@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 from wam_regtest.desktop import RegtestWalletWindow, qt_application
 from wam_regtest.wallet_session import WalletSession, PaymentReview
+from wam_regtest.wallet_read import format_wam
 
 
 def _parse_atoms(value,minimum,maximum):
@@ -61,7 +62,9 @@ class OperationalWalletWindow(RegtestWalletWindow):
         send.setObjectName("ContentCard")
         layout=QVBoxLayout(send)
         layout.setContentsMargins(24,24,24,24)
-        layout.addWidget(QLabel("Send · BIP352 silent payment"))
+        title=QLabel("Send · BIP352 silent payment")
+        title.setObjectName("PageTitle")
+        layout.addWidget(title)
         self.recipient=QLineEdit()
         self.recipient.setMaxLength(256)
         self.recipient.setPlaceholderText("wamrtsp1… disposable REGTEST recipient")
@@ -96,6 +99,9 @@ class OperationalWalletWindow(RegtestWalletWindow):
         security.setObjectName("ContentCard")
         layout=QVBoxLayout(security)
         layout.setContentsMargins(24,24,24,24)
+        title=QLabel("Security · encrypted test wallet")
+        title.setObjectName("PageTitle")
+        layout.addWidget(title)
         text=QLabel("Encrypted wallet keys and authenticated checkpoints · AES-GCM / scrypt\n"
                     "Independent macOS Keychain generation/digest anchor\n\n"
                     "Keep the latest backup after each payment. Older anchored generations are rejected.\n"
@@ -120,10 +126,14 @@ class OperationalWalletWindow(RegtestWalletWindow):
         settings.setObjectName("ContentCard")
         layout=QVBoxLayout(settings)
         layout.setContentsMargins(24,24,24,24)
-        layout.addWidget(QLabel("Settings · isolated REGTEST node"))
-        layout.addWidget(QLabel("Official WAM Core v0.1.11 · zero peers · localhost only\n"
+        title=QLabel("Settings · isolated REGTEST node")
+        title.setObjectName("PageTitle")
+        layout.addWidget(title)
+        node_text=QLabel("Official WAM Core v0.1.11 · zero peers · localhost only\n"
                                "Background sync every 30 seconds; appearance follows macOS in Auto mode.\n"
-                               "The test chain is deleted when this developer session closes."))
+                               "The test chain is deleted when this developer session closes.")
+        node_text.setWordWrap(True)
+        layout.addWidget(node_text)
         self.mine_button=QPushButton("Mine 1 REGTEST block to confirm pending transactions")
         self.mine_button.clicked.connect(lambda:self.start_operation("mine"))
         layout.addWidget(self.mine_button)
@@ -161,7 +171,12 @@ class OperationalWalletWindow(RegtestWalletWindow):
         worker=OperationWorker(self.session,action,args)
         self._worker=worker
         self.refresh_button.setEnabled(False)
-        self.status.setText("Working on verified disposable REGTEST wallet…")
+        labels={"prepare":"Preparing payment review", "sign":"Signing approved payment",
+                "broadcast":"Submitting approved transaction", "cancel":"Canceling unsigned draft",
+                "lock":"Locking wallet", "unlock":"Verifying passphrase and live chain",
+                "backup":"Saving latest encrypted backup", "recover":"Verifying anchored recovery",
+                "mine":"Mining one REGTEST block"}
+        self.status.setText(labels[action]+"…")
         worker.ready.connect(self._operation_ready)
         worker.denied.connect(self._operation_denied)
         worker.finished.connect(self._worker_finished)
@@ -188,8 +203,9 @@ class OperationalWalletWindow(RegtestWalletWindow):
             self.signed=action=="sign"
             self.review_text.setText(
                 f"{'SIGNED — ready to broadcast' if self.signed else 'REVIEW BEFORE SIGNING'}\n"
-                f"Recipient: {result.code}\nAmount: {result.atoms} atoms\n"
-                f"Fee: {result.fee} atoms\nChange back to this wallet: {result.change_atoms} atoms\n"
+                f"Recipient: {result.code}\nAmount: {format_wam(result.atoms)} WAM ({result.atoms} atoms)\n"
+                f"Fee: {format_wam(result.fee)} WAM ({result.fee} atoms)\n"
+                f"Change: {format_wam(result.change_atoms)} WAM ({result.change_atoms} atoms)\n"
                 f"Inputs: {result.input_count}")
         elif action in ("cancel","broadcast","lock"):
             self.review=None
@@ -199,7 +215,12 @@ class OperationalWalletWindow(RegtestWalletWindow):
             self._clear_balance()
             self.status.setText("LOCKED · encrypted snapshot anchored in macOS Keychain")
         else:
-            self.status.setText("REGTEST wallet operation completed; sync to refresh confirmed history")
+            message = ("BACKUP SAVED · latest anchored generation" if action=="backup" else
+                       "BROADCAST SUBMITTED · mine a block and sync to verify confirmation" if action=="broadcast" else
+                       "SIGNED · reservations retained; Broadcast requires separate approval" if action=="sign" else
+                       "REVIEW READY · verify recipient, amount and fee before Sign" if action=="prepare" else
+                       "REGTEST operation completed · sync to refresh confirmed history")
+            self.status.setText(message)
             if action in ("unlock","recover","mine"):
                 self.apply_snapshot(result)
         self._update_controls()

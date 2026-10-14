@@ -74,7 +74,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window.apply_snapshot(initial)
         assert window.navigation.count()==6 and window._sync_timer.isActive()
         assert not window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
-        for index,color in ((2,'#0B1322'),(1,'#F3F6FB')):
+        for index,color in ((2,'#10100F'),(1,'#F5F3EE')):
             window.appearance.setCurrentIndex(index)
             app.processEvents()
             assert color in window.styleSheet()
@@ -83,7 +83,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         prior=hints.colorScheme()
         auto_verified=False
         if prior in (Qt.ColorScheme.Light,Qt.ColorScheme.Dark):
-            for scheme,color in ((Qt.ColorScheme.Dark,'#0B1322'),(Qt.ColorScheme.Light,'#F3F6FB')):
+            for scheme,color in ((Qt.ColorScheme.Dark,'#10100F'),(Qt.ColorScheme.Light,'#F5F3EE')):
                 hints.setColorScheme(scheme)
                 app.processEvents()
                 assert hints.colorScheme()==scheme and color in window.styleSheet()

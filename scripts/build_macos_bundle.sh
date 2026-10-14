@@ -21,6 +21,8 @@ echo "MACOS_APP_STAGE=PYINSTALLER_START"
 python -m PyInstaller --noconfirm --clean --onedir --windowed \
   --name "WAM Privacy Wallet REGTEST" \
   --osx-bundle-identifier "org.wamcoin.privacywallet.regtest" \
+  --icon "$(pwd)/assets/wam-wallet.icns" \
+  --add-data "$(pwd)/assets/wam-coin-original.png:branding" \
   --paths "$(pwd)/src" \
   --collect-submodules wam_regtest \
   --collect-submodules wam_sp \
@@ -137,6 +139,10 @@ Path("package-output/SHA256SUMS.json").write_text(
     json.dumps({
         "status": "UNNOTARIZED_REAL_REGTEST_MACOS_ARM64_PREVIEW",
         "source": "signed WAM Core v0.1.11 + pinned WSP-1",
+        "source_commit": __import__("subprocess").check_output(["git", "rev-parse", "HEAD"],text=True).strip(),
+        "original_brand_sha256": sha256(Path("assets/wam-coin-original.png").read_bytes()).hexdigest(),
+        "wamd_sha256": sha256(Path("core/wamd").read_bytes()).hexdigest(),
+        "wam_cli_sha256": sha256(Path("core/wam-cli").read_bytes()).hexdigest(),
         "real_core_packaged_e2e": True,
         "mainnet_allowed": False,
         "files": out,
