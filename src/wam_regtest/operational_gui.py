@@ -288,6 +288,8 @@ def launch_disposable_wallet(core_dir,datadir,source,mining_address):
     else:
         session=WalletSession.from_backup(core_dir,datadir,source,backup.parent,backup.name,
                                            encoded,mining_address,authorized=True)
+    encoded=None
+    password=""
     window=OperationalWalletWindow(session)
     window.show()
     QTimer.singleShot(0,window.request_sync)
