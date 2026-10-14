@@ -119,3 +119,60 @@ jobs:
             real-regtest-gui-preview.png
           if-no-files-found: error
           retention-days: 14
+
+
+  native-app-dmg:
+    name: Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E
+    needs: real-wamd
+    runs-on: macos-15
+    timeout-minutes: 55
+    env:
+      PYTHONUNBUFFERED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Immutable upstream WSP-1 source
+        uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: 'arm64'
+      - name: Require native Apple Silicon and official GPG verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -s)" = Darwin
+          test "$(uname -m)" = arm64
+          if ! command -v gpg >/dev/null 2>&1; then brew install gnupg; fi
+      - name: Install GUI, pinned source and native frozen-app builder
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
+          python -m pip install --disable-pip-version-check -e '.[gui]' -e ./wsp-upstream 'pyinstaller>=6.15,<7'
+          python -m pip check
+      - name: Security and bundling contracts
+        run: python -m unittest discover -s tests -v
+      - name: Fetch and authenticate exact official v0.1.11 ARM64 Core
+        run: python -m wam_regtest.release --platform macos-arm64 --destination core
+      - name: Build actual native .app/.dmg and repeat REAL Core + WSP + Qt E2E inside app
+        shell: bash
+        run: bash scripts/build_macos_bundle.sh
+      - name: Upload real built Mac application, DMG, checksums and Qt screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: WAM-Privacy-Wallet-REGTEST-macOS-ARM64-${{ github.sha }}
+          path: |
+            package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip
+            package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg
+            package-output/SHA256SUMS.json
+            real-regtest-gui-preview.png
+          if-no-files-found: error
+          retention-days: 14
