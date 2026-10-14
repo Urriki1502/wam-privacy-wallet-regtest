@@ -24,3 +24,4 @@ bundle-input/
 package-output/
 *.spec
 real-regtest-gui-preview.png
+real-regtest-wallet-preview.png

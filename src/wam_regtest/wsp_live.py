@@ -125,8 +125,8 @@ def _public_fixture_payment(rpc, account, mining_address: str, *,
     """
     from wam_sp.core import Input, pub, send
     from wam_sp.transaction import p2wpkh, signed_single_input
-    if (type(funding_height) is not int or funding_height not in (1, 2)
-            or type(expected_before_height) is not int or expected_before_height not in (101, 102)
+    if (type(funding_height) is not int or funding_height not in (1, 2, 3)
+            or type(expected_before_height) is not int or expected_before_height not in (101, 102, 103)
             or rpc.call("getblockcount") != expected_before_height):
         raise RealWspScanError("WSP_PUBLIC_FIXTURE_HEIGHT_DENIED")
     expected_after = expected_before_height + 1

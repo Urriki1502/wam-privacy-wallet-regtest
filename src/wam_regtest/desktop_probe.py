@@ -25,13 +25,11 @@ def probe_running_real_core_gui(
             or len(expected_txid) != 64 or type(expected_atoms) is not int
             or expected_atoms <= 0):
         raise NativeGuiProbeError("GUI_REAL_REGTEST_PROBE_SCOPE_DENIED")
-    from PySide6.QtCore import QEventLoop, QTimer
+    from PySide6.QtCore import QEventLoop, QTimer, QCoreApplication, QEvent
     from PySide6.QtWidgets import QApplication
-    from .desktop import RegtestWalletWindow
+    from .desktop import RegtestWalletWindow, qt_application
 
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
+    app = qt_application()
     win = RegtestWalletWindow(core_dir, datadir, source_root)
     events: dict[str, object] = {}
     loop = QEventLoop()
@@ -90,6 +88,8 @@ def probe_running_real_core_gui(
     if not win.grab().save(str(path)):
         raise NativeGuiProbeError("GUI_REAL_REGTEST_CAPTURE_DENIED")
     win.close()
+    win.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
     return {
         "status": "REAL_WAM_CORE_V0_1_11_NATIVE_QT_RECEIVE_BALANCE_HISTORY_PASS",
         "real_core_rpc": True,
@@ -99,6 +99,7 @@ def probe_running_real_core_gui(
         "confirmed_balance_atoms": expected_atoms,
         "confirmed_history_txid": expected_txid,
         "observed_height": expected_height,
+        "verified_tip": snap.tip,
         "native_wsp_sqlite_synced": True,
         "gui_background_worker_completed": True,
         "signer_allowed": False,

@@ -1,0 +1,185 @@
+"""Real-Core native Qt Send/Sign/Broadcast/backup recovery acceptance."""
+from pathlib import Path
+import subprocess
+import secrets
+from PySide6.QtCore import QEventLoop,QTimer,QCoreApplication,QEvent
+from PySide6.QtWidgets import QApplication
+from .wallet_session import WalletSession, WalletSessionError
+from .operational_gui import OperationalWalletWindow
+
+
+class WalletProbeError(ValueError):
+    pass
+
+
+def _operation(app,window,action,trigger,*,denied=False):
+    loop=QEventLoop()
+    result={}
+    def success(name,value):
+        if name==action:
+            result['value']=value
+            result['success']=True
+            loop.quit()
+    def failure(_code):
+        result['denied']=True
+        loop.quit()
+    timer=QTimer()
+    timer.setSingleShot(True)
+    timer.timeout.connect(loop.quit)
+    window.operation_completed.connect(success)
+    window.operation_failed.connect(failure)
+    timer.start(90_000)
+    trigger()
+    loop.exec()
+    timer.stop()
+    window.operation_completed.disconnect(success)
+    window.operation_failed.disconnect(failure)
+    worker=window._worker
+    if worker is not None:
+        if not worker.wait(15_000):
+            raise WalletProbeError("WALLET_GUI_THREAD_STUCK")
+        app.processEvents()
+        QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+    if (denied and not result.get('denied')) or (not denied and not result.get('success')):
+        raise WalletProbeError("WALLET_GUI_OPERATION_"+action.upper()+"_DENIED")
+    return result.get('value')
+
+
+def probe_wallet(core_dir,datadir,source,mining_address):
+    from wam_sp.keystore import Keyring
+    from wam_sp.scanner import Scanner
+    session=recipient=recipient_scan=window=None
+    keychain=datadir/'wallet-acceptance.keychain-db'
+    created=False
+    stage="KEYCHAIN"
+    print("WALLET_E2E_STAGE=KEYCHAIN",flush=True)
+    password=b"public-disposable-wallet-acceptance"
+    try:
+        status=subprocess.run(['/usr/bin/security','create-keychain','-p','public-test-only',str(keychain)],
+                               capture_output=True,timeout=15,check=False).returncode
+        if status:
+            raise WalletProbeError("WALLET_TEST_KEYCHAIN_DENIED")
+        created=True
+        stage="CREATE"
+        print("WALLET_E2E_STAGE=CREATE",flush=True)
+        session=WalletSession.create(core_dir,datadir,source,password,mining_address,authorized=True,keychain=keychain)
+        initial=session.snapshot()
+        assert initial.height==104 and initial.confirmed_utxos==1
+        recipient=Keyring()
+        code=recipient.accounts()[0].payment_code()
+        from .desktop import qt_application
+        app=qt_application()
+        window=OperationalWalletWindow(session)
+        window.show()
+        window.apply_snapshot(initial)
+        assert window.navigation.count()==6 and window._sync_timer.isActive()
+        assert not window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
+        window.recipient.setText(code)
+        window.amount.setText("0.00100000")
+        window.fee.setText("0.00010000")
+        stage="PREPARE"
+        print("WALLET_E2E_STAGE=PREPARE",flush=True)
+        review=_operation(app,window,'prepare',window.prepare_button.click)
+        assert review.code==code and review.atoms==100000 and review.fee==10000
+        assert str(review.atoms) in window.review_text.text() and code in window.review_text.text()
+        assert window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
+        stage="APPROVAL"
+        print("WALLET_E2E_STAGE=APPROVAL",flush=True)
+        try:
+            session.sign('0'*64)
+        except WalletSessionError:
+            pass
+        else:
+            raise WalletProbeError("WALLET_CHANGED_APPROVAL_ACCEPTED")
+        stage="SIGN"
+        print("WALLET_E2E_STAGE=SIGN",flush=True)
+        _operation(app,window,'sign',window.sign_button.click)
+        assert window.broadcast_button.isEnabled() and not window.cancel_button.isEnabled()
+        stage="BROADCAST"
+        print("WALLET_E2E_STAGE=BROADCAST",flush=True)
+        txid=_operation(app,window,'broadcast',window.broadcast_button.click)
+        assert txid in window.review_text.text()
+        # Real Core's mempool/consensus must accept the exact native signature.
+        rpc=session._rpc()
+        assert txid in rpc._call('getrawmempool',[])
+        stage="CONFIRM"
+        print("WALLET_E2E_STAGE=CONFIRM",flush=True)
+        confirmed=_operation(app,window,'mine',window.mine_button.click)
+        expected=initial.confirmed_atoms-review.atoms-review.fee
+        assert confirmed.height==105 and confirmed.confirmed_atoms==expected
+        assert window.balance_text.text()==f'{expected/100_000_000:,.8f} WAM'
+        assert window.history_table.rowCount()==2
+        recipient_scan=Scanner(datadir/'recipient.sqlite',recipient.accounts())
+        recipient_scan.sync(rpc)
+        coins=recipient_scan.coins()
+        assert len(coins)==1 and coins[0]['txid']==txid and coins[0]['atoms']==review.atoms
+        # Real send-block reorg must remove debit/change and recipient receive;
+        # signed/broadcast reservations remain irreversible during rollback.
+        stage="REORG"
+        print("WALLET_E2E_STAGE=REORG",flush=True)
+        tip=rpc.call('getbestblockhash')
+        rpc._call('invalidateblock',[tip])
+        rolled=session.snapshot()
+        recipient_scan.sync(rpc)
+        assert rolled.confirmed_atoms==initial.confirmed_atoms and not recipient_scan.coins()
+        assert session.scanner.store.db.execute("SELECT state FROM reservations").fetchone()[0]=='broadcast'
+        rpc._call('reconsiderblock',[tip])
+        restored=session.snapshot()
+        assert restored.confirmed_atoms==expected and restored.height==105
+        window.apply_snapshot(restored)
+        stage="BACKUP"
+        print("WALLET_E2E_STAGE=BACKUP",flush=True)
+        backup=datadir/'wallet-backup'
+        backup.mkdir(mode=0o700)
+        _operation(app,window,'backup',lambda:window.start_operation('backup',backup,'wallet-backup.enc'))
+        stage="LOCK"
+        print("WALLET_E2E_STAGE=LOCK",flush=True)
+        _operation(app,window,'lock',window.lock_button.click)
+        assert session.locked and not session.runtime.exists() and window.balance_text.text()=='—'
+        assert not window.prepare_button.isEnabled()
+        stage="PASSWORD"
+        print("WALLET_E2E_STAGE=PASSWORD",flush=True)
+        _operation(app,window,'unlock',lambda:window.start_operation('unlock',b'wrong-regtest-passphrase'),denied=True)
+        assert session.locked
+        stage="RECOVER"
+        print("WALLET_E2E_STAGE=RECOVER",flush=True)
+        final=_operation(app,window,'recover',lambda:window.start_operation('recover',backup,'wallet-backup.enc',password))
+        assert final.confirmed_atoms==expected and final.height==105
+        assert window.prepare_button.isEnabled()
+        window.navigation.setCurrentRow(3)
+        assert window.grab().save(str(Path('real-regtest-wallet-preview.png').resolve()))
+        window.close()
+        window.deleteLater()
+        QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+        window=None
+        return {
+            'status':'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS',
+            'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
+            'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
+            'exact_intent_approval_required':True,'real_core_mempool_accepted':True,
+            'real_core_confirmed_recipient_atoms':100000,'native_sender_change_confirmed':True,
+            'encrypted_reservations_before_network':True,'actual_send_reorg_depth':1,
+            'irreversible_reservations_survive_reorg':True,'native_qt_backup_lock_recovery':True,
+            'wrong_unlock_password_denied':True,'background_sync_active':True,
+            'native_gui_navigation_pages':6,'observed_height':105,
+            'production_custody_qualified':False,
+        }
+    except WalletProbeError:
+        raise
+    except Exception:
+        raise WalletProbeError('WALLET_REAL_CORE_'+stage+'_DENIED') from None
+    finally:
+        if window is not None:
+            worker=window._worker
+            if worker is not None:
+                worker.wait(15_000)
+            QApplication.instance().processEvents()
+            window.close()
+        for item in (session,recipient_scan,recipient):
+            if item is not None:
+                item.close()
+        if created:
+            status=subprocess.run(['/usr/bin/security','delete-keychain',str(keychain)],
+                                   capture_output=True,timeout=15,check=False).returncode
+            if status:
+                raise WalletProbeError('WALLET_TEST_KEYCHAIN_CLEANUP_DENIED')

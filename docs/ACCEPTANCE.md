@@ -7,3 +7,9 @@
 - **PACKAGE PASS** requires a native Apple Silicon `.app` and `.dmg` booting on a MacBook with the above real Core and WSP flows. Signing/notarization is separate.
 - The old repository is a library of reviewed code/tests, not an authorization to merge all 427 files. Port only the exact modules needed.
 - Build is experimental and handles **no real user secrets, funds or mainnet**. The authenticated archive does not constitute a production-grade code-signing, launch or loader chain.
+
+The complete disposable-wallet gate is `--confirm-wallet-e2e` together with
+`--confirm-security-e2e` and the existing real-Core/GUI/payment confirmations.
+See [native wallet scope](WALLET-REGTEST.md). Receive baseline is recorded at
+height 102, security funding/reorg at 103, and operational send confirmation
+at 105. The top-level Core receipt records the final live height/tip.

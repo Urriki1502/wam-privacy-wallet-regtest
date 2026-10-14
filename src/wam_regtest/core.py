@@ -149,7 +149,8 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     wsp_payment_e2e: bool = False,
                     gui_e2e: bool = False,
                     interactive_demo: bool = False,
-                    security_e2e: bool = False) -> dict:
+                    security_e2e: bool = False,
+                    wallet_e2e: bool = False, operational_demo: bool = False) -> dict:
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
     if (wsp_source is not None and
@@ -166,6 +167,9 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
         raise CoreSmokeError("CORE_REAL_DEMO_SCOPE_DENIED")
     if type(security_e2e) is not bool or (security_e2e and (not wsp_payment_e2e or interactive_demo)):
         raise CoreSmokeError("CORE_SECURITY_SCOPE_DENIED")
+    if (type(wallet_e2e) is not bool or (wallet_e2e and not security_e2e)
+            or type(operational_demo) is not bool or (operational_demo and not interactive_demo)):
+        raise CoreSmokeError("CORE_DISPOSABLE_WALLET_SCOPE_DENIED")
     node, cli, receipt = verified_core_paths(core_dir)
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
@@ -276,9 +280,11 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     print("REAL REGTEST PUBLIC DEMO: no mainnet or real funds; "
                           "close the wallet window to stop Core and delete the test chain.",
                           flush=True)
-                    exit_status = launch_readonly_wallet(
-                        core_dir, datadir, wsp_source
-                    )
+                    if operational_demo:
+                        from .operational_gui import launch_disposable_wallet
+                        exit_status = launch_disposable_wallet(core_dir,datadir,wsp_source,mine_to)
+                    else:
+                        exit_status = launch_readonly_wallet(core_dir,datadir,wsp_source)
                     if exit_status != 0:
                         raise CoreSmokeError("CORE_REAL_DEMO_WINDOW_DENIED")
                     demo_finished = True
@@ -293,7 +299,21 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     security_receipt = probe_security(cli, datadir, wsp_source, mine_to)
                 except SecurityProbeError as exc:
                     raise CoreSmokeError(str(exc)) from None
+            wallet_receipt = None
+            if wallet_e2e:
+                from .wallet_probe import probe_wallet, WalletProbeError
+                try:
+                    wallet_receipt = probe_wallet(core_dir,datadir,wsp_source,mine_to)
+                except WalletProbeError as exc:
+                    raise CoreSmokeError(str(exc)) from None
+            final_height = _read_cli(prefix + ["getblockcount"])
+            final_tip = _read_cli(prefix + ["getbestblockhash"])
+            if (type(final_height) is not int or not 101<=final_height<=1_000_000
+                    or type(final_tip) is not str or len(final_tip)!=64
+                    or _read_cli(prefix+["getconnectioncount"])!=0):
+                raise CoreSmokeError("CORE_FINAL_CHAIN_ATTESTATION_DENIED")
             return {
+                "wallet_live_core": wallet_receipt,
                 "security_live_core": security_receipt,
                 "interactive_demo_closed_cleanly": demo_finished,
                 "gui_real_core_e2e_pass": gui_receipt is not None,
@@ -313,10 +333,10 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 ),
                 "platform": receipt["platform"], "node_sha256": receipt["wamd_sha256"],
                 "chain": "regtest",
-                "block_height": (wsp_receipt["observed_height"] if wsp_receipt is not None else height),
-                "tip": (wsp_receipt["verified_tip"] if wsp_receipt is not None else tip),
+                "block_height": final_height,
+                "tip": final_tip,
                 "live_wamd_process_observed": True, "live_rpc_observed": True,
-                "wallet_send_e2e_pass": False,
+                "wallet_send_e2e_pass": wallet_receipt is not None,
                 "wsp_bip352_e2e_pass": (
                     wsp_receipt["wsp_bip352_payment_confirmed"]
                     if wsp_receipt is not None else False

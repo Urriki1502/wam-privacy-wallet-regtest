@@ -22,6 +22,8 @@ def main() -> int:
 
     smoke.add_argument("--confirm-security-e2e", action="store_true", help="Test encrypted recovery, independent macOS Keychain anchor and actual Core reorg")
 
+    smoke.add_argument("--confirm-wallet-e2e", action="store_true", help="Verify disposable native Qt Send/Sign/Broadcast and encrypted recovery on real Core")
+
     gui = sub.add_parser("gui", help="Open native Mac read-only public-demo wallet on an ALREADY RUNNING isolated Core REGTEST daemon")
     gui.add_argument("--core-dir", required=True, type=Path)
     gui.add_argument("--datadir", required=True, type=Path)
@@ -35,6 +37,11 @@ def main() -> int:
     demo.add_argument("--wsp-source-root", required=True, type=Path)
     demo.add_argument("--confirm-disposable-regtest", action="store_true")
     demo.add_argument("--confirm-public-fixture-payment", action="store_true")
+    wallet = sub.add_parser("wallet", help="Launch disposable test-key native REGTEST wallet (Send/Sign/Broadcast)")
+    wallet.add_argument("--core-dir",required=True,type=Path)
+    wallet.add_argument("--wsp-source-root",required=True,type=Path)
+    wallet.add_argument("--confirm-disposable-regtest",action="store_true")
+    wallet.add_argument("--confirm-public-fixture-payment",action="store_true")
     args = ap.parse_args()
     try:
         if args.command == "smoke":
@@ -42,14 +49,15 @@ def main() -> int:
                                       wsp_source=(args.wsp_source_root.expanduser().absolute() if args.wsp_source_root else None),
                                       wsp_payment_e2e=args.confirm_public_fixture_payment,
                                       gui_e2e=args.confirm_real_gui_e2e,
-                                      security_e2e=args.confirm_security_e2e)
+                                      security_e2e=args.confirm_security_e2e,
+                                      wallet_e2e=args.confirm_wallet_e2e)
             if args.report:
                 if args.report.exists() or not args.report.parent.is_dir():
                     raise CoreSmokeError("CORE_REPORT_PATH_DENIED")
                 args.report.write_text(json.dumps(outcome, sort_keys=True, indent=2) + "\n")
             print(json.dumps(outcome, sort_keys=True))
             return 0
-        if args.command == "demo":
+        if args.command in ("demo", "wallet"):
             if (args.confirm_disposable_regtest is not True
                     or args.confirm_public_fixture_payment is not True):
                 raise CoreSmokeError("CORE_REAL_DEMO_CONSENT_DENIED")
@@ -59,6 +67,7 @@ def main() -> int:
                 wsp_source=args.wsp_source_root.expanduser().absolute(),
                 wsp_payment_e2e=True,
                 interactive_demo=True,
+                operational_demo=args.command=="wallet",
             )
             if not result.get("interactive_demo_closed_cleanly"):
                 raise CoreSmokeError("CORE_REAL_DEMO_NOT_CLOSED")
@@ -79,6 +88,10 @@ def main() -> int:
     except CoreSmokeError as error:
         print(str(error), file=sys.stderr)
         return 2
+    finally:
+        desktop = sys.modules.get("wam_regtest.desktop")
+        if desktop is not None:
+            desktop.shutdown_qt()
 
 
 if __name__ == "__main__":
