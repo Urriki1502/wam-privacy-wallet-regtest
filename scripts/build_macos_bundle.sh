@@ -47,11 +47,32 @@ for name in ("wamd", "wam-cli"):
     target = candidates[0]
     source = Path("core") / name
     if sha256(target.read_bytes()).hexdigest() != sha256(source.read_bytes()).hexdigest():
+        # PyInstaller re-signs Mach-O even when staged as data. Restore the
+        # verbatim official release member AFTER PyInstaller finishes.
+        # The final application cannot run until exact SHA-256 matches again.
+        import shutil
+        shutil.copyfile(source, target)
+    if sha256(target.read_bytes()).hexdigest() != sha256(source.read_bytes()).hexdigest():
         raise SystemExit("MACOS_BUNDLE_CORE_SIGNED_HASH_DENIED")
     target.chmod(0o700)
     if not os.access(target, os.X_OK):
         raise SystemExit("MACOS_BUNDLE_CORE_EXEC_MODE_DENIED")
 print("MACOS_APP_STAGE=UNMODIFIED_SIGNED_CORE_SHA256_PASS", flush=True)
+PY
+# Update outer ad-hoc app resources signature only. The original WAM Core
+# Mach-O SHA-256 MUST remain byte-for-byte identical to upstream after signing.
+codesign --force --sign - --timestamp=none "$APP"
+python - <<'PY'
+from hashlib import sha256
+from pathlib import Path
+for name in ("wamd", "wam-cli"):
+    files = [p for p in Path("dist/WAM Privacy Wallet REGTEST.app").rglob(name)
+             if p.is_file() and not p.is_symlink()]
+    if len(files) != 1:
+        raise SystemExit("MACOS_BUNDLE_CORE_SHAPE_AFTER_CODESIGN_DENIED")
+    if sha256(files[0].read_bytes()).hexdigest() != sha256((Path("core") / name).read_bytes()).hexdigest():
+        raise SystemExit("MACOS_BUNDLE_CODESIGN_MODIFIED_CORE_DENIED")
+print("MACOS_APP_STAGE=OUTER_APP_SIGNED_CORE_HASH_STILL_PASS", flush=True)
 PY
 BIN="$APP/Contents/MacOS/WAM Privacy Wallet REGTEST"
 test -d "$APP"
