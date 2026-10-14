@@ -136,7 +136,8 @@ def _rpc(cli: Path, datadir: Path, port: int, env: dict, *args: str, timeout=15)
 
 def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: Path,
                                 signature: Path, *, consent: bool = False,
-                                timeout: int = 120) -> dict:
+                                timeout: int = 120, wsp_source: Path | None = None,
+                                confirm_public_fixture_payment: bool = False) -> dict:
     """Authentic actual Windows node: 101-block smoke with zero peers.
 
     Deliberately has no WSP scanner, wallet signer, broadcast or real-fund API.
@@ -146,6 +147,11 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
         _deny("WIN_CORE_EXPLICIT_CONSENT_REQUIRED")
     if sys.platform != "win32" or platform.machine().lower() not in ("amd64", "x86_64"):
         _deny("WIN_CORE_NATIVE_X64_ONLY")
+    if (type(confirm_public_fixture_payment) is not bool
+            or (wsp_source is not None and not confirm_public_fixture_payment)
+            or (confirm_public_fixture_payment and
+                (type(wsp_source) is not type(Path()) or not wsp_source.is_absolute()))):
+        _deny("WIN_CORE_PUBLIC_FIXTURE_SCOPE_DENIED")
     if not all(type(p) is type(Path()) and p.is_file() for p in
                (archive, signing_key, sha256sums, signature)):
         _deny("WIN_CORE_INPUT_DENIED")
@@ -160,6 +166,14 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
             or proof["mainnet_allowed"] is not False
             or set(proof["member_sha256"]) != {"wamd.exe", "wam-cli.exe"}):
         _deny("WIN_CORE_TRUST_SCOPE_DENIED")
+
+    mine_to_public = None
+    if confirm_public_fixture_payment:
+        from .wsp_live import public_regtest_mining_address
+        try:
+            mine_to_public = public_regtest_mining_address(wsp_source)
+        except Exception:
+            _deny("WIN_CORE_PINNED_WSP_SOURCE_DENIED")
 
     with tempfile.TemporaryDirectory(prefix="wam-win-real-regtest-") as tmp:
         root = Path(tmp).resolve(strict=True)
@@ -200,7 +214,8 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
             address = _rpc(cli, datadir, rpc, env, "-rpcwallet=test", "getnewaddress")
             if type(address) is not str or not 20 <= len(address) <= 120:
                 _deny("WIN_CORE_REGTEST_ADDRESS_DENIED")
-            blocks = _rpc(cli, datadir, rpc, env, "generatetoaddress", "101", address, timeout=90)
+            blocks = _rpc(cli, datadir, rpc, env, "generatetoaddress", "101",
+                          mine_to_public or address, timeout=90)
             if type(blocks) is not list or len(blocks) != 101:
                 _deny("WIN_CORE_101_BLOCKS_DENIED")
             if _rpc(cli, datadir, rpc, env, "getblockcount") != 101:
@@ -210,8 +225,18 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                 _deny("WIN_CORE_TIP_DENIED")
             if _rpc(cli, datadir, rpc, env, "getconnectioncount") != 0:
                 _deny("WIN_CORE_UNEXPECTED_PEERS")
+            wsp_receipt = None
+            if confirm_public_fixture_payment:
+                from .windows_wsp_regtest import prove_real_windows_wsp_receive
+                try:
+                    wsp_receipt = prove_real_windows_wsp_receive(
+                        cli, datadir, rpc, env, wsp_source, mine_to_public)
+                except Exception:
+                    _deny("WIN_CORE_WSP_PAYMENT_E2E_DENIED")
             receipt = {
-                "status": "WIN64_SIGNED_WAM_CORE_REGTEST_101_BLOCK_SMOKE_PASS",
+                "status": ("WIN64_REAL_CORE_WSP1_BIP352_CONFIRMED_RECEIVE_PASS"
+                           if wsp_receipt is not None else
+                           "WIN64_SIGNED_WAM_CORE_REGTEST_101_BLOCK_SMOKE_PASS"),
                 "official_signed_core": True,
                 "real_node_process": True,
                 "actual_regtest_101_blocks": True,
@@ -219,7 +244,8 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                 "archive_sha256": proof["archive_sha256"],
                 "core_sha256": proof["member_sha256"]["wamd.exe"],
                 "cli_sha256": proof["member_sha256"]["wam-cli.exe"],
-                "wsp_bip352_payment_e2e": False,
+                "wsp_bip352_payment_e2e": wsp_receipt is not None,
+                "wsp_receipt": wsp_receipt,
                 "qt_wallet_e2e": False,
                 "sign_broadcast_authorized": False,
                 "production_authorized": False,
