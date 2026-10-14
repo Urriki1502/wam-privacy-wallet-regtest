@@ -20,6 +20,8 @@ def main() -> int:
     smoke.add_argument("--confirm-public-fixture-payment", action="store_true", help="Approve globally-known REGTEST fixture key signing and broadcast, no mainnet")
     smoke.add_argument("--confirm-real-gui-e2e", action="store_true", help="Assert native Qt UI against live Core BIP352/SQLite (CI/headless)")
 
+    smoke.add_argument("--confirm-security-e2e", action="store_true", help="Test encrypted recovery, independent macOS Keychain anchor and actual Core reorg")
+
     gui = sub.add_parser("gui", help="Open native Mac read-only public-demo wallet on an ALREADY RUNNING isolated Core REGTEST daemon")
     gui.add_argument("--core-dir", required=True, type=Path)
     gui.add_argument("--datadir", required=True, type=Path)
@@ -39,7 +41,8 @@ def main() -> int:
             outcome = smoke_real_core(args.core_dir.expanduser().absolute(), explicit_consent=args.confirm_disposable_regtest,
                                       wsp_source=(args.wsp_source_root.expanduser().absolute() if args.wsp_source_root else None),
                                       wsp_payment_e2e=args.confirm_public_fixture_payment,
-                                      gui_e2e=args.confirm_real_gui_e2e)
+                                      gui_e2e=args.confirm_real_gui_e2e,
+                                      security_e2e=args.confirm_security_e2e)
             if args.report:
                 if args.report.exists() or not args.report.parent.is_dir():
                     raise CoreSmokeError("CORE_REPORT_PATH_DENIED")

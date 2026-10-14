@@ -114,7 +114,9 @@ def public_regtest_mining_address(source_root: Path) -> str:
     return encode("wamrt", hash160(pub(31)), version=0, bech32m=False)
 
 
-def _public_fixture_payment(rpc, account, mining_address: str) -> tuple[str, int, int]:
+def _public_fixture_payment(rpc, account, mining_address: str, *,
+                            funding_height: int = 1,
+                            expected_before_height: int = 101) -> tuple[str, int, int]:
     """Actual signed raw P2WPKH spend → BIP352 P2TR on the real regtest chain.
 
     The fixture scalar 31 is globally known; it MUST NEVER leave disposable
@@ -123,7 +125,12 @@ def _public_fixture_payment(rpc, account, mining_address: str) -> tuple[str, int
     """
     from wam_sp.core import Input, pub, send
     from wam_sp.transaction import p2wpkh, signed_single_input
-    first_hash = rpc.call("getblockhash", [1])
+    if (type(funding_height) is not int or funding_height not in (1, 2)
+            or type(expected_before_height) is not int or expected_before_height not in (101, 102)
+            or rpc.call("getblockcount") != expected_before_height):
+        raise RealWspScanError("WSP_PUBLIC_FIXTURE_HEIGHT_DENIED")
+    expected_after = expected_before_height + 1
+    first_hash = rpc.call("getblockhash", [funding_height])
     block = rpc._call("getblock", [first_hash, "2"])
     if (type(block) is not dict or block.get("hash") != first_hash
             or type(block.get("tx")) is not list or len(block["tx"]) != 1):
@@ -165,9 +172,9 @@ def _public_fixture_payment(rpc, account, mining_address: str) -> tuple[str, int
     confirmed = rpc._call("generatetoaddress", ["1", mining_address])
     if (type(confirmed) is not list or len(confirmed) != 1
             or type(confirmed[0]) is not str or not _HASH.fullmatch(confirmed[0])
-            or rpc.call("getblockcount") != 102):
+            or rpc.call("getblockcount") != expected_after):
         raise RealWspScanError("WSP_LIVE_PAYMENT_CONFIRM_DENIED")
-    return txid, amount - fee, 102
+    return txid, amount - fee, expected_after
 
 
 class LiveCoreReadOnlyCli:

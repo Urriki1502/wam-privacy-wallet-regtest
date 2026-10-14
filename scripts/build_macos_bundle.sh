@@ -11,9 +11,11 @@ test -x core/wamd
 test -x core/wam-cli
 test -f core/receipt.json
 mkdir -p bundle-input package-output
+SOURCE_STAGE=$(mktemp -d "$(pwd)/bundle-input/build-XXXXXX")
+trap 'rm -rf "$SOURCE_STAGE"' EXIT
 python -m wam_regtest.package_manifest \
   --source-root "$(pwd)/wsp-upstream" \
-  --output "$(pwd)/bundle-input/wsp-source"
+  --output "$SOURCE_STAGE/wsp-source"
 
 echo "MACOS_APP_STAGE=PYINSTALLER_START"
 python -m PyInstaller --noconfirm --clean --onedir --windowed \
@@ -26,7 +28,7 @@ python -m PyInstaller --noconfirm --clean --onedir --windowed \
   --add-data "$(pwd)/core/wamd:core" \
   --add-data "$(pwd)/core/wam-cli:core" \
   --add-data "$(pwd)/core/receipt.json:core" \
-  --add-data "$(pwd)/bundle-input/wsp-source:wsp-source" \
+  --add-data "$SOURCE_STAGE/wsp-source:wsp-source" \
   src/wam_regtest/package_entry.py
 
 echo "MACOS_APP_STAGE=PYINSTALLER_COMPLETED"
@@ -120,12 +122,15 @@ from hashlib import sha256
 from pathlib import Path
 import json
 out = {}
-for p in sorted(Path("package-output").iterdir()):
-    if p.is_file():
-        out[p.name] = {
-            "sha256": sha256(p.read_bytes()).hexdigest(),
-            "size_bytes": p.stat().st_size,
-        }
+for name in ("WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip",
+             "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"):
+    p = Path("package-output") / name
+    if not p.is_file() or p.stat().st_size <= 0:
+        raise SystemExit("MACOS_PACKAGE_ARTIFACT_MISSING")
+    out[name] = {
+        "sha256": sha256(p.read_bytes()).hexdigest(),
+        "size_bytes": p.stat().st_size,
+    }
 assert len(out) == 2
 Path("package-output/SHA256SUMS.json").write_text(
     json.dumps({

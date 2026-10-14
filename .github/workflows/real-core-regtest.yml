@@ -67,6 +67,7 @@ jobs:
             --wsp-source-root wsp-upstream \
             --confirm-public-fixture-payment \
             --confirm-real-gui-e2e \
+            --confirm-security-e2e \
             --report real-core-evidence.json
           python - <<'PY'
           import json
@@ -104,6 +105,15 @@ jobs:
           assert view['mainnet_allowed'] is False
           assert actual['verified_tip']==proof['tip']
           assert proof['mainnet_allowed'] is False
+          security = proof['security_live_core']
+          assert security['status'] == 'REAL_CORE_MACOS_KEYCHAIN_ENCRYPTED_RECOVERY_REORG_PASS'
+          assert security['real_core_rpc'] is True and security['synthetic_rpc'] is False
+          assert security['independent_native_keychain_anchor'] is True
+          assert security['wallet_directory_rollback_denied'] is True
+          assert security['wrong_password_denied'] is True
+          assert security['restored_balance_blocked_until_live_scan'] is True
+          assert security['actual_core_reorg_depth'] == 1 and security['observed_height'] == 103
+          print('REAL_CORE_KEYCHAIN_ENCRYPTED_RECOVERY_REORG_PASS')
           print('REAL_WAM_CORE_REGTEST_101_BLOCKS_PASS')
           print('REAL_WAM_CORE_NATIVE_WSP_SQLITE_SCAN_101_BLOCKS_AND_RESTART_PASS')
           print('REAL_WAM_CORE_NATIVE_BIP352_CONFIRMED_RECEIVE_SQLITE_PASS')
