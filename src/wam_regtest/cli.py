@@ -17,11 +17,13 @@ def main() -> int:
     smoke.add_argument("--confirm-disposable-regtest", action="store_true", help="Approve keyless local Core process and disposable test wallet")
     smoke.add_argument("--report", type=Path, help="Write a redacted public receipt")
     smoke.add_argument("--wsp-source-root", type=Path, help="Pinned upstream WSP checkout; require actual live node and scanner")
+    smoke.add_argument("--confirm-public-fixture-payment", action="store_true", help="Approve globally-known REGTEST fixture key signing and broadcast, no mainnet")
     args = ap.parse_args()
     try:
         if args.command == "smoke":
             outcome = smoke_real_core(args.core_dir.expanduser().absolute(), explicit_consent=args.confirm_disposable_regtest,
-                                      wsp_source=(args.wsp_source_root.expanduser().absolute() if args.wsp_source_root else None))
+                                      wsp_source=(args.wsp_source_root.expanduser().absolute() if args.wsp_source_root else None),
+                                      wsp_payment_e2e=args.confirm_public_fixture_payment)
             if args.report:
                 if args.report.exists() or not args.report.parent.is_dir():
                     raise CoreSmokeError("CORE_REPORT_PATH_DENIED")
