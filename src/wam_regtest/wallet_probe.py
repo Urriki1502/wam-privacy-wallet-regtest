@@ -75,6 +75,12 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window.show()
         window.apply_snapshot(initial)
         assert window.navigation.count()==6 and window._sync_timer.isActive()
+        assert window.navigation.item(0).text()=="Overview"
+        assert window.stack.widget(0) is window.dashboard
+        assert window.dashboard.balance_value.text()==window.balance_text.text()
+        assert window.dashboard.activity_table.rowCount()==min(6,len(initial.history))
+        assert "REGTEST VERIFIED" in window.dashboard.live_badge.text()
+        assert window.dashboard.go_send.isEnabled() and window.dashboard.open_security.isEnabled()
         assert window._sync_timer.interval()==30_000
         # Exercise an actual Qt timer-triggered background worker with live
         # Core. Accelerate only the test interval, then restore the real 30s.
@@ -104,7 +110,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window._sync_timer.start()
         assert sync_result.get('snap')==initial and window._worker is None
         assert not window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
-        for index,color in ((2,'#10100F'),(1,'#F5F3EE')):
+        for index,color in ((2,'#0D121A'),(1,'#F4F6FA')):
             window.appearance.setCurrentIndex(index)
             app.processEvents()
             assert color in window.styleSheet()
@@ -113,7 +119,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         prior=hints.colorScheme()
         auto_verified=False
         if prior in (Qt.ColorScheme.Light,Qt.ColorScheme.Dark):
-            for scheme,color in ((Qt.ColorScheme.Dark,'#10100F'),(Qt.ColorScheme.Light,'#F5F3EE')):
+            for scheme,color in ((Qt.ColorScheme.Dark,'#0D121A'),(Qt.ColorScheme.Light,'#F4F6FA')):
                 hints.setColorScheme(scheme)
                 app.processEvents()
                 assert hints.colorScheme()==scheme and color in window.styleSheet()
@@ -312,6 +318,9 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         print("WALLET_E2E_STAGE=LOCK",flush=True)
         _operation(app,window,'lock',window.lock_button.click)
         assert session.locked and not session.runtime.exists() and window.balance_text.text()=='—'
+        assert window.dashboard.balance_value.text()=='—'
+        assert window.dashboard.activity_table.rowCount()==0
+        assert not window.dashboard.go_send.isEnabled()
         assert not window.prepare_button.isEnabled()
         assert 'block_height' not in window.disclosure_text.text() and session._disclosure_gate is None
         stage="PASSWORD"

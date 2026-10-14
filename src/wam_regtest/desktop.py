@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 
 from .wallet_read import WalletReadSnapshot, read_real_wallet_snapshot, format_wam
 from .branding import brand_image
+from .fusion_ui import FusionOverview, fusion_palette, fusion_stylesheet, fusion_nav_icons
 
 
 _QT_APPLICATION = None
@@ -114,7 +115,7 @@ class RegtestWalletWindow(QMainWindow):
         self.setWindowTitle("WAM Privacy Wallet · Real REGTEST")
         self.setWindowIcon(QIcon(str(brand_image())))
         self.setMinimumSize(960, 660)
-        self.resize(1020, 680)
+        self.resize(1240, 820)
         base = QWidget()
         base.setObjectName("WalletRoot")
         self.setCentralWidget(base)
@@ -143,7 +144,7 @@ class RegtestWalletWindow(QMainWindow):
         h.addStretch()
         self.appearance = QComboBox()
         for label, value in (
-            ("Auto · local time", "auto"), ("Light", "light"), ("Dark", "dark"),
+            ("Auto · system", "auto"), ("Light", "light"), ("Dark", "dark"),
         ):
             self.appearance.addItem(label, value)
         h.addWidget(self.appearance)
@@ -167,7 +168,7 @@ class RegtestWalletWindow(QMainWindow):
         self.navigation = QListWidget()
         self.navigation.setFixedWidth(205)
         self.navigation.setIconSize(__import__("PySide6.QtCore", fromlist=["QSize"]).QSize(24, 24))
-        for label in ("Receive", "Balance", "History"):
+        for label in ("Overview", "Receive", "History"):
             self.navigation.addItem(QListWidgetItem(label))
         layout.addWidget(self.navigation)
         self.stack = QStackedWidget()
@@ -192,20 +193,12 @@ class RegtestWalletWindow(QMainWindow):
         receive_layout.addStretch()
         self.stack.addWidget(receive)
 
-        balance = QFrame()
-        balance.setObjectName("ContentCard")
-        bal_layout = QVBoxLayout(balance)
-        bal_layout.setContentsMargins(28, 30, 28, 30)
-        title = QLabel("Confirmed balance")
-        title.setObjectName("PageTitle")
-        bal_layout.addWidget(title)
-        self.balance_text = QLabel("—")
-        self.balance_text.setObjectName("BalanceValue")
-        bal_layout.addWidget(self.balance_text)
-        self.utxo_text = QLabel("Awaiting verified chain and SQLite scan")
-        self.utxo_text.setObjectName("SecondaryLabel")
-        bal_layout.addWidget(self.utxo_text)
-        bal_layout.addStretch()
+        # Replace the old balance-only panel with the WAM Fusion dashboard.
+        # Retain the EXACT existing value-label references for verified E2E.
+        balance = FusionOverview()
+        self.dashboard = balance
+        self.balance_text = balance.balance_value
+        self.utxo_text = balance.utxo_details
         self.stack.addWidget(balance)
 
         hist = QFrame()
@@ -224,12 +217,18 @@ class RegtestWalletWindow(QMainWindow):
         self.history_table.setColumnWidth(0, 285)
         hist_layout.addWidget(self.history_table)
         self.stack.addWidget(hist)
+        # The dashboard is visually first, but source E2E still uses Send=3,
+        # Security=4 and Settings=5. Read-only wallet remains exactly 3 tabs.
+        self.stack.insertWidget(0, balance)
 
         col.addLayout(layout, stretch=1)
         self.navigation.currentRowChanged.connect(self.stack.setCurrentIndex)
         self.navigation.setCurrentRow(0)
         self.refresh_button.clicked.connect(self.request_sync)
         self.appearance.currentIndexChanged.connect(self.apply_theme)
+        self.dashboard.go_receive.clicked.connect(lambda: self.navigation.setCurrentRow(1))
+        self.dashboard.open_history.clicked.connect(lambda: self.navigation.setCurrentRow(2))
+        self.dashboard.manual_sync.clicked.connect(self.request_sync)
 
         self._theme_timer = QTimer(self)
         self._theme_timer.setInterval(60_000)
@@ -239,64 +238,25 @@ class RegtestWalletWindow(QMainWindow):
         self._sync_timer.setInterval(30_000)
         self._sync_timer.timeout.connect(self.request_sync)
         self._sync_timer.start()
+        QApplication.styleHints().colorSchemeChanged.connect(self.apply_theme)
+        self._appearance_connected = True
         self.apply_theme()
 
     def apply_theme(self, *_):
         local = datetime.now().astimezone()
         active = resolve_theme(self.appearance.currentData(), local)
-        if self.appearance.currentData() == "auto" and self.session is not None:
+        if self.appearance.currentData() == "auto":
             scheme = QApplication.styleHints().colorScheme()
             if scheme == Qt.ColorScheme.Dark:
                 active = "dark"
             elif scheme == Qt.ColorScheme.Light:
                 active = "light"
-        if active == "dark":
-            c = dict(bg="#10100F", surface="#1C1B18", text="#F5F2E9",
-                     muted="#BEB8A9", border="#454033", tint="#302B20",
-                     accent="#F1C55A", onaccent="#211A09", warning="#30271A",
-                     warning_text="#F5D892")
-        else:
-            c = dict(bg="#F5F3EE", surface="#FFFFFF", text="#29251B",
-                     muted="#6B6251", border="#DBD4C5", tint="#F3EBD9",
-                     accent="#795507", onaccent="#FFFFFF", warning="#FFF2D3",
-                     warning_text="#694710")
-        self.setStyleSheet(f"""
-            QMainWindow, QWidget#WalletRoot {{background:{c['bg']}; color:{c['text']};}}
-            QFrame#HeaderCard, QFrame#ContentCard {{
-                background:{c['surface']}; border:1px solid {c['border']};
-                border-radius:15px;
-            }}
-            QLabel {{color:{c['text']}; background:transparent; border:none;}}
-            QLabel#WalletMark {{background:transparent;}}
-            QLabel#BrandTitle {{font-size:21px; font-weight:800;}}
-            QLabel#PageTitle {{font-size:23px; font-weight:700;}}
-            QLabel#BalanceValue {{font-size:38px; font-weight:800; color:{c['accent']};}}
-            QLabel#ReceiveCode {{font-family:monospace; font-size:13px; padding:14px;
-                background:{c['tint']}; border-radius:8px;}}
-            QLabel#SecondaryLabel, QLabel#StatusText {{color:{c['muted']};}}
-            QLabel#Warning {{background:{c['warning']}; color:{c['warning_text']};
-                padding:11px 15px; border-radius:9px; font-weight:700;}}
-            QListWidget {{background:{c['surface']}; color:{c['text']};
-                border:1px solid {c['border']}; border-radius:12px;
-                padding:8px; font-size:14px;}}
-            QListWidget::item {{padding:14px 10px; border-radius:8px;}}
-            QListWidget::item:selected {{background:{c['tint']}; color:{c['accent']};
-                font-weight:700;}}
-            QLineEdit {{background:{c['surface']}; color:{c['text']};
-                border:1px solid {c['border']}; border-radius:7px; padding:10px;}}
-            QLineEdit:focus {{border:2px solid {c['accent']};}}
-            QLineEdit:disabled {{color:{c['muted']}; background:{c['tint']};}}
-            QPushButton, QComboBox {{background:{c['tint']}; color:{c['text']};
-                border:1px solid {c['border']}; border-radius:9px; padding:9px 13px;}}
-            QPushButton#PrimaryButton {{background:{c['accent']};
-                color:{c['onaccent']}; font-weight:700; border:none;}}
-            QPushButton:disabled {{color:{c['muted']}; background:{c['tint']};}}
-            QPushButton:hover:enabled {{border:1px solid {c['accent']};}}
-            QTableWidget, QHeaderView::section {{background:{c['surface']};
-                color:{c['text']}; border:1px solid {c['border']}; padding:6px;}}
-        """)
+        c = fusion_palette(active)
+        self.setStyleSheet(fusion_stylesheet(active))
+        self.dashboard.set_theme(active)
         for item, icon in zip(
-            (self.navigation.item(i) for i in range(3)), _wallet_icons(c["accent"])
+            (self.navigation.item(i) for i in range(self.navigation.count())),
+            fusion_nav_icons(c["accent"]),
         ):
             item.setIcon(icon)
 
@@ -323,6 +283,9 @@ class RegtestWalletWindow(QMainWindow):
         self.balance_text.setText("—")
         self.utxo_text.setText("Unverified — live scan required")
         self.history_table.setRowCount(0)
+        self.dashboard.render_snapshot(None, locked=bool(
+            self.session is not None and (self.session.locked or self.session.faulted)
+        ))
 
     def _sync_failed(self, reason: str):
         self._clear_balance()
@@ -356,6 +319,11 @@ class RegtestWalletWindow(QMainWindow):
             f"VERIFIED LIVE REGTEST · height {snap.height} · "
             f"tip {snap.tip[:14]}… · " +
             ("DISPOSABLE TEST WALLET" if self.session is not None else "READ ONLY"))
+        try:
+            self.dashboard.render_snapshot(snap, operational=self.session is not None)
+        except (TypeError, ValueError):
+            self._sync_failed("FUSION_UNTRUSTED_HISTORY_DENIED")
+            return
         self.snapshot_updated.emit(snap)
 
     def closeEvent(self, event):
@@ -366,6 +334,9 @@ class RegtestWalletWindow(QMainWindow):
             return
         self._theme_timer.stop()
         self._sync_timer.stop()
+        if self._appearance_connected:
+            QApplication.styleHints().colorSchemeChanged.disconnect(self.apply_theme)
+            self._appearance_connected = False
         super().closeEvent(event)
 
 

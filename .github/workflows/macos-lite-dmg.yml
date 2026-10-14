@@ -1,0 +1,101 @@
+# Repackage an ALREADY-QUALIFIED Mac ARM64 Fusion build for slow links.
+# No rebuilding WAM Core, no bypassed E2E, no other source dependencies.
+name: WAM Fusion macOS Lite DMG download (verified existing build)
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/macos-lite-dmg.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  mac-fusion-dmg-only:
+    name: Verify existing signed-Core E2E archive and upload single DMG
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Download pinned Fusion Mac package from SUCCESSFUL real-Core E2E
+        uses: actions/download-artifact@v4
+        with:
+          repository: Urriki1502/wam-privacy-wallet-regtest
+          run-id: 38579345792
+          artifact-ids: "11900859924"
+          github-token: ${{ github.token }}
+          path: source
+          merge-multiple: true
+      - name: Authenticate exact package manifest and select DMG only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          root = Path("source")
+          manifests = list(root.rglob("SHA256SUMS.json"))
+          if len(manifests) != 1 or manifests[0].is_symlink():
+              raise SystemExit("LITE_SIGNED_SOURCE_MANIFEST_MISSING")
+          manifest_path = manifests[0]
+          receipt = json.loads(manifest_path.read_text(encoding="utf-8"))
+          if (receipt.get("status") != "UNNOTARIZED_REAL_REGTEST_MACOS_ARM64_PREVIEW"
+              or receipt.get("source_commit") != "115bb20d2f37106748b56dfae93f54ae25ec559f"
+              or receipt.get("real_core_packaged_e2e") is not True
+              or receipt.get("mainnet_allowed") is not False
+              or receipt.get("wamd_sha256") !=
+                    "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              or receipt.get("wam_cli_sha256") !=
+                    "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"):
+              raise SystemExit("LITE_EXACT_TRUST_PROVENANCE_DENIED")
+          files = receipt.get("files")
+          dmg = "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
+          app_zip = "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip"
+          if type(files) is not dict or set(files) != {dmg, app_zip}:
+              raise SystemExit("LITE_PACKAGE_MEMBERS_DENIED")
+          out = Path("mac-lite")
+          out.mkdir(mode=0o700)
+          for name in (dmg, app_zip):
+              candidate = manifest_path.parent / name
+              expected = files[name]
+              if (not candidate.is_file() or candidate.is_symlink()
+                  or type(expected) is not dict
+                  or type(expected.get("size_bytes")) is not int
+                  or candidate.stat().st_size != expected["size_bytes"]
+                  or expected["size_bytes"] < 4096):
+                  raise SystemExit("LITE_PACKAGE_SIZE_DENIED")
+              hasher = hashlib.sha256()
+              with candidate.open("rb") as fp:
+                  for part in iter(lambda: fp.read(4 * 1024 * 1024), b""):
+                      hasher.update(part)
+              if hasher.hexdigest() != expected.get("sha256"):
+                  raise SystemExit("LITE_PACKAGE_SHA256_DENIED")
+          import shutil
+          shutil.copyfile(manifest_path.parent / dmg, out / dmg)
+          shutil.copyfile(manifest_path, out / "SHA256SUMS.json")
+          (out / "READ_ME_FIRST.txt").write_text(
+              "WAM Fusion Signature - macOS ARM64 REGTEST PREVIEW\n"
+              "This lite archive contains ONLY the previously qualified, compressed DMG.\n"
+              "Unzip the downloaded artifact, open the .dmg, then open the WAM app.\n"
+              "The application is ad-hoc signed and NOT Apple notarized. Your Mac\n"
+              "may show a Gatekeeper warning. Do not disable system protections.\n"
+              "Use disposable REGTEST keys and test funds only. NO MAINNET.\n"
+              "Original full CI: https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38579345792\n"
+              "The JSON manifest contains the original SHA256 hash for this DMG.\n",
+              encoding="utf-8",
+          )
+          print("MAC_FUSION_DMG_LITE_SHA256_PASS")
+          print("MAC_FUSION_DMG_ONLY_BYTES", (out / dmg).stat().st_size)
+          print("ORIGINAL_DUAL_PACKAGE_BYTES",
+                sum((manifest_path.parent / name).stat().st_size for name in (dmg, app_zip)))
+          PY
+      - name: Publish smaller DMG-only ZIP download, not a release
+        uses: actions/upload-artifact@v4
+        with:
+          name: WAM-Fusion-macOS-ARM64-DMG-Lite-28888aa27
+          path: mac-lite/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14

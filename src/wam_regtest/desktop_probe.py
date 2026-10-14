@@ -82,7 +82,14 @@ def probe_running_real_core_gui(
             or win.history_table.item(0, 3).text().split(" / ")[0] !=
             f"+{expected_atoms / 100_000_000:.8f}"
             or "VERIFIED LIVE REGTEST" not in win.status.text()
-            or win.navigation.count() != 3):
+            or win.navigation.count() != 3
+            or win.navigation.item(0).text() != "Overview"
+            or win.stack.widget(0) is not win.dashboard
+            or win.dashboard.balance_value.text() != win.balance_text.text()
+            or win.dashboard.activity_table.rowCount() != 1
+            or win.dashboard.chart._activity != ((expected_height, expected_atoms, 0),)
+            or win.dashboard.go_send.isEnabled()
+            or "REGTEST VERIFIED" not in win.dashboard.live_badge.text()):
         raise NativeGuiProbeError("GUI_REAL_REGTEST_VIEW_MISMATCH")
     path = Path("real-regtest-gui-preview.png").resolve()
     if not win.grab().save(str(path)):
