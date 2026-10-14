@@ -186,7 +186,7 @@ def publish(directory,name,ciphertext):
     if type(ciphertext) is not bytes or not 52<=len(ciphertext)<=MAX_ENVELOPE or not ciphertext.startswith(b'WAMSP02\x00'):
         _deny('WIN_CUSTODY_ENVELOPE_DENIED')
     temporary='.stage-'+secrets.token_hex(16);handle=None;renamed=False
-    with directory_guard(directory) as root:
+    with directory_guard(directory):
         try:
             with security_attributes() as attributes:
                 handle=create(str(directory/temporary),0x80000000|0x40000000|0x10000|0x20000,1,attributes,1,0x80200080,None)
@@ -199,9 +199,11 @@ def publish(directory,name,ciphertext):
                     _deny('WIN_CUSTODY_WRITE_DENIED')
                 offset+=count.value
             if not flush(handle): _deny('WIN_CUSTODY_FLUSH_DENIED')
-            # Handle-based same-directory rename; flags=0 NEVER replaces.
-            text=name.encode('utf-16-le');buffer=c.create_string_buffer(RENAME.name.offset+len(text)+2)
-            rename=RENAME.from_buffer(buffer);rename.flags=0;rename.root=root;rename.length=len(text)
+            # Source-handle rename to an absolute same-directory path. Ancestor
+            # handles remain pinned without delete/write sharing throughout.
+            # ReplaceIfExists=FALSE: an existing snapshot is NEVER replaced.
+            text=str(directory/name).encode('utf-16-le');buffer=c.create_string_buffer(RENAME.name.offset+len(text)+2)
+            rename=RENAME.from_buffer(buffer);rename.flags=0;rename.root=None;rename.length=len(text)
             c.memmove(c.addressof(buffer)+RENAME.name.offset,text,len(text))
             if not setinfo(handle,3,buffer,len(buffer)): _deny('WIN_CUSTODY_PUBLISH_DENIED')
             renamed=True;_metadata(handle);verify_security(handle)
