@@ -76,8 +76,12 @@ def _write_private_config(datadir: Path, rpcport: int, p2pport: int) -> None:
     # Password stays in owner-only wam.conf; never passed as a command argument.
     password = secrets.token_hex(32)
     user = "disposable_" + secrets.token_hex(8)
-    values = {
-        "regtest": "1", "server": "1", "rpcuser": user, "rpcpassword": password,
+    # Bitcoin Core/WAM Core requires network-scoped settings such as
+    # connect/port/rpcport under the explicit [regtest] stanza. Putting these
+    # options in the global stanza makes real wamd EXIT 1 before RPC starts.
+    global_values = {"regtest": "1", "server": "1"}
+    network_values = {
+        "rpcuser": user, "rpcpassword": password,
         "rpcbind": "127.0.0.1", "rpcallowip": "127.0.0.1", "rpcport": str(rpcport),
         "port": str(p2pport), "listen": "0", "connect": "0", "dnsseed": "0",
         "discover": "0", "upnp": "0", "txindex": "1", "blockfilterindex": "1",
@@ -86,10 +90,58 @@ def _write_private_config(datadir: Path, rpcport: int, p2pport: int) -> None:
     config = datadir / "wam.conf"
     fd = os.open(config, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, "w") as out:
-        for k, v in values.items():
+        for k, v in global_values.items():
+            out.write(f"{k}={v}\n")
+        out.write("[regtest]\n")
+        for k, v in network_values.items():
             out.write(f"{k}={v}\n")
         out.flush()
         os.fsync(out.fileno())
+
+
+def _early_exit_category(datadir: Path) -> str:
+    """Classify actual wamd stderr WITHOUT emitting log lines or credentials.
+
+    The node log remains inside the private disposable datadir. Only fixed
+    non-secret categories escape the process boundary to CI.
+    """
+    try:
+        log = datadir / "core-output.log"
+        with log.open("rb") as stream:
+            data = stream.read(65536).decode("utf-8", "replace").lower()
+    except OSError:
+        return "CORE_DAEMON_EARLY_EXIT_LOG_UNAVAILABLE"
+    if any(word in data for word in ("dyld", "library not loaded", "symbol not found")):
+        return "CORE_MACOS_DYNAMIC_LIBRARY_UNAVAILABLE"
+    if any(word in data for word in ("unknown configuration", "unknown option",
+                                     "unrecognized option", "invalid parameter")):
+        return "CORE_DAEMON_OPTION_UNSUPPORTED"
+    if any(word in data for word in ("permission denied", "operation not permitted")):
+        return "CORE_DAEMON_PERMISSION_DENIED"
+    if any(word in data for word in ("unable to bind", "could not bind",
+                                     "unable to start http server")):
+        return "CORE_DAEMON_PORT_BIND_DENIED"
+    if any(word in data for word in ("error opening block database", "database corrupt",
+                                     "database environment")):
+        return "CORE_DAEMON_DATABASE_DENIED"
+    # Report only a fixed vocabulary of observed startup tokens. Never send
+    # arbitrary daemon lines (could contain RPC credentials or private paths).
+    import re
+    safe_words = frozenset((
+        "error", "failed", "fatal", "regtest", "config", "configuration",
+        "unknown", "invalid", "unsupported", "argument", "option", "daemon",
+        "wallet", "datadir", "rpc", "bind", "port", "peer", "network",
+        "index", "txindex", "coinstatsindex", "blockfilterindex", "connect",
+        "listen", "permission", "denied", "directory", "database", "file",
+        "lock", "address", "genesis", "server", "shutdown", "usage", "help",
+        "timeout", "missing", "cannot", "unable", "not", "set", "already",
+        "bitcoin", "wam", "core", "refused", "incompatible", "root",
+    ))
+    tokens = [w for w in re.findall(r"[a-z]{2,32}", data)
+              if w in safe_words]
+    if tokens:
+        return "CORE_DAEMON_EXIT_LOG_TOKENS_" + "_".join(tokens[:12]).upper()
+    return "CORE_DAEMON_EARLY_EXIT_UNCLASSIFIED"
 
 
 def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 120) -> dict:
@@ -120,7 +172,13 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             info = None
             while time.monotonic() < end:
                 if proc.poll() is not None:
-                    raise CoreSmokeError("CORE_DAEMON_EARLY_EXIT")
+                    code = proc.returncode
+                    status = _early_exit_category(datadir)
+                    # Process status is a bounded integer; no paths, passwords
+                    # or uncontrolled log text are emitted.
+                    if type(code) is int and -255 <= code <= 255:
+                        status += "_STATUS_" + ("NEG" if code < 0 else "POS") + str(abs(code))
+                    raise CoreSmokeError(status)
                 try:
                     candidate = _read_cli(prefix + ["getblockchaininfo"], timeout=5)
                     if isinstance(candidate, dict):

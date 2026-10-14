@@ -1,10 +1,11 @@
 """Small negative security tests; never substitute for live-Core CI."""
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
 
-from wam_regtest.core import CoreSmokeError, smoke_real_core, verified_core_paths
+from wam_regtest.core import CoreSmokeError, smoke_real_core, verified_core_paths, _early_exit_category, _write_private_config
 from wam_regtest.release import ARCHIVES, ReleaseError, _verify_executable_shape, _NoRedirect
 
 
@@ -41,6 +42,45 @@ class CoreContractTests(unittest.TestCase):
             for os_arch in ARCHIVES:
                 with self.subTest(os_arch=os_arch), self.assertRaises(ReleaseError):
                     _verify_executable_shape(file, os_arch)
+
+    def test_real_core_config_network_options_are_regtest_scoped(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            _write_private_config(root, 29453, 29455)
+            conf = root / "wam.conf"
+            payload = conf.read_text()
+            global_section, regtest_section = payload.split("[regtest]\n")
+            self.assertEqual(global_section, "regtest=1\nserver=1\n")
+            self.assertIn("rpcport=29453\n", regtest_section)
+            self.assertIn("port=29455\n", regtest_section)
+            self.assertIn("connect=0\n", regtest_section)
+            self.assertIn("listen=0\n", regtest_section)
+            self.assertNotIn("rpcpassword=", global_section)
+            self.assertNotIn("rpcbind=", global_section)
+            self.assertEqual(os.stat(conf).st_mode & 0o777, 0o600)
+
+    def test_early_exit_redacts_real_daemon_messages(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            self.assertEqual(
+                _early_exit_category(root), "CORE_DAEMON_EARLY_EXIT_LOG_UNAVAILABLE"
+            )
+            samples = (
+                ("dyld: Library not loaded: /private/sensitive/libsomething.dylib",
+                 "CORE_MACOS_DYNAMIC_LIBRARY_UNAVAILABLE"),
+                ("Error: Unknown configuration value rpcmystery in config file",
+                 "CORE_DAEMON_OPTION_UNSUPPORTED"),
+                ("Error: unable to bind to 127.0.0.1:19001",
+                 "CORE_DAEMON_PORT_BIND_DENIED"),
+                ("private data must NEVER be included in an error",
+                 "CORE_DAEMON_EXIT_LOG_TOKENS_ERROR"),
+            )
+            for raw, expected in samples:
+                (root / "core-output.log").write_text(raw)
+                result = _early_exit_category(root)
+                self.assertEqual(result, expected)
+                self.assertNotIn("private", result.lower())
+                self.assertNotIn("19001", result)
 
     def test_release_downloader_refuses_redirect(self):
         with self.assertRaises(ReleaseError):

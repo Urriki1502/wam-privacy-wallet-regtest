@@ -38,6 +38,13 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
         run: python -m wam_regtest.release --platform macos-arm64 --destination core
+      - name: Inspect signed node dynamic library requirements (real ARM64 bytes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Only public dependency names; no credentials or datadir.
+          otool -L core/wamd
+          otool -L core/wam-cli
       - name: Launch ACTUAL WAM Core and confirm fresh REGTEST chain
         run: |
           python -m wam_regtest.cli smoke \
