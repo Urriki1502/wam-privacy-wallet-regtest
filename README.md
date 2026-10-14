@@ -28,6 +28,28 @@ python -m unittest discover -s tests -v
 
 `python -m wam_regtest.release` requires a locally trusted `gpg` executable (`brew install gnupg`), real HTTPS access to `wamcoin.org`, and a genuine signed release. It fails closed on download/signature/hash/architecture errors. The runner never fetches an arbitrary binary URL.
 
+## Downloadable macOS ARM64 REGTEST preview (.app / .dmg)
+
+The existing REAL WAM Core macOS ARM64 workflow now has a native-app-dmg job.
+After its exact-commit live-Core, WSP-1 and Qt E2E tests PASS, select the successful
+[GitHub Actions run](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/workflows/real-core-regtest.yml)
+and download its WAM-Privacy-Wallet-REGTEST-macOS-ARM64 artifact.
+The artifact contains a .dmg, an .app.zip, SHA-256 checksums
+and a captured native Qt screen.
+
+The preview bundles the verified official signed WAM Core v0.1.11 ARM64
+(wamd and wam-cli), pinned WSP-1 code and PySide6 GUI. Opening the app starts
+an ephemeral REAL REGTEST with a publicly known test-only BIP352 payment,
+then shows Receive / Balance / History. Closing the window stops Core and
+deletes disposable test chain data; it does not save a personal wallet.
+
+IMPORTANT: this is an UNSIGNED/UNNOTARIZED developer preview, not a
+Developer ID notarized release. Gatekeeper can warn for downloaded apps.
+Check the exact repository Actions provenance and SHA-256 and, if satisfied,
+use Finder right-click -> Open. Public demo keys are globally known.
+NEVER send actual WAM, personal keys or passwords to this app. No general
+Send, mainnet or qualified production loader security is provided.
+
 ## One-command live macOS REGTEST demo
 
 After installing the exact pinned WSP upstream checkout and the signed Core release, run one command:
