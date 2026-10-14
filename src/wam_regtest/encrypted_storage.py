@@ -91,3 +91,8 @@ def read(directory: Path, name: str) -> bytes:
         if fd is not None:
             os.close(fd)
         os.close(dfd)
+
+
+def validate_directory(directory):
+    fd = open_macos_private_directory(directory)
+    os.close(fd)

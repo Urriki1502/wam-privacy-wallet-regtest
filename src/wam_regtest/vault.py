@@ -17,7 +17,7 @@ import stat
 import tempfile
 import threading
 from contextlib import contextmanager
-from . import encrypted_storage
+from . import encrypted_storage, custody
 
 
 class VaultError(ValueError):
@@ -124,8 +124,14 @@ class CheckpointVault:
         _pinned_source(source)
         self.directory, self.anchor = directory, anchor
         # Validate custody before reading an anchor or invoking cryptography.
-        fd = encrypted_storage.open_macos_private_directory(directory)
-        os.close(fd)
+        self._storage = custody.storage()
+        self._storage.validate_directory(directory)
+        if sys.platform == "win32":
+            from .windows_checkpoint_anchor import WindowsCredentialAnchor
+            if type(anchor) is not WindowsCredentialAnchor:
+                raise VaultError("VAULT_NATIVE_ANCHOR_REQUIRED")
+        elif type(anchor) is not KeychainAnchor:
+            raise VaultError("VAULT_NATIVE_ANCHOR_REQUIRED")
         self._expected = anchor.read()
 
     @staticmethod
@@ -147,14 +153,14 @@ class CheckpointVault:
                 self._load_payload(password, previous)
             serial = 1 if previous is None else previous[0] + 1
             payload = {
-                "version": 1, "disposable_regtest": True, "network": GENESIS,
+                **custody.envelope_profile(), "disposable_regtest": True, "network": GENESIS,
                 "wallet_id": self.anchor.wallet_id, "generation": serial,
                 "keys": base64.b64encode(ring.backup(password)).decode("ascii"),
                 "checkpoint": base64.b64encode(scanner.checkpoint(password)).decode("ascii"),
             }
             raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
             ciphertext = seal(raw, password, b"recovery")
-            encrypted_storage.publish(self.directory, self._filename(serial), ciphertext)
+            self._storage.publish(self.directory, self._filename(serial), ciphertext)
             current = serial, sha256(ciphertext).hexdigest()
             # A crash before/while anchoring leaves an orphan, never a silently
             # accepted old generation. Ambiguous writes fail closed.
@@ -165,14 +171,16 @@ class CheckpointVault:
     def _load_payload(self, password, record):
         from wam_sp.keystore import unseal
         from wam_sp.watcher import GENESIS
-        ciphertext = encrypted_storage.read(self.directory, self._filename(record[0]))
+        ciphertext = self._storage.read(self.directory, self._filename(record[0]))
         if sha256(ciphertext).hexdigest() != record[1]:
             raise VaultError("VAULT_ROLLBACK_OR_TAMPER_DENIED")
         try:
             payload = json.loads(unseal(ciphertext, password, b"recovery"))
-            if (set(payload) != {"version", "disposable_regtest", "network",
+            profile = custody.envelope_profile()
+            if (type(payload) is not dict or set(payload) != set(profile) | {"disposable_regtest", "network",
                     "wallet_id", "generation", "keys", "checkpoint"}
-                    or payload["version"] != 1 or payload["disposable_regtest"] is not True
+                    or any(type(payload[k]) is not type(v) or payload[k] != v for k,v in profile.items())
+                    or payload["disposable_regtest"] is not True
                     or payload["network"] != GENESIS
                     or payload["wallet_id"] != self.anchor.wallet_id
                     or type(payload["generation"]) is not int
@@ -197,8 +205,7 @@ class CheckpointVault:
         ring = scanner = None
         runtime_created = False
         try:
-            fd=encrypted_storage.open_macos_private_directory(runtime_path.parent)
-            os.close(fd)
+            self._storage.validate_directory(runtime_path.parent)
             with self.anchor.lease(), exclusive_file_lock(self.directory / ".vault.lock"):
                 record = self.anchor.read()
                 if record is None:
@@ -232,10 +239,10 @@ class CheckpointVault:
             record = self.anchor.read()
             if record is None:
                 raise VaultError("VAULT_ANCHOR_MISSING_DENIED")
-            ciphertext = encrypted_storage.read(self.directory, self._filename(record[0]))
+            ciphertext = self._storage.read(self.directory, self._filename(record[0]))
             if sha256(ciphertext).hexdigest() != record[1]:
                 raise VaultError("VAULT_ROLLBACK_OR_TAMPER_DENIED")
-            encrypted_storage.publish(destination, name, ciphertext)
+            self._storage.publish(destination, name, ciphertext)
             if self.anchor.read() != record:
                 raise VaultError("VAULT_ANCHOR_CHANGED")
             return record

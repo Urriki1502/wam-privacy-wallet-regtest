@@ -19,6 +19,12 @@ import zipfile
 
 ASSET = "wam-coin-v0.1.11-x86_64-w64-mingw32.zip"
 ROOT = "wam-coin-v0.1.11"
+# Independently authenticated official v0.1.11 bytes; never learned from a receipt.
+ARCHIVE_SHA256 = "ece622fa7ec3072c4e8b0d32e2c3749397d66260f2b0cf22b3636346873d15c5"
+BINARY_SHA256 = {
+    "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+    "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+}
 MEMBERS = {f"{ROOT}/bin/{name}.exe" for name in ("wamd", "wam-cli")}
 MAX_ARCHIVE_BYTES = 320 * 1024 * 1024
 MAX_MEMBER_BYTES = 128 * 1024 * 1024
@@ -158,6 +164,8 @@ def verify_signed_windows_archive(archive: Path, signing_key: Path,
         except ReleaseError:
             _fail("WIN_RELEASE_SIGNATURE_DENIED")
     result = inspect_signed_zip_shape(archive, expected)
+    if result["archive_sha256"] != ARCHIVE_SHA256 or result["member_sha256"] != BINARY_SHA256:
+        _fail("WIN_RELEASE_INDEPENDENT_PIN_DENIED")
     result["signed_archive_verified"] = True
     return result
 
