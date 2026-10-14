@@ -15,6 +15,7 @@ python -m wam_regtest.package_manifest \
   --source-root "$(pwd)/wsp-upstream" \
   --output "$(pwd)/bundle-input/wsp-source"
 
+echo "MACOS_APP_STAGE=PYINSTALLER_START"
 python -m PyInstaller --noconfirm --clean --onedir --windowed \
   --name "WAM Privacy Wallet REGTEST" \
   --osx-bundle-identifier "org.wamcoin.privacywallet.regtest" \
@@ -27,6 +28,7 @@ python -m PyInstaller --noconfirm --clean --onedir --windowed \
   --add-data "$(pwd)/bundle-input/wsp-source:wsp-source" \
   src/wam_regtest/package_entry.py
 
+echo "MACOS_APP_STAGE=PYINSTALLER_COMPLETED"
 APP="dist/WAM Privacy Wallet REGTEST.app"
 BIN="$APP/Contents/MacOS/WAM Privacy Wallet REGTEST"
 test -d "$APP"
@@ -34,19 +36,39 @@ test -x "$BIN"
 
 # Validation MUST invoke the final frozen application, not an editable checkout.
 export QT_QPA_PLATFORM=offscreen
-"$BIN" --check-bundle
-"$BIN" --ci-real-core-gui
+export WAM_FROZEN_BIN="$BIN"
+python - <<'PY'
+import os
+import subprocess
+import sys
+binary = os.environ["WAM_FROZEN_BIN"]
+print("MACOS_APP_STAGE=FROZEN_BUNDLE_SELF_CHECK_START", flush=True)
+try:
+    subprocess.run([binary, "--check-bundle"], timeout=45, check=True)
+except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
+    sys.exit("MACOS_FROZEN_BUNDLE_CHECK_DENIED")
+print("MACOS_APP_STAGE=FROZEN_BUNDLE_SELF_CHECK_PASS", flush=True)
+print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_START", flush=True)
+try:
+    subprocess.run([binary, "--ci-real-core-gui"], timeout=240, check=True)
+except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
+    sys.exit("MACOS_FROZEN_REAL_CORE_GUI_DENIED")
+print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_PASS", flush=True)
+PY
 test -s real-regtest-gui-preview.png
 
+echo "MACOS_APP_STAGE=PACKAGED_REAL_CORE_GUI_PASS"
 # Preserve macOS bundle metadata/resource forks in the downloadable ZIP.
 ditto -c -k --sequesterRsrc --keepParent "$APP" \
   "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip"
 
 # The DMG is an unnotarized developer preview. Do not claim Developer ID.
+echo "MACOS_APP_STAGE=DMG_CREATE_START"
 hdiutil create -volname "WAM Privacy Wallet REGTEST" \
   -srcfolder "$APP" -format UDZO -ov \
   "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
 hdiutil verify "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
+echo "MACOS_APP_STAGE=DMG_VERIFIED"
 
 python - <<'PY'
 from hashlib import sha256
