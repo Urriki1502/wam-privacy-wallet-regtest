@@ -302,6 +302,11 @@ class WalletSession:
             self._save()
             self._prepared=self._review=self._tip=None
 
+    def network_diagnostics(self):
+        from .network_policy import diagnostics
+        with self._lock:
+            return diagnostics(self._rpc())
+
     def mine(self):
         with self._lock:
             rpc=self._rpc()

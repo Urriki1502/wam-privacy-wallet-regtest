@@ -121,6 +121,20 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window.recipient.setText(code)
         window.amount.setText("0.00100000")
         window.fee.setText("0.00010000")
+        network=_operation(app,window,'network',window.network_button.click)
+        assert network['status']=='LOCAL_REGTEST_NETWORK_POLICY_PASS' and network['zero_peers'] is True
+        assert network['clearnet_fallback_allowed'] is False
+        assert "VERIFIED LOCAL REGTEST" in window.network_text.text()
+        # Tamper only with this owned disposable node's config. The genuine
+        # node remains alive; the wallet must deny before any CLI/fallback.
+        original_config=(datadir/'wam.conf').read_bytes()
+        try:
+            (datadir/'wam.conf').write_bytes(original_config+b'proxy=127.0.0.1:9050\n')
+            _operation(app,window,'network',window.network_button.click,denied=True)
+        finally:
+            (datadir/'wam.conf').write_bytes(original_config)
+        network=_operation(app,window,'network',window.network_button.click)
+        assert network['zero_peers'] is True
         stage="PREPARE"
         print("WALLET_E2E_STAGE=PREPARE",flush=True)
         review=_operation(app,window,'prepare',window.prepare_button.click)
@@ -283,7 +297,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         return {
             'status':'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS',
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
-            'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
+            'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
             'exact_intent_approval_required':True,'real_core_mempool_accepted':True,
             'real_core_confirmed_recipient_atoms':100000,'native_sender_change_confirmed':True,
             'encrypted_reservations_before_network':True,'actual_send_reorg_depth':1,

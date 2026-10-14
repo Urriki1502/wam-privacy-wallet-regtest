@@ -131,7 +131,7 @@ def main() -> int:
             if not all(wallet.get(name) is True for name in (
                     "irreversible_anchor_before_native_crypto", "sign_broadcast_os_lease_held",
                     "real_core_lost_broadcast_reply_lock_retained", "uncertain_reservation_survives_unlock",
-                    "background_sync_timer_live_core_verified")):
+                    "background_sync_timer_live_core_verified", "local_network_privacy_diagnostics")):
                 raise BundleLaunchError("WAM_BUNDLE_INTERRUPTED_PAYMENT_DENIED")
             if not all(security.get(name) is True for name in (
                     "separate_process_lease_contended", "killed_process_lease_released",

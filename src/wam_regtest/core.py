@@ -58,8 +58,18 @@ def _port() -> int:
 
 
 def _read_cli(cmd: list[str], timeout: int = 15) -> object:
+    from .network_policy import local_rpc_port, NetworkPolicyError
     try:
-        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
+        if (type(cmd) is not list or len(cmd)<3 or type(cmd[1]) is not str
+                or not cmd[1].startswith("-datadir=")):
+            raise CoreSmokeError("CORE_LOCAL_RPC_COMMAND_DENIED")
+        directory=Path(cmd[1][9:])
+        port=local_rpc_port(directory)
+        isolated=[cmd[0],cmd[1],"-rpcconnect=127.0.0.1",f"-rpcport={port}",*cmd[2:]]
+        p = subprocess.run(isolated, capture_output=True, text=True, timeout=timeout, check=False,
+            env={"PATH":"/usr/bin:/bin:/usr/sbin:/sbin","HOME":str(directory),"LC_ALL":"C"})
+    except NetworkPolicyError:
+        raise CoreSmokeError("CORE_LOCAL_NETWORK_POLICY_DENIED") from None
     except (OSError, subprocess.TimeoutExpired):
         raise CoreSmokeError("CORE_RPC_PROCESS_DENIED") from None
     if p.returncode != 0:
