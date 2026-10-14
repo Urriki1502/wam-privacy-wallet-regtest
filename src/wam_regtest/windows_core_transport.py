@@ -90,8 +90,17 @@ def local_rpc_port(directory):
 def read_cli(cmd,timeout=15):
     from .windows_core_regtest_smoke import _rpc, _host_env
     store.require_native()
-    if type(cmd) is not list or len(cmd)<3 or not cmd[1].startswith('-datadir='):
+    if (type(cmd) is not list or len(cmd)<3 or any(type(x) is not str for x in cmd)
+            or not cmd[1].startswith('-datadir=')):
         raise WindowsCoreTransportError('WIN_CORE_LOCAL_COMMAND_DENIED')
+    args=cmd[2:]
+    if args[0]=='-rpcwallet=test':args=args[1:]
+    permitted={'getblockchaininfo','getblockcount','getbestblockhash','getblockhash','getblock',
+        'getconnectioncount','getnetworkinfo','getrawmempool','gettxout','testmempoolaccept',
+        'sendrawtransaction','generatetoaddress','invalidateblock','reconsiderblock',
+        'createwallet','getnewaddress','stop'}
+    if not args or args[0] not in permitted or any(a.startswith('-') for a in args):
+        raise WindowsCoreTransportError('WIN_CORE_LOCAL_METHOD_DENIED')
     directory=Path(cmd[1][9:]);binary=Path(cmd[0])
     # Every CLI invocation authenticates exact bytes and native file custody.
     if binary.name!='wam-cli.exe' or sha256(read_private(binary.parent,binary.name)).hexdigest()!=BINARY_SHA256['wam-cli.exe']:
