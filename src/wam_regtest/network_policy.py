@@ -22,6 +22,10 @@ _FIXED = {'port':None,'rpcport':None,'rpcuser':None,'rpcpassword':None,
 
 def local_rpc_port(datadir):
     """Read bounded private config; return only the local port, never secrets."""
+    import sys
+    if sys.platform=="win32":
+        from .windows_core_transport import local_rpc_port as windows_port
+        return windows_port(datadir)
     fd=dfd=None
     try:
         dfd=open_macos_private_directory(datadir)
@@ -36,6 +40,19 @@ def local_rpc_port(datadir):
         if any(getattr(info,k)!=getattr(after,k) for k in
                ('st_dev','st_ino','st_size','st_mtime_ns','st_ctime_ns','st_nlink')):
             raise NetworkPolicyError('LOCAL_RPC_CONFIG_CHANGED')
+        return parse_local_config(raw)
+    except NetworkPolicyError:
+        raise
+    except (OSError,ValueError,UnicodeError):
+        raise NetworkPolicyError('LOCAL_RPC_CONFIG_DENIED') from None
+    finally:
+        if fd is not None: os.close(fd)
+        if dfd is not None: os.close(dfd)
+
+
+
+def parse_local_config(raw):
+    try:
         lines=raw.decode('ascii').splitlines()
         if lines[:3]!=['regtest=1','server=1','[regtest]']:
             raise NetworkPolicyError('LOCAL_RPC_SCOPE_DENIED')
@@ -58,11 +75,8 @@ def local_rpc_port(datadir):
         return ports[1]
     except NetworkPolicyError:
         raise
-    except (OSError,ValueError,UnicodeError):
+    except (ValueError,UnicodeError,TypeError):
         raise NetworkPolicyError('LOCAL_RPC_CONFIG_DENIED') from None
-    finally:
-        if fd is not None: os.close(fd)
-        if dfd is not None: os.close(dfd)
 
 
 def diagnostics(rpc):

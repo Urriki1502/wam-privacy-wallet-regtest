@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import secrets
 import threading
+from wam_regtest import custody
 from wam_regtest.core import verified_core_paths
 from wam_regtest.wsp_live import LiveCoreReadOnlyCli, _pinned_source, _public_fixture_payment
 from wam_regtest.vault import CheckpointVault, KeychainAnchor
@@ -87,7 +88,7 @@ class WalletSession:
         from wam_sp.keystore import Keyring
         from wam_sp.scanner import Scanner
         _, cli, receipt = verified_core_paths(core_dir)
-        if receipt["platform"] != "macos-arm64":
+        if receipt["platform"] != custody.platform_name():
             raise WalletSessionError("WALLET_MACOS_CORE_DENIED")
         rpc = WalletCoreCli(cli, datadir)
         rpc.attest()
@@ -95,7 +96,7 @@ class WalletSession:
         if height not in (102, 103):
             raise WalletSessionError("WALLET_FRESH_TEST_CHAIN_REQUIRED")
         folder = datadir / "wallet-vault"
-        folder.mkdir(mode=0o700)
+        custody.create_directory(folder)
         ring = Keyring()
         scanner = None
         try:
@@ -105,7 +106,7 @@ class WalletSession:
                                     funding_height=height-100, expected_before_height=height)
             scanner = Scanner(datadir / "wallet-runtime.sqlite", ring.accounts())
             scanner.sync(rpc)
-            anchor = KeychainAnchor(secrets.token_hex(16), keychain)
+            anchor = custody.anchor(secrets.token_hex(16), keychain)
             vault = CheckpointVault(folder, anchor, source)
             session = cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address)
             vault.save(ring,scanner,password)
@@ -127,7 +128,8 @@ class WalletSession:
         if authorized is not True:
             raise WalletSessionError("WALLET_DISPOSABLE_CONSENT_DENIED")
         _pinned_source(source)
-        from wam_regtest.encrypted_storage import read, publish
+        storage=custody.storage()
+        read,publish=storage.read,storage.publish
         from wam_sp.keystore import unseal
         from wam_sp.watcher import GENESIS
         ring=scanner=None
@@ -135,20 +137,20 @@ class WalletSession:
             ciphertext=read(directory,name)
             payload=json.loads(unseal(ciphertext,password,b"recovery"))
             if (type(payload) is not dict or payload.get("disposable_regtest") is not True
-                    or payload.get("version")!=1 or payload.get("network")!=GENESIS
+                    or any(type(payload.get(k)) is not type(v) or payload.get(k)!=v for k,v in custody.envelope_profile().items()) or payload.get("network")!=GENESIS
                     or type(payload.get("generation")) is not int):
                 raise WalletSessionError("WALLET_BACKUP_PROFILE_DENIED")
-            anchor=KeychainAnchor(payload["wallet_id"],keychain)
+            anchor=custody.anchor(payload["wallet_id"],keychain)
             record=payload["generation"],sha256(ciphertext).hexdigest()
             if anchor.read()!=record:
                 raise WalletSessionError("WALLET_BACKUP_STALE_OR_TAMPERED")
             folder=datadir/"wallet-vault"
-            folder.mkdir(mode=0o700)
+            custody.create_directory(folder)
             publish(folder,CheckpointVault._filename(record[0]),ciphertext)
             vault=CheckpointVault(folder,anchor,source)
             ring,scanner=vault.restore(datadir/"wallet-runtime.sqlite",password)
             _,cli,receipt=verified_core_paths(core_dir)
-            if receipt["platform"]!="macos-arm64":
+            if receipt["platform"]!=custody.platform_name():
                 raise WalletSessionError("WALLET_MACOS_CORE_DENIED")
             rpc=WalletCoreCli(cli,datadir)
             rpc.attest()
@@ -374,7 +376,8 @@ class WalletSession:
                 raise WalletSessionError("WALLET_RECOVERY_LIVE_SYNC_DENIED") from None
 
     def recover_backup(self, directory, name, password):
-        from wam_regtest.encrypted_storage import read, publish
+        storage=custody.storage()
+        read,publish=storage.read,storage.publish
         with self._lock:
             if not self.locked:
                 raise WalletSessionError("WALLET_LOCK_BEFORE_RECOVERY")
@@ -383,7 +386,7 @@ class WalletSession:
             if record is None or sha256(ciphertext).hexdigest()!=record[1]:
                 raise WalletSessionError("WALLET_BACKUP_STALE_OR_TAMPERED")
             folder=self.datadir/("recovered-vault-"+secrets.token_hex(8))
-            folder.mkdir(mode=0o700)
+            custody.create_directory(folder)
             publish(folder,self.vault._filename(record[0]),ciphertext)
             self.vault=CheckpointVault(folder,self.vault.anchor,self.source)
             return self.unlock(password)

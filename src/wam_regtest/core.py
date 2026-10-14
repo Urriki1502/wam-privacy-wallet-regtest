@@ -24,6 +24,10 @@ class CoreSmokeError(RuntimeError):
 
 
 def verified_core_paths(core_dir: Path) -> tuple[Path, Path, dict]:
+    import sys
+    if sys.platform == "win32":
+        from .windows_core_transport import verified_core_paths as windows_paths
+        return windows_paths(core_dir)
     if not core_dir.is_absolute() or core_dir.is_symlink():
         raise CoreSmokeError("CORE_DIRECTORY_DENIED")
     try:
@@ -58,6 +62,13 @@ def _port() -> int:
 
 
 def _read_cli(cmd: list[str], timeout: int = 15) -> object:
+    import sys
+    if sys.platform == "win32":
+        from .windows_core_transport import read_cli
+        try:
+            return read_cli(cmd,timeout)
+        except (ValueError,OSError):
+            raise CoreSmokeError("CORE_WINDOWS_LOCAL_RPC_DENIED") from None
     from .network_policy import local_rpc_port, NetworkPolicyError
     try:
         if (type(cmd) is not list or len(cmd)<3 or type(cmd[1]) is not str
@@ -84,6 +95,10 @@ def _read_cli(cmd: list[str], timeout: int = 15) -> object:
 
 
 def _write_private_config(datadir: Path, rpcport: int, p2pport: int) -> None:
+    import sys
+    if sys.platform == "win32":
+        from .windows_core_regtest_smoke import _config
+        return _config(datadir,rpcport,p2pport)
     # Password stays in owner-only wam.conf; never passed as a command argument.
     password = secrets.token_hex(32)
     user = "disposable_" + secrets.token_hex(8)
@@ -192,8 +207,17 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
         # Canonicalize the OS-created temporary directory: macOS /var is a
         # system symlink. Private storage then walks canonical ancestors with
         # O_NOFOLLOW rather than relaxing its symlink checks.
-        datadir = Path(temp).resolve(strict=True)
-        datadir.chmod(0o700)
+        import sys
+        if sys.platform == "win32":
+            from .custody import create_directory
+            datadir = Path(temp).absolute()/"chain"
+            create_directory(datadir)
+            from .windows_core_regtest_smoke import _host_env
+            child_env=_host_env(datadir)
+        else:
+            datadir = Path(temp).resolve(strict=True)
+            datadir.chmod(0o700)
+            child_env={"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(datadir), "LC_ALL": "C"}
         rpc, p2p = _port(), _port()
         if rpc == p2p:
             raise CoreSmokeError("CORE_PORT_COLLISION_DENIED")
@@ -206,8 +230,9 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 proc = subprocess.Popen(
                     [str(node), f"-datadir={datadir}", "-daemon=0"],
                     stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
-                    cwd=datadir,
-                    env={"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(datadir), "LC_ALL": "C"},
+                    cwd=node.parent if sys.platform=="win32" else datadir,
+                    env=child_env,
+                    creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0) if sys.platform=="win32" else 0,
                 )
             end = time.monotonic() + timeout
             info = None
@@ -311,7 +336,12 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             if security_e2e:
                 from .security_probe import probe_security, SecurityProbeError
                 try:
-                    security_receipt = probe_security(cli, datadir, wsp_source, mine_to)
+                    if sys.platform == "win32":
+                        from .windows_vault_probe import prove_real_windows_vault
+                        from .windows_core_transport import local_rpc_port
+                        security_receipt=prove_real_windows_vault(cli,datadir,local_rpc_port(datadir),child_env,wsp_source,mine_to)
+                    else:
+                        security_receipt = probe_security(cli, datadir, wsp_source, mine_to)
                 except SecurityProbeError as exc:
                     raise CoreSmokeError(str(exc)) from None
             wallet_receipt = None

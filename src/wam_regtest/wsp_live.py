@@ -269,9 +269,13 @@ def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
                  mining_address != public_regtest_mining_address(source_root)))
             or type(expected_height) is not int or expected_height != _MINE_LIMIT
             or type(datadir) is not type(Path()) or not datadir.is_absolute()
-            or datadir.is_symlink()
-            or stat.S_IMODE(datadir.stat().st_mode) != 0o700):
+            or datadir.is_symlink()):
         raise RealWspScanError("WSP_LIVE_REGTEST_SCOPE_DENIED")
+    from .custody import storage
+    try:
+        storage().validate_directory(datadir)
+    except (ValueError,OSError):
+        raise RealWspScanError("WSP_LIVE_NATIVE_CUSTODY_DENIED") from None
     _pinned_source(source_root)
     from wam_sp.core import pub
     from wam_sp.keystore import ScanAccount

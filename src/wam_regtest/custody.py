@@ -33,3 +33,23 @@ def envelope_profile():
         storage()
         return {'version': 2, 'custody_platform': 'windows-x64'}
     raise ValueError('VAULT_NATIVE_PLATFORM_REQUIRED')
+
+
+def platform_name():
+    storage()
+    return 'windows-x64' if sys.platform=='win32' else 'macos-arm64'
+
+
+def anchor(wallet_id,keychain=None):
+    if sys.platform=='win32':
+        if keychain is not None:raise ValueError('VAULT_FOREIGN_ANCHOR_DENIED')
+        from .windows_checkpoint_anchor import WindowsCredentialAnchor
+        return WindowsCredentialAnchor(wallet_id)
+    if sys.platform=='darwin':
+        from .vault import KeychainAnchor
+        return KeychainAnchor(wallet_id,keychain)
+    raise ValueError('VAULT_NATIVE_PLATFORM_REQUIRED')
+
+
+def anchor_label():
+    return 'Windows Credential Manager' if sys.platform=='win32' else 'macOS Keychain'
