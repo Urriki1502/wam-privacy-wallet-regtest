@@ -95,10 +95,28 @@ def _sha(path: Path) -> str:
 
 
 def _gpg(exe: str, home: Path, *args: str) -> tuple[int, str]:
+    # The Git-for-Windows MSYS GnuPG bundled on hosted Windows runners expects
+    # /c/... POSIX paths, NOT C:\\... Win32 paths. Without conversion it tries
+    # to open <working-directory>/C:\\.../pubring.kbx and fails before parsing.
+    # Retain exact official fingerprint and detached signature verification.
+    if os.name == "nt":
+        import shutil
+        resolved = shutil.which(exe) or ""
+        normalized = resolved.replace("\\", "/").lower()
+        if not normalized.endswith("/git/usr/bin/gpg.exe"):
+            raise ReleaseError("RELEASE_WINDOWS_GPG_RUNTIME_DENIED")
+        def native_to_msys(value: str) -> str:
+            if re.match(r"^[A-Za-z]:[\\/]", value):
+                return "/" + value[0].lower() + "/" + value[3:].replace("\\", "/")
+            return value
+        gpg_home = native_to_msys(str(home))
+        gpg_args = tuple(native_to_msys(arg) for arg in args)
+    else:
+        gpg_home, gpg_args = str(home), args
     # Windows GnuPG requires the OS system directory for its native runtime.
     # Keep the isolated GNUPGHOME and strict public-key/signature checks;
     # do not import user keyrings or process arbitrary GPG configuration.
-    env = {"GNUPGHOME": str(home), "HOME": str(home), "LC_ALL": "C",
+    env = {"GNUPGHOME": gpg_home, "HOME": gpg_home, "LC_ALL": "C",
            "PATH": os.environ.get("PATH", "")}
     if os.name == "nt":
         root = os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT")
@@ -107,8 +125,8 @@ def _gpg(exe: str, home: Path, *args: str) -> tuple[int, str]:
         env["SystemRoot"] = root
     try:
         p = subprocess.run(
-            [exe, "--homedir", str(home), "--batch", "--no-tty", "--no-autostart",
-             "--no-auto-key-retrieve", *args],
+            [exe, "--homedir", gpg_home, "--batch", "--no-tty", "--no-autostart",
+             "--no-auto-key-retrieve", *gpg_args],
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
             stdin=subprocess.DEVNULL, timeout=30, check=False,
             env=env,
