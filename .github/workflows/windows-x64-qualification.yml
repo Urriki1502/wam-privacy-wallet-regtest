@@ -64,6 +64,7 @@ jobs:
       - name: Reuse native WSP scanner and SQLite integration regression
         shell: pwsh
         run: |
+          $env:PYTHONPATH = (Resolve-Path "wsp-upstream").Path
           python -m unittest discover -s wsp-upstream/tests -p "test_scanner_wallet.py" -v
           if ($LASTEXITCODE -ne 0) { throw "WIN_SCANNER_SQLITE_DENIED" }
       - name: Windows signed-release parser hostile-fixture unit contracts
@@ -96,6 +97,25 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -e .
           python -c "import wam_regtest.windows_release_preflight; print('WIN_RELEASE_VERIFIER_IMPORT_PASS')"
+      - name: Diagnose native GPG official public signer parsing (no approval)
+        shell: pwsh
+        run: |
+          @'
+          import os, subprocess, tempfile
+          from pathlib import Path
+          from wam_regtest.release import _download_exact, _gpg, FINGERPRINT
+          with tempfile.TemporaryDirectory(prefix="wam-win-gpg-probe-") as t:
+              home=Path(t)/"gpg"; home.mkdir()
+              key=Path(t)/"SIGNING-KEY.asc"
+              _download_exact("/SIGNING-KEY.asc",32768,key)
+              rc,out=_gpg("gpg",home,"--with-colons","--import-options","show-only","--import",str(key))
+              fingerprints=[x.split(":")[9] for x in out.splitlines() if x.startswith("fpr:") and len(x.split(":"))>9]
+              print("WIN_GPG_IMPORT_RC",rc)
+              print("WIN_GPG_PUBLIC_FINGERPRINT_MATCH",FINGERPRINT in fingerprints)
+              print("WIN_GPG_RECORD_TYPES",[x.split(":")[0] for x in out.splitlines()][:15])
+              # Non-authorizing diagnostic; the strict production verifier still decides.
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw "WIN_GPG_DIAGNOSTIC_UNAVAILABLE" }
       - name: Obtain official signed release and verify archive + both PE64 executables WITHOUT running
         shell: pwsh
         run: |
