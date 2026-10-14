@@ -76,8 +76,12 @@ def _write_private_config(datadir: Path, rpcport: int, p2pport: int) -> None:
     # Password stays in owner-only wam.conf; never passed as a command argument.
     password = secrets.token_hex(32)
     user = "disposable_" + secrets.token_hex(8)
-    values = {
-        "regtest": "1", "server": "1", "rpcuser": user, "rpcpassword": password,
+    # Bitcoin Core/WAM Core requires network-scoped settings such as
+    # connect/port/rpcport under the explicit [regtest] stanza. Putting these
+    # options in the global stanza makes real wamd EXIT 1 before RPC starts.
+    global_values = {"regtest": "1", "server": "1"}
+    network_values = {
+        "rpcuser": user, "rpcpassword": password,
         "rpcbind": "127.0.0.1", "rpcallowip": "127.0.0.1", "rpcport": str(rpcport),
         "port": str(p2pport), "listen": "0", "connect": "0", "dnsseed": "0",
         "discover": "0", "upnp": "0", "txindex": "1", "blockfilterindex": "1",
@@ -86,7 +90,10 @@ def _write_private_config(datadir: Path, rpcport: int, p2pport: int) -> None:
     config = datadir / "wam.conf"
     fd = os.open(config, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, "w") as out:
-        for k, v in values.items():
+        for k, v in global_values.items():
+            out.write(f"{k}={v}\n")
+        out.write("[regtest]\n")
+        for k, v in network_values.items():
             out.write(f"{k}={v}\n")
         out.flush()
         os.fsync(out.fileno())
