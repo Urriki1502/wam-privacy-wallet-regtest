@@ -69,6 +69,11 @@ _WAIT_OWNED = 0
 _WAIT_ABANDONED = 0x80
 _WAIT_TIMEOUT = 0x102
 _ANCHOR_PATTERN = re.compile(rb"([1-9][0-9]{0,8}):([0-9a-f]{64})\Z")
+# Win32 mutex recursion is PER THREAD, not per handle/object. Deny a second
+# anchor object in the same Python process as well as external contenders.
+_local_lease_lock = threading.RLock()
+_local_wallet_leases: set[str] = set()
+
 
 
 class WindowsAnchorError(ValueError):
@@ -117,15 +122,20 @@ class WindowsCredentialAnchor:
 
     @contextmanager
     def lease(self):
-        """Mutual exclusion across Windows threads/processes/user sessions."""
+        """Mutual exclusion across objects, threads, processes and sessions."""
         if getattr(self._local, "inside", False):
             yield
             return
-        handle = _mutex(None, False, self._mutex_name)
-        if not handle:
-            raise WindowsAnchorError("WIN_ANCHOR_MUTEX_UNAVAILABLE")
+        with _local_lease_lock:
+            if self.wallet_id in _local_wallet_leases:
+                raise WindowsAnchorError("WIN_ANCHOR_SESSION_BUSY")
+            _local_wallet_leases.add(self.wallet_id)
+        handle = None
         acquired = False
         try:
+            handle = _mutex(None, False, self._mutex_name)
+            if not handle:
+                raise WindowsAnchorError("WIN_ANCHOR_MUTEX_UNAVAILABLE")
             code = _wait(handle, 0)
             if code == _WAIT_OWNED:
                 acquired = True
@@ -135,8 +145,6 @@ class WindowsCredentialAnchor:
                 finally:
                     self._local.inside = False
             elif code == _WAIT_ABANDONED:
-                # Windows reports ownership acquired despite abandonment.
-                # Release but DENY: an abandoned wallet writer is ambiguous.
                 acquired = True
                 raise WindowsAnchorError("WIN_ANCHOR_ABANDONED_WRITER_DENIED")
             elif code == _WAIT_TIMEOUT:
@@ -144,10 +152,14 @@ class WindowsCredentialAnchor:
             else:
                 raise WindowsAnchorError("WIN_ANCHOR_MUTEX_WAIT_DENIED")
         finally:
-            if acquired and not _release(handle):
-                _close(handle)
-                raise WindowsAnchorError("WIN_ANCHOR_MUTEX_RELEASE_DENIED")
-            _close(handle)
+            try:
+                if handle and acquired and not _release(handle):
+                    raise WindowsAnchorError("WIN_ANCHOR_MUTEX_RELEASE_DENIED")
+            finally:
+                if handle:
+                    _close(handle)
+                with _local_lease_lock:
+                    _local_wallet_leases.discard(self.wallet_id)
 
     def advance(self, previous: tuple[int, str] | None, current: tuple[int, str]) -> None:
         with self.lease():
@@ -165,10 +177,10 @@ class WindowsCredentialAnchor:
                          or type(previous[0]) is not int
                          or type(previous[1]) is not str))):
             raise WindowsAnchorError("WIN_ANCHOR_GENERATION_DENIED")
-        if current[0] != (1 if previous is None else previous[0] + 1):
-            raise WindowsAnchorError("WIN_ANCHOR_GENERATION_DENIED")
         if self.read() != previous:
             raise WindowsAnchorError("WIN_ANCHOR_STALE_WRITER_DENIED")
+        if current[0] != (1 if previous is None else previous[0] + 1):
+            raise WindowsAnchorError("WIN_ANCHOR_GENERATION_DENIED")
         data = f"{current[0]}:{current[1]}".encode("ascii")
         storage = (ctypes.c_ubyte * len(data)).from_buffer_copy(data)
         credential = _CredentialW()
