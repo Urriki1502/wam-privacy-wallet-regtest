@@ -146,7 +146,8 @@ def _early_exit_category(datadir: Path) -> str:
 
 def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 120,
                     wsp_source: Path | None = None,
-                    wsp_payment_e2e: bool = False) -> dict:
+                    wsp_payment_e2e: bool = False,
+                    gui_e2e: bool = False) -> dict:
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
     if (wsp_source is not None and
@@ -155,6 +156,8 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
     if (type(wsp_payment_e2e) is not bool
             or (wsp_payment_e2e and wsp_source is None)):
         raise CoreSmokeError("CORE_PUBLIC_FIXTURE_PAYMENT_SCOPE_DENIED")
+    if (type(gui_e2e) is not bool or (gui_e2e and not wsp_payment_e2e)):
+        raise CoreSmokeError("CORE_REAL_GUI_SCOPE_DENIED")
     node, cli, receipt = verified_core_paths(core_dir)
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
@@ -236,8 +239,27 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     )
                 except RealWspScanError as exc:
                     raise CoreSmokeError(str(exc)) from None
+            gui_receipt = None
+            if gui_e2e:
+                # The REAL daemon remains running here. The native Qt worker
+                # independently opens WSP SQLite and calls official Core RPC
+                # again before any Receive/Balance/History UI claim.
+                try:
+                    from .desktop_probe import probe_running_real_core_gui
+                    gui_receipt = probe_running_real_core_gui(
+                        core_dir, datadir, wsp_source,
+                        expected_height=wsp_receipt["observed_height"],
+                        expected_txid=wsp_receipt["public_fixture_payment_txid"],
+                        expected_atoms=wsp_receipt["confirmed_receive_atoms"],
+                    )
+                except Exception:
+                    raise CoreSmokeError("CORE_MACOS_NATIVE_QT_E2E_DENIED") from None
             return {
-                "status": ("REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS"
+                "gui_real_core_e2e_pass": gui_receipt is not None,
+                "gui_live_core_view": gui_receipt,
+                "status": ("REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS"
+                           if gui_receipt is not None else
+                           "REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS"
                            if wsp_payment_e2e and wsp_receipt is not None else
                            "REAL_WAM_CORE_V0_1_11_REGTEST_AND_NATIVE_WSP_SCANNER_PASS"
                            if wsp_receipt is not None else
