@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
+from types import SimpleNamespace
 
 from wam_regtest.core import CoreSmokeError, smoke_real_core, verified_core_paths, _early_exit_category, _write_private_config
 from wam_regtest.release import ARCHIVES, ReleaseError, _verify_executable_shape, _NoRedirect
@@ -53,6 +55,18 @@ class CoreContractTests(unittest.TestCase):
             with self.assertRaisesRegex(RealWspScanError, "^WSP_SOURCE_PIN_DENIED$"):
                 _pinned_source(folder)
 
+    def test_pinned_sha_cannot_authorize_dirty_scanner_source(self):
+        from wam_regtest.wsp_live import PINNED_WSP_COMMIT
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder).resolve()
+            (root/'src/wam_sp').mkdir(parents=True)
+            (root/'src/wam_sp/scanner.py').write_text('tampered source')
+            with patch('wam_regtest.wsp_live.subprocess.run',side_effect=[
+                SimpleNamespace(stdout=PINNED_WSP_COMMIT+'\n'),
+                SimpleNamespace(stdout=' M src/wam_sp/scanner.py\n')]):
+                with self.assertRaisesRegex(RealWspScanError,'WSP_SOURCE_WORKTREE_DENIED'):
+                    _pinned_source(root)
+
     def test_consent_denied_before_filesystem_or_process(self):
         with self.assertRaisesRegex(CoreSmokeError, "CORE_REAL_REGTEST_CONSENT_DENIED"):
             smoke_real_core(Path("/nonexistent/path"), explicit_consent=False)
@@ -77,6 +91,18 @@ class CoreContractTests(unittest.TestCase):
                 (home / "receipt.json").write_text(json.dumps(receipt))
                 with self.assertRaises(CoreSmokeError):
                     verified_core_paths(home)
+
+    def test_mutable_receipt_cannot_authorize_replaced_macos_cli(self):
+        with tempfile.TemporaryDirectory() as folder:
+            home=Path(folder)
+            receipt={
+                "platform":"macos-arm64","signed_archive_verified":True,
+                "mainnet_allowed":False,"loader_process_binding_qualified":False,
+                "wamd_sha256":ARCHIVES["macos-arm64"][1],"wam_cli_sha256":"0"*64,
+            }
+            (home/"receipt.json").write_text(json.dumps(receipt))
+            with self.assertRaisesRegex(CoreSmokeError,"CORE_RECEIPT_DENIED"):
+                verified_core_paths(home)
 
     def test_architecture_requires_exact_signed_executable_bytes(self):
         with tempfile.TemporaryDirectory() as folder:

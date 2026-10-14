@@ -19,6 +19,13 @@ class RealWalletReadError(ValueError):
     """Only fixed, redacted categories may be shown in the UI."""
 
 
+def format_wam(atoms: int, *, grouped: bool = False) -> str:
+    if type(atoms) is not int or atoms < 0:
+        raise RealWalletReadError("WALLET_AMOUNT_DENIED")
+    whole,fraction=divmod(atoms,100_000_000)
+    return (f"{whole:,}" if grouped else str(whole))+f".{fraction:08d}"
+
+
 @dataclass(frozen=True)
 class HistoryRow:
     txid: str

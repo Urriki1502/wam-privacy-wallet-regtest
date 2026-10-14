@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
-from .wallet_read import WalletReadSnapshot, read_real_wallet_snapshot
+from .wallet_read import WalletReadSnapshot, read_real_wallet_snapshot, format_wam
 
 
 _QT_APPLICATION = None
@@ -325,7 +325,7 @@ class RegtestWalletWindow(QMainWindow):
             return
         self._snapshot = snap
         self.receive_code.setText(snap.receive_code)
-        self.balance_text.setText(f"{snap.confirmed_atoms / 100_000_000:,.8f} WAM")
+        self.balance_text.setText(format_wam(snap.confirmed_atoms,grouped=True)+" WAM")
         self.utxo_text.setText(
             f"{snap.confirmed_utxos} confirmed UTXO(s) · block {snap.height}")
         self.history_table.setRowCount(len(snap.history))
@@ -334,8 +334,7 @@ class RegtestWalletWindow(QMainWindow):
                 item.txid,
                 str(item.block_height),
                 str(item.confirmations),
-                f"+{item.credit_atoms / 100_000_000:.8f} / "
-                f"-{item.debit_atoms / 100_000_000:.8f}",
+                "+"+format_wam(item.credit_atoms)+" / -"+format_wam(item.debit_atoms),
             )
             for col, value in enumerate(values):
                 self.history_table.setItem(row, col, QTableWidgetItem(value))

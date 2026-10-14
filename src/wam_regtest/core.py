@@ -16,7 +16,7 @@ import subprocess
 import tempfile
 import time
 
-from .release import ARCHIVES, _sha
+from .release import ARCHIVES, CLI_SHA256, _sha
 
 
 class CoreSmokeError(RuntimeError):
@@ -35,7 +35,8 @@ def verified_core_paths(core_dir: Path) -> tuple[Path, Path, dict]:
                 receipt["signed_archive_verified"] is not True or
                 receipt.get("mainnet_allowed") is not False or
                 receipt.get("loader_process_binding_qualified") is not False or
-                receipt["wamd_sha256"] != ARCHIVES[platform][1]):
+                receipt["wamd_sha256"] != ARCHIVES[platform][1] or
+                (platform in CLI_SHA256 and receipt.get("wam_cli_sha256") != CLI_SHA256[platform])):
             raise CoreSmokeError("CORE_RECEIPT_DENIED")
         for path, key in ((node, "wamd_sha256"), (cli, "wam_cli_sha256")):
             s = path.lstat()
@@ -150,7 +151,8 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     gui_e2e: bool = False,
                     interactive_demo: bool = False,
                     security_e2e: bool = False,
-                    wallet_e2e: bool = False, operational_demo: bool = False) -> dict:
+                    wallet_e2e: bool = False, operational_demo: bool = False,
+                    recovery_case: tuple | None = None) -> dict:
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
     if (wsp_source is not None and
@@ -170,6 +172,9 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
     if (type(wallet_e2e) is not bool or (wallet_e2e and not security_e2e)
             or type(operational_demo) is not bool or (operational_demo and not interactive_demo)):
         raise CoreSmokeError("CORE_DISPOSABLE_WALLET_SCOPE_DENIED")
+    if recovery_case is not None and (type(recovery_case) is not tuple or len(recovery_case)!=5
+            or not wsp_payment_e2e or interactive_demo or gui_e2e or security_e2e or wallet_e2e):
+        raise CoreSmokeError("CORE_RECOVERY_CASE_SCOPE_DENIED")
     node, cli, receipt = verified_core_paths(core_dir)
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
@@ -306,6 +311,13 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     wallet_receipt = probe_wallet(core_dir,datadir,wsp_source,mine_to)
                 except WalletProbeError as exc:
                     raise CoreSmokeError(str(exc)) from None
+            recovery_receipt = None
+            if recovery_case is not None:
+                from .reopen_probe import probe_reopened_wallet, ReopenProbeError
+                try:
+                    recovery_receipt = probe_reopened_wallet(core_dir,datadir,wsp_source,mine_to,recovery_case)
+                except ReopenProbeError as exc:
+                    raise CoreSmokeError(str(exc)) from None
             final_height = _read_cli(prefix + ["getblockcount"])
             final_tip = _read_cli(prefix + ["getbestblockhash"])
             if (type(final_height) is not int or not 101<=final_height<=1_000_000
@@ -314,6 +326,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 raise CoreSmokeError("CORE_FINAL_CHAIN_ATTESTATION_DENIED")
             return {
                 "wallet_live_core": wallet_receipt,
+                "recovery_live_core": recovery_receipt,
                 "security_live_core": security_receipt,
                 "interactive_demo_closed_cleanly": demo_finished,
                 "gui_real_core_e2e_pass": gui_receipt is not None,

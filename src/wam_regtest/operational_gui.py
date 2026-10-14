@@ -262,12 +262,34 @@ class OperationalWalletWindow(RegtestWalletWindow):
 
 def launch_disposable_wallet(core_dir,datadir,source,mining_address):
     app=qt_application()
-    password,ok=QInputDialog.getText(None,"Create disposable REGTEST wallet",
-        "Create fresh test keys with an encrypted backup passphrase (12+ characters).\n"
-        "No personal keys/funds. This chain is deleted on close.",QLineEdit.EchoMode.Password)
+    choice,ok=QInputDialog.getItem(None,"Disposable REGTEST wallet",
+        "Fresh test chain · no personal keys or real funds",
+        ["Create fresh test keys","Recover latest backup on this Mac"],0,False)
     if not ok:
         return 0
-    session=WalletSession.create(core_dir,datadir,source,password.encode(),mining_address,authorized=True)
+    backup=None
+    if choice=="Recover latest backup on this Mac":
+        name,_=QFileDialog.getOpenFileName(None,"Latest anchored REGTEST backup",filter="Encrypted backups (*.enc)")
+        if not name:
+            return 0
+        backup=Path(name).absolute()
+    while True:
+        password,ok=QInputDialog.getText(None,"Disposable REGTEST wallet",
+            "Wallet backup passphrase (12+ characters).\n"
+            "Recovery rescans a fresh test chain and creates a new test receive epoch.",QLineEdit.EchoMode.Password)
+        if not ok:
+            return 0
+        encoded=password.encode()
+        if len(password)>=12 and len(encoded)<=1024:
+            break
+        QMessageBox.warning(None,"Passphrase length","Use a longer passphrase (at least 12 characters).")
+    if backup is None:
+        session=WalletSession.create(core_dir,datadir,source,encoded,mining_address,authorized=True)
+    else:
+        session=WalletSession.from_backup(core_dir,datadir,source,backup.parent,backup.name,
+                                           encoded,mining_address,authorized=True)
+    encoded=None
+    password=""
     window=OperationalWalletWindow(session)
     window.show()
     QTimer.singleShot(0,window.request_sync)

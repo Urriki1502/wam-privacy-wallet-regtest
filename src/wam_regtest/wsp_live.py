@@ -94,6 +94,15 @@ def _pinned_source(root: Path) -> None:
         raise RealWspScanError("WSP_SOURCE_PIN_DENIED") from None
     if sha != PINNED_WSP_COMMIT or not (root / "src/wam_sp/scanner.py").is_file():
         raise RealWspScanError("WSP_SOURCE_PIN_DENIED")
+    try:
+        dirty = subprocess.run(
+            ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=no", "--", "src/wam_sp"],
+            capture_output=True, text=True, timeout=6, check=True,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED") from None
+    if dirty.strip():
+        raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED")
     # Installed native WSP must point to exactly this checkout; never
     # silently use a PyPI package, a different editable path or a fake class.
     found = importlib.util.find_spec("wam_sp")

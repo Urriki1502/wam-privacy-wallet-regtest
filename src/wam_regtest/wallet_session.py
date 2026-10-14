@@ -115,6 +115,61 @@ class WalletSession:
             ring.close()
             raise WalletSessionError("WALLET_CREATE_DENIED") from None
 
+    @classmethod
+    def from_backup(cls, core_dir, datadir, source, directory, name, password,
+                    mining_address, *, authorized, keychain=None):
+        """Recover test keys on a fresh real chain against the existing anchor.
+
+        Keep all old irreversible reservations. Rotate a new testing epoch for
+        fresh-chain funding rather than guessing that old signed locks expired.
+        """
+        if authorized is not True:
+            raise WalletSessionError("WALLET_DISPOSABLE_CONSENT_DENIED")
+        _pinned_source(source)
+        from wam_regtest.encrypted_storage import read, publish
+        from wam_sp.keystore import unseal
+        from wam_sp.watcher import GENESIS
+        ring=scanner=None
+        try:
+            ciphertext=read(directory,name)
+            payload=json.loads(unseal(ciphertext,password,b"recovery"))
+            if (type(payload) is not dict or payload.get("disposable_regtest") is not True
+                    or payload.get("version")!=1 or payload.get("network")!=GENESIS
+                    or type(payload.get("generation")) is not int):
+                raise WalletSessionError("WALLET_BACKUP_PROFILE_DENIED")
+            anchor=KeychainAnchor(payload["wallet_id"],keychain)
+            record=payload["generation"],sha256(ciphertext).hexdigest()
+            if anchor.read()!=record:
+                raise WalletSessionError("WALLET_BACKUP_STALE_OR_TAMPERED")
+            folder=datadir/"wallet-vault"
+            folder.mkdir(mode=0o700)
+            publish(folder,CheckpointVault._filename(record[0]),ciphertext)
+            vault=CheckpointVault(folder,anchor,source)
+            ring,scanner=vault.restore(datadir/"wallet-runtime.sqlite",password)
+            _,cli,receipt=verified_core_paths(core_dir)
+            if receipt["platform"]!="macos-arm64":
+                raise WalletSessionError("WALLET_MACOS_CORE_DENIED")
+            rpc=WalletCoreCli(cli,datadir)
+            rpc.attest()
+            height=rpc.call("getblockcount")
+            if height not in (102,103):
+                raise WalletSessionError("WALLET_FRESH_TEST_CHAIN_REQUIRED")
+            scanner.sync(rpc)
+            account=ring.rotate(height+1)
+            scanner.reconfigure(ring.accounts())
+            _public_fixture_payment(rpc,account,mining_address,funding_height=height-100,
+                                    expected_before_height=height)
+            scanner.sync(rpc)
+            session=cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address)
+            session._save()
+            return session
+        except Exception:
+            if scanner is not None:
+                scanner.close()
+            if ring is not None:
+                ring.close()
+            raise WalletSessionError("WALLET_CROSS_SESSION_RECOVERY_DENIED") from None
+
     @property
     def locked(self):
         return self.ring is None
@@ -122,6 +177,9 @@ class WalletSession:
     def _rpc(self):
         if self.locked or self.faulted:
             raise WalletSessionError("WALLET_LOCKED_OR_FAULTED")
+        if self.vault.anchor.read()!=self.vault._expected:
+            self.faulted=True
+            raise WalletSessionError("WALLET_STALE_SESSION_DENIED")
         _pinned_source(self.source)
         _, cli, _ = verified_core_paths(self.core_dir)
         rpc = WalletCoreCli(cli, self.datadir)
@@ -151,7 +209,7 @@ class WalletSession:
             history = tuple(HistoryRow(r["txid"],r["height"],r["confirmations"],r["credit"],r["debit"])
                             for r in reversed(wallet.history()))
             return WalletReadSnapshot(
-                "regtest",tip[0],tip[1],self.ring.accounts()[0].payment_code(),
+                "regtest",tip[0],tip[1],self.ring.accounts()[-1].payment_code(),
                 balance["confirmed_atoms"],len(self.scanner.coins()),history,
                 verified_core_paths(self.core_dir)[2]["wamd_sha256"],
                 signer_allowed=True,broadcast_allowed=True,
