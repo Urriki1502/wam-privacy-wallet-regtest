@@ -15,8 +15,10 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case):
     directory,name,password,keychain,expected_code=case
     session=window=None
     try:
+        if sys.platform=='win32':print('WIN_REOPEN_STAGE=FROM_BACKUP',flush=True)
         session=WalletSession.from_backup(core_dir,datadir,source,directory,name,password,
                                            mining_address,authorized=True,keychain=keychain)
+        if sys.platform=='win32':print('WIN_REOPEN_STAGE=SNAPSHOT',flush=True)
         snap=session.snapshot()
         assert session.ring.accounts()[0].payment_code()==expected_code
         assert snap.receive_code!=expected_code and session.ring.accounts()[-1].epoch==1
@@ -36,6 +38,7 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case):
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
         window=None
         if sys.platform=='win32':
+            print('WIN_REOPEN_STAGE=STALE_PAYMENT',flush=True)
             _prove_windows_stale_payment(session,password)
         return {
             'stale_before_native_signature_denied':sys.platform=='win32',
@@ -78,10 +81,13 @@ def _prove_windows_stale_payment(session,password):
         ring,scan=vault.restore(root/(suffix+'.sqlite'),password)
         scan.sync(session._rpc())
         return vault,ring,scan
+    print('WIN_STALE_STAGE=PREPARE',flush=True)
     review=session.prepare(session.ring.accounts()[0].payment_code(),100000,10000)
     proposal=session._prepared.proposal
+    print('WIN_STALE_STAGE=CLONE_BEFORE_SIGN',flush=True)
     other,ring,scan=competing_vault('stale-before-sign')
     try:
+        print('WIN_STALE_STAGE=ADVANCE_BEFORE_SIGN',flush=True)
         other.save(ring,scan,password)
         entered=[];original=Signer.sign
         def tracked_sign(*args,**kwargs):
@@ -93,14 +99,18 @@ def _prove_windows_stale_payment(session,password):
         assert not entered and session.faulted
         # This exact fixture draft never entered signing. Native WSP permits
         # unsigned cancellation; no signed/uncertain lock is released.
+        print('WIN_STALE_STAGE=CANCEL_UNSIGNED',flush=True)
         Wallet(scan).release_draft(proposal.token)
         other.save(ring,scan,password)
         latest=root/'stale-recovery-backup';custody.create_directory(latest)
         other.backup(latest,'recovery.enc')
+        print('WIN_STALE_STAGE=RECOVER_CURRENT',flush=True)
         session.lock();session.recover_backup(latest,'recovery.enc',password)
     finally:scan.close();ring.close()
     review=session.prepare(session.ring.accounts()[0].payment_code(),100000,10000)
+    print('WIN_STALE_STAGE=POSITIVE_NATIVE_SIGN',flush=True)
     session.sign(review.commitment)  # Actual native signature, positive control.
+    print('WIN_STALE_STAGE=CLONE_BEFORE_BROADCAST',flush=True)
     other,ring,scan=competing_vault('stale-before-broadcast')
     try:
         other.save(ring,scan,password)
