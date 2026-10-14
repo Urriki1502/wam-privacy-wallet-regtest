@@ -69,7 +69,7 @@ class WinReleasePreflightTests(unittest.TestCase):
         cases = [
             [(f"{ROOT}/bin/wamd.exe", fixture_pe()), (f"{ROOT}/bin/wam-cli.exe", fixture_pe()), (f"{ROOT}/../evil.txt", b"bad")],
             [(f"{ROOT}/bin/wamd.exe", fixture_pe()), (f"{ROOT}/bin/wam-cli.exe", fixture_pe()), (f"{ROOT}/bin/WAMD.EXE", fixture_pe())],
-            [(f"{ROOT}\\bin\\wamd.exe", fixture_pe()), (f"{ROOT}/bin/wam-cli.exe", fixture_pe())]
+            [(f"{ROOT}/bin/wamd.exe", fixture_pe()), (f"{ROOT}/bin/wam-cli.exe", fixture_pe()), (f"{ROOT}/bin/../evil.txt", b"bad")],
         ]
         for rows in cases:
             with self.subTest(case=rows[-1][0]):
@@ -79,6 +79,28 @@ class WinReleasePreflightTests(unittest.TestCase):
                         inspect_signed_zip_shape(path, digest)
                 finally:
                     home.cleanup()
+
+    def test_raw_zip_backslash_denied_on_windows_and_posix(self):
+        # Python zipfile.writestr normalizes \ to / on Windows.
+        # Replace equal-length names in both ZIP headers to test a REAL
+        # invalid path, rather than a fixture sanitized by zipfile.
+        marker = f"{ROOT}/bin/untrusted.txt".encode("ascii")
+        attack = f"{ROOT}\\bin\\untrusted.txt".encode("ascii")
+        self.assertEqual(len(marker), len(attack))
+        home, path, _ = self._archive(
+            (f"{ROOT}/bin/wamd.exe", fixture_pe()),
+            (f"{ROOT}/bin/wam-cli.exe", fixture_pe()),
+            (marker.decode("ascii"), b"bad"),
+        )
+        try:
+            payload = path.read_bytes()
+            self.assertEqual(payload.count(marker), 2)
+            path.write_bytes(payload.replace(marker, attack))
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(WindowsReleaseError, "WIN_RELEASE_ZIP_ENTRY_DENIED"):
+                inspect_signed_zip_shape(path, digest)
+        finally:
+            home.cleanup()
 
     def test_cannot_claim_signed_integrity_with_untrusted_key(self):
         # No verifier bypass: no signature/public-key inputs are supplied here.
