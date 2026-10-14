@@ -117,10 +117,12 @@ ditto -c -k --sequesterRsrc --keepParent "$APP" \
 
 # The DMG is an unnotarized developer preview. Do not claim Developer ID.
 echo "MACOS_APP_STAGE=DMG_CREATE_START"
-hdiutil create -volname "WAM Privacy Wallet REGTEST" \
-  -srcfolder "$APP" -format UDZO -ov \
-  "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
-hdiutil verify "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
+# Retry ONLY transient macOS diskimages "Resource busy", max three
+# attempts. Each attempt uses private staging. Verify with hdiutil before
+# atomic final publication; never detach unrelated volumes or bypass E2E.
+python scripts/create_verified_dmg.py \
+  --app "$APP" \
+  --output "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
 echo "MACOS_APP_STAGE=DMG_VERIFIED"
 
 python - <<'PY'
