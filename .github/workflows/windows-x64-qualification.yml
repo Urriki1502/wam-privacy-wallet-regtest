@@ -91,6 +91,11 @@ jobs:
           $gpg = Get-Command gpg -ErrorAction SilentlyContinue
           if (!$gpg) { throw "WIN_GPG_NOT_INSTALLED_FAIL_CLOSED" }
           & $gpg.Source --version | Select-Object -First 1
+      - name: Install exact local release verification module
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+          python -c "import wam_regtest.windows_release_preflight; print('WIN_RELEASE_VERIFIER_IMPORT_PASS')"
       - name: Obtain official signed release and verify archive + both PE64 executables WITHOUT running
         shell: pwsh
         run: |
