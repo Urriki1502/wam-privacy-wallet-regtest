@@ -23,7 +23,7 @@ fresh disposable research keys. This is internal engineering qualification.
   public generation/digest, never the wallet seed or passphrase.
 - An OS lease keyed by wallet ID serializes anchor updates across different
   vault directories. A writer must still match the generation it previously
-  read; stale writers fail before publication/signing/network action.
+  read; stale writers fail before publication or signature exposure/network submission.
 - Both official macOS node and CLI member hashes are independently pinned;
   changing a receipt cannot authorize a substituted CLI.
 - Missing/mismatched anchor, older ciphertext under the latest name, wrong

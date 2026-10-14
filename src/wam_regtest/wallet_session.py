@@ -177,6 +177,9 @@ class WalletSession:
     def _rpc(self):
         if self.locked or self.faulted:
             raise WalletSessionError("WALLET_LOCKED_OR_FAULTED")
+        if self.vault.anchor.read()!=self.vault._expected:
+            self.faulted=True
+            raise WalletSessionError("WALLET_STALE_SESSION_DENIED")
         _pinned_source(self.source)
         _, cli, _ = verified_core_paths(self.core_dir)
         rpc = WalletCoreCli(cli, self.datadir)
