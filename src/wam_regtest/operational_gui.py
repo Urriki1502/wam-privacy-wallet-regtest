@@ -6,7 +6,7 @@ import re
 from PySide6.QtCore import QThread, Signal, QTimer, Qt
 from PySide6.QtWidgets import (
     QApplication,QFrame,QVBoxLayout,QLabel,QLineEdit,QPushButton,QHBoxLayout,
-    QFileDialog,QMessageBox,QInputDialog,QComboBox,QCheckBox,
+    QFileDialog,QMessageBox,QInputDialog,QComboBox,QCheckBox,QScrollArea,
 )
 from wam_regtest.desktop import RegtestWalletWindow, qt_application
 from wam_regtest.wallet_session import WalletSession, PaymentReview
@@ -135,7 +135,11 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.disclosure_text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         layout.addWidget(self.disclosure_text)
         layout.addStretch()
-        self.stack.addWidget(security)
+        security_scroll=QScrollArea()
+        security_scroll.setWidgetResizable(True)
+        security_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        security_scroll.setWidget(security)
+        self.stack.addWidget(security_scroll)
         self.lock_button.clicked.connect(lambda:self.start_operation("lock"))
         self.unlock_button.clicked.connect(self.unlock_wallet)
         self.backup_button.clicked.connect(self.backup_wallet)

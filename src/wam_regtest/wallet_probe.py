@@ -140,9 +140,14 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window.disclosure_fields['block_height'].setChecked(True)
         disclosure_txid=window.disclosure_record.currentData()
         _operation(app,window,'disclose',lambda:window.start_operation('disclose',disclosure_txid,('block_height',),b'wrong-test-passphrase'),denied=True)
+        window.apply_snapshot(session.snapshot())
+        assert window.disclosure_button.isEnabled()
         disclosed=_operation(app,window,'disclose',lambda:window.start_operation('disclose',disclosure_txid,('block_height',),password))
         assert disclosed['facts']=={'block_height':104} and disclosed['ownership_proof'] is False
         assert disclosure_txid not in window.disclosure_text.text() and 'credit_atoms' not in window.disclosure_text.text()
+        window.navigation.setCurrentRow(4)
+        assert window.grab().save(str(Path('real-regtest-security-preview.png').resolve()))
+        window.navigation.setCurrentRow(3)
         stage="PREPARE"
         print("WALLET_E2E_STAGE=PREPARE",flush=True)
         review=_operation(app,window,'prepare',window.prepare_button.click)
