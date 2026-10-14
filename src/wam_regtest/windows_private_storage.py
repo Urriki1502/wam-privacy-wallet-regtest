@@ -56,6 +56,9 @@ if sys.platform=='win32':
         _fields_=[('count',w.DWORD),('used',w.DWORD),('free',w.DWORD)]
     class ACE(c.Structure):
         _fields_=[('kind',c.c_ubyte),('flags',c.c_ubyte),('size',w.WORD),('mask',w.DWORD)]
+    class IO_STATUS(c.Structure):
+        _fields_=[('status',c.c_void_p),('information',c.c_size_t)]
+    rename_native=api(c.WinDLL('ntdll',use_last_error=True),'NtSetInformationFile',[w.HANDLE,c.POINTER(IO_STATUS),c.c_void_p,w.DWORD,c.c_int],c.c_long)
     class DISPOSITION(c.Structure):
         _fields_=[('delete',w.BOOL)]
     class RENAME(c.Structure):
@@ -199,15 +202,16 @@ def publish(directory,name,ciphertext):
                     _deny('WIN_CUSTODY_WRITE_DENIED')
                 offset+=count.value
             if not flush(handle): _deny('WIN_CUSTODY_FLUSH_DENIED')
-            # Source-handle rename to an absolute same-directory path. Ancestor
-            # handles remain pinned without delete/write sharing throughout.
-            # ReplaceIfExists=FALSE: an existing snapshot is NEVER replaced.
-            text=str(directory/name).encode('utf-16-le');buffer=c.create_string_buffer(RENAME.name.offset+len(text)+2)
+            # NtSetInformationFile documents a simple name + NULL root as a
+            # rename within the source directory. Avoid Win32's target-directory
+            # reopening: it conflicts with our no-write/no-delete ancestor pins.
+            # No replacement, no move, no ambient current-directory resolution.
+            text=name.encode('utf-16-le');buffer=c.create_string_buffer(c.sizeof(RENAME)+len(text))
             rename=RENAME.from_buffer(buffer);rename.flags=0;rename.root=None;rename.length=len(text)
             c.memmove(c.addressof(buffer)+RENAME.name.offset,text,len(text))
-            if not setinfo(handle,3,buffer,len(buffer)):
-                category={5:'ACCESS',32:'SHARING',87:'PARAMETER'}.get(c.get_last_error(),'OTHER')
-                _deny('WIN_CUSTODY_PUBLISH_'+category+'_DENIED')
+            status=IO_STATUS()
+            if rename_native(handle,c.byref(status),buffer,len(buffer),10)!=0:
+                _deny('WIN_CUSTODY_PUBLISH_DENIED')
             renamed=True;_metadata(handle);verify_security(handle)
         finally:
             if handle is not None:
