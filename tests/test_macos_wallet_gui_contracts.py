@@ -52,6 +52,29 @@ class RealMacosWalletContracts(unittest.TestCase):
                                 gui_e2e=malformed, wsp_payment_e2e=True,
                                 wsp_source=Path("/untrusted"))
 
+    def test_interactive_demo_requires_real_payment_wsp_and_owner_consent(self):
+        core = Path("/untrusted-real-core")
+        pinned = Path("/untrusted-wsp")
+        for payload in (
+            dict(wsp_payment_e2e=False, wsp_source=pinned,
+                 interactive_demo=True),
+            dict(wsp_payment_e2e=True, wsp_source=None,
+                 interactive_demo=True),
+            dict(wsp_payment_e2e=True, wsp_source=pinned,
+                 gui_e2e=True, interactive_demo=True),
+            dict(wsp_payment_e2e=True, wsp_source=pinned,
+                 interactive_demo=1),
+            dict(wsp_payment_e2e=True, wsp_source=pinned,
+                 interactive_demo="yes"),
+        ):
+            # All denials must occur before any file/daemon access.
+            with self.subTest(payload=payload), self.assertRaises(CoreSmokeError):
+                smoke_real_core(core, explicit_consent=True, **payload)
+        with self.assertRaisesRegex(CoreSmokeError, "^CORE_REAL_REGTEST_CONSENT_DENIED$"):
+            smoke_real_core(core, explicit_consent=False,
+                            wsp_source=pinned, wsp_payment_e2e=True,
+                            interactive_demo=True)
+
     def test_no_core_wallet_projection_from_unknown_filesystem(self):
         with self.assertRaises(RealWalletReadError):
             read_real_wallet_snapshot(
