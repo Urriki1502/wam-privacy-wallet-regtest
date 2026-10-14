@@ -95,13 +95,23 @@ def _sha(path: Path) -> str:
 
 
 def _gpg(exe: str, home: Path, *args: str) -> tuple[int, str]:
+    # Windows GnuPG requires the OS system directory for its native runtime.
+    # Keep the isolated GNUPGHOME and strict public-key/signature checks;
+    # do not import user keyrings or process arbitrary GPG configuration.
+    env = {"GNUPGHOME": str(home), "HOME": str(home), "LC_ALL": "C",
+           "PATH": os.environ.get("PATH", "")}
+    if os.name == "nt":
+        root = os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT")
+        if not root or not os.path.isabs(root):
+            raise ReleaseError("RELEASE_WINDOWS_SYSTEMROOT_DENIED")
+        env["SystemRoot"] = root
     try:
         p = subprocess.run(
             [exe, "--homedir", str(home), "--batch", "--no-tty", "--no-autostart",
              "--no-auto-key-retrieve", *args],
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
             stdin=subprocess.DEVNULL, timeout=30, check=False,
-            env={"GNUPGHOME": str(home), "HOME": str(home), "LC_ALL": "C", "PATH": os.environ.get("PATH", "")},
+            env=env,
         )
     except (OSError, subprocess.TimeoutExpired):
         raise ReleaseError("RELEASE_GPG_UNAVAILABLE") from None
