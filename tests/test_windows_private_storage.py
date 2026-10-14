@@ -49,6 +49,40 @@ class NativeWindowsCustodyTests(unittest.TestCase):
         import hashlib
         self.assertEqual(p.returncode,0);self.assertEqual(p.stdout.strip(),hashlib.sha256(self.blob).hexdigest())
 
+    def test_terminated_writer_leaves_only_unpublished_ciphertext(self):
+        import time
+        store.publish(self.private,'test.enc',self.blob)
+        code = """
+from pathlib import Path
+import ctypes,time,sys
+from wam_regtest import windows_private_storage as s
+root=Path(sys.argv[1])
+with s.directory_guard(root),s.security_attributes() as sa:
+    h=s.create(str(root/'.stage-interrupted'),0xc0030000,1,sa,1,0x80200080,None)
+    assert h not in (None,s.INVALID)
+    blob=b'WAMSP02\\x00'+b'c'*80
+    buf=ctypes.create_string_buffer(blob);count=s.w.DWORD()
+    assert s.write(h,buf,len(blob),ctypes.byref(count),None) and count.value==len(blob)
+    assert s.flush(h)
+    s.publish(root,'ready.enc',blob)
+    time.sleep(60)
+"""
+        p=subprocess.Popen([sys.executable,'-c',code,str(self.private)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        try:
+            deadline=time.monotonic()+10
+            while not (self.private/'ready.enc').exists() and p.poll() is None and time.monotonic()<deadline:
+                time.sleep(.05)
+            self.assertTrue((self.private/'ready.enc').exists(),'native writer did not reach flushed pre-publication phase')
+            p.kill();p.wait(timeout=5)
+            self.assertFalse((self.private/'snapshot-000000002.enc').exists())
+            self.assertEqual(store.read(self.private,'test.enc'),self.blob)
+            self.assertTrue((self.private/'.stage-interrupted').exists())
+            with self.assertRaises(store.WindowsCustodyError):store.publish(self.private,'test.enc',self.blob)
+            self.assertEqual(store.read(self.private,'test.enc'),self.blob)
+        finally:
+            if p.poll() is None:p.kill()
+            p.wait(timeout=5)
+
 class WindowsCustodyHostScope(unittest.TestCase):
     def test_native_scope_not_simulated_on_other_hosts(self):
         if sys.platform!='win32':

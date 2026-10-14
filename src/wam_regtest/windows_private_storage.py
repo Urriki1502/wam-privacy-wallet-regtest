@@ -56,6 +56,8 @@ if sys.platform=='win32':
         _fields_=[('count',w.DWORD),('used',w.DWORD),('free',w.DWORD)]
     class ACE(c.Structure):
         _fields_=[('kind',c.c_ubyte),('flags',c.c_ubyte),('size',w.WORD),('mask',w.DWORD)]
+    class DISPOSITION(c.Structure):
+        _fields_=[('delete',w.BOOL)]
     class RENAME(c.Structure):
         _fields_=[('flags',w.DWORD),('root',w.HANDLE),('length',w.DWORD),('name',w.WCHAR*1)]
     INVALID=c.c_void_p(-1).value
@@ -204,9 +206,13 @@ def publish(directory,name,ciphertext):
             if not setinfo(handle,3,buffer,len(buffer)): _deny('WIN_CUSTODY_PUBLISH_DENIED')
             renamed=True;_metadata(handle);verify_security(handle)
         finally:
-            if handle is not None: close(handle)
-            if not renamed and (directory/temporary).exists():
-                if not delete(str(directory/temporary)): _deny('WIN_CUSTODY_STAGE_CLEANUP_DENIED')
+            if handle is not None:
+                try:
+                    if not renamed:
+                        disposition=DISPOSITION(True)
+                        if not setinfo(handle,4,c.byref(disposition),c.sizeof(disposition)):
+                            _deny('WIN_CUSTODY_STAGE_CLEANUP_DENIED')
+                finally: close(handle)
 
 
 def read(directory,name):
