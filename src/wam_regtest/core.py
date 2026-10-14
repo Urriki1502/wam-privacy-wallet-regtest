@@ -144,9 +144,13 @@ def _early_exit_category(datadir: Path) -> str:
     return "CORE_DAEMON_EARLY_EXIT_UNCLASSIFIED"
 
 
-def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 120) -> dict:
+def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 120,
+                    wsp_source: Path | None = None) -> dict:
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
+    if (wsp_source is not None and
+            (type(wsp_source) is not type(Path()) or not wsp_source.is_absolute())):
+        raise CoreSmokeError("CORE_WSP_SOURCE_SCOPE_DENIED")
     node, cli, receipt = verified_core_paths(core_dir)
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
@@ -209,8 +213,21 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 raise CoreSmokeError("CORE_REGTEST_CHAIN_DRIFT_DENIED")
             if _read_cli(prefix + ["getconnectioncount"]) != 0:
                 raise CoreSmokeError("CORE_EXTERNAL_PEERS_DENIED")
+            wsp_receipt = None
+            if wsp_source is not None:
+                from .wsp_live import scan_actual_core_blocks, RealWspScanError
+                try:
+                    wsp_receipt = scan_actual_core_blocks(
+                        cli, datadir, wsp_source, expected_height=height,
+                    )
+                except RealWspScanError as exc:
+                    raise CoreSmokeError(str(exc)) from None
             return {
-                "status": "REAL_WAM_CORE_V0_1_11_REGTEST_RPC_101_BLOCKS_PASS",
+                "status": ("REAL_WAM_CORE_V0_1_11_REGTEST_AND_NATIVE_WSP_SCANNER_PASS"
+                           if wsp_receipt is not None else
+                           "REAL_WAM_CORE_V0_1_11_REGTEST_RPC_101_BLOCKS_PASS"),
+                "wsp_real_core_scan_pass": wsp_receipt is not None,
+                "wsp_live_scan": wsp_receipt,
                 "platform": receipt["platform"], "node_sha256": receipt["wamd_sha256"],
                 "chain": "regtest", "block_height": height, "tip": tip,
                 "live_wamd_process_observed": True, "live_rpc_observed": True,
