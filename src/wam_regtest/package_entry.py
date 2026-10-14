@@ -94,6 +94,7 @@ def main() -> int:
             core_dir, explicit_consent=True, wsp_source=source,
             wsp_payment_e2e=True,
             gui_e2e=ci_mode,
+            security_e2e=ci_mode,
             interactive_demo=not ci_mode,
         )
         if ci_mode:
@@ -102,6 +103,9 @@ def main() -> int:
                     or not result.get("wsp_bip352_e2e_pass")
                     or result.get("mainnet_allowed") is not False):
                 raise BundleLaunchError("WAM_BUNDLE_LIVE_E2E_DENIED")
+            if result["security_live_core"]["status"] != "REAL_CORE_MACOS_KEYCHAIN_ENCRYPTED_RECOVERY_REORG_PASS":
+                raise BundleLaunchError("WAM_BUNDLE_SECURITY_E2E_DENIED")
+            print("MACOS_ARM64_PACKAGED_ENCRYPTED_RECOVERY_REORG_E2E_PASS")
             print("MACOS_ARM64_PACKAGED_APP_REAL_CORE_QT_BIP352_E2E_PASS")
         else:
             if not result.get("interactive_demo_closed_cleanly"):

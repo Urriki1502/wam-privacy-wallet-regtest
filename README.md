@@ -105,3 +105,11 @@ The script uses the current GitHub identity, creates `wam-privacy-wallet-regtest
 - Official Core: https://github.com/wamcoin-core-dev/wam-coin/releases/tag/v0.1.11
 - WSP source pin: https://github.com/Urriki1502/wam-silent-payments/tree/ac55f13423620252bdbf848c7e8a280c3b84721e
 - Legacy wallet (archive/reference only): https://github.com/Urriki1502/wam-privacy-wallet
+
+## Encrypted REGTEST wallet state qualification
+
+`--confirm-security-e2e` adds real native macOS Keychain anchored encrypted
+key/checkpoint backup, recovery and actual Core invalidate/reconsider checks.
+The final frozen app repeats this gate. See [security reuse and exact limits](docs/SECURITY-REUSE.md).
+The checkpoint vault uses pinned WSP AES-GCM/scrypt; the Keychain anchor contains
+only a public generation/digest. No mainnet, personal keys or production custody.

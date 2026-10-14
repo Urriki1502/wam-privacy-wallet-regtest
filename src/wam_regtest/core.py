@@ -148,7 +148,8 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     wsp_source: Path | None = None,
                     wsp_payment_e2e: bool = False,
                     gui_e2e: bool = False,
-                    interactive_demo: bool = False) -> dict:
+                    interactive_demo: bool = False,
+                    security_e2e: bool = False) -> dict:
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
     if (wsp_source is not None and
@@ -163,11 +164,16 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             or (interactive_demo and (not wsp_payment_e2e
                                       or wsp_source is None or gui_e2e))):
         raise CoreSmokeError("CORE_REAL_DEMO_SCOPE_DENIED")
+    if type(security_e2e) is not bool or (security_e2e and (not wsp_payment_e2e or interactive_demo)):
+        raise CoreSmokeError("CORE_SECURITY_SCOPE_DENIED")
     node, cli, receipt = verified_core_paths(core_dir)
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
     with tempfile.TemporaryDirectory(prefix="wam-real-regtest-") as temp:
-        datadir = Path(temp)
+        # Canonicalize the OS-created temporary directory: macOS /var is a
+        # system symlink. Private storage then walks canonical ancestors with
+        # O_NOFOLLOW rather than relaxing its symlink checks.
+        datadir = Path(temp).resolve(strict=True)
         datadir.chmod(0o700)
         rpc, p2p = _port(), _port()
         if rpc == p2p:
@@ -280,7 +286,15 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     raise
                 except Exception:
                     raise CoreSmokeError("CORE_REAL_DEMO_GUI_DENIED") from None
+            security_receipt = None
+            if security_e2e:
+                from .security_probe import probe_security, SecurityProbeError
+                try:
+                    security_receipt = probe_security(cli, datadir, wsp_source, mine_to)
+                except SecurityProbeError as exc:
+                    raise CoreSmokeError(str(exc)) from None
             return {
+                "security_live_core": security_receipt,
                 "interactive_demo_closed_cleanly": demo_finished,
                 "gui_real_core_e2e_pass": gui_receipt is not None,
                 "gui_live_core_view": gui_receipt,
