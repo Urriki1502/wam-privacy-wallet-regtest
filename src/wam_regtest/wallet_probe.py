@@ -2,7 +2,7 @@
 from pathlib import Path
 import subprocess
 import secrets
-from PySide6.QtCore import QEventLoop,QTimer,QCoreApplication,QEvent
+from PySide6.QtCore import QEventLoop,QTimer,QCoreApplication,QEvent,Qt
 from PySide6.QtWidgets import QApplication
 from .wallet_session import WalletSession, WalletSessionError
 from .operational_gui import OperationalWalletWindow
@@ -74,6 +74,22 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window.apply_snapshot(initial)
         assert window.navigation.count()==6 and window._sync_timer.isActive()
         assert not window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
+        for index,color in ((2,'#0B1322'),(1,'#F3F6FB')):
+            window.appearance.setCurrentIndex(index)
+            app.processEvents()
+            assert color in window.styleSheet()
+        window.appearance.setCurrentIndex(0)
+        hints=app.styleHints()
+        prior=hints.colorScheme()
+        auto_verified=False
+        if prior in (Qt.ColorScheme.Light,Qt.ColorScheme.Dark):
+            for scheme,color in ((Qt.ColorScheme.Dark,'#0B1322'),(Qt.ColorScheme.Light,'#F3F6FB')):
+                hints.setColorScheme(scheme)
+                app.processEvents()
+                assert hints.colorScheme()==scheme and color in window.styleSheet()
+            hints.setColorScheme(prior)
+            app.processEvents()
+            auto_verified=True
         window.recipient.setText(code)
         window.amount.setText("0.00100000")
         window.fee.setText("0.00010000")
@@ -152,6 +168,16 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window.deleteLater()
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
         window=None
+        stage="REOPEN_ON_NEW_CORE"
+        print("WALLET_E2E_STAGE=REOPEN_ON_NEW_CORE",flush=True)
+        from .core import smoke_real_core
+        reopened=smoke_real_core(core_dir,explicit_consent=True,wsp_source=source,
+                                 wsp_payment_e2e=True,
+                                 recovery_case=(backup,'wallet-backup.enc',password,keychain,initial.receive_code))
+        proof=reopened['recovery_live_core']
+        assert proof['status']=='REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS'
+        assert reopened['block_height']==103 and reopened['live_wamd_process_observed'] is True
+        assert reopened['mainnet_allowed'] is False and reopened['node_sha256']==initial.core_sha256
         return {
             'status':'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS',
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
@@ -162,6 +188,9 @@ def probe_wallet(core_dir,datadir,source,mining_address):
             'irreversible_reservations_survive_reorg':True,'native_qt_backup_lock_recovery':True,
             'wrong_unlock_password_denied':True,'background_sync_active':True,
             'native_gui_navigation_pages':6,'observed_height':105,
+            'qt_manual_light_dark_verified':True,'qt_auto_system_events_verified':auto_verified,
+            'cross_session_key_recovery':True,'cross_session_native_qt':True,
+            'cross_session_recovery_proof':proof,
             'production_custody_qualified':False,
         }
     except WalletProbeError:

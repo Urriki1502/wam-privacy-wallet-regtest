@@ -38,8 +38,13 @@ SQLite runtime. Unlock/recovery authenticates the latest Keychain-anchored
 snapshot and scans actual Core before enabling balances or spending. Save latest
 backup creates a new private folder with a 0600 ciphertext file; it never replaces
 an existing backup. Keep a new backup after state changes; older generations are
-rejected while a newer anchor exists. Current GUI recovery is within the active
-session; cross-session/cross-Mac recovery is not yet qualified.
+rejected while a newer anchor exists. Recovery is available both within the active session and on a new app session
+on the same Mac. Choose **Recover latest backup on this Mac** at startup. The
+existing Keychain anchor must match the backup. The fresh chain is rescanned;
+a new testing epoch is funded while prior signed/uncertain reservations remain
+locked. Save a new latest backup after recovery. Cross-Mac anchor migration is
+not allowed. The pinned keyring supports at most 16 testing epochs and fails
+closed at its rotation limit.
 
 Settings retains manual sync, a 30-second background worker, explicit REGTEST
 mining and macOS light/dark Auto appearance with Light/Dark override. There is no
@@ -52,5 +57,12 @@ Both source and final frozen executable must perform actual native Qt Prepare,
 Sign and Broadcast to real Core; mempool acceptance; confirmation at block 105;
 100,000 atoms received by an independent WSP scanner; verified sender change;
 real send-block invalidate/reconsider with irreversible locks retained; and native
-Qt backup/lock/wrong-password rejection/recovery. All 28 BIP352 vector suites and
+Qt backup/lock/wrong-password rejection/recovery, then a second actual Core
+session proving the same keys recover against the retained Keychain anchor. All 28 BIP352 vector suites and
 all security contracts remain mandatory. Mock unit contracts are not real E2E.
+
+Local Cocoa appearance qualification runs the final package with
+`QT_QPA_PLATFORM=cocoa` and `--ci-real-core-wallet-cocoa`. This additionally
+verifies real macOS Qt color-scheme change events in Auto mode while repeating
+the actual Core wallet/security/recovery flows. It does not replace the mandatory
+headless source/frozen gates. No system appearance preference is changed.

@@ -78,6 +78,18 @@ class CoreContractTests(unittest.TestCase):
                 with self.assertRaises(CoreSmokeError):
                     verified_core_paths(home)
 
+    def test_mutable_receipt_cannot_authorize_replaced_macos_cli(self):
+        with tempfile.TemporaryDirectory() as folder:
+            home=Path(folder)
+            receipt={
+                "platform":"macos-arm64","signed_archive_verified":True,
+                "mainnet_allowed":False,"loader_process_binding_qualified":False,
+                "wamd_sha256":ARCHIVES["macos-arm64"][1],"wam_cli_sha256":"0"*64,
+            }
+            (home/"receipt.json").write_text(json.dumps(receipt))
+            with self.assertRaisesRegex(CoreSmokeError,"CORE_RECEIPT_DENIED"):
+                verified_core_paths(home)
+
     def test_architecture_requires_exact_signed_executable_bytes(self):
         with tempfile.TemporaryDirectory() as folder:
             file = Path(folder) / "bad-binary"

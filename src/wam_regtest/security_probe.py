@@ -56,8 +56,29 @@ def probe_security(cli, datadir, source, mining_address):
         stage = "ENCRYPTED_SAVE"
         first = vault.save(ring, scanner, password)
         first_bytes = read(private, vault._filename(first[0]))
+        duplicate = datadir / "stale-vault-copy"
+        duplicate.mkdir(mode=0o700)
+        publish(duplicate, vault._filename(first[0]), first_bytes)
+        stale_writer = CheckpointVault(duplicate, anchor, source)
         second = vault.save(ring, scanner, password)
+        try:
+            stale_writer.save(ring, scanner, password)
+        except VaultError as error:
+            if str(error) != "VAULT_STALE_WRITER_DENIED":
+                raise
+        else:
+            raise SecurityProbeError("SECURITY_STALE_WRITER_ACCEPTED")
         assert second[0] == first[0] + 1 and first_bytes != read(private, vault._filename(second[0]))
+        with anchor.lease():
+            competitor=KeychainAnchor(anchor.wallet_id,keychain)
+            try:
+                competitor.advance(second,(second[0]+1,"a"*64))
+            except VaultError as error:
+                if str(error)!="VAULT_SESSION_BUSY":
+                    raise
+            else:
+                raise SecurityProbeError("SECURITY_GLOBAL_LEASE_BYPASSED")
+        assert anchor.read()==second
         stage = "PASSWORD"
         # Wrong passphrase cannot restore even a correctly anchored envelope.
         try:
@@ -110,12 +131,22 @@ def probe_security(cli, datadir, source, mining_address):
         restored.sync(rpc)
         assert restored.ready and restored.coins()[0]["atoms"] == amount
         assert restored.store.tip() == (103, tip)
+        for depth in (12,100):
+            changed = rpc.call("getblockhash",[103-depth+1])
+            rpc._call("invalidateblock",[changed])
+            measured = restored.sync(rpc)
+            assert measured.rollback == depth and restored.ready and not restored.coins()
+            rpc._call("reconsiderblock",[changed])
+            restored.sync(rpc)
+            assert restored.store.tip() == (103,tip) and restored.coins()[0]["atoms"] == amount
         return {
             "status": "REAL_CORE_MACOS_KEYCHAIN_ENCRYPTED_RECOVERY_REORG_PASS",
             "real_core_rpc": True, "synthetic_rpc": False, "mainnet_allowed": False,
             "encrypted_key_backup": True, "authenticated_checkpoint": True,
             "wrong_password_denied": True, "wallet_directory_rollback_denied": True,
             "independent_native_keychain_anchor": True,
+            "stale_writer_denied": True, "native_wallet_id_lease_contended": True,
+            "actual_core_reorg_depths": [1,12,100],
             "backup_recovery_then_live_scan": True, "restored_balance_blocked_until_live_scan": True,
             "actual_core_reorg_depth": 1, "observed_height": 103,
             "same_uid_malware_protection": False, "keychain_rollback_protection": False,

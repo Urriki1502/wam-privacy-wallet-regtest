@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import platform
+import os
 import sys
 
 
@@ -59,7 +60,10 @@ def main() -> int:
         core_dir, source = _check_bundle()
         from wam_regtest.core import smoke_real_core
         # Hidden CI mode: actual signed Core + genuine BIP352 + Qt screen.
-        ci_mode = sys.argv[1:] == ["--ci-real-core-gui"]
+        cocoa_mode = sys.argv[1:] == ["--ci-real-core-wallet-cocoa"]
+        ci_mode = sys.argv[1:] == ["--ci-real-core-gui"] or cocoa_mode
+        if cocoa_mode and os.environ.get("QT_QPA_PLATFORM") != "cocoa":
+            raise BundleLaunchError("WAM_BUNDLE_COCOA_PLATFORM_REQUIRED")
         self_test = sys.argv[1:] == ["--check-bundle"]
         if sys.argv[1:] and not (ci_mode or self_test):
             raise BundleLaunchError("WAM_BUNDLE_ARGUMENT_DENIED")
@@ -93,15 +97,17 @@ def main() -> int:
         result = smoke_real_core(
             core_dir, explicit_consent=True, wsp_source=source,
             wsp_payment_e2e=True,
-            gui_e2e=ci_mode,
+            gui_e2e=ci_mode and not cocoa_mode,
             security_e2e=ci_mode,
             wallet_e2e=ci_mode,
             operational_demo=not ci_mode,
             interactive_demo=not ci_mode,
         )
         if ci_mode:
-            if (result.get("status") != "REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS"
-                    or not result.get("gui_real_core_e2e_pass")
+            expected_status = ("REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS" if cocoa_mode else
+                               "REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS")
+            if (result.get("status") != expected_status
+                    or result.get("gui_real_core_e2e_pass") is not (not cocoa_mode)
                     or not result.get("wsp_bip352_e2e_pass")
                     or result.get("mainnet_allowed") is not False):
                 raise BundleLaunchError("WAM_BUNDLE_LIVE_E2E_DENIED")
@@ -109,6 +115,13 @@ def main() -> int:
                 raise BundleLaunchError("WAM_BUNDLE_SECURITY_E2E_DENIED")
             if result["wallet_live_core"]["status"] != "REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS":
                 raise BundleLaunchError("WAM_BUNDLE_WALLET_E2E_DENIED")
+            if result["wallet_live_core"].get("cross_session_key_recovery") is not True:
+                raise BundleLaunchError("WAM_BUNDLE_CROSS_SESSION_RECOVERY_DENIED")
+            if cocoa_mode:
+                if result["wallet_live_core"].get("qt_auto_system_events_verified") is not True:
+                    raise BundleLaunchError("WAM_BUNDLE_COCOA_AUTO_APPEARANCE_DENIED")
+                print("MACOS_COCOA_PACKAGED_AUTO_LIGHT_DARK_REAL_CORE_WALLET_PASS")
+            print("MACOS_ARM64_PACKAGED_CROSS_SESSION_BACKUP_RECOVERY_PASS")
             print("MACOS_ARM64_PACKAGED_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_PASS")
             print("MACOS_ARM64_PACKAGED_ENCRYPTED_RECOVERY_REORG_E2E_PASS")
             print("MACOS_ARM64_PACKAGED_APP_REAL_CORE_QT_BIP352_E2E_PASS")

@@ -21,6 +21,11 @@ fresh disposable research keys. This is internal engineering qualification.
 - Versioned snapshot generation and ciphertext SHA-256 are anchored in a
   separate macOS Keychain generic-password item. The item contains only the
   public generation/digest, never the wallet seed or passphrase.
+- An OS lease keyed by wallet ID serializes anchor updates across different
+  vault directories. A writer must still match the generation it previously
+  read; stale writers fail before publication/signing/network action.
+- Both official macOS node and CLI member hashes are independently pinned;
+  changing a receipt cannot authorize a substituted CLI.
 - Missing/mismatched anchor, older ciphertext under the latest name, wrong
   passphrase, malformed recovery and nonempty restore destination fail closed.
 - Recovery preserves irreversible reservations and requires a fresh scanner
@@ -50,6 +55,6 @@ clearing; interpreter/native copies may remain. No production-custody claim.
 It funds a fresh test Keyring at block 103, saves two authenticated snapshots,
 uses an isolated native test Keychain (without changing the default/search
 list), rejects a wrong password and wallet-file rollback, restores a backup,
-blocks coin reads before RPC sync, invalidates the real receive block and then
-reconsiders it. Acceptance is repeated inside the final PyInstaller executable.
+blocks coin reads before RPC sync, rejects a stale writer, and exercises real
+invalidate/reconsider reorg depths 1, 12 and 100. Acceptance is repeated inside the final PyInstaller executable.
 Mock unit contracts are not counted as real E2E.

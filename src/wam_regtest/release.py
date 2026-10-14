@@ -35,6 +35,11 @@ ARCHIVES = {
         "625609c08afef441e9dddd71330dcab1cec112d6fabe361769b9907f0efe7ab4",
     ),
 }
+# Independently pinned exact macOS CLI member from the same GPG-verified
+# official v0.1.11 archive; a mutable receipt cannot authorize another CLI.
+CLI_SHA256 = {
+    "macos-arm64": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+}
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 MAX_ARCHIVE = 320 * 1024 * 1024
 MAX_MEMBER = 128 * 1024 * 1024
@@ -221,7 +226,10 @@ def review_and_stage(os_arch: str, destination: Path, gpg_exe: str = "gpg") -> d
             raise ReleaseError("RELEASE_ARCHIVE_CONTENT_DENIED") from None
         if set(hashes) != {"wamd", "wam-cli"} or hashes["wamd"] != node_sha:
             raise ReleaseError("RELEASE_MEMBER_SHA_DENIED")
+        if os_arch in CLI_SHA256 and hashes["wam-cli"] != CLI_SHA256[os_arch]:
+            raise ReleaseError("RELEASE_CLI_MEMBER_SHA_DENIED")
         _verify_executable_shape(stage / "wamd", os_arch)
+        _verify_executable_shape(stage / "wam-cli", os_arch)
         receipt = {
             "tag": VERSION, "platform": os_arch, "archive": archive_name,
             "archive_sha256": signed_sha, "wamd_sha256": node_sha,

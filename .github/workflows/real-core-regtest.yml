@@ -112,6 +112,9 @@ jobs:
           assert security['independent_native_keychain_anchor'] is True
           assert security['wallet_directory_rollback_denied'] is True
           assert security['wrong_password_denied'] is True
+          assert security['stale_writer_denied'] is True
+          assert security['native_wallet_id_lease_contended'] is True
+          assert security['actual_core_reorg_depths'] == [1,12,100]
           assert security['restored_balance_blocked_until_live_scan'] is True
           assert security['actual_core_reorg_depth'] == 1 and security['observed_height'] == 103
           wallet = proof['wallet_live_core']
@@ -126,6 +129,13 @@ jobs:
           assert wallet['irreversible_reservations_survive_reorg'] is True
           assert wallet['native_qt_backup_lock_recovery'] is True
           assert wallet['background_sync_active'] is True
+          assert wallet['qt_manual_light_dark_verified'] is True
+          assert wallet['cross_session_key_recovery'] is True and wallet['cross_session_native_qt'] is True
+          reopen = wallet['cross_session_recovery_proof']
+          assert reopen['status'] == 'REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS'
+          assert reopen['real_core_rpc'] is True and reopen['synthetic_rpc'] is False
+          assert reopen['same_test_keys_recovered'] is True and reopen['old_reservations_retained'] is True
+          assert reopen['observed_height'] == 103
           assert wallet['native_gui_navigation_pages'] == 6 and wallet['observed_height'] == 105
           print('REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_PASS')
           print('REAL_CORE_KEYCHAIN_ENCRYPTED_RECOVERY_REORG_PASS')
