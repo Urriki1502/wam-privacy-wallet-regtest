@@ -1,4 +1,6 @@
 """Native disposable test-wallet Send/Sign/Broadcast and Security/Settings UI."""
+import sys
+from . import custody
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 import secrets
@@ -105,7 +107,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         title.setObjectName("PageTitle")
         layout.addWidget(title)
         text=QLabel("Encrypted wallet keys and authenticated checkpoints · AES-GCM / scrypt\n"
-                    "Independent macOS Keychain generation/digest anchor\n\n"
+                    f"Independent {custody.anchor_label()} generation/digest anchor\n\n"
                     "Keep the latest backup after each payment. Older anchored generations are rejected.\n"
                     "Recovery always verifies and scans the live REGTEST chain.\n"
                     "Unlocked SQLite is a private disposable runtime; memory clearing is best effort.")
@@ -153,7 +155,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         title.setObjectName("PageTitle")
         layout.addWidget(title)
         node_text=QLabel("Official WAM Core v0.1.11 · zero peers · localhost only\n"
-                               "Background sync every 30 seconds; appearance follows macOS in Auto mode.\n"
+                               "Background sync every 30 seconds; appearance follows the system in Auto mode.\n"
                                "The test chain is deleted when this developer session closes.")
         node_text.setWordWrap(True)
         layout.addWidget(node_text)
@@ -168,7 +170,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         layout.addWidget(self.network_text)
         layout.addStretch()
         self.stack.addWidget(settings)
-        self.appearance.setItemText(0,"Auto · macOS")
+        self.appearance.setItemText(0,"Auto · Windows" if sys.platform=="win32" else "Auto · macOS")
         hints=QApplication.styleHints()
         hints.colorSchemeChanged.connect(self.apply_theme)
         self._appearance_connected=True
@@ -250,7 +252,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
             self.network_text.setText("VERIFIED LOCAL REGTEST · zero peers\nScan/broadcast share the private local node.\nNo remote routes, proxy or clearnet fallback; anonymity unqualified.")
         if action=="lock":
             self._clear_balance()
-            self.status.setText("LOCKED · encrypted snapshot anchored in macOS Keychain")
+            self.status.setText("LOCKED · encrypted snapshot anchored in "+custody.anchor_label())
         else:
             message = ("BACKUP SAVED · latest anchored generation" if action=="backup" else
                        "BROADCAST SUBMITTED · mine a block and sync to verify confirmation" if action=="broadcast" else
@@ -320,7 +322,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         if parent:
             directory=Path(parent).resolve()/("wam-regtest-backup-"+secrets.token_hex(6))
             try:
-                directory.mkdir(mode=0o700)
+                custody.create_directory(directory)
                 self.start_operation("backup",directory,"wallet-backup.enc")
             except OSError:
                 self._operation_denied("WALLET_BACKUP_DIRECTORY_DENIED")
@@ -353,11 +355,11 @@ def launch_disposable_wallet(core_dir,datadir,source,mining_address):
     app=qt_application()
     choice,ok=QInputDialog.getItem(None,"Disposable REGTEST wallet",
         "Fresh test chain · no personal keys or real funds",
-        ["Create fresh test keys","Recover latest backup on this Mac"],0,False)
+        ["Create fresh test keys","Recover latest backup on this computer"],0,False)
     if not ok:
         return 0
     backup=None
-    if choice=="Recover latest backup on this Mac":
+    if choice=="Recover latest backup on this computer":
         name,_=QFileDialog.getOpenFileName(None,"Latest anchored REGTEST backup",filter="Encrypted backups (*.enc)")
         if not name:
             return 0

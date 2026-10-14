@@ -6,6 +6,7 @@ A Qt worker runs live WSP Scanner.sync off the GUI thread.
 """
 from __future__ import annotations
 
+import sys
 from datetime import datetime
 from pathlib import Path
 from PySide6.QtCore import QThread, QTimer, Signal, Qt
@@ -134,7 +135,7 @@ class RegtestWalletWindow(QMainWindow):
         titles = QVBoxLayout()
         name = QLabel("WAM Privacy Wallet")
         name.setObjectName("BrandTitle")
-        sub = QLabel("REAL WAM CORE  ·  BIP352  ·  macOS ARM64")
+        sub = QLabel("REAL WAM CORE  ·  BIP352  ·  "+("Windows x64" if sys.platform=="win32" else "macOS ARM64"))
         sub.setObjectName("SecondaryLabel")
         titles.addWidget(name)
         titles.addWidget(sub)

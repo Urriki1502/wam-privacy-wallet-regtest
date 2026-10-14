@@ -47,7 +47,11 @@ def _staged_signed_binaries(archive: Path, receipt: dict, destination: Path) -> 
     """Create only exact, independently hashed signed Core/CLI members."""
     if destination.exists():
         _deny("WIN_CORE_STAGE_EXISTS_DENIED")
-    destination.mkdir()
+    from .custody import create_directory
+    if sys.platform == "win32":
+        create_directory(destination)
+    else:
+        destination.mkdir()
     trusted = receipt["member_sha256"]
     try:
         with zipfile.ZipFile(archive, "r") as z:
@@ -63,14 +67,22 @@ def _staged_signed_binaries(archive: Path, receipt: dict, destination: Path) -> 
                     binary = stream.read(128 * 1024 * 1024 + 1)
                 if len(binary) != entry.file_size or _hash(binary) != trusted[filename]:
                     _deny("WIN_CORE_STAGED_HASH_DENIED")
-                with (destination / filename).open("xb") as out:
-                    out.write(binary)
-                    out.flush()
-                    os.fsync(out.fileno())
+                if sys.platform == "win32":
+                    from .windows_core_transport import write_new
+                    write_new(destination,filename,binary)
+                else:
+                    with (destination / filename).open("xb") as out:
+                        out.write(binary)
+                        out.flush()
+                        os.fsync(out.fileno())
                 if _hash((destination / filename).read_bytes()) != trusted[filename]:
                     _deny("WIN_CORE_STAGED_HASH_DENIED")
         if set(p.name for p in destination.iterdir()) != {"wamd.exe", "wam-cli.exe"}:
             _deny("WIN_CORE_STAGING_CONTENT_DENIED")
+        if sys.platform == "win32":
+            from .windows_core_transport import write_new, verified_core_paths
+            write_new(destination,"receipt.json",json.dumps(receipt,sort_keys=True).encode())
+            verified_core_paths(destination)
         return destination / "wamd.exe", destination / "wam-cli.exe"
     except WindowsCoreSmokeError:
         raise
@@ -80,7 +92,15 @@ def _staged_signed_binaries(archive: Path, receipt: dict, destination: Path) -> 
 
 def _host_env(datadir: Path) -> dict:
     """Minimize inherited DLL search/profile influences for disposable CI."""
-    root = os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT")
+    from . import windows_private_storage as store
+    store.require_native()
+    import ctypes
+    from ctypes import wintypes
+    get_root=store.K.GetSystemWindowsDirectoryW
+    get_root.argtypes=[wintypes.LPWSTR,wintypes.UINT];get_root.restype=wintypes.UINT
+    buffer=ctypes.create_unicode_buffer(261)
+    size=get_root(buffer,len(buffer))
+    root=buffer.value if 1<=size<len(buffer) else None
     if not root or not Path(root).is_dir():
         _deny("WIN_CORE_SYSTEMROOT_DENIED")
     return {
@@ -106,10 +126,8 @@ def _config(datadir: Path, rpc_port: int, peer_port: int) -> None:
         "dnsseed=0", "discover=0", "upnp=0", "txindex=1",
         "blockfilterindex=1", "coinstatsindex=1", "fallbackfee=0.0001", "",
     ))
-    with (datadir / "wam.conf").open("x", encoding="ascii", newline="\n") as f:
-        f.write(config)
-        f.flush()
-        os.fsync(f.fileno())
+    from .windows_core_transport import write_new
+    write_new(datadir,"wam.conf",config.encode("ascii"))
 
 
 def _rpc(cli: Path, datadir: Path, port: int, env: dict, *args: str, timeout=15):
@@ -185,11 +203,8 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
         root = Path(tmp).resolve(strict=True)
         node, cli = _staged_signed_binaries(archive, proof, root / "core")
         datadir = root / "chain"
-        if vault_e2e:
-            from .custody import create_directory
-            create_directory(datadir)
-        else:
-            datadir.mkdir()
+        from .custody import create_directory
+        create_directory(datadir)
         rpc, p2p = _port(), _port()
         _config(datadir, rpc, p2p)
         env = _host_env(datadir)

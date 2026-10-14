@@ -2,6 +2,8 @@
 from pathlib import Path
 import subprocess
 import secrets
+import sys
+from . import custody
 from PySide6.QtCore import QEventLoop,QTimer,QCoreApplication,QEvent,Qt
 from PySide6.QtWidgets import QApplication
 from .wallet_session import WalletSession, WalletSessionError, WalletCoreCli
@@ -49,17 +51,17 @@ def probe_wallet(core_dir,datadir,source,mining_address):
     from wam_sp.keystore import Keyring
     from wam_sp.scanner import Scanner
     session=recipient=recipient_scan=window=None
-    keychain=datadir/'wallet-acceptance.keychain-db'
+    keychain=datadir/'wallet-acceptance.keychain-db' if sys.platform=='darwin' else None
     created=False
     stage="KEYCHAIN"
     print("WALLET_E2E_STAGE=KEYCHAIN",flush=True)
     password=b"public-disposable-wallet-acceptance"
     try:
-        status=subprocess.run(['/usr/bin/security','create-keychain','-p','public-test-only',str(keychain)],
-                               capture_output=True,timeout=15,check=False).returncode
-        if status:
-            raise WalletProbeError("WALLET_TEST_KEYCHAIN_DENIED")
-        created=True
+        if sys.platform=='darwin':
+            status=subprocess.run(['/usr/bin/security','create-keychain','-p','public-test-only',str(keychain)],
+                                   capture_output=True,timeout=15,check=False).returncode
+            if status:raise WalletProbeError("WALLET_TEST_KEYCHAIN_DENIED")
+            created=True
         stage="CREATE"
         print("WALLET_E2E_STAGE=CREATE",flush=True)
         session=WalletSession.create(core_dir,datadir,source,password,mining_address,authorized=True,keychain=keychain)
@@ -201,12 +203,12 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         original_sign=Signer.sign
         observed={}
         def checked_sign(signer,*args):
-            other=KeychainAnchor(session.vault.anchor.wallet_id,keychain)
+            other=custody.anchor(session.vault.anchor.wallet_id,keychain)
             try:
                 with other.lease():
                     raise WalletProbeError("WALLET_SIGN_LEASE_NOT_HELD")
-            except VaultError as error:
-                assert str(error)=="VAULT_SESSION_BUSY"
+            except ValueError as error:
+                assert str(error)==("WIN_ANCHOR_SESSION_BUSY" if sys.platform=="win32" else "VAULT_SESSION_BUSY")
             path=datadir/'before-native-sign.sqlite'
             recovered_ring,recovered_scan=session.vault.restore(path,password)
             try:
@@ -266,12 +268,12 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         entered={}
         def lost_reply(client,method,params=None):
             if method=='sendrawtransaction':
-                other=KeychainAnchor(session.vault.anchor.wallet_id,keychain)
+                other=custody.anchor(session.vault.anchor.wallet_id,keychain)
                 try:
                     with other.lease():
                         raise WalletProbeError("WALLET_BROADCAST_LEASE_NOT_HELD")
-                except VaultError as error:
-                    assert str(error)=="VAULT_SESSION_BUSY"
+                except ValueError as error:
+                    assert str(error)==("WIN_ANCHOR_SESSION_BUSY" if sys.platform=="win32" else "VAULT_SESSION_BUSY")
                 path=datadir/'before-network.sqlite'
                 recovered_ring,recovered_scan=session.vault.restore(path,password)
                 try:
@@ -304,7 +306,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         stage="BACKUP"
         print("WALLET_E2E_STAGE=BACKUP",flush=True)
         backup=datadir/'wallet-backup'
-        backup.mkdir(mode=0o700)
+        custody.create_directory(backup)
         _operation(app,window,'backup',lambda:window.start_operation('backup',backup,'wallet-backup.enc'))
         stage="LOCK"
         print("WALLET_E2E_STAGE=LOCK",flush=True)
@@ -334,11 +336,11 @@ def probe_wallet(core_dir,datadir,source,mining_address):
                                  wsp_payment_e2e=True,
                                  recovery_case=(backup,'wallet-backup.enc',password,keychain,initial.receive_code))
         proof=reopened['recovery_live_core']
-        assert proof['status']=='REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS'
+        assert proof['status']==('REAL_CORE_CROSS_SESSION_CREDENTIAL_BACKUP_REOPEN_PASS' if sys.platform=='win32' else 'REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS')
         assert reopened['block_height']==103 and reopened['live_wamd_process_observed'] is True
         assert reopened['mainnet_allowed'] is False and reopened['node_sha256']==initial.core_sha256
         return {
-            'status':'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS',
+            'status':('WIN64_REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS' if sys.platform=='win32' else 'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS'),
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
             'authenticated_selected_local_disclosure':True,'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
             'native_psbtv2_payjoin_bip352_fail_closed':True,'payjoin_signing_authorized':False,'payjoin_transport_implemented':False,
@@ -372,6 +374,9 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         for item in (session,recipient_scan,recipient):
             if item is not None:
                 item.close()
+        if sys.platform=="win32" and session is not None:
+            from .windows_vault_probe import _delete_fixture
+            _delete_fixture(session.vault.anchor)
         if created:
             status=subprocess.run(['/usr/bin/security','delete-keychain',str(keychain)],
                                    capture_output=True,timeout=15,check=False).returncode

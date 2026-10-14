@@ -1,5 +1,6 @@
 """Reopen an anchored encrypted test-key backup on a different actual Core session."""
 from pathlib import Path
+import sys
 from PySide6.QtCore import QCoreApplication,QEvent
 from .desktop import qt_application
 from .operational_gui import OperationalWalletWindow
@@ -35,7 +36,7 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case):
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
         window=None
         return {
-            'status':'REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS',
+            'status':('REAL_CORE_CROSS_SESSION_CREDENTIAL_BACKUP_REOPEN_PASS' if sys.platform=='win32' else 'REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS'),
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
             'same_test_keys_recovered':True,'old_reservations_retained':True,
             'fresh_chain_rescanned_before_balance':True,'new_testing_epoch_funded':True,
