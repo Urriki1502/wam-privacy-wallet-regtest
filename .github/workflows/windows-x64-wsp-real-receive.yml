@@ -1,0 +1,82 @@
+name: REAL Windows x64 WAM Core + WSP BIP352 confirmed receive
+
+on:
+  pull_request:
+    paths:
+      - "src/wam_regtest/windows_wsp_regtest.py"
+      - "src/wam_regtest/windows_core_regtest_smoke.py"
+      - "tests/test_windows_wsp_regtest.py"
+      - ".github/workflows/windows-x64-wsp-real-receive.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64-wsp-core-e2e:
+    name: Signed Core + real WSP BIP352 receive / SQLite restart
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Strict native Windows and exact pinned WSP
+        shell: pwsh
+        run: |
+          python -c "import os,platform,struct; assert os.name=='nt' and platform.machine().lower() in ('amd64','x86_64') and struct.calcsize('P')==8"
+          $head = git -C wsp-upstream rev-parse HEAD
+          if ($head.Trim() -ne "ac55f13423620252bdbf848c7e8a280c3b84721e") { throw "WSP_PIN_DENIED" }
+          if (!(Get-Command gpg -ErrorAction SilentlyContinue)) { throw "SIGNED_CORE_GPG_REQUIRED" }
+      - name: Install real pinned engine + wallet and negative tests
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -e . -e ./wsp-upstream
+          python -m pip check
+          python -m unittest discover -s tests -p "test_windows_wsp_regtest.py" -v
+          if ($LASTEXITCODE -ne 0) { throw "WIN_WSP_BRIDGE_CONTRACT_DENIED" }
+      - name: Execute genuine Core regtest and native WSP BIP352 receive/SQLite
+        shell: pwsh
+        run: |
+          @'
+          import tempfile
+          from pathlib import Path
+          from wam_regtest.release import _download_exact
+          from wam_regtest.windows_core_regtest_smoke import smoke_signed_windows_regtest
+          from wam_regtest.windows_release_preflight import ASSET
+
+          source=Path("wsp-upstream").absolute()
+          with tempfile.TemporaryDirectory(prefix="wam-win-wsp-e2e-") as temp:
+              root=Path(temp)
+              for remote,name,limit in (
+                  ("/SIGNING-KEY.asc","SIGNING-KEY.asc",32768),
+                  ("/downloads/v0.1.11/SHA256SUMS","SHA256SUMS",131072),
+                  ("/downloads/v0.1.11/SHA256SUMS.asc","SHA256SUMS.asc",16384),
+                  ("/downloads/v0.1.11/"+ASSET,ASSET,320*1024*1024),
+              ):
+                  _download_exact(remote,limit,root/name)
+              evidence=smoke_signed_windows_regtest(
+                  root/ASSET,root/"SIGNING-KEY.asc",root/"SHA256SUMS",
+                  root/"SHA256SUMS.asc", consent=True,
+                  wsp_source=source, confirm_public_fixture_payment=True)
+              assert evidence["status"]=="WIN64_REAL_CORE_WSP1_BIP352_CONFIRMED_RECEIVE_PASS"
+              assert evidence["wsp_bip352_payment_e2e"] is True
+              assert evidence["wsp_receipt"]["real_onchain_payment"] is True
+              assert evidence["wsp_receipt"]["scanner_sqlite_history"] is True
+              assert evidence["wsp_receipt"]["scanner_restart_no_double_credit"] is True
+              for forbidden in ("sign_broadcast_authorized","production_authorized","mainnet_allowed"):
+                  assert evidence[forbidden] is False, "WIN_E2E_FORBIDDEN_AUTHORITY"
+              print("WIN64_ACTUAL_SIGNED_CORE_WSP_BIP352_RECEIVE_SQLITE_E2E_PASS")
+              print("CONFIRM_BLOCK_HEIGHT",evidence["wsp_receipt"]["confirm_height"])
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw "WIN_REAL_CORE_WSP_BIP352_E2E_DENIED" }
