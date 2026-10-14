@@ -31,6 +31,55 @@ class WalletSessionContracts(unittest.TestCase):
         self.assertEqual(format_wam(22_000_000*100_000_000-1,grouped=True),'21,999,999.99999999')
         self.assertEqual(format_wam(1),'0.00000001')
 
+    def test_native_keyring_epoch_limit_and_closed_access(self):
+        from wam_sp.keystore import Keyring
+        ring=Keyring()  # Disposable test keys only.
+        try:
+            for birthday in range(2,17):
+                ring.rotate(birthday)
+            self.assertEqual(len(ring.accounts()),16)
+            with self.assertRaisesRegex(ValueError,'ROTATION_LIMIT'):
+                ring.rotate(17)
+            ring.close()
+            with self.assertRaisesRegex(ValueError,'KEYRING_CLOSED'):
+                ring.spend_secret(0)
+        finally:
+            ring.close()
+
+    def test_native_lease_nests_only_for_same_anchor_and_thread(self):
+        from concurrent.futures import ThreadPoolExecutor
+        import secrets
+        from wam_regtest.vault import KeychainAnchor,VaultError
+        anchor=KeychainAnchor(secrets.token_hex(16))
+        def other_thread():
+            with self.assertRaisesRegex(VaultError,'VAULT_SESSION_BUSY'):
+                with anchor.lease():
+                    self.fail('thread bypassed lease')
+        with anchor.lease():
+            with anchor.lease():
+                pass
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                pool.submit(other_thread).result(timeout=3)
+            with self.assertRaisesRegex(VaultError,'VAULT_SESSION_BUSY'):
+                with KeychainAnchor(anchor.wallet_id).lease():
+                    self.fail('anchor copy bypassed lease')
+        with KeychainAnchor(anchor.wallet_id).lease():
+            pass
+
+    def test_restore_preserves_existing_sqlite_sidecar(self):
+        import tempfile
+        from wam_regtest.vault import CheckpointVault,VaultError
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder).resolve()/'runtime.sqlite'
+            sidecar=path.with_name(path.name+'-journal')
+            sidecar.write_bytes(b'existing runtime sidecar')
+            # This precondition must reject before touching keys or Keychain.
+            vault=object.__new__(CheckpointVault)
+            with self.assertRaisesRegex(VaultError,'VAULT_FRESH_RUNTIME_REQUIRED'):
+                vault.restore(path,b'public-test-only')
+            self.assertEqual(sidecar.read_bytes(),b'existing runtime sidecar')
+            self.assertFalse(path.exists())
+
     def test_write_wrapper_never_authorizes_unknown_rpc(self):
         rpc=WalletCoreCli(Path('/unknown-cli'),Path('/unknown-dir'))
         for method in ('dumpprivkey','sendtoaddress','walletpassphrase','importprivkey','stop'):

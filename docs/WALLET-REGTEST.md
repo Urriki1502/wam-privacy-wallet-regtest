@@ -66,3 +66,19 @@ Local Cocoa appearance qualification runs the final package with
 verifies real macOS Qt color-scheme change events in Auto mode while repeating
 the actual Core wallet/security/recovery flows. It does not replace the mandatory
 headless source/frozen gates. No system appearance preference is changed.
+
+## Interrupted operation qualification
+
+Sign approval writes an irreversible anchored reservation before entering
+native crypto. Sign and Broadcast retain the wallet-ID OS lease through the
+operation. Crypto or broadcast uncertainty faults the session and keeps locks;
+Lock/Unlock performs a real live rescan. An uncertain broadcast reply never
+authorizes canceling its inputs, even when Core already accepted the transaction.
+The real gate verifies that exact accepted transaction in Core's mempool, then
+checks reservation retention through Unlock and fresh-chain backup recovery.
+
+Failed checkpoint restore removes its own fresh disposable SQLite and sidecars
+after closing keys/DB. An orphan ciphertext after a failed anchor update remains
+create-only and blocks retry until deliberate diagnosis; no silent overwrite or
+anchor downgrade is allowed. Power-loss recovery, encrypted unlocked SQLite,
+same-user malware resistance and guaranteed memory erase remain unqualified.

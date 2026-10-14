@@ -4,7 +4,7 @@ import subprocess
 import secrets
 from PySide6.QtCore import QEventLoop,QTimer,QCoreApplication,QEvent,Qt
 from PySide6.QtWidgets import QApplication
-from .wallet_session import WalletSession, WalletSessionError
+from .wallet_session import WalletSession, WalletSessionError, WalletCoreCli
 from .operational_gui import OperationalWalletWindow
 
 
@@ -73,6 +73,34 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window.show()
         window.apply_snapshot(initial)
         assert window.navigation.count()==6 and window._sync_timer.isActive()
+        assert window._sync_timer.interval()==30_000
+        # Exercise an actual Qt timer-triggered background worker with live
+        # Core. Accelerate only the test interval, then restore the real 30s.
+        sync_loop=QEventLoop()
+        sync_result={}
+        def background_ready(snap):
+            sync_result['snap']=snap
+            sync_loop.quit()
+        def background_denied(reason):
+            sync_loop.quit()
+        deadline=QTimer()
+        deadline.setSingleShot(True)
+        deadline.timeout.connect(sync_loop.quit)
+        window.snapshot_updated.connect(background_ready)
+        window.snapshot_failed.connect(background_denied)
+        window._sync_timer.setInterval(50)
+        deadline.start(15_000)
+        sync_loop.exec()
+        window._sync_timer.stop()
+        deadline.stop()
+        window.snapshot_updated.disconnect(background_ready)
+        window.snapshot_failed.disconnect(background_denied)
+        if window._worker is not None:
+            assert window._worker.wait(15_000)
+            app.processEvents()
+        window._sync_timer.setInterval(30_000)
+        window._sync_timer.start()
+        assert sync_result.get('snap')==initial and window._worker is None
         assert not window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
         for index,color in ((2,'#10100F'),(1,'#F5F3EE')):
             window.appearance.setCurrentIndex(index)
@@ -109,7 +137,34 @@ def probe_wallet(core_dir,datadir,source,mining_address):
             raise WalletProbeError("WALLET_CHANGED_APPROVAL_ACCEPTED")
         stage="SIGN"
         print("WALLET_E2E_STAGE=SIGN",flush=True)
-        _operation(app,window,'sign',window.sign_button.click)
+        # Instrument the actual signer entry, then delegate to real native
+        # crypto. No fake transaction, signature or RPC is substituted.
+        from unittest.mock import patch
+        from wam_sp.wallet import Signer
+        from .vault import KeychainAnchor, VaultError
+        original_sign=Signer.sign
+        observed={}
+        def checked_sign(signer,*args):
+            other=KeychainAnchor(session.vault.anchor.wallet_id,keychain)
+            try:
+                with other.lease():
+                    raise WalletProbeError("WALLET_SIGN_LEASE_NOT_HELD")
+            except VaultError as error:
+                assert str(error)=="VAULT_SESSION_BUSY"
+            path=datadir/'before-native-sign.sqlite'
+            recovered_ring,recovered_scan=session.vault.restore(path,password)
+            try:
+                rows=recovered_scan.store.db.execute('SELECT state FROM reservations').fetchall()
+                assert rows and all(r[0]=='signed' for r in rows)
+                observed['before_crypto']=True
+            finally:
+                recovered_scan.close()
+                recovered_ring.close()
+                path.unlink()
+            return original_sign(signer,*args)
+        with patch.object(Signer,'sign',checked_sign):
+            _operation(app,window,'sign',window.sign_button.click)
+        assert observed.get('before_crypto') is True
         assert window.broadcast_button.isEnabled() and not window.cancel_button.isEnabled()
         stage="BROADCAST"
         print("WALLET_E2E_STAGE=BROADCAST",flush=True)
@@ -143,6 +198,53 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         restored=session.snapshot()
         assert restored.confirmed_atoms==expected and restored.height==105
         window.apply_snapshot(restored)
+        stage="LOST_BROADCAST_REPLY"
+        print("WALLET_E2E_STAGE=LOST_BROADCAST_REPLY",flush=True)
+        # A second real payment spends confirmed change. Drop only the local
+        # response AFTER genuine Core has accepted it; no synthetic RPC.
+        _operation(app,window,'prepare',window.prepare_button.click)
+        _operation(app,window,'sign',window.sign_button.click)
+        from wam_sp.psbt import PSBT
+        uncertain_txid=PSBT.decode(session._signed).txid()
+        original_call=WalletCoreCli.call
+        entered={}
+        def lost_reply(client,method,params=None):
+            if method=='sendrawtransaction':
+                other=KeychainAnchor(session.vault.anchor.wallet_id,keychain)
+                try:
+                    with other.lease():
+                        raise WalletProbeError("WALLET_BROADCAST_LEASE_NOT_HELD")
+                except VaultError as error:
+                    assert str(error)=="VAULT_SESSION_BUSY"
+                path=datadir/'before-network.sqlite'
+                recovered_ring,recovered_scan=session.vault.restore(path,password)
+                try:
+                    states={r[0] for r in recovered_scan.store.db.execute('SELECT state FROM reservations')}
+                    assert 'uncertain' in states
+                    entered['anchored_before_rpc']=True
+                finally:
+                    recovered_scan.close()
+                    recovered_ring.close()
+                    path.unlink()
+                actual=original_call(client,method,params)
+                assert actual==uncertain_txid
+                raise WalletSessionError("WALLET_TEST_LOST_REPLY_AFTER_REAL_CORE")
+            return original_call(client,method,params)
+        with patch.object(WalletCoreCli,'call',lost_reply):
+            _operation(app,window,'broadcast',window.broadcast_button.click,denied=True)
+        assert entered.get('anchored_before_rpc') is True and session.faulted
+        assert not window.prepare_button.isEnabled() and not window.broadcast_button.isEnabled()
+        assert uncertain_txid in rpc._call('getrawmempool',[])
+        _operation(app,window,'lock',window.lock_button.click)
+        _operation(app,window,'unlock',lambda:window.start_operation('unlock',password))
+        assert not session.faulted and not session.locked
+        assert 'uncertain' in {r[0] for r in session.scanner.store.db.execute('SELECT state FROM reservations')}
+        try:
+            session.cancel()
+        except WalletSessionError:
+            pass
+        else:
+            raise WalletProbeError("WALLET_UNCERTAIN_RESERVATION_RELEASED")
         stage="BACKUP"
         print("WALLET_E2E_STAGE=BACKUP",flush=True)
         backup=datadir/'wallet-backup'
@@ -185,8 +287,13 @@ def probe_wallet(core_dir,datadir,source,mining_address):
             'exact_intent_approval_required':True,'real_core_mempool_accepted':True,
             'real_core_confirmed_recipient_atoms':100000,'native_sender_change_confirmed':True,
             'encrypted_reservations_before_network':True,'actual_send_reorg_depth':1,
+            'irreversible_anchor_before_native_crypto':True,'sign_broadcast_os_lease_held':True,
+            'real_core_lost_broadcast_reply_lock_retained':True,
+            'uncertain_reservation_survives_unlock':True,
             'irreversible_reservations_survive_reorg':True,'native_qt_backup_lock_recovery':True,
             'wrong_unlock_password_denied':True,'background_sync_active':True,
+            'background_sync_timer_live_core_verified':True,
+            'background_sync_production_interval_ms':30000,'background_sync_test_interval_ms':50,
             'native_gui_navigation_pages':6,'observed_height':105,
             'qt_manual_light_dark_verified':True,'qt_auto_system_events_verified':auto_verified,
             'cross_session_key_recovery':True,'cross_session_native_qt':True,
