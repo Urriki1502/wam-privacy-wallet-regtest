@@ -33,13 +33,16 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case):
         qt_application().processEvents()
         assert window.receive_code.text()==snap.receive_code and window.prepare_button.isEnabled()
         assert window.navigation.count()==6
+        if sys.platform=='win32':
+            # Window close locks its session. Exercise stale writers while
+            # the actual recovered wallet is open, then close it normally.
+            window._sync_timer.stop()
+            print('WIN_REOPEN_STAGE=STALE_PAYMENT',flush=True)
+            _prove_windows_stale_payment(session,password)
         window.close()
         window.deleteLater()
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
         window=None
-        if sys.platform=='win32':
-            print('WIN_REOPEN_STAGE=STALE_PAYMENT',flush=True)
-            _prove_windows_stale_payment(session,password)
         return {
             'stale_before_native_signature_denied':sys.platform=='win32',
             'stale_before_real_broadcast_denied':sys.platform=='win32',
