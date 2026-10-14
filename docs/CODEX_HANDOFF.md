@@ -6,19 +6,20 @@ Preserve interim ChatGPT/user work. Official repository only:
 
 ## Exact checkpoint identities
 
-- Verified main: `b215dcd1431d3f34c19ad48d5fd64c1727a1fad0` (PR #12 merged).
+- Verified main: `d1e6a79604c602c96b52a8150b0606c3d2c714fd` (PR #13 merged).
 - Network implementation: `feature/local-network-privacy-policy`,
   `8ede00c0f445f46d68fa5a6df613af43d93fe22f`.
-- Current engineering branch: `security/independent-wallet-contract-gate`.
-- Independent-gate implementation commit:
-  `1c9919d233563d3280923704487248f27e55d08f`.
+- Current engineering branch: `feature/authenticated-local-disclosure`.
+- Disclosure implementation commit:
+  `606f97eb58829366dbe1328f44d7d64e9a572ec7`
+  (includes initial foundation `64505baa4ed6bade3f7cd5c6ad3f968978eecf36`).
 - This handoff-only commit follows that implementation; obtain the exact
   published PR HEAD with `gh pr list --state open --json number,headRefOid`.
   No application code is changed by the handoff itself.
 
 ## Completed / verified
 
-PRs #1–#12 merged. PR #12: all three checks PASS at exact implementation HEAD;
+PRs #1–#13 merged. PR #12: all three checks PASS at exact implementation HEAD;
 source/package run 38529671510, canonical vectors 38529671523. 35 unit contracts,
 28 BIP352 suites, genuine signed Core / WSP / SQLite / native Qt / recovery /
 real reorg 1/12/100 and final packaged E2E PASS. Local bundle also PASS.
@@ -28,21 +29,28 @@ loopback, isolated CLI HOME/environment, and read-only Settings diagnostics.
 It denies proxy/include/remote/fallback and clears stale verification. Explicit
 local scan/broadcast role sharing; no anonymity or remote networking claim.
 
-Independent gate code committed above: no wallet imports/runtime PASS flags;
-AST critical contracts, crash-boundary and mutation evaluation, direct pinned
-Core hashes, bundled WSP source comparison and original ICNS check. Local
-source and existing qualified package evaluation PASS. New integrated CI and
-fresh package evaluation are **PENDING**; do not merge until all checks pass.
-No external reviewer or independent-builder approval is asserted.
+Independent gate MERGED via PR #13, head
+`a68b4128177a79b862fc038fc05332921bb9e130`, merge
+`d1e6a79604c602c96b52a8150b0606c3d2c714fd`: all 3 checks PASS;
+source/package 38530814472, vectors 38530814405. Gate imports no wallet code,
+trusts no runtime PASS flags, evaluates critical AST/crash/mutation contracts,
+independent Core hashes and pinned bundle source comparison. No external
+reviewer, second builder or full formal-proof claim.
+
+Disclosure committed above: native Security fields/explicit approval and
+fresh passphrase check; fact projection from synchronized real WSP history;
+one-use HMAC bound to wallet/session/anchor/record/fields/monotonic expiry;
+revocation on Lock and redacted audit. 40 unit contracts PASS; independent
+source contracts PASS; genuine-Core source E2E PASS before final UI scroll/
+selection/screenshot refinements. Current exact-head CI and packaged E2E
+are **PENDING**. No network transmission or ownership proof.
 
 ## Next engineering actions
 
-1. Publish/inspect the independent-gate PR, attach it, verify its source and
-   package receipts, retained real-Core and vectors; merge only qualified HEAD.
-2. Implement wallet-local selective disclosure using exact fields, same
-   unlocked/authenticated session, fresh explicit consent, one-use/revoked
-   authorization and redacted audit. Source facts from real local WSP history,
-   not RPC-owned annotations. No cryptographic ownership-proof claim.
+1. Publish/inspect the disclosure PR; verify exact-head source, package,
+   independent audit receipts and vectors; merge only qualified HEAD.
+2. Inspect Security screenshot for layout/selection scope, then run final
+   packaged Cocoa regression when this new integration is qualified.
 3. Adapt PayJoin sender safety to real WSP PSBTv2 bytes and authenticated local
    input ownership/UTXOs. Keep validation-only until BIP352 input changes,
    receiver finalization, protocol/transport/signing are qualified; do not
