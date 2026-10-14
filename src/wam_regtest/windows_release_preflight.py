@@ -83,7 +83,14 @@ def inspect_signed_zip_shape(archive: Path, expected_sha256: str) -> dict:
             if not 2 <= len(entries) <= 128:
                 _fail("WIN_RELEASE_ENTRY_COUNT_DENIED")
             for entry in entries:
-                name = entry.filename.rstrip("/")
+                # On native Windows, Python ZipInfo normalizes raw backslash
+                # separators to forward slashes before exposing .filename.
+                # Verify the ORIGINAL archive entry name first: otherwise
+                # a crafted noncanonical member can bypass path policy.
+                raw_name = getattr(entry, "orig_filename", None)
+                if type(raw_name) is not str or raw_name != entry.filename:
+                    _fail("WIN_RELEASE_ZIP_ENTRY_DENIED")
+                name = raw_name.rstrip("/")
                 components = name.split("/")
                 if (not name or len(name) > 512 or name.startswith("/")
                         or "\\" in name or ":" in name
