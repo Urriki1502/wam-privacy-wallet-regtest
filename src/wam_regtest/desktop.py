@@ -1,6 +1,6 @@
-"""Native Qt macOS public-demo REGTEST wallet, reading *real* Core/WSP state.
+"""Native Qt macOS REGTEST view, reading *real* Core/WSP state.
 
-Nothing here can sign or broadcast. Core is a separately running, verified
+The baseline view is read-only; the operational subclass adds gated payments. Core is a separately running, verified
 v0.1.11 regtest daemon. All balances/history are cleared on RPC failure.
 A Qt worker runs live WSP Scanner.sync off the GUI thread.
 """
@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from .wallet_read import WalletReadSnapshot, read_real_wallet_snapshot, format_wam
+from .branding import brand_image
 
 
 _QT_APPLICATION = None
@@ -28,6 +29,8 @@ def qt_application():
     global _QT_APPLICATION
     if _QT_APPLICATION is None:
         _QT_APPLICATION = QApplication.instance() or QApplication([])
+        _QT_APPLICATION.setWindowIcon(QIcon(str(brand_image())))
+        _QT_APPLICATION.setApplicationDisplayName("WAM Privacy Wallet REGTEST")
     return _QT_APPLICATION
 
 
@@ -108,6 +111,8 @@ class RegtestWalletWindow(QMainWindow):
         self._worker = None
         self._snapshot = None
         self.setWindowTitle("WAM Privacy Wallet · Real REGTEST")
+        self.setWindowIcon(QIcon(str(brand_image())))
+        self.setMinimumSize(960, 660)
         self.resize(1020, 680)
         base = QWidget()
         base.setObjectName("WalletRoot")
@@ -119,7 +124,10 @@ class RegtestWalletWindow(QMainWindow):
         header.setObjectName("HeaderCard")
         h = QHBoxLayout(header)
         h.setContentsMargins(20, 14, 20, 14)
-        mark = QLabel("W")
+        mark = QLabel()
+        mark.setPixmap(QPixmap(str(brand_image())).scaled(64,64,
+            Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+        mark.setFixedSize(64,64)
         mark.setObjectName("WalletMark")
         mark.setAlignment(Qt.AlignmentFlag.AlignCenter)
         h.addWidget(mark)
@@ -172,7 +180,9 @@ class RegtestWalletWindow(QMainWindow):
         title = QLabel("Receive · BIP352")
         title.setObjectName("PageTitle")
         receive_layout.addWidget(title)
-        receive_layout.addWidget(QLabel("Public test-only scan account · wallet address is NOT a Core sendtoaddress destination"))
+        receive_hint = QLabel("Disposable REGTEST silent-payment address · use a BIP352 sender")
+        receive_hint.setWordWrap(True)
+        receive_layout.addWidget(receive_hint)
         self.receive_code = QLabel("—")
         self.receive_code.setObjectName("ReceiveCode")
         self.receive_code.setWordWrap(True)
@@ -240,15 +250,15 @@ class RegtestWalletWindow(QMainWindow):
             elif scheme == Qt.ColorScheme.Light:
                 active = "light"
         if active == "dark":
-            c = dict(bg="#0B1322", surface="#172439", text="#F4F8FF",
-                     muted="#A3B5CA", border="#334760", tint="#20374B",
-                     accent="#68DDC1", onaccent="#102C2B", warning="#382C21",
-                     warning_text="#FFDFA8")
+            c = dict(bg="#10100F", surface="#1C1B18", text="#F5F2E9",
+                     muted="#BEB8A9", border="#454033", tint="#302B20",
+                     accent="#F1C55A", onaccent="#211A09", warning="#30271A",
+                     warning_text="#F5D892")
         else:
-            c = dict(bg="#F3F6FB", surface="#FFFFFF", text="#172A3E",
-                     muted="#5D6C7D", border="#D9E4EC", tint="#EDF4F7",
-                     accent="#087E73", onaccent="#FFFFFF", warning="#FFF4E1",
-                     warning_text="#79551F")
+            c = dict(bg="#F5F3EE", surface="#FFFFFF", text="#29251B",
+                     muted="#6B6251", border="#DBD4C5", tint="#F3EBD9",
+                     accent="#795507", onaccent="#FFFFFF", warning="#FFF2D3",
+                     warning_text="#694710")
         self.setStyleSheet(f"""
             QMainWindow, QWidget#WalletRoot {{background:{c['bg']}; color:{c['text']};}}
             QFrame#HeaderCard, QFrame#ContentCard {{
@@ -256,11 +266,9 @@ class RegtestWalletWindow(QMainWindow):
                 border-radius:15px;
             }}
             QLabel {{color:{c['text']}; background:transparent; border:none;}}
-            QLabel#WalletMark {{background:{c['accent']}; color:{c['onaccent']};
-                border-radius:17px; font-size:22px; font-weight:800;
-                min-height:40px; max-height:40px; min-width:40px; max-width:40px;}}
+            QLabel#WalletMark {{background:transparent;}}
             QLabel#BrandTitle {{font-size:21px; font-weight:800;}}
-            QLabel#PageTitle {{font-size:23px; font-weight:750;}}
+            QLabel#PageTitle {{font-size:23px; font-weight:700;}}
             QLabel#BalanceValue {{font-size:38px; font-weight:800; color:{c['accent']};}}
             QLabel#ReceiveCode {{font-family:monospace; font-size:13px; padding:14px;
                 background:{c['tint']}; border-radius:8px;}}
@@ -273,11 +281,16 @@ class RegtestWalletWindow(QMainWindow):
             QListWidget::item {{padding:14px 10px; border-radius:8px;}}
             QListWidget::item:selected {{background:{c['tint']}; color:{c['accent']};
                 font-weight:700;}}
+            QLineEdit {{background:{c['surface']}; color:{c['text']};
+                border:1px solid {c['border']}; border-radius:7px; padding:10px;}}
+            QLineEdit:focus {{border:2px solid {c['accent']};}}
+            QLineEdit:disabled {{color:{c['muted']}; background:{c['tint']};}}
             QPushButton, QComboBox {{background:{c['tint']}; color:{c['text']};
                 border:1px solid {c['border']}; border-radius:9px; padding:9px 13px;}}
             QPushButton#PrimaryButton {{background:{c['accent']};
                 color:{c['onaccent']}; font-weight:700; border:none;}}
-            QPushButton:disabled {{opacity:0.5; color:{c['muted']};}}
+            QPushButton:disabled {{color:{c['muted']}; background:{c['tint']};}}
+            QPushButton:hover:enabled {{border:1px solid {c['accent']};}}
             QTableWidget, QHeaderView::section {{background:{c['surface']};
                 color:{c['text']}; border:1px solid {c['border']}; padding:6px;}}
         """)

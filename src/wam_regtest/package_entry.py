@@ -38,6 +38,9 @@ def _check_bundle() -> tuple[Path, Path]:
     if receipt.get("platform") != "macos-arm64":
         raise BundleLaunchError("WAM_BUNDLE_CORE_PLATFORM_DENIED")
     _pinned_source(source)
+    from wam_regtest.branding import brand_image, check_bundle_icon
+    brand_image()
+    check_bundle_icon(Path(sys.executable).parent.parent.parent)
     # The ARM64 coincurve wheel embeds a package-local CFFI extension loaded
     # by native code, which static Python import analysis cannot discover.
     # Exercise native crypto in the frozen self-check, before starting Core.
@@ -76,18 +79,24 @@ def main() -> int:
         if not ci_mode:
             from PySide6.QtCore import QTimer, Qt
             from PySide6.QtWidgets import QApplication, QSplashScreen
-            from PySide6.QtGui import QPixmap, QColor
-            app = QApplication.instance() or QApplication([])
-            pixmap = QPixmap(620, 260)
-            pixmap.fill(QColor("#0C1728"))
+            from PySide6.QtGui import QPixmap, QColor, QPainter
+            from wam_regtest.desktop import qt_application
+            from wam_regtest.branding import brand_image
+            app = qt_application()
+            pixmap = QPixmap(620, 300)
+            pixmap.fill(QColor("#10100F"))
+            painter = QPainter(pixmap)
+            painter.drawPixmap(260,20,QPixmap(str(brand_image())).scaled(100,100,
+                Qt.AspectRatioMode.KeepAspectRatio,Qt.TransformationMode.SmoothTransformation))
+            painter.end()
             splash = QSplashScreen(pixmap)
             splash.showMessage(
                 "WAM Privacy Wallet · REGTEST\n\n"
                 "Verifying official WAM Core v0.1.11 and preparing a fresh "
-                "public-demo BIP352 payment.\n"
-                "NO MAINNET · NO REAL FUNDS · READ ONLY",
+                "test-only BIP352 payment.\n"
+                "NO MAINNET · NO REAL FUNDS · DISPOSABLE TEST KEYS",
                 Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignBottom,
-                QColor("#E9FCF6"),
+                QColor("#F1C55A"),
             )
             splash.show()
             app.processEvents()
