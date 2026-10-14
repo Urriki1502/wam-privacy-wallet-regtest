@@ -22,14 +22,37 @@ python -m PyInstaller --noconfirm --clean --onedir --windowed \
   --paths "$(pwd)/src" \
   --collect-submodules wam_regtest \
   --collect-submodules wam_sp \
-  --add-binary "$(pwd)/core/wamd:core" \
-  --add-binary "$(pwd)/core/wam-cli:core" \
+  --add-data "$(pwd)/core/wamd:core" \
+  --add-data "$(pwd)/core/wam-cli:core" \
   --add-data "$(pwd)/core/receipt.json:core" \
   --add-data "$(pwd)/bundle-input/wsp-source:wsp-source" \
   src/wam_regtest/package_entry.py
 
 echo "MACOS_APP_STAGE=PYINSTALLER_COMPLETED"
 APP="dist/WAM Privacy Wallet REGTEST.app"
+# On macOS, PyInstaller re-codesigns --add-binary Mach-O executables,
+# changing publisher-signed SHA-256. These binaries MUST be unmodified DATA,
+# then made executable in-place; validate both hashes against ORIGINALS.
+export WAM_BUNDLE_APP="$APP"
+python - <<'PY'
+from hashlib import sha256
+import os
+from pathlib import Path
+app = Path(os.environ["WAM_BUNDLE_APP"])
+for name in ("wamd", "wam-cli"):
+    candidates = [p for p in app.rglob(name)
+                  if p.is_file() and not p.is_symlink()]
+    if len(candidates) != 1:
+        raise SystemExit("MACOS_BUNDLE_CORE_MEMBER_SHAPE_DENIED")
+    target = candidates[0]
+    source = Path("core") / name
+    if sha256(target.read_bytes()).hexdigest() != sha256(source.read_bytes()).hexdigest():
+        raise SystemExit("MACOS_BUNDLE_CORE_SIGNED_HASH_DENIED")
+    target.chmod(0o700)
+    if not os.access(target, os.X_OK):
+        raise SystemExit("MACOS_BUNDLE_CORE_EXEC_MODE_DENIED")
+print("MACOS_APP_STAGE=UNMODIFIED_SIGNED_CORE_SHA256_PASS", flush=True)
+PY
 BIN="$APP/Contents/MacOS/WAM Privacy Wallet REGTEST"
 test -d "$APP"
 test -x "$BIN"
