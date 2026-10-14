@@ -76,6 +76,7 @@ class WalletSession:
         self._lock = threading.RLock()
         self._prepared = self._signed = self._review = self._tip = None
         self.faulted = False
+        self._disclosure_gate = None
         self.runtime = scanner.store.path
 
     @classmethod
@@ -302,6 +303,28 @@ class WalletSession:
             self._save()
             self._prepared=self._review=self._tip=None
 
+    def disclose_record(self,txid,fields,password,*,approved=False):
+        import hmac
+        from .disclosure import LocalDisclosureGate,DisclosureError
+        from wam_sp.wallet import Wallet
+        with self._lock,self.vault.anchor.lease():
+            self._rpc()
+            if (approved is not True or type(password) is not bytes or not 12<=len(password)<=1024
+                    or not hmac.compare_digest(password,self._password)):
+                raise WalletSessionError("WALLET_DISCLOSURE_REAUTH_CONSENT_REQUIRED")
+            self.snapshot()  # Facts belong to live validated local WSP history.
+            rows=[row for row in Wallet(self.scanner).history() if row['txid']==txid]
+            if len(rows)!=1:
+                raise WalletSessionError("WALLET_DISCLOSURE_LOCAL_RECORD_REQUIRED")
+            row=rows[0]
+            fact={'txid':row['txid'],'block_height':row['height'],
+                  'credit_atoms':row['credit'],'debit_atoms':row['debit']}
+            if self._disclosure_gate is None:
+                self._disclosure_gate=LocalDisclosureGate(self.vault.anchor.wallet_id)
+            anchor=self.vault.anchor.read()
+            ticket=self._disclosure_gate.issue(fact,fields,anchor,approved=True,authenticated=True)
+            return self._disclosure_gate.release(ticket,fact,self.vault.anchor.read())
+
     def network_diagnostics(self):
         from .network_policy import diagnostics
         with self._lock:
@@ -323,6 +346,9 @@ class WalletSession:
 
     def lock(self):
         with self._lock:
+            if self._disclosure_gate is not None:
+                self._disclosure_gate.close()
+                self._disclosure_gate=None
             if self.locked:
                 return
             self.scanner.close()

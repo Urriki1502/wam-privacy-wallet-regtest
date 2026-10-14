@@ -6,7 +6,7 @@ import re
 from PySide6.QtCore import QThread, Signal, QTimer, Qt
 from PySide6.QtWidgets import (
     QApplication,QFrame,QVBoxLayout,QLabel,QLineEdit,QPushButton,QHBoxLayout,
-    QFileDialog,QMessageBox,QInputDialog,QComboBox,
+    QFileDialog,QMessageBox,QInputDialog,QComboBox,QCheckBox,
 )
 from wam_regtest.desktop import RegtestWalletWindow, qt_application
 from wam_regtest.wallet_session import WalletSession, PaymentReview
@@ -32,13 +32,15 @@ class OperationWorker(QThread):
     def __init__(self, session, action, args):
         super().__init__()
         self.session,self.action,self.args=session,action,args
+    def disclose(self,txid,fields,password):
+        return self.session.disclose_record(txid,fields,password,approved=True)
     def run(self):
         try:
             methods={"prepare":self.session.prepare,"sign":self.session.sign,
                      "broadcast":self.session.broadcast,"cancel":self.session.cancel,
                      "lock":self.session.lock,"unlock":self.session.unlock,
                      "backup":self.session.backup,"recover":self.session.recover_backup,
-                     "mine":self.session.mine,"network":self.session.network_diagnostics}
+                     "mine":self.session.mine,"network":self.session.network_diagnostics,"disclose":self.disclose}
             result=methods[self.action](*self.args)
             self.ready.emit(self.action,result)
         except Exception:
@@ -115,6 +117,23 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.recover_button=QPushButton("Recover latest anchored backup…")
         for button in (self.lock_button,self.unlock_button,self.backup_button,self.recover_button):
             layout.addWidget(button)
+        layout.addWidget(QLabel("Local record disclosure · no ownership proof"))
+        self.disclosure_record=QComboBox()
+        layout.addWidget(self.disclosure_record)
+        fields_row=QHBoxLayout()
+        self.disclosure_fields={}
+        for field in ('txid','block_height','credit_atoms','debit_atoms'):
+            check=QCheckBox(field.replace('_',' '))
+            fields_row.addWidget(check)
+            self.disclosure_fields[field]=check
+        layout.addLayout(fields_row)
+        self.disclosure_button=QPushButton("Approve selected local disclosure…")
+        self.disclosure_button.clicked.connect(self.disclose_selected)
+        layout.addWidget(self.disclosure_button)
+        self.disclosure_text=QLabel("Choose exact fields. Re-authentication required; nothing is sent to a network.")
+        self.disclosure_text.setWordWrap(True)
+        self.disclosure_text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(self.disclosure_text)
         layout.addStretch()
         self.stack.addWidget(security)
         self.lock_button.clicked.connect(lambda:self.start_operation("lock"))
@@ -150,7 +169,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         hints.colorSchemeChanged.connect(self.apply_theme)
         self._appearance_connected=True
         self._actions=(self.prepare_button,self.sign_button,self.broadcast_button,self.cancel_button,
-                       self.lock_button,self.unlock_button,self.backup_button,self.recover_button,self.mine_button,self.network_button)
+                       self.lock_button,self.unlock_button,self.backup_button,self.recover_button,self.mine_button,self.network_button,self.disclosure_button)
         self._update_controls()
 
     def _update_controls(self):
@@ -167,6 +186,9 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.unlock_button.setEnabled(not busy and self.session.locked)
         self.recover_button.setEnabled(not busy and self.session.locked)
         self.lock_button.setEnabled(not busy and not self.session.locked)
+        self.disclosure_record.setEnabled(not busy and unlocked)
+        for field in self.disclosure_fields.values(): field.setEnabled(not busy and unlocked)
+        self.disclosure_button.setEnabled(not busy and unlocked and self.disclosure_record.count()>0)
         editable=not busy and unlocked and self.review is None
         for field in (self.recipient,self.amount,self.fee):
             field.setEnabled(editable)
@@ -181,7 +203,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
                 "broadcast":"Submitting approved transaction", "cancel":"Canceling unsigned draft",
                 "lock":"Locking wallet", "unlock":"Verifying passphrase and live chain",
                 "backup":"Saving latest encrypted backup", "recover":"Verifying anchored recovery",
-                "mine":"Mining one REGTEST block","network":"Verifying local node privacy"}
+                "mine":"Mining one REGTEST block","network":"Verifying local node privacy","disclose":"Verifying local disclosure consent"}
         self.status.setText(labels[action]+"…")
         worker.ready.connect(self._operation_ready)
         worker.denied.connect(self._operation_denied)
@@ -217,6 +239,9 @@ class OperationalWalletWindow(RegtestWalletWindow):
             self.review=None
             self.signed=False
             self.review_text.setText("Broadcast txid: "+result if action=="broadcast" else "No active payment review")
+        if action=="disclose":
+            import json
+            self.disclosure_text.setText(json.dumps(result,sort_keys=True))
         if action=="network":
             self.network_text.setText("VERIFIED LOCAL REGTEST · zero peers\nScan/broadcast share the private local node.\nNo remote routes, proxy or clearnet fallback; anonymity unqualified.")
         if action=="lock":
@@ -233,6 +258,36 @@ class OperationalWalletWindow(RegtestWalletWindow):
                 self.apply_snapshot(result)
         self._update_controls()
         self.operation_completed.emit(action,result)
+
+    def apply_snapshot(self,snap):
+        super().apply_snapshot(snap)
+        if hasattr(self,"disclosure_record"):
+            self.disclosure_record.clear()
+            if self._snapshot is not None:
+                for row in snap.history:
+                    self.disclosure_record.addItem(row.txid[:16]+"… · block "+str(row.block_height),row.txid)
+            self._update_controls()
+
+    def _clear_balance(self):
+        super()._clear_balance()
+        if hasattr(self,"disclosure_record"):
+            self.disclosure_record.clear()
+            self.disclosure_text.setText("No verified local disclosure")
+
+    def disclose_selected(self):
+        fields=tuple(sorted(k for k,v in self.disclosure_fields.items() if v.isChecked()))
+        txid=self.disclosure_record.currentData()
+        if not fields or txid is None:
+            return
+        if QMessageBox.question(self,"Local disclosure approval",
+                "Display only "+", ".join(fields)+" for the selected local record?\n"
+                "No ownership proof; nothing is sent to a network.",
+                QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)!=QMessageBox.StandardButton.Yes:
+            return
+        password=self._passphrase("Wallet passphrase for selected local disclosure")
+        if password is not None:
+            self.start_operation("disclose",txid,fields,password)
 
     def _operation_denied(self,reason):
         self.network_text.setText("UNVERIFIED · run local node privacy verification again")

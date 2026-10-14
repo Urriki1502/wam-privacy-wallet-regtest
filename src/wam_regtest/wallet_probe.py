@@ -135,6 +135,14 @@ def probe_wallet(core_dir,datadir,source,mining_address):
             (datadir/'wam.conf').write_bytes(original_config)
         network=_operation(app,window,'network',window.network_button.click)
         assert network['zero_peers'] is True
+        window.apply_snapshot(session.snapshot())
+        assert window.disclosure_record.count()==1 and window.disclosure_button.isEnabled()
+        window.disclosure_fields['block_height'].setChecked(True)
+        disclosure_txid=window.disclosure_record.currentData()
+        _operation(app,window,'disclose',lambda:window.start_operation('disclose',disclosure_txid,('block_height',),b'wrong-test-passphrase'),denied=True)
+        disclosed=_operation(app,window,'disclose',lambda:window.start_operation('disclose',disclosure_txid,('block_height',),password))
+        assert disclosed['facts']=={'block_height':104} and disclosed['ownership_proof'] is False
+        assert disclosure_txid not in window.disclosure_text.text() and 'credit_atoms' not in window.disclosure_text.text()
         stage="PREPARE"
         print("WALLET_E2E_STAGE=PREPARE",flush=True)
         review=_operation(app,window,'prepare',window.prepare_button.click)
@@ -269,6 +277,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         _operation(app,window,'lock',window.lock_button.click)
         assert session.locked and not session.runtime.exists() and window.balance_text.text()=='—'
         assert not window.prepare_button.isEnabled()
+        assert 'block_height' not in window.disclosure_text.text() and session._disclosure_gate is None
         stage="PASSWORD"
         print("WALLET_E2E_STAGE=PASSWORD",flush=True)
         _operation(app,window,'unlock',lambda:window.start_operation('unlock',b'wrong-regtest-passphrase'),denied=True)
@@ -297,7 +306,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         return {
             'status':'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS',
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
-            'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
+            'authenticated_selected_local_disclosure':True,'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
             'exact_intent_approval_required':True,'real_core_mempool_accepted':True,
             'real_core_confirmed_recipient_atoms':100000,'native_sender_change_confirmed':True,
             'encrypted_reservations_before_network':True,'actual_send_reorg_depth':1,
