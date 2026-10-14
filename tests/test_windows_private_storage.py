@@ -37,6 +37,13 @@ class NativeWindowsCustodyTests(unittest.TestCase):
             with store.security_attributes(directory=True,descriptor=descriptor) as sa:
                 self.assertTrue(store.mkdir(str(path),sa))
             with self.assertRaises(store.WindowsCustodyError):store.validate_directory(path)
+    def test_ancestor_and_private_directory_cannot_be_renamed_while_pinned(self):
+        moved=self.base/'moved'
+        with store.directory_guard(self.private):
+            with self.assertRaises(OSError):os.rename(self.private,moved)
+            with self.assertRaises(OSError):os.rename(self.base,self.base.with_name(self.base.name+'-moved'))
+        os.rename(self.private,moved);os.rename(moved,self.private)
+        store.validate_directory(self.private)
     def test_bad_names_and_envelopes_never_publish(self):
         for name in ('../escape.enc','con.enc','test.enc:stream','UPPER.enc','a.enc '):
             with self.assertRaises(store.WindowsCustodyError):store.publish(self.private,name,self.blob)

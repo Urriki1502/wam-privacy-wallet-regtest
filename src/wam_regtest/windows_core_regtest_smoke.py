@@ -138,7 +138,8 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                                 signature: Path, *, consent: bool = False,
                                 timeout: int = 120, wsp_source: Path | None = None,
                                 confirm_public_fixture_payment: bool = False,
-                                qt_readonly_e2e: bool = False) -> dict:
+                                qt_readonly_e2e: bool = False,
+                                vault_e2e: bool = False) -> dict:
     """Authentic actual Windows node: 101-block smoke with zero peers.
 
     Deliberately has no WSP scanner, wallet signer, broadcast or real-fund API.
@@ -150,6 +151,8 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
         _deny("WIN_CORE_NATIVE_X64_ONLY")
     if (type(confirm_public_fixture_payment) is not bool
             or type(qt_readonly_e2e) is not bool
+            or type(vault_e2e) is not bool
+            or (vault_e2e and not confirm_public_fixture_payment)
             or (qt_readonly_e2e and not confirm_public_fixture_payment)
             or (wsp_source is not None and not confirm_public_fixture_payment)
             or (confirm_public_fixture_payment and
@@ -182,7 +185,11 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
         root = Path(tmp).resolve(strict=True)
         node, cli = _staged_signed_binaries(archive, proof, root / "core")
         datadir = root / "chain"
-        datadir.mkdir()
+        if vault_e2e:
+            from .custody import create_directory
+            create_directory(datadir)
+        else:
+            datadir.mkdir()
         rpc, p2p = _port(), _port()
         _config(datadir, rpc, p2p)
         env = _host_env(datadir)
@@ -245,8 +252,14 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                         proof["member_sha256"]["wamd.exe"])
                 except Exception:
                     _deny("WIN_CORE_NATIVE_GUI_READ_E2E_DENIED")
+            vault_receipt = None
+            if vault_e2e:
+                from .windows_vault_probe import prove_real_windows_vault
+                vault_receipt = prove_real_windows_vault(cli,datadir,rpc,env,wsp_source,mine_to_public)
             receipt = {
-                "status": ("WIN64_SIGNED_CORE_WSP_QT_READ_ONLY_E2E_PASS"
+                "status": ("WIN64_REAL_CORE_CREDENTIAL_ENCRYPTED_VAULT_RECOVERY_REORG_PASS"
+                           if vault_receipt is not None else
+                           "WIN64_SIGNED_CORE_WSP_QT_READ_ONLY_E2E_PASS"
                            if gui_receipt is not None else
                            "WIN64_REAL_CORE_WSP1_BIP352_CONFIRMED_RECEIVE_PASS"
                            if wsp_receipt is not None else
@@ -260,6 +273,7 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                 "cli_sha256": proof["member_sha256"]["wam-cli.exe"],
                 "wsp_bip352_payment_e2e": wsp_receipt is not None,
                 "wsp_receipt": wsp_receipt,
+                "vault_receipt": vault_receipt,
                 "qt_wallet_e2e": gui_receipt is not None,
                 "qt_receipt": gui_receipt,
                 "sign_broadcast_authorized": False,
