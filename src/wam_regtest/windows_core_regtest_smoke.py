@@ -137,7 +137,8 @@ def _rpc(cli: Path, datadir: Path, port: int, env: dict, *args: str, timeout=15)
 def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: Path,
                                 signature: Path, *, consent: bool = False,
                                 timeout: int = 120, wsp_source: Path | None = None,
-                                confirm_public_fixture_payment: bool = False) -> dict:
+                                confirm_public_fixture_payment: bool = False,
+                                qt_readonly_e2e: bool = False) -> dict:
     """Authentic actual Windows node: 101-block smoke with zero peers.
 
     Deliberately has no WSP scanner, wallet signer, broadcast or real-fund API.
@@ -148,6 +149,8 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
     if sys.platform != "win32" or platform.machine().lower() not in ("amd64", "x86_64"):
         _deny("WIN_CORE_NATIVE_X64_ONLY")
     if (type(confirm_public_fixture_payment) is not bool
+            or type(qt_readonly_e2e) is not bool
+            or (qt_readonly_e2e and not confirm_public_fixture_payment)
             or (wsp_source is not None and not confirm_public_fixture_payment)
             or (confirm_public_fixture_payment and
                 (type(wsp_source) is not type(Path()) or not wsp_source.is_absolute()))):
@@ -233,8 +236,19 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                         cli, datadir, rpc, env, wsp_source, mine_to_public)
                 except Exception:
                     _deny("WIN_CORE_WSP_PAYMENT_E2E_DENIED")
+            gui_receipt = None
+            if qt_readonly_e2e:
+                from .windows_read_gui import probe_real_windows_wallet_gui
+                try:
+                    gui_receipt = probe_real_windows_wallet_gui(
+                        node, cli, datadir, rpc, env, wsp_source,
+                        proof["member_sha256"]["wamd.exe"])
+                except Exception:
+                    _deny("WIN_CORE_NATIVE_GUI_READ_E2E_DENIED")
             receipt = {
-                "status": ("WIN64_REAL_CORE_WSP1_BIP352_CONFIRMED_RECEIVE_PASS"
+                "status": ("WIN64_SIGNED_CORE_WSP_QT_READ_ONLY_E2E_PASS"
+                           if gui_receipt is not None else
+                           "WIN64_REAL_CORE_WSP1_BIP352_CONFIRMED_RECEIVE_PASS"
                            if wsp_receipt is not None else
                            "WIN64_SIGNED_WAM_CORE_REGTEST_101_BLOCK_SMOKE_PASS"),
                 "official_signed_core": True,
@@ -246,7 +260,8 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                 "cli_sha256": proof["member_sha256"]["wam-cli.exe"],
                 "wsp_bip352_payment_e2e": wsp_receipt is not None,
                 "wsp_receipt": wsp_receipt,
-                "qt_wallet_e2e": False,
+                "qt_wallet_e2e": gui_receipt is not None,
+                "qt_receipt": gui_receipt,
                 "sign_broadcast_authorized": False,
                 "production_authorized": False,
                 "mainnet_allowed": False,
