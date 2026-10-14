@@ -113,6 +113,29 @@ jobs:
               print("WIN_GPG_IMPORT_RC",rc)
               print("WIN_GPG_PUBLIC_FINGERPRINT_MATCH",FINGERPRINT in fingerprints)
               print("WIN_GPG_RECORD_TYPES",[x.split(":")[0] for x in out.splitlines()][:15])
+              # Diagnostic with authenticated public signing key only. Keep
+              # official strict verifier unchanged until root cause is known.
+              command = ["gpg", "--homedir", str(home), "--batch", "--no-tty",
+                         "--no-autostart", "--no-auto-key-retrieve", "--with-colons",
+                         "--import-options", "show-only", "--import", str(key)]
+              variants = (
+                  ("clean_windows_runtime",
+                   {**{"PATH":os.environ.get("PATH",""),"GNUPGHOME":str(home),
+                       "HOME":str(home),"LC_ALL":"C"},
+                    **{k:os.environ[k] for k in ("SystemRoot","APPDATA","USERPROFILE",
+                                                "TEMP","TMP") if k in os.environ}}),
+                  ("full_windows_runtime",
+                   {**os.environ, "GNUPGHOME":str(home), "HOME":str(home),
+                    "LC_ALL":"C"}),
+              )
+              for label, environment in variants:
+                  process=subprocess.run(command,env=environment,capture_output=True,
+                                         text=True,timeout=15,check=False)
+                  fingerprint=FINGERPRINT in process.stdout
+                  err=process.stderr.replace(str(home),"<gpg-home>").replace(str(key),"<public-key>")
+                  print("WIN_GPG_VARIANT",label,"EXIT",process.returncode,
+                        "PUBLIC_FINGERPRINT_MATCH",fingerprint,
+                        "PUBLIC_KEY_DIAGNOSTIC",repr(err[:250]))
               # Non-authorizing diagnostic; the strict production verifier still decides.
           '@ | python -
           if ($LASTEXITCODE -ne 0) { throw "WIN_GPG_DIAGNOSTIC_UNAVAILABLE" }
