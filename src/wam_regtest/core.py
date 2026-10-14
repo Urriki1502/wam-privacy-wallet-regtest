@@ -145,12 +145,16 @@ def _early_exit_category(datadir: Path) -> str:
 
 
 def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 120,
-                    wsp_source: Path | None = None) -> dict:
+                    wsp_source: Path | None = None,
+                    wsp_payment_e2e: bool = False) -> dict:
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
     if (wsp_source is not None and
             (type(wsp_source) is not type(Path()) or not wsp_source.is_absolute())):
         raise CoreSmokeError("CORE_WSP_SOURCE_SCOPE_DENIED")
+    if (type(wsp_payment_e2e) is not bool
+            or (wsp_payment_e2e and wsp_source is None)):
+        raise CoreSmokeError("CORE_PUBLIC_FIXTURE_PAYMENT_SCOPE_DENIED")
     node, cli, receipt = verified_core_paths(core_dir)
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
@@ -199,7 +203,15 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             addr = _read_cli(prefix + ["-rpcwallet=test", "getnewaddress"])
             if not isinstance(addr, str) or not 20 <= len(addr) <= 120:
                 raise CoreSmokeError("CORE_REGTEST_ADDRESS_DENIED")
-            mined = _read_cli(prefix + ["generatetoaddress", "101", addr], timeout=90)
+            # The deliberately public scalar 31 is never a user key. For
+            # opted-in payment E2E, mine coinbase to its known P2WPKH script.
+            # This supplies an actual matured UTXO that the pinned WSP
+            # serializer can spend into a genuine BIP352 output.
+            mine_to = addr
+            if wsp_payment_e2e:
+                from .wsp_live import public_regtest_mining_address
+                mine_to = public_regtest_mining_address(wsp_source)
+            mined = _read_cli(prefix + ["generatetoaddress", "101", mine_to], timeout=90)
             if not isinstance(mined, list) or len(mined) != 101:
                 raise CoreSmokeError("CORE_REGTEST_GENERATE_DENIED")
             height = _read_cli(prefix + ["getblockcount"])
@@ -219,19 +231,33 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 try:
                     wsp_receipt = scan_actual_core_blocks(
                         cli, datadir, wsp_source, expected_height=height,
+                        payment_e2e=wsp_payment_e2e,
+                        mining_address=(mine_to if wsp_payment_e2e else None),
                     )
                 except RealWspScanError as exc:
                     raise CoreSmokeError(str(exc)) from None
             return {
-                "status": ("REAL_WAM_CORE_V0_1_11_REGTEST_AND_NATIVE_WSP_SCANNER_PASS"
+                "status": ("REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS"
+                           if wsp_payment_e2e and wsp_receipt is not None else
+                           "REAL_WAM_CORE_V0_1_11_REGTEST_AND_NATIVE_WSP_SCANNER_PASS"
                            if wsp_receipt is not None else
                            "REAL_WAM_CORE_V0_1_11_REGTEST_RPC_101_BLOCKS_PASS"),
                 "wsp_real_core_scan_pass": wsp_receipt is not None,
                 "wsp_live_scan": wsp_receipt,
+                "regtest_public_fixture_broadcast_confirmed": (
+                    wsp_receipt["regtest_fixture_broadcast_confirmed"]
+                    if wsp_receipt is not None else False
+                ),
                 "platform": receipt["platform"], "node_sha256": receipt["wamd_sha256"],
-                "chain": "regtest", "block_height": height, "tip": tip,
+                "chain": "regtest",
+                "block_height": (wsp_receipt["observed_height"] if wsp_receipt is not None else height),
+                "tip": (wsp_receipt["verified_tip"] if wsp_receipt is not None else tip),
                 "live_wamd_process_observed": True, "live_rpc_observed": True,
-                "wallet_send_e2e_pass": False, "wsp_bip352_e2e_pass": False,
+                "wallet_send_e2e_pass": False,
+                "wsp_bip352_e2e_pass": (
+                    wsp_receipt["wsp_bip352_payment_confirmed"]
+                    if wsp_receipt is not None else False
+                ),
                 "mainnet_allowed": False, "production_process_binding_qualified": False,
             }
         finally:
