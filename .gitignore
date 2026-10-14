@@ -18,3 +18,9 @@ core/
 *.sqlite*
 .wam-regtest/
 real-core-evidence.json
+
+wsp-upstream/
+bundle-input/
+package-output/
+*.spec
+real-regtest-gui-preview.png
