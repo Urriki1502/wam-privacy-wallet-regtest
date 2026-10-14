@@ -1,10 +1,11 @@
 """Small negative security tests; never substitute for live-Core CI."""
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
 
-from wam_regtest.core import CoreSmokeError, smoke_real_core, verified_core_paths, _early_exit_category
+from wam_regtest.core import CoreSmokeError, smoke_real_core, verified_core_paths, _early_exit_category, _write_private_config
 from wam_regtest.release import ARCHIVES, ReleaseError, _verify_executable_shape, _NoRedirect
 
 
@@ -41,6 +42,22 @@ class CoreContractTests(unittest.TestCase):
             for os_arch in ARCHIVES:
                 with self.subTest(os_arch=os_arch), self.assertRaises(ReleaseError):
                     _verify_executable_shape(file, os_arch)
+
+    def test_real_core_config_network_options_are_regtest_scoped(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            _write_private_config(root, 29453, 29455)
+            conf = root / "wam.conf"
+            payload = conf.read_text()
+            global_section, regtest_section = payload.split("[regtest]\\n".replace("\\\\", "\\"))
+            self.assertEqual(global_section, "regtest=1\\nserver=1\\n".replace("\\\\", "\\"))
+            self.assertIn("rpcport=29453\\n".replace("\\\\", "\\"), regtest_section)
+            self.assertIn("port=29455\\n".replace("\\\\", "\\"), regtest_section)
+            self.assertIn("connect=0\\n".replace("\\\\", "\\"), regtest_section)
+            self.assertIn("listen=0\\n".replace("\\\\", "\\"), regtest_section)
+            self.assertNotIn("rpcpassword=", global_section)
+            self.assertNotIn("rpcbind=", global_section)
+            self.assertNotEqual(os.stat(conf).st_mode & 0o777, 0o644)
 
     def test_early_exit_redacts_real_daemon_messages(self):
         with tempfile.TemporaryDirectory() as folder:
