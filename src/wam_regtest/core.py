@@ -117,6 +117,23 @@ def _early_exit_category(datadir: Path) -> str:
     if any(word in data for word in ("error opening block database", "database corrupt",
                                      "database environment")):
         return "CORE_DAEMON_DATABASE_DENIED"
+    # Report only a fixed vocabulary of observed startup tokens. Never send
+    # arbitrary daemon lines (could contain RPC credentials or private paths).
+    import re
+    safe_words = frozenset((
+        "error", "failed", "fatal", "regtest", "config", "configuration",
+        "unknown", "invalid", "unsupported", "argument", "option", "daemon",
+        "wallet", "datadir", "rpc", "bind", "port", "peer", "network",
+        "index", "txindex", "coinstatsindex", "blockfilterindex", "connect",
+        "listen", "permission", "denied", "directory", "database", "file",
+        "lock", "address", "genesis", "server", "shutdown", "usage", "help",
+        "timeout", "missing", "cannot", "unable", "not", "set", "already",
+        "bitcoin", "wam", "core", "refused", "incompatible", "root",
+    ))
+    tokens = [w for w in re.findall(r"[a-z]{2,32}", data)
+              if w in safe_words]
+    if tokens:
+        return "CORE_DAEMON_EXIT_LOG_TOKENS_" + "_".join(tokens[:12]).upper()
     return "CORE_DAEMON_EARLY_EXIT_UNCLASSIFIED"
 
 
@@ -148,7 +165,13 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             info = None
             while time.monotonic() < end:
                 if proc.poll() is not None:
-                    raise CoreSmokeError(_early_exit_category(datadir))
+                    code = proc.returncode
+                    status = _early_exit_category(datadir)
+                    # Process status is a bounded integer; no paths, passwords
+                    # or uncontrolled log text are emitted.
+                    if type(code) is int and -255 <= code <= 255:
+                        status += "_STATUS_" + ("NEG" if code < 0 else "POS") + str(abs(code))
+                    raise CoreSmokeError(status)
                 try:
                     candidate = _read_cli(prefix + ["getblockchaininfo"], timeout=5)
                     if isinstance(candidate, dict):
