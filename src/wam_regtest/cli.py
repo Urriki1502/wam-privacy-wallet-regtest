@@ -25,6 +25,14 @@ def main() -> int:
     gui.add_argument("--datadir", required=True, type=Path)
     gui.add_argument("--wsp-source-root", required=True, type=Path)
     gui.add_argument("--confirm-disposable-regtest", action="store_true")
+
+    demo = sub.add_parser(
+        "demo", help="One command: signed v0.1.11 Core -> genuine BIP352 payment -> interactive native Qt REGTEST"
+    )
+    demo.add_argument("--core-dir", required=True, type=Path)
+    demo.add_argument("--wsp-source-root", required=True, type=Path)
+    demo.add_argument("--confirm-disposable-regtest", action="store_true")
+    demo.add_argument("--confirm-public-fixture-payment", action="store_true")
     args = ap.parse_args()
     try:
         if args.command == "smoke":
@@ -37,6 +45,21 @@ def main() -> int:
                     raise CoreSmokeError("CORE_REPORT_PATH_DENIED")
                 args.report.write_text(json.dumps(outcome, sort_keys=True, indent=2) + "\n")
             print(json.dumps(outcome, sort_keys=True))
+            return 0
+        if args.command == "demo":
+            if (args.confirm_disposable_regtest is not True
+                    or args.confirm_public_fixture_payment is not True):
+                raise CoreSmokeError("CORE_REAL_DEMO_CONSENT_DENIED")
+            result = smoke_real_core(
+                args.core_dir.expanduser().absolute(),
+                explicit_consent=True,
+                wsp_source=args.wsp_source_root.expanduser().absolute(),
+                wsp_payment_e2e=True,
+                interactive_demo=True,
+            )
+            if not result.get("interactive_demo_closed_cleanly"):
+                raise CoreSmokeError("CORE_REAL_DEMO_NOT_CLOSED")
+            print(json.dumps(result, sort_keys=True))
             return 0
         if args.command == "gui":
             if args.confirm_disposable_regtest is not True:
