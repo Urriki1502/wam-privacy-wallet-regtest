@@ -68,13 +68,14 @@ jobs:
             --confirm-public-fixture-payment \
             --confirm-real-gui-e2e \
             --confirm-security-e2e \
+            --confirm-wallet-e2e \
             --report real-core-evidence.json
           python - <<'PY'
           import json
           from pathlib import Path
           proof=json.loads(Path('real-core-evidence.json').read_text())
           assert proof['status']=='REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS'
-          assert proof['chain']=='regtest' and proof['block_height']==102
+          assert proof['chain']=='regtest' and proof['block_height']==105
           assert proof['live_wamd_process_observed'] is True
           assert proof['live_rpc_observed'] is True
           assert proof['wsp_bip352_e2e_pass'] is True
@@ -90,7 +91,7 @@ jobs:
           assert actual['observed_height']==102
           assert actual['regtest_fixture_broadcast_confirmed'] is True
           assert proof['regtest_public_fixture_broadcast_confirmed'] is True
-          assert proof['wallet_send_e2e_pass'] is False
+          assert proof['wallet_send_e2e_pass'] is True
           assert proof['gui_real_core_e2e_pass'] is True
           view = proof['gui_live_core_view']
           assert view['status']=='REAL_WAM_CORE_V0_1_11_NATIVE_QT_RECEIVE_BALANCE_HISTORY_PASS'
@@ -103,7 +104,7 @@ jobs:
           assert view['gui_background_worker_completed'] is True
           assert view['signer_allowed'] is False and view['broadcast_allowed'] is False
           assert view['mainnet_allowed'] is False
-          assert actual['verified_tip']==proof['tip']
+          assert actual['verified_tip']==proof['gui_live_core_view']['verified_tip']
           assert proof['mainnet_allowed'] is False
           security = proof['security_live_core']
           assert security['status'] == 'REAL_CORE_MACOS_KEYCHAIN_ENCRYPTED_RECOVERY_REORG_PASS'
@@ -113,6 +114,20 @@ jobs:
           assert security['wrong_password_denied'] is True
           assert security['restored_balance_blocked_until_live_scan'] is True
           assert security['actual_core_reorg_depth'] == 1 and security['observed_height'] == 103
+          wallet = proof['wallet_live_core']
+          assert wallet['status'] == 'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS'
+          assert wallet['real_core_rpc'] is True and wallet['synthetic_rpc'] is False
+          assert wallet['native_qt_prepare_sign_broadcast'] is True
+          assert wallet['exact_intent_approval_required'] is True
+          assert wallet['real_core_mempool_accepted'] is True
+          assert wallet['real_core_confirmed_recipient_atoms'] == 100000
+          assert wallet['native_sender_change_confirmed'] is True
+          assert wallet['encrypted_reservations_before_network'] is True
+          assert wallet['irreversible_reservations_survive_reorg'] is True
+          assert wallet['native_qt_backup_lock_recovery'] is True
+          assert wallet['background_sync_active'] is True
+          assert wallet['native_gui_navigation_pages'] == 6 and wallet['observed_height'] == 105
+          print('REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_PASS')
           print('REAL_CORE_KEYCHAIN_ENCRYPTED_RECOVERY_REORG_PASS')
           print('REAL_WAM_CORE_REGTEST_101_BLOCKS_PASS')
           print('REAL_WAM_CORE_NATIVE_WSP_SQLITE_SCAN_101_BLOCKS_AND_RESTART_PASS')
@@ -127,6 +142,7 @@ jobs:
           path: |
             real-core-evidence.json
             real-regtest-gui-preview.png
+            real-regtest-wallet-preview.png
           if-no-files-found: error
           retention-days: 14
 
@@ -184,5 +200,6 @@ jobs:
             package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg
             package-output/SHA256SUMS.json
             real-regtest-gui-preview.png
+            real-regtest-wallet-preview.png
           if-no-files-found: error
           retention-days: 14

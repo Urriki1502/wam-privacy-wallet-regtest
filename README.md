@@ -2,7 +2,12 @@
 
 **Fresh MIT repository. No historical mock-first PR chain. WAM Core v0.1.11 is the only node baseline.**
 
-**Status:** the official signed WAM Core v0.1.11 has passed native macOS ARM64 real REGTEST RPC; pinned WSP-1 detected an actual BIP352 payment at block 102, with SQLite/history/restart. The new Qt **read-only public-demo Receive/Balance/History** must still pass its exact-head live-Core GUI CI gate. This is NOT a user-key wallet, generalized signer or mainnet application.
+**Status:** experimental native macOS ARM64 disposable REGTEST wallet with
+Receive, Balance, History, Send, review-gated Sign/Broadcast, encrypted backup,
+Keychain rollback anchor, Security/Settings and background sync. Source and
+frozen-app acceptance use official signed WAM Core v0.1.11, pinned WSP BIP352,
+actual SQLite and Qt. No personal keys, real funds or mainnet. Full behavior and
+limits: [native wallet](docs/WALLET-REGTEST.md).
 
 ## Actual first acceptance gate
 
@@ -113,3 +118,15 @@ key/checkpoint backup, recovery and actual Core invalidate/reconsider checks.
 The final frozen app repeats this gate. See [security reuse and exact limits](docs/SECURITY-REUSE.md).
 The checkpoint vault uses pinned WSP AES-GCM/scrypt; the Keychain anchor contains
 only a public generation/digest. No mainnet, personal keys or production custody.
+
+## Launch the disposable test-key wallet
+
+The `.app` launches this flow directly. From source:
+
+```bash
+wam-regtest wallet --core-dir core --wsp-source-root wsp-upstream \
+  --confirm-disposable-regtest --confirm-public-fixture-payment
+```
+
+The existing `demo` command remains a read-only public-fixture view. A wallet
+passphrase is entered only through the native GUI; no CLI password argument.

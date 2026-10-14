@@ -19,6 +19,27 @@ from PySide6.QtWidgets import (
 from .wallet_read import WalletReadSnapshot, read_real_wallet_snapshot
 
 
+_QT_APPLICATION = None
+
+
+def qt_application():
+    # Qt allows one QApplication lifetime per process. Keep it alive across
+    # baseline and operational probes; destroying/recreating it can crash.
+    global _QT_APPLICATION
+    if _QT_APPLICATION is None:
+        _QT_APPLICATION = QApplication.instance() or QApplication([])
+    return _QT_APPLICATION
+
+
+def shutdown_qt():
+    global _QT_APPLICATION
+    if _QT_APPLICATION is not None:
+        _QT_APPLICATION.closeAllWindows()
+        _QT_APPLICATION.processEvents()
+        _QT_APPLICATION.shutdown()
+        _QT_APPLICATION = None
+
+
 def _wallet_icons(tone: str) -> tuple[QIcon, ...]:
     icons = []
     for which in range(3):
@@ -60,15 +81,15 @@ class _ReadWorker(QThread):
     ready = Signal(object)
     denied = Signal(str)
 
-    def __init__(self, core_dir: Path, datadir: Path, source: Path):
+    def __init__(self, core_dir: Path, datadir: Path, source: Path, session=None):
         super().__init__()
         self._core_dir, self._datadir, self._source = core_dir, datadir, source
+        self.session = session
 
     def run(self):
         try:
-            result = read_real_wallet_snapshot(
-                self._core_dir, self._datadir, self._source
-            )
+            result = (self.session.snapshot() if self.session is not None else
+                      read_real_wallet_snapshot(self._core_dir, self._datadir, self._source))
             self.ready.emit(result)
         except Exception:
             # Never forward external RPC messages, paths or private data.
@@ -80,8 +101,9 @@ class RegtestWalletWindow(QMainWindow):
     snapshot_updated = Signal(object)
     snapshot_failed = Signal(str)
 
-    def __init__(self, core_dir: Path, datadir: Path, source: Path):
+    def __init__(self, core_dir: Path, datadir: Path, source: Path, *, session=None):
         super().__init__()
+        self.session = session
         self._core_dir, self._datadir, self._source = core_dir, datadir, source
         self._worker = None
         self._snapshot = None
@@ -125,6 +147,7 @@ class RegtestWalletWindow(QMainWindow):
         warning.setObjectName("Warning")
         warning.setWordWrap(True)
         col.addWidget(warning)
+        self.warning = warning
 
         self.status = QLabel("NOT SYNCED — live Core verification required")
         self.status.setObjectName("StatusText")
@@ -210,6 +233,12 @@ class RegtestWalletWindow(QMainWindow):
     def apply_theme(self, *_):
         local = datetime.now().astimezone()
         active = resolve_theme(self.appearance.currentData(), local)
+        if self.appearance.currentData() == "auto" and self.session is not None:
+            scheme = QApplication.styleHints().colorScheme()
+            if scheme == Qt.ColorScheme.Dark:
+                active = "dark"
+            elif scheme == Qt.ColorScheme.Light:
+                active = "light"
         if active == "dark":
             c = dict(bg="#0B1322", surface="#172439", text="#F4F8FF",
                      muted="#A3B5CA", border="#334760", tint="#20374B",
@@ -262,7 +291,7 @@ class RegtestWalletWindow(QMainWindow):
             return
         self.refresh_button.setEnabled(False)
         self.status.setText("Scanning signed WAM Core REGTEST and WSP-1 SQLite…")
-        worker = _ReadWorker(self._core_dir, self._datadir, self._source)
+        worker = _ReadWorker(self._core_dir, self._datadir, self._source, self.session)
         self._worker = worker
         worker.ready.connect(self.apply_snapshot)
         worker.denied.connect(self._sync_failed)
@@ -289,7 +318,9 @@ class RegtestWalletWindow(QMainWindow):
     def apply_snapshot(self, snap: WalletReadSnapshot):
         if (type(snap) is not WalletReadSnapshot or snap.chain != "regtest"
                 or not snap.demo_account_only or snap.synthetic_rpc
-                or snap.signer_allowed or snap.broadcast_allowed or snap.mainnet_allowed):
+                or snap.signer_allowed is not (self.session is not None)
+                or snap.broadcast_allowed is not (self.session is not None)
+                or snap.mainnet_allowed):
             self._sync_failed("REGTEST_UNTRUSTED_SNAPSHOT_DENIED")
             return
         self._snapshot = snap
@@ -310,7 +341,8 @@ class RegtestWalletWindow(QMainWindow):
                 self.history_table.setItem(row, col, QTableWidgetItem(value))
         self.status.setText(
             f"VERIFIED LIVE REGTEST · height {snap.height} · "
-            f"tip {snap.tip[:14]}… · READ ONLY")
+            f"tip {snap.tip[:14]}… · " +
+            ("DISPOSABLE TEST WALLET" if self.session is not None else "READ ONLY"))
         self.snapshot_updated.emit(snap)
 
     def closeEvent(self, event):
@@ -325,10 +357,7 @@ class RegtestWalletWindow(QMainWindow):
 
 
 def launch_readonly_wallet(core_dir: Path, datadir: Path, source: Path) -> int:
-    app = QApplication.instance()
-    created = app is None
-    if created:
-        app = QApplication([])
+    app = qt_application()
     window = RegtestWalletWindow(core_dir, datadir, source)
     window.show()
     QTimer.singleShot(0, window.request_sync)

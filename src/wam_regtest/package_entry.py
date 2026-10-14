@@ -95,6 +95,8 @@ def main() -> int:
             wsp_payment_e2e=True,
             gui_e2e=ci_mode,
             security_e2e=ci_mode,
+            wallet_e2e=ci_mode,
+            operational_demo=not ci_mode,
             interactive_demo=not ci_mode,
         )
         if ci_mode:
@@ -105,6 +107,9 @@ def main() -> int:
                 raise BundleLaunchError("WAM_BUNDLE_LIVE_E2E_DENIED")
             if result["security_live_core"]["status"] != "REAL_CORE_MACOS_KEYCHAIN_ENCRYPTED_RECOVERY_REORG_PASS":
                 raise BundleLaunchError("WAM_BUNDLE_SECURITY_E2E_DENIED")
+            if result["wallet_live_core"]["status"] != "REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS":
+                raise BundleLaunchError("WAM_BUNDLE_WALLET_E2E_DENIED")
+            print("MACOS_ARM64_PACKAGED_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_PASS")
             print("MACOS_ARM64_PACKAGED_ENCRYPTED_RECOVERY_REORG_E2E_PASS")
             print("MACOS_ARM64_PACKAGED_APP_REAL_CORE_QT_BIP352_E2E_PASS")
         else:
@@ -137,6 +142,10 @@ def main() -> int:
             except Exception:
                 pass
         return 2
+    finally:
+        desktop = sys.modules.get("wam_regtest.desktop")
+        if desktop is not None:
+            desktop.shutdown_qt()
 
 
 if __name__ == "__main__":
