@@ -37,6 +37,18 @@ def _check_bundle() -> tuple[Path, Path]:
     if receipt.get("platform") != "macos-arm64":
         raise BundleLaunchError("WAM_BUNDLE_CORE_PLATFORM_DENIED")
     _pinned_source(source)
+    # The ARM64 coincurve wheel embeds a package-local CFFI extension loaded
+    # by native code, which static Python import analysis cannot discover.
+    # Exercise native crypto in the frozen self-check, before starting Core.
+    try:
+        from wam_sp.core import pub, hash160
+        from wam_sp.crypto import shared_point
+        from wam_sp.keystore import Keyring
+        if (shared_point((1).to_bytes(32, "big"), pub(2)) != pub(2)
+                or len(hash160(pub(31))) != 20):
+            raise BundleLaunchError("WAM_BUNDLE_NATIVE_CRYPTO_DENIED")
+    except ImportError:
+        raise BundleLaunchError("WAM_BUNDLE_NATIVE_CRYPTO_IMPORT_DENIED") from None
     if not node.is_file() or not cli.is_file():
         raise BundleLaunchError("WAM_BUNDLE_CORE_DENIED")
     return core_dir, source

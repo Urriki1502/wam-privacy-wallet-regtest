@@ -22,6 +22,7 @@ python -m PyInstaller --noconfirm --clean --onedir --windowed \
   --paths "$(pwd)/src" \
   --collect-submodules wam_regtest \
   --collect-submodules wam_sp \
+  --hidden-import coincurve._cffi_backend \
   --add-data "$(pwd)/core/wamd:core" \
   --add-data "$(pwd)/core/wam-cli:core" \
   --add-data "$(pwd)/core/receipt.json:core" \
