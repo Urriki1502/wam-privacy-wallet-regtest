@@ -133,7 +133,14 @@ class WindowsCredentialAnchor:
         handle = None
         acquired = False
         try:
-            handle = _mutex(None, False, self._mutex_name)
+            from .windows_private_storage import security_attributes, verify_security, WindowsCustodyError
+            try:
+                with security_attributes(kernel=True) as attributes:
+                    handle = _mutex(attributes, False, self._mutex_name)
+                if handle:
+                    verify_security(handle, kernel=True)
+            except WindowsCustodyError:
+                raise WindowsAnchorError("WIN_ANCHOR_MUTEX_CUSTODY_DENIED") from None
             if not handle:
                 raise WindowsAnchorError("WIN_ANCHOR_MUTEX_UNAVAILABLE")
             code = _wait(handle, 0)
