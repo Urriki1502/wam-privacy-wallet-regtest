@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 
 from .wallet_read import WalletReadSnapshot, read_real_wallet_snapshot, format_wam
 from .branding import brand_image
-from .fusion_ui import FusionOverview, fusion_palette, fusion_stylesheet
+from .fusion_ui import FusionOverview, fusion_palette, fusion_stylesheet, fusion_nav_icons
 
 
 _QT_APPLICATION = None
@@ -144,7 +144,7 @@ class RegtestWalletWindow(QMainWindow):
         h.addStretch()
         self.appearance = QComboBox()
         for label, value in (
-            ("Auto · local time", "auto"), ("Light", "light"), ("Dark", "dark"),
+            ("Auto · system", "auto"), ("Light", "light"), ("Dark", "dark"),
         ):
             self.appearance.addItem(label, value)
         h.addWidget(self.appearance)
@@ -255,7 +255,8 @@ class RegtestWalletWindow(QMainWindow):
         self.setStyleSheet(fusion_stylesheet(active))
         self.dashboard.set_theme(active)
         for item, icon in zip(
-            (self.navigation.item(i) for i in range(3)), _wallet_icons(c["accent"])
+            (self.navigation.item(i) for i in range(self.navigation.count())),
+            fusion_nav_icons(c["accent"]),
         ):
             item.setIcon(icon)
 
