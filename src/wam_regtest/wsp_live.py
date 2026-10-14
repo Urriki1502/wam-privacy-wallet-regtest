@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import hashlib
+import json
+import sys
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 import re
@@ -27,9 +30,61 @@ class RealWspScanError(ValueError):
     """A fixed non-secret failure status; never include node output or paths."""
 
 
+def _verify_frozen_source(root: Path) -> None:
+    """Verify the complete bundled WSP .py source corpus, not a Git checkout.
+
+    PyInstaller applications cannot rely on system git or checkout metadata.
+    The pinned source corpus and its SHA-256 manifest are generated on the
+    macOS build runner from the reviewed WSP commit. This remains an
+    experimental REGTEST package, not runtime code-signing attestation.
+    """
+    try:
+        bundle = Path(sys._MEIPASS).resolve()
+        if root.resolve() != (bundle / "wsp-source").resolve():
+            raise RealWspScanError("WSP_FROZEN_SOURCE_SCOPE_DENIED")
+        receipt = json.loads((root / "SOURCE_SHA256.json").read_text())
+        records = receipt["files"]
+        if (receipt["source_commit"] != PINNED_WSP_COMMIT
+                or type(records) is not dict or not 2 <= len(records) <= 200):
+            raise RealWspScanError("WSP_FROZEN_SOURCE_MANIFEST_DENIED")
+        base = root / "src" / "wam_sp"
+        actual = {
+            p.relative_to(root).as_posix()
+            for p in base.rglob("*.py") if p.is_file()
+        }
+        if set(records) != actual:
+            raise RealWspScanError("WSP_FROZEN_SOURCE_CLOSURE_DENIED")
+        for relative, expected in records.items():
+            if (type(relative) is not str
+                    or not relative.startswith("src/wam_sp/")
+                    or ".." in Path(relative).parts
+                    or type(expected) is not str
+                    or not re.fullmatch(r"[0-9a-f]{64}", expected)):
+                raise RealWspScanError("WSP_FROZEN_SOURCE_MANIFEST_DENIED")
+            member = root / relative
+            if member.is_symlink() or not member.is_file():
+                raise RealWspScanError("WSP_FROZEN_SOURCE_MEMBER_DENIED")
+            if hashlib.sha256(member.read_bytes()).hexdigest() != expected:
+                raise RealWspScanError("WSP_FROZEN_SOURCE_HASH_DENIED")
+        spec = importlib.util.find_spec("wam_sp")
+        if spec is None or not spec.origin:
+            raise RealWspScanError("WSP_FROZEN_PACKAGE_DENIED")
+        # The imported package must be part of the sealed PyInstaller runtime,
+        # not any unrelated system or user-site installation.
+        if not Path(spec.origin).resolve().is_relative_to(bundle):
+            raise RealWspScanError("WSP_FROZEN_PACKAGE_ORIGIN_DENIED")
+    except RealWspScanError:
+        raise
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        raise RealWspScanError("WSP_FROZEN_SOURCE_DENIED") from None
+
+
 def _pinned_source(root: Path) -> None:
     if type(root) is not type(Path()) or not root.is_absolute():
         raise RealWspScanError("WSP_SOURCE_DIRECTORY_DENIED")
+    if getattr(sys, "frozen", False):
+        _verify_frozen_source(root)
+        return
     try:
         sha = subprocess.run(
             ["git", "-C", str(root), "rev-parse", "HEAD"],
