@@ -23,7 +23,10 @@ def _resource_paths() -> tuple[Path, Path]:
             or not hasattr(sys, "_MEIPASS")):
         raise BundleLaunchError("WAM_BUNDLE_MACOS_ARM64_REQUIRED")
     root = Path(sys._MEIPASS).resolve()
-    return root / "core", root / "wsp-source"
+    # PyInstaller relocates data under Contents/Resources and places a safe
+    # symlink in _MEIPASS. Resolve that *directory* before Core refuses links;
+    # the actual verified wamd/wam-cli members remain regular unmodified files.
+    return (root / "core").resolve(), (root / "wsp-source").resolve()
 
 
 def _check_bundle() -> tuple[Path, Path]:
