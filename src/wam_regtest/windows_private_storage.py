@@ -205,7 +205,9 @@ def publish(directory,name,ciphertext):
             text=str(directory/name).encode('utf-16-le');buffer=c.create_string_buffer(RENAME.name.offset+len(text)+2)
             rename=RENAME.from_buffer(buffer);rename.flags=0;rename.root=None;rename.length=len(text)
             c.memmove(c.addressof(buffer)+RENAME.name.offset,text,len(text))
-            if not setinfo(handle,3,buffer,len(buffer)): _deny('WIN_CUSTODY_PUBLISH_DENIED')
+            if not setinfo(handle,3,buffer,len(buffer)):
+                category={5:'ACCESS',32:'SHARING',87:'PARAMETER'}.get(c.get_last_error(),'OTHER')
+                _deny('WIN_CUSTODY_PUBLISH_'+category+'_DENIED')
             renamed=True;_metadata(handle);verify_security(handle)
         finally:
             if handle is not None:
