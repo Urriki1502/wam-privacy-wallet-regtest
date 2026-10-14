@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   real-wamd:
-    name: Signed real wamd → confirmed BIP352 receive → WSP SQLite
+    name: Real signed Core → WSP BIP352 → native Qt Receive Balance History
     runs-on: macos-15
     timeout-minutes: 35
     env:
@@ -44,7 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
-          python -m pip install --disable-pip-version-check -e . -e ./wsp-upstream
+          python -m pip install --disable-pip-version-check -e '.[gui]' -e ./wsp-upstream
           python -m pip check
       - name: Run fail-closed unit contracts (not E2E)
         run: python -m unittest discover -s tests -v
@@ -57,19 +57,22 @@ jobs:
           # Only public dependency names; no credentials or datadir.
           otool -L core/wamd
           otool -L core/wam-cli
-      - name: Launch ACTUAL WAM Core and confirm fresh REGTEST chain
+      - name: Launch ACTUAL WAM Core, native WSP and Qt Receive/Balance/History E2E
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: |
           python -m wam_regtest.cli smoke \
             --core-dir core \
             --confirm-disposable-regtest \
             --wsp-source-root wsp-upstream \
             --confirm-public-fixture-payment \
+            --confirm-real-gui-e2e \
             --report real-core-evidence.json
           python - <<'PY'
           import json
           from pathlib import Path
           proof=json.loads(Path('real-core-evidence.json').read_text())
-          assert proof['status']=='REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS'
+          assert proof['status']=='REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS'
           assert proof['chain']=='regtest' and proof['block_height']==102
           assert proof['live_wamd_process_observed'] is True
           assert proof['live_rpc_observed'] is True
@@ -87,17 +90,32 @@ jobs:
           assert actual['regtest_fixture_broadcast_confirmed'] is True
           assert proof['regtest_public_fixture_broadcast_confirmed'] is True
           assert proof['wallet_send_e2e_pass'] is False
+          assert proof['gui_real_core_e2e_pass'] is True
+          view = proof['gui_live_core_view']
+          assert view['status']=='REAL_WAM_CORE_V0_1_11_NATIVE_QT_RECEIVE_BALANCE_HISTORY_PASS'
+          assert view['real_core_rpc'] is True and view['synthetic_rpc'] is False
+          assert view['qt_gui_rendered'] is True
+          assert view['confirmed_balance_atoms']==actual['confirmed_receive_atoms']
+          assert view['confirmed_history_txid']==actual['public_fixture_payment_txid']
+          assert view['observed_height']==102
+          assert view['native_wsp_sqlite_synced'] is True
+          assert view['gui_background_worker_completed'] is True
+          assert view['signer_allowed'] is False and view['broadcast_allowed'] is False
+          assert view['mainnet_allowed'] is False
           assert actual['verified_tip']==proof['tip']
           assert proof['mainnet_allowed'] is False
           print('REAL_WAM_CORE_REGTEST_101_BLOCKS_PASS')
           print('REAL_WAM_CORE_NATIVE_WSP_SQLITE_SCAN_101_BLOCKS_AND_RESTART_PASS')
           print('REAL_WAM_CORE_NATIVE_BIP352_CONFIRMED_RECEIVE_SQLITE_PASS')
+          print('REAL_WAM_CORE_NATIVE_QT_GUI_RECEIVE_BALANCE_HISTORY_PASS')
           PY
       - name: Upload only sanitized live-Core evidence
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: real-core-regtest-${{ github.sha }}
-          path: real-core-evidence.json
+          path: |
+            real-core-evidence.json
+            real-regtest-gui-preview.png
           if-no-files-found: error
           retention-days: 14

@@ -2,7 +2,7 @@
 
 **Fresh MIT repository. No historical mock-first PR chain. WAM Core v0.1.11 is the only node baseline.**
 
-**Status:** foundation only — independently signed Core bootstrap and *real* REGTEST blockchain smoke. This is **not** a working WSP wallet or E2E Receive/Send yet. Nothing has been proven against a live node until the `real-core` CI job succeeds on this repo. No mainnet, real funds or personal keys.
+**Status:** the official signed WAM Core v0.1.11 has passed native macOS ARM64 real REGTEST RPC; pinned WSP-1 detected an actual BIP352 payment at block 102, with SQLite/history/restart. The new Qt **read-only public-demo Receive/Balance/History** must still pass its exact-head live-Core GUI CI gate. This is NOT a user-key wallet, generalized signer or mainnet application.
 
 ## Actual first acceptance gate
 
@@ -27,6 +27,20 @@ python -m unittest discover -s tests -v
 ```
 
 `python -m wam_regtest.release` requires a locally trusted `gpg` executable (`brew install gnupg`), real HTTPS access to `wamcoin.org`, and a genuine signed release. It fails closed on download/signature/hash/architecture errors. The runner never fetches an arbitrary binary URL.
+
+## Native Qt wallet (experimental, public-demo account only)
+
+Install `python -m pip install -e '.[gui]'` plus the exact pinned WSP upstream source. A separate **official, signed, already-running** WAM Core v0.1.11 REGTEST daemon must be available with an owner-private `0700` datadir and a WSP SQLite database. Run:
+
+```bash
+wam-regtest gui --core-dir core --datadir /ABSOLUTE/DISPOSABLE/REGTEST-DATADIR \
+  --wsp-source-root /ABSOLUTE/PINNED/wam-silent-payments \
+  --confirm-disposable-regtest
+```
+
+The GUI performs a live WSP scanner RPC round-trip in a background Qt thread every 30 seconds; it clears all balances/history when verification fails and never creates/signs/broadcasts transactions. It shows **public-fixture-only** BIP352 Receive, confirmed Balance and History. Appearance Auto uses the operating system's local clock (light 06:00–17:59, dark 18:00–05:59) and supports manual override. **Never send real WAM to its published demo receive code.**
+
+The macOS real-Core CI drives the actual GUI against a signed running daemon, a mined BIP352 transaction and real WSP SQLite, then uploads a UI screenshot; no synthetic RPC is accepted.
 
 ## Scope and clean milestones
 
