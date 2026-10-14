@@ -171,9 +171,12 @@ class OperationalWalletWindow(RegtestWalletWindow):
         layout.addStretch()
         self.stack.addWidget(settings)
         self.appearance.setItemText(0,"Auto · Windows" if sys.platform=="win32" else "Auto · macOS")
-        hints=QApplication.styleHints()
-        hints.colorSchemeChanged.connect(self.apply_theme)
-        self._appearance_connected=True
+        # The shared Fusion window already follows native OS appearance.
+        # Avoid duplicate signal connections between subclasses.
+        # Actual operational actions are wired to existing, separately
+        # approval-gated WalletSession controls; styling never calls signer.
+        self.dashboard.go_send.clicked.connect(lambda: self.navigation.setCurrentRow(3))
+        self.dashboard.open_security.clicked.connect(lambda: self.navigation.setCurrentRow(4))
         self._actions=(self.prepare_button,self.sign_button,self.broadcast_button,self.cancel_button,
                        self.lock_button,self.unlock_button,self.backup_button,self.recover_button,self.mine_button,self.network_button,self.disclosure_button)
         self._update_controls()
@@ -183,6 +186,9 @@ class OperationalWalletWindow(RegtestWalletWindow):
             return
         busy=self._worker is not None
         unlocked=not self.session.locked and not self.session.faulted
+        self.dashboard.go_send.setEnabled(not busy and unlocked)
+        # A locked user must still be able to reach recovery/security.
+        self.dashboard.open_security.setEnabled(not busy)
         for button in self._actions:
             button.setEnabled(not busy and unlocked)
         self.prepare_button.setEnabled(not busy and unlocked and self.review is None)
