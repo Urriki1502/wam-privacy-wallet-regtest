@@ -11,6 +11,28 @@ from wam_regtest.wsp_live import LiveCoreReadOnlyCli, RealWspScanError, _pinned_
 
 
 class CoreContractTests(unittest.TestCase):
+    def test_payment_e2e_requires_both_explicit_consent_and_pinned_wsp(self):
+        with self.assertRaisesRegex(CoreSmokeError,
+                                    "^CORE_REAL_REGTEST_CONSENT_DENIED$"):
+            smoke_real_core(Path("/nonexistent"), explicit_consent=False,
+                            wsp_payment_e2e=True)
+        for flag in (True, 1, "true", None):
+            if flag is True:
+                target = "CORE_PUBLIC_FIXTURE_PAYMENT_SCOPE_DENIED"
+            elif flag is None:
+                continue  # ordinary non-payment mode, tested separately
+            else:
+                target = "CORE_PUBLIC_FIXTURE_PAYMENT_SCOPE_DENIED"
+            with self.subTest(flag=flag), self.assertRaisesRegex(
+                CoreSmokeError, "^" + target + "$"
+            ):
+                smoke_real_core(Path("/nonexistent"), explicit_consent=True,
+                                wsp_payment_e2e=flag)
+        with self.assertRaisesRegex(CoreSmokeError,
+                                    "^CORE_PUBLIC_FIXTURE_PAYMENT_SCOPE_DENIED$"):
+            smoke_real_core(Path("/nonexistent"), explicit_consent=True,
+                            wsp_payment_e2e=True, wsp_source=None)
+
     def test_live_scanner_rpc_cannot_access_write_methods_or_unqualified_chain(self):
         with tempfile.TemporaryDirectory() as root:
             folder = Path(root).absolute()
