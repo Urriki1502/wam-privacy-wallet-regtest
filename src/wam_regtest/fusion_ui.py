@@ -6,8 +6,8 @@ Snapshots are supplied only by the existing verified Core/WSP read path.
 """
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QRectF
-from PySide6.QtGui import QColor, QPainter, QPen, QFont
+from PySide6.QtCore import Qt, QRectF, QPointF
+from PySide6.QtGui import QColor, QPainter, QPen, QIcon, QPixmap, QPolygonF
 from PySide6.QtWidgets import (
     QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
     QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QHeaderView,
@@ -141,7 +141,8 @@ def activity_by_block(snapshot: WalletReadSnapshot | None) -> tuple[tuple[int, i
     """
     if snapshot is None:
         return ()
-    if type(snapshot) is not WalletReadSnapshot or snapshot.synthetic_rpc or snapshot.chain != "regtest":
+    if (type(snapshot) is not WalletReadSnapshot or snapshot.synthetic_rpc or
+            snapshot.chain != "regtest" or snapshot.mainnet_allowed):
         raise ValueError("FUSION_HISTORY_UNVERIFIED_DENIED")
     blocks: dict[int, list[int]] = {}
     for row in snapshot.history:
@@ -234,6 +235,53 @@ def _muted(text: str) -> QLabel:
     label.setObjectName("FusionMuted")
     label.setWordWrap(True)
     return label
+
+
+def fusion_nav_icons(tone: str) -> tuple[QIcon, ...]:
+    """One outline-geometry icon set for both native Qt platforms."""
+    color = QColor(tone)
+    if not color.isValid():
+        raise ValueError("FUSION_ICON_COLOR_DENIED")
+    icons = []
+    for index in range(6):
+        pix = QPixmap(40, 40)
+        pix.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pix)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(QPen(color, 2.4, Qt.PenStyle.SolidLine,
+                            Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        if index == 0:  # Overview home
+            painter.drawPolyline(QPolygonF([QPointF(7,19),QPointF(20,8),QPointF(33,19)]))
+            painter.drawLine(11,17,11,32);painter.drawLine(29,17,29,32)
+            painter.drawLine(11,32,29,32)
+            painter.drawRect(18,24,5,8)
+        elif index == 1:  # Receive
+            painter.drawLine(20,7,20,27)
+            painter.drawLine(12,19,20,27);painter.drawLine(28,19,20,27)
+            painter.drawLine(8,32,32,32)
+        elif index == 2:  # History
+            painter.drawEllipse(8,8,24,24)
+            painter.drawLine(20,13,20,21);painter.drawLine(20,21,26,25)
+        elif index == 3:  # Send
+            painter.drawPolygon(QPolygonF([QPointF(6,18),QPointF(34,8),
+                                           QPointF(25,34),QPointF(19,23),QPointF(6,18)]))
+            painter.drawLine(19,23,34,8)
+        elif index == 4:  # Security
+            painter.drawPolygon(QPolygonF([QPointF(20,6),QPointF(31,12),
+                                           QPointF(30,24),QPointF(20,34),
+                                           QPointF(10,24),QPointF(9,12),QPointF(20,6)]))
+            painter.drawLine(15,20,19,24);painter.drawLine(19,24,26,16)
+        else:  # Settings
+            painter.drawEllipse(11,11,18,18);painter.drawEllipse(17,17,6,6)
+            for a,b,cc,dd in ((20,5,20,10),(20,30,20,35),
+                               (5,20,10,20),(30,20,35,20),
+                               (9,9,12,12),(28,28,31,31),
+                               (9,31,12,28),(28,12,31,9)):
+                painter.drawLine(a,b,cc,dd)
+        painter.end()
+        icons.append(QIcon(pix))
+    return tuple(icons)
 
 
 class FusionOverview(QScrollArea):
