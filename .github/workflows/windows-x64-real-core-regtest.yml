@@ -1,0 +1,77 @@
+# First ACTUAL Windows Core node lifecycle; no WSP payment, GUI or signer.
+# This is additional evidence, never a replacement for macOS V1 E2E.
+name: REAL signed WAM Core v0.1.11 Windows x64 REGTEST smoke
+
+on:
+  pull_request:
+    paths:
+      - "src/wam_regtest/windows_core_regtest_smoke.py"
+      - "src/wam_regtest/windows_release_preflight.py"
+      - "src/wam_regtest/release.py"
+      - "tests/test_windows_core_regtest_smoke.py"
+      - ".github/workflows/windows-x64-real-core-regtest.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  win64-real-core-101-blocks:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Verify native Windows x64 and pinned GnuPG
+        shell: pwsh
+        run: |
+          python -c "import os,platform,struct; assert os.name=='nt' and platform.machine().lower() in ('amd64','x86_64') and struct.calcsize('P')==8, 'WIN64_NATIVE_DENIED'"
+          if (!(Get-Command gpg -ErrorAction SilentlyContinue)) { throw "WIN_GPG_REQUIRED" }
+      - name: Install inspected application module and run fail-closed contracts
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+          python -m unittest discover -s tests -p "test_windows_core_regtest_smoke.py" -v
+          if ($LASTEXITCODE -ne 0) { throw "WIN_REAL_CORE_CONTRACTS_DENIED" }
+      - name: Authenticate official release then start disposable real Core and mine 101 blocks
+        shell: pwsh
+        run: |
+          @'
+          import tempfile
+          from pathlib import Path
+          from wam_regtest.release import _download_exact
+          from wam_regtest.windows_core_regtest_smoke import smoke_signed_windows_regtest
+          from wam_regtest.windows_release_preflight import ASSET
+
+          with tempfile.TemporaryDirectory(prefix="wam-win-core-download-") as temp:
+              root=Path(temp)
+              files=(
+                  ("/SIGNING-KEY.asc","SIGNING-KEY.asc",32768),
+                  ("/downloads/v0.1.11/SHA256SUMS","SHA256SUMS",131072),
+                  ("/downloads/v0.1.11/SHA256SUMS.asc","SHA256SUMS.asc",16384),
+                  ("/downloads/v0.1.11/"+ASSET,ASSET,320*1024*1024),
+              )
+              for remote,name,limit in files:
+                  _download_exact(remote,limit,root/name)
+              receipt=smoke_signed_windows_regtest(
+                  root/ASSET,root/"SIGNING-KEY.asc",root/"SHA256SUMS",
+                  root/"SHA256SUMS.asc",consent=True,timeout=120)
+              assert receipt["status"]=="WIN64_SIGNED_WAM_CORE_REGTEST_101_BLOCK_SMOKE_PASS"
+              assert receipt["actual_regtest_101_blocks"] is True
+              assert receipt["zero_peers"] is True
+              assert receipt["real_node_process"] is True
+              for forbidden in ("wsp_bip352_payment_e2e","qt_wallet_e2e",
+                                "sign_broadcast_authorized","production_authorized",
+                                "mainnet_allowed"):
+                  assert receipt[forbidden] is False, "WIN_AUTHORITY_SCOPE_DENIED"
+              print(receipt["status"])
+              print("ORIGINAL_SIGNED_CORE_SHA256",receipt["core_sha256"])
+              print("ORIGINAL_SIGNED_CLI_SHA256",receipt["cli_sha256"])
+              print("REGTEST_ONLY_NO_SIGNER_NO_WALLET_NO_FUNDS")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw "WIN_REAL_CORE_101_BLOCK_SMOKE_DENIED" }
