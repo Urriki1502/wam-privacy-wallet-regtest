@@ -79,6 +79,8 @@ for name in ("wamd", "wam-cli"):
         raise SystemExit("MACOS_BUNDLE_CODESIGN_MODIFIED_CORE_DENIED")
 print("MACOS_APP_STAGE=OUTER_APP_SIGNED_CORE_HASH_STILL_PASS", flush=True)
 PY
+python scripts/audit_wallet_security.py --root "$(pwd)" --core "$(pwd)/core" \
+  --app "$(pwd)/$APP" --output package-output/INDEPENDENT-WALLET-SECURITY.json
 BIN="$APP/Contents/MacOS/WAM Privacy Wallet REGTEST"
 test -d "$APP"
 test -x "$BIN"
@@ -140,6 +142,7 @@ Path("package-output/SHA256SUMS.json").write_text(
         "status": "UNNOTARIZED_REAL_REGTEST_MACOS_ARM64_PREVIEW",
         "source": "signed WAM Core v0.1.11 + pinned WSP-1",
         "source_commit": __import__("subprocess").check_output(["git", "rev-parse", "HEAD"],text=True).strip(),
+        "independent_contract_receipt_sha256": sha256(Path("package-output/INDEPENDENT-WALLET-SECURITY.json").read_bytes()).hexdigest(),
         "original_brand_sha256": sha256(Path("assets/wam-coin-original.png").read_bytes()).hexdigest(),
         "wamd_sha256": sha256(Path("core/wamd").read_bytes()).hexdigest(),
         "wam_cli_sha256": sha256(Path("core/wam-cli").read_bytes()).hexdigest(),
