@@ -73,6 +73,34 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window.show()
         window.apply_snapshot(initial)
         assert window.navigation.count()==6 and window._sync_timer.isActive()
+        assert window._sync_timer.interval()==30_000
+        # Exercise an actual Qt timer-triggered background worker with live
+        # Core. Accelerate only the test interval, then restore the real 30s.
+        sync_loop=QEventLoop()
+        sync_result={}
+        def background_ready(snap):
+            sync_result['snap']=snap
+            sync_loop.quit()
+        def background_denied(reason):
+            sync_loop.quit()
+        deadline=QTimer()
+        deadline.setSingleShot(True)
+        deadline.timeout.connect(sync_loop.quit)
+        window.snapshot_updated.connect(background_ready)
+        window.snapshot_failed.connect(background_denied)
+        window._sync_timer.setInterval(50)
+        deadline.start(15_000)
+        sync_loop.exec()
+        window._sync_timer.stop()
+        deadline.stop()
+        window.snapshot_updated.disconnect(background_ready)
+        window.snapshot_failed.disconnect(background_denied)
+        if window._worker is not None:
+            assert window._worker.wait(15_000)
+            app.processEvents()
+        window._sync_timer.setInterval(30_000)
+        window._sync_timer.start()
+        assert sync_result.get('snap')==initial and window._worker is None
         assert not window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
         for index,color in ((2,'#10100F'),(1,'#F5F3EE')):
             window.appearance.setCurrentIndex(index)
@@ -264,6 +292,8 @@ def probe_wallet(core_dir,datadir,source,mining_address):
             'uncertain_reservation_survives_unlock':True,
             'irreversible_reservations_survive_reorg':True,'native_qt_backup_lock_recovery':True,
             'wrong_unlock_password_denied':True,'background_sync_active':True,
+            'background_sync_timer_live_core_verified':True,
+            'background_sync_production_interval_ms':30000,'background_sync_test_interval_ms':50,
             'native_gui_navigation_pages':6,'observed_height':105,
             'qt_manual_light_dark_verified':True,'qt_auto_system_events_verified':auto_verified,
             'cross_session_key_recovery':True,'cross_session_native_qt':True,

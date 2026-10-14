@@ -138,6 +138,8 @@ jobs:
           assert wallet['irreversible_reservations_survive_reorg'] is True
           assert wallet['native_qt_backup_lock_recovery'] is True
           assert wallet['background_sync_active'] is True
+          assert wallet['background_sync_timer_live_core_verified'] is True
+          assert wallet['background_sync_production_interval_ms'] == 30000
           assert wallet['qt_manual_light_dark_verified'] is True
           assert wallet['cross_session_key_recovery'] is True and wallet['cross_session_native_qt'] is True
           reopen = wallet['cross_session_recovery_proof']

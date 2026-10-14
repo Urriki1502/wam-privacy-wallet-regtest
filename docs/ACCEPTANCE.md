@@ -13,3 +13,9 @@ The complete disposable-wallet gate is `--confirm-wallet-e2e` together with
 See [native wallet scope](WALLET-REGTEST.md). Receive baseline is recorded at
 height 102, security funding/reorg at 103, and operational send confirmation
 at 105. The top-level Core receipt records the final live height/tip.
+
+Background sync qualification requires a real Qt timer-triggered worker and
+a live-Core snapshot. The probe records the production interval (30,000 ms)
+and accelerates only its test interval (50 ms), then restores 30 seconds.
+An active timer flag alone is insufficient. Cocoa appearance qualification
+is supplemental local Mac testing; offscreen CI cannot prove native Auto.
