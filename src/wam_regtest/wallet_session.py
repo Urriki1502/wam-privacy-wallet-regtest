@@ -251,22 +251,29 @@ class WalletSession:
     def sign(self, commitment):
         from wam_sp.wallet import Signer, Wallet
         from wam_sp.psbt import PSBT
-        with self._lock:
+        with self._lock, self.vault.anchor.lease():
             if self._review is None or commitment != self._review.commitment or self._signed is not None:
                 raise WalletSessionError("WALLET_EXACT_INTENT_APPROVAL_REQUIRED")
             rpc=self._rpc()
             self._unchanged_inputs(rpc)
             proposal=self._prepared.proposal
-            signed=Signer(self.ring).sign(self._prepared,proposal.intents,self._review.fee)
-            PSBT.decode(signed).finalize()  # Verify all signatures and sender proof.
+            # Approving Sign makes this reservation irreversible BEFORE
+            # entering native crypto. A crash/failure cannot restore a draft
+            # that is cancelable, even if no signature was returned.
             Wallet(self.scanner).mark_signed(proposal.token)
             self._save()
+            try:
+                signed=Signer(self.ring).sign(self._prepared,proposal.intents,self._review.fee)
+                PSBT.decode(signed).finalize()  # Verify signatures and sender proof.
+            except Exception:
+                self.faulted=True
+                raise WalletSessionError("WALLET_SIGN_UNCERTAIN_LOCK_RETAINED") from None
             self._signed=signed
             return self._review
 
     def broadcast(self, commitment):
         from wam_sp.wallet import Wallet
-        with self._lock:
+        with self._lock, self.vault.anchor.lease():
             if self._review is None or self._signed is None or commitment != self._review.commitment:
                 raise WalletSessionError("WALLET_BROADCAST_APPROVAL_REQUIRED")
             rpc=self._rpc()
@@ -279,6 +286,7 @@ class WalletSession:
                 txid=Wallet(self.scanner).broadcast(self._signed,token,rpc)
                 self._save()
             except Exception:
+                self.faulted=True
                 self._signed=None
                 raise WalletSessionError("WALLET_BROADCAST_UNCERTAIN_LOCK_RETAINED") from None
             self._prepared=self._signed=self._review=self._tip=None

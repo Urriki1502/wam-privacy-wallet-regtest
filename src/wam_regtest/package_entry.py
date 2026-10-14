@@ -126,6 +126,17 @@ def main() -> int:
                 raise BundleLaunchError("WAM_BUNDLE_WALLET_E2E_DENIED")
             if result["wallet_live_core"].get("cross_session_key_recovery") is not True:
                 raise BundleLaunchError("WAM_BUNDLE_CROSS_SESSION_RECOVERY_DENIED")
+            wallet=result["wallet_live_core"]
+            security=result["security_live_core"]
+            if not all(wallet.get(name) is True for name in (
+                    "irreversible_anchor_before_native_crypto", "sign_broadcast_os_lease_held",
+                    "real_core_lost_broadcast_reply_lock_retained", "uncertain_reservation_survives_unlock")):
+                raise BundleLaunchError("WAM_BUNDLE_INTERRUPTED_PAYMENT_DENIED")
+            if not all(security.get(name) is True for name in (
+                    "separate_process_lease_contended", "killed_process_lease_released",
+                    "failed_restore_plaintext_cleaned", "missing_or_replaced_keychain_anchor_denied",
+                    "unanchored_snapshot_retry_denied")):
+                raise BundleLaunchError("WAM_BUNDLE_NATIVE_FAILURE_PATHS_DENIED")
             if cocoa_mode:
                 if result["wallet_live_core"].get("qt_auto_system_events_verified") is not True:
                     raise BundleLaunchError("WAM_BUNDLE_COCOA_AUTO_APPEARANCE_DENIED")

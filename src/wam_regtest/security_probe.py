@@ -8,6 +8,11 @@ import os
 from pathlib import Path
 import secrets
 import subprocess
+import tempfile
+import selectors
+import base64
+import json
+from hashlib import sha256
 from .vault import CheckpointVault, KeychainAnchor, VaultError
 from .encrypted_storage import read, publish
 
@@ -79,6 +84,103 @@ def probe_security(cli, datadir, source, mining_address):
             else:
                 raise SecurityProbeError("SECURITY_GLOBAL_LEASE_BYPASSED")
         assert anchor.read()==second
+        stage = "PROCESS_LEASE"
+        # An actual separate OS process holds this public empty lock. Killing
+        # that owned child must release the lease without deleting the file.
+        lease_file=(Path(tempfile.gettempdir()).resolve()/"wam-regtest-wallet-leases"/
+                    (anchor.wallet_id+".lock"))
+        child=subprocess.Popen(["/usr/bin/perl","-MFcntl=:flock","-e",
+            'open(my $f,"+<",$ARGV[0]) or exit 2; flock($f,LOCK_EX|LOCK_NB) or exit 3; '
+            '$|=1; print "HELD\\n"; sleep 120;',str(lease_file)],
+            stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
+            env={"PATH":"/usr/bin:/bin","HOME":str(datadir)})
+        try:
+            with selectors.DefaultSelector() as selector:
+                selector.register(child.stdout,selectors.EVENT_READ)
+                if not selector.select(timeout=5) or os.read(child.stdout.fileno(),5)!=b"HELD\n":
+                    raise SecurityProbeError("SECURITY_CHILD_LEASE_DENIED")
+            try:
+                with anchor.lease():
+                    raise SecurityProbeError("SECURITY_PROCESS_LEASE_BYPASSED")
+            except VaultError as error:
+                assert str(error)=="VAULT_SESSION_BUSY"
+        finally:
+            if child.poll() is None:
+                child.kill()
+            child.wait(timeout=5)
+            child.stdout.close()
+        with anchor.lease():
+            assert anchor.read()==second
+        stage = "RESTORE_FAILURE_CLEANUP"
+        # Authenticated outer/key envelopes, deliberately invalid checkpoint.
+        # The actual native keystore and SQLite restore allocate before the
+        # inner schema rejects it. A retry must not encounter plaintext debris.
+        from wam_sp.keystore import seal
+        from wam_sp.watcher import GENESIS
+        bad_dir=datadir/'bad-checkpoint-vault'
+        bad_dir.mkdir(mode=0o700)
+        bad_anchor=KeychainAnchor(secrets.token_hex(16),keychain)
+        bad_payload={"version":1,"disposable_regtest":True,"network":GENESIS,
+            "wallet_id":bad_anchor.wallet_id,"generation":1,
+            "keys":base64.b64encode(ring.backup(password)).decode(),
+            "checkpoint":base64.b64encode(seal(b"{}",password,b"checkpoint")).decode()}
+        invalid=seal(json.dumps(bad_payload).encode(),password,b"recovery")
+        publish(bad_dir,CheckpointVault._filename(1),invalid)
+        missing=CheckpointVault(bad_dir,bad_anchor,source)
+        try:
+            missing.restore(datadir/'missing-anchor.sqlite',password)
+        except VaultError:
+            pass
+        else:
+            raise SecurityProbeError("SECURITY_MISSING_ANCHOR_ACCEPTED")
+        bad_record=(1,sha256(invalid).hexdigest())
+        bad_anchor.advance(None,bad_record)
+        malformed=CheckpointVault(bad_dir,bad_anchor,source)
+        broken_runtime=datadir/'failed-restore.sqlite'
+        for _ in range(2):
+            try:
+                malformed.restore(broken_runtime,password)
+            except VaultError:
+                pass
+            else:
+                raise SecurityProbeError("SECURITY_BAD_CHECKPOINT_ACCEPTED")
+            assert not any(broken_runtime.with_name(broken_runtime.name+x).exists()
+                           for x in ('','-journal','-wal','-shm'))
+        status,_=bad_anchor._run(["add-generic-password","-U","-s",
+            "org.wamcoin.regtest.checkpoint","-a",bad_anchor.wallet_id,"-w","1:"+"0"*64])
+        assert status==0
+        try:
+            malformed.restore(datadir/'replaced-anchor.sqlite',password)
+        except VaultError:
+            pass
+        else:
+            raise SecurityProbeError("SECURITY_REPLACED_ANCHOR_ACCEPTED")
+        stage = "UNANCHORED_PUBLICATION"
+        # Failure injection is after real ciphertext publication and before
+        # a native anchor write. It models that boundary, not a power-loss test.
+        from unittest.mock import patch
+        from .encrypted_storage import EncryptedStorageError
+        orphan_dir=datadir/'orphan-vault'
+        orphan_dir.mkdir(mode=0o700)
+        orphan_anchor=KeychainAnchor(secrets.token_hex(16),keychain)
+        orphan_vault=CheckpointVault(orphan_dir,orphan_anchor,source)
+        stable=orphan_vault.save(ring,scanner,password)
+        with patch.object(orphan_anchor,'_advance_unlocked',side_effect=VaultError('TEST_ANCHOR_WRITE_INTERRUPTED')):
+            try:
+                orphan_vault.save(ring,scanner,password)
+            except VaultError:
+                pass
+            else:
+                raise SecurityProbeError("SECURITY_FAILED_ANCHOR_ACCEPTED")
+        assert orphan_anchor.read()==stable
+        assert read(orphan_dir,orphan_vault._filename(stable[0]+1))
+        try:
+            orphan_vault.save(ring,scanner,password)
+        except EncryptedStorageError:
+            pass
+        else:
+            raise SecurityProbeError("SECURITY_ORPHAN_OVERWRITTEN")
+        assert orphan_anchor.read()==stable
         stage = "PASSWORD"
         # Wrong passphrase cannot restore even a correctly anchored envelope.
         try:
@@ -147,6 +249,11 @@ def probe_security(cli, datadir, source, mining_address):
             "independent_native_keychain_anchor": True,
             "stale_writer_denied": True, "native_wallet_id_lease_contended": True,
             "actual_core_reorg_depths": [1,12,100],
+            "separate_process_lease_contended": True, "killed_process_lease_released": True,
+            "failed_restore_plaintext_cleaned": True, "failed_restore_retry_denied_cleanly": True,
+            "missing_or_replaced_keychain_anchor_denied": True,
+            "unanchored_snapshot_retry_denied": True, "automatic_orphan_overwrite_allowed": False,
+            "power_loss_durability_qualified": False,
             "backup_recovery_then_live_scan": True, "restored_balance_blocked_until_live_scan": True,
             "actual_core_reorg_depth": 1, "observed_height": 103,
             "same_uid_malware_protection": False, "keychain_rollback_protection": False,

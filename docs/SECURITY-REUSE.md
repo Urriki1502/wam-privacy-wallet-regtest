@@ -24,6 +24,10 @@ fresh disposable research keys. This is internal engineering qualification.
 - An OS lease keyed by wallet ID serializes anchor updates across different
   vault directories. A writer must still match the generation it previously
   read; stale writers fail before publication or signature exposure/network submission.
+  Sign and Broadcast hold that lease through approval verification, persistence,
+  native crypto and RPC, so another cooperating session cannot advance the
+  anchor between the guard and the sensitive operation. Reentry is limited
+  to the exact anchor object on the thread that already owns its OS lease.
 - Both official macOS node and CLI member hashes are independently pinned;
   changing a receipt cannot authorize a substituted CLI.
 - Missing/mismatched anchor, older ciphertext under the latest name, wrong
@@ -32,8 +36,20 @@ fresh disposable research keys. This is internal engineering qualification.
   runtime. No restored balance is current until real REGTEST RPC attestation
   and Scanner.sync. Live reorg undo is independently exercised on actual Core.
 - Failure after snapshot publication/anchor update is ambiguous and fails
-  closed. An orphan is retained for deliberate recovery; automatic downgrade
-  or deletion of the anchor is not allowed.
+  closed for the writer. An unanchored snapshot blocks a retry at that
+  create-only filename; it is retained for deliberate diagnosis. The previous
+  anchored snapshot remains the only accepted generation if the anchor did not
+  advance. No signed bytes or network submission occur before an irreversible
+  anchored reservation exists. Automatic overwrite/downgrade or anchor deletion
+  is not allowed. There is no automated orphan reconciliation or claim of
+  hardware power-loss qualification.
+- Sign approval persists an irreversible reservation before native crypto.
+  Crypto failure/crash can conservatively retain a lock even if no signature
+  was returned. Lost broadcast replies fault the session; Lock/Unlock rescans
+  genuine Core while keeping uncertain locks. They cannot be canceled as drafts.
+- Failed authenticated checkpoint restore closes keys/SQLite and removes only
+  its newly created private disposable runtime and sidecars; it does not erase
+  a supplied existing database. This allows safe retry after failure.
 
 ## Limits that remain explicit
 
@@ -56,5 +72,17 @@ It funds a fresh test Keyring at block 103, saves two authenticated snapshots,
 uses an isolated native test Keychain (without changing the default/search
 list), rejects a wrong password and wallet-file rollback, restores a backup,
 blocks coin reads before RPC sync, rejects a stale writer, and exercises real
-invalidate/reconsider reorg depths 1, 12 and 100. Acceptance is repeated inside the final PyInstaller executable.
+invalidate/reconsider reorg depths 1, 12 and 100. It also kills an owned
+separate OS lease-holder process, confirms lease release, rejects missing or
+replaced native anchors, and rejects invalid authenticated inner checkpoints
+without leaving plaintext runtime debris. Boundary fault injection after
+ciphertext publication verifies that unanchored files cannot be overwritten
+or advance the anchor silently. This is not a hardware power-loss test.
+
+The operational probe inspects real encrypted reservation state at native
+signer entry, verifies another anchor cannot acquire the lease during Sign
+or Broadcast, and drops a local reply only after actual Core accepts a second
+transaction. Real mempool observation and native Lock/Unlock prove uncertain
+reservations remain irreversible. No fake RPC, signature or chain substitutes
+for the real acceptance. All gates repeat in the final PyInstaller executable.
 Mock unit contracts are not counted as real E2E.

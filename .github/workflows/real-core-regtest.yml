@@ -114,6 +114,11 @@ jobs:
           assert security['wrong_password_denied'] is True
           assert security['stale_writer_denied'] is True
           assert security['native_wallet_id_lease_contended'] is True
+          assert security['separate_process_lease_contended'] is True
+          assert security['killed_process_lease_released'] is True
+          assert security['failed_restore_plaintext_cleaned'] is True
+          assert security['missing_or_replaced_keychain_anchor_denied'] is True
+          assert security['unanchored_snapshot_retry_denied'] is True
           assert security['actual_core_reorg_depths'] == [1,12,100]
           assert security['restored_balance_blocked_until_live_scan'] is True
           assert security['actual_core_reorg_depth'] == 1 and security['observed_height'] == 103
@@ -126,6 +131,10 @@ jobs:
           assert wallet['real_core_confirmed_recipient_atoms'] == 100000
           assert wallet['native_sender_change_confirmed'] is True
           assert wallet['encrypted_reservations_before_network'] is True
+          assert wallet['irreversible_anchor_before_native_crypto'] is True
+          assert wallet['sign_broadcast_os_lease_held'] is True
+          assert wallet['real_core_lost_broadcast_reply_lock_retained'] is True
+          assert wallet['uncertain_reservation_survives_unlock'] is True
           assert wallet['irreversible_reservations_survive_reorg'] is True
           assert wallet['native_qt_backup_lock_recovery'] is True
           assert wallet['background_sync_active'] is True

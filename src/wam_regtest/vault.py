@@ -15,6 +15,7 @@ import subprocess
 import sys
 import stat
 import tempfile
+import threading
 from contextlib import contextmanager
 from . import encrypted_storage
 
@@ -34,6 +35,7 @@ class KeychainAnchor:
             raise VaultError("VAULT_MACOS_SCOPE_DENIED")
         self.wallet_id = wallet_id
         self.keychain = keychain
+        self._lease_local = threading.local()
         if keychain is not None and (type(keychain) is not type(Path())
                 or not keychain.is_absolute() or keychain.is_symlink()):
             raise VaultError("VAULT_KEYCHAIN_SCOPE_DENIED")
@@ -43,6 +45,11 @@ class KeychainAnchor:
         # All copies of one wallet share this OS lease even when their vault
         # directories differ. The root contains empty locks, never secrets.
         import fcntl
+        # Only this exact anchor object and thread may nest a held lease.
+        # Another object/process for the same wallet must still contend.
+        if getattr(self._lease_local,"held_pid",None)==os.getpid():
+            yield
+            return
         root=Path(tempfile.gettempdir()).resolve(strict=True)/"wam-regtest-wallet-leases"
         root.mkdir(mode=0o700,exist_ok=True)
         dfd=encrypted_storage.open_macos_private_directory(root)
@@ -58,9 +65,11 @@ class KeychainAnchor:
                 fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
             except OSError:
                 raise VaultError("VAULT_SESSION_BUSY") from None
+            self._lease_local.held_pid=os.getpid()
             try:
                 yield
             finally:
+                self._lease_local.held_pid=None
                 fcntl.flock(fd,fcntl.LOCK_UN)
         finally:
             if fd is not None:
@@ -181,16 +190,22 @@ class CheckpointVault:
         from wam_sp.keystore import Keyring
         from wam_sp.scanner import Scanner
         from wam_sp.file_lock import exclusive_file_lock
-        if runtime_path.exists() or runtime_path.is_symlink():
+        runtime_files=tuple(runtime_path.with_name(runtime_path.name+x)
+                            for x in ("","-journal","-wal","-shm"))
+        if any(p.exists() or p.is_symlink() for p in runtime_files):
             raise VaultError("VAULT_FRESH_RUNTIME_REQUIRED")
         ring = scanner = None
+        runtime_created = False
         try:
+            fd=encrypted_storage.open_macos_private_directory(runtime_path.parent)
+            os.close(fd)
             with self.anchor.lease(), exclusive_file_lock(self.directory / ".vault.lock"):
                 record = self.anchor.read()
                 if record is None:
                     raise VaultError("VAULT_ANCHOR_MISSING_DENIED")
                 payload = self._load_payload(password, record)
                 ring = Keyring.restore(base64.b64decode(payload["keys"], validate=True), password)
+                runtime_created = True
                 scanner = Scanner(runtime_path, ring.accounts())
                 scanner.restore(base64.b64decode(payload["checkpoint"], validate=True), password)
                 if scanner.ready or self.anchor.read() != record:
@@ -198,10 +213,17 @@ class CheckpointVault:
                 self._expected = record
                 return ring, scanner
         except Exception:
-            if scanner is not None:
-                scanner.close()
-            if ring is not None:
-                ring.close()
+            try:
+                if scanner is not None:
+                    scanner.close()
+            finally:
+                if ring is not None:
+                    ring.close()
+                if runtime_created:
+                    # Only our fresh private disposable SQLite path, never a
+                    # supplied existing DB. Failed restore must be retryable.
+                    for path in reversed(runtime_files):
+                        path.unlink(missing_ok=True)
             raise VaultError("VAULT_RESTORE_DENIED") from None
 
     def backup(self, destination, name):
