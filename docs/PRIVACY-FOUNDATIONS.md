@@ -33,3 +33,29 @@ The full real-Core probe uses this same policy, tests the Settings action,
 rejects an injected proxy option in its owned disposable config, restores the
 fixture, then verifies the genuine node again. No mock/synthetic RPC qualifies
 this gate. This provides isolation, not Tor/I2P/OHTTP or general anonymity.
+
+## Implemented selected local disclosure
+
+Adapt the reviewed PR #53 pattern without importing its broad capability
+framework or merging its Draft branch. Security offers an exact local record
+and four selectable fields: txid, block height, credit atoms, debit atoms.
+Default selections are empty. An explicit confirmation lists selected fields;
+a fresh passphrase check is required against the unlocked wallet before any
+projection. Facts come from live synchronized native WSP history. There is no
+network, clipboard, automatic export or ownership proof.
+
+A bounded one-use HMAC consent binds fixed REGTEST/local-projection purpose,
+wallet ID, unlock-session nonce, current Keychain generation/digest, full local
+record digest, selected fields and a 30-second monotonic expiry. Consume before
+release. Reject replay, mutation, stale anchor, another session/record, expiry,
+revocation, wildcard/private fields and failed authentication. Lock revokes
+all grants, clears displayed facts and best-effort clears the ephemeral key.
+Audit records only fixed decision codes. No consent snapshot is persisted,
+so old grants cannot be restored across a process restart or lock/unlock.
+
+The gate belongs to trusted local wallet/UI code; issuance is not proof of
+human presence by itself and must never be exposed to a remote requester.
+Same-process/UID compromise and guaranteed memory clearing remain unqualified.
+Unit consent fixtures are not blockchain proof: mandatory real-Core/Qt E2E
+checks selected projection and wrong-passphrase denial on genuine WSP history.
+Human dialog/passphrase interaction remains separate operator acceptance.

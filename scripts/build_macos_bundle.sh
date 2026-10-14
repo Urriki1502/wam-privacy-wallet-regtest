@@ -108,6 +108,7 @@ print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_PASS", flush=True)
 PY
 test -s real-regtest-gui-preview.png
 test -s real-regtest-wallet-preview.png
+test -s real-regtest-security-preview.png
 
 echo "MACOS_APP_STAGE=PACKAGED_REAL_CORE_GUI_PASS"
 # Preserve macOS bundle metadata/resource forks in the downloadable ZIP.
