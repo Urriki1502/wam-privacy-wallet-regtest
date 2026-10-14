@@ -92,6 +92,34 @@ def _write_private_config(datadir: Path, rpcport: int, p2pport: int) -> None:
         os.fsync(out.fileno())
 
 
+def _early_exit_category(datadir: Path) -> str:
+    """Classify actual wamd stderr WITHOUT emitting log lines or credentials.
+
+    The node log remains inside the private disposable datadir. Only fixed
+    non-secret categories escape the process boundary to CI.
+    """
+    try:
+        log = datadir / "core-output.log"
+        with log.open("rb") as stream:
+            data = stream.read(65536).decode("utf-8", "replace").lower()
+    except OSError:
+        return "CORE_DAEMON_EARLY_EXIT_LOG_UNAVAILABLE"
+    if any(word in data for word in ("dyld", "library not loaded", "symbol not found")):
+        return "CORE_MACOS_DYNAMIC_LIBRARY_UNAVAILABLE"
+    if any(word in data for word in ("unknown configuration", "unknown option",
+                                     "unrecognized option", "invalid parameter")):
+        return "CORE_DAEMON_OPTION_UNSUPPORTED"
+    if any(word in data for word in ("permission denied", "operation not permitted")):
+        return "CORE_DAEMON_PERMISSION_DENIED"
+    if any(word in data for word in ("unable to bind", "could not bind",
+                                     "unable to start http server")):
+        return "CORE_DAEMON_PORT_BIND_DENIED"
+    if any(word in data for word in ("error opening block database", "database corrupt",
+                                     "database environment")):
+        return "CORE_DAEMON_DATABASE_DENIED"
+    return "CORE_DAEMON_EARLY_EXIT_UNCLASSIFIED"
+
+
 def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 120) -> dict:
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
@@ -120,7 +148,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             info = None
             while time.monotonic() < end:
                 if proc.poll() is not None:
-                    raise CoreSmokeError("CORE_DAEMON_EARLY_EXIT")
+                    raise CoreSmokeError(_early_exit_category(datadir))
                 try:
                     candidate = _read_cli(prefix + ["getblockchaininfo"], timeout=5)
                     if isinstance(candidate, dict):
