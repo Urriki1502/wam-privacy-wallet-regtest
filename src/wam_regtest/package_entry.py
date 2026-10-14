@@ -92,11 +92,21 @@ def main() -> int:
             if not result.get("interactive_demo_closed_cleanly"):
                 raise BundleLaunchError("WAM_BUNDLE_GUI_EXIT_DENIED")
         return 0
-    except Exception:
-        # Never emit Core log text, RPC passwords, private paths, BIP352 keys
-        # or arbitrary subprocess exception details.
-        print("WAM_REGTEST_BUNDLE_LAUNCH_DENIED", file=sys.stderr)
-        if "--ci-real-core-gui" not in sys.argv:
+    except Exception as error:
+        # Only a small fixed-code vocabulary; never emit arbitrary Core log
+        # text, RPC credentials, paths, traceback or secrets.
+        code = str(error)
+        accepted = {"BundleLaunchError", "CoreSmokeError",
+                    "RealWspScanError", "ReleaseError"}
+        reason = (code if type(error).__name__ in accepted
+                  and 5 <= len(code) <= 110
+                  and code == code.upper()
+                  and code.replace("_", "").isalnum()
+                  else "UNKNOWN")
+        print("WAM_REGTEST_BUNDLE_LAUNCH_DENIED:" + reason, file=sys.stderr)
+        # The CI modes MUST NEVER open a modal Qt message box; it can hang
+        # headless runners, obscuring the exact reason for bundle rejection.
+        if len(sys.argv) == 1:
             try:
                 from PySide6.QtWidgets import QApplication, QMessageBox
                 app = QApplication.instance() or QApplication([])
