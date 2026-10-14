@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   real-wamd:
-    name: Signed real wamd → live RPC → mine 101 REGTEST blocks
+    name: Signed real wamd → confirmed BIP352 receive → WSP SQLite
     runs-on: macos-15
     timeout-minutes: 35
     env:
@@ -63,27 +63,35 @@ jobs:
             --core-dir core \
             --confirm-disposable-regtest \
             --wsp-source-root wsp-upstream \
+            --confirm-public-fixture-payment \
             --report real-core-evidence.json
           python - <<'PY'
           import json
           from pathlib import Path
           proof=json.loads(Path('real-core-evidence.json').read_text())
-          assert proof['status']=='REAL_WAM_CORE_V0_1_11_REGTEST_AND_NATIVE_WSP_SCANNER_PASS'
-          assert proof['chain']=='regtest' and proof['block_height']>=101
+          assert proof['status']=='REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS'
+          assert proof['chain']=='regtest' and proof['block_height']==102
           assert proof['live_wamd_process_observed'] is True
           assert proof['live_rpc_observed'] is True
-          assert proof['wsp_bip352_e2e_pass'] is False
+          assert proof['wsp_bip352_e2e_pass'] is True
           assert proof['wsp_real_core_scan_pass'] is True
           actual = proof['wsp_live_scan']
-          assert actual['status']=='REAL_WAM_CORE_WSP1_SCANNER_LIVE_101_BLOCKS_PASS'
+          assert actual['status']=='REAL_WAM_CORE_WSP1_BIP352_CONFIRMED_RECEIVE_PASS'
           assert actual['real_core_rpc'] is True and actual['synthetic_rpc'] is False
           assert actual['actual_scanner_blocks_processed']==101
           assert actual['sqlite_restart_blocks_processed']==0
-          assert actual['wsp_bip352_payment_confirmed'] is False
+          assert actual['wsp_bip352_payment_confirmed'] is True
+          assert actual['confirmed_demo_utxos']==1
+          assert actual['confirmed_receive_atoms']>0
+          assert actual['observed_height']==102
+          assert actual['regtest_fixture_broadcast_confirmed'] is True
+          assert proof['regtest_public_fixture_broadcast_confirmed'] is True
+          assert proof['wallet_send_e2e_pass'] is False
           assert actual['verified_tip']==proof['tip']
           assert proof['mainnet_allowed'] is False
           print('REAL_WAM_CORE_REGTEST_101_BLOCKS_PASS')
           print('REAL_WAM_CORE_NATIVE_WSP_SQLITE_SCAN_101_BLOCKS_AND_RESTART_PASS')
+          print('REAL_WAM_CORE_NATIVE_BIP352_CONFIRMED_RECEIVE_SQLITE_PASS')
           PY
       - name: Upload only sanitized live-Core evidence
         if: success()
