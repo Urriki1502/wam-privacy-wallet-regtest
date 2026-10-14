@@ -154,6 +154,35 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         assert review.code==code and review.atoms==100000 and review.fee==10000
         assert str(review.atoms) in window.review_text.text() and code in window.review_text.text()
         assert window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
+        # Real Core integration: inspect the exact WSP-1 native PSBTv2
+        # prepared from LIVE verified coins. BIP352 input-set changes require
+        # fresh receiver output/proof derivation, not yet qualified; the
+        # validation-only gate MUST fail closed without reserving new inputs,
+        # signing, or broadcasting. Normal separately approved Send continues.
+        stage="PAYJOIN_SAFETY"
+        print("WALLET_E2E_STAGE=PAYJOIN_SAFETY",flush=True)
+        from wam_sp.psbt import PSBT
+        from .payjoin_safety import validate_live_payjoin_psbt_v2, PayjoinSafetyError
+        native = session._prepared.psbt
+        assert PSBT.decode(native).version == 2
+        before = tuple(session.scanner.store.db.execute(
+            "SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout"
+        ))
+        try:
+            validate_live_payjoin_psbt_v2(
+                native, native,
+                wallet_coins=session.scanner.coins(),
+                live_rpc=session._rpc(),
+            )
+        except PayjoinSafetyError as denied:
+            assert str(denied) == "PJ_BIP352_REDERIVATION_UNQUALIFIED"
+        else:
+            raise WalletProbeError("WALLET_BIP352_PAYJOIN_INCORRECTLY_AUTHORIZED")
+        after = tuple(session.scanner.store.db.execute(
+            "SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout"
+        ))
+        assert after == before and session._signed is None
+        assert window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
         stage="APPROVAL"
         print("WALLET_E2E_STAGE=APPROVAL",flush=True)
         try:
@@ -312,6 +341,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
             'status':'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS',
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
             'authenticated_selected_local_disclosure':True,'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
+            'native_psbtv2_payjoin_bip352_fail_closed':True,'payjoin_signing_authorized':False,'payjoin_transport_implemented':False,
             'exact_intent_approval_required':True,'real_core_mempool_accepted':True,
             'real_core_confirmed_recipient_atoms':100000,'native_sender_change_confirmed':True,
             'encrypted_reservations_before_network':True,'actual_send_reorg_depth':1,
