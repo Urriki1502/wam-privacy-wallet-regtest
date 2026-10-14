@@ -147,7 +147,8 @@ def _early_exit_category(datadir: Path) -> str:
 def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 120,
                     wsp_source: Path | None = None,
                     wsp_payment_e2e: bool = False,
-                    gui_e2e: bool = False) -> dict:
+                    gui_e2e: bool = False,
+                    interactive_demo: bool = False) -> dict:
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
     if (wsp_source is not None and
@@ -158,6 +159,10 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
         raise CoreSmokeError("CORE_PUBLIC_FIXTURE_PAYMENT_SCOPE_DENIED")
     if (type(gui_e2e) is not bool or (gui_e2e and not wsp_payment_e2e)):
         raise CoreSmokeError("CORE_REAL_GUI_SCOPE_DENIED")
+    if (type(interactive_demo) is not bool
+            or (interactive_demo and (not wsp_payment_e2e
+                                      or wsp_source is None or gui_e2e))):
+        raise CoreSmokeError("CORE_REAL_DEMO_SCOPE_DENIED")
     node, cli, receipt = verified_core_paths(core_dir)
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
@@ -254,7 +259,29 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     )
                 except Exception:
                     raise CoreSmokeError("CORE_MACOS_NATIVE_QT_E2E_DENIED") from None
+            demo_finished = False
+            if interactive_demo:
+                # Owner-approved, disposable REGTEST only. Launch the real Qt
+                # live-sync window while wamd is alive, not after temp cleanup.
+                # The existing finally shuts down wamd and deletes test data
+                # only AFTER the user has closed the GUI.
+                try:
+                    from .desktop import launch_readonly_wallet
+                    print("REAL REGTEST PUBLIC DEMO: no mainnet or real funds; "
+                          "close the wallet window to stop Core and delete the test chain.",
+                          flush=True)
+                    exit_status = launch_readonly_wallet(
+                        core_dir, datadir, wsp_source
+                    )
+                    if exit_status != 0:
+                        raise CoreSmokeError("CORE_REAL_DEMO_WINDOW_DENIED")
+                    demo_finished = True
+                except CoreSmokeError:
+                    raise
+                except Exception:
+                    raise CoreSmokeError("CORE_REAL_DEMO_GUI_DENIED") from None
             return {
+                "interactive_demo_closed_cleanly": demo_finished,
                 "gui_real_core_e2e_pass": gui_receipt is not None,
                 "gui_live_core_view": gui_receipt,
                 "status": ("REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS"
