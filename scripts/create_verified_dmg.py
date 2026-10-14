@@ -25,7 +25,7 @@ def create_verified_dmg(
     runner=subprocess.run,
     sleeper=time.sleep,
 ) -> int:
-    if (type(app) is not Path or type(output) is not Path
+    if (not isinstance(app, Path) or not isinstance(output, Path)
             or not app.is_absolute() or not output.is_absolute()
             or not app.is_dir() or app.is_symlink()
             or not output.parent.is_dir() or output.is_symlink()
