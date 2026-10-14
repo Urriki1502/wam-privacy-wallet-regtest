@@ -1,0 +1,50 @@
+name: WSP-1 canonical 28 BIP352 vectors (macOS ARM64)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-vectors:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: 'arm64'
+      - name: Require immutable upstream source and native ARM64
+        shell: bash
+        run: |
+          test "$(uname -m)" = arm64
+          test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
+      - name: Install exact pinned WSP source + native crypto dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -e ./wsp-upstream
+          python -m pip check
+      - name: Require 28/28 real BIP352 algorithm vectors
+        shell: python
+        run: |
+          import json,unittest
+          from pathlib import Path
+          vectors=json.loads(Path('wsp-upstream/tests/vectors/bip352.json').read_text())
+          if len(vectors)!=28: raise SystemExit('BIP352_VECTOR_COUNT_DENIED')
+          tests=unittest.defaultTestLoader.discover('wsp-upstream/tests',pattern='test_vectors.py')
+          if tests.countTestCases()!=28: raise SystemExit('BIP352_TEST_COUNT_DENIED')
+          outcome=unittest.TextTestRunner(verbosity=2).run(tests)
+          if not outcome.wasSuccessful() or outcome.skipped or outcome.testsRun!=28:
+              raise SystemExit('BIP352_28_VECTORS_DENIED')
+          print('BIP352_28_OF_28_PASS_NATIVE_ARM64')

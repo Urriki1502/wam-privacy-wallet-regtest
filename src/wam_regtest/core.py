@@ -1,0 +1,177 @@
+"""Real WAM v0.1.11 Core REGTEST disposable RPC smoke, never mock or mainnet.
+
+This is a developer acceptance harness, not a production executable loader
+binding or key custody boundary. No user datadir is ever read or modified.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import secrets
+import socket
+import stat
+import subprocess
+import tempfile
+import time
+
+from .release import ARCHIVES, _sha
+
+
+class CoreSmokeError(RuntimeError):
+    """Fixed redacted errors, no paths/passwords/logs."""
+
+
+def verified_core_paths(core_dir: Path) -> tuple[Path, Path, dict]:
+    if not core_dir.is_absolute() or core_dir.is_symlink():
+        raise CoreSmokeError("CORE_DIRECTORY_DENIED")
+    try:
+        receipt = json.loads((core_dir / "receipt.json").read_text())
+        platform = receipt["platform"]
+        node = core_dir / "wamd"
+        cli = core_dir / "wam-cli"
+        if (platform not in ARCHIVES or
+                receipt["signed_archive_verified"] is not True or
+                receipt.get("mainnet_allowed") is not False or
+                receipt.get("loader_process_binding_qualified") is not False or
+                receipt["wamd_sha256"] != ARCHIVES[platform][1]):
+            raise CoreSmokeError("CORE_RECEIPT_DENIED")
+        for path, key in ((node, "wamd_sha256"), (cli, "wam_cli_sha256")):
+            s = path.lstat()
+            if (not stat.S_ISREG(s.st_mode) or s.st_nlink != 1
+                    or s.st_size <= 0 or s.st_size > 128 * 1024 * 1024
+                    or path.is_symlink() or _sha(path) != receipt[key]):
+                raise CoreSmokeError("CORE_EXACT_BINARY_DENIED")
+        return node, cli, receipt
+    except CoreSmokeError:
+        raise
+    except (OSError, KeyError, TypeError, ValueError):
+        raise CoreSmokeError("CORE_EXACT_BINARY_DENIED") from None
+
+
+def _port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+
+def _read_cli(cmd: list[str], timeout: int = 15) -> object:
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        raise CoreSmokeError("CORE_RPC_PROCESS_DENIED") from None
+    if p.returncode != 0:
+        raise CoreSmokeError("CORE_RPC_DENIED")
+    value = p.stdout.strip()
+    if not value:
+        return None
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
+
+
+def _write_private_config(datadir: Path, rpcport: int, p2pport: int) -> None:
+    # Password stays in owner-only wam.conf; never passed as a command argument.
+    password = secrets.token_hex(32)
+    user = "disposable_" + secrets.token_hex(8)
+    values = {
+        "regtest": "1", "server": "1", "rpcuser": user, "rpcpassword": password,
+        "rpcbind": "127.0.0.1", "rpcallowip": "127.0.0.1", "rpcport": str(rpcport),
+        "port": str(p2pport), "listen": "0", "connect": "0", "dnsseed": "0",
+        "discover": "0", "upnp": "0", "txindex": "1", "blockfilterindex": "1",
+        "coinstatsindex": "1", "fallbackfee": "0.0001",
+    }
+    config = datadir / "wam.conf"
+    fd = os.open(config, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w") as out:
+        for k, v in values.items():
+            out.write(f"{k}={v}\n")
+        out.flush()
+        os.fsync(out.fileno())
+
+
+def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 120) -> dict:
+    if explicit_consent is not True or not 30 <= timeout <= 240:
+        raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
+    node, cli, receipt = verified_core_paths(core_dir)
+    # The caller runs on a dedicated CI runner or owner-approved macOS test host.
+    # We intentionally do NOT claim fd-to-loader or hardened process provenance.
+    with tempfile.TemporaryDirectory(prefix="wam-real-regtest-") as temp:
+        datadir = Path(temp)
+        datadir.chmod(0o700)
+        rpc, p2p = _port(), _port()
+        if rpc == p2p:
+            raise CoreSmokeError("CORE_PORT_COLLISION_DENIED")
+        _write_private_config(datadir, rpc, p2p)
+        prefix = [str(cli), f"-datadir={datadir}"]
+        proc = None
+        try:
+            with (datadir / "core-output.log").open("xb") as log:
+                # Only the exact path/hash from signed receipt; no shell or user keys.
+                proc = subprocess.Popen(
+                    [str(node), f"-datadir={datadir}", "-daemon=0"],
+                    stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
+                    cwd=datadir,
+                    env={"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(datadir), "LC_ALL": "C"},
+                )
+            end = time.monotonic() + timeout
+            info = None
+            while time.monotonic() < end:
+                if proc.poll() is not None:
+                    raise CoreSmokeError("CORE_DAEMON_EARLY_EXIT")
+                try:
+                    candidate = _read_cli(prefix + ["getblockchaininfo"], timeout=5)
+                    if isinstance(candidate, dict):
+                        info = candidate
+                        break
+                except CoreSmokeError:
+                    pass
+                time.sleep(0.5)
+            if info is None or info.get("chain") != "regtest":
+                raise CoreSmokeError("CORE_WRONG_CHAIN_DENIED")
+            if _read_cli(prefix + ["getconnectioncount"]) != 0:
+                raise CoreSmokeError("CORE_EXTERNAL_PEERS_DENIED")
+            _read_cli(prefix + ["createwallet", "test"])
+            addr = _read_cli(prefix + ["-rpcwallet=test", "getnewaddress"])
+            if not isinstance(addr, str) or not 20 <= len(addr) <= 120:
+                raise CoreSmokeError("CORE_REGTEST_ADDRESS_DENIED")
+            mined = _read_cli(prefix + ["generatetoaddress", "101", addr], timeout=90)
+            if not isinstance(mined, list) or len(mined) != 101:
+                raise CoreSmokeError("CORE_REGTEST_GENERATE_DENIED")
+            height = _read_cli(prefix + ["getblockcount"])
+            if type(height) is not int or height < 101:
+                raise CoreSmokeError("CORE_REGTEST_HEIGHT_DENIED")
+            tip = _read_cli(prefix + ["getbestblockhash"])
+            if not isinstance(tip, str) or len(tip) != 64 or tip != mined[-1]:
+                raise CoreSmokeError("CORE_REGTEST_TIP_DENIED")
+            final = _read_cli(prefix + ["getblockchaininfo"])
+            if not isinstance(final, dict) or final.get("chain") != "regtest" or final.get("blocks") != height:
+                raise CoreSmokeError("CORE_REGTEST_CHAIN_DRIFT_DENIED")
+            if _read_cli(prefix + ["getconnectioncount"]) != 0:
+                raise CoreSmokeError("CORE_EXTERNAL_PEERS_DENIED")
+            return {
+                "status": "REAL_WAM_CORE_V0_1_11_REGTEST_RPC_101_BLOCKS_PASS",
+                "platform": receipt["platform"], "node_sha256": receipt["wamd_sha256"],
+                "chain": "regtest", "block_height": height, "tip": tip,
+                "live_wamd_process_observed": True, "live_rpc_observed": True,
+                "wallet_send_e2e_pass": False, "wsp_bip352_e2e_pass": False,
+                "mainnet_allowed": False, "production_process_binding_qualified": False,
+            }
+        finally:
+            if proc is not None:
+                if proc.poll() is None:
+                    try:
+                        _read_cli(prefix + ["stop"], timeout=8)
+                    except CoreSmokeError:
+                        pass
+                    try:
+                        proc.wait(timeout=12)
+                    except subprocess.TimeoutExpired:
+                        proc.terminate()
+                        try:
+                            proc.wait(timeout=6)
+                        except subprocess.TimeoutExpired:
+                            proc.kill()
+                            proc.wait(timeout=6)

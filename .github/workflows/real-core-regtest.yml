@@ -1,0 +1,66 @@
+name: REAL WAM Core v0.1.11 REGTEST (macOS ARM64)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-wamd:
+    name: Signed real wamd → live RPC → mine 101 REGTEST blocks
+    runs-on: macos-15
+    timeout-minutes: 35
+    env:
+      PYTHONUNBUFFERED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: 'arm64'
+      - name: Require actual Apple Silicon hardware
+        run: test "$(uname -m)" = arm64
+      - name: Setup official GnuPG verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v gpg >/dev/null; then brew install gnupg; fi
+          command -v gpg
+      - name: Install minimal wallet CLI
+        run: python -m pip install --disable-pip-version-check -e .
+      - name: Run fail-closed unit contracts (not E2E)
+        run: python -m unittest discover -s tests -v
+      - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
+        run: python -m wam_regtest.release --platform macos-arm64 --destination core
+      - name: Launch ACTUAL WAM Core and confirm fresh REGTEST chain
+        run: |
+          python -m wam_regtest.cli smoke \
+            --core-dir core \
+            --confirm-disposable-regtest \
+            --report real-core-evidence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          proof=json.loads(Path('real-core-evidence.json').read_text())
+          assert proof['status']=='REAL_WAM_CORE_V0_1_11_REGTEST_RPC_101_BLOCKS_PASS'
+          assert proof['chain']=='regtest' and proof['block_height']>=101
+          assert proof['live_wamd_process_observed'] is True
+          assert proof['live_rpc_observed'] is True
+          assert proof['wsp_bip352_e2e_pass'] is False
+          assert proof['mainnet_allowed'] is False
+          print('REAL_WAM_CORE_REGTEST_101_BLOCKS_PASS')
+          PY
+      - name: Upload only sanitized live-Core evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-core-regtest-${{ github.sha }}
+          path: real-core-evidence.json
+          if-no-files-found: error
+          retention-days: 14
