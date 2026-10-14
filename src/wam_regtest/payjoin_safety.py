@@ -10,8 +10,6 @@ PSBT-provided ownership labels. Source PSBT is the LOCAL UNSIGNED intent.
 """
 from __future__ import annotations
 
-import hmac
-
 MAX_MONEY = 22_000_000 * 100_000_000
 MAX_EXTRA_INPUTS = 4
 MAX_FEE_ATOMS = 1_000_000
@@ -50,7 +48,7 @@ def _sender_proof_present(psbt):
     outs = psbt.output_extra or ({},) * len(psbt.tx.outputs)
     return (any(b"\x09" in x or b"\x0a" in x for x in outs)
             or any(any(k[:1] in (b"\x1d", b"\x1e") for k in m) for m in ins)
-            or any(any(k[:1] in (b"\x07", b"\x08") for k in [k]) for k in psbt.global_extra))
+            or any(k[:1] in (b"\x07", b"\x08") for k in psbt.global_extra))
 
 
 def _finalized_p2tr_external(psbt, index):
