@@ -49,15 +49,15 @@ class CoreContractTests(unittest.TestCase):
             _write_private_config(root, 29453, 29455)
             conf = root / "wam.conf"
             payload = conf.read_text()
-            global_section, regtest_section = payload.split("[regtest]\\n".replace("\\\\", "\\"))
-            self.assertEqual(global_section, "regtest=1\\nserver=1\\n".replace("\\\\", "\\"))
-            self.assertIn("rpcport=29453\\n".replace("\\\\", "\\"), regtest_section)
-            self.assertIn("port=29455\\n".replace("\\\\", "\\"), regtest_section)
-            self.assertIn("connect=0\\n".replace("\\\\", "\\"), regtest_section)
-            self.assertIn("listen=0\\n".replace("\\\\", "\\"), regtest_section)
+            global_section, regtest_section = payload.split("[regtest]\n")
+            self.assertEqual(global_section, "regtest=1\nserver=1\n")
+            self.assertIn("rpcport=29453\n", regtest_section)
+            self.assertIn("port=29455\n", regtest_section)
+            self.assertIn("connect=0\n", regtest_section)
+            self.assertIn("listen=0\n", regtest_section)
             self.assertNotIn("rpcpassword=", global_section)
             self.assertNotIn("rpcbind=", global_section)
-            self.assertNotEqual(os.stat(conf).st_mode & 0o777, 0o644)
+            self.assertEqual(os.stat(conf).st_mode & 0o777, 0o600)
 
     def test_early_exit_redacts_real_daemon_messages(self):
         with tempfile.TemporaryDirectory() as folder:
