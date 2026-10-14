@@ -38,7 +38,7 @@ class OperationWorker(QThread):
                      "broadcast":self.session.broadcast,"cancel":self.session.cancel,
                      "lock":self.session.lock,"unlock":self.session.unlock,
                      "backup":self.session.backup,"recover":self.session.recover_backup,
-                     "mine":self.session.mine}
+                     "mine":self.session.mine,"network":self.session.network_diagnostics}
             result=methods[self.action](*self.args)
             self.ready.emit(self.action,result)
         except Exception:
@@ -137,6 +137,12 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.mine_button=QPushButton("Mine 1 REGTEST block to confirm pending transactions")
         self.mine_button.clicked.connect(lambda:self.start_operation("mine"))
         layout.addWidget(self.mine_button)
+        self.network_button=QPushButton("Verify local node privacy")
+        self.network_button.clicked.connect(lambda:self.start_operation("network"))
+        layout.addWidget(self.network_button)
+        self.network_text=QLabel("Scan and broadcast use the same isolated local node.\nRemote/proxy routes and fallback are unavailable; no anonymity claim.")
+        self.network_text.setWordWrap(True)
+        layout.addWidget(self.network_text)
         layout.addStretch()
         self.stack.addWidget(settings)
         self.appearance.setItemText(0,"Auto · macOS")
@@ -144,7 +150,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         hints.colorSchemeChanged.connect(self.apply_theme)
         self._appearance_connected=True
         self._actions=(self.prepare_button,self.sign_button,self.broadcast_button,self.cancel_button,
-                       self.lock_button,self.unlock_button,self.backup_button,self.recover_button,self.mine_button)
+                       self.lock_button,self.unlock_button,self.backup_button,self.recover_button,self.mine_button,self.network_button)
         self._update_controls()
 
     def _update_controls(self):
@@ -175,7 +181,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
                 "broadcast":"Submitting approved transaction", "cancel":"Canceling unsigned draft",
                 "lock":"Locking wallet", "unlock":"Verifying passphrase and live chain",
                 "backup":"Saving latest encrypted backup", "recover":"Verifying anchored recovery",
-                "mine":"Mining one REGTEST block"}
+                "mine":"Mining one REGTEST block","network":"Verifying local node privacy"}
         self.status.setText(labels[action]+"…")
         worker.ready.connect(self._operation_ready)
         worker.denied.connect(self._operation_denied)
@@ -211,6 +217,8 @@ class OperationalWalletWindow(RegtestWalletWindow):
             self.review=None
             self.signed=False
             self.review_text.setText("Broadcast txid: "+result if action=="broadcast" else "No active payment review")
+        if action=="network":
+            self.network_text.setText("VERIFIED LOCAL REGTEST · zero peers\nScan/broadcast share the private local node.\nNo remote routes, proxy or clearnet fallback; anonymity unqualified.")
         if action=="lock":
             self._clear_balance()
             self.status.setText("LOCKED · encrypted snapshot anchored in macOS Keychain")
@@ -227,6 +235,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.operation_completed.emit(action,result)
 
     def _operation_denied(self,reason):
+        self.network_text.setText("UNVERIFIED · run local node privacy verification again")
         self._clear_balance()
         self.status.setText("DENIED · wallet state/reservations retained; unlock/recover or verify chain")
         self.operation_failed.emit("WALLET_OPERATION_DENIED_STATE_RETAINED")
