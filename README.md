@@ -28,6 +28,19 @@ python -m unittest discover -s tests -v
 
 `python -m wam_regtest.release` requires a locally trusted `gpg` executable (`brew install gnupg`), real HTTPS access to `wamcoin.org`, and a genuine signed release. It fails closed on download/signature/hash/architecture errors. The runner never fetches an arbitrary binary URL.
 
+## One-command live macOS REGTEST demo
+
+After installing the exact pinned WSP upstream checkout and the signed Core release, run one command:
+
+```bash
+python -m pip install -e '.[gui]' -e /ABSOLUTE/PINNED/wam-silent-payments
+wam-regtest demo --core-dir core \
+  --wsp-source-root /ABSOLUTE/PINNED/wam-silent-payments \
+  --confirm-disposable-regtest --confirm-public-fixture-payment
+```
+
+This starts official signed WAM Core v0.1.11 on a new private disposable REGTEST chain, mines 101 blocks to a **globally known test key**, broadcasts and mines a genuine BIP352 payment at block 102, opens the Qt wallet, and enables automatic background WSP/SQLite refresh. **Close the window to stop the daemon and erase the temporary test chain.** Nothing touches regular WAM data or mainnet. The published demo receive code is not safe for personal funds. A Core binary from an unverified local directory is refused. The desktop app is not yet a self-contained signed `.app/.dmg`.
+
 ## Native Qt wallet (experimental, public-demo account only)
 
 Install `python -m pip install -e '.[gui]'` plus the exact pinned WSP upstream source. A separate **official, signed, already-running** WAM Core v0.1.11 REGTEST daemon must be available with an owner-private `0700` datadir and a WSP SQLite database. Run:
