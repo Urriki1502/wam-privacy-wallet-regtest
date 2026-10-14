@@ -140,6 +140,9 @@ jobs:
           assert wallet['irreversible_reservations_survive_reorg'] is True
           assert wallet['native_qt_backup_lock_recovery'] is True
           assert wallet['authenticated_selected_local_disclosure'] is True
+          assert wallet['native_psbtv2_payjoin_bip352_fail_closed'] is True
+          assert wallet['payjoin_signing_authorized'] is False
+          assert wallet['payjoin_transport_implemented'] is False
           assert wallet['local_network_privacy_diagnostics'] is True
           assert wallet['background_sync_active'] is True
           assert wallet['background_sync_timer_live_core_verified'] is True
