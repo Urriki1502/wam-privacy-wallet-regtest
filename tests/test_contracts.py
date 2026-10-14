@@ -7,9 +7,30 @@ import unittest
 
 from wam_regtest.core import CoreSmokeError, smoke_real_core, verified_core_paths, _early_exit_category, _write_private_config
 from wam_regtest.release import ARCHIVES, ReleaseError, _verify_executable_shape, _NoRedirect
+from wam_regtest.wsp_live import LiveCoreReadOnlyCli, RealWspScanError, _pinned_source, REGTEST_GENESIS
 
 
 class CoreContractTests(unittest.TestCase):
+    def test_live_scanner_rpc_cannot_access_write_methods_or_unqualified_chain(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root).absolute()
+            rpc = LiveCoreReadOnlyCli(folder / "wam-cli", folder)
+            for method in (
+                "sendrawtransaction", "walletprocesspsbt", "createwallet",
+                "dumpprivkey", "generatetoaddress", "stop", "getblock",
+            ):
+                with self.subTest(method=method), self.assertRaisesRegex(
+                    RealWspScanError, "^WSP_LIVE_METHOD_DENIED$",
+                ):
+                    rpc.call(method)
+            self.assertEqual(len(REGTEST_GENESIS), 64)
+
+    def test_pinned_wsp_source_never_imports_unknown_package(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root).absolute()
+            with self.assertRaisesRegex(RealWspScanError, "^WSP_SOURCE_PIN_DENIED$"):
+                _pinned_source(folder)
+
     def test_consent_denied_before_filesystem_or_process(self):
         with self.assertRaisesRegex(CoreSmokeError, "CORE_REAL_REGTEST_CONSENT_DENIED"):
             smoke_real_core(Path("/nonexistent/path"), explicit_consent=False)
