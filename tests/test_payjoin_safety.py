@@ -153,10 +153,12 @@ class PayjoinStrictByteSafetyContracts(unittest.TestCase):
         self.denied("PJ_ATTESTED_LOCAL_CORE_REQUIRED", rpc=object())
         self.assertEqual(self.rpc.calls, [])
 
-    def test_reject_both_parties_same_prevout(self):
+    def test_pinned_psbtv2_serializer_rejects_duplicate_prevout_before_adapter(self):
+        # The pinned WSP serializer fails before bytes can be proposed.
+        # Never mistake upstream's ValueError for successful adaptation.
         p = replace(self.candidate, tx=replace(self.candidate.tx, inputs=(SENDER, SENDER)))
-        with self.assertRaises(PayjoinSafetyError):
-            self.inspect(proposal=p)
+        with self.assertRaisesRegex(ValueError, "^DUPLICATE_INPUT$"):
+            p.encode()
 
 
 if __name__ == "__main__":
