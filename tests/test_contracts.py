@@ -56,7 +56,7 @@ class CoreContractTests(unittest.TestCase):
                 ("Error: unable to bind to 127.0.0.1:19001",
                  "CORE_DAEMON_PORT_BIND_DENIED"),
                 ("private data must NEVER be included in an error",
-                 "CORE_DAEMON_EARLY_EXIT_UNCLASSIFIED"),
+                 "CORE_DAEMON_EXIT_LOG_TOKENS_ERROR"),
             )
             for raw, expected in samples:
                 (root / "core-output.log").write_text(raw)
