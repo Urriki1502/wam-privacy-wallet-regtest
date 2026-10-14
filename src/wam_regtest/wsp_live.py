@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 import re
 import stat
@@ -48,6 +49,70 @@ def _pinned_source(root: Path) -> None:
             raise RealWspScanError("WSP_SOURCE_IMPORT_DENIED")
     except OSError:
         raise RealWspScanError("WSP_SOURCE_IMPORT_DENIED") from None
+
+
+def public_regtest_mining_address(source_root: Path) -> str:
+    """Publicly known scalar 31: disposable REGTEST ONLY, never a user key."""
+    _pinned_source(source_root)
+    from wam_sp.core import pub, hash160
+    from wam_sp.codec import encode
+    return encode("wamrt", hash160(pub(31)), version=0, bech32m=False)
+
+
+def _public_fixture_payment(rpc, account, mining_address: str) -> tuple[str, int, int]:
+    """Actual signed raw P2WPKH spend → BIP352 P2TR on the real regtest chain.
+
+    The fixture scalar 31 is globally known; it MUST NEVER leave disposable
+    REGTEST. Signatures are produced locally by the pinned WSP demo serializer,
+    then validated by real Core mempool and consensus during block generation.
+    """
+    from wam_sp.core import Input, pub, send
+    from wam_sp.transaction import p2wpkh, signed_single_input
+    first_hash = rpc.call("getblockhash", [1])
+    block = rpc._call("getblock", [first_hash, "2"])
+    if (type(block) is not dict or block.get("hash") != first_hash
+            or type(block.get("tx")) is not list or len(block["tx"]) != 1):
+        raise RealWspScanError("WSP_LIVE_FUNDING_BLOCK_DENIED")
+    cb = block["tx"][0]
+    script_hex = p2wpkh(31).hex()
+    matches = [o for o in cb.get("vout", [])
+               if type(o) is dict and type(o.get("scriptPubKey")) is dict
+               and o["scriptPubKey"].get("hex") == script_hex]
+    if (len(matches) != 1 or type(cb.get("txid")) is not str
+            or not _HASH.fullmatch(cb["txid"])):
+        raise RealWspScanError("WSP_LIVE_PUBLIC_FUNDING_DENIED")
+    out = matches[0]
+    if type(out.get("n")) is not int or not 0 <= out["n"] < 100:
+        raise RealWspScanError("WSP_LIVE_PUBLIC_FUNDING_DENIED")
+    try:
+        atoms = Decimal(str(out["value"])) * 100_000_000
+        if not atoms.is_finite() or atoms != int(atoms):
+            raise ValueError()
+        amount = int(atoms)
+    except (ValueError, KeyError, TypeError, InvalidOperation):
+        raise RealWspScanError("WSP_LIVE_FUNDING_AMOUNT_DENIED") from None
+    fee = 10_000
+    if not 100_000 <= amount < 100 * 100_000_000:
+        raise RealWspScanError("WSP_LIVE_FUNDING_AMOUNT_DENIED")
+    txin = Input(
+        cb["txid"], out["n"], p2wpkh(31),
+        witness=(b"\x30", pub(31)), secret=31,
+    )
+    output = b"\x51\x20" + send((txin,), (account.payment_code(),))[0]
+    raw = signed_single_input(
+        txin, amount, ((amount - fee, output),), 31,
+    )
+    # Real consensus validates this exact fixture signature and BIP352
+    # script; success cannot be forged by a synthetic result.
+    txid = rpc._call("sendrawtransaction", [raw])
+    if type(txid) is not str or not _HASH.fullmatch(txid):
+        raise RealWspScanError("WSP_LIVE_PAYMENT_BROADCAST_DENIED")
+    confirmed = rpc._call("generatetoaddress", ["1", mining_address])
+    if (type(confirmed) is not list or len(confirmed) != 1
+            or type(confirmed[0]) is not str or not _HASH.fullmatch(confirmed[0])
+            or rpc.call("getblockcount") != 102):
+        raise RealWspScanError("WSP_LIVE_PAYMENT_CONFIRM_DENIED")
+    return txid, amount - fee, 102
 
 
 class LiveCoreReadOnlyCli:
@@ -119,13 +184,19 @@ class LiveCoreReadOnlyCli:
 
 
 def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
-                            *, expected_height: int) -> dict[str, object]:
+                            *, expected_height: int, payment_e2e: bool = False,
+                            mining_address: str | None = None) -> dict[str, object]:
     """Real WSP scanner -> 101 actual Core blocks -> SQLite restart/replay proof.
 
     Fixture deliberately contains only a publicly known scan key. It has zero
     funds and must not be used to receive any real value.
     """
-    if (type(expected_height) is not int or expected_height != _MINE_LIMIT
+    if (type(payment_e2e) is not bool
+            or (payment_e2e and
+                (type(mining_address) is not str or
+                 not mining_address.startswith("wamrt1q") or
+                 mining_address != public_regtest_mining_address(source_root)))
+            or type(expected_height) is not int or expected_height != _MINE_LIMIT
             or type(datadir) is not type(Path()) or not datadir.is_absolute()
             or datadir.is_symlink()
             or stat.S_IMODE(datadir.stat().st_mode) != 0o700):
@@ -165,19 +236,59 @@ def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
         if (replay.blocks != 0 or scanner.store.tip() != (expected_height, tip)
                 or not scanner.ready or scanner.coins()):
             raise RealWspScanError("WSP_LIVE_SQLITE_RESTART_DENIED")
+        matched = False
+        payment_txid = None
+        amount = 0
+        received = 0
+        if payment_e2e:
+            payment_txid, amount, new_height = _public_fixture_payment(
+                rpc, account, mining_address,
+            )
+            payment_scan = scanner.sync(rpc)
+            coins = scanner.coins()
+            if (payment_scan.blocks != 1 or new_height != 102
+                    or scanner.store.tip()[0] != 102
+                    or not scanner.ready or len(coins) != 1
+                    or coins[0]["txid"] != payment_txid
+                    or coins[0]["atoms"] != amount):
+                raise RealWspScanError("WSP_LIVE_BIP352_PAYMENT_NOT_DETECTED")
+            row = scanner.store.db.execute(
+                "SELECT credit,debit,height FROM history WHERE txid=?",
+                (payment_txid,),
+            ).fetchone()
+            if (row is None or row["credit"] != amount
+                    or row["debit"] != 0 or row["height"] != 102):
+                raise RealWspScanError("WSP_LIVE_BIP352_HISTORY_DENIED")
+            matched = True
+            received = amount
+            tip = scanner.store.tip()[1]
+            scanner.close()
+            scanner = None
+            scanner = Scanner(path, (account,))
+            final_replay = scanner.sync(rpc)
+            again = scanner.coins()
+            if (final_replay.blocks != 0 or len(again) != 1
+                    or again[0]["txid"] != payment_txid
+                    or again[0]["atoms"] != amount):
+                raise RealWspScanError("WSP_LIVE_BIP352_RESTART_DENIED")
         return {
-            "status": "REAL_WAM_CORE_WSP1_SCANNER_LIVE_101_BLOCKS_PASS",
+            "status": ("REAL_WAM_CORE_WSP1_BIP352_CONFIRMED_RECEIVE_PASS"
+                       if matched else
+                       "REAL_WAM_CORE_WSP1_SCANNER_LIVE_101_BLOCKS_PASS"),
             "source_commit": PINNED_WSP_COMMIT,
             "regtest_genesis": REGTEST_GENESIS,
-            "observed_height": expected_height,
+            "observed_height": (102 if matched else expected_height),
             "verified_tip": tip,
             "actual_scanner_blocks_processed": observed.blocks,
             "sqlite_restart_blocks_processed": replay.blocks,
             "public_demo_receive_code_validated": True,
-            "confirmed_demo_utxos": 0,
+            "confirmed_demo_utxos": (1 if matched else 0),
+            "confirmed_receive_atoms": received,
+            "public_fixture_payment_txid": payment_txid,
+            "regtest_fixture_broadcast_confirmed": matched,
             "real_core_rpc": True,
             "synthetic_rpc": False,
-            "wsp_bip352_payment_confirmed": False,
+            "wsp_bip352_payment_confirmed": matched,
             "signing_allowed": False,
             "mainnet_allowed": False,
         }
