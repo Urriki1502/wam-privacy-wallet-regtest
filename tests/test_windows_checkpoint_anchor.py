@@ -10,12 +10,16 @@ from wam_regtest.windows_checkpoint_anchor import (
     WindowsCredentialAnchor, WindowsAnchorError,
 )
 
-_advapi = ctypes.WinDLL("Advapi32", use_last_error=True)
-_delete = _advapi.CredDeleteW
-_delete.argtypes = (wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD)
-_delete.restype = wintypes.BOOL
+if sys.platform == "win32":
+    _advapi = ctypes.WinDLL("Advapi32", use_last_error=True)
+    _delete = _advapi.CredDeleteW
+    _delete.argtypes = (wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD)
+    _delete.restype = wintypes.BOOL
+else:
+    _delete = None
 
 
+@unittest.skipUnless(sys.platform == "win32", "Native Win32-only credential tests")
 class NativeWindowsAnchorTests(unittest.TestCase):
     def setUp(self):
         self.wallet_id = secrets.token_hex(16)
