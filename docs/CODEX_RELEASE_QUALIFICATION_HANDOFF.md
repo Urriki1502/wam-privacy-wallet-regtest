@@ -19,7 +19,14 @@ and scoped security findings: RC1_SECURITY_AND_DEPENDENCY_REVIEW.md.
 RQ02: coherent candidate ancestry complete; common RC1 build provenance and
 four artifact names added without relaxing runtime/security tests. Mac builder
 pin6.22.3 matches qualified Windows/Linux. No new wallet features/portable import.
-RQ03–05: NEW exact-commit native/frozen qualification pending dispatch/results.
+RQ03–05: first exact commit0cdb1116d949800444f8fbef011391f2785fcddf
+passed Mac/native+frozen and Linux source/headless+desktop/frozen. The additional
+legacy Windows Qt gate38746345395 correctly failed: its install omitted the
+Fusion QR dependency (ModuleNotFoundError:qrcode). Fix only that workflow to
+install the existing declared .[gui] extra; preserve every real-Core assertion.
+This successor MUST rerun all exact-commit native/frozen gates. Predecessor
+artifacts remain diagnostic, not the final candidate. Physical Linux remains
+PENDING_OPERATOR per owner reply (no authorized machine available).
 RQ06: owner explicitly reports no authorized physical Linux host; PENDING_OPERATOR.
 Prepare runnable Ubuntu operator kit, not fake physical PASS. Actual MacBook
 Cocoa final-app testing planned; Windows human testing separate from native CI.
