@@ -184,7 +184,7 @@ jobs:
         run: xvfb-run -a python scripts/build_linux_wallet.py --core-dir qualified-linux-core/linux-core --desktop
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-frozen-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
+          name: WAM-Fusion-REGTEST-RC1-linux-x86_64-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             linux-package-output/
             fusion-ui-review/
