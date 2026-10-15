@@ -6,6 +6,8 @@ import sys
 from . import custody
 from PySide6.QtCore import QEventLoop,QTimer,QCoreApplication,QEvent,Qt
 from PySide6.QtWidgets import QApplication
+from .fusion_pages import PaymentApproval
+from .fusion_ui import fusion_palette
 from .wallet_session import WalletSession, WalletSessionError, WalletCoreCli
 from .operational_gui import OperationalWalletWindow
 
@@ -110,7 +112,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window._sync_timer.start()
         assert sync_result.get('snap')==initial and window._worker is None
         assert not window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
-        for index,color in ((2,'#0D121A'),(1,'#F4F6FA')):
+        for index,color in ((2,fusion_palette('dark')['bg']),(1,fusion_palette('light')['bg'])):
             window.appearance.setCurrentIndex(index)
             app.processEvents()
             assert color in window.styleSheet()
@@ -119,7 +121,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         prior=hints.colorScheme()
         auto_verified=False
         if prior in (Qt.ColorScheme.Light,Qt.ColorScheme.Dark):
-            for scheme,color in ((Qt.ColorScheme.Dark,'#0D121A'),(Qt.ColorScheme.Light,'#F4F6FA')):
+            for scheme,color in ((Qt.ColorScheme.Dark,fusion_palette('dark')['bg']),(Qt.ColorScheme.Light,fusion_palette('light')['bg'])):
                 hints.setColorScheme(scheme)
                 app.processEvents()
                 assert hints.colorScheme()==scheme and color in window.styleSheet()
@@ -162,6 +164,9 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         assert review.code==code and review.atoms==100000 and review.fee==10000
         assert str(review.atoms) in window.review_text.text() and code in window.review_text.text()
         assert window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
+        # A rejected native approval must not enter signer or alter reservations.
+        _approve_dialog(app,window,window.sign_button,approve=False)
+        assert session._signed is None and window.sign_button.isEnabled()
         # Real Core integration: inspect the exact WSP-1 native PSBTv2
         # prepared from LIVE verified coins. BIP352 input-set changes require
         # fresh receiver output/proof derivation, not yet qualified; the
@@ -227,12 +232,12 @@ def probe_wallet(core_dir,datadir,source,mining_address):
                 path.unlink()
             return original_sign(signer,*args)
         with patch.object(Signer,'sign',checked_sign):
-            _operation(app,window,'sign',window.sign_button.click)
+            _operation(app,window,'sign',lambda:_approve_dialog(app,window,window.sign_button))
         assert observed.get('before_crypto') is True
         assert window.broadcast_button.isEnabled() and not window.cancel_button.isEnabled()
         stage="BROADCAST"
         print("WALLET_E2E_STAGE=BROADCAST",flush=True)
-        txid=_operation(app,window,'broadcast',window.broadcast_button.click)
+        txid=_operation(app,window,'broadcast',lambda:_approve_dialog(app,window,window.broadcast_button))
         assert txid in window.review_text.text()
         # Real Core's mempool/consensus must accept the exact native signature.
         rpc=session._rpc()
@@ -267,7 +272,8 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         # A second real payment spends confirmed change. Drop only the local
         # response AFTER genuine Core has accepted it; no synthetic RPC.
         _operation(app,window,'prepare',window.prepare_button.click)
-        _operation(app,window,'sign',window.sign_button.click)
+        _capture_fusion_views(app,window)
+        _operation(app,window,'sign',lambda:_approve_dialog(app,window,window.sign_button))
         from wam_sp.psbt import PSBT
         uncertain_txid=PSBT.decode(session._signed).txid()
         original_call=WalletCoreCli.call
@@ -295,7 +301,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
                 raise WalletSessionError("WALLET_TEST_LOST_REPLY_AFTER_REAL_CORE")
             return original_call(client,method,params)
         with patch.object(WalletCoreCli,'call',lost_reply):
-            _operation(app,window,'broadcast',window.broadcast_button.click,denied=True)
+            _operation(app,window,'broadcast',lambda:_approve_dialog(app,window,window.broadcast_button),denied=True)
         assert entered.get('anchored_before_rpc') is True and session.faulted
         assert not window.prepare_button.isEnabled() and not window.broadcast_button.isEnabled()
         assert uncertain_txid in rpc._call('getrawmempool',[])
@@ -320,6 +326,10 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         assert session.locked and not session.runtime.exists() and window.balance_text.text()=='—'
         assert window.dashboard.balance_value.text()=='—'
         assert window.dashboard.activity_table.rowCount()==0
+        assert window.receive_page.qr.matrix is None and window.receive_page.code is None
+        assert window.history_page.rows==() and not window.history_page.copy_button.isEnabled()
+        assert window.dashboard.evidence_text.toolTip()==''
+        assert initial.receive_code not in window.recipient.text() and code not in window.review_text.text()
         assert not window.dashboard.go_send.isEnabled()
         assert not window.prepare_button.isEnabled()
         assert 'block_height' not in window.disclosure_text.text() and session._disclosure_gate is None
@@ -391,3 +401,62 @@ def probe_wallet(core_dir,datadir,source,mining_address):
                                    capture_output=True,timeout=15,check=False).returncode
             if status:
                 raise WalletProbeError('WALLET_TEST_KEYCHAIN_CLEANUP_DENIED')
+
+
+def _approve_dialog(app,window,button,*,approve=True):
+    # Drive the actual modal dialog as an explicit disposable-fixture operator.
+    # No application test flag or authorization bypass is introduced.
+    seen=[]
+    def respond():
+        dialog=QApplication.activeModalWidget()
+        if isinstance(dialog,PaymentApproval):
+            assert dialog.cancel.isDefault() and not dialog.approve.isDefault()
+            seen.append(True)
+            directory=Path('fusion-ui-review');directory.mkdir(exist_ok=True)
+            import sys
+            platform='windows-x64' if sys.platform=='win32' else 'macos-arm64'
+            assert dialog.grab().save(str(directory/(platform+'-approval-'+('broadcast' if button is window.broadcast_button else 'sign')+'.png')))
+            (dialog.approve if approve else dialog.cancel).click()
+    QTimer.singleShot(80,respond)
+    button.click()
+    assert seen, 'NATIVE_PAYMENT_APPROVAL_DIALOG_REQUIRED'
+
+
+def _capture_fusion_views(app,window):
+    import json,sys
+    directory=Path('fusion-ui-review');directory.mkdir(exist_ok=True)
+    platform='windows-x64' if sys.platform=='win32' else 'macos-arm64'
+    old_size=window.size();old_page=window.navigation.currentRow();old_mode=window.appearance.currentIndex()
+    records=[];geometry=[]
+    def capture(filename,requested):
+        assert window.grab().save(str(directory/filename));records.append(filename)
+        geometry.append({'file':filename,'requested_logical_size':list(requested),
+            'actual_logical_size':[window.width(),window.height()],
+            'device_pixel_ratio':window.devicePixelRatioF()})
+    def settle():
+        loop=QEventLoop();QTimer.singleShot(80,loop.quit);loop.exec()
+        app.processEvents()
+    try:
+        window.resize(1280,800);window.appearance.setCurrentIndex(2)
+        for index,name in enumerate(('overview','receive','history','send','security','settings')):
+            window.navigation.setCurrentRow(index)
+            if index==2 and window.history_table.rowCount():window.history_table.selectRow(0)
+            settle()
+            filename=f'{platform}-dark-{name}-1280x800.png'
+            capture(filename,(1280,800))
+        window.navigation.setCurrentRow(0)
+        for mode,index in (('light',1),('auto',0)):
+            window.appearance.setCurrentIndex(index);settle()
+            filename=f'{platform}-{mode}-overview-1280x800.png'
+            capture(filename,(1280,800))
+        window.appearance.setCurrentIndex(2)
+        for width,height in ((1440,900),(1920,1080),(900,650)):
+            window.resize(width,height);settle()
+            filename=f'{platform}-dark-overview-{width}x{height}.png'
+            capture(filename,(width,height))
+        receipt={'platform':platform,'qt_platform':app.platformName(),'device_pixel_ratio':window.devicePixelRatioF(),
+            'real_core_snapshot':True,'synthetic_rpc':False,'verified_height':window._snapshot.height,
+            'screenshots':records,'capture_geometry':geometry,'visual_approval':'PENDING_HUMAN_REVIEW'}
+        (directory/(platform+'-visual-receipt.json')).write_text(json.dumps(receipt,indent=2)+'\n')
+    finally:
+        window.resize(old_size);window.appearance.setCurrentIndex(old_mode);window.navigation.setCurrentRow(old_page);app.processEvents()

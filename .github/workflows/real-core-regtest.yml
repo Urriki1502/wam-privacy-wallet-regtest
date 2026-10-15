@@ -170,6 +170,7 @@ jobs:
           path: |
             real-core-evidence.json
             independent-wallet-security.json
+            fusion-ui-review/
             real-regtest-gui-preview.png
             real-regtest-wallet-preview.png
             real-regtest-security-preview.png
@@ -230,6 +231,7 @@ jobs:
             package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg
             package-output/SHA256SUMS.json
             package-output/INDEPENDENT-WALLET-SECURITY.json
+            fusion-ui-review/
             real-regtest-gui-preview.png
             real-regtest-wallet-preview.png
             real-regtest-security-preview.png
