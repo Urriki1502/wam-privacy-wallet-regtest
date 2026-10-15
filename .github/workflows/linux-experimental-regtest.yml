@@ -33,6 +33,7 @@ jobs:
         id: scope
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          WAM_ROOT_WITNESS_NATIVE_TESTS: '1'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y acl

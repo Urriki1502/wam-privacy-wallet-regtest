@@ -3,11 +3,11 @@
 Only application repository: https://github.com/Urriki1502/wam-privacy-wallet-regtest
 
 Worktree: `/Users/dinhdang/Documents/Codex/2026-10-14/wam-privacy-wallet-real-regtest-macos/work/linux-regtest-integration`
-Branch: `feature/linux-private-custody-20261015`
+Branch: `feature/linux-root-anchor-witness-20261015`
 Integration base / last completed upstream commit: `a869a36a76ae3f3d9e0e39b4eea2135f01649c37` (PR28 Fusion 2.0).
-Current PR: https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/29 (Draft).
-Last completed engineering commit: 576082d (Core build retry and native contract scope).
-Next Draft PR: native Linux storage/leases, stacked on29; Core remains under29.
+Current base PR: https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/30 (Draft, stacked on29).
+Last completed engineering commit: 240881b (native custody and builder dependency fix).
+Next Draft PR: optional independent Linux root witness; no wallet activation yet.
 Main remains `50e1ea94df61b8400cbab3bffe0fbdd285c6b419`.
 PR9 merged; PR18–28 remain stacked open Draft. Do not merge or rewrite them.
 
@@ -61,10 +61,16 @@ actual error; zero automatic retry is the bounded policy (no recurring charges).
 Next: inspect Linux run38697805476 for LINUX-02 native build/mining/cleanup.
 LINUX-03 primitives now implemented in linux_private_storage.py; native contracts
 for ACLs, actual WSP encryption, create-only publication, processes and crashes
-are pending. On macOS,6 foreign/ELF contracts PASS and10 native-only cases skip;
+passed in native-contracts of38698476013. Its builder repeated all custody tests
+without WSP installed and failed before build;240881b limits that builder to
+Core parser tests after the mandatory full native contract job. Retry38698811352.
+On macOS,6 foreign/ELF contracts PASS and10 native-only cases skip;
 these are not Linux acceptance. Spending explicitly refuses until an independent
 trusted anchor is qualified; see LINUX_CUSTODY_POLICY.md. Do not wire a plain
 file anchor into WalletSession to make tests pass.
+Root witness implementation and opt-in real root-process CI tests now exist
+but remain unqualified/unconnected. See LINUX_ROOT_WITNESS_POLICY.md; native
+tests must pass before integrating exact LinuxRootWitnessAnchor into vault.
 Then finish LINUX-03 trusted witness policy and regression gates;
 LINUX-04 shared headless session; LINUX-05 existing Fusion Qt;
 LINUX-06 real payment/recovery/reorg/uncertainty gates;
