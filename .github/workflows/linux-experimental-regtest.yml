@@ -34,6 +34,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y acl
           python -m pip install -e . -e ./wsp-upstream
           python -m unittest discover -s tests -p 'test_linux*.py' -v
           python - <<'PY'
@@ -79,7 +81,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils cmake libevent-dev libboost-dev libssl-dev libsqlite3-dev binutils
           python -m pip install -e .
-          python -m unittest discover -s tests -p 'test_linux*.py' -v
+          python -m unittest discover -s tests -p 'test_linux_developer_core.py' -v
       - name: Build exact upstream sources and refuse executable GNU_STACK
         run: bash scripts/build_linux_developer_core.sh
       - name: Actual developer Core REGTEST 101 blocks and process cleanup
