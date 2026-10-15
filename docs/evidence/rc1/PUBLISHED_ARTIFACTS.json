@@ -1,0 +1,34 @@
+[
+  {
+    "platform": "macos",
+    "id": 11980032023,
+    "name": "WAM-Fusion-REGTEST-RC1-macos-arm64-144d87700b87a241467172adfad3692b41e1d273",
+    "actions_zip_digest": "sha256:415ca7037a21eac3fb2f29d559d1549b3310f3fb6639fb7ba14e4b9c6e1a051c",
+    "expires_utc": "2026-10-29T14:02:34Z",
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747153198/artifacts/11980032023"
+  },
+  {
+    "platform": "windows",
+    "id": 11980747014,
+    "name": "WAM-Fusion-REGTEST-RC1-windows-x64-144d87700b87a241467172adfad3692b41e1d273",
+    "actions_zip_digest": "sha256:e0ee27dd04ec8f6a02517728165473e558959c131549d66a91d217ca0485cecc",
+    "expires_utc": "2026-10-29T14:19:11Z",
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747163508/artifacts/11980747014"
+  },
+  {
+    "platform": "linux-desktop",
+    "id": 11979187025,
+    "name": "WAM-Fusion-REGTEST-RC1-linux-x86_64-desktop-144d87700b87a241467172adfad3692b41e1d273",
+    "actions_zip_digest": "sha256:7a61417cb242bfea816d8d0d44cbbdf3fa47d06d186a7ab28ee3c3af63d9cff8",
+    "expires_utc": "2026-10-29T14:01:33Z",
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307/artifacts/11979187025"
+  },
+  {
+    "platform": "linux-headless",
+    "id": 11980206630,
+    "name": "WAM-Fusion-REGTEST-RC1-linux-x86_64-headless-144d87700b87a241467172adfad3692b41e1d273",
+    "actions_zip_digest": "sha256:a8708695511f87646e511f79986075d2290d992d9ffc392dd99a2b040321c8a1",
+    "expires_utc": "2026-10-29T14:00:53Z",
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307/artifacts/11980206630"
+  }
+]

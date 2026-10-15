@@ -1,5 +1,6 @@
 # Linux integration handoff — 15 October 2026
 
+> Historical 15 October checkpoint. Current integrated RC1 source, downloads and acceptance: [release qualification](RELEASE_CANDIDATE_QUALIFICATION.md). Resume using [release handoff](CODEX_RELEASE_QUALIFICATION_HANDOFF.md); do not re-dispatch the old one-shot scheduler.
 Only application repository: https://github.com/Urriki1502/wam-privacy-wallet-regtest
 
 Worktree: `/Users/dinhdang/Documents/Codex/2026-10-14/wam-privacy-wallet-real-regtest-macos/work/linux-regtest-integration`

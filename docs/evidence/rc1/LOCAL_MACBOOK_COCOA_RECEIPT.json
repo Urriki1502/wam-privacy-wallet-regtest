@@ -1,0 +1,23 @@
+{
+  "code_head": "144d87700b87a241467172adfad3692b41e1d273",
+  "artifact_checkout": "144d87700b87a241467172adfad3692b41e1d273",
+  "qt_platform": "cocoa",
+  "local_macbook_automated_cocoa_real_core_e2e": "PASS",
+  "downloaded_dmg_hdiutil_verify": "VALID",
+  "ad_hoc_app_codesign_strict_verify": "PASS",
+  "human_finder_signoff": false,
+  "physical_human_acceptance": "PENDING_OPERATOR",
+  "os": "macOS-27.0.1-arm64-arm-64bit",
+  "hardware_model": "Mac14,9",
+  "started_utc": "2026-10-15T23:33:20.175446+00:00",
+  "finished_utc": "2026-10-15T23:34:19.102718+00:00",
+  "core_sha256_unchanged_after_execution": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "app_zip_sha256": "f094e6c5c18687e67acea632fe50c70bc6f9a8332972818ffd4ac688abc2c296",
+  "dmg_sha256": "df06b152719a3c23cdf899d9416234660676835c96a8c2e9809d6a221137d50d",
+  "mainnet_allowed": false,
+  "production_qualified": false,
+  "owned_downloaded_app_and_core_processes_absent_after_exit": true
+}
