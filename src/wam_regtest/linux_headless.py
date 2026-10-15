@@ -115,19 +115,28 @@ def run(args):
         core=args.core_dir.expanduser().absolute();source=args.wsp_source_root.expanduser().absolute()
         configure(core,args.manifest_sha256,args.anchor_socket.expanduser().absolute(),
             authorized=args.confirm_experimental_developer_regtest)
-        if args.confirm_headless_e2e and args.recover_backup is not None:
+        if (args.confirm_headless_e2e or args.confirm_qt_e2e or args.gui) and args.recover_backup is not None:
             raise WalletSessionError('HEADLESS_RECOVERY_ACCEPTANCE_MODE_CONFLICT')
         def callback(c,d,s,m):return launch(c,d,s,m,backup=args.recover_backup)
         if args.confirm_headless_e2e:
             from .linux_headless_probe import probe
             callback=probe
+        elif args.confirm_qt_e2e:
+            from .linux_qt_probe import probe
+            callback=probe
+        elif args.gui:
+            from .operational_gui import launch_disposable_wallet
+            def callback(c,d,s,m):
+                if launch_disposable_wallet(c,d,s,m)!=0:
+                    raise WalletSessionError('LINUX_QT_WINDOW_DENIED')
+                return {'status':'LINUX_QT_DISPOSABLE_SESSION_CLOSED','mainnet_allowed':False}
         result=smoke_real_core(core,explicit_consent=args.confirm_experimental_developer_regtest,
             wsp_source=source,wsp_payment_e2e=True,headless_callback=callback)
         result.update({'official_signed_release':False,'developer_manifest_sha256':args.manifest_sha256,
-            'linux_headless':True,'qt_imported':any(n.startswith('PySide6') for n in sys.modules)})
+            'linux_headless':not (args.gui or args.confirm_qt_e2e),'qt_imported':any(n.startswith('PySide6') for n in sys.modules)})
         if args.report:
             with args.report.open('x') as output:json.dump(result,output,indent=2);output.write('\n')
-        print('LINUX_HEADLESS_REAL_REGTEST_COMPLETED')
+        print('LINUX_NATIVE_REAL_REGTEST_COMPLETED')
         return 0
     except Exception as error:
         import re

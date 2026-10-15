@@ -414,7 +414,7 @@ def _approve_dialog(app,window,button,*,approve=True):
             seen.append(True)
             directory=Path('fusion-ui-review');directory.mkdir(exist_ok=True)
             import sys
-            platform='windows-x64' if sys.platform=='win32' else 'macos-arm64'
+            platform={'win32':'windows-x64','darwin':'macos-arm64','linux':'linux-x86_64'}[sys.platform]
             assert dialog.grab().save(str(directory/(platform+'-approval-'+('broadcast' if button is window.broadcast_button else 'sign')+'.png')))
             (dialog.approve if approve else dialog.cancel).click()
     QTimer.singleShot(80,respond)
@@ -425,7 +425,7 @@ def _approve_dialog(app,window,button,*,approve=True):
 def _capture_fusion_views(app,window):
     import json,sys
     directory=Path('fusion-ui-review');directory.mkdir(exist_ok=True)
-    platform='windows-x64' if sys.platform=='win32' else 'macos-arm64'
+    platform={'win32':'windows-x64','darwin':'macos-arm64','linux':'linux-x86_64'}[sys.platform]
     old_size=window.size();old_page=window.navigation.currentRow();old_mode=window.appearance.currentIndex()
     records=[];geometry=[]
     def capture(filename,requested):

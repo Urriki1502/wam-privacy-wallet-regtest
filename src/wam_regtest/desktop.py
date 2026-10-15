@@ -33,7 +33,7 @@ def qt_application():
     if _QT_APPLICATION is None:
         _QT_APPLICATION = QApplication.instance() or QApplication([])
         families=set(QFontDatabase.families())
-        preferred=('Segoe UI','Arial') if sys.platform=='win32' else ('Helvetica Neue','Avenir Next','Arial')
+        preferred={'win32':('Segoe UI','Arial'),'darwin':('Helvetica Neue','Avenir Next','Arial')}.get(sys.platform,('Noto Sans','DejaVu Sans','Liberation Sans'))
         family=next((f for f in preferred if f in families),None)
         if family:_QT_APPLICATION.setFont(QFont(family,11))
         _QT_APPLICATION.setWindowIcon(QIcon(str(brand_image())))
@@ -193,7 +193,7 @@ class RegtestWalletWindow(QMainWindow):
         if self._worker is not None:
             return
         self.refresh_button.setEnabled(False)
-        self.status.setText("Scanning signed WAM Core REGTEST and WSP-1 SQLite…")
+        self.status.setText("Verifying WAM Core REGTEST and WSP-1 SQLite…")
         worker = _ReadWorker(self._core_dir, self._datadir, self._source, self.session)
         self._worker = worker
         worker.ready.connect(self.apply_snapshot)

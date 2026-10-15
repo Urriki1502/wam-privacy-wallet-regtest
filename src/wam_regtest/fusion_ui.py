@@ -267,7 +267,7 @@ class FusionOverview(QScrollArea):
         self.open_security=action('Security & backup','security');self.open_security.setEnabled(False);pl.addWidget(self.open_security);pl.addStretch()
         whole.addWidget(ResponsiveRow(self.hero,privacy,weights=[3,2]))
         self.status_cards=[];self.status_icons=[];cards=[]
-        for name,caption,icon in (('Official Core','v0.1.11 · exact binary identity','core'),('WSP-1 scanner','BIP352 · live SQLite checkpoint','sync'),('Wallet custody','Native checkpoint anchor','security')):
+        for name,caption,icon in (('Verified Core','Pinned binary identity','core'),('WSP-1 scanner','BIP352 · live SQLite checkpoint','sync'),('Wallet custody','Native checkpoint anchor','security')):
             card,cl=panel();top=QHBoxLayout();icon_label=QLabel();icon_label.setProperty('fusion_icon_label',icon);icon_label.setFixedSize(24,24);top.addWidget(icon_label);top.addWidget(label(name,'FusionCardTitle'));top.addStretch();cl.addLayout(top)
             cl.setContentsMargins(18,14,18,14);cl.setSpacing(7)
             value=label('Not verified','FusionCardValue');cl.addWidget(value);cl.addWidget(label(caption));self.status_cards.append(value);self.status_icons.append(icon_label);cards.append(card)
