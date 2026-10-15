@@ -26,7 +26,7 @@ An OS wallet-ID flock remains in the root server for the entire client lease.
 Exact-object/thread nesting is allowed; another object/process contends even
 across vault directories. Release acknowledgement follows actual unlock.
 Client validates a live lease after its body; service loss raises and must fault
-the future coordinator before success/signature exposure. A killed client or
+the shared coordinator before success/signature exposure. A killed client or
 server releases OS locks. Server instance flock prevents competing listeners.
 
 Advance compares the exact prior generation/digest, requires next generation,
@@ -40,8 +40,8 @@ witness remains intact. Root compromise, rollback/loss of the entire witness
 store/OS, hardware power loss, guaranteed erasure, availability against the
 authorized UID, and hardened executable-to-process binding are unqualified.
 Loss/replacement must not authorize old-backup import or automatic reset.
-Future Linux vault envelopes must bind this policy and require the witness;
-absence must keep spending disabled. Cross-OS migration remains separate.
+Linux-v3 vault envelopes bind this policy and require the witness;
+absence keeps spending disabled. Cross-OS migration remains separate.
 
 Required native tests: actual root peer and UID custody, monotonic CAS/stale
 writer denial, ordinary-user inability to write witness records, exact-object

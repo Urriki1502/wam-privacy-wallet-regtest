@@ -1,4 +1,4 @@
-# WAM Privacy Wallet — Real REGTEST (macOS ARM64)
+# WAM Privacy Wallet — Real REGTEST candidates
 
 Experimental native Qt wallet using official signed WAM Core v0.1.11,
 pinned WSP-1 BIP352 and actual SQLite. Receive, Balance, History, review-gated
@@ -12,6 +12,26 @@ PRs [#6](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/6)
 (encrypted recovery), [#8](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/8)
 (native payments) and [#9](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/9)
 (cross-session recovery and stale-writer protection) are merged.
+
+## Cross-platform candidate status — 15 October 2026
+
+This stacked branch also contains Windows x64 and experimental Linux x86_64
+candidates. These are **Draft engineering units**, not merged V1/Final releases.
+See [platform qualification](docs/LINUX_QUALIFICATION.md) for exact code heads,
+native runner evidence, artifacts, checksums and remaining operator/security work.
+macOS retains official signed Core/Keychain; Windows retains official signed
+Core/Credential Manager. Linux rejects the published executable-stack release
+and uses an explicitly approved, exact upstream source build plus an independent
+administratively provisioned root witness. It is not an official signed Linux
+Core release. The original WAM coin artwork is shared unchanged.
+
+Linux now reuses the same WalletSession and Fusion Qt screens, approvals,
+reservations, native WSP signer and scanner. Source and frozen no-Qt headless / xcb
+desktop gates are separate. Start with [headless](docs/LINUX_HEADLESS.md),
+[Qt](docs/LINUX_QT.md), [packaging](docs/LINUX_PACKAGING.md) and
+[root witness policy](docs/LINUX_ROOT_WITNESS_POLICY.md).
+Portable/cross-OS backup migration remains unimplemented; platform-bound backups
+and independent anchor checks must never be bypassed to simulate portability.
 
 ## Download and launch the actual application
 
@@ -85,8 +105,9 @@ They are separate from the operational wallet's fresh random test keys.
 
 ## Qualification and remaining limits
 
-The two existing workflows cover 28 canonical BIP352 vector suites and native
-Apple Silicon real-Core source/frozen acceptance, including real reorg depths
+The canonical-vector and macOS workflows cover 28 BIP352 vector suites and
+native Apple Silicon real-Core source/frozen acceptance. Windows and Linux
+qualification use their platform-specific native jobs. These include real reorg depths
 1, 12 and 100, stale-writer rejection, native OS lease contention across vault
 directories and recovery on a new Core chain. No mock RPC can replace these
 gates. Negative unit contracts are additional tests, not real E2E evidence.
