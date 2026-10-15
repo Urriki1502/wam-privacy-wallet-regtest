@@ -5,9 +5,9 @@ Only application repository: https://github.com/Urriki1502/wam-privacy-wallet-re
 Worktree: `/Users/dinhdang/Documents/Codex/2026-10-14/wam-privacy-wallet-real-regtest-macos/work/linux-regtest-integration`
 Branch: `feature/linux-headless-wallet-20261015`
 Integration base / last completed upstream commit: `a869a36a76ae3f3d9e0e39b4eea2135f01649c37` (PR28 Fusion 2.0).
-Current base PR: https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/31 (Draft, stacked on30/29/28).
-Last completed engineering commit: 7335633 (root witness and actual UID/crash cases).
-Next Draft PR: explicit Linux runtime and shared headless wallet acceptance.
+Current PR: https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/32 (Draft, stacked on31/30/29/28).
+Last completed CODE commit: f9c0eedbabe16951839f2dac563b5123b1beb623 (Linux shared headless wallet, strict Core directory guard).
+Next unit: Linux Qt over the existing Fusion design, then frozen headless/desktop packages. No merge/release.
 Main remains `50e1ea94df61b8400cbab3bffe0fbdd285c6b419`.
 PR9 merged; PR18–28 remain stacked open Draft. Do not merge or rewrite them.
 
@@ -97,6 +97,49 @@ WAM source is unchanged and final ELF RW validation remains mandatory. No
 Core startup/mining occurred in the failed run. Build retry pending.
 Engineering lease contention tested on local Mac: second process exits73.
 
-Linux Core smoke PASS only; full Linux wallet remains pending. Current host is macOS ARM64. CI Linux must provide
+Linux Core and SOURCE HEADLESS wallet PASS; Qt/frozen/portable recovery remain pending. Current host is macOS ARM64. CI Linux must provide
 actual ELF/process/scanner/SQLite/Qt evidence. Mock/negative units are supplementary.
 No mainnet, personal secrets, real funds, production qualification or automatic merge.
+
+## Latest verified checkpoint (authoritative, 15 October2026)
+
+At code f9c0eed, Linux run38701530294 native-contracts and headless-wallet PASS.
+Headless artifact11956317856: linux-headless-wallet-evidence-f9c0eedbabe16951839f2dac563b5123b1beb623.
+Actual CLI subprocess, root witness, no PySide6, real PSBTv2 signing, mempool,
+recipient100000 atoms, confirmed change, reorg1/12/100, lost actual broadcast
+reply, original-key recovery on TWO fresh chains, irreversible reservations and
+stale-before-sign/broadcast refusal PASS. No synthetic RPC/crypto. Reports under
+project outputs/linux-headless-qualified-f9c0eed and linux-core-qualified-576082d.
+Core binary and approved manifest hashes independently checked after download.
+
+Exact code-head macOS source and28 canonical vector suites PASS. macOS frozen,
+Windows regression/frozen and repeated developer Core build still running at
+checkpoint; refresh actual state before any all-platform claim. PR29 all checks
+PASS. PR30/31 native contracts passed; stacked review remains Draft, no merges.
+
+Next actions, in order:
+1. Refresh PR32 runs38701530294 (Linux),38701530304 (Mac),38701530301 (Windows),
+38701530265 (vectors), and any documentation-head reruns. Diagnose failures;
+never weaken gates. Code-qualified HEAD is f9c0eed; this final checkpoint commit
+changes documentation only. Preserve the stack and uncommitted work.
+2. Add startup --recover-backup selection to the interactive headless launcher;
+backend same-key fresh-chain recovery already passes, but product startup still
+initializes fresh sessions. Do not repeat cryptographic/reorg work unnecessarily.
+3. LINUX-05: configure existing OperationalWalletWindow with approved Linux
+runtime; correct platform labels/fonts/screenshot names, preserve six screens,
+consent/clear/worker gates. Native Qt xcb/Xvfb actual-Core acceptance, independent
+headless no-Qt gate. Do not claim human Linux desktop/OS theme signoff.
+4. LINUX-07: separate native frozen CLI and desktop artifacts, bundled qualified
+Core/WSP closure, preserved Core bytes/stackRW, manifests/checksums; execute the
+FINAL binaries with actual wallet E2E before qualification. Root witness stays
+optional administratively provisioned; app must not auto-install privileged code.
+5. LINUX-08: versioned portable export/migration policy. v1 Mac/v2 Win/v3 Linux
+remain platform-bound. No cross-platform recovery PASS without actual source and
+destination OS tests. Root/whole-store rollback and power-loss remain unqualified.
+
+Scheduler still installed ACTIVE: linux-regtest-single-continuation, one future
+run19:06:55 Asia/Ho_Chi_Minh15Oct2026 /12:06:55 UTC. Local app scheduler, NOT
+launchd/CLI process launch. App/Mac availability required; credits not guaranteed.
+Existing prompt enters this worktree and reads this file. Acquire engineering
+lease and inspect active threads before writes; write separate resume log,
+then disable the one-shot after successful work. No automatic paid retries.
