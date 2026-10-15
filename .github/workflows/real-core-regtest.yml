@@ -213,7 +213,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
-          python -m pip install --disable-pip-version-check -e '.[gui]' -e ./wsp-upstream 'pyinstaller>=6.15,<7'
+          python -m pip install --disable-pip-version-check -e '.[gui]' -e ./wsp-upstream 'pyinstaller==6.22.3'
           python -m pip check
       - name: Security and bundling contracts
         run: python -m unittest discover -s tests -v
@@ -221,16 +221,22 @@ jobs:
         run: python -m wam_regtest.release --platform macos-arm64 --destination core
       - name: Build actual native .app/.dmg and repeat REAL Core + WSP + Qt E2E inside app
         shell: bash
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: bash scripts/build_macos_bundle.sh
       - name: Upload real built Mac application, DMG, checksums and Qt screenshot
         uses: actions/upload-artifact@v4
         with:
-          name: WAM-Privacy-Wallet-REGTEST-macOS-ARM64-${{ github.sha }}
+          name: WAM-Fusion-REGTEST-RC1-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip
             package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg
             package-output/SHA256SUMS.json
             package-output/INDEPENDENT-WALLET-SECURITY.json
+            package-output/RELEASE_CANDIDATE_MANIFEST.json
+            package-output/SHA256SUMS.txt
+            package-output/OWNER_REGTEST_ACCEPTANCE.md
+            package-output/DEV_WAM_REVIEW_HANDOFF.md
             fusion-ui-review/
             real-regtest-gui-preview.png
             real-regtest-wallet-preview.png

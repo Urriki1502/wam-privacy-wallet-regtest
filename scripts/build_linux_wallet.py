@@ -96,6 +96,8 @@ def main():
     shutil.copyfile('docs/LINUX_ROOT_WITNESS_POLICY.md',output/'ROOT_WITNESS_POLICY.md')
     (output/'SHA256SUMS.txt').write_text(''.join(sha256(p.read_bytes()).hexdigest()+'  '+p.name+'\n'
         for p in sorted(output.iterdir()) if p.is_file() and p.name!='SHA256SUMS.txt'))
+    from wam_regtest.release_candidate import write_candidate_manifest
+    write_candidate_manifest(output,'linux-x86_64-'+('desktop' if args.desktop else 'headless'),CORE)
     print('LINUX_FINAL_FROZEN_'+('DESKTOP' if args.desktop else 'NO_QT_HEADLESS')+'_REAL_WALLET_PASS')
 
 

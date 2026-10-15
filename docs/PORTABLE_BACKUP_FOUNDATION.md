@@ -37,3 +37,8 @@ approved real signing/broadcast. Synthetic RPC or a fake cross-platform anchor
 cannot qualify it. Cross-Mac, real funds and mainnet remain outside current
 execution scope. Design review and platform-specific evidence are required
 before any implementation changes native envelope acceptance.
+
+Future portable exports must explicitly explain offline password-guessing risk,
+remain opt-in/separate from native OS-bound backups, and choose/review KDF cost
+on lower-end supported hardware. No such export is implemented or required for
+the RC1 preview; this note does not change native profiles or crypto parameters.
