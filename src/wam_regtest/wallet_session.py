@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import secrets
 import threading
+from .linux_anchor_witness import LinuxWitnessError
 from wam_regtest import custody
 from wam_regtest.core import verified_core_paths
 from wam_regtest.wsp_live import LiveCoreReadOnlyCli, _pinned_source, _public_fixture_payment
@@ -254,46 +255,54 @@ class WalletSession:
     def sign(self, commitment):
         from wam_sp.wallet import Signer, Wallet
         from wam_sp.psbt import PSBT
-        with self._lock, self.vault.anchor.lease():
-            if self._review is None or commitment != self._review.commitment or self._signed is not None:
-                raise WalletSessionError("WALLET_EXACT_INTENT_APPROVAL_REQUIRED")
-            rpc=self._rpc()
-            self._unchanged_inputs(rpc)
-            proposal=self._prepared.proposal
-            # Approving Sign makes this reservation irreversible BEFORE
-            # entering native crypto. A crash/failure cannot restore a draft
-            # that is cancelable, even if no signature was returned.
-            Wallet(self.scanner).mark_signed(proposal.token)
-            self._save()
-            try:
-                signed=Signer(self.ring).sign(self._prepared,proposal.intents,self._review.fee)
-                PSBT.decode(signed).finalize()  # Verify signatures and sender proof.
-            except Exception:
-                self.faulted=True
-                raise WalletSessionError("WALLET_SIGN_UNCERTAIN_LOCK_RETAINED") from None
-            self._signed=signed
-            return self._review
+        try:
+            with self._lock, self.vault.anchor.lease():
+                if self._review is None or commitment != self._review.commitment or self._signed is not None:
+                    raise WalletSessionError("WALLET_EXACT_INTENT_APPROVAL_REQUIRED")
+                rpc=self._rpc()
+                self._unchanged_inputs(rpc)
+                proposal=self._prepared.proposal
+                # Approving Sign makes this reservation irreversible BEFORE
+                # entering native crypto. A crash/failure cannot restore a draft
+                # that is cancelable, even if no signature was returned.
+                Wallet(self.scanner).mark_signed(proposal.token)
+                self._save()
+                try:
+                    signed=Signer(self.ring).sign(self._prepared,proposal.intents,self._review.fee)
+                    PSBT.decode(signed).finalize()  # Verify signatures and sender proof.
+                except Exception:
+                    self.faulted=True
+                    raise WalletSessionError("WALLET_SIGN_UNCERTAIN_LOCK_RETAINED") from None
+                self._signed=signed
+                return self._review
+        except LinuxWitnessError:
+            self.faulted=True;self._signed=None
+            raise WalletSessionError("WALLET_ROOT_LEASE_UNCERTAIN_LOCK_RETAINED") from None
 
     def broadcast(self, commitment):
         from wam_sp.wallet import Wallet
-        with self._lock, self.vault.anchor.lease():
-            if self._review is None or self._signed is None or commitment != self._review.commitment:
-                raise WalletSessionError("WALLET_BROADCAST_APPROVAL_REQUIRED")
-            rpc=self._rpc()
-            self._unchanged_inputs(rpc)
-            token=self._prepared.proposal.token
-            # Retain irreversible uncertainty in encrypted storage BEFORE RPC.
-            self.scanner.store.db.execute("UPDATE reservations SET state='uncertain' WHERE token=?",(token,))
-            self._save()
-            try:
-                txid=Wallet(self.scanner).broadcast(self._signed,token,rpc)
+        try:
+            with self._lock, self.vault.anchor.lease():
+                if self._review is None or self._signed is None or commitment != self._review.commitment:
+                    raise WalletSessionError("WALLET_BROADCAST_APPROVAL_REQUIRED")
+                rpc=self._rpc()
+                self._unchanged_inputs(rpc)
+                token=self._prepared.proposal.token
+                # Retain irreversible uncertainty in encrypted storage BEFORE RPC.
+                self.scanner.store.db.execute("UPDATE reservations SET state='uncertain' WHERE token=?",(token,))
                 self._save()
-            except Exception:
-                self.faulted=True
-                self._signed=None
-                raise WalletSessionError("WALLET_BROADCAST_UNCERTAIN_LOCK_RETAINED") from None
-            self._prepared=self._signed=self._review=self._tip=None
-            return txid
+                try:
+                    txid=Wallet(self.scanner).broadcast(self._signed,token,rpc)
+                    self._save()
+                except Exception:
+                    self.faulted=True
+                    self._signed=None
+                    raise WalletSessionError("WALLET_BROADCAST_UNCERTAIN_LOCK_RETAINED") from None
+                self._prepared=self._signed=self._review=self._tip=None
+                return txid
+        except LinuxWitnessError:
+            self.faulted=True;self._signed=None
+            raise WalletSessionError("WALLET_ROOT_LEASE_UNCERTAIN_LOCK_RETAINED") from None
 
     def cancel(self):
         from wam_sp.wallet import Wallet

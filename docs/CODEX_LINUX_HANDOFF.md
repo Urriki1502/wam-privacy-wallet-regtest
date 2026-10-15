@@ -3,11 +3,11 @@
 Only application repository: https://github.com/Urriki1502/wam-privacy-wallet-regtest
 
 Worktree: `/Users/dinhdang/Documents/Codex/2026-10-14/wam-privacy-wallet-real-regtest-macos/work/linux-regtest-integration`
-Branch: `feature/linux-root-anchor-witness-20261015`
+Branch: `feature/linux-headless-wallet-20261015`
 Integration base / last completed upstream commit: `a869a36a76ae3f3d9e0e39b4eea2135f01649c37` (PR28 Fusion 2.0).
-Current base PR: https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/30 (Draft, stacked on29).
-Last completed engineering commit: 240881b (native custody and builder dependency fix).
-Next Draft PR: optional independent Linux root witness; no wallet activation yet.
+Current base PR: https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/31 (Draft, stacked on30/29/28).
+Last completed engineering commit: 7335633 (root witness and actual UID/crash cases).
+Next Draft PR: explicit Linux runtime and shared headless wallet acceptance.
 Main remains `50e1ea94df61b8400cbab3bffe0fbdd285c6b419`.
 PR9 merged; PR18–28 remain stacked open Draft. Do not merge or rewrite them.
 
@@ -58,7 +58,13 @@ actual error; zero automatic retry is the bounded policy (no recurring charges).
 
 ## Next / remaining milestones
 
-Next: inspect Linux run38697805476 for LINUX-02 native build/mining/cleanup.
+LINUX-02 PASS: run38697805476 at576082d227ccd9eb139686ded431c69c07399237.
+Artifact11955725964, name linux-developer-core-576082d227ccd9eb139686ded431c69c07399237.
+Manifest SHA256 e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806.
+wamd ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6;
+CLI ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652.
+Both ELF64/stackRW;101 actual blocks/genesis/zero peers/process+datadir cleanup.
+Artifact downloaded to project outputs/linux-core-qualified-576082d. Not signed release.
 LINUX-03 primitives now implemented in linux_private_storage.py; native contracts
 for ACLs, actual WSP encryption, create-only publication, processes and crashes
 passed in native-contracts of38698476013. Its builder repeated all custody tests
@@ -68,10 +74,16 @@ On macOS,6 foreign/ELF contracts PASS and10 native-only cases skip;
 these are not Linux acceptance. Spending explicitly refuses until an independent
 trusted anchor is qualified; see LINUX_CUSTODY_POLICY.md. Do not wire a plain
 file anchor into WalletSession to make tests pass.
-Root witness implementation and opt-in real root-process CI tests now exist
-but remain unqualified/unconnected. See LINUX_ROOT_WITNESS_POLICY.md; native
-tests must pass before integrating exact LinuxRootWitnessAnchor into vault.
-Then finish LINUX-03 trusted witness policy and regression gates;
+Root witness native-contracts PASS in38699751140 (actual root service, UID
+refusal, CAS, stale writers, contention, killed client/server, restart). Root/OS
+rollback and power-loss remain unqualified. Explicit runtime/anchor v3 now
+connects the shared vault; no default Linux enablement, no root auto-install.
+Headless source app and real acceptance added; CI pending. Local full contracts
+128 PASS (33 platform skips), independent unchanged macOS security auditor PASS.
+Next: inspect new PR headless-wallet job, fix actual native failures, then
+qualify source before frozen/Qt work. Keep new Linux CLI startup-recovery option
+as an explicit remaining improvement; backend fresh-chain recovery is in gate.
+Then finish LINUX-03/04 real wallet and platform regression gates;
 LINUX-04 shared headless session; LINUX-05 existing Fusion Qt;
 LINUX-06 real payment/recovery/reorg/uncertainty gates;
 LINUX-07 frozen native headless/desktop packages;
@@ -85,6 +97,6 @@ WAM source is unchanged and final ELF RW validation remains mandatory. No
 Core startup/mining occurred in the failed run. Build retry pending.
 Engineering lease contention tested on local Mac: second process exits73.
 
-No Linux real test PASS yet. Current host is macOS ARM64. CI Linux must provide
+Linux Core smoke PASS only; full Linux wallet remains pending. Current host is macOS ARM64. CI Linux must provide
 actual ELF/process/scanner/SQLite/Qt evidence. Mock/negative units are supplementary.
 No mainnet, personal secrets, real funds, production qualification or automatic merge.
