@@ -143,3 +143,22 @@ launchd/CLI process launch. App/Mac availability required; credits not guarantee
 Existing prompt enters this worktree and reads this file. Acquire engineering
 lease and inspect active threads before writes; write separate resume log,
 then disable the one-shot after successful work. No automatic paid retries.
+
+## Scheduled continuation in progress — 15 October 2026 12:07 UTC
+
+Lease session54700 acquired; only current thread active; clean initial HEAD
+e16ecf28dfcd1a32bb2d1f9dbfc8e9e325bd249c. Official fetch confirmed main unchanged.
+All seven checks at e16ecf2 PASS: Linux38702175324, Mac38702175252,
+Windows38702175350, vectors38702175261. PR29–32 remain Draft/open, all checks PASS.
+Separate resume log: project outputs/linux-resume-20261015T121033Z.log.
+Actual usage tool ordinaryUsageAllowed=true, primary2%; no reset credit used.
+
+PR32 a63c3716a453c9e26c2ace815ff37b7783d43366 adds startup --recover-backup;
+exact same selector is used in two actual fresh-Core acceptance lifecycles.
+New branch feature/linux-fusion-qt-20261015 stacked on PR32 adds optional --gui,
+native xcb Qt acceptance, shared Fusion windows/approvals/workers and truthful
+platform labels. Native evidence is PENDING until this exact head passes.
+Local 128 contracts PASS with33 platform skips, unchanged independent wallet
+security auditor PASS. No Linux-native claim from those Mac tests.
+Next frozen headless/desktop actual binaries, then portable migration policy.
+Scheduler fired once; pause it after this successful continuation. No retries.

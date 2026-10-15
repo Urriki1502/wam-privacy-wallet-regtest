@@ -99,10 +99,11 @@ class OperationalWalletWindow(RegtestWalletWindow):
         apl.addWidget(self.settings_appearance);apl.addWidget(label('Auto responds to native Qt operating-system appearance events without a restart.'))
         build,bl=panel('Application','Experimental REGTEST · WAM Fusion 2.0')
         import PySide6
-        bl.addWidget(label(('macOS ARM64' if sys.platform=='darwin' else 'Windows x64')+' / Qt '+PySide6.__version__))
-        bl.addWidget(label('Linux HOLD · PayJoin validation only. No production or real-fund operations.'))
+        bl.addWidget(label({'darwin':'macOS ARM64','win32':'Windows x64','linux':'Linux x86_64 experimental'}.get(sys.platform,'Unsupported platform')+' / Qt '+PySide6.__version__))
+        bl.addWidget(label('Linux experimental · PayJoin validation only. No production or real-fund operations.'))
         layout.addWidget(ResponsiveRow(appearance,build))
-        node,nl=panel('Official WAM Core','v0.1.11 · independent binary identity checks')
+        node,nl=panel('Developer WAM Core' if sys.platform=='linux' else 'Official WAM Core',
+            'Pinned upstream source build · not a signed release' if sys.platform=='linux' else 'v0.1.11 · independent binary identity checks')
         self.core_identity=label('No verified Core identity in this session','ReceiveCode',True);nl.addWidget(self.core_identity);layout.addWidget(node)
         privacy,pl=panel('Local network policy','Scan and broadcast use the same isolated local REGTEST node.')
         self.network_button=action('Verify node privacy','security');pl.addWidget(self.network_button);self.network_text=label('Remote/proxy routes and fallback are unavailable. Zero peers must be verified; there is no anonymity guarantee.');pl.addWidget(self.network_text);layout.addWidget(privacy)
@@ -110,7 +111,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.settings_sync=action('Sync verified chain','sync');self.settings_sync.clicked.connect(self.request_sync);sl.addWidget(self.settings_sync)
         self.mine_button=action('Mine one REGTEST block','core');sl.addWidget(self.mine_button);sl.addWidget(label('Mining confirms disposable test transactions only. The test chain is removed when this developer session closes.','FusionGold'));layout.addWidget(sync);layout.addStretch();self.stack.addWidget(settings)
         self.mine_button.clicked.connect(lambda:self.start_operation('mine'));self.network_button.clicked.connect(lambda:self.start_operation('network'))
-        self.appearance.setItemText(0,'Auto · Windows' if sys.platform=='win32' else 'Auto · macOS')
+        self.appearance.setItemText(0,'Auto · '+{'win32':'Windows','darwin':'macOS','linux':'Linux desktop'}.get(sys.platform,'system'))
         self.dashboard.go_send.clicked.connect(lambda:self.navigation.setCurrentRow(3));self.dashboard.open_security.clicked.connect(lambda:self.navigation.setCurrentRow(4))
         self._actions=(self.prepare_button,self.sign_button,self.broadcast_button,self.cancel_button,self.lock_button,self.unlock_button,self.backup_button,self.recover_button,self.mine_button,self.network_button,self.disclosure_button)
         self._update_controls();self.apply_theme()
