@@ -1,0 +1,64 @@
+name: Linux x86_64 experimental developer Core REGTEST
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/linux-experimental-regtest.yml'
+      - 'scripts/build_linux_developer_core.sh'
+      - 'src/wam_regtest/linux*.py'
+      - 'tests/test_linux*.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  developer-core:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/checkout@v4
+        with:
+          repository: wamcoin-core-dev/wam-coin
+          ref: 82a1487fd86f7021b1b9fc1524d267fca126f7d4
+          path: linux-upstream
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: bitcoin/bitcoin
+          ref: 32efe850438ef22e2de39e562af557872a402c31
+          path: linux-upstream/build/wam-core
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: tevador/RandomX
+          ref: 102f8acf90a7649ada410de5499a7ec62e49e1da
+          path: linux-upstream/build/randomx
+          persist-credentials: false
+      - name: Native Linux prerequisites and parser contracts
+        run: |
+          test "$(uname -sm)" = 'Linux x86_64'
+          sudo apt-get update -qq
+          sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils cmake libevent-dev libboost-dev libssl-dev libsqlite3-dev binutils
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_linux*.py' -v
+      - name: Build exact upstream sources and refuse executable GNU_STACK
+        run: bash scripts/build_linux_developer_core.sh
+      - name: Actual developer Core REGTEST 101 blocks and process cleanup
+        run: |
+          python -m wam_regtest.linux_core_probe --core-dir linux-core \
+            --manifest-sha256 "$(cat LINUX_DEVELOPER_CORE_MANIFEST_SHA256.txt)" \
+            --confirm-experimental-developer-regtest --report linux-core-evidence.json
+      - name: Publish experimental Core bytes and public trust receipt only
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-developer-core-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            linux-core/
+            LINUX_DEVELOPER_CORE_MANIFEST_SHA256.txt
+            linux-core-evidence.json
+          retention-days: 14
+          if-no-files-found: error
