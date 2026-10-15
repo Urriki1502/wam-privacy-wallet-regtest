@@ -45,6 +45,12 @@ All screenshots come from a real Core-funded test wallet, not illustration or
 synthetic balances. `fusion-ui-review/*-visual-receipt.json` states the platform,
 Qt backend, DPR, verified height and pending human visual review.
 
-Manual native Windows125%/150% and human macOS/Windows visual signoff remain
-separate from source/frozen CI. Review exact-head artifact/checksum provenance
+The frozen Windows gate also reruns the genuine wallet at125%/150% via
+QT_SCALE_FACTOR, verifies qwindows + actual DPR and publishes separate views.
+Human Windows OS/display-setting and macOS/Windows visual signoff remain
+separate from these automated source/frozen runs. Review exact-head artifact/checksum provenance
 before qualification. Linux HOLD; PayJoin validation-only; no mainnet or funds.
+
+Local MacBook native Cocoa E2E on6fdff6d passed real send/confirmation,
+reorg1/12/100, encrypted recovery, fresh-Core reopen and Auto/Light/Dark.
+This is automated native application testing, not human visual approval.

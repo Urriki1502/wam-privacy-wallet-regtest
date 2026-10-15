@@ -28,8 +28,9 @@ class FusionV2Widgets(unittest.TestCase):
   page.render_snapshot(None);self.assertIsNone(page.qr.matrix);self.assertIsNone(page.code);self.assertFalse(page.copy_button.isEnabled())
  def test_invalid_receive_address_never_produces_a_qr(self):
   page=ReceivePage();self.addCleanup(page.deleteLater)
+  page.render_snapshot(fixture())
   with self.assertRaises(ValueError):page.render_snapshot(replace(fixture(),receive_code='wamrtsp1-invalid'))
-  self.assertIsNone(page.qr.matrix)
+  self.assertIsNone(page.qr.matrix);self.assertIsNone(page.code);self.assertFalse(page.copy_button.isEnabled())
  def test_history_filter_detail_copy_and_failure_clear(self):
   page=HistoryPage();self.addCleanup(page.deleteLater);snap=fixture();page.render_snapshot(snap)
   page.select_txid('b'*64);self.assertEqual(page.detail_id.text(),'b'*64);page.copy_button.click();self.assertEqual(self.app.clipboard().text(),'b'*64)

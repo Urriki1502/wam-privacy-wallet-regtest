@@ -63,6 +63,22 @@ def main():
     assert result.returncode==0,'WIN_FROZEN_REAL_WALLET_DENIED'
     evidence=json.loads(Path('windows-packaged-wallet-evidence.json').read_text())
     assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
+    # Actual native qwindows + genuine Core again at Windows125%/150%.
+    # Distinct cwd keeps create-only evidence and screenshots independent.
+    scales={}
+    for factor in ('1.25','1.5'):
+        review=Path('windows-ui-scale-'+factor).absolute();review.mkdir()
+        scaled={**environment,'QT_SCALE_FACTOR':factor}
+        result=subprocess.run([str(executable),'--ci-real-core-wallet'],cwd=review,env=scaled,
+            stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
+        assert result.returncode==0,'WIN_SCALED_FROZEN_REAL_WALLET_DENIED'
+        record=json.loads((review/'fusion-ui-review/windows-x64-visual-receipt.json').read_text())
+        assert record['qt_platform']=='windows' and abs(record['device_pixel_ratio']-float(factor))<.01
+        assert record['real_core_snapshot'] and not record['synthetic_rpc']
+        target=output/('ui-scale-'+factor);target.mkdir()
+        shutil.copytree(review/'fusion-ui-review',target/'fusion-ui-review')
+        shutil.copyfile(review/'windows-packaged-wallet-evidence.json',target/'windows-packaged-wallet-evidence.json')
+        scales[factor]={'native_qwindows_real_frozen_e2e':True,'device_pixel_ratio':record['device_pixel_ratio']}
     members={p.relative_to(bundle).as_posix():sha256(p.read_bytes()).hexdigest() for p in bundle.rglob('*') if p.is_file()}
     assert not any(p.is_symlink() for p in bundle.rglob('*'))
     head=os.environ['WAM_SOURCE_HEAD'];archive=output/('WAM-Privacy-Wallet-REGTEST-windows-x64-'+head+'.zip')
@@ -73,9 +89,9 @@ def main():
         'platform':'windows-x64','wsp_source_commit':'ac55f13423620252bdbf848c7e8a280c3b84721e',
         'official_core_sha256':BINARY_SHA256,'bundle_files_sha256':members,
         'archive_sha256':sha256(archive.read_bytes()).hexdigest(),'archive_name':archive.name,
-        'packaged_real_core_wallet_e2e_pass':True,'operator_windows10_11_acceptance':False,
+        'packaged_real_core_wallet_e2e_pass':True,'native_ui_scaling_acceptance':scales,'operator_windows10_11_acceptance':False,
         'authenticode_signed_application':False,'production_qualified':False,'mainnet_allowed':False,
-        'dependencies':{n:importlib.metadata.version(n) for n in ('PySide6','PyInstaller','coincurve','cryptography','Pillow')}}
+        'dependencies':{n:importlib.metadata.version(n) for n in ('PySide6','PyInstaller','coincurve','cryptography','Pillow','qrcode')}}
     (output/'WINDOWS_PACKAGE_MANIFEST.json').write_text(json.dumps(manifest,sort_keys=True,indent=2)+'\n')
     shutil.copyfile('windows-packaged-wallet-evidence.json',output/'windows-packaged-wallet-evidence.json')
     (output/'SHA256SUMS.txt').write_text(''.join(sha256(p.read_bytes()).hexdigest()+'  '+p.name+'\n'

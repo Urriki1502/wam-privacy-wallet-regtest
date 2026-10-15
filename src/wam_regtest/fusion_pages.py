@@ -11,7 +11,8 @@ class PaymentQR(QWidget):
     def __init__(self):
         super().__init__();self.matrix=None;self.setMinimumSize(220,220);self.setMaximumSize(300,300);self.setAccessibleName('QR code of the verified REGTEST silent-payment address')
     def set_code(self,code):
-        if not code:self.matrix=None;self.update();return
+        self.matrix=None;self.update()
+        if not code:return
         from wam_sp.core import decode_address
         if not code.startswith('wamrtsp1'):raise ValueError('FUSION_RECEIVE_NAMESPACE_DENIED')
         decode_address(code)
@@ -45,7 +46,8 @@ class ReceivePage(QWidget):
         il.addWidget(label('Use disposable REGTEST funds only. Never import a personal production key or send real value.','FusionGold'));layout.addWidget(info)
         self.received=label('No verified receiving activity');layout.addWidget(self.received);layout.addStretch()
     def render_snapshot(self,snap):
-        self.code=snap.receive_code if snap else None;self.qr.set_code(self.code);self.receive_code.setText(self.code or '—');self.copy_button.setEnabled(bool(self.code));self.copy_status.setText('Copy includes the entire verified address.' if self.code else 'Address unavailable · unlock and verify the chain.')
+        self.code=None;self.copy_button.setEnabled(False);self.receive_code.setText('—');self.qr.set_code(None)
+        candidate=snap.receive_code if snap else None;self.qr.set_code(candidate);self.code=candidate;self.receive_code.setText(self.code or '—');self.copy_button.setEnabled(bool(self.code));self.copy_status.setText('Copy includes the entire verified address.' if self.code else 'Address unavailable · unlock and verify the chain.')
         count=sum(r.credit_atoms>0 for r in snap.history) if snap else 0;self.received.setText(f'{count} confirmed transaction(s) with wallet credits' if snap else 'No verified receiving activity')
     def copy_address(self):
         if self.code:
