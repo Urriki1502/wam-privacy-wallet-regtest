@@ -72,8 +72,9 @@ def fusion_stylesheet(mode):
     QCheckBox {{color:{c['text']};spacing:8px;}}
     QCheckBox::indicator {{width:17px;height:17px;border:1px solid {c['muted']};border-radius:4px;background:{c['panel']};}}
     QCheckBox::indicator:checked {{background:{c['accent']};border:1px solid {c['accent']};}}
-    QTableWidget,QTableWidget#FusionActivityTable {{background:{c['surface']};alternate-background-color:{c['surface']};color:{c['text']};border:0;gridline-color:{c['border']};selection-background-color:{c['selection']};}}
+    QTableWidget,QTableWidget#FusionActivityTable {{background:{c['surface']};alternate-background-color:{c['surface']};color:{c['text']};border:0;gridline-color:{c['border']};selection-background-color:{c['selection']};selection-color:{c['text']};}}
     QTableWidget::item {{padding:10px;border-bottom:1px solid {c['border']};}}
+    QTableWidget::item:selected {{background:{c['selection']};color:{c['text']};}}
     QHeaderView::section {{background:{c['surface']};color:{c['muted']};border:0;border-bottom:1px solid {c['border']};padding:10px;font-size:12px;font-weight:600;}}
     QScrollBar:vertical {{background:transparent;width:7px;}} QScrollBar::handle:vertical {{background:{c['border']};border-radius:3px;min-height:30px;}}
     QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical {{height:0;}} QScrollBar::add-page:vertical,QScrollBar::sub-page:vertical {{background:transparent;}}
