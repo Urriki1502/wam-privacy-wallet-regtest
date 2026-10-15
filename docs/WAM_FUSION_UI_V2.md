@@ -44,6 +44,10 @@ path. Real source/frozen runs capture six Dark screens plus Light/Auto Overview,
 All screenshots come from a real Core-funded test wallet, not illustration or
 synthetic balances. `fusion-ui-review/*-visual-receipt.json` states the platform,
 Qt backend, DPR, verified height and pending human visual review.
+The receipt records requested and actual logical geometry separately. Cocoa
+can constrain a large requested window to the MacBook display work area;
+filenames describe the requested viewport, not proof of a larger display.
+Review the actual geometry before accepting a viewport or scale claim.
 
 The frozen Windows gate also reruns the genuine wallet at125%/150% via
 QT_SCALE_FACTOR, verifies qwindows + actual DPR and publishes separate views.

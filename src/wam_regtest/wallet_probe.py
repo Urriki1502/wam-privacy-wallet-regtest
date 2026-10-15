@@ -427,7 +427,12 @@ def _capture_fusion_views(app,window):
     directory=Path('fusion-ui-review');directory.mkdir(exist_ok=True)
     platform='windows-x64' if sys.platform=='win32' else 'macos-arm64'
     old_size=window.size();old_page=window.navigation.currentRow();old_mode=window.appearance.currentIndex()
-    records=[]
+    records=[];geometry=[]
+    def capture(filename,requested):
+        assert window.grab().save(str(directory/filename));records.append(filename)
+        geometry.append({'file':filename,'requested_logical_size':list(requested),
+            'actual_logical_size':[window.width(),window.height()],
+            'device_pixel_ratio':window.devicePixelRatioF()})
     def settle():
         loop=QEventLoop();QTimer.singleShot(80,loop.quit);loop.exec()
         app.processEvents()
@@ -438,20 +443,20 @@ def _capture_fusion_views(app,window):
             if index==2 and window.history_table.rowCount():window.history_table.selectRow(0)
             settle()
             filename=f'{platform}-dark-{name}-1280x800.png'
-            assert window.grab().save(str(directory/filename));records.append(filename)
+            capture(filename,(1280,800))
         window.navigation.setCurrentRow(0)
         for mode,index in (('light',1),('auto',0)):
             window.appearance.setCurrentIndex(index);settle()
             filename=f'{platform}-{mode}-overview-1280x800.png'
-            assert window.grab().save(str(directory/filename));records.append(filename)
+            capture(filename,(1280,800))
         window.appearance.setCurrentIndex(2)
         for width,height in ((1440,900),(1920,1080),(900,650)):
             window.resize(width,height);settle()
             filename=f'{platform}-dark-overview-{width}x{height}.png'
-            assert window.grab().save(str(directory/filename));records.append(filename)
+            capture(filename,(width,height))
         receipt={'platform':platform,'qt_platform':app.platformName(),'device_pixel_ratio':window.devicePixelRatioF(),
             'real_core_snapshot':True,'synthetic_rpc':False,'verified_height':window._snapshot.height,
-            'screenshots':records,'visual_approval':'PENDING_HUMAN_REVIEW'}
+            'screenshots':records,'capture_geometry':geometry,'visual_approval':'PENDING_HUMAN_REVIEW'}
         (directory/(platform+'-visual-receipt.json')).write_text(json.dumps(receipt,indent=2)+'\n')
     finally:
         window.resize(old_size);window.appearance.setCurrentIndex(old_mode);window.navigation.setCurrentRow(old_page);app.processEvents()

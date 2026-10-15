@@ -77,6 +77,13 @@ class HistoryPage(QWidget):
                 self.table.setItem(i,j,item)
             self.table.setRowHeight(i,48)
         self.empty.setVisible(not self.rows);self.apply_filter()
+    def set_theme(self,mode):
+        self.mode=mode;c=fusion_palette(mode)
+        for i,row in enumerate(self.rows):
+            item=self.table.item(i,0)
+            if item is not None:
+                positive=row.credit_atoms>row.debit_atoms
+                item.setIcon(vector_icon('receive' if positive else 'send',c['green' if positive else 'blue']))
     def apply_filter(self,*_):
         term=self.search.text().strip().lower();choice=self.filter.currentIndex();shown=0
         for i,row in enumerate(self.rows):

@@ -50,8 +50,8 @@ def fusion_stylesheet(mode):
     QLabel#FusionInfo {{color:{c['blue']};}}
     QLabel#FusionGold {{color:{c['accent']};font-weight:600;}}
     QLabel#FusionBadge {{color:{c['accent']};background:{c['selection']};border:1px solid {c['border']};border-radius:8px;padding:5px 9px;font-size:11px;font-weight:600;}}
-    QLabel#Warning {{color:{c['warning_text']};background:{c['warning']};border-radius:9px;padding:10px;font-size:11px;}}
-    QLabel#ReceiveCode,QPlainTextEdit#ReceiveCode {{font-family:monospace;font-size:14px;background:{c['panel']};border:1px solid {c['border']};border-radius:12px;padding:16px;}}
+    QLabel#Warning {{color:{c['warning_text']};background:{c['warning']};border-radius:9px;padding:10px;min-height:64px;font-size:11px;}}
+    QLabel#ReceiveCode,QPlainTextEdit#ReceiveCode {{font-size:14px;background:{c['panel']};border:1px solid {c['border']};border-radius:12px;padding:16px;}}
     QListWidget {{background:transparent;color:{c['muted']};border:0;padding:4px;font-size:14px;}}
     QListWidget::item {{padding:14px 12px;border-radius:10px;margin:3px 0;}}
     QListWidget::item:selected {{background:{c['selection']};color:{c['accent']};font-weight:600;}}
@@ -260,24 +260,32 @@ class FusionOverview(QScrollArea):
         hero.addWidget(label('CONFIRMED BALANCE','FusionKicker'));self.balance_value=label('—','FusionBalance',True);hero.addWidget(self.balance_value)
         self.utxo_details=label('Awaiting verified Core / WSP state');hero.addWidget(self.utxo_details)
         row=QHBoxLayout();self.go_receive=action('Receive','receive',True);self.go_send=action('Send payment','send');self.go_send.setEnabled(False);row.addWidget(self.go_receive);row.addWidget(self.go_send);row.addStretch();hero.addLayout(row)
-        privacy,pl=panel('Private by design','Silent payments derive each on-chain destination from the genuine BIP352 payment code.')
-        pl.addWidget(label('REGTEST · TEST KEYS ONLY','FusionBadge'));self.security_note=label('No production security or anonymity claim.');pl.addWidget(self.security_note)
+        privacy,pl=panel('Silent payments','BIP352 destinations · native WSP-1 scanning')
+        pl.setContentsMargins(20,16,20,16);pl.setSpacing(8)
+        self.security_note=label('Experimental REGTEST custody.\nNo production or anonymity guarantee.');pl.addWidget(self.security_note)
         self.open_security=action('Security & backup','security');self.open_security.setEnabled(False);pl.addWidget(self.open_security);pl.addStretch()
         whole.addWidget(ResponsiveRow(self.hero,privacy,weights=[3,2]))
         self.status_cards=[];self.status_icons=[];cards=[]
         for name,caption,icon in (('Official Core','v0.1.11 · exact binary identity','core'),('WSP-1 scanner','BIP352 · live SQLite checkpoint','sync'),('Wallet custody','Native checkpoint anchor','security')):
             card,cl=panel();top=QHBoxLayout();icon_label=QLabel();icon_label.setProperty('fusion_icon_label',icon);icon_label.setFixedSize(24,24);top.addWidget(icon_label);top.addWidget(label(name,'FusionCardTitle'));top.addStretch();cl.addLayout(top)
+            cl.setContentsMargins(18,14,18,14);cl.setSpacing(7)
             value=label('Not verified','FusionCardValue');cl.addWidget(value);cl.addWidget(label(caption));self.status_cards.append(value);self.status_icons.append(icon_label);cards.append(card)
         self.core_status,self.scanner_status,self.vault_status=self.status_cards;whole.addWidget(ResponsiveRow(*cards,breakpoint=650))
         chart_card,chart=panel('Confirmed on-chain activity','Gross credits / debits, including change. Not balance history or market price.')
         legend=QHBoxLayout();legend.addWidget(label('Credits · WAM','FusionGold'));legend.addWidget(label('Debits · WAM','FusionInfo'));legend.addStretch();legend.addWidget(label('Confirmed block','FusionMuted'));chart.addLayout(legend);self.chart=ChainActivity();chart.addWidget(self.chart);
         activity,al=panel();top=QHBoxLayout();top.addWidget(label('Recent transactions','FusionCardTitle'));top.addStretch();self.open_history=action('View history','history');top.addWidget(self.open_history);al.addLayout(top)
-        self.activity_table=QTableWidget(0,2);self.activity_table.setObjectName('FusionActivityTable');self.activity_table.setHorizontalHeaderLabels(('ACTIVITY','NET WAM'));self.activity_table.verticalHeader().hide();self.activity_table.setShowGrid(False);self.activity_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers);self.activity_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows);self.activity_table.horizontalHeader().setStretchLastSection(True);self.activity_table.setMinimumHeight(196);self.activity_table.setColumnWidth(0,120);self.activity_table.cellDoubleClicked.connect(self._select_tx)
+        self.activity_table=QTableWidget(0,2);self.activity_table.setObjectName('FusionActivityTable');self.activity_table.setHorizontalHeaderLabels(('ACTIVITY','NET WAM'));self.activity_table.verticalHeader().hide();self.activity_table.setShowGrid(False);self.activity_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers);self.activity_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows);self.activity_table.horizontalHeader().setStretchLastSection(True);self.activity_table.setMinimumHeight(196);self.activity_table.setColumnWidth(0,158);self.activity_table.cellClicked.connect(self._select_tx)
         self._txids=[];al.addWidget(self.activity_table);self.empty=label('No confirmed transactions yet. Your verified on-chain activity will appear here.');al.addWidget(self.empty);whole.addWidget(ResponsiveRow(chart_card,activity,weights=[3,2],breakpoint=820))
         bottom=QHBoxLayout();self.evidence_text=label('No verified blockchain snapshot');bottom.addWidget(self.evidence_text,1);self.manual_sync=action('Sync chain','sync');bottom.addWidget(self.manual_sync);whole.addLayout(bottom)
     def _select_tx(self,row,column):
         if 0<=row<len(self._txids):self.transaction_selected.emit(self._txids[row])
-    def set_theme(self,mode):self.hero.mode=mode;self.hero.update();self.chart.set_theme(mode)
+    def set_theme(self,mode):
+        self.hero.mode=mode;self.hero.update();self.chart.set_theme(mode)
+        for row in range(self.activity_table.rowCount()):
+            item=self.activity_table.item(row,0)
+            if item is not None:
+                positive=item.data(Qt.ItemDataRole.UserRole)>0
+                item.setIcon(vector_icon('receive' if positive else 'send',fusion_palette(mode)['green' if positive else 'blue']))
     def render_snapshot(self,snap,*,locked=False,operational=False):
         if snap is None or locked:
             self.balance_value.setText('—');self.utxo_details.setText('Unlock and verify the chain to display wallet values.');self.live_badge.setText('Locked / not verified' if locked else 'Not verified')
@@ -290,9 +298,11 @@ class FusionOverview(QScrollArea):
         rows=snap.history[:4];self._txids=[r.txid for r in rows];self.activity_table.setRowCount(len(rows));self.empty.setVisible(not rows)
         for i,tx in enumerate(rows):
             value=tx.credit_atoms-tx.debit_atoms;direction='Received' if value>0 else 'Sent' if value<0 else 'Activity'
-            for j,text in enumerate((direction+' · '+str(tx.block_height),('+' if value>0 else '-' if value<0 else '')+format_wam(abs(value)))):
-                item=QTableWidgetItem(text);item.setToolTip(tx.txid)
-                if j==0:item.setIcon(vector_icon('receive' if value>0 else 'send',fusion_palette(self.chart._mode)['green' if value>0 else 'blue']))
+            for j,text in enumerate((direction+' · '+str(tx.block_height)+'\nConfirmed ('+str(tx.confirmations)+')',('+' if value>0 else '-' if value<0 else '')+format_wam(abs(value)))):
+                item=QTableWidgetItem(text);item.setToolTip(tx.txid+'\nClick to view exact transaction details')
+                if j==0:
+                    item.setData(Qt.ItemDataRole.UserRole,value)
+                    item.setIcon(vector_icon('receive' if value>0 else 'send',fusion_palette(self.chart._mode)['green' if value>0 else 'blue']))
                 if j==1:item.setTextAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
                 self.activity_table.setItem(i,j,item)
-            self.activity_table.setRowHeight(i,44)
+            self.activity_table.setRowHeight(i,60)

@@ -176,7 +176,7 @@ class RegtestWalletWindow(QMainWindow):
         self.setStyleSheet(fusion_stylesheet(active))
         self._active_theme=active
         self.dashboard.set_theme(active)
-        self.history_page.mode=active
+        self.history_page.set_theme(active)
         for button in self.findChildren(QPushButton):
             name=button.property("fusion_icon")
             if name:button.setIcon(vector_icon(name,c["onaccent"] if button.objectName() in ("FusionPrimary","PrimaryButton") else c["accent"],self.devicePixelRatioF()))
