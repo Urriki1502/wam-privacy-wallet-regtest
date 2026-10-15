@@ -45,11 +45,21 @@ def show_review(review):
     print('Inputs: '+str(review.input_count)+'\nCommitment: '+review.commitment)
 
 
-def launch(core,datadir,source,mining):
+def open_session(core,datadir,source,mining,password,backup=None):
+    """One startup path for interactive recovery and real fresh-chain acceptance."""
+    if backup is None:
+        return WalletSession.create(core,datadir,source,password,mining,authorized=True)
+    backup=Path(backup).expanduser().absolute()
+    return WalletSession.from_backup(core,datadir,source,backup.parent,backup.name,
+        password,mining,authorized=True)
+
+
+def launch(core,datadir,source,mining,*,backup=None):
     from . import custody
-    password=passphrase('New disposable REGTEST passphrase: ')
-    session=WalletSession.create(core,datadir,source,password,mining,authorized=True)
-    password=None;frontend=HeadlessWallet(session)
+    password=passphrase('Backup passphrase: ' if backup is not None else 'New disposable REGTEST passphrase: ')
+    try:session=open_session(core,datadir,source,mining,password,backup)
+    finally:password=None
+    frontend=HeadlessWallet(session)
     print('REGTEST ONLY. Commands: receive balance history sync prepare sign broadcast cancel backup lock unlock recover mine quit')
     try:
         while True:
@@ -105,7 +115,9 @@ def run(args):
         core=args.core_dir.expanduser().absolute();source=args.wsp_source_root.expanduser().absolute()
         configure(core,args.manifest_sha256,args.anchor_socket.expanduser().absolute(),
             authorized=args.confirm_experimental_developer_regtest)
-        callback=launch
+        if args.confirm_headless_e2e and args.recover_backup is not None:
+            raise WalletSessionError('HEADLESS_RECOVERY_ACCEPTANCE_MODE_CONFLICT')
+        def callback(c,d,s,m):return launch(c,d,s,m,backup=args.recover_backup)
         if args.confirm_headless_e2e:
             from .linux_headless_probe import probe
             callback=probe

@@ -49,6 +49,7 @@ def main() -> int:
     linux.add_argument('--wsp-source-root',type=Path,required=True)
     linux.add_argument('--confirm-experimental-developer-regtest',action='store_true')
     linux.add_argument('--confirm-headless-e2e',action='store_true',help='Explicit disposable real-process acceptance operator, no personal keys')
+    linux.add_argument('--recover-backup',type=Path,help='Recover the latest same-host anchored encrypted backup on this fresh disposable chain')
     linux.add_argument('--report',type=Path)
     args = ap.parse_args()
     try:

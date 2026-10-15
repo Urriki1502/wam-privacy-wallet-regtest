@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 from unittest.mock import patch
 from . import custody
-from .linux_headless import HeadlessWallet
+from .linux_headless import HeadlessWallet,open_session
 from .wallet_session import WalletSession,WalletCoreCli,WalletSessionError
 from .vault import CheckpointVault
 from .core import smoke_real_core
@@ -92,7 +92,7 @@ def probe(core,datadir,source,mining):
         recovery=[]
         def reopen(backup_path,stale_broadcast):
             def driver(c,d,s,m):
-                restored=WalletSession.from_backup(c,d,s,backup_path,'wallet-backup.enc',PASSWORD,m,authorized=True)
+                restored=open_session(c,d,s,m,PASSWORD,backup_path/'wallet-backup.enc')
                 try:
                     snapshot=restored.snapshot()
                     assert snapshot.height==103 and restored.ring.accounts()[0]==original_accounts[0]

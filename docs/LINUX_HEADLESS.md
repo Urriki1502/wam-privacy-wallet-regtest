@@ -29,10 +29,14 @@ fee, change and commitment. Signing requires typed SIGN plus exact commitment;
 Broadcast separately requires BROADCAST plus that commitment. No automatic retry.
 
 Quit closes keys/SQLite and stops/removes the owned disposable Core chain. Latest
-encrypted backup and independent root witness are required for recovery. Current
-interactive launcher initializes fresh sessions; startup recovery is exercised
-by the same backend in native acceptance but startup CLI selection remains a
-next improvement. Unlocked SQLite and best-effort memory clearing retain the
+encrypted backup and independent root witness are required for recovery. Start with `--recover-backup /absolute/private-directory/wallet-backup.enc`
+to recover the latest same-host anchored backup instead of creating new keys.
+The encrypted file is read through the same owner/ACL/no-follow guard. A wrong
+password, lost witness, stale generation or exhausted epoch limit refuses
+startup; it never falls back to new keys. Recovery retains irreversible
+reservations and creates the existing fresh-chain receive epoch. This is not
+cross-host or cross-platform recovery. Native acceptance uses this exact
+startup session selector on two new real chains. Unlocked SQLite and best-effort memory clearing retain the
 existing explicit limits. Never personal keys, mainnet or real funds.
 
 Native acceptance launches the actual CLI subprocess with only source/WSP
