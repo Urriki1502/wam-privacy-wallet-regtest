@@ -25,6 +25,10 @@ class CoreSmokeError(RuntimeError):
 
 def verified_core_paths(core_dir: Path) -> tuple[Path, Path, dict]:
     import sys
+    if sys.platform == 'linux':
+        from .linux_runtime import verified_paths
+        try:return verified_paths(core_dir)
+        except (ValueError,OSError):raise CoreSmokeError('CORE_LINUX_EXPLICIT_TRUST_DENIED') from None
     if sys.platform == "win32":
         from .windows_core_transport import verified_core_paths as windows_paths
         return windows_paths(core_dir)
@@ -74,6 +78,10 @@ def _read_cli(cmd: list[str], timeout: int = 15) -> object:
         if (type(cmd) is not list or len(cmd)<3 or type(cmd[1]) is not str
                 or not cmd[1].startswith("-datadir=")):
             raise CoreSmokeError("CORE_LOCAL_RPC_COMMAND_DENIED")
+        if sys.platform=='linux':
+            from .linux_runtime import validate_cli
+            try:validate_cli(Path(cmd[0]))
+            except (ValueError,OSError):raise CoreSmokeError('CORE_LINUX_APPROVED_CLI_DENIED') from None
         directory=Path(cmd[1][9:])
         port=local_rpc_port(directory)
         isolated=[cmd[0],cmd[1],"-rpcconnect=127.0.0.1",f"-rpcport={port}",*cmd[2:]]
@@ -177,7 +185,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     interactive_demo: bool = False,
                     security_e2e: bool = False,
                     wallet_e2e: bool = False, operational_demo: bool = False,
-                    recovery_case: tuple | None = None) -> dict:
+                    recovery_case: tuple | None = None, headless_callback=None) -> dict:
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
     if (wsp_source is not None and
@@ -200,6 +208,11 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
     if recovery_case is not None and (type(recovery_case) is not tuple or len(recovery_case)!=5
             or not wsp_payment_e2e or interactive_demo or gui_e2e or security_e2e or wallet_e2e):
         raise CoreSmokeError("CORE_RECOVERY_CASE_SCOPE_DENIED")
+    if headless_callback is not None:
+        import sys
+        if (sys.platform!='linux' or not callable(headless_callback) or not wsp_payment_e2e
+                or gui_e2e or interactive_demo or security_e2e or wallet_e2e or recovery_case is not None):
+            raise CoreSmokeError('CORE_HEADLESS_SCOPE_DENIED')
     node, cli, receipt = verified_core_paths(core_dir)
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
@@ -345,6 +358,8 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 except SecurityProbeError as exc:
                     raise CoreSmokeError(str(exc)) from None
             wallet_receipt = None
+            if headless_callback is not None:
+                wallet_receipt=headless_callback(core_dir,datadir,wsp_source,mine_to)
             if wallet_e2e:
                 from .wallet_probe import probe_wallet, WalletProbeError
                 try:

@@ -22,10 +22,11 @@ mutual exclusion, not monotonic freshness. No Qt, desktop keyring, shell
 password argument, secret environment or new cryptographic implementation is
 required by these primitives.
 
-**These primitives do not enable Linux WalletSession or spending.** A software
+**These primitives alone do not enable Linux WalletSession or spending.** A software
 file journal controlled by the wallet user, a passphrase alone or a lease cannot
 qualify a trusted rollback anchor. require_trusted_anchor_for_spending refuses.
-custody.py still rejects Linux; macOS/Windows invariants remain unchanged.
+custody.py rejects Linux without the explicit approved Core/root-witness runtime
+policy; macOS/Windows invariants remain unchanged.
 
 Next reviewed policy candidate is an independent root-owned monotonic witness
 with Unix SO_PEERCRED authentication, CAS generation/digest advancement,

@@ -3,7 +3,8 @@
 Problem: owner-controlled encrypted files cannot establish independent
 monotonic freshness without Keychain/Credential Manager. This optional witness
 separates authority by OS UID instead. It is not a cipher, keyring, signer,
-hosted scanner or TPM. It is not yet connected to wallet persistence/spending.
+hosted scanner or TPM. The explicit Linux runtime now connects it to the shared
+vault/session; source wallet acceptance remains mandatory before qualification.
 
 Administrative provisioning must install the reviewed standalone Python
 service root-owned and non-writable by group/others, then explicitly provision

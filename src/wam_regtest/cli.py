@@ -42,8 +42,20 @@ def main() -> int:
     wallet.add_argument("--wsp-source-root",required=True,type=Path)
     wallet.add_argument("--confirm-disposable-regtest",action="store_true")
     wallet.add_argument("--confirm-public-fixture-payment",action="store_true")
+    linux=sub.add_parser('linux-wallet',help='Experimental Linux headless wallet; approved developer manifest and root witness required')
+    linux.add_argument('--core-dir',type=Path,required=True)
+    linux.add_argument('--manifest-sha256',required=True)
+    linux.add_argument('--anchor-socket',type=Path,required=True)
+    linux.add_argument('--wsp-source-root',type=Path,required=True)
+    linux.add_argument('--confirm-experimental-developer-regtest',action='store_true')
+    linux.add_argument('--confirm-headless-e2e',action='store_true',help='Explicit disposable real-process acceptance operator, no personal keys')
+    linux.add_argument('--recover-backup',type=Path,help='Recover the latest same-host anchored encrypted backup on this fresh disposable chain')
+    linux.add_argument('--report',type=Path)
     args = ap.parse_args()
     try:
+        if args.command=='linux-wallet':
+            from .linux_headless import run
+            return run(args)
         if args.command == "smoke":
             outcome = smoke_real_core(args.core_dir.expanduser().absolute(), explicit_consent=args.confirm_disposable_regtest,
                                       wsp_source=(args.wsp_source_root.expanduser().absolute() if args.wsp_source_root else None),

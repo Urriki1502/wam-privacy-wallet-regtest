@@ -130,6 +130,11 @@ class CheckpointVault:
             from .windows_checkpoint_anchor import WindowsCredentialAnchor
             if type(anchor) is not WindowsCredentialAnchor:
                 raise VaultError("VAULT_NATIVE_ANCHOR_REQUIRED")
+        elif sys.platform == 'linux':
+            from .linux_anchor_witness import LinuxRootWitnessAnchor
+            from .linux_runtime import policy
+            if type(anchor) is not LinuxRootWitnessAnchor or anchor.endpoint!=policy().witness:
+                raise VaultError('VAULT_NATIVE_ROOT_WITNESS_REQUIRED')
         elif type(anchor) is not KeychainAnchor:
             raise VaultError("VAULT_NATIVE_ANCHOR_REQUIRED")
         self._expected = anchor.read()

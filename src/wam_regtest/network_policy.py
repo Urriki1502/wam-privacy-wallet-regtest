@@ -28,7 +28,10 @@ def local_rpc_port(datadir):
         return windows_port(datadir)
     fd=dfd=None
     try:
-        dfd=open_macos_private_directory(datadir)
+        if sys.platform=='linux':
+            from .linux_private_storage import open_linux_private_directory
+            dfd=open_linux_private_directory(datadir)
+        else:dfd=open_macos_private_directory(datadir)
         fd=os.open('wam.conf',os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK|os.O_CLOEXEC,dir_fd=dfd)
         info=os.fstat(fd)
         if (not stat.S_ISREG(info.st_mode) or info.st_uid!=os.geteuid()
