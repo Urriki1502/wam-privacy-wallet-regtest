@@ -6,6 +6,7 @@ import secrets
 import selectors
 import subprocess
 import sys
+import time
 import unittest
 from wam_regtest.linux_anchor_witness import LinuxRootWitnessAnchor,LinuxWitnessError
 
@@ -80,6 +81,32 @@ class NativeRootWitness(unittest.TestCase):
             '--state-root',str(self.root),'--uid',str(os.geteuid())],capture_output=True,timeout=10)
         self.assertEqual(result.returncode,2)
         self.assertIn(b'ROOT_WITNESS_START_DENIED',result.stderr)
+    def test_kernel_peer_uid_denies_other_user_even_if_socket_mode_tampered(self):
+        endpoint=self.root/'anchor.sock'
+        try:
+            endpoint.chmod(0o666)  # Our socket only; SO_PEERCRED must still deny.
+            code="import socket,sys,json;s=socket.socket(socket.AF_UNIX);s.settimeout(5);s.connect(sys.argv[1]);print(s.recv(512).decode())"
+            result=subprocess.run(['sudo','-n','-u','nobody','/usr/bin/python3','-I','-c',code,str(endpoint)],capture_output=True,timeout=10)
+            self.assertEqual(result.returncode,0)
+            self.assertIn(b'ROOT_WITNESS_DENIED',result.stdout)
+        finally:endpoint.chmod(0o600)
+        self.assertIsNone(self.anchor().read())
+    def test_killed_wallet_process_releases_root_held_lease(self):
+        anchor=self.anchor()
+        code="from pathlib import Path;import sys,time;from wam_regtest.linux_anchor_witness import LinuxRootWitnessAnchor\na=LinuxRootWitnessAnchor(sys.argv[1],Path(sys.argv[2]))\nwith a.lease():\n print('HELD',flush=True);time.sleep(30)"
+        child=subprocess.Popen([sys.executable,'-c',code,anchor.wallet_id,str(anchor.endpoint)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+        selector=selectors.DefaultSelector();selector.register(child.stdout,selectors.EVENT_READ)
+        try:
+            self.assertTrue(selector.select(10));self.assertEqual(child.stdout.readline().strip(),'HELD')
+            with self.assertRaises(LinuxWitnessError):anchor.read()
+        finally:
+            selector.close();child.kill();child.wait(timeout=10);child.stdout.close();child.stderr.close()
+        deadline=time.monotonic()+5
+        while True:
+            try:self.assertIsNone(anchor.read());break
+            except LinuxWitnessError:
+                if time.monotonic()>deadline:raise
+                time.sleep(.05)
 
 
 class WitnessForeignContracts(unittest.TestCase):
