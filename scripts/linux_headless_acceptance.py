@@ -7,6 +7,7 @@ import sys
 
 parser=argparse.ArgumentParser()
 parser.add_argument('--core-dir',type=Path,required=True)
+parser.add_argument('--executable',type=Path,help='Execute final frozen bootloader with bundled resources')
 parser.add_argument('--qt',action='store_true',help='Native xcb Qt acceptance instead of independent no-Qt headless gate')
 args=parser.parse_args()
 report=Path('linux-qt-evidence.json' if args.qt else 'linux-headless-evidence.json')
@@ -16,11 +17,12 @@ from test_linux_anchor_witness import NativeRootWitness
 
 NativeRootWitness.setUpClass()
 try:
-    result=subprocess.run([sys.executable,'-m','wam_regtest.cli','linux-wallet',
-        '--core-dir',str(args.core_dir.absolute()),
+    command=([str(args.executable.absolute())] if args.executable else
+        [sys.executable,'-m','wam_regtest.cli','linux-wallet','--core-dir',str(args.core_dir.absolute()),
+         '--wsp-source-root',str((root/'wsp-upstream').absolute())])
+    result=subprocess.run([*command,
         '--manifest-sha256','e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
         '--anchor-socket',str(NativeRootWitness.root/'anchor.sock'),
-        '--wsp-source-root',str((root/'wsp-upstream').absolute()),
         '--confirm-experimental-developer-regtest','--confirm-qt-e2e' if args.qt else '--confirm-headless-e2e',
         '--report',str(report)],stdin=subprocess.DEVNULL,timeout=600)
     assert result.returncode==0,'LINUX_ACTUAL_HEADLESS_EXECUTABLE_DENIED'
