@@ -12,6 +12,20 @@ git -C linux-upstream/build/wam-core fetch origin tag v28.1 --depth=1
 test "$(git -C linux-upstream/build/wam-core rev-parse v28.1)" = 0e6ddeca339cef84d862bd8ce4e38f4bf83a8760
 export RANDOMX_TAG=102f8acf90a7649ada410de5499a7ec62e49e1da
 export WAM_RANDOMX_ARCH=x86-64
+# The pinned upstream script's unmatched grep exits under set -e on a pristine
+# RandomX tree. Seed ONLY its own exact GNU-stack NOTE block; do not edit WAM
+# source or change linker flags. Final ELF inspection still requires stack RW.
+python - <<'PATCH_RANDOMX'
+from pathlib import Path
+source=Path('linux-upstream/scripts/fetch-upstream.sh').read_text()
+start=source.index("<<'NOTE'\n")+len("<<'NOTE'\n")
+block=source[start:source.index('\nNOTE\n',start)]+"\n"
+assert '#if defined(__ELF__)' in block and '.section .note.GNU-stack,"",%progbits' in block
+for path in Path('linux-upstream/build/randomx/src').glob('*.S'):
+    raw=path.read_text()
+    assert 'WAM:note.GNU-stack' not in raw and 'Added by WAM' not in raw
+    if 'note.GNU-stack' not in raw:path.write_text(raw+'\n'+block)
+PATCH_RANDOMX
 bash linux-upstream/scripts/fetch-upstream.sh
 test "$(git -C linux-upstream/build/wam-core rev-parse HEAD)" = 32efe850438ef22e2de39e562af557872a402c31
 test "$(git -C linux-upstream/build/randomx rev-parse HEAD)" = 102f8acf90a7649ada410de5499a7ec62e49e1da

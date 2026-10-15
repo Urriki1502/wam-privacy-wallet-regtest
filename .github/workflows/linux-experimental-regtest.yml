@@ -10,7 +10,42 @@ on:
 permissions:
   contents: read
 jobs:
+  native-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      core_changed: ${{ steps.scope.outputs.core_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Native headless contracts and immutable build-input scope
+        id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python -m pip install -e . -e ./wsp-upstream
+          python -m unittest discover -s tests -p 'test_linux*.py' -v
+          python - <<'PY'
+          import os,subprocess
+          base=os.environ.get('BASE_SHA')
+          changed=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines() if base else []
+          inputs={'.github/workflows/linux-experimental-regtest.yml','scripts/build_linux_developer_core.sh','src/wam_regtest/linux_developer_core.py','src/wam_regtest/linux_core_probe.py','src/wam_regtest/core.py','tests/test_linux_developer_core.py'}
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:out.write('core_changed='+str(not base or bool(inputs.intersection(changed))).lower()+'\n')
+          PY
   developer-core:
+    needs: native-contracts
+    if: needs.native-contracts.outputs.core_changed == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:

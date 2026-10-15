@@ -5,7 +5,9 @@ Only application repository: https://github.com/Urriki1502/wam-privacy-wallet-re
 Worktree: `/Users/dinhdang/Documents/Codex/2026-10-14/wam-privacy-wallet-real-regtest-macos/work/linux-regtest-integration`
 Branch: `feature/linux-regtest-integration-20261015`
 Integration base / last completed upstream commit: `a869a36a76ae3f3d9e0e39b4eea2135f01649c37` (PR28 Fusion 2.0).
-Current PR: not yet opened. Main remains `50e1ea94df61b8400cbab3bffe0fbdd285c6b419`.
+Current PR: https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/29 (Draft).
+Last completed engineering commit: d1bd624 (Core policy and parser contracts).
+Main remains `50e1ea94df61b8400cbab3bffe0fbdd285c6b419`.
 PR9 merged; PR18–28 remain stacked open Draft. Do not merge or rewrite them.
 
 ## Completed / actual evidence
@@ -62,6 +64,14 @@ LINUX-04 shared headless session; LINUX-05 existing Fusion Qt;
 LINUX-06 real payment/recovery/reorg/uncertainty gates;
 LINUX-07 frozen native headless/desktop packages;
 LINUX-08 authenticated portable-export design without weakening native anchors.
+
+First native run38697520671 passed parser contracts, then failed inside pinned
+upstream fetch-upstream.sh: unmatched grep under set-e aborts pristine RandomX
+before its NOTE insertion. Build preparation now extracts ONLY that exact NOTE
+block from the pinned official script and pre-applies it to pristine RandomX;
+WAM source is unchanged and final ELF RW validation remains mandatory. No
+Core startup/mining occurred in the failed run. Build retry pending.
+Engineering lease contention tested on local Mac: second process exits73.
 
 No Linux real test PASS yet. Current host is macOS ARM64. CI Linux must provide
 actual ELF/process/scanner/SQLite/Qt evidence. Mock/negative units are supplementary.
