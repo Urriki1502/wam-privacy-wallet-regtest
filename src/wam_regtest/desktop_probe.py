@@ -25,7 +25,7 @@ def probe_running_real_core_gui(
             or len(expected_txid) != 64 or type(expected_atoms) is not int
             or expected_atoms <= 0):
         raise NativeGuiProbeError("GUI_REAL_REGTEST_PROBE_SCOPE_DENIED")
-    from PySide6.QtCore import QEventLoop, QTimer, QCoreApplication, QEvent
+    from PySide6.QtCore import QEventLoop, QTimer, QCoreApplication, QEvent, Qt
     from PySide6.QtWidgets import QApplication
     from .desktop import RegtestWalletWindow, qt_application
 
@@ -78,9 +78,9 @@ def probe_running_real_core_gui(
             or not snap.receive_code.startswith("wamrtsp1")
             or win.balance_text.text() != f"{expected_atoms / 100_000_000:,.8f} WAM"
             or win.history_table.rowCount() != 1
-            or win.history_table.item(0, 0).text() != expected_txid
-            or win.history_table.item(0, 3).text().split(" / ")[0] !=
-            f"+{expected_atoms / 100_000_000:.8f}"
+            or win.history_table.item(0, 1).data(Qt.ItemDataRole.UserRole) != expected_txid
+            or win.history_table.item(0, 4).text() != f"{expected_atoms / 100_000_000:.8f}"
+            or win.history_table.item(0, 5).text() != "0.00000000"
             or "VERIFIED LIVE REGTEST" not in win.status.text()
             or win.navigation.count() != 3
             or win.navigation.item(0).text() != "Overview"
@@ -91,6 +91,15 @@ def probe_running_real_core_gui(
             or win.dashboard.go_send.isEnabled()
             or "REGTEST VERIFIED" not in win.dashboard.live_badge.text()):
         raise NativeGuiProbeError("GUI_REAL_REGTEST_VIEW_MISMATCH")
+    win.history_page.select_txid(expected_txid)
+    if win.history_page.detail_id.text()!=expected_txid:
+        raise NativeGuiProbeError("GUI_FULL_TRANSACTION_ID_DETAIL_DENIED")
+    win.receive_page.copy_button.click()
+    if app.clipboard().text()!=snap.receive_code:
+        raise NativeGuiProbeError("GUI_FULL_RECEIVE_CODE_COPY_DENIED")
+    win.history_page.copy_button.click()
+    if app.clipboard().text()!=expected_txid:
+        raise NativeGuiProbeError("GUI_FULL_TRANSACTION_ID_COPY_DENIED")
     path = Path("real-regtest-gui-preview.png").resolve()
     if not win.grab().save(str(path)):
         raise NativeGuiProbeError("GUI_REAL_REGTEST_CAPTURE_DENIED")

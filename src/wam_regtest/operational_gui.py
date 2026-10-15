@@ -7,12 +7,14 @@ import secrets
 import re
 from PySide6.QtCore import QThread, Signal, QTimer, Qt
 from PySide6.QtWidgets import (
-    QApplication,QFrame,QVBoxLayout,QLabel,QLineEdit,QPushButton,QHBoxLayout,
+    QApplication,QFrame,QVBoxLayout,QLabel,QLineEdit,QPushButton,QHBoxLayout,QDialog,
     QFileDialog,QMessageBox,QInputDialog,QComboBox,QCheckBox,QScrollArea,
 )
 from wam_regtest.desktop import RegtestWalletWindow, qt_application
 from wam_regtest.wallet_session import WalletSession, PaymentReview
 from wam_regtest.wallet_read import format_wam
+from .fusion_ui import panel,page,label,action,ResponsiveRow,ReadableText
+from .fusion_pages import PaymentSteps,PaymentApproval
 
 
 def _parse_atoms(value,minimum,maximum):
@@ -62,124 +64,76 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.setWindowTitle("WAM Privacy Wallet · Disposable REGTEST")
         self.warning.setText("REGTEST ONLY · DISPOSABLE TEST KEYS · NO REAL FUNDS")
         self.navigation.addItems(["Send","Security","Settings"])
-        send=QFrame()
-        send.setObjectName("ContentCard")
-        layout=QVBoxLayout(send)
-        layout.setContentsMargins(24,24,24,24)
-        title=QLabel("Send · BIP352 silent payment")
-        title.setObjectName("PageTitle")
-        layout.addWidget(title)
-        self.recipient=QLineEdit()
-        self.recipient.setMaxLength(256)
-        self.recipient.setPlaceholderText("wamrtsp1… disposable REGTEST recipient")
-        self.amount=QLineEdit()
-        self.amount.setMaxLength(32)
-        self.amount.setPlaceholderText("Amount in WAM")
-        self.fee=QLineEdit("0.00010000")
-        self.fee.setMaxLength(32)
-        for label,widget in (("Recipient",self.recipient),("Amount (WAM)",self.amount),("Fee (WAM; max 0.01)",self.fee)):
-            layout.addWidget(QLabel(label))
-            layout.addWidget(widget)
-        self.review_text=QLabel("Prepare a payment, verify the exact recipient/amount/fee, then approve signing and broadcast separately.")
-        self.review_text.setWordWrap(True)
-        self.review_text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        layout.addWidget(self.review_text)
-        row=QHBoxLayout()
-        self.prepare_button=QPushButton("Prepare")
-        self.sign_button=QPushButton("Approve & Sign")
-        self.broadcast_button=QPushButton("Broadcast")
-        self.cancel_button=QPushButton("Cancel unsigned draft")
-        for button in (self.prepare_button,self.sign_button,self.broadcast_button,self.cancel_button):
-            row.addWidget(button)
-        layout.addLayout(row)
-        layout.addStretch()
-        self.stack.addWidget(send)
-        self.prepare_button.clicked.connect(self.prepare_payment)
-        self.sign_button.clicked.connect(lambda:self.start_operation("sign",self.review.commitment) if self.review else None)
-        self.broadcast_button.clicked.connect(lambda:self.start_operation("broadcast",self.review.commitment) if self.review else None)
-        self.cancel_button.clicked.connect(lambda:self.start_operation("cancel"))
+        send,layout=page('Send a silent payment','Prepare an exact recipient, amount and fee. Signing and broadcast require separate approval.','TRANSACTIONS / SEND')
+        self.steps=PaymentSteps();layout.addWidget(self.steps)
+        form,fl=panel('Payment details','BIP352 · disposable REGTEST funds only')
+        self.recipient=QLineEdit();self.recipient.setMaxLength(256);self.recipient.setPlaceholderText('wamrtsp1… full silent-payment code');self.recipient.setAccessibleName('Silent payment recipient')
+        self.amount=QLineEdit();self.amount.setMaxLength(32);self.amount.setPlaceholderText('0.00000000');self.amount.setAccessibleName('Payment amount in WAM')
+        self.fee=QLineEdit('0.00010000');self.fee.setMaxLength(32);self.fee.setAccessibleName('Fee in WAM')
+        fl.addWidget(label('Recipient payment code','FusionKicker'));fl.addWidget(self.recipient)
+        numbers=QHBoxLayout()
+        for title,widget in (('AMOUNT / WAM',self.amount),('FEE / WAM',self.fee)):
+            col=QVBoxLayout();col.addWidget(label(title,'FusionKicker'));col.addWidget(widget);numbers.addLayout(col,1)
+        fl.addLayout(numbers);fl.addWidget(label('Exact atom arithmetic · fee limit 0.01 WAM. No market-price conversion.'))
+        self.prepare_button=action('Prepare payment','send',True);fl.addWidget(self.prepare_button)
+        review,rl=panel('Review before approval','The recipient, amount, fee and change are bound to the prepared commitment.')
+        self.review_text=ReadableText('No active payment review. Prepare a payment to inspect its exact details.');rl.addWidget(self.review_text,1)
+        self.sign_button=action('Approve & Sign','security',True);self.broadcast_button=action('Broadcast','send');self.cancel_button=action('Cancel unsigned draft','history');rl.addWidget(self.sign_button);rl.addWidget(self.broadcast_button);rl.addWidget(self.cancel_button)
+        layout.addWidget(ResponsiveRow(form,review,weights=[3,2]));layout.addWidget(label('Signing retains irreversible input reservations. An uncertain broadcast result must be recovered, never silently retried.','FusionGold'));layout.addStretch();self.stack.addWidget(send)
+        self.prepare_button.clicked.connect(self.prepare_payment);self.sign_button.clicked.connect(lambda:self.approve_payment('sign'));self.broadcast_button.clicked.connect(lambda:self.approve_payment('broadcast'));self.cancel_button.clicked.connect(lambda:self.start_operation('cancel'))
 
-        security=QFrame()
-        security.setObjectName("ContentCard")
-        layout=QVBoxLayout(security)
-        layout.setContentsMargins(24,24,24,24)
-        title=QLabel("Security · encrypted test wallet")
-        title.setObjectName("PageTitle")
-        layout.addWidget(title)
-        text=QLabel("Encrypted wallet keys and authenticated checkpoints · AES-GCM / scrypt\n"
-                    f"Independent {custody.anchor_label()} generation/digest anchor\n\n"
-                    "Keep the latest backup after each payment. Older anchored generations are rejected.\n"
-                    "Recovery always verifies and scans the live REGTEST chain.\n"
-                    "Unlocked SQLite is a private disposable runtime; memory clearing is best effort.")
-        text.setWordWrap(True)
-        layout.addWidget(text)
-        self.lock_button=QPushButton("Lock wallet")
-        self.unlock_button=QPushButton("Unlock with passphrase")
-        self.backup_button=QPushButton("Save latest encrypted backup…")
-        self.recover_button=QPushButton("Recover latest anchored backup…")
-        for button in (self.lock_button,self.unlock_button,self.backup_button,self.recover_button):
-            layout.addWidget(button)
-        layout.addWidget(QLabel("Local record disclosure · no ownership proof"))
-        self.disclosure_record=QComboBox()
-        layout.addWidget(self.disclosure_record)
-        fields_row=QHBoxLayout()
-        self.disclosure_fields={}
+        security,layout=page('Wallet security','Understand the actual custody boundaries. No invented score or production guarantee.','CUSTODY / SECURITY')
+        vault,vl=panel('Encrypted wallet','WSP-1 AES-GCM / scrypt · native private storage')
+        self.vault_state=label('Awaiting wallet state','FusionCardValue');vl.addWidget(self.vault_state);vl.addWidget(label('SQLite is plaintext in the private runtime while unlocked. Secret memory clearing is best effort.'))
+        row=QHBoxLayout();self.lock_button=action('Lock wallet','lock');self.lock_button.setObjectName('FusionDestructive');self.unlock_button=action('Unlock','unlock',True);row.addWidget(self.lock_button);row.addWidget(self.unlock_button);vl.addLayout(row)
+        anchor,al=panel('Checkpoint anchor',custody.anchor_label())
+        self.anchor_state=label('Not attested','FusionCardValue');al.addWidget(self.anchor_state);al.addWidget(label('Generation and ciphertext digest guard file rollback and stale writers. Loss, replacement or OS profile rollback require explicit recovery handling.'))
+        layout.addWidget(ResponsiveRow(vault,anchor))
+        backup,bl=panel('Encrypted backup','Save the latest anchored generation after each payment.')
+        self.backup_button=action('Save encrypted backup','backup',True);bl.addWidget(self.backup_button);bl.addWidget(label('Backup contains encrypted test keys and reservations. Preserve the passphrase separately.'))
+        recovery,rl=panel('Verified recovery','Unlock only after live chain verification and rescan.')
+        self.recover_button=action('Recover latest backup','sync');rl.addWidget(self.recover_button);rl.addWidget(label('Older generations are rejected. Original test keys and irreversible reservations are preserved.'))
+        layout.addWidget(ResponsiveRow(backup,recovery))
+        disclosure,dl=panel('Local selective disclosure','Choose exact verified fields, then approve and re-authenticate. Nothing is sent to a network.')
+        self.disclosure_record=QComboBox();self.disclosure_record.setAccessibleName('Select local confirmed record');dl.addWidget(self.disclosure_record)
+        self.disclosure_fields={};fields_row=QHBoxLayout()
         for field in ('txid','block_height','credit_atoms','debit_atoms'):
-            check=QCheckBox(field.replace('_',' '))
-            fields_row.addWidget(check)
-            self.disclosure_fields[field]=check
-        layout.addLayout(fields_row)
-        self.disclosure_button=QPushButton("Approve selected local disclosure…")
-        self.disclosure_button.clicked.connect(self.disclose_selected)
-        layout.addWidget(self.disclosure_button)
-        self.disclosure_text=QLabel("Choose exact fields. Re-authentication required; nothing is sent to a network.")
-        self.disclosure_text.setWordWrap(True)
-        self.disclosure_text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        layout.addWidget(self.disclosure_text)
-        layout.addStretch()
-        security_scroll=QScrollArea()
-        security_scroll.setWidgetResizable(True)
-        security_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        security_scroll.setWidget(security)
-        self.stack.addWidget(security_scroll)
-        self.lock_button.clicked.connect(lambda:self.start_operation("lock"))
-        self.unlock_button.clicked.connect(self.unlock_wallet)
-        self.backup_button.clicked.connect(self.backup_wallet)
-        self.recover_button.clicked.connect(self.recover_wallet)
+            check=QCheckBox(field.replace('_',' ').title());fields_row.addWidget(check);self.disclosure_fields[field]=check
+        dl.addLayout(fields_row);self.disclosure_button=action('Review disclosure scope','security');dl.addWidget(self.disclosure_button);self.disclosure_text=label('No verified local disclosure. This is not an ownership proof.','FusionMuted',True);dl.addWidget(self.disclosure_text);layout.addWidget(disclosure);layout.addStretch();self.stack.addWidget(security)
+        self.lock_button.clicked.connect(lambda:self.start_operation('lock'));self.unlock_button.clicked.connect(self.unlock_wallet);self.backup_button.clicked.connect(self.backup_wallet);self.recover_button.clicked.connect(self.recover_wallet);self.disclosure_button.clicked.connect(self.disclose_selected)
 
-        settings=QFrame()
-        settings.setObjectName("ContentCard")
-        layout=QVBoxLayout(settings)
-        layout.setContentsMargins(24,24,24,24)
-        title=QLabel("Settings · isolated REGTEST node")
-        title.setObjectName("PageTitle")
-        layout.addWidget(title)
-        node_text=QLabel("Official WAM Core v0.1.11 · zero peers · localhost only\n"
-                               "Background sync every 30 seconds; appearance follows the system in Auto mode.\n"
-                               "The test chain is deleted when this developer session closes.")
-        node_text.setWordWrap(True)
-        layout.addWidget(node_text)
-        self.mine_button=QPushButton("Mine 1 REGTEST block to confirm pending transactions")
-        self.mine_button.clicked.connect(lambda:self.start_operation("mine"))
-        layout.addWidget(self.mine_button)
-        self.network_button=QPushButton("Verify local node privacy")
-        self.network_button.clicked.connect(lambda:self.start_operation("network"))
-        layout.addWidget(self.network_button)
-        self.network_text=QLabel("Scan and broadcast use the same isolated local node.\nRemote/proxy routes and fallback are unavailable; no anonymity claim.")
-        self.network_text.setWordWrap(True)
-        layout.addWidget(self.network_text)
-        layout.addStretch()
-        self.stack.addWidget(settings)
-        self.appearance.setItemText(0,"Auto · Windows" if sys.platform=="win32" else "Auto · macOS")
-        # The shared Fusion window already follows native OS appearance.
-        # Avoid duplicate signal connections between subclasses.
-        # Actual operational actions are wired to existing, separately
-        # approval-gated WalletSession controls; styling never calls signer.
-        self.dashboard.go_send.clicked.connect(lambda: self.navigation.setCurrentRow(3))
-        self.dashboard.open_security.clicked.connect(lambda: self.navigation.setCurrentRow(4))
-        self._actions=(self.prepare_button,self.sign_button,self.broadcast_button,self.cancel_button,
-                       self.lock_button,self.unlock_button,self.backup_button,self.recover_button,self.mine_button,self.network_button,self.disclosure_button)
-        self._update_controls()
+        settings,layout=page('Settings','Native appearance and the actual local REGTEST environment.','PREFERENCES / SETTINGS')
+        appearance,apl=panel('Appearance','Signature Dark, Signature Light or native system Auto.')
+        self.settings_appearance=QComboBox()
+        for text,value in (('Auto · system','auto'),('Signature Light','light'),('Signature Dark','dark')):self.settings_appearance.addItem(text,value)
+        self.settings_appearance.currentIndexChanged.connect(self.appearance.setCurrentIndex)
+        self.appearance.currentIndexChanged.connect(self.settings_appearance.setCurrentIndex)
+        apl.addWidget(self.settings_appearance);apl.addWidget(label('Auto responds to native Qt operating-system appearance events without a restart.'))
+        build,bl=panel('Application','Experimental REGTEST · WAM Fusion 2.0')
+        import PySide6
+        bl.addWidget(label(('macOS ARM64' if sys.platform=='darwin' else 'Windows x64')+' / Qt '+PySide6.__version__))
+        bl.addWidget(label('Linux HOLD · PayJoin validation only. No production or real-fund operations.'))
+        layout.addWidget(ResponsiveRow(appearance,build))
+        node,nl=panel('Official WAM Core','v0.1.11 · independent binary identity checks')
+        self.core_identity=label('No verified Core identity in this session','ReceiveCode',True);nl.addWidget(self.core_identity);layout.addWidget(node)
+        privacy,pl=panel('Local network policy','Scan and broadcast use the same isolated local REGTEST node.')
+        self.network_button=action('Verify node privacy','security');pl.addWidget(self.network_button);self.network_text=label('Remote/proxy routes and fallback are unavailable. Zero peers must be verified; there is no anonymity guarantee.');pl.addWidget(self.network_text);layout.addWidget(privacy)
+        sync,sl=panel('Synchronization & test blocks','Background sync every 30 seconds. Manual sync re-verifies the live chain.')
+        self.settings_sync=action('Sync verified chain','sync');self.settings_sync.clicked.connect(self.request_sync);sl.addWidget(self.settings_sync)
+        self.mine_button=action('Mine one REGTEST block','core');sl.addWidget(self.mine_button);sl.addWidget(label('Mining confirms disposable test transactions only. The test chain is removed when this developer session closes.','FusionGold'));layout.addWidget(sync);layout.addStretch();self.stack.addWidget(settings)
+        self.mine_button.clicked.connect(lambda:self.start_operation('mine'));self.network_button.clicked.connect(lambda:self.start_operation('network'))
+        self.appearance.setItemText(0,'Auto · Windows' if sys.platform=='win32' else 'Auto · macOS')
+        self.dashboard.go_send.clicked.connect(lambda:self.navigation.setCurrentRow(3));self.dashboard.open_security.clicked.connect(lambda:self.navigation.setCurrentRow(4))
+        self._actions=(self.prepare_button,self.sign_button,self.broadcast_button,self.cancel_button,self.lock_button,self.unlock_button,self.backup_button,self.recover_button,self.mine_button,self.network_button,self.disclosure_button)
+        self._update_controls();self.apply_theme()
+
+    def approve_payment(self,kind):
+        if self.review is None or self._worker is not None or self.session.locked or self.session.faulted:return
+        if kind=='sign' and self.signed or kind=='broadcast' and not self.signed:return
+        dialog=PaymentApproval(self.review,kind,self)
+        approved=dialog.exec()==QDialog.DialogCode.Accepted
+        dialog.deleteLater()
+        if approved:self.start_operation(kind,self.review.commitment)
 
     def _update_controls(self):
         if not hasattr(self,"_actions"):
@@ -201,6 +155,11 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.disclosure_record.setEnabled(not busy and unlocked)
         for field in self.disclosure_fields.values(): field.setEnabled(not busy and unlocked)
         self.disclosure_button.setEnabled(not busy and unlocked and self.disclosure_record.count()>0)
+        if hasattr(self,"vault_state"):
+            self.vault_state.setText("Locked" if self.session.locked else "Faulted · reservations retained" if self.session.faulted else "Unlocked test wallet")
+            self.anchor_state.setText("Checked on latest wallet snapshot" if self._snapshot is not None and unlocked else "Re-verify on next wallet operation")
+            self.settings_sync.setEnabled(not busy and unlocked)
+            self.steps.set_stage(2 if busy and getattr(self._worker,"action",None)=="sign" else 3 if self.signed else 1 if self.review is not None else 0)
         editable=not busy and unlocked and self.review is None
         for field in (self.recipient,self.amount,self.fee):
             field.setEnabled(editable)
@@ -240,6 +199,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
     def _operation_ready(self,action,result):
         if action in ("prepare","sign"):
             self.review=result
+            self.recipient.setCursorPosition(0)
             self.signed=action=="sign"
             self.review_text.setText(
                 f"{'SIGNED — ready to broadcast' if self.signed else 'REVIEW BEFORE SIGNING'}\n"
@@ -273,6 +233,8 @@ class OperationalWalletWindow(RegtestWalletWindow):
 
     def apply_snapshot(self,snap):
         super().apply_snapshot(snap)
+        if hasattr(self,"core_identity"):
+            self.core_identity.setText("SHA-256 / "+snap.core_sha256 if self._snapshot is not None else "Core identity not verified")
         if hasattr(self,"disclosure_record"):
             self.disclosure_record.clear()
             if self._snapshot is not None:
@@ -282,9 +244,12 @@ class OperationalWalletWindow(RegtestWalletWindow):
 
     def _clear_balance(self):
         super()._clear_balance()
-        if hasattr(self,"disclosure_record"):
-            self.disclosure_record.clear()
-            self.disclosure_text.setText("No verified local disclosure")
+        if hasattr(self,'disclosure_record'):
+            self.disclosure_record.clear();self.disclosure_text.setText('No verified local disclosure')
+            self.core_identity.setText('No verified Core identity in this session')
+            if self.session.locked or self.session.faulted:
+                self.recipient.clear();self.amount.clear();self.review_text.setText('Wallet locked or faulted · verify recovery before payment details are displayed.')
+            self._update_controls()
 
     def disclose_selected(self):
         fields=tuple(sorted(k for k,v in self.disclosure_fields.items() if v.isChecked()))

@@ -13,7 +13,7 @@ authors = [{name = "WAM Privacy Wallet contributors"}]
 dependencies = []
 
 [project.optional-dependencies]
-gui = ["PySide6>=6.8,<7"]
+gui = ["PySide6>=6.8,<7", "qrcode==8.2"]
 
 [project.scripts]
 wam-regtest = "wam_regtest.cli:main"
