@@ -138,11 +138,15 @@ def verify(directory, manifest_sha256, *, authorized=False):
         raise LinuxCoreError('LINUX_DEVELOPER_MANIFEST_APPROVAL_REQUIRED')
     if not directory.is_absolute() or directory.is_symlink():
         raise LinuxCoreError('LINUX_CORE_DIRECTORY_DENIED')
+    from .linux_private_storage import _walk
+    held=_walk(directory,private=False)
+    os.close(held)
     path = directory/'DEVELOPER_CORE_MANIFEST.json'
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK)
     try:
         info = os.fstat(fd)
-        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or not 1 <= info.st_size <= 65536:
+        if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or not 1 <= info.st_size <= 65536
+                or info.st_uid not in (0,os.geteuid()) or info.st_mode&0o022):
             raise LinuxCoreError('LINUX_MANIFEST_SHAPE_DENIED')
         raw = os.read(fd, 65537)
     finally:
