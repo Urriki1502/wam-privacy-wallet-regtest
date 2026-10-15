@@ -1,5 +1,6 @@
 # Platform qualification checkpoint — 15 October 2026
 
+> Historical 15 October checkpoint. Current integrated RC1 source, downloads and acceptance: [release qualification](RELEASE_CANDIDATE_QUALIFICATION.md). Resume using [release handoff](CODEX_RELEASE_QUALIFICATION_HANDOFF.md); do not re-dispatch the old one-shot scheduler.
 Code candidate: `be294c19dba02b5d8016cf76520b40975ee20c96` (Draft PR34).
 Main remains `50e1ea94df61b8400cbab3bffe0fbdd285c6b419`; no stack merges.
 Documentation commits after this code do not retroactively qualify new runtime.

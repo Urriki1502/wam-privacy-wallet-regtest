@@ -1,0 +1,172 @@
+[
+  {
+    "gate": "vectors",
+    "run": 38747142053,
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747142053",
+    "source_sha": "144d87700b87a241467172adfad3692b41e1d273",
+    "event": "workflow_dispatch",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "canonical-vectors",
+        "id": 116463650759,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747142053/job/116463650759"
+      }
+    ]
+  },
+  {
+    "gate": "macos",
+    "run": 38747153198,
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747153198",
+    "source_sha": "144d87700b87a241467172adfad3692b41e1d273",
+    "event": "workflow_dispatch",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Real signed Core \u2192 WSP BIP352 \u2192 native Qt Receive Balance History",
+        "id": 116463689174,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747153198/job/116463689174"
+      },
+      {
+        "name": "Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E",
+        "id": 116464824635,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747153198/job/116464824635"
+      }
+    ]
+  },
+  {
+    "gate": "windows",
+    "run": 38747163508,
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747163508",
+    "source_sha": "144d87700b87a241467172adfad3692b41e1d273",
+    "event": "workflow_dispatch",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "win64-native-credential-cas",
+        "id": 116463725725,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747163508/job/116463725725"
+      }
+    ]
+  },
+  {
+    "gate": "linux",
+    "run": 38747174307,
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307",
+    "source_sha": "144d87700b87a241467172adfad3692b41e1d273",
+    "event": "workflow_dispatch",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "native-contracts",
+        "id": 116463763247,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307/job/116463763247"
+      },
+      {
+        "name": "headless-wallet",
+        "id": 116463929797,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307/job/116463929797"
+      },
+      {
+        "name": "developer-core",
+        "id": 116463929971,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307/job/116463929971"
+      },
+      {
+        "name": "native-qt-wallet",
+        "id": 116463930098,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307/job/116463930098"
+      },
+      {
+        "name": "frozen-wallet (headless)",
+        "id": 116464578047,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307/job/116464578047"
+      },
+      {
+        "name": "frozen-wallet (desktop)",
+        "id": 116464580785,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307/job/116464580785"
+      }
+    ]
+  },
+  {
+    "gate": "windows_preflight",
+    "run": 38747184018,
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747184018",
+    "source_sha": "144d87700b87a241467172adfad3692b41e1d273",
+    "event": "workflow_dispatch",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Signed official Windows Core ZIP / PE64 identity (no launch)",
+        "id": 116463795332,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747184018/job/116463795332"
+      },
+      {
+        "name": "Native Windows x64 WSP scanner and BIP352",
+        "id": 116463795605,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747184018/job/116463795605"
+      }
+    ]
+  },
+  {
+    "gate": "windows_core",
+    "run": 38747193574,
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747193574",
+    "source_sha": "144d87700b87a241467172adfad3692b41e1d273",
+    "event": "workflow_dispatch",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "win64-real-core-101-blocks",
+        "id": 116463828260,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747193574/job/116463828260"
+      }
+    ]
+  },
+  {
+    "gate": "windows_receive",
+    "run": 38747202781,
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747202781",
+    "source_sha": "144d87700b87a241467172adfad3692b41e1d273",
+    "event": "workflow_dispatch",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Signed Core + real WSP BIP352 receive / SQLite restart",
+        "id": 116463860645,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747202781/job/116463860645"
+      }
+    ]
+  },
+  {
+    "gate": "windows_read_qt",
+    "run": 38747211715,
+    "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747211715",
+    "source_sha": "144d87700b87a241467172adfad3692b41e1d273",
+    "event": "workflow_dispatch",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Signed real Core + real WSP SQLite -> native Qt GUI",
+        "id": 116463892928,
+        "conclusion": "success",
+        "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747211715/job/116463892928"
+      }
+    ]
+  }
+]

@@ -4,6 +4,9 @@ Experimental disposable REGTEST only. No mainnet, personal seeds/keys, real fund
 or production wallet. Owner acceptance is PENDING until an actual operator
 records the results. Native CI and automated MacBook Cocoa results are separate.
 
+Qualified code: `144d87700b87a241467172adfad3692b41e1d273`.
+Current downloads/checksums: [RC1 qualification](RELEASE_CANDIDATE_QUALIFICATION.md).
+
 ## Download, provenance and checksums
 
 Use only actual published Actions links in RELEASE_CANDIDATE_QUALIFICATION.md or
@@ -63,6 +66,15 @@ Qualified OS is Ubuntu24.04 x86_64 with exact manifest-pinned Core system
 libraries, binutils, libevent/libsqlite3, xcb/EGL and installed fonts. A different
 library closure/distribution must refuse; do not substitute a new receipt/hash.
 The source-built Core is reviewed developer Core, NOT an official signed release.
+
+The Linux artifact is the operator kit: archive, manifests, genuine native
+receipt, this guide and `root-witness-review-only.py`. On the approved Ubuntu24.04
+host, an administrator must separately review any missing dependency installation.
+The exact CI package set is libevent-dev, libsqlite3-dev, binutils; desktop also
+uses libegl1, libxcb-cursor0, libxkbcommon-x11-0, libxcb-icccm4, libxcb-image0,
+libxcb-keysyms1, libxcb-render-util0, libxcb-xinerama0, libxcb-xkb1, libxcb-shape0,
+libdbus-1-3 and fonts-noto-core. Xvfb/xauth are CI display infrastructure, not a
+physical desktop requirement. Never change pinned runtime hashes to fit a host.
 
 Linux needs a separately reviewed/provisioned root witness. The app NEVER runs
 sudo, installs or starts it. **STOP before privileged setup** until the actual

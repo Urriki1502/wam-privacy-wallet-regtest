@@ -75,9 +75,11 @@ cost on lower-end hardware before source/destination native acceptance.
 
 Run all existing workflows by workflow_dispatch at the SAME exact candidate ref:
 `bip352-vectors.yml`, `real-core-regtest.yml`,
-`windows-x64-credential-anchor.yml`, `linux-experimental-regtest.yml`.
-The last includes actual root service contracts, separate no-Qt CLI and native
-xcb Qt source gates, reviewed Core build and both FINAL binary gates. Mac also
+`windows-x64-credential-anchor.yml`, `linux-experimental-regtest.yml`; also retain
+`windows-x64-qualification.yml`, `windows-x64-real-core-regtest.yml`,
+`windows-x64-wsp-real-receive.yml`, `windows-x64-qt-live-read.yml`.
+The Linux workflow includes actual root service contracts, separate no-Qt CLI and native
+xcb Qt source gates, reviewed Core build and both frozen binary gates. Mac also
 needs downloaded app Cocoa testing on actual ARM64 Mac and DMG validation.
 Recipes: scripts/build_macos_bundle.sh, build_windows_bundle.py and
 build_linux_wallet.py; only after their final executable E2E do they write the
@@ -104,3 +106,21 @@ loss/replacement or rollback of both anchor stores; root/OS compromise; hardware
 power loss; guaranteed erasure; hardened loader-to-process binding; generic Linux
 distribution portability. BIP352×PayJoin transport/execution stays V2/HOLD.
 No production keys, mainnet permission, real funds or exaggerated custody claim.
+
+## Qualified RC1 owner delivery — 16 October 2026
+
+CODE SHA `144d87700b87a241467172adfad3692b41e1d273`; integration Draft PR36. All eight exact-source native
+workflows and four frozen payload gates PASS; downloaded MacBook Cocoa/DMG
+verification PASS. This docs-only evidence revision does not change that code.
+
+| Package | Actual download | Expires UTC |
+| --- | --- | --- |
+| macos | [Download 11980032023](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747153198/artifacts/11980032023) | 2026-10-29T14:02:34Z |
+| windows | [Download 11980747014](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747163508/artifacts/11980747014) | 2026-10-29T14:19:11Z |
+| linux-desktop | [Download 11979187025](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307/artifacts/11979187025) | 2026-10-29T14:01:33Z |
+| linux-headless | [Download 11980206630](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38747174307/artifacts/11980206630) | 2026-10-29T14:00:53Z |
+
+Exact run URLs, payload SHA256/Core pins/build versions and downloadable public
+receipts: [release qualification](RELEASE_CANDIDATE_QUALIFICATION.md). Practical
+launch/REGTEST tests: [owner guide](OWNER_REGTEST_ACCEPTANCE.md). Native bindings
+remain; owner/physical acceptance pending; DEV_WAM_REVIEWED=false, not sent.

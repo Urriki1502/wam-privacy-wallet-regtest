@@ -13,12 +13,12 @@ PRs [#6](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/6)
 (native payments) and [#9](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/9)
 (cross-session recovery and stale-writer protection) are merged.
 
-## Cross-platform candidate status — 15 October 2026
+## WAM Fusion REGTEST RC1 — 16 October 2026
 
-This stacked branch also contains Windows x64 and experimental Linux x86_64
-candidates. These are **Draft engineering units**, not merged V1/Final releases.
-See [platform qualification](docs/LINUX_QUALIFICATION.md) for exact code heads,
-native runner evidence, artifacts, checksums and remaining operator/security work.
+Qualified code `144d87700b87a241467172adfad3692b41e1d273` has same-source macOS ARM64, Windows x64 and experimental Linux x86_64 packages. **READY FOR OWNER REGTEST TESTING**; human acceptance remains PENDING_OPERATOR. Start with [downloads, exact native CI and checksums](docs/RELEASE_CANDIDATE_QUALIFICATION.md), [owner test guide](docs/OWNER_REGTEST_ACCEPTANCE.md) and [DEV review draft](docs/DEV_WAM_REVIEW_HANDOFF.md).
+
+This stacked integration preserves the existing engineering candidates. These are **Draft engineering units**, not merged V1/Final releases.
+The older [Linux qualification checkpoint](docs/LINUX_QUALIFICATION.md) is historical; the RC1 report above supersedes its artifact list.
 macOS retains official signed Core/Keychain; Windows retains official signed
 Core/Credential Manager. Linux rejects the published executable-stack release
 and uses an explicitly approved, exact upstream source build plus an independent
@@ -35,8 +35,7 @@ and independent anchor checks must never be bypassed to simulate portability.
 
 ## Download and launch the actual application
 
-Choose a successful exact-commit [REAL Core Actions run](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/workflows/real-core-regtest.yml)
-and download `WAM-Privacy-Wallet-REGTEST-macOS-ARM64-<commit>`.
+Use the four actual [RC1 artifact links](docs/RELEASE_CANDIDATE_QUALIFICATION.md#published-downloads-and-checksums). The macOS artifact is `WAM-Fusion-REGTEST-RC1-macos-arm64-144d87700b87a241467172adfad3692b41e1d273`.
 It contains `.dmg`, `.app.zip`, `SHA256SUMS.json` and native Qt previews.
 Check the artifact provenance and checksums, then open the app from Finder.
 The original owner-supplied black-and-gold WAM image is used for Finder/Dock
@@ -66,7 +65,7 @@ same-user malware resistance or production wallet custody.
 ```bash
 python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[gui]' 'pyinstaller>=6.15,<7'
+python -m pip install -e '.[gui]' 'pyinstaller==6.22.3'
 git clone https://github.com/Urriki1502/wam-silent-payments wsp-upstream
 git -C wsp-upstream checkout ac55f13423620252bdbf848c7e8a280c3b84721e
 python -m pip install -e ./wsp-upstream
