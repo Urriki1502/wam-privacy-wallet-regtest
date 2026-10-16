@@ -1,0 +1,22 @@
+{
+  "platform": "macos-arm64",
+  "profile": "fusion-bip39-bip32-bip352-regtest-v1",
+  "engine_source_sha256": "aa8cc775b962e90a1e17301939f8fadbb1c423598303a3aec922d81de738c05f",
+  "network": "regtest",
+  "full_bip39_seed_bytes": 64,
+  "same_restored_native_receive_code": true,
+  "real_core_native_wsp_bip352_payment_confirmed": true,
+  "confirmed_atoms": 4749990000,
+  "observed_height": 103,
+  "independent_original_restored_scanners_agree": true,
+  "sqlite_restart_no_rescan_required": true,
+  "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+  "synthetic_rpc": false,
+  "mnemonic_exported": false,
+  "database_exported": false,
+  "persistent_custody_integrated": false,
+  "signing_integrated": false,
+  "frozen_feature_qualified": false,
+  "mainnet_allowed": false,
+  "production_qualified": false
+}

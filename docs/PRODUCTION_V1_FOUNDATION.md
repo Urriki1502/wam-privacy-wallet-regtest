@@ -101,3 +101,53 @@ its own REGTEST, restores through Core, checks owned receive address/amounts and
 unchanged source bytes. No external .dat argument exists. Databases and private
 Core replies are destroyed; receipts contain only categories/booleans/hashes of
 the official Core binary, never descriptor text, mnemonic, key or database.
+
+## PR-B implemented engine (not yet an operational persistent wallet)
+
+`bip39_wallet.py` reuses Trezor python-mnemonic0.21 (tag commit
+ d4b106cdec196202d44628026fcb8fedc8ea50c1). The exact English2048-word corpus is
+SHA2562f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda;
+runtime checks that canonical corpus. Reference generation uses secrets.token_bytes.
+No second ECC/BIP32/BIP352/scanner/signature implementation was introduced.
+All64PBKDF2 bytes go directly to the pinned native silent_key/ExtendedPrivate.
+
+Implemented: opt-in disposable REGTEST generation12/24; strict English/checksum/
+count/profile validation; NFKD phrase/passphrase handling; deterministic native
+scan/spend derivation and public wamrtsp code; redacted secret-object repr;
+closed-key refusal and best-effort clearing of the owned seed bytearray. CSPRNG
+phrases/seed are never logged/persisted/copied to clipboard by this engine.
+Immutable Python/library/native copies can remain; this is not memory forensics
+protection. Caller-owned ScanAccount contains scan secrets and must not be logged.
+
+Eight shared contracts PASS locally, including all16 supported public Trezor
+English128/256bit vectors, exact64-byte seeds, published root xprv serialization,
+explicit native BIP352 paths, same-code restore, NFKD, random generation roundtrip,
+invalid words/checksum/18word/profile/consent, wrong types/Unicode and closed state.
+These are standards/negative contracts, not mock Core E2E. Test data contains
+ONLY globally published vectors, never generated application wallet phrases.
+Failure assertions deliberately do not format phrases, seeds or xprv values.
+
+The new real-Core receive probe creates24words in memory, restores independently,
+receives an actual confirmed BIP352 payment, compares two independent native WSP
+scanners, and reopens SQLite without reprocessing blocks. It never enables signing
+or persists seed/DB/phrase in artifacts. Only the final completed matching-source
+receipt counts. A preliminary driver missed the mandatory attest; another treated
+Metrics as an integer. Both refused/faulted and are not counted as PASS.
+
+Cross-platform vector checks are added to existing Windows/Linux native contract
+jobs; macOS already discovers alltests. No new workflow/job or removed security
+assertion. Windows/Linux new-engine execution remains PENDING until live CI proof;
+source/runner evidence does not qualify a new GUI/frozen feature. The RC1 packaged
+regression remains separate from new BIP39 operational acceptance.
+
+Next: native onboarding state/phrase confirmation, then a separately versioned
+custody bridge and durable wallet identity before GUI activation/signing. BIP39
+keys alone do not restore irreversible reservations/anchors. Never mint a fresh
+anchor to bypass pre-existing same-wallet state or reinterpret RC1 backups.
+
+[Completed macOS BIP39/Core/WSP/SQLite receipt](evidence/production-v1/PR_B_BIP39_CORE.json):
+24words ->64bytes -> native WSP -> real confirmed receive4749990000atoms at103;
+original/restored scanners and SQLite restart agree. Engine source hash matches
+the committed implementation. [Unchanged signer/security auditor](evidence/production-v1/PR_B_SECURITY_AUDIT.json) PASS.
+All140 local contract tests:107PASS/33SKIPPED/0FAIL (native foreign-platform skips
+are not acceptance). Windows/Linux native new-vector CI still pending at commit.
