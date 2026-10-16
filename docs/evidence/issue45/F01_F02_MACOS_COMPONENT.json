@@ -1,0 +1,138 @@
+{
+  "status": "REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS",
+  "platform": "macos-arm64",
+  "core_version": "v0.1.11",
+  "wamd_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+  "wam_cli_sha256": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+  "regtest_halving_interval": 150,
+  "treasury_last_height": 400000,
+  "maturity": [
+    {
+      "depth": 99,
+      "balance_before_send": {
+        "trusted_atoms": 0,
+        "pending_untrusted_atoms": 0,
+        "immature_atoms": 4750000000,
+        "available_atoms": 0,
+        "available_utxos": 0
+      },
+      "wallet_send_accepted": false
+    },
+    {
+      "depth": 100,
+      "balance_before_send": {
+        "trusted_atoms": 0,
+        "pending_untrusted_atoms": 0,
+        "immature_atoms": 4750000000,
+        "available_atoms": 0,
+        "available_utxos": 0
+      },
+      "wallet_send_accepted": false
+    },
+    {
+      "depth": 101,
+      "balance_before_send": {
+        "trusted_atoms": 4750000000,
+        "pending_untrusted_atoms": 0,
+        "immature_atoms": 0,
+        "available_atoms": 4750000000,
+        "available_utxos": 1
+      },
+      "wallet_send_accepted": true
+    }
+  ],
+  "coinbase_audits": [
+    {
+      "height": 1,
+      "subsidy_atoms": 5000000000,
+      "treasury_paid_atoms": 250000000,
+      "miner_total_atoms": 4750000000,
+      "owned_miner_atoms": 4750000000,
+      "fees_atoms": 0
+    },
+    {
+      "height": 102,
+      "subsidy_atoms": 5000000000,
+      "treasury_paid_atoms": 250000000,
+      "miner_total_atoms": 4750001410,
+      "owned_miner_atoms": 4750001410,
+      "fees_atoms": 1410
+    },
+    {
+      "height": 150,
+      "subsidy_atoms": 5000000000,
+      "treasury_paid_atoms": 250000000,
+      "miner_total_atoms": 4750000000,
+      "owned_miner_atoms": 4750000000,
+      "fees_atoms": 0
+    },
+    {
+      "height": 151,
+      "subsidy_atoms": 2500000000,
+      "treasury_paid_atoms": 125000000,
+      "miner_total_atoms": 2375000000,
+      "owned_miner_atoms": 2375000000,
+      "fees_atoms": 0
+    },
+    {
+      "height": 300,
+      "subsidy_atoms": 2500000000,
+      "treasury_paid_atoms": 125000000,
+      "miner_total_atoms": 2375000000,
+      "owned_miner_atoms": 2375000000,
+      "fees_atoms": 0
+    },
+    {
+      "height": 301,
+      "subsidy_atoms": 1250000000,
+      "treasury_paid_atoms": 62500000,
+      "miner_total_atoms": 1187500000,
+      "owned_miner_atoms": 1187500000,
+      "fees_atoms": 0
+    },
+    {
+      "height": 450,
+      "subsidy_atoms": 1250000000,
+      "treasury_paid_atoms": 62500000,
+      "miner_total_atoms": 1187500000,
+      "owned_miner_atoms": 1187500000,
+      "fees_atoms": 0
+    },
+    {
+      "height": 451,
+      "subsidy_atoms": 625000000,
+      "treasury_paid_atoms": 31250000,
+      "miner_total_atoms": 593750000,
+      "owned_miner_atoms": 593750000,
+      "fees_atoms": 0
+    }
+  ],
+  "fee_atoms": 1410,
+  "after_payment_balance": {
+    "trusted_atoms": 4749898590,
+    "pending_untrusted_atoms": 0,
+    "immature_atoms": 4750001410,
+    "available_atoms": 4749898590,
+    "available_utxos": 1
+  },
+  "locked_available_atoms": 0,
+  "treasury_owned_by_fixture": false,
+  "source_main_schedule_200000_is_not_regtest_interval": true,
+  "sunset_height_runtime_qualified": false,
+  "no_fusion_reservation_released": true,
+  "elapsed_seconds": 34.008,
+  "synthetic_rpc": false,
+  "owner_data_accessed": false,
+  "mainnet_allowed": false,
+  "core_wallet_probe_not_bip39_signer_qualification": true,
+  "source_sha": "87891761adc33f3d1a8b5661dbf44126aa9452d5",
+  "tested_utc": "2026-10-16T14:57:17.043317+00:00",
+  "wsp_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "module_sha256": {
+    "mining_account.py": "9f6e44c58874cdef596003889b3e3aab825903949949559fd85138049c49c753",
+    "mining_probe.py": "8252871d1aec2b65e849c04d016121f65e8af19686f2c1417b9d1e9c244f7205"
+  },
+  "frozen_qualified": false,
+  "physical_accepted": false,
+  "integrated_v1_qualified": false
+}
