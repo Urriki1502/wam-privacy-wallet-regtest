@@ -1,3 +1,5 @@
+Current resume checkpoint: [Issue45 continuation](ISSUE45_CONTINUATION.md).
+
 # Issue45 execution and acceptance registry
 
 Canonical scope: [Issue45](https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45), read in full, observed 2026-10-16T09:57:52.013008+00:00.
