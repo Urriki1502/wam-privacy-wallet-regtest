@@ -185,7 +185,12 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     interactive_demo: bool = False,
                     security_e2e: bool = False,
                     wallet_e2e: bool = False, operational_demo: bool = False,
-                    recovery_case: tuple | None = None, headless_callback=None) -> dict:
+                    recovery_case: tuple | None = None, headless_callback=None,
+                    rpc_contention_e2e: bool = False) -> dict:
+    if type(rpc_contention_e2e) is not bool:
+        raise CoreSmokeError('CORE_RPC_CONTENTION_CONSENT_DENIED')
+    if rpc_contention_e2e and interactive_demo:
+        raise CoreSmokeError('CORE_RPC_CONTENTION_SCOPE_DENIED')
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
     if (wsp_source is not None and
@@ -304,7 +309,8 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             owned_rpc_receipt = None
             if not interactive_demo:
                 from .owned_rpc_probe import probe_owned_reads
-                owned_rpc_receipt = probe_owned_reads(proc, core_dir, datadir, height)
+                owned_rpc_receipt = probe_owned_reads(proc, core_dir, datadir, height,
+                    contention=(rpc_contention_e2e or wallet_e2e or security_e2e or gui_e2e))
             wsp_receipt = None
             if wsp_source is not None:
                 from .wsp_live import scan_actual_core_blocks, RealWspScanError

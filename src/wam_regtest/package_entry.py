@@ -153,6 +153,13 @@ def main() -> int:
                 if result["wallet_live_core"].get("qt_auto_system_events_verified") is not True:
                     raise BundleLaunchError("WAM_BUNDLE_COCOA_AUTO_APPEARANCE_DENIED")
                 print("MACOS_COCOA_PACKAGED_AUTO_LIGHT_DARK_REAL_CORE_WALLET_PASS")
+            # Public disposable-fixture facts only. Keep actual frozen evidence
+            # alongside artifacts, instead of relying solely on PASS log lines.
+            from .desktop import qt_application
+            result.update(frozen_entrypoint=True, qt_platform=qt_application().platformName())
+            report='macos-cocoa-packaged-wallet-evidence.json' if cocoa_mode else 'macos-packaged-wallet-evidence.json'
+            with Path(report).open('x',encoding='utf8') as stream:
+                json.dump(result,stream,sort_keys=True,indent=2);stream.write('\n')
             print("MACOS_ARM64_PACKAGED_CROSS_SESSION_BACKUP_RECOVERY_PASS")
             print("MACOS_ARM64_PACKAGED_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_PASS")
             print("MACOS_ARM64_PACKAGED_ENCRYPTED_RECOVERY_REORG_E2E_PASS")

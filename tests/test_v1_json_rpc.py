@@ -32,6 +32,16 @@ class ReadRpcContracts(unittest.TestCase):
         with self.assertRaises(RpcError):ManagedReadRpc(None,None)
         _params('getblockhash',[0])
 
+    def test_contention_acceptance_requires_a_boolean_opt_in(self):
+        from pathlib import Path
+        from wam_regtest.core import smoke_real_core,CoreSmokeError
+        for value in (1,'yes',None):
+            with self.assertRaisesRegex(CoreSmokeError,'^CORE_RPC_CONTENTION_CONSENT_DENIED$'):
+                smoke_real_core(Path('/not-opened'),explicit_consent=True,rpc_contention_e2e=value)
+
+        with self.assertRaisesRegex(CoreSmokeError,'^CORE_RPC_CONTENTION_SCOPE_DENIED$'):
+            smoke_real_core(Path('/not-opened'),explicit_consent=True,interactive_demo=True,rpc_contention_e2e=True)
+
     def test_only_explicit_busy_reads_retry_with_bounded_jitter(self):
         from unittest.mock import patch,Mock
         client=object.__new__(ManagedReadRpc)

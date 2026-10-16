@@ -131,7 +131,8 @@ def run(args):
                     raise WalletSessionError('LINUX_QT_WINDOW_DENIED')
                 return {'status':'LINUX_QT_DISPOSABLE_SESSION_CLOSED','mainnet_allowed':False}
         result=smoke_real_core(core,explicit_consent=args.confirm_experimental_developer_regtest,
-            wsp_source=source,wsp_payment_e2e=True,headless_callback=callback)
+            wsp_source=source,wsp_payment_e2e=True,headless_callback=callback,
+            rpc_contention_e2e=args.confirm_qt_e2e or args.confirm_headless_e2e)
         result.update({'official_signed_release':False,'developer_manifest_sha256':args.manifest_sha256,
             'frozen_runtime':bool(getattr(sys,'frozen',False)),
             'linux_headless':not (args.gui or args.confirm_qt_e2e),'qt_imported':any(n.startswith('PySide6') for n in sys.modules)})

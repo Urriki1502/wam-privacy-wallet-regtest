@@ -9,7 +9,7 @@ from .core_process import OwnedCoreBinding
 from .json_rpc import ManagedReadRpc, RpcError, _BoundConnection
 
 
-def probe_owned_reads(process, core, directory, height):
+def probe_owned_reads(process, core, directory, height, *, contention=False):
     binding = OwnedCoreBinding(process, core, directory)
     with ManagedReadRpc(core, directory, authorized_readonly=True, binding=binding) as client:
         info=client.call('getnetworkinfo')
@@ -18,7 +18,7 @@ def probe_owned_reads(process, core, directory, height):
             if client.call('getblockcount') != height:
                 raise ValueError('RPC_PROBE_HEIGHT_DENIED')
         from .rpc_contention_probe import prove_busy_read
-        busy_proof=prove_busy_read(client,binding,height)
+        busy_proof=prove_busy_read(client,binding,height) if contention is True else None
         before = client._identifier
         try:
             client.call('stop')
