@@ -219,7 +219,7 @@ mining maturity/fees/ownership, native Send/Sign/Broadcast/confirmed change,
 uncertain locks, recovery and reorg1/12/100.156units123PASS/33SKIP/0FAIL. Later
 comment-only edits and Linux-only acceptance lifecycle fix are not silently
 claimed as newly tested frozen/platform evidence; exact-head CI remains required.
-Operational WalletSession/GUI still uses CLI: T01 is NOT completed by this slice.
+That earlier scanner-only slice did not migrate WalletSession; the later operational slice below supplies separate evidence. T01/integrated V1 still require the remaining paths and exact-platform qualification.
 
 PR51 Windows first failure was a test-wallet selector/method scope mismatch.
 9f8402e reuses protected native RPC only in its owned fresh fixture, retains exact
@@ -240,3 +240,104 @@ FAIL rewritten as PASS. Old-head runs were cancelled only after replacement;
 latest-head required checks remain active, cancellation is not qualification.
 
 Checkpoint: PR51/Linux Qt fresh-Core recovery and headless source gates PASS at516b4f2; PR52/Linux Qt still required at its own HEAD. Full latest native/frozen matrix remains in progress. Core updater remains deferredP1. See ISSUE45_CONTINUATION.md.
+
+
+## 2026-10-16 session T0 15:47:58 UTC — operational HTTP and queue contention
+
+Existing Draft53 is reused; no new PR, auto merge, main/RC1 or upstream change.
+Refresh found51(516b4f2) and52(c877705) all10 exact-head checks SUCCESS.
+53/c478db1 Linux Qt reported two snapshots;03d0db7 stops the accelerated test
+sync timer at signal delivery, preserving exact-one assertion. Linux native Qt
+and frozen desktop then PASS at that historical head; cancelled obsolete runs
+are not PASS.
+
+527fb72 migrates operational WalletSession snapshots, background Qt sync, lock/
+unlock/recovery snapshots and privacy diagnostics to the owned HTTP capability
+borrowed explicitly from the actual process owner. Create/recover refuses missing
+or unrelated capability before key/backup access. Core process owner closes the
+shared connection before Core shutdown. No attach-by-PID, HTTP writes or CLI
+fallback is added. Independent signing/broadcast CLI hash/approval/reservation
+checks remain. Legacy public read-only demo and fixture setup paths are not all
+migrated; persistent managed Core and external read-only attachment remain open.
+
+The unchanged real-Core config-tamper negative test exposed a security regression:
+HTTP cached its original config and accepted a later read after the protected
+file was changed to a proxy profile.9ba9cfc restores native private-file custody
+and exact bounded-config digest checks before any HTTP bytes or capability loan.
+No new credentials/port are adopted. A later explicit read can proceed only when
+the exact protected original configuration is restored. Unrelated speculative
+Qt harness changes were removed, preserving the recorded failing revisions.
+[Mac full Core/WSP/SQLite/Qt receipt](evidence/issue45/HTTP_OPERATIONAL_MACOS_CORE_QT.json)
+is PASS at9ba9cfc: repeated/actual-worker snapshots run with CLI/full-Core hash
+paths forbidden, config tamper denied, original restored, Send/Sign/Broadcast,
+uncertain locks, latest recovery/fresh Core, reorg1/12/100. Offscreen/source only;
+this is not frozen, physical, Cocoa Auto or production qualification.
+
+T07: real disposable Core RPC queue saturation reproduced20 successful long-poll
+reads and12 HTTP503 responses. Baseline closed its entire read session after503.
+The next component permits at most3 positively rejected idempotent-read attempts
+with bounded exponential jitter, preserves the session after busy, and reconnects
+only through fresh OS socket/process proof. Invalid auth, malformed replies,
+config drift and connection uncertainty are not retried; no HTTP write API or
+uncertain broadcast retry exists. A genuine32-client owned-node gate verifies
+three rejected attempts, complete bounded cleanup, then successful reads without
+restarting Core. Same native/frozen entrypoints require its receipt. Solo-miner
+coexistence, broad refresh coalescing, peer lab and full T07/Q04 remain PENDING.
+
+[Actual Windows52 frozen inspection](evidence/issue45/WINDOWS_C877_FROZEN_INSPECTION.json):
+artifact12054979956, sourcec877705/checkout01edf096, outer SHA256
+9f042124bf4ee6c478eac4cf5b53e0f335802e358232ffeafc37d6959c08de04;
+inner4e038edc053ac423fc0b8908d9cd4804cdc410a7394167cb2deb8f30c76e1074.
+All354 actual packaged files and independently pinned Core pair match. Frozen
+receipt confirms maturity99/100 refused and101 accepted,1410atom fee to miner,
+treasury excluded, reorg1/12/100. Inspection on Mac is not execution on Windows;
+this historical component does not qualify the changed HTTP runtime.
+
+T0 Vietnam22:47:58 on16Oct; requested next execution03:47:58 on17Oct2026 UTC+7
+(20:47:58UTC16Oct). Existing linux-regtest-single-continuation automation updated
+ACTIVE as a single next continuation, checkpoint changed to Issue45/production-v1.
+No duplicate automation or recurring credit retry. Stored ACTIVE/wall-clock
+schedule verified; tool does not expose a computed runtime nextRun field.
+
+
+## Current runtime5555df8 — repaired native/frozen gates
+
+Windows8b50296 failed its first operational HTTP snapshot with a stale socket
+send error after lengthy CLI/custody setup.5555df8 expires idle connections after
+5seconds BEFORE sending; a fresh connection still proves exact native server
+ownership before credentials. No failed request is replayed, and uncertainty
+still quarantines the session. Genuine5.1second idle/reconnect plus queue32/read
+recovery now run only in explicit acceptance; normal interactive startup never
+runs this stress gate. Windows5555 native real Core/WSP/Qt/reservation/stale
+signing/recovery receipt is downloaded and hash verified. Final Windows package
+CI remains PENDING at this snapshot; source success cannot qualify it.
+
+The Mac frozen failure was a relative import in the PyInstaller __main__ entry.
+An absolute import fixes it. The actual final5555 app ran successfully on the
+local ARM64 MacBook with offscreen Qt, original signed Core, native WSP and
+isolated test Keychain: receive, sign/broadcast/change, denied approvals,
+config tamper, idle/busy, backup/lock/recovery, fresh Core and reorg1/12/100.
+DMG hdiutil verification succeeded. The local builder's final manifest-only step
+initially selected the reused venv's old editable package; it was completed with
+PYTHONPATH=src after source/checkout/payload/Core digest checks. No binary/gate
+changed. Reproduction must install this checkout or set PYTHONPATH=src.
+AppZIP56c7526dc4092867359eb3b133502df84ce276463946d65cd2b06866089b0aff;
+DMG7ff2acbade4be94344916517bf289c5600e26dfe98c55c9b0acf5749cf5ed061.
+[Local final executable receipt](evidence/issue45/HTTP_IDLE_BUSY_5555_LOCAL_FROZEN.json).
+Mac runner native and frozen5555 gates also PASS independently (run38965264090).
+
+[Windows native](evidence/issue45/WINDOWS_5555_NATIVE_CORE_QT.json),
+[Linux native Qt](evidence/issue45/LINUX_5555_NATIVE_QT.json) and
+[Linux no-Qt](evidence/issue45/LINUX_5555_NATIVE_HEADLESS.json) actual artifact
+receipts confirm the5555 source head, owned HTTP guards, real idle/busy proof
+and preserved signing/recovery. Linux5555 frozen headless/desktop CI PASS;
+independent developer-Core rebuild and Windows frozen aggregate still running
+at this snapshot. None is physical acceptance; Linux remains a separately
+reviewed developer binary with root witness, never an official signed release.
+162units=129PASS/33platformSKIP/0FAIL. Full Issue45 integrated V1 stays PENDING.
+
+The requested one-shot heartbeat arrived20:48:21.727UTC16Oct (03:48:21.727UTC+7
+17Oct),23.727seconds after the scheduled20:47:58UTC. It was coalesced into the
+same still-held lease94867, without a second writer. The same automation is now
+verified PAUSED; no future run or recurring retry was created. Current native/
+frozen evidence is preserved separately from latest docs-only checkpoint CI.

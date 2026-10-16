@@ -1,0 +1,30 @@
+{
+  "artifact_id": 12054979956,
+  "run_id": 38922220043,
+  "platform": "windows-x64",
+  "source_head_sha": "c877705581d585499d7796caaa50f58fad33a348",
+  "checkout_sha": "01edf096005efe25506bcbae581c6ea9c9f84eb5",
+  "outer_sha256": "9f042124bf4ee6c478eac4cf5b53e0f335802e358232ffeafc37d6959c08de04",
+  "archive_sha256": "4e038edc053ac423fc0b8908d9cd4804cdc410a7394167cb2deb8f30c76e1074",
+  "bundle_file_count": 354,
+  "all_file_hashes_verified": true,
+  "independent_official_core_hashes": {
+    "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+    "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+  },
+  "exe_amd64": true,
+  "actual_frozen_receipt_maturity99_100_101": [
+    false,
+    false,
+    true
+  ],
+  "frozen_receipt_fee_atoms": 1410,
+  "frozen_receipt_reorg_depths": [
+    1,
+    12,
+    100
+  ],
+  "receipt_verified_not_locally_executed": true,
+  "current_http_runtime_qualified": false,
+  "physical_acceptance": "PENDING_OPERATOR"
+}

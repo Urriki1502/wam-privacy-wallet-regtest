@@ -1,0 +1,16 @@
+{
+  "artifact_id": 12075220049,
+  "run_id": 38965264123,
+  "source_head_sha": "5555df8acab1e6512271be409a8f4ca673143692",
+  "checkout_sha": "64f28c730fbe5797ccd4c19299a6fcddacb04f29",
+  "outer_sha256": "30f7feb0400551d45a2d34aa5f2b09b5c44fe4bb1a9a2e82068026519d53ed54",
+  "archive_sha256": "04b814655b16d52862bb4a4a2ebc76ee0dd3dc04b01ce12a0ea9bfa26712ad7c",
+  "actual_bundle_files_verified": 193,
+  "internal_symlinks_verified": 0,
+  "approved_developer_core_pair_verified": true,
+  "official_signed_core_release": false,
+  "final_executable_receipt_verified": true,
+  "idle_busy_and_reorg_receipt_verified": true,
+  "local_execution": false,
+  "physical": "PENDING_OPERATOR"
+}

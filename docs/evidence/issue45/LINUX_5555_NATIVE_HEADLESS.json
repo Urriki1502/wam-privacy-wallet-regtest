@@ -1,0 +1,252 @@
+{
+  "mining_account_component": {
+    "status": "REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS",
+    "platform": "linux-x86_64",
+    "core_version": "v0.1.11",
+    "wamd_sha256": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+    "wam_cli_sha256": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+    "regtest_halving_interval": 150,
+    "treasury_last_height": 400000,
+    "maturity": [
+      {
+        "depth": 99,
+        "balance_before_send": {
+          "trusted_atoms": 0,
+          "pending_untrusted_atoms": 0,
+          "immature_atoms": 4750000000,
+          "available_atoms": 0,
+          "available_utxos": 0
+        },
+        "wallet_send_accepted": false
+      },
+      {
+        "depth": 100,
+        "balance_before_send": {
+          "trusted_atoms": 0,
+          "pending_untrusted_atoms": 0,
+          "immature_atoms": 4750000000,
+          "available_atoms": 0,
+          "available_utxos": 0
+        },
+        "wallet_send_accepted": false
+      },
+      {
+        "depth": 101,
+        "balance_before_send": {
+          "trusted_atoms": 4750000000,
+          "pending_untrusted_atoms": 0,
+          "immature_atoms": 0,
+          "available_atoms": 4750000000,
+          "available_utxos": 1
+        },
+        "wallet_send_accepted": true
+      }
+    ],
+    "coinbase_audits": [
+      {
+        "height": 1,
+        "subsidy_atoms": 5000000000,
+        "treasury_paid_atoms": 250000000,
+        "miner_total_atoms": 4750000000,
+        "owned_miner_atoms": 4750000000,
+        "fees_atoms": 0
+      },
+      {
+        "height": 102,
+        "subsidy_atoms": 5000000000,
+        "treasury_paid_atoms": 250000000,
+        "miner_total_atoms": 4750001410,
+        "owned_miner_atoms": 4750001410,
+        "fees_atoms": 1410
+      },
+      {
+        "height": 150,
+        "subsidy_atoms": 5000000000,
+        "treasury_paid_atoms": 250000000,
+        "miner_total_atoms": 4750000000,
+        "owned_miner_atoms": 4750000000,
+        "fees_atoms": 0
+      },
+      {
+        "height": 151,
+        "subsidy_atoms": 2500000000,
+        "treasury_paid_atoms": 125000000,
+        "miner_total_atoms": 2375000000,
+        "owned_miner_atoms": 2375000000,
+        "fees_atoms": 0
+      },
+      {
+        "height": 300,
+        "subsidy_atoms": 2500000000,
+        "treasury_paid_atoms": 125000000,
+        "miner_total_atoms": 2375000000,
+        "owned_miner_atoms": 2375000000,
+        "fees_atoms": 0
+      },
+      {
+        "height": 301,
+        "subsidy_atoms": 1250000000,
+        "treasury_paid_atoms": 62500000,
+        "miner_total_atoms": 1187500000,
+        "owned_miner_atoms": 1187500000,
+        "fees_atoms": 0
+      },
+      {
+        "height": 450,
+        "subsidy_atoms": 1250000000,
+        "treasury_paid_atoms": 62500000,
+        "miner_total_atoms": 1187500000,
+        "owned_miner_atoms": 1187500000,
+        "fees_atoms": 0
+      },
+      {
+        "height": 451,
+        "subsidy_atoms": 625000000,
+        "treasury_paid_atoms": 31250000,
+        "miner_total_atoms": 593750000,
+        "owned_miner_atoms": 593750000,
+        "fees_atoms": 0
+      }
+    ],
+    "fee_atoms": 1410,
+    "after_payment_balance": {
+      "trusted_atoms": 4749898590,
+      "pending_untrusted_atoms": 0,
+      "immature_atoms": 4750001410,
+      "available_atoms": 4749898590,
+      "available_utxos": 1
+    },
+    "locked_available_atoms": 0,
+    "treasury_owned_by_fixture": false,
+    "source_main_schedule_200000_is_not_regtest_interval": true,
+    "sunset_height_runtime_qualified": false,
+    "no_fusion_reservation_released": true,
+    "elapsed_seconds": 23.754,
+    "synthetic_rpc": false,
+    "owner_data_accessed": false,
+    "mainnet_allowed": false,
+    "core_wallet_probe_not_bip39_signer_qualification": true
+  },
+  "owned_http_read_component": {
+    "status": "REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS",
+    "rpc_compatibility_profile": {
+      "version": 111,
+      "subversion": "/WAM:0.1.11/",
+      "protocolversion": 70016
+    },
+    "node_busy_read_component": {
+      "status": "REAL_CORE_BUSY_READ_RECOVERY_PASS",
+      "read_attempt_limit": 3,
+      "observed_busy_attempts": 3,
+      "queue_response_200": 20,
+      "queue_response_503": 12,
+      "recovered_without_daemon_restart": true,
+      "no_synthetic_rpc": true,
+      "mainnet_allowed": false
+    },
+    "idle_read_component": {
+      "status": "REAL_CORE_IDLE_READ_RECONNECT_PASS",
+      "observed_idle_seconds": 5.1,
+      "old_socket_closed_before_request": true,
+      "request_replayed": false,
+      "no_synthetic_rpc": true,
+      "mainnet_allowed": false
+    },
+    "repeated_authenticated_reads": 8,
+    "height": 101,
+    "process_image_and_established_socket_before_auth": true,
+    "wrong_process_endpoint_denied_before_any_http_bytes": true,
+    "genuine_core_invalid_auth_denied": true,
+    "write_denied_before_wire": true,
+    "synthetic_core_rpc": false,
+    "scanner_gui_transport_integrated": false,
+    "hardened_loader_attestation_qualified": false,
+    "mainnet_allowed": false
+  },
+  "wallet_live_core": {
+    "status": "REAL_LINUX_CORE_ROOT_WITNESS_HEADLESS_WALLET_E2E_PASS",
+    "operational_snapshot_http": {
+      "transport": "owned-http",
+      "repeated_reads": 3,
+      "cli_and_rehash_forbidden": true,
+      "synthetic_rpc": false
+    },
+    "real_core_rpc": true,
+    "synthetic_rpc": false,
+    "mainnet_allowed": false,
+    "confirmed_recipient_atoms": 100000,
+    "confirmed_sender_change": true,
+    "actual_reorg_depths": [
+      1,
+      12,
+      100
+    ],
+    "fresh_chain_key_recovery": true,
+    "irreversible_reservations_retained": true,
+    "lost_actual_broadcast_reply_retained": true,
+    "stale_before_native_sign_denied": true,
+    "stale_before_broadcast_denied": true,
+    "anchored_irreversible_before_crypto": true,
+    "separate_sign_broadcast_approvals": true,
+    "backup_lock_wrong_password_recovery": true,
+    "qt_imported": false
+  },
+  "recovery_live_core": null,
+  "security_live_core": null,
+  "interactive_demo_closed_cleanly": false,
+  "gui_real_core_e2e_pass": false,
+  "gui_live_core_view": null,
+  "status": "REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS",
+  "wsp_real_core_scan_pass": true,
+  "wsp_live_scan": {
+    "status": "REAL_WAM_CORE_WSP1_BIP352_CONFIRMED_RECEIVE_PASS",
+    "scanner_transport": "owned-http",
+    "cli_and_rehash_forbidden_during_scan": true,
+    "source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+    "regtest_genesis": "b88f3d262f285e38e184f50bf3eea1c8e615486ae67d3d9eaf0976fbd6d3d30d",
+    "observed_height": 102,
+    "verified_tip": "78c9145eaf7d63f126d550ae20c5cc29b5e4787ad0d849d253d1e7e46deb5316",
+    "actual_scanner_blocks_processed": 101,
+    "sqlite_restart_blocks_processed": 0,
+    "public_demo_receive_code_validated": true,
+    "confirmed_demo_utxos": 1,
+    "confirmed_receive_atoms": 4749990000,
+    "public_fixture_payment_txid": "3a195d0568cb7bd30fd6bbcd2746e7267b318346794ad33c103ca992c411f5e7",
+    "regtest_fixture_broadcast_confirmed": true,
+    "real_core_rpc": true,
+    "synthetic_rpc": false,
+    "wsp_bip352_payment_confirmed": true,
+    "signing_allowed": false,
+    "mainnet_allowed": false
+  },
+  "regtest_public_fixture_broadcast_confirmed": true,
+  "platform": "linux-x86_64",
+  "node_sha256": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+  "wam_cli_sha256": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+  "chain": "regtest",
+  "block_height": 104,
+  "tip": "664e09aad31f6b149523cf11a5d49f66bab22c8e963cdcef77629be387b22118",
+  "live_wamd_process_observed": true,
+  "live_rpc_observed": true,
+  "wallet_send_e2e_pass": true,
+  "wsp_bip352_e2e_pass": true,
+  "mainnet_allowed": false,
+  "production_process_binding_qualified": false,
+  "official_signed_release": false,
+  "developer_manifest_sha256": "e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806",
+  "frozen_runtime": false,
+  "linux_headless": true,
+  "qt_imported": false,
+  "source_head_sha": "5555df8acab1e6512271be409a8f4ca673143692",
+  "checkout_sha": "64f28c730fbe5797ccd4c19299a6fcddacb04f29",
+  "tested_utc": "2026-10-16T20:54:33.835882+00:00",
+  "acceptance_environment": {
+    "os": "Linux",
+    "release": "6.17.0-1022-azure",
+    "architecture": "x86_64",
+    "python": "3.12.15",
+    "frozen_entrypoint": false,
+    "qt": false
+  },
+  "wsp_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e"
+}
