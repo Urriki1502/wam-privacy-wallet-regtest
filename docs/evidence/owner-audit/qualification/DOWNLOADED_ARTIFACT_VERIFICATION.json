@@ -1,0 +1,36 @@
+[
+  {
+    "frontend": "headless",
+    "archive": "wam-regtest-headless-linux-x86_64-427d3b0789d0b7e2da1f506c8dde860b5c6b4575.tar.gz",
+    "archive_sha256": "75eafb5ae656bff36c32d3b314ab1b7125989bae76892e1a825e634fa2a722a9",
+    "source_head_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "checkout_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "regular_members_verified": 180,
+    "internal_links_verified": 0,
+    "original_brand_hash_verified": true,
+    "pinned_wsp_source_members_verified": 33,
+    "root_helper_matches_reviewed_source": true,
+    "independent_core_hashes_verified": true,
+    "bootloader_core_stack_rw": true,
+    "downloaded_archive_member_inspection": "PASS",
+    "native_execution_on_this_mac": false,
+    "native_runner_final_executable_e2e": true
+  },
+  {
+    "frontend": "desktop",
+    "archive": "wam-regtest-desktop-linux-x86_64-427d3b0789d0b7e2da1f506c8dde860b5c6b4575.tar.gz",
+    "archive_sha256": "dd57ddf9fd69429bf678415573641c4f2521dd046bc35d903ceab9dbb171604b",
+    "source_head_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "checkout_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "regular_members_verified": 441,
+    "internal_links_verified": 25,
+    "original_brand_hash_verified": true,
+    "pinned_wsp_source_members_verified": 33,
+    "root_helper_matches_reviewed_source": true,
+    "independent_core_hashes_verified": true,
+    "bootloader_core_stack_rw": true,
+    "downloaded_archive_member_inspection": "PASS",
+    "native_execution_on_this_mac": false,
+    "native_runner_final_executable_e2e": true
+  }
+]

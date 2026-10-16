@@ -9,7 +9,8 @@ No automatic merge or release. No personal keys, real funds or mainnet.
 
 ## Verdict and confirmed findings
 
-Completed RC1 baseline: **39 PASS / 4 FAIL out of43**. All43 PASS on the proposed
+Completed RC1 baseline: **46 PASS / 4 FAIL out of50** (43 original +6 keyboard/password-dialog checks
++1 actual fresh-GUI startup group). All50 PASS on the proposed
 fix using a fresh native Cocoa session with real Core. The four FAIL checks
 represent three UX defects; they do not show a broken native signer or loss of funds.
 
@@ -126,20 +127,139 @@ QR decoding uses independent zxing-cpp2.3.0 over actual rendered grayscale widge
 pixels; the exact decoded code matches native WSP. This dependency is audit-only
 in an isolated output folder, not added to application/packaging dependencies.
 
-Additional regression PASS locally:132 application contracts (33 platform skips,
-not proof of Windows/Linux execution), unchanged independent wallet auditor,
+Additional regression PASS locally:132 application contract tests:99 PASS and33 SKIPPED
+(platform skips are not proof of Windows/Linux execution), unchanged independent wallet auditor,
 actual Cocoa native Keychain/signing leases/stale-before-sign/stale-before-RPC,
 reorg1/12/100, killed-process leases, interrupted publication, wrong/absent anchor,
 new-chain recovery, lost actual broadcast reply and irreversible reservations.
 [NATIVE_COCOA_REGRESSION.json](evidence/owner-audit/NATIVE_COCOA_REGRESSION.json).
+Its cross-session payment-stale fields are false on Mac because that old helper
+only exercises them on Windows; false is not PASS. This audit separately reused
+the same competing-writer logic on a fresh Mac Core session and explicitly named
+native test Keychain: stale before actual native signer entry and before real
+broadcast both refused; positive native signature control passed; no mempool
+submission and signed reservations retained. This additional source regression
+is outside the50 UX checks and outside the unchanged frozen receipt schema:
+[Mac stale-payment proof](evidence/owner-audit/qualification/MAC_STALE_PAYMENT_RECEIPT.json).
+The two earlier driver attempts failed only harness path resolution/read-only
+observation after the intentionally faulted session; neither is counted PASS.
+Final run uses an independent verified observer RPC without clearing the fault.
+
+Additional actual-Core/Cocoa cases: masked passphrase acceptance and Cancel,
+Sign Escape and Enter/default-Cancel, Broadcast Escape and Enter/default-Cancel
+all PASS on both preserved RC1 and proposed code. Anchor/reservation states and
+actual mempool were unchanged on each keyboard cancellation. Actual font family
+Helvetica Neue, Qt cocoa. Receipts: [baseline keyboard/dialog](evidence/owner-audit/BASELINE_KEYBOARD_PASSWORD_DIALOG.json),
+[proposed keyboard/dialog](evidence/owner-audit/FIXED_KEYBOARD_PASSWORD_DIALOG.json).
+
+One additional real startup group PASS on both versions: actual Fresh selector,
+masked password acceptance, fresh keys, live Core/WSP/SQLite snapshot at height103,
+and clean window close. To protect the owner's Keychain, this source-only startup
+fixture routes the native anchor factory to an explicitly named temporary test
+Keychain; it still uses the real native factory, Core and crypto. This is not
+Finder/Gatekeeper/default-owner-Keychain acceptance. Receipts:
+[baseline startup](evidence/owner-audit/BASELINE_GUI_STARTUP.json),
+[proposed startup](evidence/owner-audit/FIXED_GUI_STARTUP.json).
+All50 individual verdicts: [comparison](evidence/owner-audit/OWNER_ACCEPTANCE_COMPARISON.json).
+
+| Additional check | Original RC1 | Proposed fix, local Cocoa |
+| --- | --- | --- |
+| Masked passphrase accepted | PASS | PASS |
+| Passphrase Cancel performs no operation | PASS | PASS |
+| Sign Escape | PASS | PASS |
+| Sign Enter/default-Cancel | PASS | PASS |
+| Broadcast Escape | PASS | PASS |
+| Broadcast Enter/default-Cancel | PASS | PASS |
+| Fresh GUI selector/password/live snapshot/close | PASS | PASS |
 
 ## Native/frozen requalification
 
-New exact source commit and native CI/artifacts: **PENDING until dispatched and
-observed**. Previous RC1 PASS does not qualify the changed GUI. Reuse the existing
-eight workflows and their final executable gates; no new workflow or reduced
-assertion is introduced. Do not install the proposed binary over the owner's
-running RC1 or treat this source-only result as frozen acceptance.
+Proposed CODE SHA `427d3b0789d0b7e2da1f506c8dde860b5c6b4575`, [Draft PR38](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/38).
+Eight new workflow_dispatch runs completed **SUCCESS at this exact source SHA**;
+each checkout is the same code SHA, not a synthetic pull-request merge commit.
+The proposed code branch stays immutable while final evidence is published on a
+separate documentation branch. No qualified baseline was advanced or merged.
+
+| Gate | Exact-source CI evidence | Result |
+| --- | --- | --- |
+| Canonical WSP vectors | [38843576037](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843576037) | PASS |
+| macOS source + frozen app/DMG | [38843580133](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843580133) | PASS |
+| Windows credential/private storage + operational source/frozen + DPI | [38843585494](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843585494) | PASS |
+| Linux contracts + source Qt/CLI + both frozen + repeated developer Core build | [38843589482](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843589482) | PASS, developer-Core scope |
+| Windows official Core/PE/WSP preflight | [38843594122](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843594122) | PASS |
+| Windows genuine Core/101 blocks | [38843598553](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843598553) | PASS |
+| Windows BIP352/SQLite/restart | [38843604563](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843604563) | PASS |
+| Windows native read GUI | [38843609070](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843609070) | PASS |
+
+[NATIVE_CI_EVIDENCE.json](evidence/owner-audit/qualification/NATIVE_CI_EVIDENCE.json)
+records exact jobs and conclusions. PR38 also has9 successful jobs and1 conditional
+Linux developer-core SKIPPED; that skip is not counted as PASS. The independent
+workflow_dispatch Linux developer-core job116789081626 actually passed. No new
+workflow or reduced security assertion was introduced.
+
+| Platform | Source/native regression | Final packaged E2E | Independent downloaded inspection | Physical/human |
+| --- | --- | --- | --- | --- |
+| macOS ARM64 | PASS, native Cocoa/Keychain | PASS, runner + this MacBook | PASS, Core/WSP/brand/ZIP, DMG VALID, ad-hoc signature | PENDING_OPERATOR |
+| Windows x64 | PASS, QWindows/Credential Manager | PASS, native runner, DPI125%/150% | PASS, 341 members/PE/Core/WSP/brand | PENDING_OPERATOR |
+| Linux x86_64 desktop | PASS, xcb/root witness | PASS, Ubuntu/Xvfb runner | PASS, members/ELF RW stack/Core/WSP/helper | PENDING_OPERATOR; OS Auto unknown |
+| Linux x86_64 headless | PASS, real CLI/root witness | PASS, Ubuntu native runner | PASS, members/ELF RW stack/Core/WSP/helper/no Qt | PENDING_OPERATOR hardware |
+
+The freshly downloaded proposed Mac app was executed on Mac14,9, macOS27.0.1,
+ARM64, Qt Cocoa, 16October2026 04:46:49–04:47:46UTC. Exit0; all5 packaged
+Core/BIP352/Qt/send/security/recovery/reorg/appearance suite markers present.
+Downloaded DMG passed hdiutil verify, app passed strict deep ad-hoc codesign
+verification, official Core hashes stayed unchanged after execution, and no audit
+app/bundled-Core process survived. This is actual automated MacBook binary testing,
+not a runner-only claim, Finder consent or human signoff. See
+[local receipt](evidence/owner-audit/qualification/LOCAL_MACBOOK_COCOA_RECEIPT.json).
+Windows/Linux execution was performed by their native runners; downloaded Windows
+and Linux code is not executed on this Mac. The native frozen GUI probes exercise
+7 real input-refusal feedback cases and submitted→confirmed state transitions;
+50-case source owner acceptance is a separate suite, not50 packaged tests.
+
+Linux uses the explicitly reviewed developer-source v0.1.11 build. The official
+Linux binary's executable-stack policy remains rejected; no official signed Linux
+qualification is claimed. Repeated source build success does not automatically
+replace the independently approved Core hashes in packages. macOS/Windows retain
+their independently pinned official signed upstream bytes. WSP stays at
+ac55f13423620252bdbf848c7e8a280c3b84721e; all33 packaged Python source files and
+the original WAM artwork were checked (Windows permits only exact reversible Git
+LF→CRLF checkout conversion). Upstream Core was not modified.
+
+**Disposition:** original RC1 has3 confirmed UX defects; proposed427d3b0 is
+technically qualified by native/frozen REGTEST gates for controlled disposable
+review, with all four downloaded packages independently inspected. Keep
+Draft PR38 unmerged for owner review. No Final/production/mainnet release or
+cross-platform recovery qualification. Remaining physical checks are listed below.
+
+## Downloads and exact payload SHA-256
+
+All packages below were built from427d3b0 and independently downloaded/inspected.
+Actions artifacts expire30October2026; these are expiring engineering artifacts,
+not a durable Final release. Full payload/Core hashes, sizes, Actions-reported
+outer archive digests and expiry timestamps:
+[PUBLISHED_ARTIFACTS.json](evidence/owner-audit/qualification/PUBLISHED_ARTIFACTS.json).
+The outer Actions digest is GitHub-reported; local inspection independently
+recomputes the inner payload/member/public-output hashes.
+
+| Package | Download | Payload SHA-256 |
+| --- | --- | --- |
+| macos-arm64 DMG | [artifact12022821744](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843580133/artifacts/12022821744) | `ac0b4ce5a580ce6af5e99be6e20e252617e413d03d1d3312a302aa4608f8eec9` |
+| macos-arm64 app ZIP | [artifact12022821744](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843580133/artifacts/12022821744) | `72ae4590bb01c8674122c4b1d82db8913d0ed03ba1f916682a5f66fba7697704` |
+| windows-x64 | [artifact12023245350](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843585494/artifacts/12023245350) | `8520719ee1a2fa1b3e0df6b54a8154af10779dd40a8313239b8b844100d4eef3` |
+| linux-x86_64-desktop | [artifact12022432490](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843589482/artifacts/12022432490) | `dd57ddf9fd69429bf678415573641c4f2521dd046bc35d903ceab9dbb171604b` |
+| linux-x86_64-headless | [artifact12022796655](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843589482/artifacts/12022796655) | `75eafb5ae656bff36c32d3b314ab1b7125989bae76892e1a825e634fa2a722a9` |
+
+[Common manifest/toolchain verification](evidence/owner-audit/qualification/COMMON_MANIFEST_VERIFICATION.json),
+[Mac/Windows member verification](evidence/owner-audit/qualification/MAC_WINDOWS_ARTIFACT_VERIFICATION.json),
+[Linux member verification](evidence/owner-audit/qualification/DOWNLOADED_ARTIFACT_VERIFICATION.json).
+Build Python3.12.10 on macOS/Windows and3.12.15 on Linux; PyInstaller6.22.3,
+Qt/PySide6 6.12.0 where present. Headless package has no Qt dependency. Manifests
+contain exact dependencies/build OS; same-source provenance is verified, but no
+bit-for-bit reproducible-build claim is made. Windows native receipts preserve
+field-specific results: older unused read-GUI fields can be false while
+wallet_send_e2e_pass, wallet_live_core and security_live_core record the exercised
+operational modes. Linux OS Auto remains unknown/PENDING, never relabeled PASS.
 
 ## Evidence and reproduction
 
