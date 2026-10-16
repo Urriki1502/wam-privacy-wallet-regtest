@@ -200,3 +200,41 @@ contract, genuine REGTEST block/UTXO proof, packaged app and physical acceptance
 remain independent layers. Owner's new DEV test-host agreement in Issue45 is
 acknowledged: only clean isolated hosts, never a treasury-signing computer;
 actual external execution still PENDING until evidence is received.
+
+## T-01 scanner vertical slice and regression
+
+46a7493 adds typed getblock(hash,3)/best-hash/peer-count HTTP reads. Blocks have
+32MiB explicit reply bound, other replies retain1MiB. Validate requested hash,
+height/list shape; WSP remains the pinned independent transaction/crypto/scanner
+validator. Chain/genesis/version/zero peers and native owned process/socket
+remain required. Scoped session receipt does not rehash full Core per read.
+No HTTP failure falls back to CLI. Existing explicit fixture write operations
+retain their previous transport and approvals; no HTTP write API added.
+
+Genuine source/frozen scanner acceptance now requires owned HTTP, with guards
+that raise on any CLI/Core-full-hash call inside WSP scan/SQLite replay. Guards
+return no fake Core result. [Full Mac Core/WSP/Qt regression](evidence/issue45/HTTP_SCANNER_MACOS_CORE_QT.json)
+PASS at e8e75ff:101blocks,actual BIP352 receive102,4749990000atoms,zero replay,
+mining maturity/fees/ownership, native Send/Sign/Broadcast/confirmed change,
+uncertain locks, recovery and reorg1/12/100.156units123PASS/33SKIP/0FAIL. Later
+comment-only edits and Linux-only acceptance lifecycle fix are not silently
+claimed as newly tested frozen/platform evidence; exact-head CI remains required.
+Operational WalletSession/GUI still uses CLI: T01 is NOT completed by this slice.
+
+PR51 Windows first failure was a test-wallet selector/method scope mismatch.
+9f8402e reuses protected native RPC only in its owned fresh fixture, retains exact
+binary/config custody, fixed fixture method scope and unchanged application
+allowlist. PR52 first byte-pin failure was Windows checkout newline conversion;
+.gitattributes preserves exact upstream bytes, not a relaxed pin. Native compiled
+source receipts from [Windows](evidence/issue45/PR52_WINDOWS_SOURCE.json) and
+[Linux](evidence/issue45/PR52_LINUX_SOURCE.json) verify the pinned source vectors;
+these are SOURCE-only, never node binary E2E.
+
+Linux Qt fresh-Core recovery failure was localized to background_snapshot's
+exact-one-result assertion (linux_qt_probe.py:32).516b4f2 keeps the multi-window
+acceptance QApplication alive through its deliberate no-window interval, restores
+interactive shutdown policy afterward, and retains all assertions. Safe counts/
+reviewed file:line diagnostics aid any remaining failure; no arbitrary exception,
+secret or path is logged. Latest native/frozen qualification PENDING, no prior
+FAIL rewritten as PASS. Old-head runs were cancelled only after replacement;
+latest-head required checks remain active, cancellation is not qualification.
