@@ -127,7 +127,9 @@ def probe(core,datadir,source,mining):
             'desktop_os_appearance_signoff':'PENDING_OPERATOR','visual_signoff':'PENDING_OPERATOR',
             'native_input_feedback_cases':validation_cases,'submitted_confirmation_feedback':True,
             'production_qualified':False}
-    except Exception:
+    except Exception as error:
+        from .acceptance_failure import failure_site
+        print('LINUX_QT_FAILURE_SITE='+failure_site(error),flush=True)
         print('LINUX_QT_FAILED_STAGE='+stage,flush=True)
         raise
     finally:
