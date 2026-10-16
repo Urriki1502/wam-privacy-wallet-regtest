@@ -113,6 +113,8 @@ def main() -> int:
             interactive_demo=not ci_mode,
         )
         if ci_mode:
+            if result['owned_http_read_component']['status'] != 'REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS':
+                raise BundleLaunchError('WAM_BUNDLE_OWNED_HTTP_DENIED')
             expected_status = ("REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS" if cocoa_mode else
                                "REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS")
             if (result.get("status") != expected_status

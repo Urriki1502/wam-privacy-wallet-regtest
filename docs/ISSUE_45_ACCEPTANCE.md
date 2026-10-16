@@ -72,3 +72,31 @@ Lease63300 is held through this engineering run. Future resumes must inspect
 actual holder/thread/worktree state and acquire their own lease; never infer
 ownership from this document. Separate local run log:
 outputs/production-v1-20261016/RESUME_LOG.txt. No scheduled retry/reset/purchase.
+
+## T-03/T-04 owned endpoint slice (2026-10-16)
+
+New branch `feature/issue45-owned-rpc-endpoint-20261016` stacks on PR46
+90561d159cf3e79cd4d4c60cd5f04c491c108718. Before any Basic auth/HTTP bytes,
+require the exact owned Popen argv, live OS image, independently pinned Core
+pair and kernel ownership of the server half of this established TCP socket.
+macOS uses trusted system lsof/proc_pidpath; Linux uses proc executable/fd/TCP
+inodes; Windows uses QueryFullProcessImageNameW/GetExtendedTcpTable. Unknown or
+unavailable proof refuses; no fallback. Each new connection rechecks ownership;
+reused requests recheck process/file metadata without CLI/full hash per read.
+
+The actual Mac component probe passed authenticated reads and a wrong-process
+byte-collector endpoint which received zero HTTP bytes, plus genuine Core401.
+The collector never supplies synthetic RPC results. Existing native and frozen
+acceptance entrypoints now run this same probe and require its receipt. This is
+not scanner/GUI migration or full T-03 completion: supported RPC capability/
+version checks, cookie attachment, persistent lifecycle, tamper/loader races,
+contention and multi-node testing remain pending. No claim of hardened loader
+attestation or resistance to a compromised same-UID process/kernel. Windows and
+Linux results for this changed code are PENDING until exact-head CI completes.
+
+Local unit result:149 run,116 PASS,33 SKIP,0 FAIL. These skips are not native
+platform acceptance. PR46 Windows run38884448364 FAILED in the operational GUI
+probe (missing modal Sign after screenshot capture); its source/frozen Windows
+qualification is FAIL. Do not count other green jobs as a replacement. Review
+worker/timer scheduling in a separate focused fix without relaxing approvals.
+All integrated-V1 registry gates remain PENDING; historical receipts unchanged.

@@ -251,6 +251,8 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                 _deny("WIN_CORE_TIP_DENIED")
             if _rpc(cli, datadir, rpc, env, "getconnectioncount") != 0:
                 _deny("WIN_CORE_UNEXPECTED_PEERS")
+            from .owned_rpc_probe import probe_owned_reads
+            owned_rpc_receipt = probe_owned_reads(daemon, node.parent, datadir, 101)
             wsp_receipt = None
             if confirm_public_fixture_payment:
                 from .windows_wsp_regtest import prove_real_windows_wsp_receive
@@ -273,6 +275,7 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                 from .windows_vault_probe import prove_real_windows_vault
                 vault_receipt = prove_real_windows_vault(cli,datadir,rpc,env,wsp_source,mine_to_public)
             receipt = {
+                "owned_http_read_component": owned_rpc_receipt,
                 "status": ("WIN64_REAL_CORE_CREDENTIAL_ENCRYPTED_VAULT_RECOVERY_REORG_PASS"
                            if vault_receipt is not None else
                            "WIN64_SIGNED_CORE_WSP_QT_READ_ONLY_E2E_PASS"

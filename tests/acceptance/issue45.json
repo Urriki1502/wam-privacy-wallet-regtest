@@ -1,10 +1,10 @@
 {
   "schema": "wam-issue45-acceptance/v1",
   "canonical_issue": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
-  "spec_body_sha256": "89ee8d1a6f419d0b44c280fd78306ef01bbf7a9254e2f3f2754e50e7c77afbed",
-  "observed_utc": "2026-10-16T09:57:52.013008+00:00",
-  "candidate_branch": "feature/issue45-rpc-readonly-20261016",
-  "candidate_runtime_code_sha": "4c630306489df241077615e6058dc81024475d11",
+  "spec_body_sha256": "dbbe8b2ba46b9b24264151abd417975a8ee1948973d30d13bd3d7d47f05dc072",
+  "observed_utc": "2026-10-16T10:35:54.020380+00:00",
+  "candidate_branch": "feature/issue45-owned-rpc-endpoint-20261016",
+  "candidate_runtime_code_sha": "ee2fab74eb27cbc93a5bd76abc820df11705f4b0",
   "integrated_v1_qualified": false,
   "historical_pass_does_not_qualify_candidate": true,
   "branch_map": {
@@ -19,7 +19,8 @@
     },
     "separate_PR44": "1ace4e23e5b31702376a215be2339d0003ddb58b",
     "PR44_cherry_pick": "90ed9be",
-    "read_rpc_code": "4c630306489df241077615e6058dc81024475d11"
+    "read_rpc_code": "4c630306489df241077615e6058dc81024475d11",
+    "owned_rpc_code": "ee2fab74eb27cbc93a5bd76abc820df11705f4b0"
   },
   "core_profiles": {
     "macos-arm64": {

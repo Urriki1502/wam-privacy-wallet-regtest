@@ -71,6 +71,8 @@ def main():
                 wsp_payment_e2e=True,security_e2e=ci,wallet_e2e=ci,
                 operational_demo=not ci,interactive_demo=not ci)
             if ci:
+                if proof['owned_http_read_component']['status'] != 'REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS':
+                    raise ValueError('WIN_BUNDLE_OWNED_HTTP_DENIED')
                 wallet=proof['wallet_live_core'];security=proof['security_live_core']
                 if (proof['platform']!='windows-x64' or proof['block_height']!=105
                         or proof['mainnet_allowed'] is not False
