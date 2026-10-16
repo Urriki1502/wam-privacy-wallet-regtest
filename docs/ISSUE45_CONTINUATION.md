@@ -1,84 +1,98 @@
-# Issue45 resumable checkpoint — 16 October 2026
+# Issue45 resumable checkpoint — F01/F02 and Core integration
 
-Canonical contract: https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45
-Read it completely and refresh GitHub before engineering. Never auto-merge,
-force-push, modify RC1/main/upstream Core or access owner data/mainnet.
+Refresh the FULL live Issue45 and PR46–53; latest owner priorities F01/F02,
+remaining Core integration. Core Update Manager remains DEFERRED P1; do not
+implement it. No mainnet, owner keys/data/miner, upstream Core edit, automatic
+merge, force push or RC1/main change. Only owned disposable REGTEST fixtures.
 
-## Current integration and lease
+## Workspace / lease / exact heads
 
-Workspace work/production-v1; branch fix/issue45-linux-evidence-identity-20261016.
-Runtime460eceff6ffe36c638cfadce53e2016c9d3c6595, Draft50 on49.
-Lease63300 was held for this run. Release is recorded in the separate local
-outputs/production-v1-20261016/RESUME_LOG.txt. Acquire a new exclusive lease with
-scripts/engineering_lease.py --hold; refuse concurrent engineering. Never infer
-lease ownership from this document. Preserve all other worktrees/user files.
+work/production-v1, branch feature/issue45-http-scanner-20261016.
+This run held exclusive lease93427. Release is recorded in the separate
+outputs/issue45-funds-20261016/RESUME_LOG.txt; acquire a NEW exclusive lease via
+scripts/engineering_lease.py --hold and refuse concurrency. This document never
+proves lock ownership. Existing uncommitted/user work was preserved.
 
-Main50e1ea94df61b8400cbab3bffe0fbdd285c6b419 and immutable RC1
-144d87700b87a241467172adfad3692b41e1d273 were confirmed unchanged.
+PR50 baseline a9d96ac6b13c647ee5ee865f569abd0d40ccdc8a fully green native/frozen,
+including Windows. PR46 historical modal race red was fixed once in48; do not
+replay. All46–50 ancestors verified included. Main50e1ea94df61b8400cbab3bffe0fbdd285c6b419
+and immutable RC1144d87700b87a241467172adfad3692b41e1d273 unchanged.
 
-## New focused Draft stack, no merges to main
+-51 feature/issue45-core-miner-accounting-20261016,
+ 516b4f26ca7ec343a489754a0b472c9aaaa41979. New REGTEST miner reward/fee/ownership
+ and balance read model; genuine isolated Core maturity99/100/101, output audit,
+ fee100%miner, lock eligibility, actual halvings150/151,300/301,450/451. Not a
+ full mining-account GUI or import/signing authority. Initial8789176 Mac proof
+ committed. Windows fixture selector/method mismatch fixed9f8402e with a PRIVATE
+ fixture RPC scope; application windows_core_transport allowlist unchanged.
+ LinuxQt fresh-Core failure localized background_snapshot exact-one-result
+ assertion.516b4f2 prevents the acceptance QApplication quitting in its deliberate
+ no-window interval; default interactive shutdown restored, assertions retained.
+ Latest Linux source/headless/Qt and Mac source PASS at checkpoint; frozen and
+ Windows aggregate still pending. Diagnostics emit only reviewed file:line and
+ fixed public failure codes/counts, never arbitrary exception/key/config text.
+-52 test/issue45-pinned-subsidy-vectors-20261016,
+ c877705581d585499d7796caaa50f58fad33a348. Compile unchanged pinned WAM subsidy
+ functions with explicit type/parameter SHIMS, SOURCE CONTRACT ONLY, never Core
+ binary/mainnet E2E. Mac/Win/Linux native64 source receipts PASS. Windows CRLF pin
+ mismatch fixed by .gitattributes preserving exact bytes, not a relaxed hash.
+ Production-parameter200000 boundary vectors incl0/1/200000/200001/399999/400000/
+ 400001/600000/600001 and750000WAM lifetime; independent cutoff tests with fixed
+ nonzero subsidy. Source.blobs d798155e1964adbdb3ccc48b44dd48fcde3b1602(params),
+ 5659e868f191f2c497950d690829f0369aa912d1(cpp),43e2e8c11a58b1b56141c63de470acb4743544ad(h).
+ Source receipts pin actual merge checkout0c839153c02b876b4aecc75007897fa199042098;
+ not silently relabelled current runtime. Latest Mac/Linux source PASS, native/
+ frozen rest pending; refresh exact heads. Prior failures remain historical.
+-53 feature/issue45-http-scanner-20261016, runtime30300a5eb07c74c435c1a3eb13d460e92e45f8d8
+ plus this checkpoint docs. Owned shared HTTP scanner via typed block(hash,3),
+ best-hash and peer-count;32MiB block bound,1MiB otherwise; chain/genesis/version/
+ zero peers/OS-owned socket preserved. No HTTP write API or failure-to-CLI
+ fallback. Genuine WSP scan/SQLite replay guards RAISE on CLI/full-Core-hash;
+ they never return mock RPC results. Same source/frozen acceptance requires
+ owned-http receipt. GUI/WalletSession normal reads STILL CLI: T01 incomplete.
 
--46,90561d159cf3e79cd4d4c60cd5f04c491c108718: shared protected HTTP reads and
- complete42task/20Q acceptance registry; source/frozen Windows had a GUI race FAIL.
--47,e61ed4bd50f065d839c4e326ee4dcbeb42086f29: owned Core PID/image and kernel
- established socket before any HTTP/auth byte; no CLI/full hash per read.
- Windows aliases use same-file identity plus unchanged pinned metadata. Earlier
- cad7785 operational Windows image-string mismatch FAIL is retained, not waived.
--48,17ccbbd868ee0f10cd124f4cca61933ffb7f8c3d: real modal approval/background
- sync race reproduced and fixed; harness waits idle and emits timer/manual sync
- inside every actual modal, retains default Cancel/exact intent/backend gates.
--49,0ea42e61b638200e2f00c01fed3741c1642f0846: measured RPC111,/WAM:0.1.11/,
- protocol70016; typed compatibility refusal; actual copied-binary tamper,
- replacement and process-exit quarantine. Native/frozen-only path filters added
- to EXISTING workflows, no new job. Includes47/48 through normal merge ancestry.
--50,460eceff6ffe36c638cfadce53e2016c9d3c6595: Linux receipt provenance gap:
- emit independently pinned CLI hash, source/checkout, UTC environment and WSP.
- Validate declared source against checkout/direct raw parent without fetching
- history, including shallow CI. Native Linux/frozen proof PENDING on this SHA.
+## Proven observations and truthful limits
 
-## Observed evidence (refresh; never inherit PASS for changed code)
+156local tests=123PASS/33platformSKIP/0FAIL. Actual Mac full Core/WSP/SQLite/Qt
+ E2E PASS at e8e75ff: mining maturity/ownership/fee, BIP3524749990000atoms/102,
+ replay0, native Send/Sign/Broadcast/confirmed change, lost reply reservation,
+ backup/lock/recovery/fresh Core, reorg1/12/100. Receipt/module hashes committed.
+ Later docstrings and Linux-only harness changes are not new platform/frozen
+ PASS. Offscreen is not Cocoa Auto/physical; false/not-exercised flags stay false.
+ Native child83 source receipts distinct from binary qualification.
 
-150 local units=117PASS/33platformSKIP/0FAIL. Actual Mac full Core/WSP/SQLite/Qt
- Send/Sign/Broadcast,100000atoms confirmed/change, lost reply retains reservations,
- backup/lock/wrong-password/recovery/fresh Core and reorg1/12/100 PASS at3ea32b8.
- Offscreen is not Cocoa Auto or physical acceptance; false/not-exercised receipt
- flags remain false. Actual Mac RPC/version and copied-exec failure receipts at
- ea5ff6c are committed under docs/evidence/issue45. No mutated binary launched;
- originals rehashed unchanged. Latest metadata-only Core smoke460ecef PASS101
- blocks and version-bound HTTP; does not claim WSP/signing tested in that smoke.
+**Actual pinned REGTEST halving interval is150, not200000.** The independent
+ treasury cutoff is400000. REGTEST subsidy is zero from4951, so a nonzero-subsidy
+ high-height sunset cannot be demonstrated simply by mining this unchanged
+ binary. Source contract complements real REGTEST outputs, not fabricated
+ high-height Core PASS. Full F01/F02/Q11/UI/integrated V1 remain PENDING.
 
-PR48 run38889045778 has passed native operational Windows and is building/running
- actual packaged exe at checkpoint. Both Linux frozen gates in38889045717 PASS.
- PR49 runs38889211784(Mac),38889211782(Windows),38889211809(Linux) still in progress;
- native Mac/Linux source gates PASS, final frozen/Windows disposition PENDING.
- PR50 discovery/CI pending. Snapshot in separate outputs/ISSUE45_LIVE_PRS.json.
- Do not count missing/SKIP as PASS. All integrated-V1 Q rows remain PENDING.
+PR50 downloaded artifact outer digests and inner archive hashes were verified:
+ Windows12042082405 outer5112eae40ecf89c33acaedc3e94b7c5b0b2b20157282321ceda7777a818b0475,
+ inner4db4f0a1b23fc5404218bb60b4552fc911bcc078678cb24baa40b6b280b39698.
+ Linux headless12040599834 outer2600c6101b1eaf5f0f1f79196415675fb2b0494375306583d33f7a7496643fa3,
+ inner93eae5e127bb0013d6e7d702e8b56d7164048da9398f9b4f24b8e34946638a9d.
+ Checked frozen receipts/Core pair/RPC111,/WAM:0.1.11/,70016, sourcea9d96ac,
+ production/mainnet false. Native Linux metadata fix50 verified in actual JSON.
+ These historical binaries do not qualify changed51–53; new artifact inspection pending.
 
-Verified downloaded PR48 native receipts (archive SHA matches GitHub):
- Windows vault artifact12040279941,
- 99d581b95dff4bea56bfbe5aab046fcb1afb1c272af7ce85ea835e00cc78932e;
- Linux headless artifact12041058114,
- f5ad7b348b338b583bdde7f3629e2cc750110fab49f6d1117785b0e9579b3fde.
- Both contain genuine owned-socket proof, real401 and zero-byte wrong-process
- refusal. Linux older JSON lacked source/CLI identity: preserved and fixed in50,
- not retroactively rewritten into qualification. Artifact links are under the
- corresponding GitHub run/artifact ID. Final new binary inspection still pending.
+## Next concrete actions
 
-## Next unblocked order
+1.Refresh51/52/53 CI. Fix any red exact-head gate FIRST on existing branches;
+ normal merge updates to descendants, never force-push/replay. Logs/diagnostics
+ in outputs/issue45-funds-20261016. Old obsolete-head runs cancelled only after
+ replacement, never counted as PASS; latest required runs remain active.
+2.Inspect new actual frozen receipts: mining_account_component and owned HTTP
+ WSP scan proof. Verify artifact source/checkout and SHA256. Do not mark skipped
+ or running jobs PASS. All integrated-case registry states still PENDING.
+3.Complete operational GUI/WalletSession shared owned HTTP, retaining independent
+ signing/broadcast approvals, persistent unsigned/uncertain reservations, source
+ pins and OS custody. Next bounded busy/coalesced reads with no uncertain write
+ replay; persistent managed lifecycle/read-only attach/port recovery/multi-node.
+4.Complete mining/Core account UI and funds reconciliation before DEV preflight.
+ Owner Mac; DEV Win/Linux agreement only on clean isolated hosts, NEVER the
+ treasury-signing computer. Physical tests and external review remain PENDING.
 
-1.Refresh47–50 exact-head CI, fix any red gate first. Inspect actual packaged
- manifests/HTTP receipts, download+verify SHA-256. Do not repeat old engineering.
-2.Finish B03 native/frozen metadata proof50. Update registry snapshots truthfully.
-3.T01 typed scanner block reads + lifecycle-owned reusable HTTP through genuine
- WSP/Qt, preserving source pins/zero-peer default; no per-read CLI/hash. Current
- GUI/scanner STILL use CLI; new HTTP is a tested component, not completedT01.
-4.T07 bounded busy/coalesced idempotent reads; never auto replay uncertain writes.
- Then persistent managed Core/read-only cookie attach/port collision recovery and
- separately scoped mandatory multi-node private REGTEST lab. Follow45 dependency
- order before full BIP39 GUI/custody/import/recovery. Physical OS/operator,
- independent security review and production/mainnet remain separate gates.
-
-Usage last observed primary96%,weekly77%,ordinaryUsageAllowed=true, credits0.
-No reset/purchase/recurring retry was used or created. Leave checkpoint before
-exhaustion; record any actual usage failure, never assume a reset. This file is
-resumption evidence, not a claim that work continues after this turn.
+Usage last observed primary92%,weekly92%,ordinaryUsageAllowed=true,credits0.
+No reset/purchase/recurring retry created or used. No claimed credit failure;
+record any actual failure and never assume a reset. Checkpoint before exhaustion.

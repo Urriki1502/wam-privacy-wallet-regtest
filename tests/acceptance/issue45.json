@@ -2,9 +2,9 @@
   "schema": "wam-issue45-acceptance/v1",
   "canonical_issue": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
   "spec_body_sha256": "2968296fd68712ee0016079d87efd8935b1636ff0639a0e6e8c7c08c8f424f36",
-  "observed_utc": "2026-10-16T14:58:18.730315+00:00",
-  "candidate_branch": "feature/issue45-core-miner-accounting-20261016",
-  "candidate_runtime_code_sha": "87891761adc33f3d1a8b5661dbf44126aa9452d5",
+  "observed_utc": "2026-10-16T15:18:58.324344+00:00",
+  "candidate_branch": "feature/issue45-http-scanner-20261016",
+  "candidate_runtime_code_sha": "30300a5eb07c74c435c1a3eb13d460e92e45f8d8",
   "integrated_v1_qualified": false,
   "historical_pass_does_not_qualify_candidate": true,
   "branch_map": {
@@ -120,10 +120,10 @@
       "priority": "P0",
       "owner": "ENGINEERING",
       "status": "PENDING",
-      "code_sha": "4c630306489df241077615e6058dc81024475d11",
-      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "code_sha": "30300a5eb07c74c435c1a3eb13d460e92e45f8d8",
+      "observed_utc": "2026-10-16T15:18:58.324344+00:00",
       "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
-      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "next_action": "Refresh PR51-53 exact-head native/frozen qualification; full mining GUI and operational HTTP session integration remain unfinished",
       "platforms": {
         "macos-arm64": {
           "SOURCE": "PENDING",
@@ -147,7 +147,12 @@
           "DEV_REVIEWED": "PENDING"
         }
       },
-      "evidence_refs": []
+      "evidence_refs": [
+        "docs/evidence/issue45/F01_F02_MACOS_COMPONENT.json",
+        "docs/evidence/issue45/F01_PINNED_SOURCE_MACOS.json",
+        "docs/evidence/issue45/HTTP_SCANNER_MACOS_CORE_QT.json"
+      ],
+      "component_scope_note": "Partial component evidence; never integrated case PASS or mainnet authorization."
     },
     {
       "id": "B-04",
@@ -256,10 +261,10 @@
       "priority": "P0",
       "owner": "ENGINEERING",
       "status": "PENDING",
-      "code_sha": "4c630306489df241077615e6058dc81024475d11",
-      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "code_sha": "30300a5eb07c74c435c1a3eb13d460e92e45f8d8",
+      "observed_utc": "2026-10-16T15:18:58.324344+00:00",
       "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
-      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "next_action": "Refresh PR51-53 exact-head native/frozen qualification; full mining GUI and operational HTTP session integration remain unfinished",
       "platforms": {
         "macos-arm64": {
           "SOURCE": "PENDING",
@@ -283,7 +288,12 @@
           "DEV_REVIEWED": "PENDING"
         }
       },
-      "evidence_refs": []
+      "evidence_refs": [
+        "docs/evidence/issue45/F01_F02_MACOS_COMPONENT.json",
+        "docs/evidence/issue45/F01_PINNED_SOURCE_MACOS.json",
+        "docs/evidence/issue45/HTTP_SCANNER_MACOS_CORE_QT.json"
+      ],
+      "component_scope_note": "Partial component evidence; never integrated case PASS or mainnet authorization."
     },
     {
       "id": "T-02",
@@ -902,10 +912,10 @@
       "priority": "P0",
       "owner": "ENGINEERING",
       "status": "PENDING",
-      "code_sha": "4c630306489df241077615e6058dc81024475d11",
-      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "code_sha": "30300a5eb07c74c435c1a3eb13d460e92e45f8d8",
+      "observed_utc": "2026-10-16T15:18:58.324344+00:00",
       "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
-      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "next_action": "Refresh PR51-53 exact-head native/frozen qualification; full mining GUI and operational HTTP session integration remain unfinished",
       "platforms": {
         "macos-arm64": {
           "SOURCE": "PENDING",
@@ -929,17 +939,22 @@
           "DEV_REVIEWED": "PENDING"
         }
       },
-      "evidence_refs": []
+      "evidence_refs": [
+        "docs/evidence/issue45/F01_F02_MACOS_COMPONENT.json",
+        "docs/evidence/issue45/F01_PINNED_SOURCE_MACOS.json",
+        "docs/evidence/issue45/HTTP_SCANNER_MACOS_CORE_QT.json"
+      ],
+      "component_scope_note": "Partial component evidence; never integrated case PASS or mainnet authorization."
     },
     {
       "id": "F-02",
       "priority": "P0",
       "owner": "ENGINEERING",
       "status": "PENDING",
-      "code_sha": "4c630306489df241077615e6058dc81024475d11",
-      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "code_sha": "30300a5eb07c74c435c1a3eb13d460e92e45f8d8",
+      "observed_utc": "2026-10-16T15:18:58.324344+00:00",
       "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
-      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "next_action": "Refresh PR51-53 exact-head native/frozen qualification; full mining GUI and operational HTTP session integration remain unfinished",
       "platforms": {
         "macos-arm64": {
           "SOURCE": "PENDING",
@@ -963,7 +978,12 @@
           "DEV_REVIEWED": "PENDING"
         }
       },
-      "evidence_refs": []
+      "evidence_refs": [
+        "docs/evidence/issue45/F01_F02_MACOS_COMPONENT.json",
+        "docs/evidence/issue45/F01_PINNED_SOURCE_MACOS.json",
+        "docs/evidence/issue45/HTTP_SCANNER_MACOS_CORE_QT.json"
+      ],
+      "component_scope_note": "Partial component evidence; never integrated case PASS or mainnet authorization."
     },
     {
       "id": "F-03",
@@ -1344,10 +1364,10 @@
       "priority": "P0",
       "owner": "ENGINEERING",
       "status": "PENDING",
-      "code_sha": "4c630306489df241077615e6058dc81024475d11",
-      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "code_sha": "30300a5eb07c74c435c1a3eb13d460e92e45f8d8",
+      "observed_utc": "2026-10-16T15:18:58.324344+00:00",
       "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
-      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "next_action": "Refresh PR51-53 exact-head native/frozen qualification; full mining GUI and operational HTTP session integration remain unfinished",
       "platforms": {
         "macos-arm64": {
           "SOURCE": "PENDING",
@@ -1371,7 +1391,12 @@
           "DEV_REVIEWED": "PENDING"
         }
       },
-      "evidence_refs": []
+      "evidence_refs": [
+        "docs/evidence/issue45/F01_F02_MACOS_COMPONENT.json",
+        "docs/evidence/issue45/F01_PINNED_SOURCE_MACOS.json",
+        "docs/evidence/issue45/HTTP_SCANNER_MACOS_CORE_QT.json"
+      ],
+      "component_scope_note": "Partial component evidence; never integrated case PASS or mainnet authorization."
     },
     {
       "id": "R-04",
@@ -2154,6 +2179,84 @@
         }
       },
       "evidence_refs": []
+    },
+    {
+      "id": "F-01a",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "30300a5eb07c74c435c1a3eb13d460e92e45f8d8",
+      "observed_utc": "2026-10-16T15:18:58.324344+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "Refresh PR51-53 exact-head native/frozen qualification; full mining GUI and operational HTTP session integration remain unfinished",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": [
+        "docs/evidence/issue45/F01_F02_MACOS_COMPONENT.json",
+        "docs/evidence/issue45/F01_PINNED_SOURCE_MACOS.json",
+        "docs/evidence/issue45/HTTP_SCANNER_MACOS_CORE_QT.json"
+      ],
+      "component_scope_note": "Partial component evidence; never integrated case PASS or mainnet authorization."
+    },
+    {
+      "id": "F-01b",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "30300a5eb07c74c435c1a3eb13d460e92e45f8d8",
+      "observed_utc": "2026-10-16T15:18:58.324344+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "Refresh PR51-53 exact-head native/frozen qualification; full mining GUI and operational HTTP session integration remain unfinished",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": [
+        "docs/evidence/issue45/F01_F02_MACOS_COMPONENT.json",
+        "docs/evidence/issue45/F01_PINNED_SOURCE_MACOS.json",
+        "docs/evidence/issue45/HTTP_SCANNER_MACOS_CORE_QT.json"
+      ],
+      "component_scope_note": "Partial component evidence; never integrated case PASS or mainnet authorization."
     }
   ]
 }

@@ -5,7 +5,7 @@ Current resume checkpoint: [Issue45 continuation](ISSUE45_CONTINUATION.md).
 Canonical scope: [Issue45](https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45), read in full, observed 2026-10-16T09:57:52.013008+00:00.
 This registry is evidence bookkeeping, never an alternative specification or
 production/mainnet permission. [Machine registry](../tests/acceptance/issue45.json)
-contains all42 task IDs and20 Q IDs with separate SOURCE/CORE_E2E/FROZEN/
+contains the task/Q IDs including the new F-01a/F-01b subcases; original42 task IDs and20 Q IDs with separate SOURCE/CORE_E2E/FROZEN/
 PHYSICAL/DEV_REVIEWED slots for all3OS. All integrated-V1 gates remain PENDING.
 No aggregate95% or inherited RC1 PASS is asserted. Missing/SKIP is PENDING;
 changed tested source/OS/Core/WSP invalidates prior PASS to STALE.
@@ -238,3 +238,5 @@ reviewed file:line diagnostics aid any remaining failure; no arbitrary exception
 secret or path is logged. Latest native/frozen qualification PENDING, no prior
 FAIL rewritten as PASS. Old-head runs were cancelled only after replacement;
 latest-head required checks remain active, cancellation is not qualification.
+
+Checkpoint: PR51/Linux Qt fresh-Core recovery and headless source gates PASS at516b4f2; PR52/Linux Qt still required at its own HEAD. Full latest native/frozen matrix remains in progress. Core updater remains deferredP1. See ISSUE45_CONTINUATION.md.
