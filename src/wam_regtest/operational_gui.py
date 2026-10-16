@@ -116,8 +116,18 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.mine_button.clicked.connect(lambda:self.start_operation('mine'));self.network_button.clicked.connect(lambda:self.start_operation('network'))
         self.appearance.setItemText(0,'Auto · '+{'win32':'Windows','darwin':'macOS','linux':'Linux desktop'}.get(sys.platform,'system'))
         self.dashboard.go_send.clicked.connect(lambda:self.navigation.setCurrentRow(3));self.dashboard.open_security.clicked.connect(lambda:self.navigation.setCurrentRow(4))
+        from .mining_gui import MiningAccountPage
+        self.mining_page=MiningAccountPage()
+        self.navigation.addItem('Mining Account');self.stack.addWidget(self.mining_page.widget)
+        self.navigation.currentRowChanged.connect(lambda i:self.workspace_title.setText('Mining Account') if i==6 else None)
         self._actions=(self.prepare_button,self.sign_button,self.broadcast_button,self.cancel_button,self.lock_button,self.unlock_button,self.backup_button,self.recover_button,self.mine_button,self.network_button,self.disclosure_button)
         self._update_controls();self.apply_theme()
+
+    def apply_theme(self):
+        super().apply_theme()
+        if self.navigation.count()>6:
+            from .fusion_ui import vector_icon,fusion_palette
+            self.navigation.item(6).setIcon(vector_icon('core',fusion_palette(self._active_theme)['accent'],self.devicePixelRatioF()))
 
     def approve_payment(self,kind):
         if self._approval_open or self.review is None or self._worker is not None or self.session.locked or self.session.faulted:return
@@ -241,6 +251,9 @@ class OperationalWalletWindow(RegtestWalletWindow):
 
     def apply_snapshot(self,snap):
         super().apply_snapshot(snap)
+        if hasattr(self,'mining_page'):
+            try:self.mining_page.render_snapshot(snap.mining if self._snapshot is not None else None)
+            except ValueError:self._sync_failed('RPC_MINING_RECONCILIATION_DENIED');return
         if self._snapshot is not None and self._submitted_txid is not None:
             confirmed=next((r for r in snap.history if r.txid==self._submitted_txid and r.confirmations>0),None)
             if confirmed is not None:
@@ -262,6 +275,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
 
     def _clear_balance(self):
         super()._clear_balance()
+        if hasattr(self,"mining_page"):self.mining_page.render_snapshot(None)
         if hasattr(self,'disclosure_record'):
             self.disclosure_record.clear();self.disclosure_text.setText('No verified local disclosure')
             self.core_identity.setText('No verified Core identity in this session')

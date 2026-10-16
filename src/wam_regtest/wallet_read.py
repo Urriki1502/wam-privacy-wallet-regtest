@@ -7,6 +7,10 @@ verified SQLite. Does not treat a cached DB as an attested wallet balance.
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .mining_read import MiningSnapshot
+
 from dataclasses import dataclass
 from pathlib import Path
 import platform
@@ -50,6 +54,7 @@ class WalletReadSnapshot:
     signer_allowed: bool = False
     broadcast_allowed: bool = False
     mainnet_allowed: bool = False
+    mining: MiningSnapshot | None = None
 
 
 def read_real_wallet_snapshot(

@@ -34,7 +34,8 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case,*,read_rpc
         window.apply_snapshot(snap)
         qt_application().processEvents()
         assert window.receive_code.text()==snap.receive_code and window.prepare_button.isEnabled()
-        assert window.navigation.count()==6
+        assert window.navigation.count()==7
+        assert 'treasury excluded' in window.mining_page.state.text()
         if sys.platform=='win32':
             # Window close locks its session. Exercise stale writers while
             # the actual recovered wallet is open, then close it normally.
@@ -56,7 +57,9 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case,*,read_rpc
             'native_qt_recovered_receive_balance':True,'observed_height':103,
             'cross_mac_anchor_migration_allowed':False,
         }
-    except Exception:
+    except Exception as error:
+        from .acceptance_failure import failure_site
+        print('REOPEN_FAILURE_SITE='+failure_site(error),flush=True)
         raise ReopenProbeError('WALLET_REAL_CORE_REOPEN_DENIED') from None
     finally:
         if window is not None:

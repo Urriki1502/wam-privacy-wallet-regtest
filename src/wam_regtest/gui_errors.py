@@ -2,6 +2,10 @@
 INPUT_ERRORS=frozenset(('WALLET_INPUT_AMOUNT_INVALID','WALLET_INPUT_FEE_INVALID',
                         'WALLET_INPUT_RECIPIENT_INVALID','WALLET_INPUT_FUNDS_UNAVAILABLE'))
 _MESSAGES={
+ 'RPC_MINING_RECONCILIATION_DENIED':'Core mining-account ownership or UTXO balances could not be reconciled. Balances are hidden. No keys or reservations are changed.',
+ 'RPC_MINING_CHAIN_CHANGED':'The chain changed while reading the mining account. Balances are hidden; use Sync to verify again.',
+ 'RPC_MINING_RESULT_DENIED':'Core mining-account data is unavailable or exceeds the supported read limit. Balances are hidden; no account is imported or selected automatically.',
+
  'WALLET_INPUT_AMOUNT_INVALID':'Amount not accepted. Enter 0.00000330 to 22000000 WAM, using a decimal point and at most 8 decimal places.',
  'WALLET_INPUT_FEE_INVALID':'Fee not accepted. Enter 0.00000001 to 0.01000000 WAM, using a decimal point and at most 8 decimal places.',
  'WALLET_INPUT_RECIPIENT_INVALID':'Recipient not accepted. Use the complete REGTEST silent-payment code (wamrtsp1…). Ordinary Core addresses, other networks and invalid checksums are not supported.',

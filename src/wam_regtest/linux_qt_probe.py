@@ -38,7 +38,7 @@ def probe(core,datadir,source,mining,*,read_rpc):
         assert initial.height==103 and initial.confirmed_utxos==1 and initial.history
         window=OperationalWalletWindow(session);window.show();window.apply_snapshot(initial)
         validation_cases=_validation_feedback_probe(app,window,session)
-        assert window.navigation.count()==6 and window._sync_timer.interval()==30000
+        assert window.navigation.count()==7 and window._sync_timer.interval()==30000
         assert background_snapshot(app,window)==initial
         for index,mode in ((2,'dark'),(1,'light')):
             window.appearance.setCurrentIndex(index);app.processEvents()
@@ -110,7 +110,7 @@ def probe(core,datadir,source,mining,*,read_rpc):
         return {'status':'REAL_LINUX_CORE_ROOT_WITNESS_NATIVE_QT_WALLET_E2E_PASS',
             'operational_snapshot_http':http_proof,
             'synthetic_rpc':False,'mainnet_allowed':False,'qt_platform':app.platformName(),
-            'native_pages':6,'background_timer_live_core_verified':True,
+            'native_pages':7,'background_timer_live_core_verified':True,
             'separate_native_sign_broadcast_approvals':True,'cancel_is_default':True,
             'confirmed_recipient_atoms':100000,'confirmed_sender_change':True,
             'backup_lock_wrong_password_recovery':True,'fresh_core_same_keys_reservations':True,

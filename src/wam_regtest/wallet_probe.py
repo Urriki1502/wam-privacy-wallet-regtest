@@ -124,7 +124,10 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         window.apply_snapshot(initial)
         stage="QT_VALIDATION"
         validation_cases=_validation_feedback_probe(app,window,session)
-        assert window.navigation.count()==6 and window._sync_timer.isActive()
+        assert window.navigation.count()==7 and window._sync_timer.isActive()
+        assert window.navigation.item(6).text()=='Mining Account'
+        assert window.mining_page.values['available_atoms'].text()=='0.00000000 WAM'
+        assert 'treasury excluded' in window.mining_page.state.text()
         assert window.navigation.item(0).text()=="Overview"
         assert window.stack.widget(0) is window.dashboard
         assert window.dashboard.balance_value.text()==window.balance_text.text()
@@ -360,6 +363,7 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         assert window.history_page.rows==() and not window.history_page.copy_button.isEnabled()
         assert window.dashboard.evidence_text.toolTip()==''
         assert initial.receive_code not in window.recipient.text() and code not in window.review_text.text()
+        assert all(v.text()=='—' for v in window.mining_page.values.values())
         assert not window.dashboard.go_send.isEnabled()
         assert not window.prepare_button.isEnabled()
         assert 'block_height' not in window.disclosure_text.text() and session._disclosure_gate is None
@@ -404,7 +408,7 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
             'wrong_unlock_password_denied':True,'background_sync_active':True,
             'background_sync_timer_live_core_verified':True,
             'background_sync_production_interval_ms':30000,'background_sync_test_interval_ms':50,
-            'native_gui_navigation_pages':6,'observed_height':105,
+            'native_gui_navigation_pages':7,'observed_height':105,
             'qt_manual_light_dark_verified':True,'qt_auto_system_events_verified':auto_verified,
             'cross_session_key_recovery':True,'cross_session_native_qt':True,
             'cross_session_recovery_proof':proof,
@@ -482,7 +486,7 @@ def _capture_fusion_views(app,window):
         app.processEvents()
     try:
         window.resize(1280,800);window.appearance.setCurrentIndex(2)
-        for index,name in enumerate(('overview','receive','history','send','security','settings')):
+        for index,name in enumerate(('overview','receive','history','send','security','settings','mining')):
             window.navigation.setCurrentRow(index)
             if index==2 and window.history_table.rowCount():window.history_table.selectRow(0)
             settle()

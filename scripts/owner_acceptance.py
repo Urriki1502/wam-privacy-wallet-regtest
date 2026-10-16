@@ -101,7 +101,7 @@ def audit(core,source):
    image=memoryview(tight).cast('B',shape=(qr.height(),qr.width()))
    decoded=zxingcpp.read_barcode(image)
    record('rendered_qr_independent_decode',decoded is not None and decoded.text==initial.receive_code)
-   record('six_screen_navigation',window.navigation.count()==6)
+   record('seven_screen_navigation',window.navigation.count()==7)
    for i in range(6):window.navigation.setCurrentRow(i);app.processEvents();assert window.stack.currentIndex()==i
    # Use a real malformed-input matrix; all denials must leave chain/reservations untouched.
    tests=[('amount_empty',receiver.accounts()[0].payment_code(),'','0.00010000'),('amount_negative',initial.receive_code,'-1','0.00010000'),('amount_comma',initial.receive_code,'0,001','0.00010000'),('amount_dust',initial.receive_code,'0.00000001','0.00010000'),('amount_precision',initial.receive_code,'0.000000001','0.00010000'),('fee_zero',initial.receive_code,'0.00100000','0'),('fee_negative',initial.receive_code,'0.00100000','-0.01'),('fee_excess',initial.receive_code,'0.00100000','0.01000001'),('fee_precision',initial.receive_code,'0.00100000','0.000000001'),('recipient_empty','','0.00100000','0.00010000'),('recipient_garbage','not-an-address','0.00100000','0.00010000'),('recipient_standard_core',mining,'0.00100000','0.00010000'),('recipient_bad_checksum',initial.receive_code[:-1]+('q' if initial.receive_code[-1]!='q' else 'p'),'0.00100000','0.00010000'),('insufficient_funds',initial.receive_code,'999999.00000000','0.00010000')]

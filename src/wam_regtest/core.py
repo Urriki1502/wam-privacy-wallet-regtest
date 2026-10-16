@@ -186,7 +186,9 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     security_e2e: bool = False,
                     wallet_e2e: bool = False, operational_demo: bool = False,
                     recovery_case: tuple | None = None, headless_callback=None,
-                    rpc_contention_e2e: bool = False) -> dict:
+                    rpc_contention_e2e: bool = False, mining_gui_e2e: bool = False) -> dict:
+    if type(mining_gui_e2e) is not bool or (mining_gui_e2e and (interactive_demo or headless_callback is None)):
+        raise CoreSmokeError('CORE_MINING_GUI_SCOPE_DENIED')
     if type(rpc_contention_e2e) is not bool:
         raise CoreSmokeError('CORE_RPC_CONTENTION_CONSENT_DENIED')
     if rpc_contention_e2e and interactive_demo:
@@ -221,7 +223,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
     mining_receipt=None
     if (wallet_e2e or headless_callback is not None) and not interactive_demo:
         from .mining_probe import probe_core_mining
-        mining_receipt=probe_core_mining(core_dir,wsp_source)
+        mining_receipt=probe_core_mining(core_dir,wsp_source,gui=(wallet_e2e or mining_gui_e2e))
     node, cli, receipt = verified_core_paths(core_dir)
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.

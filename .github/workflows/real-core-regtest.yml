@@ -156,7 +156,9 @@ jobs:
           assert reopen['real_core_rpc'] is True and reopen['synthetic_rpc'] is False
           assert reopen['same_test_keys_recovered'] is True and reopen['old_reservations_retained'] is True
           assert reopen['observed_height'] == 103
-          assert wallet['native_gui_navigation_pages'] == 6 and wallet['observed_height'] == 105
+          assert wallet['native_gui_navigation_pages'] == 7 and wallet['observed_height'] == 105
+          assert proof['mining_account_component']['native_gui_depths'] == [99,100,101]
+          assert proof['mining_account_component']['owned_http_matches_independent_cli'] is True
           print('REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_PASS')
           print('REAL_CORE_KEYCHAIN_ENCRYPTED_RECOVERY_REORG_PASS')
           print('REAL_WAM_CORE_REGTEST_101_BLOCKS_PASS')

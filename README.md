@@ -15,6 +15,19 @@ PRs [#6](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/6)
 (native payments) and [#9](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/9)
 (cross-session recovery and stale-writer protection) are merged.
 
+## Active Issue45 engineering
+
+[PR54](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/54) adds a
+read-only Mining Account page with verified owned-Core eligible, immature,
+trusted and pending balances, kept separate from WSP payment funds. Genuine
+Core depth99/100/101 and frozen Mac evidence are retained in
+[the acceptance ledger](docs/ISSUE_45_ACCEPTANCE.md). This is a component under
+qualification, not integrated V1 or Core-account signing/import support.
+[Continuation checkpoint](docs/ISSUE45_CONTINUATION.md) tracks current CI,
+remaining P0 gates and exclusive engineering. Build macOS bundles in a clean
+checkout with an empty package-output directory; archive existing own build
+artifacts before rebuilding. Never change checkout while a build is running.
+
 ## WAM Fusion REGTEST RC1 — 16 October 2026
 
 Qualified code `144d87700b87a241467172adfad3692b41e1d273` has same-source macOS ARM64, Windows x64 and experimental Linux x86_64 packages. **READY FOR OWNER REGTEST TESTING**; human acceptance remains PENDING_OPERATOR. Start with [downloads, exact native CI and checksums](docs/RELEASE_CANDIDATE_QUALIFICATION.md), [owner test guide](docs/OWNER_REGTEST_ACCEPTANCE.md) and [DEV review draft](docs/DEV_WAM_REVIEW_HANDOFF.md).
