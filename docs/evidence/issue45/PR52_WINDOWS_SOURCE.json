@@ -1,0 +1,82 @@
+{
+  "source_contract_only": true,
+  "core_binary_e2e": false,
+  "production_parameter_vectors": [
+    {
+      "height": 0,
+      "subsidy_atoms": 200000000000000,
+      "treasury_atoms": 0,
+      "miner_atoms": 200000000000000
+    },
+    {
+      "height": 1,
+      "subsidy_atoms": 5000000000,
+      "treasury_atoms": 250000000,
+      "miner_atoms": 4750000000
+    },
+    {
+      "height": 200000,
+      "subsidy_atoms": 5000000000,
+      "treasury_atoms": 250000000,
+      "miner_atoms": 4750000000
+    },
+    {
+      "height": 200001,
+      "subsidy_atoms": 2500000000,
+      "treasury_atoms": 125000000,
+      "miner_atoms": 2375000000
+    },
+    {
+      "height": 399999,
+      "subsidy_atoms": 2500000000,
+      "treasury_atoms": 125000000,
+      "miner_atoms": 2375000000
+    },
+    {
+      "height": 400000,
+      "subsidy_atoms": 2500000000,
+      "treasury_atoms": 125000000,
+      "miner_atoms": 2375000000
+    },
+    {
+      "height": 400001,
+      "subsidy_atoms": 1250000000,
+      "treasury_atoms": 0,
+      "miner_atoms": 1250000000
+    },
+    {
+      "height": 600000,
+      "subsidy_atoms": 1250000000,
+      "treasury_atoms": 0,
+      "miner_atoms": 1250000000
+    },
+    {
+      "height": 600001,
+      "subsidy_atoms": 625000000,
+      "treasury_atoms": 0,
+      "miner_atoms": 625000000
+    }
+  ],
+  "treasury_cutoff_independent": true,
+  "genesis_not_normal_reward": true,
+  "production_parameter_lifetime_treasury_atoms": 75000000000000,
+  "regtest_lifetime_treasury_atoms": 74999998050,
+  "regtest_interval": 150,
+  "no_mainnet_node_or_network": true,
+  "upstream_tag": "v0.1.11",
+  "upstream_blobs": {
+    "wam-params.h": "d798155e1964adbdb3ccc48b44dd48fcde3b1602",
+    "consensus/subsidy.cpp": "5659e868f191f2c497950d690829f0369aa912d1",
+    "consensus/subsidy.h": "43e2e8c11a58b1b56141c63de470acb4743544ad"
+  },
+  "source_sha": "0c839153c02b876b4aecc75007897fa199042098",
+  "tested_utc": "2026-10-16T15:10:12.684565+00:00",
+  "os": "Windows",
+  "architecture": "AMD64",
+  "compiler": "c++.EXE",
+  "shims_are_not_core_consensus_validation": true,
+  "test_driver_sha256": "7dceddb00713e59ec7bc7b61f3a5b99dd9a442235f6316a497bb2dc318033d1f",
+  "mainnet_allowed": false,
+  "frozen_qualified": false,
+  "physical_accepted": false
+}

@@ -1,84 +1,122 @@
-# Issue45 resumable checkpoint — 16 October 2026
+# Issue45 continuation — owned HTTP qualified components, V1 still pending
 
-Canonical contract: https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45
-Read it completely and refresh GitHub before engineering. Never auto-merge,
-force-push, modify RC1/main/upstream Core or access owner data/mainnet.
+Read the FULL live Issue45 and refresh actual Git/PR/CI, not just this snapshot.
+Core Update Manager remains DEFERRED P1. REGTEST only; no owner data/anchors,
+mainnet, upstream Core edit, main/RC1 change, force push or automatic merge.
+Reuse existing Draft53; do not recreate merged/ancestor Security/Send/Recovery.
 
-## Current integration and lease
+## Workspace and exclusive lease
 
-Workspace work/production-v1; branch fix/issue45-linux-evidence-identity-20261016.
-Runtime460eceff6ffe36c638cfadce53e2016c9d3c6595, Draft50 on49.
-Lease63300 was held for this run. Release is recorded in the separate local
-outputs/production-v1-20261016/RESUME_LOG.txt. Acquire a new exclusive lease with
-scripts/engineering_lease.py --hold; refuse concurrent engineering. Never infer
-lease ownership from this document. Preserve all other worktrees/user files.
+work/production-v1, feature/issue45-http-scanner-20261016, official origin.
+Current runtime5555df8acab1e6512271be409a8f4ca673143692; following checkpoint
+commits contain docs/evidence only. Check actual HEAD before execution.
+This continuation held OS lease94867, including the scheduled heartbeat; no
+second writer was started. Actual release is recorded in separate logs under
+outputs/issue45-session-20261016T154758 and issue45-heartbeat-20261016T204821.
+Acquire a NEW lease via scripts/engineering_lease.py --hold; exit73 means REFUSE
+concurrent engineering. This document never proves current lock ownership.
 
 Main50e1ea94df61b8400cbab3bffe0fbdd285c6b419 and immutable RC1
-144d87700b87a241467172adfad3692b41e1d273 were confirmed unchanged.
+144d87700b87a241467172adfad3692b41e1d273 remain unchanged. Native WSP pin
+ac55f13423620252bdbf848c7e8a280c3b84721e; Core remains independently pinned
+v0.1.11. Linux is the separately approved developer build, not signed official.
+Tool venv: sibling wam-privacy-wallet-regtest/.venv. Use PYTHONPATH=src plus
+outputs/production-v1-20261016/reference-deps when needed; do not modify that
+old editable install or upstream. Native tests use QT_QPA_PLATFORM=offscreen.
 
-## New focused Draft stack, no merges to main
+## Existing stack — do not replay
 
--46,90561d159cf3e79cd4d4c60cd5f04c491c108718: shared protected HTTP reads and
- complete42task/20Q acceptance registry; source/frozen Windows had a GUI race FAIL.
--47,e61ed4bd50f065d839c4e326ee4dcbeb42086f29: owned Core PID/image and kernel
- established socket before any HTTP/auth byte; no CLI/full hash per read.
- Windows aliases use same-file identity plus unchanged pinned metadata. Earlier
- cad7785 operational Windows image-string mismatch FAIL is retained, not waived.
--48,17ccbbd868ee0f10cd124f4cca61933ffb7f8c3d: real modal approval/background
- sync race reproduced and fixed; harness waits idle and emits timer/manual sync
- inside every actual modal, retains default Cancel/exact intent/backend gates.
--49,0ea42e61b638200e2f00c01fed3741c1642f0846: measured RPC111,/WAM:0.1.11/,
- protocol70016; typed compatibility refusal; actual copied-binary tamper,
- replacement and process-exit quarantine. Native/frozen-only path filters added
- to EXISTING workflows, no new job. Includes47/48 through normal merge ancestry.
--50,460eceff6ffe36c638cfadce53e2016c9d3c6595: Linux receipt provenance gap:
- emit independently pinned CLI hash, source/checkout, UTC environment and WSP.
- Validate declared source against checkout/direct raw parent without fetching
- history, including shallow CI. Native Linux/frozen proof PENDING on this SHA.
+PR46 historical modal race was fixed once in48.47–50 native/frozen green history
+is retained, not qualification for later code.51 feature/issue45-core-miner-
+accounting-20261016 at516b4f26ca7ec343a489754a0b472c9aaaa41979 and52 test/issue45-
+pinned-subsidy-vectors-20261016 atc877705581d585499d7796caaa50f58fad33a348 each
+had all10 checks PASS.53 stacks on52 and now contains:
 
-## Observed evidence (refresh; never inherit PASS for changed code)
+-03d0db7: Linux test timer stopped at signal delivery; exact-one snapshot
+ assertion retained. Earlier Linux multi-window lifetime fix remains.
+-527fb72: operational snapshots/background Qt/lock/unlock/recovery reads borrow
+ the actual owned process's shared HTTP capability. Missing/wrong scope is
+ refused before wallet keys/backup access. No HTTP write/failure-to-CLI path.
+-9ba9cfc: real config-tamper negative caught cached-config regression. Native
+ private config custody plus exact4KiB digest rechecked before any request or
+ capability loan. Exact-original restoration requires a subsequent explicit
+ read; no new auth/port adopted. Unrelated speculative64b929c/7acf495 harness
+ changes were removed normally; historical FAIL logs remain.
+-42cb9a8: genuine queue32 produces20 HTTP200/12 HTTP503. At most3 positively
+ rejected idempotent-read attempts with bounded jitter; session recovers when
+ queue drains. Invalid auth/config/reply/connection uncertainty and all writes
+ are never replayed. All native/frozen gates require the busy proof.
+-bb28a1a: queue stress only in explicit acceptance, not interactive startup;
+ actual frozen Mac E2E JSON is retained in artifact with source/checkout IDs.
+-8b50296: reviewed basename:line diagnostics localize Windows failure safely.
+-5555df8: idle socket expiration5s BEFORE request, fresh OS endpoint proof before
+ auth, no failed request replay. Genuine5.1s idle probe. Fixes absolute import in
+ PyInstaller __main__ that caused Mac frozen UNKNOWN after full wallet tests.
+ Sign/Broadcast independent CLI hashes/approval/OS lease/irreversible locks stay.
 
-150 local units=117PASS/33platformSKIP/0FAIL. Actual Mac full Core/WSP/SQLite/Qt
- Send/Sign/Broadcast,100000atoms confirmed/change, lost reply retains reservations,
- backup/lock/wrong-password/recovery/fresh Core and reorg1/12/100 PASS at3ea32b8.
- Offscreen is not Cocoa Auto or physical acceptance; false/not-exercised receipt
- flags remain false. Actual Mac RPC/version and copied-exec failure receipts at
- ea5ff6c are committed under docs/evidence/issue45. No mutated binary launched;
- originals rehashed unchanged. Latest metadata-only Core smoke460ecef PASS101
- blocks and version-bound HTTP; does not claim WSP/signing tested in that smoke.
+## Exact evidence and limits
 
-PR48 run38889045778 has passed native operational Windows and is building/running
- actual packaged exe at checkpoint. Both Linux frozen gates in38889045717 PASS.
- PR49 runs38889211784(Mac),38889211782(Windows),38889211809(Linux) still in progress;
- native Mac/Linux source gates PASS, final frozen/Windows disposition PENDING.
- PR50 discovery/CI pending. Snapshot in separate outputs/ISSUE45_LIVE_PRS.json.
- Do not count missing/SKIP as PASS. All integrated-V1 Q rows remain PENDING.
+162units=129PASS/33platformSKIP/0FAIL. At5555, actual downloaded Windows native
+Core/WSP/Qt receipt PASS including stale pre-sign/pre-broadcast, custody and
+recovery. Linux native headless/Qt and frozen headless/desktop CI PASS under
+independent root witness. Mac native and frozen CI PASS (run38965264090).
+Windows final package aggregate and separate Linux developer-Core rebuild were
+still RUNNING at last snapshot; refresh them first. Cancelled obsolete-head
+runs are not PASS, and docs-only new HEAD still requires its current CI.
 
-Verified downloaded PR48 native receipts (archive SHA matches GitHub):
- Windows vault artifact12040279941,
- 99d581b95dff4bea56bfbe5aab046fcb1afb1c272af7ce85ea835e00cc78932e;
- Linux headless artifact12041058114,
- f5ad7b348b338b583bdde7f3629e2cc750110fab49f6d1117785b0e9579b3fde.
- Both contain genuine owned-socket proof, real401 and zero-byte wrong-process
- refusal. Linux older JSON lacked source/CLI identity: preserved and fixed in50,
- not retroactively rewritten into qualification. Artifact links are under the
- corresponding GitHub run/artifact ID. Final new binary inspection still pending.
+Actual local5555 final .app ran on MacBook ARM64 with offscreen Qt and an isolated
+fixture Keychain: config-tamper denial/restoration, idle/busy, actual BIP352,
+Receive/History, exact approvals, Send/Sign/Broadcast/confirmed change, uncertain
+locks, backup/lock/wrong-password/recovery/fresh Core, reorg1/12/100. DMG verified.
+Manifest tail initially imported reused venv's old package; completed with
+PYTHONPATH=src after source/checkout/payload/Core digest checks. No binary/gate
+changed. Full reproduction must use this checkout or PYTHONPATH=src.
 
-## Next unblocked order
+Local artifacts: outputs/issue45-heartbeat-20261016T204821/LOCAL_MACOS_5555.
+AppZIP SHA25656c7526dc4092867359eb3b133502df84ce276463946d65cd2b06866089b0aff;
+DMG7ff2acbade4be94344916517bf289c5600e26dfe98c55c9b0acf5749cf5ed061.
+See docs/evidence/issue45/HTTP_IDLE_BUSY_5555_LOCAL_FROZEN.json and platform
+5555 native receipts. Earlier9ba/42cb/bb28 Mac source PASS and historical c478
+Mac/c877 Windows artifact inspection stay separately labelled. Windows c877
+archive354 actual file hashes/Core pair verified, not new runtime qualification.
+Linux5555 frozen download/inspection progress is in the separate heartbeat log.
 
-1.Refresh47–50 exact-head CI, fix any red gate first. Inspect actual packaged
- manifests/HTTP receipts, download+verify SHA-256. Do not repeat old engineering.
-2.Finish B03 native/frozen metadata proof50. Update registry snapshots truthfully.
-3.T01 typed scanner block reads + lifecycle-owned reusable HTTP through genuine
- WSP/Qt, preserving source pins/zero-peer default; no per-read CLI/hash. Current
- GUI/scanner STILL use CLI; new HTTP is a tested component, not completedT01.
-4.T07 bounded busy/coalesced idempotent reads; never auto replay uncertain writes.
- Then persistent managed Core/read-only cookie attach/port collision recovery and
- separately scoped mandatory multi-node private REGTEST lab. Follow45 dependency
- order before full BIP39 GUI/custody/import/recovery. Physical OS/operator,
- independent security review and production/mainnet remain separate gates.
+Offscreen is not Finder/Cocoa Auto/physical signoff. Mac fresh-recovery flags
+not exercised remain false. Linux is never relabelled official-signed. Physical
+Mac/Windows/Linux and external review remain PENDING_OPERATOR/DEV_REVIEWED.
+DEV agreement permits clean isolated hosts only, NEVER treasury-signing machine.
 
-Usage last observed primary96%,weekly77%,ordinaryUsageAllowed=true, credits0.
-No reset/purchase/recurring retry was used or created. Leave checkpoint before
-exhaustion; record any actual usage failure, never assume a reset. This file is
-resumption evidence, not a claim that work continues after this turn.
+F01/F02 component: actual REGTEST halving interval150, not production parameter
+200000. Coinbase99/100 unavailable,101 eligible; subsidy-only treasury independent
+cutoff400000; all fees miner; locked/immature/untrusted not available. At4951
+REGTEST subsidy is zero, so nonzero-subsidy sunset400001 runtime proof cannot be
+fabricated from unchanged binary. Pinned original C++ functions + explicit type/
+parameter SHIMS provide SOURCE vectors and750000WAM production-parameter lifetime,
+not mainnet/Core binary high-height PASS. Full mining account UI/Q11 remains open.
+
+## Next unblocked P0 work
+
+1.Refresh53 exact-head CI. Fix genuine failures on this branch before features.
+ Inspect actual latest frozen receipts and hashes, especially Windows5555 or
+ successor, and root/developer-Core job. No merge/readiness promotion from SKIP.
+2.F01/F02 native Core mining-account GUI and funds reconciliation remain missing;
+ reuse mining_account.py read model, maintain separate Core/WSP ownership and
+ signing authority. Complete legacy read-only/fixture scanner CLI migration only
+ where needed; do not repeat already proven operational HTTP migration.
+3.Persistent owned Core lifecycle, explicit read-only external REGTEST attachment,
+ bounded port-collision recovery, broader coalescing/busy UI and mandatory >=2
+ genuine peer-node lab remain open. No uncertain write retry or custody reset.
+4.BIP39 GUI/durable custody/import/recovery and remaining K/F/R/Q gates follow
+ canonical order. All integrated V1 registry cases remain PENDING until complete
+ matching source/Core/frozen/physical evidence. Never declare production Final.
+
+## Schedule and usage
+
+T0=2026-10-16T15:47:58Z (22:47:58UTC+7). Same existing automation was updated
+ACTIVE for the one requested next run20:47:58Z (03:47:58 on17OctUTC+7). Heartbeat
+actually arrived20:48:21.727Z,23.727s later, and coalesced into the held lease.
+It is now tool/config-verified PAUSED; no next run, duplicate or recurring retry.
+Observed usage at heartbeat primary1%,weekly16%,ordinaryAllowed=true,credits0;
+no purchase/reset performed or assumed. Record any actual quota failure, not
+an inferred one. Leave a checkpoint before stopping; do not schedule more work
+without a new explicit owner request.

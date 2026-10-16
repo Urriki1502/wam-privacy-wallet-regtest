@@ -12,35 +12,14 @@ from .fusion_ui import fusion_palette
 from .linux_headless import open_session
 from .linux_headless_probe import locks
 from .operational_gui import OperationalWalletWindow
-from .wallet_probe import _operation,_approve_dialog,_capture_fusion_views,_validation_feedback_probe
+from .wallet_probe import _operation,_approve_dialog,_capture_fusion_views,_validation_feedback_probe,background_snapshot
 from .wallet_session import WalletSession
 
 PASSWORD=b'public-disposable-linux-qt-acceptance'
 
 
-def background_snapshot(app,window):
-    loop=QEventLoop();observed=[];failures=[]
-    def ready(snap):observed.append(snap);loop.quit()
-    def denied(code):
-        from .gui_errors import public_code
-        failures.append(public_code(code));loop.quit()
-    deadline=QTimer();deadline.setSingleShot(True);deadline.timeout.connect(loop.quit)
-    window.snapshot_updated.connect(ready);window.snapshot_failed.connect(denied)
-    try:
-        window._sync_timer.setInterval(50);deadline.start(15000);loop.exec()
-        window._sync_timer.stop()
-        if window._worker is not None:assert window._worker.wait(15000)
-        app.processEvents();QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
-        if len(observed)!=1 or window._worker is not None:
-            print('LINUX_QT_BACKGROUND_COUNT='+str(len(observed))+';BUSY='+str(window._worker is not None)+';SAFE_FAILURE='+(','.join(failures) or 'NONE'),flush=True)
-        assert len(observed)==1 and window._worker is None
-        return observed[0]
-    finally:
-        deadline.stop();window.snapshot_updated.disconnect(ready);window.snapshot_failed.disconnect(denied)
-        window._sync_timer.setInterval(30000);window._sync_timer.start()
 
-
-def probe(core,datadir,source,mining):
+def probe(core,datadir,source,mining,*,read_rpc):
     from wam_sp.keystore import Keyring
     from wam_sp.scanner import Scanner
     from .core import smoke_real_core
@@ -52,7 +31,9 @@ def probe(core,datadir,source,mining):
     app.setQuitOnLastWindowClosed(False)
     try:
         assert app.platformName()=='xcb','LINUX_NATIVE_XCB_REQUIRED'
-        session=WalletSession.create(core,datadir,source,PASSWORD,mining,authorized=True)
+        session=WalletSession.create(core,datadir,source,PASSWORD,mining,authorized=True,read_rpc=read_rpc)
+        from .http_session_probe import prove_session_reads
+        http_proof=prove_session_reads(session)
         initial=session.snapshot();accounts=session.ring.accounts()
         assert initial.height==103 and initial.confirmed_utxos==1 and initial.history
         window=OperationalWalletWindow(session);window.show();window.apply_snapshot(initial)
@@ -113,8 +94,8 @@ def probe(core,datadir,source,mining):
         assert recovered==confirmed and session.ring.accounts()==accounts and locks(session)==retained
         window.close();window.deleteLater();QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete);window=None;session=None
         stage='FRESH_CORE_REOPEN';print('LINUX_QT_STAGE='+stage,flush=True)
-        def reopen(c,d,s,m):
-            restored=open_session(c,d,s,m,PASSWORD,backup/'wallet-backup.enc');view=None
+        def reopen(c,d,s,m,*,read_rpc):
+            restored=open_session(c,d,s,m,PASSWORD,backup/'wallet-backup.enc',read_rpc=read_rpc);view=None
             try:
                 assert restored.ring.accounts()[0]==accounts[0] and set(retained).issubset(set(locks(restored)))
                 snap=restored.snapshot();assert snap.height==103
@@ -127,6 +108,7 @@ def probe(core,datadir,source,mining):
         second=smoke_real_core(core,explicit_consent=True,wsp_source=source,wsp_payment_e2e=True,headless_callback=reopen)
         assert second['wallet_live_core']['fresh_core_same_keys_reservations_native_qt']
         return {'status':'REAL_LINUX_CORE_ROOT_WITNESS_NATIVE_QT_WALLET_E2E_PASS',
+            'operational_snapshot_http':http_proof,
             'synthetic_rpc':False,'mainnet_allowed':False,'qt_platform':app.platformName(),
             'native_pages':6,'background_timer_live_core_verified':True,
             'separate_native_sign_broadcast_approvals':True,'cancel_is_default':True,

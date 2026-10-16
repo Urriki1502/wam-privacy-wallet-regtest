@@ -19,6 +19,15 @@ class WalletSessionContracts(unittest.TestCase):
             WalletSession.from_backup(Path('/unknown'),Path('/unknown'),Path('/unknown'),
                 Path('/unknown'),'wallet.enc',b'', '',authorized=False)
 
+    def test_wallet_requires_owned_http_before_key_or_backup_access(self):
+        for rpc in (None, object()):
+            with self.assertRaisesRegex(WalletSessionError,'WALLET_OWNED_HTTP_REQUIRED'):
+                WalletSession.create(Path('/unknown'),Path('/unknown'),Path('/unknown'),
+                    b'', '',authorized=True,read_rpc=rpc)
+            with self.assertRaisesRegex(WalletSessionError,'WALLET_OWNED_HTTP_REQUIRED'):
+                WalletSession.from_backup(Path('/unknown'),Path('/unknown'),Path('/unknown'),
+                    Path('/unknown'),'wallet.enc',b'', '',authorized=True,read_rpc=rpc)
+
     def test_integer_atoms_without_float_rounding(self):
         self.assertEqual(parse_amount('0.00100000'),100000)
         self.assertEqual(parse_amount('0.00000330'),330)

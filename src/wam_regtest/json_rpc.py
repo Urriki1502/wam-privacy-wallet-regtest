@@ -1,9 +1,11 @@
 """Managed, authenticated loopback REGTEST reads; no CLI per request.
 
-Initial T-01/T-02 slice. No attach/cookie/write/lifecycle or complete process
-attestation claim. Existing scanner/GUI transports are deliberately unchanged.
+Typed owned scanner reads with no attach/cookie/write/lifecycle authority.
+Operational snapshots borrow this owned capability; hardened loader qualification
+and explicit external-Core attachment remain open.
 """
 import base64
+from hashlib import sha256
 from decimal import Decimal
 import http.client
 import json
@@ -12,11 +14,15 @@ import re
 import stat
 import sys
 import threading
+import time
+import random
 from .core_process import OwnedCoreBinding, CoreBindingError
 from .network_policy import parse_local_config
 from .wsp_live import REGTEST_GENESIS
 
 MAX_REPLY=1024*1024
+MAX_BLOCK_REPLY=32*1024*1024
+MAX_IDLE_REUSE_SECONDS=5
 # Measured on genuine independently pinned v0.1.11, not inferred from Bitcoin.
 # Signed newer binaries require a separate compatibility qualification.
 SUPPORTED_RPC=(111, '/WAM:0.1.11/', 70016)
@@ -60,17 +66,25 @@ def _unique(pairs):
 
 
 def _params(method,params):
-    if type(method) is not str or method not in ('getblockchaininfo','getblockcount','getblockhash','getnetworkinfo') or type(params) is not list:
+    if type(method) is not str or method not in ('getblockchaininfo','getblockcount','getblockhash','getnetworkinfo','getbestblockhash','getblock','getconnectioncount') or type(params) is not list:
         raise RpcError('RPC_READ_SCOPE_DENIED')
     if method=='getblockhash':
         if len(params)!=1 or type(params[0]) is not int or not 0<=params[0]<=1_000_000:
             raise RpcError('RPC_PARAMS_DENIED')
+    elif method=='getblock':
+        if (len(params)!=2 or type(params[0]) is not str or not re.fullmatch('[0-9a-f]{64}',params[0])
+                or type(params[1]) is not int or params[1]!=3):raise RpcError('RPC_PARAMS_DENIED')
     elif params:raise RpcError('RPC_PARAMS_DENIED')
 
 
 def _result(method,value):
-    if method=='getblockhash':valid=type(value) is str and re.fullmatch('[0-9a-f]{64}',value)
+    if method in ('getblockhash','getbestblockhash'):valid=type(value) is str and re.fullmatch('[0-9a-f]{64}',value)
     elif method=='getblockcount':valid=type(value) is int and 0<=value<=1_000_000
+    elif method=='getconnectioncount':valid=type(value) is int and 0<=value<=1000
+    elif method=='getblock':
+        valid=(type(value) is dict and type(value.get('hash')) is str and re.fullmatch('[0-9a-f]{64}',value['hash'])
+               and type(value.get('height')) is int and 0<=value['height']<=1_000_000
+               and type(value.get('tx')) is list and 1<=len(value['tx'])<=100_000)
     elif method=='getnetworkinfo':
         valid=(type(value) is dict and type(value.get('version')) is int
                and type(value.get('protocolversion')) is int and type(value.get('subversion')) is str
@@ -83,7 +97,7 @@ def _result(method,value):
 
 def _reply(raw,identifier,method):
     try:
-        if type(raw) is not bytes or not 1<=len(raw)<=MAX_REPLY:raise ValueError
+        if type(raw) is not bytes or not 1<=len(raw)<=(MAX_BLOCK_REPLY if method=='getblock' else MAX_REPLY):raise ValueError
         data=json.loads(raw.decode('utf8'),object_pairs_hook=_unique,parse_float=Decimal,
                         parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
         if (type(data) is not dict or set(data)!={'result','error','id'}
@@ -131,9 +145,10 @@ class ManagedReadRpc:
         if type(timeout) not in (int,float) or not 0.1<=timeout<=30:raise RpcError('RPC_TIMEOUT_DENIED')
         if type(binding) is not OwnedCoreBinding or binding.core!=core or binding.directory!=directory:
             raise RpcError('RPC_MANAGED_PROCESS_REQUIRED')
-        self._connection=None;self._auth=None;self._closed=False;self._lock=threading.RLock();self._identifier=0
+        self._connection=None;self._auth=None;self._closed=False;self._lock=threading.RLock();self._identifier=0;self._last_completed=None
         try:
             raw=_private_config(directory);port=parse_local_config(raw)
+            self._config_directory=directory;self._config_digest=sha256(raw).digest()
             values=dict(line.split('=',1) for line in raw.decode('ascii').splitlines()[3:])
             self._auth='Basic '+base64.b64encode((values['rpcuser']+':'+values['rpcpassword']).encode('ascii')).decode('ascii')
             self._connection=_BoundConnection(port,timeout,binding)
@@ -146,21 +161,72 @@ class ManagedReadRpc:
 
     def __repr__(self):return '<ManagedReadRpc redacted>'
 
+    def receipt_for(self,core,directory):
+        with self._lock:
+            if self._closed:raise RpcError('RPC_SESSION_CLOSED')
+            binding=self._connection._binding
+            if binding.core!=core or binding.directory!=directory:raise RpcError('RPC_SESSION_SCOPE_DENIED')
+            self._assert_config()
+            try:binding._assert_image()
+            except Exception:
+                self.close();raise RpcError('RPC_MANAGED_PROCESS_CHANGED') from None
+            return dict(binding.receipt)
+
+    def _assert_config(self):
+        # Preserve the original per-operation native custody/config gate.
+        # Hash only this bounded 4KiB private config, never the Core binaries.
+        # No credentials or port are adopted from a changed configuration.
+        if sha256(_private_config(self._config_directory)).digest()!=self._config_digest:
+            raise RpcError('RPC_CONFIG_CHANGED')
+
     def _request(self,method,params):
+        _params(method,params)  # All write methods denied before retry logic.
+        for attempt in range(3):
+            try:return self._request_once(method,params)
+            except RpcError as error:
+                if error.args!=('RPC_NODE_BUSY',) or attempt==2:raise
+                # Only a positively rejected idempotent read is replayed.
+                # Connection/auth uncertainty and all writes are never retried.
+                time.sleep(random.SystemRandom().uniform(.05,.15)*(2**attempt))
+
+    def _discard_idle_connection(self):
+        # Windows can reset Core's stale keep-alive socket during a long CLI/
+        # custody setup. Expire it BEFORE sending, rather than replaying a
+        # failed request. Every reconnect still proves OS endpoint ownership.
+        if (self._last_completed is not None
+                and time.monotonic()-self._last_completed>=MAX_IDLE_REUSE_SECONDS):
+            self._connection.close()
+            self._last_completed=None
+
+    def _request_once(self,method,params):
         if self._closed:raise RpcError('RPC_SESSION_CLOSED')
-        _params(method,params);self._identifier+=1
+        _params(method,params)
+        # Deny before sending any HTTP bytes. A subsequent explicit read may
+        # proceed only if the EXACT protected original config is restored;
+        # this never retries an operation or changes the running node config.
+        self._assert_config()
+        self._identifier+=1
         try:
+            self._discard_idle_connection()
             body=json.dumps({'jsonrpc':'1.0','id':self._identifier,'method':method,'params':params},separators=(',',':')).encode('ascii')
             self._connection.request('POST','/',body,{'Authorization':self._auth,'Content-Type':'application/json','Connection':'keep-alive'})
             response=self._connection.getresponse()
-            raw=response.read(MAX_REPLY+1)
+            raw=response.read((MAX_BLOCK_REPLY if method=='getblock' else MAX_REPLY)+1)
             if response.status==401:raise RpcError('RPC_AUTHENTICATION_DENIED')
             if response.status==503:raise RpcError('RPC_NODE_BUSY')
             if response.status!=200 or response.getheader('Content-Type','').split(';')[0].strip()!='application/json':
                 raise RpcError('RPC_HTTP_DENIED')
-            return _reply(raw,self._identifier,method)
-        except RpcError:
-            self.close();raise
+            result=_reply(raw,self._identifier,method)
+            if method=='getblock' and result['hash']!=params[0]:raise RpcError('RPC_BLOCK_HASH_DENIED')
+            self._last_completed=time.monotonic()
+            return result
+        except RpcError as error:
+            if error.args==('RPC_NODE_BUSY',):
+                # Core may close the rejected connection. New TCP connections
+                # still require the native process/socket proof before auth.
+                self._connection.close()
+            else:self.close()
+            raise
         except (OSError,http.client.HTTPException,ValueError):
             self.close();raise RpcError('RPC_CONNECTION_UNCERTAIN_READ_FAILED') from None
 
@@ -170,6 +236,8 @@ class ManagedReadRpc:
             if self._request('getblockhash',[0])!=REGTEST_GENESIS:
                 self.close();raise RpcError('RPC_GENESIS_DENIED')
             self._request('getnetworkinfo',[])
+            if self._request('getconnectioncount',[])!=0:
+                self.close();raise RpcError('RPC_EXTERNAL_PEERS_DENIED')
             return info
 
     def call(self,method,params=None):

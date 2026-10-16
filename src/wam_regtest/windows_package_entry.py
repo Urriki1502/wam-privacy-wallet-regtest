@@ -71,11 +71,19 @@ def main():
                 wsp_payment_e2e=True,security_e2e=ci,wallet_e2e=ci,
                 operational_demo=not ci,interactive_demo=not ci)
             if ci:
+                if (proof['wsp_live_scan']['scanner_transport'] != 'owned-http'
+                        or proof['wsp_live_scan']['cli_and_rehash_forbidden_during_scan'] is not True):
+                    raise ValueError('BUNDLE_SCANNER_HTTP_REQUIRED')
                 if proof['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS':
                     raise ValueError('BUNDLE_MINING_ACCEPTANCE_DENIED')
+                if proof['owned_http_read_component']['idle_read_component']['status'] != 'REAL_CORE_IDLE_READ_RECONNECT_PASS':
+                    raise ValueError('BUNDLE_IDLE_READ_REQUIRED')
+                if proof['owned_http_read_component']['node_busy_read_component']['status'] != 'REAL_CORE_BUSY_READ_RECOVERY_PASS':
+                    raise ValueError('BUNDLE_BUSY_READ_REQUIRED')
                 if proof['owned_http_read_component']['status'] != 'REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS':
                     raise ValueError('WIN_BUNDLE_OWNED_HTTP_DENIED')
                 wallet=proof['wallet_live_core'];security=proof['security_live_core']
+                assert wallet['operational_snapshot_http']['cli_and_rehash_forbidden'] is True
                 if (proof['platform']!='windows-x64' or proof['block_height']!=105
                         or proof['mainnet_allowed'] is not False
                         or wallet['status']!='WIN64_REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS'

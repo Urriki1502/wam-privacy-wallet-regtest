@@ -256,11 +256,12 @@ class LiveCoreReadOnlyCli:
 
 def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
                             *, expected_height: int, payment_e2e: bool = False,
-                            mining_address: str | None = None) -> dict[str, object]:
+                            mining_address: str | None = None, read_rpc=None) -> dict[str, object]:
     """Real WSP scanner -> 101 actual Core blocks -> SQLite restart/replay proof.
 
-    Fixture deliberately contains only a publicly known scan key. It has zero
-    funds and must not be used to receive any real value.
+    Fixture uses only a publicly known scan key and disposable REGTEST value.
+    The acceptance HTTP path never falls back to CLI on failure. Explicit legacy
+    fixture callers retain their existing transport and approval boundaries.
     """
     if (type(payment_e2e) is not bool
             or (payment_e2e and
@@ -284,8 +285,23 @@ def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
 
     if GENESIS != REGTEST_GENESIS:
         raise RealWspScanError("WSP_LIVE_UPSTREAM_GENESIS_DENIED")
-    rpc = LiveCoreReadOnlyCli(cli, datadir)
+    fixture_rpc = LiveCoreReadOnlyCli(cli, datadir)
+    if read_rpc is not None:
+        from .json_rpc import ManagedReadRpc
+        if type(read_rpc) is not ManagedReadRpc:raise RealWspScanError('WSP_MANAGED_HTTP_REQUIRED')
+        read_rpc.receipt_for(cli.parent,datadir)
+        rpc=read_rpc
+    else:rpc=fixture_rpc
     rpc.attest()
+    def sync_http_guard(scanner):
+        if read_rpc is None:return scanner.sync(rpc)
+        # Guards return no synthetic result: all scanner bytes still come from
+        # genuine Core. No CLI/hash call can hide inside the scan/replay loop.
+        from unittest.mock import patch
+        with patch('wam_regtest.core._read_cli',side_effect=AssertionError('WSP_HTTP_CLI_FORBIDDEN')), \
+             patch('wam_regtest.core.verified_core_paths',side_effect=AssertionError('WSP_HTTP_REHASH_FORBIDDEN')), \
+             patch('wam_regtest.core_process.verified_core_paths',side_effect=AssertionError('WSP_HTTP_REHASH_FORBIDDEN')):
+            return scanner.sync(rpc)
     if rpc.call("getblockcount") != expected_height:
         raise RealWspScanError("WSP_LIVE_HEIGHT_DENIED")
     account = ScanAccount(0, 1, pub(2), birthday=1)
@@ -296,7 +312,7 @@ def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
     scanner = None
     try:
         scanner = Scanner(path, (account,))
-        observed = scanner.sync(rpc)
+        observed = sync_http_guard(scanner)
         if (observed.blocks != expected_height
                 or scanner.store.tip()[0] != expected_height
                 or not scanner.ready or scanner.coins()):
@@ -307,7 +323,7 @@ def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
         scanner.close()
         scanner = None
         scanner = Scanner(path, (account,))
-        replay = scanner.sync(rpc)
+        replay = sync_http_guard(scanner)
         if (replay.blocks != 0 or scanner.store.tip() != (expected_height, tip)
                 or not scanner.ready or scanner.coins()):
             raise RealWspScanError("WSP_LIVE_SQLITE_RESTART_DENIED")
@@ -316,10 +332,11 @@ def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
         amount = 0
         received = 0
         if payment_e2e:
+            fixture_rpc.attest()
             payment_txid, amount, new_height = _public_fixture_payment(
-                rpc, account, mining_address,
+                fixture_rpc, account, mining_address,
             )
-            payment_scan = scanner.sync(rpc)
+            payment_scan = sync_http_guard(scanner)
             coins = scanner.coins()
             if (payment_scan.blocks != 1 or new_height != 102
                     or scanner.store.tip()[0] != 102
@@ -340,7 +357,7 @@ def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
             scanner.close()
             scanner = None
             scanner = Scanner(path, (account,))
-            final_replay = scanner.sync(rpc)
+            final_replay = sync_http_guard(scanner)
             again = scanner.coins()
             if (final_replay.blocks != 0 or len(again) != 1
                     or again[0]["txid"] != payment_txid
@@ -350,6 +367,8 @@ def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
             "status": ("REAL_WAM_CORE_WSP1_BIP352_CONFIRMED_RECEIVE_PASS"
                        if matched else
                        "REAL_WAM_CORE_WSP1_SCANNER_LIVE_101_BLOCKS_PASS"),
+            "scanner_transport": "owned-http" if read_rpc is not None else "pinned-cli",
+            "cli_and_rehash_forbidden_during_scan": read_rpc is not None,
             "source_commit": PINNED_WSP_COMMIT,
             "regtest_genesis": REGTEST_GENESIS,
             "observed_height": (102 if matched else expected_height),

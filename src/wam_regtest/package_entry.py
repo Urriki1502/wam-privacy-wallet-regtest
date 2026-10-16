@@ -113,8 +113,15 @@ def main() -> int:
             interactive_demo=not ci_mode,
         )
         if ci_mode:
+            if (result['wsp_live_scan']['scanner_transport'] != 'owned-http'
+                    or result['wsp_live_scan']['cli_and_rehash_forbidden_during_scan'] is not True):
+                raise BundleLaunchError('BUNDLE_SCANNER_HTTP_REQUIRED')
             if result['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS':
                 raise BundleLaunchError('BUNDLE_MINING_ACCEPTANCE_DENIED')
+            if result['owned_http_read_component']['idle_read_component']['status'] != 'REAL_CORE_IDLE_READ_RECONNECT_PASS':
+                raise BundleLaunchError('BUNDLE_IDLE_READ_REQUIRED')
+            if result['owned_http_read_component']['node_busy_read_component']['status'] != 'REAL_CORE_BUSY_READ_RECOVERY_PASS':
+                raise BundleLaunchError('BUNDLE_BUSY_READ_REQUIRED')
             if result['owned_http_read_component']['status'] != 'REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS':
                 raise BundleLaunchError('WAM_BUNDLE_OWNED_HTTP_DENIED')
             expected_status = ("REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS" if cocoa_mode else
@@ -131,6 +138,8 @@ def main() -> int:
             if result["wallet_live_core"].get("cross_session_key_recovery") is not True:
                 raise BundleLaunchError("WAM_BUNDLE_CROSS_SESSION_RECOVERY_DENIED")
             wallet=result["wallet_live_core"]
+            if wallet['operational_snapshot_http']['cli_and_rehash_forbidden'] is not True:
+                raise BundleLaunchError('BUNDLE_WALLET_HTTP_REQUIRED')
             security=result["security_live_core"]
             if not all(wallet.get(name) is True for name in (
                     "irreversible_anchor_before_native_crypto", "sign_broadcast_os_lease_held",
@@ -146,6 +155,13 @@ def main() -> int:
                 if result["wallet_live_core"].get("qt_auto_system_events_verified") is not True:
                     raise BundleLaunchError("WAM_BUNDLE_COCOA_AUTO_APPEARANCE_DENIED")
                 print("MACOS_COCOA_PACKAGED_AUTO_LIGHT_DARK_REAL_CORE_WALLET_PASS")
+            # Public disposable-fixture facts only. Keep actual frozen evidence
+            # alongside artifacts, instead of relying solely on PASS log lines.
+            from wam_regtest.desktop import qt_application
+            result.update(frozen_entrypoint=True, qt_platform=qt_application().platformName())
+            report='macos-cocoa-packaged-wallet-evidence.json' if cocoa_mode else 'macos-packaged-wallet-evidence.json'
+            with Path(report).open('x',encoding='utf8') as stream:
+                json.dump(result,stream,sort_keys=True,indent=2);stream.write('\n')
             print("MACOS_ARM64_PACKAGED_CROSS_SESSION_BACKUP_RECOVERY_PASS")
             print("MACOS_ARM64_PACKAGED_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_PASS")
             print("MACOS_ARM64_PACKAGED_ENCRYPTED_RECOVERY_REORG_E2E_PASS")

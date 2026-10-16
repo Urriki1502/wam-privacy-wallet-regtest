@@ -84,7 +84,8 @@ def parse_local_config(raw):
 
 def diagnostics(rpc):
     rpc.attest()
-    info=rpc._call('getnetworkinfo',[])
+    from .json_rpc import ManagedReadRpc
+    info=rpc.call('getnetworkinfo',[]) if type(rpc) is ManagedReadRpc else rpc._call('getnetworkinfo',[])
     if (type(info) is not dict or type(info.get('connections')) is not int or info.get('connections')!=0
             or type(info.get('networks')) is not list
             or any(type(n) is not dict or n.get('proxy')!='' for n in info['networks'])):

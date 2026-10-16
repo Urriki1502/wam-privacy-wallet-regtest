@@ -18,6 +18,11 @@ _MESSAGES={
  'WALLET_RECOVERY_REFUSED':'Recovery was refused: backup authentication, freshness or custody could not be verified. The wallet remains locked; use the latest same-platform backup.',
  'WALLET_BACKUP_DIRECTORY_DENIED':'Backup destination was refused. Choose a new private folder owned by this account, without links or inherited access.',
  'WALLET_LOCKED_OR_FAULTED':'Wallet is locked or faulted. Balances are hidden and sensitive operations are unavailable; reservations remain protected.',
+ 'RPC_CONFIG_CHANGED':'The managed Core configuration changed. Reads are refused until the original protected configuration is verified. Wallet custody and reservations are retained.',
+ 'RPC_NODE_BUSY':'The local REGTEST node is busy. Balances are hidden until a verified Sync succeeds. No payment is retried.',
+ 'RPC_AUTHENTICATION_DENIED':'Local Core authentication failed. Balances are hidden; verify the managed node session without resetting wallet custody.',
+ 'RPC_SESSION_CLOSED':'The verified local Core read session is closed. Balances are hidden; reopen the disposable session. Signed reservations remain protected.',
+ 'RPC_CONNECTION_UNCERTAIN_READ_FAILED':'The local Core read did not complete. Balances are hidden; verify the managed node session. No transaction is retried.',
  'WALLET_SYNC_UNVERIFIED':'Live REGTEST synchronization could not be verified. Balances are hidden. Verify the local node and use Sync again; do not reset custody.',
  'WALLET_OPERATION_DENIED_STATE_RETAINED':'Operation could not complete safely. Wallet state and reservations are retained. Verify the live chain and latest checkpoint; do not reset custody.',
 }
@@ -33,9 +38,10 @@ def error_text(code,*,fallback='WALLET_OPERATION_DENIED_STATE_RETAINED'):
 def operation_error(action,error):
     from .wallet_session import WalletSessionError
     from .vault import VaultError
+    from .json_rpc import RpcError
     # Do not call str(error): an external exception may contain private data
     # or implement a hostile formatter. Exact single-argument categories only.
-    args=error.args if type(error) in (ValueError,WalletSessionError,VaultError) else ()
+    args=error.args if type(error) in (ValueError,WalletSessionError,VaultError,RpcError) else ()
     code=args[0] if len(args)==1 and type(args[0]) is str else None
     if action=='prepare' and type(error) is ValueError:
         if code in ('INVALID_ADDRESS','INVALID_ENCODING','INVALID_PADDING','WRONG_NETWORK_OR_ADDRESS',
@@ -44,6 +50,8 @@ def operation_error(action,error):
         if code=='PAYMENT_AMOUNT':return 'WALLET_INPUT_AMOUNT_INVALID'
         if code=='FEE_POLICY':return 'WALLET_INPUT_FEE_INVALID'
         if code=='INSUFFICIENT_SINGLE_CLUSTER_FUNDS':return 'WALLET_INPUT_FUNDS_UNAVAILABLE'
+    if type(error) is RpcError and code in _MESSAGES:
+        return code
     if type(error) is WalletSessionError and code in _MESSAGES and code not in INPUT_ERRORS:
         return code
     if action in ('unlock','recover') and type(error) in (VaultError,WalletSessionError):

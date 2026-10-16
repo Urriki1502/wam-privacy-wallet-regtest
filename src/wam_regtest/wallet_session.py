@@ -70,7 +70,7 @@ class WalletCoreCli(LiveCoreReadOnlyCli):
 
 
 class WalletSession:
-    def __init__(self, core_dir, datadir, source, ring, scanner, vault, password, mining_address):
+    def __init__(self, core_dir, datadir, source, ring, scanner, vault, password, mining_address, read_rpc):
         self.core_dir, self.datadir, self.source = core_dir, datadir, source
         self.ring, self.scanner, self.vault = ring, scanner, vault
         self._password = password
@@ -80,11 +80,15 @@ class WalletSession:
         self.faulted = False
         self._disclosure_gate = None
         self.runtime = scanner.store.path
+        # Borrowed from the Core process owner; lock/unlock cannot change scope
+        # or stop/restart this node. Owner closes the connection before Core.
+        self._read_rpc = read_rpc
 
     @classmethod
-    def create(cls, core_dir, datadir, source, password, mining_address, *, authorized, keychain=None):
+    def create(cls, core_dir, datadir, source, password, mining_address, *, authorized, keychain=None, read_rpc=None):
         if authorized is not True:
             raise WalletSessionError("WALLET_DISPOSABLE_CONSENT_DENIED")
+        cls._require_owned_read(core_dir, datadir, read_rpc)
         _pinned_source(source)
         from wam_sp.keystore import Keyring
         from wam_sp.scanner import Scanner
@@ -109,7 +113,7 @@ class WalletSession:
             scanner.sync(rpc)
             anchor = custody.anchor(secrets.token_hex(16), keychain)
             vault = CheckpointVault(folder, anchor, source)
-            session = cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address)
+            session = cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address,read_rpc)
             vault.save(ring,scanner,password)
             return session
         except Exception:
@@ -120,7 +124,7 @@ class WalletSession:
 
     @classmethod
     def from_backup(cls, core_dir, datadir, source, directory, name, password,
-                    mining_address, *, authorized, keychain=None):
+                    mining_address, *, authorized, keychain=None, read_rpc=None):
         """Recover test keys on a fresh real chain against the existing anchor.
 
         Keep all old irreversible reservations. Rotate a new testing epoch for
@@ -128,6 +132,7 @@ class WalletSession:
         """
         if authorized is not True:
             raise WalletSessionError("WALLET_DISPOSABLE_CONSENT_DENIED")
+        cls._require_owned_read(core_dir, datadir, read_rpc)
         _pinned_source(source)
         storage=custody.storage()
         read,publish=storage.read,storage.publish
@@ -164,7 +169,7 @@ class WalletSession:
             _public_fixture_payment(rpc,account,mining_address,funding_height=height-100,
                                     expected_before_height=height)
             scanner.sync(rpc)
-            session=cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address)
+            session=cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address,read_rpc)
             session._save()
             return session
         except Exception:
@@ -173,6 +178,23 @@ class WalletSession:
             if ring is not None:
                 ring.close()
             raise WalletSessionError("WALLET_CROSS_SESSION_RECOVERY_DENIED") from None
+
+    @staticmethod
+    def _require_owned_read(core_dir, datadir, rpc):
+        from .json_rpc import ManagedReadRpc
+        if type(rpc) is not ManagedReadRpc:
+            raise WalletSessionError("WALLET_OWNED_HTTP_REQUIRED")
+        return rpc.receipt_for(core_dir, datadir)
+
+    def _read(self):
+        if self.locked or self.faulted:
+            raise WalletSessionError("WALLET_LOCKED_OR_FAULTED")
+        if self.vault.anchor.read()!=self.vault._expected:
+            self.faulted=True
+            raise WalletSessionError("WALLET_STALE_SESSION_DENIED")
+        _pinned_source(self.source)
+        receipt=self._require_owned_read(self.core_dir,self.datadir,self._read_rpc)
+        return self._read_rpc,receipt
 
     @property
     def locked(self):
@@ -200,7 +222,7 @@ class WalletSession:
     def snapshot(self):
         from wam_sp.wallet import Wallet
         with self._lock:
-            rpc = self._rpc()
+            rpc, receipt = self._read()
             result = self.scanner.sync(rpc)
             self.scanner.assert_current()
             tip = self.scanner.store.tip()
@@ -215,7 +237,7 @@ class WalletSession:
             return WalletReadSnapshot(
                 "regtest",tip[0],tip[1],self.ring.accounts()[-1].payment_code(),
                 balance["confirmed_atoms"],len(self.scanner.coins()),history,
-                verified_core_paths(self.core_dir)[2]["wamd_sha256"],
+                receipt["wamd_sha256"],
                 signer_allowed=True,broadcast_allowed=True,
             )
 
@@ -339,7 +361,8 @@ class WalletSession:
     def network_diagnostics(self):
         from .network_policy import diagnostics
         with self._lock:
-            return diagnostics(self._rpc())
+            rpc,_=self._read()
+            return diagnostics(rpc)
 
     def mine(self):
         with self._lock:

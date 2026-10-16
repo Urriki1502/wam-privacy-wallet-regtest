@@ -236,6 +236,7 @@ jobs:
             package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg
             package-output/SHA256SUMS.json
             package-output/INDEPENDENT-WALLET-SECURITY.json
+            package-output/macos-packaged-wallet-evidence.json
             package-output/RELEASE_CANDIDATE_MANIFEST.json
             package-output/SHA256SUMS.txt
             package-output/OWNER_REGTEST_ACCEPTANCE.md

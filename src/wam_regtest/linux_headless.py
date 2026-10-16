@@ -45,19 +45,19 @@ def show_review(review):
     print('Inputs: '+str(review.input_count)+'\nCommitment: '+review.commitment)
 
 
-def open_session(core,datadir,source,mining,password,backup=None):
+def open_session(core,datadir,source,mining,password,backup=None,*,read_rpc):
     """One startup path for interactive recovery and real fresh-chain acceptance."""
     if backup is None:
-        return WalletSession.create(core,datadir,source,password,mining,authorized=True)
+        return WalletSession.create(core,datadir,source,password,mining,authorized=True,read_rpc=read_rpc)
     backup=Path(backup).expanduser().absolute()
     return WalletSession.from_backup(core,datadir,source,backup.parent,backup.name,
-        password,mining,authorized=True)
+        password,mining,authorized=True,read_rpc=read_rpc)
 
 
-def launch(core,datadir,source,mining,*,backup=None):
+def launch(core,datadir,source,mining,*,backup=None,read_rpc):
     from . import custody
     password=passphrase('Backup passphrase: ' if backup is not None else 'New disposable REGTEST passphrase: ')
-    try:session=open_session(core,datadir,source,mining,password,backup)
+    try:session=open_session(core,datadir,source,mining,password,backup,read_rpc=read_rpc)
     finally:password=None
     frontend=HeadlessWallet(session)
     print('REGTEST ONLY. Commands: receive balance history sync prepare sign broadcast cancel backup lock unlock recover mine quit')
@@ -117,7 +117,7 @@ def run(args):
             authorized=args.confirm_experimental_developer_regtest)
         if (args.confirm_headless_e2e or args.confirm_qt_e2e or args.gui) and args.recover_backup is not None:
             raise WalletSessionError('HEADLESS_RECOVERY_ACCEPTANCE_MODE_CONFLICT')
-        def callback(c,d,s,m):return launch(c,d,s,m,backup=args.recover_backup)
+        def callback(c,d,s,m,*,read_rpc):return launch(c,d,s,m,backup=args.recover_backup,read_rpc=read_rpc)
         if args.confirm_headless_e2e:
             from .linux_headless_probe import probe
             callback=probe
@@ -126,12 +126,13 @@ def run(args):
             callback=probe
         elif args.gui:
             from .operational_gui import launch_disposable_wallet
-            def callback(c,d,s,m):
-                if launch_disposable_wallet(c,d,s,m)!=0:
+            def callback(c,d,s,m,*,read_rpc):
+                if launch_disposable_wallet(c,d,s,m,read_rpc=read_rpc)!=0:
                     raise WalletSessionError('LINUX_QT_WINDOW_DENIED')
                 return {'status':'LINUX_QT_DISPOSABLE_SESSION_CLOSED','mainnet_allowed':False}
         result=smoke_real_core(core,explicit_consent=args.confirm_experimental_developer_regtest,
-            wsp_source=source,wsp_payment_e2e=True,headless_callback=callback)
+            wsp_source=source,wsp_payment_e2e=True,headless_callback=callback,
+            rpc_contention_e2e=args.confirm_qt_e2e or args.confirm_headless_e2e)
         result.update({'official_signed_release':False,'developer_manifest_sha256':args.manifest_sha256,
             'frozen_runtime':bool(getattr(sys,'frozen',False)),
             'linux_headless':not (args.gui or args.confirm_qt_e2e),'qt_imported':any(n.startswith('PySide6') for n in sys.modules)})

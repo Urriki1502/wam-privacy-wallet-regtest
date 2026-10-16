@@ -22,7 +22,7 @@ def locks(session):
         "SELECT txid,vout,token,state FROM reservations WHERE state!='draft' ORDER BY txid,vout"))
 
 
-def probe(core,datadir,source,mining):
+def probe(core,datadir,source,mining,*,read_rpc):
     from wam_sp.keystore import Keyring
     from wam_sp.scanner import Scanner
     from wam_sp.wallet import Signer
@@ -30,7 +30,9 @@ def probe(core,datadir,source,mining):
     stage='CREATE'
     try:
         print('LINUX_HEADLESS_STAGE='+stage,flush=True)
-        session=WalletSession.create(core,datadir,source,PASSWORD,mining,authorized=True)
+        session=WalletSession.create(core,datadir,source,PASSWORD,mining,authorized=True,read_rpc=read_rpc)
+        from .http_session_probe import prove_session_reads
+        http_proof=prove_session_reads(session)
         front=HeadlessWallet(session);initial=session.snapshot();original_accounts=session.ring.accounts()
         assert initial.height==103 and initial.confirmed_utxos==1 and initial.history
         receiver=Keyring();code=receiver.accounts()[0].payment_code()
@@ -91,8 +93,8 @@ def probe(core,datadir,source,mining):
         next_backup=datadir/'next-backup';custody.create_directory(next_backup)
         recovery=[]
         def reopen(backup_path,stale_broadcast):
-            def driver(c,d,s,m):
-                restored=open_session(c,d,s,m,PASSWORD,backup_path/'wallet-backup.enc')
+            def driver(c,d,s,m,*,read_rpc):
+                restored=open_session(c,d,s,m,PASSWORD,backup_path/'wallet-backup.enc',read_rpc=read_rpc)
                 try:
                     snapshot=restored.snapshot()
                     assert snapshot.height==103 and restored.ring.accounts()[0]==original_accounts[0]
@@ -126,6 +128,7 @@ def probe(core,datadir,source,mining):
             headless_callback=reopen(next_backup,True))
         assert len(recovery)==2 and not any(n.startswith('PySide6') for n in sys.modules)
         return {'status':'REAL_LINUX_CORE_ROOT_WITNESS_HEADLESS_WALLET_E2E_PASS',
+            'operational_snapshot_http':http_proof,
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
             'confirmed_recipient_atoms':100000,'confirmed_sender_change':True,
             'actual_reorg_depths':[1,12,100],'fresh_chain_key_recovery':True,

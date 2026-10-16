@@ -1,0 +1,26 @@
+{
+  "artifact_id": 12055907499,
+  "run_id": 38923008673,
+  "source_head_sha": "c478db126e40d92cf5fed1c78e85687ba481edbc",
+  "checkout_sha": "56ff04dcda451ffea7e6283a40905cb8bf5cd67c",
+  "outer_sha256": "7c5447160a5bf21aba91e226b81219e90baf458f3473e988a7de01baf1b06e23",
+  "files": {
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip": {
+      "sha256": "bcd7f664ebbb46ab7dc3368803aebd770b67a2d5c7d22c241efd2777d6bd1936",
+      "size_bytes": 56411408
+    },
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg": {
+      "sha256": "2be2e68353ec7da7210fe50a3e383f8e4933fe9abe1ee3ecea16c5340df3ddd7",
+      "size_bytes": 64252481
+    }
+  },
+  "independent_core_pair": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "internal_symlinks_verified": 112,
+  "app_arm64": true,
+  "local_execution": false,
+  "current_http_runtime_qualified": false,
+  "physical_acceptance": "PENDING_OPERATOR"
+}

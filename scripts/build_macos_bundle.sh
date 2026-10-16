@@ -104,6 +104,21 @@ try:
     subprocess.run([binary, "--ci-real-core-gui"], timeout=240, check=True)
 except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
     sys.exit("MACOS_FROZEN_REAL_CORE_GUI_DENIED")
+import json
+from pathlib import Path
+report=Path('macos-packaged-wallet-evidence.json')
+evidence=json.loads(report.read_text())
+assert evidence['frozen_entrypoint'] is True and evidence['qt_platform']=='offscreen'
+assert evidence['mainnet_allowed'] is False
+assert evidence['owned_http_read_component']['node_busy_read_component']['status']=='REAL_CORE_BUSY_READ_RECOVERY_PASS'
+assert evidence['wallet_live_core']['operational_snapshot_http']['cli_and_rehash_forbidden'] is True
+checkout=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+head=os.environ.get('WAM_SOURCE_HEAD',checkout)
+header=subprocess.check_output(['git','cat-file','-p',checkout],text=True).split('\n\n',1)[0]
+parents={line[7:] for line in header.splitlines() if line.startswith('parent ')}
+assert head==checkout or head in parents, 'MACOS_FROZEN_SOURCE_CHECKOUT_IDENTITY_DENIED'
+evidence.update(source_head_sha=head,checkout_sha=checkout)
+Path('package-output/macos-packaged-wallet-evidence.json').write_text(json.dumps(evidence,sort_keys=True,indent=2)+'\n')
 print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_PASS", flush=True)
 PY
 test -s real-regtest-gui-preview.png
