@@ -122,6 +122,7 @@ class OwnedCoreBinding:
             raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
         self.process,self.core,self.directory=process,core,directory
         self.node,self.cli,self.receipt=verified_core_paths(core)
+        self._image_path=str(self.node.resolve(strict=True))
         self._argv=[str(self.node),f'-datadir={directory}','-daemon=0']
         if process.args!=self._argv or process.poll() is not None:raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
         self._files=(_metadata(self.node),_metadata(self.cli))
@@ -132,7 +133,7 @@ class OwnedCoreBinding:
     def _assert_image(self):
         if self.process.args!=self._argv or self.process.poll() is not None:
             raise CoreBindingError('RPC_OWNED_PROCESS_EXITED')
-        if os.path.normcase(_image(self.process.pid,self.directory))!=os.path.normcase(str(self.node)):
+        if os.path.normcase(_image(self.process.pid,self.directory))!=os.path.normcase(self._image_path):
             raise CoreBindingError('RPC_PROCESS_IMAGE_DENIED')
         if self._files!=(_metadata(self.node),_metadata(self.cli)):
             raise CoreBindingError('RPC_EXECUTABLE_CHANGED')
