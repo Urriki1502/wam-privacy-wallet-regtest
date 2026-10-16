@@ -59,7 +59,7 @@ and immutable RC1144d87700b87a241467172adfad3692b41e1d273 unchanged.
  backup/lock/recovery/fresh Core, reorg1/12/100. Receipt/module hashes committed.
  Later docstrings and Linux-only harness changes are not new platform/frozen
  PASS. Offscreen is not Cocoa Auto/physical; false/not-exercised flags stay false.
- Native child83 source receipts distinct from binary qualification.
+ Native source-contract receipts remain distinct from binary qualification.
 
 **Actual pinned REGTEST halving interval is150, not200000.** The independent
  treasury cutoff is400000. REGTEST subsidy is zero from4951, so a nonzero-subsidy
