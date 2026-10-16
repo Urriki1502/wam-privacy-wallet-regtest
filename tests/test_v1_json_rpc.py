@@ -3,6 +3,18 @@ import json,unittest
 from wam_regtest.json_rpc import _params,_reply,RpcError,ManagedReadRpc,MAX_REPLY
 
 class ReadRpcContracts(unittest.TestCase):
+    def test_scanner_reads_have_exact_verbosity_and_bounded_shape(self):
+        h='a'*64
+        _params('getblock',[h,3]);_params('getbestblockhash',[])
+        for args in ([h,2],[h,True],[h,'3'],['x',3],[h,3,'extra']):
+            with self.assertRaises(RpcError):_params('getblock',args)
+        def reply(value):return json.dumps({'id':1,'result':value,'error':None}).encode()
+        good={'hash':h,'height':101,'tx':[{'vin':[],'vout':[]}]}
+        self.assertEqual(_reply(reply(good),1,'getblock'),good)
+        for bad in ({**good,'hash':'x'},{**good,'height':True},{**good,'tx':[]},{**good,'tx':'not-list'}):
+            with self.assertRaises(RpcError):_reply(reply(bad),1,'getblock')
+        with self.assertRaises(RpcError):_reply(reply(True),1,'getconnectioncount')
+
     def test_version_capability_requires_exact_qualified_profile(self):
         good={'version':111,'subversion':'/WAM:0.1.11/','protocolversion':70016}
         def reply(value):return json.dumps({'id':1,'result':value,'error':None}).encode()

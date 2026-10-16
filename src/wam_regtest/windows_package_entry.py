@@ -71,6 +71,9 @@ def main():
                 wsp_payment_e2e=True,security_e2e=ci,wallet_e2e=ci,
                 operational_demo=not ci,interactive_demo=not ci)
             if ci:
+                if (proof['wsp_live_scan']['scanner_transport'] != 'owned-http'
+                        or proof['wsp_live_scan']['cli_and_rehash_forbidden_during_scan'] is not True):
+                    raise ValueError('BUNDLE_SCANNER_HTTP_REQUIRED')
                 if proof['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS':
                     raise ValueError('BUNDLE_MINING_ACCEPTANCE_DENIED')
                 if proof['owned_http_read_component']['status'] != 'REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS':

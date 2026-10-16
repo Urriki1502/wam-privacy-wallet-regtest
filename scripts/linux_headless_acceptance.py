@@ -31,6 +31,8 @@ try:
         '--report',str(report)],stdin=subprocess.DEVNULL,timeout=600)
     assert result.returncode==0,'LINUX_ACTUAL_HEADLESS_EXECUTABLE_DENIED'
     record=json.loads(report.read_text())
+    assert record['wsp_live_scan']['scanner_transport']=='owned-http'
+    assert record['wsp_live_scan']['cli_and_rehash_forbidden_during_scan'] is True
     assert record['mining_account_component']['status']=='REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS'
     assert record['owned_http_read_component']['status']=='REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS'
     wallet=record['wallet_live_core']

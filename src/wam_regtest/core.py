@@ -241,6 +241,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
         _write_private_config(datadir, rpc, p2p)
         prefix = [str(cli), f"-datadir={datadir}"]
         proc = None
+        read_rpc = None
         try:
             with (datadir / "core-output.log").open("xb") as log:
                 # Only the exact path/hash from signed receipt; no shell or user keys.
@@ -307,11 +308,16 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             wsp_receipt = None
             if wsp_source is not None:
                 from .wsp_live import scan_actual_core_blocks, RealWspScanError
+                if not interactive_demo:
+                    from .core_process import OwnedCoreBinding
+                    from .json_rpc import ManagedReadRpc
+                    read_rpc=ManagedReadRpc(core_dir,datadir,authorized_readonly=True,
+                        binding=OwnedCoreBinding(proc,core_dir,datadir))
                 try:
                     wsp_receipt = scan_actual_core_blocks(
                         cli, datadir, wsp_source, expected_height=height,
                         payment_e2e=wsp_payment_e2e,
-                        mining_address=(mine_to if wsp_payment_e2e else None),
+                        mining_address=(mine_to if wsp_payment_e2e else None),read_rpc=read_rpc,
                     )
                 except RealWspScanError as exc:
                     raise CoreSmokeError(str(exc)) from None
@@ -423,6 +429,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 "mainnet_allowed": False, "production_process_binding_qualified": False,
             }
         finally:
+            if read_rpc is not None:read_rpc.close()
             if proc is not None:
                 if proc.poll() is None:
                     try:

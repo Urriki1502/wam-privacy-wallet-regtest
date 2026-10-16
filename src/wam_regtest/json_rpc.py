@@ -17,6 +17,7 @@ from .network_policy import parse_local_config
 from .wsp_live import REGTEST_GENESIS
 
 MAX_REPLY=1024*1024
+MAX_BLOCK_REPLY=32*1024*1024
 # Measured on genuine independently pinned v0.1.11, not inferred from Bitcoin.
 # Signed newer binaries require a separate compatibility qualification.
 SUPPORTED_RPC=(111, '/WAM:0.1.11/', 70016)
@@ -60,17 +61,25 @@ def _unique(pairs):
 
 
 def _params(method,params):
-    if type(method) is not str or method not in ('getblockchaininfo','getblockcount','getblockhash','getnetworkinfo') or type(params) is not list:
+    if type(method) is not str or method not in ('getblockchaininfo','getblockcount','getblockhash','getnetworkinfo','getbestblockhash','getblock','getconnectioncount') or type(params) is not list:
         raise RpcError('RPC_READ_SCOPE_DENIED')
     if method=='getblockhash':
         if len(params)!=1 or type(params[0]) is not int or not 0<=params[0]<=1_000_000:
             raise RpcError('RPC_PARAMS_DENIED')
+    elif method=='getblock':
+        if (len(params)!=2 or type(params[0]) is not str or not re.fullmatch('[0-9a-f]{64}',params[0])
+                or type(params[1]) is not int or params[1]!=3):raise RpcError('RPC_PARAMS_DENIED')
     elif params:raise RpcError('RPC_PARAMS_DENIED')
 
 
 def _result(method,value):
-    if method=='getblockhash':valid=type(value) is str and re.fullmatch('[0-9a-f]{64}',value)
+    if method in ('getblockhash','getbestblockhash'):valid=type(value) is str and re.fullmatch('[0-9a-f]{64}',value)
     elif method=='getblockcount':valid=type(value) is int and 0<=value<=1_000_000
+    elif method=='getconnectioncount':valid=type(value) is int and 0<=value<=1000
+    elif method=='getblock':
+        valid=(type(value) is dict and type(value.get('hash')) is str and re.fullmatch('[0-9a-f]{64}',value['hash'])
+               and type(value.get('height')) is int and 0<=value['height']<=1_000_000
+               and type(value.get('tx')) is list and 1<=len(value['tx'])<=100_000)
     elif method=='getnetworkinfo':
         valid=(type(value) is dict and type(value.get('version')) is int
                and type(value.get('protocolversion')) is int and type(value.get('subversion')) is str
@@ -83,7 +92,7 @@ def _result(method,value):
 
 def _reply(raw,identifier,method):
     try:
-        if type(raw) is not bytes or not 1<=len(raw)<=MAX_REPLY:raise ValueError
+        if type(raw) is not bytes or not 1<=len(raw)<=(MAX_BLOCK_REPLY if method=='getblock' else MAX_REPLY):raise ValueError
         data=json.loads(raw.decode('utf8'),object_pairs_hook=_unique,parse_float=Decimal,
                         parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
         if (type(data) is not dict or set(data)!={'result','error','id'}
@@ -146,6 +155,16 @@ class ManagedReadRpc:
 
     def __repr__(self):return '<ManagedReadRpc redacted>'
 
+    def receipt_for(self,core,directory):
+        with self._lock:
+            if self._closed:raise RpcError('RPC_SESSION_CLOSED')
+            binding=self._connection._binding
+            if binding.core!=core or binding.directory!=directory:raise RpcError('RPC_SESSION_SCOPE_DENIED')
+            try:binding._assert_image()
+            except Exception:
+                self.close();raise RpcError('RPC_MANAGED_PROCESS_CHANGED') from None
+            return dict(binding.receipt)
+
     def _request(self,method,params):
         if self._closed:raise RpcError('RPC_SESSION_CLOSED')
         _params(method,params);self._identifier+=1
@@ -153,12 +172,14 @@ class ManagedReadRpc:
             body=json.dumps({'jsonrpc':'1.0','id':self._identifier,'method':method,'params':params},separators=(',',':')).encode('ascii')
             self._connection.request('POST','/',body,{'Authorization':self._auth,'Content-Type':'application/json','Connection':'keep-alive'})
             response=self._connection.getresponse()
-            raw=response.read(MAX_REPLY+1)
+            raw=response.read((MAX_BLOCK_REPLY if method=='getblock' else MAX_REPLY)+1)
             if response.status==401:raise RpcError('RPC_AUTHENTICATION_DENIED')
             if response.status==503:raise RpcError('RPC_NODE_BUSY')
             if response.status!=200 or response.getheader('Content-Type','').split(';')[0].strip()!='application/json':
                 raise RpcError('RPC_HTTP_DENIED')
-            return _reply(raw,self._identifier,method)
+            result=_reply(raw,self._identifier,method)
+            if method=='getblock' and result['hash']!=params[0]:raise RpcError('RPC_BLOCK_HASH_DENIED')
+            return result
         except RpcError:
             self.close();raise
         except (OSError,http.client.HTTPException,ValueError):
@@ -170,6 +191,8 @@ class ManagedReadRpc:
             if self._request('getblockhash',[0])!=REGTEST_GENESIS:
                 self.close();raise RpcError('RPC_GENESIS_DENIED')
             self._request('getnetworkinfo',[])
+            if self._request('getconnectioncount',[])!=0:
+                self.close();raise RpcError('RPC_EXTERNAL_PEERS_DENIED')
             return info
 
     def call(self,method,params=None):
