@@ -357,3 +357,12 @@ No Core signer/import/transfer capability added. First actual mining GUI maturit
 probe passed;167 supplemental tests134PASS/33platformSKIP. Source full recovery
 assertion updated for seventh page after observed first-run FAIL. Native/frozen
 successor evidence remains pending; no global Q or physical status promoted.
+
+Actual local Mac runtime91988714ccf8ae07b1457a3d50e64a4b815e22c1 final app
+PASS with new mining GUI99/100/101 and all retained wallet/security/recovery/reorg
+gates; DMG verified. See MINING_9198871_MACOS_FROZEN_E2E.json and inspection
+receipt: original CLI tail exited1 at old create-only manifest, metadata finished
+separately after preserving old inventory and verifying exact payload/Core hashes.
+Current native Windows/Linux successors remain CI-dependent. Offscreen local
+Mac != Finder/Cocoa/physical signoff. CI headless dependency error fixed by moving
+unchanged Qt assertions to existing GUI suite; no required GUI gates removed.

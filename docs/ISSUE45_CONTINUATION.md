@@ -42,7 +42,10 @@ OS endpoint proof before auth, bounded positive503 read retries and idle socket
 expiry BEFORE a request. Signing/broadcast keep independent CLI hashes, exact
 approval, native OS lease and irreversible reservations. Do not repeat this work.
 No PR has been merged. New focused Mining Account branch stacks on qualified53;
-reuse it for fixes, never duplicate the PR. Refresh actual branch/HEAD now.
+reuse Draft54 for fixes, never duplicate the PR. Branch
+feature/issue45-mining-account-gui-20261017. Runtime91988714ccf8ae07b1457a3d50e64a4b815e22c1;
+test-only correction1ed3b34d119ec5ff8014207ce695ba310769c24b; following checkpoint
+adds packaging preflight/docs only. Refresh actual branch/HEAD now.
 
 Actual downloaded PR53 Windows frozen artifact12076012325 (run38966708823):
 outer224d1dcd0bf8d535797ebf38e38788cc48b15818cd9934e2ac873484e4b6bd73,
@@ -75,11 +78,26 @@ NOT qualification for the new mining GUI runtime.
  no-CLI/no-full-hash guards; actual99/100/101 GUI amount/clear tests and screenshots.
  Final platform entrypoints require the new HTTP/maturity-GUI receipts.
 
-Initial supplemental167 tests:134PASS/33platformSKIP/0FAIL. First real mining GUI
+Supplemental167 tests:134PASS/33platformSKIP/0FAIL. Actual mining GUI
 probe PASS. Full source first run FAILED only at old6-page assertion on fresh
 Core recovery; corrected to7 plus mining-state assertion without changing custody
-or recovery gate. Full second run and new frozen/platform CI are pending at this
-commit; see subsequent checkpoint and separate resume log for actual results.
+or recovery gate. Full second source run PASS. Actual final local Mac9198871 app PASS with
+Core/WSP/Qt/mining maturity/sign/broadcast/backup/lock/recovery/new Core and
+reorg1/12/100; hdiutil DMG verified. Full build exited1 at old5555 manifest
+create-only refusal; preserved that old manifest, verified current payloads,
+completed metadata only. Never claim original whole-build exit0. Added early
+nonempty-output refusal and checkout-change guard for clean future builds.
+Local ZIPc8416160e728436fefc3b934d049a4af9899a452ce7afeb54637fc7b651c804f;
+DMGfe17981ad3854efa14e66f35cf05284613f7a6a430a1f811e164e479ea0e3594.
+See MINING_9198871_MACOS_FROZEN_E2E.json and matching inspection. Actual frozen
+checkout1ed3b34 is test-only child of runtime9198871; not relabelled later HEAD.
+
+CI919 native headless FAIL: a Qt negative unit was incorrectly placed in the
+headless test_v1 suite. Moved UNCHANGED assertions into test_fusion_mining.py in
+existing GUI suite, retaining mandatory genuine Qt/frozen maturity gates. At
+1ed3b34 native-contracts/canonical SUCCESS; remaining platform jobs running at
+checkpoint. Refresh exact new HEAD CI, do not infer final PASS from this text.
+Separate session resume log records later exact-head results/artifact inspection.
 No integrated V1/Q11 PASS or physical signoff is claimed.
 
 ## Next unblocked work / limits

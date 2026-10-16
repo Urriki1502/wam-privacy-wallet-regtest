@@ -54,4 +54,3 @@ class MiningReadContracts(unittest.TestCase):
                 raise AssertionError('unexpected read')
             rpc._request.side_effect=request
             with self.assertRaises(RpcError):read_mining_snapshot(rpc)
-

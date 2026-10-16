@@ -10,6 +10,15 @@ test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3
 test -x core/wamd
 test -x core/wam-cli
 test -f core/receipt.json
+# Refuse stale inventories BEFORE overwriting any previously built payload.
+# The caller may archive its own old output or use a clean build directory.
+python - <<'PREFLIGHT'
+from pathlib import Path
+out=Path('package-output')
+if out.is_symlink() or (out.exists() and (not out.is_dir() or any(out.iterdir()))):
+    raise SystemExit('MACOS_PACKAGE_OUTPUT_NOT_EMPTY_USE_FRESH_BUILD_DIRECTORY')
+PREFLIGHT
+export WAM_BUILD_CHECKOUT="$(git rev-parse HEAD)"
 mkdir -p bundle-input package-output
 SOURCE_STAGE=$(mktemp -d "$(pwd)/bundle-input/build-XXXXXX")
 trap 'rm -rf "$SOURCE_STAGE"' EXIT
@@ -113,6 +122,7 @@ assert evidence['mainnet_allowed'] is False
 assert evidence['owned_http_read_component']['node_busy_read_component']['status']=='REAL_CORE_BUSY_READ_RECOVERY_PASS'
 assert evidence['wallet_live_core']['operational_snapshot_http']['cli_and_rehash_forbidden'] is True
 checkout=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+assert checkout==os.environ['WAM_BUILD_CHECKOUT'], 'MACOS_CHECKOUT_CHANGED_DURING_BUILD'
 head=os.environ.get('WAM_SOURCE_HEAD',checkout)
 header=subprocess.check_output(['git','cat-file','-p',checkout],text=True).split('\n\n',1)[0]
 parents={line[7:] for line in header.splitlines() if line.startswith('parent ')}

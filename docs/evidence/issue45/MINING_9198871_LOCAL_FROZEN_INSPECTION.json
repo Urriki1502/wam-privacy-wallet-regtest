@@ -1,0 +1,33 @@
+{
+  "status": "LOCAL_MAC_ARM64_FROZEN_MINING_WALLET_E2E_AND_CONTENTS_VERIFIED",
+  "source_head_sha": "91988714ccf8ae07b1457a3d50e64a4b815e22c1",
+  "checkout_sha": "1ed3b34d119ec5ff8014207ce695ba310769c24b",
+  "files": {
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip": {
+      "sha256": "c8416160e728436fefc3b934d049a4af9899a452ce7afeb54637fc7b651c804f",
+      "size_bytes": 55769069
+    },
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg": {
+      "sha256": "fe17981ad3854efa14e66f35cf05284613f7a6a430a1f811e164e479ea0e3594",
+      "size_bytes": 63567480
+    }
+  },
+  "independent_core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "app_arm64_macho": true,
+  "safe_internal_symlinks_verified": 115,
+  "final_binary_executed_on_local_macbook_arm64": true,
+  "qt_platform": "offscreen",
+  "real_core_mining_gui_depths": [
+    99,
+    100,
+    101
+  ],
+  "full_cli_build_exit": 1,
+  "full_cli_build_tail_failure": "PREVIOUS_MANIFEST_CREATE_ONLY_REFUSAL",
+  "manifest_completed_separately": true,
+  "native_cocoa_finder_physical_acceptance": "PENDING_OPERATOR",
+  "mainnet_allowed": false
+}
