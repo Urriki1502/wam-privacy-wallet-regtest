@@ -3,6 +3,17 @@ import json,unittest
 from wam_regtest.json_rpc import _params,_reply,RpcError,ManagedReadRpc,MAX_REPLY
 
 class ReadRpcContracts(unittest.TestCase):
+    def test_version_capability_requires_exact_qualified_profile(self):
+        good={'version':111,'subversion':'/WAM:0.1.11/','protocolversion':70016}
+        def reply(value):return json.dumps({'id':1,'result':value,'error':None}).encode()
+        self.assertEqual(_reply(reply(good),1,'getnetworkinfo'),good)
+        _params('getnetworkinfo',[])
+        for key,value in [('version',112),('version',True),('subversion','/WAM:0.1.12/'),('protocolversion',70017),('protocolversion','70016')]:
+            invalid={**good,key:value}
+            with self.assertRaisesRegex(RpcError,'^RPC_VERSION_CAPABILITY_DENIED$'):
+                _reply(reply(invalid),1,'getnetworkinfo')
+        with self.assertRaises(RpcError):_params('getnetworkinfo',['wallet'])
+
     def test_writes_and_unknown_wallet_scope_refuse_without_socket(self):
         for method,params in [('stop',[]),('sendrawtransaction',['00']),('loadwallet',['test']),('getblockcount',{}),('getblockhash',[True]),('getblockhash',[-1]),('getblockcount',[1])]:
             with self.assertRaises(RpcError):_params(method,params)
