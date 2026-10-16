@@ -259,8 +259,9 @@ def scan_actual_core_blocks(cli: Path, datadir: Path, source_root: Path,
                             mining_address: str | None = None, read_rpc=None) -> dict[str, object]:
     """Real WSP scanner -> 101 actual Core blocks -> SQLite restart/replay proof.
 
-    Fixture deliberately contains only a publicly known scan key. It has zero
-    funds and must not be used to receive any real value.
+    Fixture uses only a publicly known scan key and disposable REGTEST value.
+    The acceptance HTTP path never falls back to CLI on failure. Explicit legacy
+    fixture callers retain their existing transport and approval boundaries.
     """
     if (type(payment_e2e) is not bool
             or (payment_e2e and

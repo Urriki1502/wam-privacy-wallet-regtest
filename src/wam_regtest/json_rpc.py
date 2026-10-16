@@ -1,7 +1,7 @@
 """Managed, authenticated loopback REGTEST reads; no CLI per request.
 
-Initial T-01/T-02 slice. No attach/cookie/write/lifecycle or complete process
-attestation claim. Existing scanner/GUI transports are deliberately unchanged.
+Typed owned scanner reads with no attach/cookie/write/lifecycle authority.
+Operational GUI/session migration and hardened loader qualification remain open.
 """
 import base64
 from decimal import Decimal
