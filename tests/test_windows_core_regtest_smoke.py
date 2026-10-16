@@ -12,6 +12,24 @@ from wam_regtest.windows_release_preflight import ROOT
 
 
 class WindowsCoreSmokeContracts(unittest.TestCase):
+    def test_rpc_launch_keeps_gui_console_free_and_local_custody_contract(self):
+        # Static launch boundary, NOT proof of physical Windows absence of flashes.
+        import ast, inspect
+        from wam_regtest.windows_core_regtest_smoke import _rpc
+        tree=ast.parse(inspect.getsource(_rpc))
+        calls=[n for n in ast.walk(tree) if isinstance(n,ast.Call)
+               and isinstance(n.func,ast.Attribute) and isinstance(n.func.value,ast.Name)
+               and n.func.value.id=='subprocess' and n.func.attr=='run']
+        self.assertEqual(len(calls),1)
+        fields={k.arg:ast.unparse(k.value) for k in calls[0].keywords}
+        self.assertEqual(fields['creationflags'],'subprocess.CREATE_NO_WINDOW')
+        self.assertEqual(fields['stdin'],'subprocess.DEVNULL')
+        self.assertEqual(fields['stdout'],'subprocess.PIPE')
+        self.assertEqual(fields['stderr'],'subprocess.DEVNULL')
+        self.assertEqual(fields['cwd'],'datadir');self.assertEqual(fields['env'],'env')
+        self.assertEqual(fields['timeout'],'timeout');self.assertEqual(fields['check'],'False')
+        self.assertNotIn('shell',fields)
+
     def test_explicit_consent_is_required_before_any_file_or_process(self):
         missing = Path("NONEXISTENT-WAM-TEST-INPUT")
         for flag in (False, None, 1, "true"):
