@@ -110,6 +110,7 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         stage="CREATE"
         print("WALLET_E2E_STAGE=CREATE",flush=True)
         session=WalletSession.create(core_dir,datadir,source,password,mining_address,authorized=True,keychain=keychain,read_rpc=read_rpc)
+        stage="OWNED_HTTP_SNAPSHOTS"
         http_proof=prove_session_reads(session)
         initial=session.snapshot()
         assert initial.height==104 and initial.confirmed_utxos==1
@@ -117,9 +118,11 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         code=recipient.accounts()[0].payment_code()
         from .desktop import qt_application
         app=qt_application()
+        stage="QT_CREATE"
         window=OperationalWalletWindow(session)
         window.show()
         window.apply_snapshot(initial)
+        stage="QT_VALIDATION"
         validation_cases=_validation_feedback_probe(app,window,session)
         assert window.navigation.count()==6 and window._sync_timer.isActive()
         assert window.navigation.item(0).text()=="Overview"
@@ -130,8 +133,10 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         assert window.dashboard.go_send.isEnabled() and window.dashboard.open_security.isEnabled()
         assert window._sync_timer.interval()==30_000
         # Actual worker and timer, with CLI/full-Core hash paths forbidden.
+        stage="QT_BACKGROUND"
         assert background_snapshot(app,window)==initial
         assert not window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
+        stage='QT_APPEARANCE'
         for index,color in ((2,fusion_palette('dark')['bg']),(1,fusion_palette('light')['bg'])):
             window.appearance.setCurrentIndex(index)
             app.processEvents()
@@ -151,6 +156,7 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         window.recipient.setText(code)
         window.amount.setText("0.00100000")
         window.fee.setText("0.00010000")
+        stage='NETWORK'
         network=_operation(app,window,'network',window.network_button.click)
         assert network['status']=='LOCAL_REGTEST_NETWORK_POLICY_PASS' and network['zero_peers'] is True
         assert network['clearnet_fallback_allowed'] is False
@@ -407,7 +413,11 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         }
     except WalletProbeError:
         raise
-    except Exception:
+    except Exception as error:
+        from .acceptance_failure import failure_site
+        print('WALLET_FAILURE_SITE='+failure_site(error),flush=True)
+        if error.__context__ is not None:
+            print('WALLET_INNER_FAILURE_SITE='+failure_site(error.__context__),flush=True)
         raise WalletProbeError('WALLET_REAL_CORE_'+stage+'_DENIED') from None
     finally:
         if window is not None:
