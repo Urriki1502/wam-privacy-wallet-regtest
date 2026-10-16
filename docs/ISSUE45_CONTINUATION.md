@@ -130,3 +130,26 @@ modify that checkout/venv/upstream. Local Mac bundle builds likewise set
 PYTHONPATH=src, PATH=<sibling .venv/bin>:$PATH. Generated old5555 artifacts were
 preserved separately before rebuilding. Keep separate resume log and actual
 usage failure evidence; do not assume reset or buy credits.
+
+## Latest final validation checkpoint
+
+Clean COMPLETE local Mac build at ebc5b0768d0fa6af8bea90df15223ce8a56a181d
+completed exit0 including final frozen mining99/100/101, full Core/WSP/Qt security,
+new-Core recovery and reorg gates, DMG verify and all manifests. Source/checkout
+BOTHebc5b07, no metadata repair. MINING_EBC5_MACOS_FROZEN_E2E.json and inspection
+record exact hashes; outputs/issue45-session-20261016T233935/LOCAL_MACOS_EBC5
+contains actual packages. Previous919 build-tail failure remains historical.
+
+CI1ed3 Linux headless/native Qt PASS, macOS underlying real E2E PASS but workflow
+FAIL because its separate assertion still expected6 navigation pages. Updated
+that workflow to require7 AND actual new mining GUI depths/HTTP comparison.
+Executed all revised workflow assertions against the actual full-source-second
+Core receipt successfully. Following commit is CI-only/evidence; refresh exact
+HEAD CI, fix further failures on SAME Draft54. New Windows/frozen/Linux rebuild
+and physical gates may still be pending; never promote from historical passes.
+Usage last observed92%,ordinaryAllowed=true,weekly30%,credits0; no actual quota
+failure or purchase/reset. Separate resume log holds final CI/schedule/lease
+release facts after this commit. Keep recurring5h ACTIVE under latest owner
+request; no second scheduler. Next P0 after current CI: persistent owned Core
+lifecycle T05, explicit read-only existing-Core T06 and bounded port collision
+T08; mining GUI is read-only and full custody/transfer/BIP39 integration remain.
