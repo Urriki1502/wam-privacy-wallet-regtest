@@ -4,7 +4,10 @@ Experimental disposable REGTEST only. No mainnet, personal seeds/keys, real fund
 or production wallet. Owner acceptance is PENDING until an actual operator
 records the results. Native CI and automated MacBook Cocoa results are separate.
 
-Qualified code: `144d87700b87a241467172adfad3692b41e1d273`.
+Baseline RC1 code: `144d87700b87a241467172adfad3692b41e1d273`.
+This branch proposes an owner-UX fix: see [owner audit](OWNER_ACCEPTANCE_AUDIT.md).
+For a proposed build use its actual manifest/source/run; baseline PASS does not
+qualify it until new native/frozen evidence is recorded.
 Current downloads/checksums: [RC1 qualification](RELEASE_CANDIDATE_QUALIFICATION.md).
 
 ## Download, provenance and checksums

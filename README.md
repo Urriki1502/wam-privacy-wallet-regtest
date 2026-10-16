@@ -1,5 +1,7 @@
 # WAM Privacy Wallet — Real REGTEST candidates
 
+Owner-acceptance audit and proposed UX fix: [results, defects and requalification](docs/OWNER_ACCEPTANCE_AUDIT.md). The qualified RC1 baseline remains unchanged.
+
 Experimental native Qt wallet using official signed WAM Core v0.1.11,
 pinned WSP-1 BIP352 and actual SQLite. Receive, Balance, History, review-gated
 Prepare / Sign / Broadcast, confirmed change, encrypted backup, Lock / Unlock,

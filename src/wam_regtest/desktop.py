@@ -101,9 +101,10 @@ class _ReadWorker(QThread):
             result = (self.session.snapshot() if self.session is not None else
                       read_real_wallet_snapshot(self._core_dir, self._datadir, self._source))
             self.ready.emit(result)
-        except Exception:
+        except Exception as error:
             # Never forward external RPC messages, paths or private data.
-            self.denied.emit("REGTEST_NODE_OR_WSP_SCAN_UNAVAILABLE")
+            from .gui_errors import operation_error
+            self.denied.emit(operation_error('sync',error))
 
 
 class RegtestWalletWindow(QMainWindow):
@@ -217,9 +218,11 @@ class RegtestWalletWindow(QMainWindow):
         ))
 
     def _sync_failed(self, reason: str):
+        from .gui_errors import error_text,public_code
+        reason=public_code(reason,fallback='WALLET_SYNC_UNVERIFIED')
         self._clear_balance()
-        self.status.setText("DENIED: REGTEST_NODE_OR_WSP_SCAN_UNAVAILABLE")
-        self.snapshot_failed.emit("REGTEST_NODE_OR_WSP_SCAN_UNAVAILABLE")
+        self.status.setText(error_text(reason,fallback='WALLET_SYNC_UNVERIFIED'))
+        self.snapshot_failed.emit(reason)
 
     def apply_snapshot(self, snap: WalletReadSnapshot):
         if (type(snap) is not WalletReadSnapshot or snap.chain != "regtest"

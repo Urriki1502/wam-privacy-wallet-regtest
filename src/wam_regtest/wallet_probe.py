@@ -33,7 +33,8 @@ def _operation(app,window,action,trigger,*,denied=False):
     window.operation_completed.connect(success)
     window.operation_failed.connect(failure)
     timer.start(90_000)
-    trigger()
+    # Parsing failures may emit synchronously; connect and enter the loop first.
+    QTimer.singleShot(0,trigger)
     loop.exec()
     timer.stop()
     window.operation_completed.disconnect(success)
@@ -76,6 +77,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window=OperationalWalletWindow(session)
         window.show()
         window.apply_snapshot(initial)
+        validation_cases=_validation_feedback_probe(app,window,session)
         assert window.navigation.count()==6 and window._sync_timer.isActive()
         assert window.navigation.item(0).text()=="Overview"
         assert window.stack.widget(0) is window.dashboard
@@ -141,6 +143,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         try:
             (datadir/'wam.conf').write_bytes(original_config+b'proxy=127.0.0.1:9050\n')
             _operation(app,window,'network',window.network_button.click,denied=True)
+            assert window._snapshot is None and window.balance_text.text()=='—'
         finally:
             (datadir/'wam.conf').write_bytes(original_config)
         network=_operation(app,window,'network',window.network_button.click)
@@ -242,11 +245,14 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         # Real Core's mempool/consensus must accept the exact native signature.
         rpc=session._rpc()
         assert txid in rpc._call('getrawmempool',[])
+        window.apply_snapshot(session.snapshot())
+        assert window._submitted_txid==txid and 'SUBMITTED' in window.status.text()
         stage="CONFIRM"
         print("WALLET_E2E_STAGE=CONFIRM",flush=True)
         confirmed=_operation(app,window,'mine',window.mine_button.click)
         expected=initial.confirmed_atoms-review.atoms-review.fee
         assert confirmed.height==105 and confirmed.confirmed_atoms==expected
+        assert window._submitted_txid is None and 'CONFIRMED' in window.review_text.text()
         assert window.balance_text.text()==f'{expected/100_000_000:,.8f} WAM'
         assert window.history_table.rowCount()==2
         recipient_scan=Scanner(datadir/'recipient.sqlite',recipient.accounts())
@@ -378,6 +384,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
             'cross_session_key_recovery':True,'cross_session_native_qt':True,
             'cross_session_recovery_proof':proof,
             'production_custody_qualified':False,
+            'native_input_feedback_cases':validation_cases,'submitted_confirmation_feedback':True,
         }
     except WalletProbeError:
         raise
@@ -460,3 +467,35 @@ def _capture_fusion_views(app,window):
         (directory/(platform+'-visual-receipt.json')).write_text(json.dumps(receipt,indent=2)+'\n')
     finally:
         window.resize(old_size);window.appearance.setCurrentIndex(old_mode);window.navigation.setCurrentRow(old_page);app.processEvents()
+
+
+def _validation_feedback_probe(app,window,session):
+    """Genuine session/worker failures, also executed inside final GUI binaries."""
+    from .gui_errors import INPUT_ERRORS
+    initial=session.snapshot()
+    code=initial.receive_code
+    cases=(('',code,'0.00010000','WALLET_INPUT_AMOUNT_INVALID'),
+           ('0.00000001',code,'0.00010000','WALLET_INPUT_AMOUNT_INVALID'),
+           ('0.00100000',code,'0','WALLET_INPUT_FEE_INVALID'),
+           ('0.00100000',code,'0.01000001','WALLET_INPUT_FEE_INVALID'),
+           ('0.00100000','not-an-address','0.00010000','WALLET_INPUT_RECIPIENT_INVALID'),
+           ('0.00100000',code[:-1]+('q' if code[-1]!='q' else 'p'),'0.00010000','WALLET_INPUT_RECIPIENT_INVALID'),
+           ('999999.00000000',code,'0.00010000','WALLET_INPUT_FUNDS_UNAVAILABLE'))
+    rpc=session._rpc()
+    for amount,recipient,fee,expected in cases:
+        window.apply_snapshot(session.snapshot())
+        window.recipient.setText(recipient);window.amount.setText(amount);window.fee.setText(fee)
+        before=(tuple(tuple(r) for r in session.scanner.store.db.execute('SELECT * FROM reservations')),
+                session.vault.anchor.read(),tuple(rpc._call('getrawmempool',[])))
+        seen=[];handler=seen.append
+        window.operation_failed.connect(handler)
+        try:_operation(app,window,'prepare',window.prepare_button.click,denied=True)
+        finally:window.operation_failed.disconnect(handler)
+        after=(tuple(tuple(r) for r in session.scanner.store.db.execute('SELECT * FROM reservations')),
+               session.vault.anchor.read(),tuple(rpc._call('getrawmempool',[])))
+        assert seen==[expected] and expected in INPUT_ERRORS and before==after
+        assert window._snapshot==initial and window.verification_badge.text().startswith('Last verified')
+        assert not session.faulted and not session.locked and session._signed is None and session._prepared is None
+    window.apply_snapshot(session.snapshot())
+    assert window.verification_badge.text().startswith('Core verified')
+    return len(cases)

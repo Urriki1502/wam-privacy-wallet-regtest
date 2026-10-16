@@ -1,0 +1,361 @@
+{
+  "schema": "wam-owner-audit/v1",
+  "network": "regtest",
+  "synthetic_rpc": false,
+  "owner_data_touched": false,
+  "checks": [
+    {
+      "check": "fresh_wallet_core_wsp_sqlite",
+      "status": "PASS",
+      "evidence": {
+        "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+        "height": 103,
+        "confirmed_atoms": 4749990000,
+        "zero_peers": true
+      }
+    },
+    {
+      "check": "receive_code_native_wsp",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "rendered_qr_independent_decode",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "six_screen_navigation",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "amount_empty_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "amount_negative_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "amount_comma_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "amount_dust_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "amount_precision_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "fee_zero_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "fee_negative_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "fee_excess_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "fee_precision_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "recipient_empty_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "recipient_garbage_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "recipient_standard_core_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "recipient_bad_checksum_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "insufficient_funds_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "specific_input_error_feedback",
+      "status": "FAIL",
+      "evidence": {
+        "signals": {
+          "amount_empty": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "amount_negative": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "amount_comma": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "amount_dust": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "amount_precision": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "fee_zero": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "fee_negative": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "fee_excess": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "fee_precision": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "recipient_empty": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "recipient_garbage": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "recipient_standard_core": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "recipient_bad_checksum": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+          "insufficient_funds": "WALLET_OPERATION_DENIED_STATE_RETAINED"
+        }
+      }
+    },
+    {
+      "check": "validation_error_not_core_failure",
+      "status": "FAIL",
+      "evidence": {
+        "cases": {
+          "amount_empty": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "amount_negative": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "amount_comma": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "amount_dust": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "amount_precision": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "fee_zero": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "fee_negative": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "fee_excess": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "fee_precision": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "recipient_empty": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "recipient_garbage": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "recipient_standard_core": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "recipient_bad_checksum": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          },
+          "insufficient_funds": {
+            "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+            "badge": "Not verified",
+            "faulted": false,
+            "locked": false
+          }
+        }
+      }
+    },
+    {
+      "check": "other_exact_review",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "other_sign_cancel",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "other_sign_approved",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "other_broadcast_cancel",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "other_real_pending",
+      "status": "PASS",
+      "evidence": {
+        "pending_label": "VERIFIED LIVE REGTEST \u00b7 height 103 \u00b7 tip 05c5f6024701bf\u2026 \u00b7 DISPOSABLE TEST WALLET",
+        "review_text": "Broadcast txid: 6567b0b9f2281c109ea8a1ce8fe4bb0d208808ead00f01872fd3a6bfa0931997",
+        "confirmed_balance_unchanged": true
+      }
+    },
+    {
+      "check": "other_pending_gui_feedback",
+      "status": "FAIL",
+      "evidence": {}
+    },
+    {
+      "check": "other_confirmed_math",
+      "status": "PASS",
+      "evidence": {
+        "before_atoms": 4749990000,
+        "after_atoms": 4749880000,
+        "payment_atoms": 100000,
+        "fee_atoms": 10000,
+        "history_credit": 4749880000,
+        "history_debit": 4749990000
+      }
+    },
+    {
+      "check": "recipient_independent_scanner",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_exact_review",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_sign_cancel",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_sign_approved",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_broadcast_cancel",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_real_pending",
+      "status": "PASS",
+      "evidence": {
+        "pending_label": "VERIFIED LIVE REGTEST \u00b7 height 104 \u00b7 tip 18ae994914629f\u2026 \u00b7 DISPOSABLE TEST WALLET",
+        "review_text": "Broadcast txid: f1a1012cd9b4e633b0f7eb024a2beddd78d926c758a1346a783de7dfbca3bb3a",
+        "confirmed_balance_unchanged": true
+      }
+    },
+    {
+      "check": "self_pending_gui_feedback",
+      "status": "FAIL",
+      "evidence": {}
+    },
+    {
+      "check": "self_confirmed_math",
+      "status": "PASS",
+      "evidence": {
+        "before_atoms": 4749880000,
+        "after_atoms": 4749870000,
+        "payment_atoms": 200000,
+        "fee_atoms": 10000,
+        "history_credit": 4749870000,
+        "history_debit": 4749880000
+      }
+    },
+    {
+      "check": "native_background_sync_responsiveness",
+      "status": "PASS",
+      "evidence": {
+        "timer_ticks": 14,
+        "production_interval_ms": 30000
+      }
+    },
+    {
+      "check": "native_resize_theme_screenshots",
+      "status": "PASS",
+      "evidence": {
+        "qt_platform": "cocoa",
+        "font_family": "Helvetica Neue",
+        "human_typography_review": "PENDING_OPERATOR"
+      }
+    },
+    {
+      "check": "lock_redaction",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "wrong_password_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "malformed_recovery_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "wrong_recovery_password_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "latest_backup_recovery",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "correct_unlock",
+      "status": "PASS",
+      "evidence": {}
+    }
+  ]
+}
