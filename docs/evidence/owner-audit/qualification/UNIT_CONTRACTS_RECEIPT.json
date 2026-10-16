@@ -1,0 +1,8 @@
+{
+  "source_code": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+  "tests_run": 132,
+  "passed": 99,
+  "skipped": 33,
+  "failed": 0,
+  "acceptance_scope": "fail-closed application contracts; not real E2E or native Windows/Linux evidence"
+}

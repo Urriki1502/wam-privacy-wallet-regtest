@@ -1,18 +1,22 @@
 # WAM-Fusion-REGTEST-RC1 — owner testing
 
 Experimental disposable REGTEST only. No mainnet, personal seeds/keys, real funds
-or production wallet. Owner acceptance is PENDING until an actual operator
-records the results. Native CI and automated MacBook Cocoa results are separate.
+or production wallet. Technical automation results and human usability signoff
+are separate. The proposed UX fix completed50 local real-Core owner checks and
+native/frozen qualification; see the audit below. Only the physical/manual items
+in its final section still need an operator. The exercises here are reproducible
+reference instructions, not a requirement to manually repeat all automated gates.
 
 Baseline RC1 code: `144d87700b87a241467172adfad3692b41e1d273`.
-This branch proposes an owner-UX fix: see [owner audit](OWNER_ACCEPTANCE_AUDIT.md).
-For a proposed build use its actual manifest/source/run; baseline PASS does not
-qualify it until new native/frozen evidence is recorded.
-Current downloads/checksums: [RC1 qualification](RELEASE_CANDIDATE_QUALIFICATION.md).
+Proposed owner-UX fix code: `427d3b0789d0b7e2da1f506c8dde860b5c6b4575`, Draft PR38.
+[Owner audit, qualification, new downloads/checksums](OWNER_ACCEPTANCE_AUDIT.md).
+The proposed code remains unmerged. Use the actual candidate manifest/source/run;
+never mix its receipts with baseline artifacts. Original baseline downloads:
+[RC1 qualification](RELEASE_CANDIDATE_QUALIFICATION.md).
 
 ## Download, provenance and checksums
 
-Use only actual published Actions links in RELEASE_CANDIDATE_QUALIFICATION.md or
+Use only actual published Actions links in the owner audit/RC1 qualification or
 the integration PR. Choose the four RC1 artifacts whose FULL source SHA matches:
 macos-arm64, windows-x64, linux-x86_64-desktop and linux-x86_64-headless.
 GitHub login may be required. Artifacts have14-day retention; the report records

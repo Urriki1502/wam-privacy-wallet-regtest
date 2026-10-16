@@ -1,0 +1,102 @@
+[
+  {
+    "platform": "macos-arm64",
+    "source_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "run_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843580133",
+    "common_manifest_sha256": "72b1faca915f2f2680347fa78ec0f6a24236d26f5c1c2407ae89397d317e507f",
+    "all_public_output_hashes_verified": 6,
+    "python": "3.12.10",
+    "build_os": "macOS-15.7.9-arm64-arm-64bit",
+    "tool_versions": {
+      "PyInstaller": "6.22.3",
+      "PySide6": "6.12.0",
+      "PySide6_Addons": "6.12.0",
+      "PySide6_Essentials": "6.12.0",
+      "altgraph": "0.17.5",
+      "cffi": "2.1.1",
+      "coincurve": "21.0.0",
+      "cryptography": "50.0.0",
+      "packaging": "26.3",
+      "pycryptodome": "3.23.0",
+      "pyinstaller-hooks-contrib": "2026.8",
+      "qrcode": "8.2",
+      "setuptools": "84.0.0",
+      "shiboken6": "6.12.0"
+    },
+    "single_commit_build": true
+  },
+  {
+    "platform": "windows-x64",
+    "source_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "run_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843585494",
+    "common_manifest_sha256": "bb0be6bc36eb86b363f86fb84de627344174b491005a34e7e9a4e6ee3f2dfb65",
+    "all_public_output_hashes_verified": 35,
+    "python": "3.12.10",
+    "build_os": "Windows-2022Server-10.0.20348-SP0",
+    "tool_versions": {
+      "Pillow": "12.0.0",
+      "PyInstaller": "6.22.3",
+      "PySide6": "6.12.0",
+      "PySide6_Addons": "6.12.0",
+      "PySide6_Essentials": "6.12.0",
+      "altgraph": "0.17.5",
+      "cffi": "2.1.1",
+      "coincurve": "21.0.0",
+      "cryptography": "50.0.0",
+      "packaging": "26.3",
+      "pycryptodome": "3.23.0",
+      "pyinstaller-hooks-contrib": "2026.8",
+      "qrcode": "8.2",
+      "setuptools": "84.0.0",
+      "shiboken6": "6.12.0"
+    },
+    "single_commit_build": true
+  },
+  {
+    "platform": "linux-x86_64-headless",
+    "source_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "run_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843589482",
+    "common_manifest_sha256": "34b3e03a79e2b700ddf7ce84986df54da54b49ce8ea30581c6f18c1a6b19b140",
+    "all_public_output_hashes_verified": 7,
+    "python": "3.12.15",
+    "build_os": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "tool_versions": {
+      "PyInstaller": "6.22.3",
+      "altgraph": "0.17.5",
+      "cffi": "2.1.1",
+      "coincurve": "21.0.0",
+      "cryptography": "50.0.0",
+      "packaging": "26.3",
+      "pycryptodome": "3.23.0",
+      "pyinstaller-hooks-contrib": "2026.8",
+      "setuptools": "84.0.0"
+    },
+    "single_commit_build": true
+  },
+  {
+    "platform": "linux-x86_64-desktop",
+    "source_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "run_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843589482",
+    "common_manifest_sha256": "afdf19fda04cac24e6574ab986bf8a89d06690b9dc339e338688e134b4dd88cf",
+    "all_public_output_hashes_verified": 7,
+    "python": "3.12.15",
+    "build_os": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "tool_versions": {
+      "PyInstaller": "6.22.3",
+      "PySide6": "6.12.0",
+      "PySide6_Addons": "6.12.0",
+      "PySide6_Essentials": "6.12.0",
+      "altgraph": "0.17.5",
+      "cffi": "2.1.1",
+      "coincurve": "21.0.0",
+      "cryptography": "50.0.0",
+      "packaging": "26.3",
+      "pycryptodome": "3.23.0",
+      "pyinstaller-hooks-contrib": "2026.8",
+      "qrcode": "8.2",
+      "setuptools": "84.0.0",
+      "shiboken6": "6.12.0"
+    },
+    "single_commit_build": true
+  }
+]

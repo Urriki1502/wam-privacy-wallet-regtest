@@ -1,0 +1,39 @@
+[
+  {
+    "platform": "windows-x64",
+    "source_head": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "checkout": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "archive": "WAM-Privacy-Wallet-REGTEST-windows-x64-427d3b0789d0b7e2da1f506c8dde860b5c6b4575.zip",
+    "archive_sha256": "8520719ee1a2fa1b3e0df6b54a8154af10779dd40a8313239b8b844100d4eef3",
+    "all_bundle_members_verified": 341,
+    "independent_core_pe_hashes_verified": true,
+    "pinned_wsp_source_files": 33,
+    "wsp_checkout_line_endings": "exact reversible CRLF conversion of pinned LF corpus",
+    "original_brand_verified": true,
+    "native_runner_final_exe_and_dpi_pass": true,
+    "native_execution_on_this_mac": false
+  },
+  {
+    "platform": "macos-arm64",
+    "source_head": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "checkout": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "files_sha256": {
+      "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip": {
+        "sha256": "72ae4590bb01c8674122c4b1d82db8913d0ed03ba1f916682a5f66fba7697704",
+        "size_bytes": 56267968
+      },
+      "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg": {
+        "sha256": "ac0b4ce5a580ce6af5e99be6e20e252617e413d03d1d3312a302aa4608f8eec9",
+        "size_bytes": 63882630
+      }
+    },
+    "independent_core_arm64_hashes_verified": true,
+    "pinned_wsp_source_files": 33,
+    "original_brand_icon_verified": true,
+    "safe_internal_links": 111,
+    "native_runner_final_app_dmg_pass": true,
+    "local_cocoa_e2e": "PASS",
+    "downloaded_dmg_hdiutil_verify": "VALID",
+    "human_finder_signoff": false
+  }
+]
