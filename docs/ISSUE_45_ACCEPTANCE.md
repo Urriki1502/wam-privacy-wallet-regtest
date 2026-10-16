@@ -100,3 +100,22 @@ probe (missing modal Sign after screenshot capture); its source/frozen Windows
 qualification is FAIL. Do not count other green jobs as a replacement. Review
 worker/timer scheduling in a separate focused fix without relaxing approvals.
 All integrated-V1 registry gates remain PENDING; historical receipts unchanged.
+
+## F-08/B-04 approval-sync regression (Draft48)
+
+Runtime3ea32b8 on47/cad7785. Actual Mac Core/WSP/Qt reproducer confirmed a
+refresh worker enters the modal approval before the fix, and cannot after.
+Timer and manual refresh are now emitted inside every actual approval in the
+shared source/frozen E2E harness; a worker or changed review fails acceptance.
+The application serializes this modal interval, retains the exact commitment
+and default Cancel, and preserves backend live-chain/security checks. Probe
+waits boundedly for background completion before clicking native actions.
+
+[Actual Mac full E2E](evidence/issue45/APPROVAL_MACOS_COMPONENT.json): genuine
+Send/Sign/Broadcast, confirmed recipient100000atoms/change, lost actual reply
+retains reservations, backup/lock/wrong password/recovery, fresh Core recovery,
+reorg1/12/100 and native HTTP endpoint component PASS. Offscreen Qt is not Cocoa
+Auto/physical acceptance; receipt flags not exercised remain false, including
+additional stale-before-sign/broadcast recovery assertions in that local mode.
+149 units:116PASS/33SKIP. New Windows/Linux/frozen CI remains PENDING until
+exact-head results; parent46 failure is preserved, not retroactively PASS.
