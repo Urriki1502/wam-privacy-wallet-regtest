@@ -20,9 +20,14 @@ PASSWORD=b'public-disposable-linux-qt-acceptance'
 
 def background_snapshot(app,window):
     loop=QEventLoop();observed=[];failures=[]
-    def ready(snap):observed.append(snap);loop.quit()
+    def ready(snap):
+        # Stop at signal delivery, not after the nested loop returns: worker
+        # teardown/processEvents may otherwise dispatch another 50ms timeout.
+        window._sync_timer.stop()
+        observed.append(snap);loop.quit()
     def denied(code):
         from .gui_errors import public_code
+        window._sync_timer.stop()
         failures.append(public_code(code));loop.quit()
     deadline=QTimer();deadline.setSingleShot(True);deadline.timeout.connect(loop.quit)
     window.snapshot_updated.connect(ready);window.snapshot_failed.connect(denied)
