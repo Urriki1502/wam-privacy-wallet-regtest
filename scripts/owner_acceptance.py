@@ -49,7 +49,7 @@ def sync(app,window):
 def reservations(session):return tuple(tuple(r) for r in session.scanner.store.db.execute('SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout'))
 
 @contextmanager
-def isolated_chain(core,source):
+def isolated_chain(core,source,*,process_observer=None):
  node,cli,receipt=verified_core_paths(core);_pinned_source(source)
  with tempfile.TemporaryDirectory(prefix='wam-owner-audit-') as temp:
   data=Path(temp).resolve();data.chmod(0o700);rpc_port,peer_port=_port(),_port();assert rpc_port!=peer_port;_write_private_config(data,rpc_port,peer_port)
@@ -71,6 +71,7 @@ def isolated_chain(core,source):
    assert len(_read_cli(prefix+['generatetoaddress','101',mining],timeout=90))==101
    scan=scan_actual_core_blocks(cli,data,source,expected_height=101,payment_e2e=True,mining_address=mining)
    assert scan['synthetic_rpc'] is False
+   if process_observer is not None:process_observer(proc)
    yield data,mining,receipt
   finally:
    if proc is not None and proc.poll() is None:

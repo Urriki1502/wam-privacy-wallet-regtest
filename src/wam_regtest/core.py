@@ -296,6 +296,10 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 raise CoreSmokeError("CORE_REGTEST_CHAIN_DRIFT_DENIED")
             if _read_cli(prefix + ["getconnectioncount"]) != 0:
                 raise CoreSmokeError("CORE_EXTERNAL_PEERS_DENIED")
+            owned_rpc_receipt = None
+            if not interactive_demo:
+                from .owned_rpc_probe import probe_owned_reads
+                owned_rpc_receipt = probe_owned_reads(proc, core_dir, datadir, height)
             wsp_receipt = None
             if wsp_source is not None:
                 from .wsp_live import scan_actual_core_blocks, RealWspScanError
@@ -380,6 +384,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     or _read_cli(prefix+["getconnectioncount"])!=0):
                 raise CoreSmokeError("CORE_FINAL_CHAIN_ATTESTATION_DENIED")
             return {
+                "owned_http_read_component": owned_rpc_receipt,
                 "wallet_live_core": wallet_receipt,
                 "recovery_live_core": recovery_receipt,
                 "security_live_core": security_receipt,

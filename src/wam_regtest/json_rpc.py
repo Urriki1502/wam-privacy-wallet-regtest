@@ -12,7 +12,7 @@ import re
 import stat
 import sys
 import threading
-from .core import verified_core_paths
+from .core_process import OwnedCoreBinding, CoreBindingError
 from .network_policy import parse_local_config
 from .wsp_live import REGTEST_GENESIS
 
@@ -87,18 +87,48 @@ def _reply(raw,identifier,method):
         raise RpcError('RPC_REPLY_INVALID') from None
 
 
+class _BoundConnection(http.client.HTTPConnection):
+    def __init__(self,port,timeout,binding):
+        self._binding=binding
+        super().__init__('127.0.0.1',port,timeout=timeout)
+
+    def request(self, *args, **kwargs):
+        # Recheck live owned process and cheap file identity even on a reused
+        # connection. Full binary hashes are checked only at binding creation.
+        try:
+            self._binding._assert_image()
+        except CoreBindingError as error:
+            self.close();raise RpcError(error.args[0]) from None
+        except Exception:
+            self.close();raise RpcError('RPC_NATIVE_PROCESS_PROOF_DENIED') from None
+        return super().request(*args, **kwargs)
+
+    def connect(self):
+        # HTTPConnection invokes this BEFORE sending buffered headers, including
+        # Basic auth. Each new TCP connection requires fresh kernel ownership.
+        try:
+            self._binding._assert_image()
+            super().connect()
+            self._binding.assert_socket(self.sock)
+        except CoreBindingError as error:
+            self.close();raise RpcError(error.args[0]) from None
+        except Exception:
+            self.close();raise RpcError('RPC_NATIVE_ENDPOINT_PROOF_DENIED') from None
+
+
 class ManagedReadRpc:
     """No endpoint override, proxy, redirect, wallet selector or write method."""
-    def __init__(self,core,directory,*,authorized_readonly=False,timeout=5):
+    def __init__(self,core,directory,*,authorized_readonly=False,timeout=5,binding=None):
         if authorized_readonly is not True:raise RpcError('RPC_EXPLICIT_READ_CONSENT_REQUIRED')
         if type(timeout) not in (int,float) or not 0.1<=timeout<=30:raise RpcError('RPC_TIMEOUT_DENIED')
+        if type(binding) is not OwnedCoreBinding or binding.core!=core or binding.directory!=directory:
+            raise RpcError('RPC_MANAGED_PROCESS_REQUIRED')
         self._connection=None;self._auth=None;self._closed=False;self._lock=threading.RLock();self._identifier=0
         try:
-            verified_core_paths(core)  # Full binary/custody checks ONCE at open.
             raw=_private_config(directory);port=parse_local_config(raw)
             values=dict(line.split('=',1) for line in raw.decode('ascii').splitlines()[3:])
             self._auth='Basic '+base64.b64encode((values['rpcuser']+':'+values['rpcpassword']).encode('ascii')).decode('ascii')
-            self._connection=http.client.HTTPConnection('127.0.0.1',port,timeout=timeout)
+            self._connection=_BoundConnection(port,timeout,binding)
             self._connection.set_debuglevel(0)
             self.attest()
         except RpcError:
@@ -113,7 +143,7 @@ class ManagedReadRpc:
         _params(method,params);self._identifier+=1
         try:
             body=json.dumps({'jsonrpc':'1.0','id':self._identifier,'method':method,'params':params},separators=(',',':')).encode('ascii')
-            self._connection.request('POST','/',body,{'Authorization':self._auth,'Content-Type':'application/json'})
+            self._connection.request('POST','/',body,{'Authorization':self._auth,'Content-Type':'application/json','Connection':'keep-alive'})
             response=self._connection.getresponse()
             raw=response.read(MAX_REPLY+1)
             if response.status==401:raise RpcError('RPC_AUTHENTICATION_DENIED')
