@@ -34,7 +34,24 @@ def _owned_chain(core):
         if rpc_port==peer_port:raise ValueError('MINING_FIXTURE_PORT_COLLISION_DENIED')
         _write_private_config(data,rpc_port,peer_port)
         proc=None
-        def rpc(*args,timeout=30):return _read_cli([str(cli),f'-datadir={data}',*args],timeout=timeout)
+        def rpc(*args,timeout=30):
+            if sys.platform!='win32':return _read_cli([str(cli),f'-datadir={data}',*args],timeout=timeout)
+            # This private acceptance context owns a newly generated datadir,
+            # process and test wallet. Do not broaden the application's CLI
+            # allowlist to grant mining-fixture wallet mutation to ordinary UI.
+            from .windows_core_transport import verified_core_paths as verify,local_rpc_port
+            from .windows_core_regtest_smoke import _rpc
+            scope=args[1:] if args and args[0]=='-rpcwallet=test' else args
+            allowed={'getblockchaininfo','getconnectioncount','getblockcount','getblock',
+                'getrawmempool','gettxout','getdevfeeinfo','getemissionschedule',
+                'createwallet','getnewaddress','getaddressinfo','getwalletinfo','getbalances',
+                'listunspent','sendtoaddress','gettransaction','lockunspent','generatetoaddress','stop'}
+            if not scope or scope[0] not in allowed or any(a.startswith('-') for a in scope):
+                raise ValueError('MINING_FIXTURE_RPC_SCOPE_DENIED')
+            _,checked_cli,_=verify(core)
+            if checked_cli!=cli:raise ValueError('MINING_FIXTURE_CLI_IDENTITY_DENIED')
+            try:return _rpc(cli,data,local_rpc_port(data),env,*args,timeout=timeout)
+            except (ValueError,OSError):raise CoreSmokeError('MINING_FIXTURE_WINDOWS_RPC_DENIED') from None
         try:
             with (data/'core-output.log').open('xb') as log:
                 proc=subprocess.Popen([str(node),f'-datadir={data}','-daemon=0'],
@@ -66,8 +83,8 @@ def _owned_chain(core):
 def probe_core_mining(core,source):
     start=time.monotonic();external=public_regtest_mining_address(source)
     with _owned_chain(core) as (rpc,receipt):
-        rpc('createwallet','mining-test')
-        def wallet(*args):return rpc('-rpcwallet=mining-test',*args)
+        rpc('createwallet','test')
+        def wallet(*args):return rpc('-rpcwallet=test',*args)
         address=wallet('getnewaddress');owned=wallet('getaddressinfo',address)
         if owned['ismine'] is not True:raise ValueError('MINER_OWNERSHIP_REQUIRED')
         treasury=rpc('getdevfeeinfo');wallet_info=wallet('getwalletinfo')
