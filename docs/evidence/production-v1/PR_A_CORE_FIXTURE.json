@@ -1,0 +1,24 @@
+{
+  "platform": "macos-arm64",
+  "network": "regtest",
+  "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+  "sqlite_header": true,
+  "native_descriptor_metadata": true,
+  "source_file_unchanged": true,
+  "native_backupwallet_restorewallet": true,
+  "core_allows_duplicate_key_wallets": true,
+  "application_descriptor_identity_duplicate_denied": true,
+  "original_receive_address_still_owned": true,
+  "balance_categories_preserved": {
+    "trusted_atoms": 4750000000,
+    "pending_untrusted_atoms": 0,
+    "immature_atoms": 349125000000,
+    "private_keys_enabled": true
+  },
+  "source_is_owned_generated_fixture": true,
+  "external_file_accepted": false,
+  "synthetic_rpc": false,
+  "cross_os_interchange_qualified": false,
+  "production_qualified": false,
+  "mainnet_allowed": false
+}
