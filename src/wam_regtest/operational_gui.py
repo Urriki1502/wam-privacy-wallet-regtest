@@ -16,6 +16,7 @@ from wam_regtest.wallet_read import format_wam
 from .fusion_ui import panel,page,label,action,ResponsiveRow,ReadableText
 from .fusion_pages import PaymentSteps,PaymentApproval
 from .amounts import _parse_atoms,parse_amount
+from .gui_errors import operation_error,error_text,public_code,INPUT_ERRORS
 
 
 class OperationWorker(QThread):
@@ -35,8 +36,8 @@ class OperationWorker(QThread):
                      "mine":self.session.mine,"network":self.session.network_diagnostics,"disclose":self.disclose}
             result=methods[self.action](*self.args)
             self.ready.emit(self.action,result)
-        except Exception:
-            self.denied.emit("WALLET_OPERATION_DENIED_STATE_RETAINED")
+        except Exception as error:
+            self.denied.emit(operation_error(self.action,error))
         finally:
             self.args=()  # Release temporary GUI passphrase copies, best effort.
 
@@ -48,6 +49,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.session=session
         self.review=None
         self.signed=False
+        self._submitted_txid=None
         super().__init__(session.core_dir,session.datadir,session.source,session=session)
         self.setWindowTitle("WAM Privacy Wallet · Disposable REGTEST")
         self.warning.setText("REGTEST ONLY · DISPOSABLE TEST KEYS · NO REAL FUNDS")
@@ -179,11 +181,16 @@ class OperationalWalletWindow(RegtestWalletWindow):
     def prepare_payment(self):
         try:
             atoms=parse_amount(self.amount.text())
+        except (ValueError,InvalidOperation,OverflowError):
+            self._operation_denied("WALLET_INPUT_AMOUNT_INVALID")
+            return
+        try:
             # Fee has a lower dust-independent floor and explicit WSP limit.
             fee=_parse_atoms(self.fee.text(),1,1_000_000)
-            self.start_operation("prepare",self.recipient.text().strip(),atoms,fee)
         except (ValueError,InvalidOperation,OverflowError):
-            self._operation_denied("WALLET_AMOUNT_OR_FEE_DENIED")
+            self._operation_denied("WALLET_INPUT_FEE_INVALID")
+            return
+        self.start_operation("prepare",self.recipient.text().strip(),atoms,fee)
 
     def _operation_ready(self,action,result):
         if action in ("prepare","sign"):
@@ -199,7 +206,11 @@ class OperationalWalletWindow(RegtestWalletWindow):
         elif action in ("cancel","broadcast","lock"):
             self.review=None
             self.signed=False
-            self.review_text.setText("Broadcast txid: "+result if action=="broadcast" else "No active payment review")
+            if action=="broadcast":
+                self._submitted_txid=result
+            elif action=="lock":
+                self._submitted_txid=None
+            self.review_text.setText("SUBMITTED · confirmation not yet observed\nTransaction: "+result if action=="broadcast" else "No active payment review")
         if action=="disclose":
             import json
             self.disclosure_text.setText(json.dumps(result,sort_keys=True))
@@ -222,6 +233,16 @@ class OperationalWalletWindow(RegtestWalletWindow):
 
     def apply_snapshot(self,snap):
         super().apply_snapshot(snap)
+        if self._snapshot is not None and self._submitted_txid is not None:
+            confirmed=next((r for r in snap.history if r.txid==self._submitted_txid and r.confirmations>0),None)
+            if confirmed is not None:
+                if self.review is None:
+                    self.review_text.setText("CONFIRMED · block "+str(confirmed.block_height)+"\nTransaction: "+self._submitted_txid)
+                self._submitted_txid=None
+            else:
+                # This is a local submission receipt, not a synthetic mempool
+                # balance or evidence the node still holds the transaction.
+                self.status.setText(self.status.text()+" · SUBMITTED: confirmation not yet observed; balance is confirmed only")
         if hasattr(self,"core_identity"):
             self.core_identity.setText("SHA-256 / "+snap.core_sha256 if self._snapshot is not None else "Core identity not verified")
         if hasattr(self,"disclosure_record"):
@@ -237,6 +258,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
             self.disclosure_record.clear();self.disclosure_text.setText('No verified local disclosure')
             self.core_identity.setText('No verified Core identity in this session')
             if self.session.locked or self.session.faulted:
+                self._submitted_txid=None
                 self.recipient.clear();self.amount.clear();self.review_text.setText('Wallet locked or faulted · verify recovery before payment details are displayed.')
             self._update_controls()
 
@@ -256,10 +278,17 @@ class OperationalWalletWindow(RegtestWalletWindow):
             self.start_operation("disclose",txid,fields,password)
 
     def _operation_denied(self,reason):
-        self.network_text.setText("UNVERIFIED · run local node privacy verification again")
-        self._clear_balance()
-        self.status.setText("DENIED · wallet state/reservations retained; unlock/recover or verify chain")
-        self.operation_failed.emit("WALLET_OPERATION_DENIED_STATE_RETAINED")
+        reason=public_code(reason)
+        if (reason in INPUT_ERRORS and self._snapshot is not None
+                and not self.session.locked and not self.session.faulted):
+            # Only known pre-mutation input/coin-selection refusals retain a
+            # previously live-verified snapshot. Never label it fresh/current.
+            self.verification_badge.setText("Last verified · "+str(self._snapshot.height))
+        else:
+            self.network_text.setText("UNVERIFIED · run local node privacy verification again")
+            self._clear_balance()
+        self.status.setText(error_text(reason))
+        self.operation_failed.emit(reason)
         self._update_controls()
 
     def request_sync(self):
@@ -284,7 +313,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
             try:
                 custody.create_directory(directory)
                 self.start_operation("backup",directory,"wallet-backup.enc")
-            except OSError:
+            except (OSError,ValueError):
                 self._operation_denied("WALLET_BACKUP_DIRECTORY_DENIED")
 
     def recover_wallet(self):

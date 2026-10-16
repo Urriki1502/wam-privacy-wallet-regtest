@@ -1,0 +1,13 @@
+{
+  "qualified_code": "144d87700b87a241467172adfad3692b41e1d273",
+  "docs_head": "d10fa54233bf81f56bd06144c840d2123d7dd7cb",
+  "runtime_workflows_pyproject_equal_qualified_code": true,
+  "owner_running_pids_preserved": [
+    5770,
+    5772
+  ],
+  "engineering_lease_session": 9827,
+  "physical_linux": "PENDING_OPERATOR",
+  "live_owner_ax": "unavailable: Computer Use timeout; no owner window actions",
+  "baseline_qr_decoder": "zxing-cpp2.3.0 audit-only"
+}
