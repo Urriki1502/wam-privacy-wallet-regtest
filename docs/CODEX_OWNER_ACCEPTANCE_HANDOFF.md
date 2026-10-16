@@ -39,3 +39,42 @@ attempts are partial diagnostic runs, not full acceptance. Only completed baseli
 and fixed43 matrices are used. No mocks in real-Core acceptance. PhysicalLinux
 PENDING_OPERATOR per prior owner answer. No scheduler updates, recurring retries,
 credit resets or paid actions authorized. Preserve originalWSP/Core/branding pins.
+
+## Live continuation checkpoint — exact code427d3b0
+
+CODE committed/pushed:427d3b0789d0b7e2da1f506c8dde860b5c6b4575.
+Draft PR38 https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/38,
+base docs/wam-fusion-regtest-rc1-evidence (#37); attached to this chat.
+Current branch docs/rc1-owner-acceptance-evidence-20261016 is documentation only;
+keep the audit code branch at427d3b0. All49 local owner technical checks PASS
+(43 original +6 actual keyboard/masked-password-dialog cases). Baseline45PASS /
+4UXFAIL of49; baseline keyboard tests used preserved RC1 source via PYTHONPATH.
+Full exact427d3b0 rerun43/43PASS. No owner app/session data changed.
+
+Eight workflow_dispatch runs at EXACT427d3b0:
+vectors38843576037, macOS38843580133, Windows38843585494,
+Linux38843589482, Win-preflight38843594122, Win-Core38843598553,
+Win-receive38843604563, Win-readQt38843609070.
+Vectors +four Windows supplemental source gates PASS. Mac source+final app/DMG
+PASS and Linux source+both frozen PASS at current snapshot. Linux repeated Core
+build and Windows frozen/scaling are still in progress; do NOT assume success.
+Manual dispatch vs synthetic PR checkout must remain distinct.
+
+Published new artifact IDs so far: Mac12022821744, Linux desktop12022432490,
+Linux headless12022796655, all source427d3b0, expire30October2026. Downloads in
+progress: sessions71711Mac,22280Linuxheadless,11020Linuxdesktop. Independent
+validators and run_macbook_qa.py have been adapted to exact427d3b0 in the output
+folder. Mac QA has not yet run for the newly downloaded binary. Windows package
+not yet available; fetch only after actual final gate succeeds.
+
+NEXT EXACT ACTION: wait/poll download sessions, run verify_linux.py and
+verify_common_manifest.py for completed Linux downloads. Execute run_macbook_qa.py
+on the NEW Mac artifact with escalation, not the owner's running RC1. Inspect
+live Windows run38843585494 and Linux38843589482. Fix real failures, never reduce
+gates. Download Windows after success; verify all4 common/manifests/Core/WSP/
+member hashes. Save final8 native results/logs, record artifacts/checksums/expiry,
+new Mac Cocoa/DMG/clean exit, update OWNER_ACCEPTANCE_AUDIT.md and this handoff.
+Then commit/push docs-only final evidence, create Draft evidence PR stacked on
+PR38 and attach it. Do not merge. Update PR38 body with final actual proof.
+Lease9827 remains held; release only after completed checkpoint/log. No scheduler,
+credit reset or main/legacy/upstream edits. Physical Linux remains unavailable.
