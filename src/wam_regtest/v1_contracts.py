@@ -18,7 +18,7 @@ def require_regtest(chain, genesis):
 
 
 def derivation_paths(profile, account=0):
-    if profile != BIP39_PROFILE or type(profile) is not str:
+    if type(profile) is not str or profile != BIP39_PROFILE:
         raise WalletContractError('V1_DERIVATION_PROFILE_DENIED')
     if type(account) is not int or not 0 <= account < 16:
         raise WalletContractError('V1_ACCOUNT_LIMIT')
