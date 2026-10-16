@@ -12,6 +12,8 @@ from .json_rpc import ManagedReadRpc, RpcError, _BoundConnection
 def probe_owned_reads(process, core, directory, height):
     binding = OwnedCoreBinding(process, core, directory)
     with ManagedReadRpc(core, directory, authorized_readonly=True, binding=binding) as client:
+        info=client.call('getnetworkinfo')
+        rpc_profile={k:info[k] for k in ('version','subversion','protocolversion')}
         for _ in range(8):
             if client.call('getblockcount') != height:
                 raise ValueError('RPC_PROBE_HEIGHT_DENIED')
@@ -51,6 +53,7 @@ def probe_owned_reads(process, core, directory, height):
             raise ValueError('RPC_PROBE_PREAUTH_LEAK_OR_CLEANUP_DENIED')
     return {
         'status': 'REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS',
+        'rpc_compatibility_profile': rpc_profile,
         'repeated_authenticated_reads': 8, 'height': height,
         'process_image_and_established_socket_before_auth': True,
         'wrong_process_endpoint_denied_before_any_http_bytes': True,

@@ -1,0 +1,25 @@
+{
+  "scope": "Mac copied-executable trust-session failure paths; not hardened loader qualification",
+  "source_sha": "ea5ff6c4f40aa4c3256ea59dbf50975fa6199ecc",
+  "executed_utc": "2026-10-16T10:43:22.735998+00:00",
+  "platform": "macos-arm64",
+  "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+  "wam_cli_sha256": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+  "wsp_source": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "module_sha256": {
+    "core_process.py": "e36c5d1a2c619d83f34655ff3b2c0a7d0bef860eba744237f95fb69d3c907e81",
+    "json_rpc.py": "3badc54ca9876b967210e3babe423e48fb98db4174af8a3946bba74ec7d29b6a"
+  },
+  "copied_cli_tamper_denial": "RPC_EXECUTABLE_CHANGED",
+  "copied_node_replacement_denial": "RPC_PROCESS_IMAGE_DENIED",
+  "owned_process_exit_denial": "RPC_OWNED_PROCESS_EXITED",
+  "refused_sessions_quarantined": true,
+  "original_core_pair_unchanged": true,
+  "mutated_executable_launched": false,
+  "synthetic_rpc": false,
+  "owner_data_accessed": false,
+  "mainnet_allowed": false,
+  "frozen_qualified": false,
+  "physical_accepted": false,
+  "recorded_utc": "2026-10-16T10:44:13.161677+00:00"
+}

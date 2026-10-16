@@ -119,3 +119,29 @@ Auto/physical acceptance; receipt flags not exercised remain false, including
 additional stale-before-sign/broadcast recovery assertions in that local mode.
 149 units:116PASS/33SKIP. New Windows/Linux/frozen CI remains PENDING until
 exact-head results; parent46 failure is preserved, not retroactively PASS.
+
+## T-03 compatibility / T-04 failure paths (next Draft)
+
+Runtime ea5ff6c incorporates47/e61ed4b and48/17ccbbd by normal merge ancestry,
+without force-push or replay. The exact genuine Mac Core RPC observation is
+version111,subversion/WAM:0.1.11/,protocol70016. Typed getnetworkinfo now refuses
+unknown/malformed profiles, and chain/genesis/version are reattested before
+reads. These are measured WAM values, not Bitcoin defaults. Existing native
+and final frozen probes execute the same compatibility check; other platform
+results are PENDING until their exact-head jobs complete.
+
+[Mac authenticated compatibility proof](evidence/issue45/T03_RPC_COMPAT_MACOS.json)
+and [copied-executable failures](evidence/issue45/T04_EXEC_FAILURES_MACOS.json)
+PASS: CLI tamper, node file replacement, owned process exit all quarantine the
+session. Tests mutate only disposable copies; no changed executable is launched;
+original signed Core pair hashes are reverified unchanged. This does not prove
+hardened fd-to-loader binding, compromised-same-user/OS resistance or Windows/
+Linux replacement coverage.149 prior tests plus1 version negative =150 run,
+117PASS/33SKIP/0FAIL. Wrong-version units supplement, not replace genuine Core.
+
+PR47/cad7785 Windows operational gate failed at process-image spelling before
+GUI. e61ed4b compares native file identity on Windows (short/long aliases) plus
+unchanged independently pinned metadata; no path-match bypass or weaker hash.
+New CI must verify this fix, not treat earlier successful staged-binary probes
+as all-path qualification. Shared transport/V1 test-only changes now trigger
+existing Windows native/frozen and Linux jobs; no new job/workflow added.

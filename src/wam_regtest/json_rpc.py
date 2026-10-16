@@ -17,6 +17,9 @@ from .network_policy import parse_local_config
 from .wsp_live import REGTEST_GENESIS
 
 MAX_REPLY=1024*1024
+# Measured on genuine independently pinned v0.1.11, not inferred from Bitcoin.
+# Signed newer binaries require a separate compatibility qualification.
+SUPPORTED_RPC=(111, '/WAM:0.1.11/', 70016)
 
 
 class RpcError(ValueError):
@@ -57,7 +60,7 @@ def _unique(pairs):
 
 
 def _params(method,params):
-    if type(method) is not str or method not in ('getblockchaininfo','getblockcount','getblockhash') or type(params) is not list:
+    if type(method) is not str or method not in ('getblockchaininfo','getblockcount','getblockhash','getnetworkinfo') or type(params) is not list:
         raise RpcError('RPC_READ_SCOPE_DENIED')
     if method=='getblockhash':
         if len(params)!=1 or type(params[0]) is not int or not 0<=params[0]<=1_000_000:
@@ -68,6 +71,11 @@ def _params(method,params):
 def _result(method,value):
     if method=='getblockhash':valid=type(value) is str and re.fullmatch('[0-9a-f]{64}',value)
     elif method=='getblockcount':valid=type(value) is int and 0<=value<=1_000_000
+    elif method=='getnetworkinfo':
+        valid=(type(value) is dict and type(value.get('version')) is int
+               and type(value.get('protocolversion')) is int and type(value.get('subversion')) is str
+               and (value['version'],value['subversion'],value['protocolversion'])==SUPPORTED_RPC)
+        if not valid:raise RpcError('RPC_VERSION_CAPABILITY_DENIED')
     else:valid=(type(value) is dict and value.get('chain')=='regtest' and type(value.get('blocks')) is int and 0<=value['blocks']<=1_000_000)
     if not valid:raise RpcError('RPC_RESULT_OR_NETWORK_DENIED')
     return value
@@ -161,6 +169,7 @@ class ManagedReadRpc:
             info=self._request('getblockchaininfo',[])
             if self._request('getblockhash',[0])!=REGTEST_GENESIS:
                 self.close();raise RpcError('RPC_GENESIS_DENIED')
+            self._request('getnetworkinfo',[])
             return info
 
     def call(self,method,params=None):
