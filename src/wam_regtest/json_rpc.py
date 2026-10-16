@@ -14,6 +14,8 @@ import re
 import stat
 import sys
 import threading
+import time
+import random
 from .core_process import OwnedCoreBinding, CoreBindingError
 from .network_policy import parse_local_config
 from .wsp_live import REGTEST_GENESIS
@@ -177,6 +179,16 @@ class ManagedReadRpc:
             raise RpcError('RPC_CONFIG_CHANGED')
 
     def _request(self,method,params):
+        _params(method,params)  # All write methods denied before retry logic.
+        for attempt in range(3):
+            try:return self._request_once(method,params)
+            except RpcError as error:
+                if error.args!=('RPC_NODE_BUSY',) or attempt==2:raise
+                # Only a positively rejected idempotent read is replayed.
+                # Connection/auth uncertainty and all writes are never retried.
+                time.sleep(random.SystemRandom().uniform(.05,.15)*(2**attempt))
+
+    def _request_once(self,method,params):
         if self._closed:raise RpcError('RPC_SESSION_CLOSED')
         _params(method,params)
         # Deny before sending any HTTP bytes. A subsequent explicit read may
@@ -196,8 +208,13 @@ class ManagedReadRpc:
             result=_reply(raw,self._identifier,method)
             if method=='getblock' and result['hash']!=params[0]:raise RpcError('RPC_BLOCK_HASH_DENIED')
             return result
-        except RpcError:
-            self.close();raise
+        except RpcError as error:
+            if error.args==('RPC_NODE_BUSY',):
+                # Core may close the rejected connection. New TCP connections
+                # still require the native process/socket proof before auth.
+                self._connection.close()
+            else:self.close()
+            raise
         except (OSError,http.client.HTTPException,ValueError):
             self.close();raise RpcError('RPC_CONNECTION_UNCERTAIN_READ_FAILED') from None
 

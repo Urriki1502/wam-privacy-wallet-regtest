@@ -17,6 +17,8 @@ def probe_owned_reads(process, core, directory, height):
         for _ in range(8):
             if client.call('getblockcount') != height:
                 raise ValueError('RPC_PROBE_HEIGHT_DENIED')
+        from .rpc_contention_probe import prove_busy_read
+        busy_proof=prove_busy_read(client,binding,height)
         before = client._identifier
         try:
             client.call('stop')
@@ -54,6 +56,7 @@ def probe_owned_reads(process, core, directory, height):
     return {
         'status': 'REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS',
         'rpc_compatibility_profile': rpc_profile,
+        'node_busy_read_component':busy_proof,
         'repeated_authenticated_reads': 8, 'height': height,
         'process_image_and_established_socket_before_auth': True,
         'wrong_process_endpoint_denied_before_any_http_bytes': True,

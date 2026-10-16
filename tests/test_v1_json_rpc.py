@@ -32,6 +32,27 @@ class ReadRpcContracts(unittest.TestCase):
         with self.assertRaises(RpcError):ManagedReadRpc(None,None)
         _params('getblockhash',[0])
 
+    def test_only_explicit_busy_reads_retry_with_bounded_jitter(self):
+        from unittest.mock import patch,Mock
+        client=object.__new__(ManagedReadRpc)
+        client._request_once=Mock(side_effect=RpcError('RPC_NODE_BUSY'))
+        with patch('wam_regtest.json_rpc.time.sleep') as sleep:
+            with self.assertRaisesRegex(RpcError,'^RPC_NODE_BUSY$'):
+                client._request('getblockcount',[])
+            self.assertEqual(client._request_once.call_count,3)
+            self.assertEqual(len(sleep.call_args_list),2)
+            for call,low,high in zip(sleep.call_args_list,(.05,.1),(.15,.3)):
+                self.assertGreaterEqual(call.args[0],low);self.assertLessEqual(call.args[0],high)
+        for code in ('RPC_AUTHENTICATION_DENIED','RPC_CONNECTION_UNCERTAIN_READ_FAILED','RPC_REPLY_INVALID','RPC_CONFIG_CHANGED'):
+            client._request_once=Mock(side_effect=RpcError(code))
+            with patch('wam_regtest.json_rpc.time.sleep') as sleep:
+                with self.assertRaisesRegex(RpcError,'^'+code+'$'):client._request('getblockcount',[])
+                self.assertEqual(client._request_once.call_count,1);sleep.assert_not_called()
+        client._request_once.reset_mock()
+        with self.assertRaisesRegex(RpcError,'^RPC_READ_SCOPE_DENIED$'):
+            client._request('sendrawtransaction',['00'])
+        client._request_once.assert_not_called()
+
     def test_config_drift_is_denied_before_wire_and_never_adopts_new_auth(self):
         from hashlib import sha256
         from pathlib import Path
