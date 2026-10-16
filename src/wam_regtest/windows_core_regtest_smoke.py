@@ -138,6 +138,7 @@ def _rpc(cli: Path, datadir: Path, port: int, env: dict, *args: str, timeout=15)
             argv, cwd=datadir, env=env, stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
             timeout=timeout, check=False,
+            creationflags=subprocess.CREATE_NO_WINDOW,
         )
     except (OSError, subprocess.TimeoutExpired):
         _deny("WIN_CORE_CLI_PROCESS_DENIED")
