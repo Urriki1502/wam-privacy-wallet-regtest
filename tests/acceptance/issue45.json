@@ -1,0 +1,2155 @@
+{
+  "schema": "wam-issue45-acceptance/v1",
+  "canonical_issue": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+  "spec_body_sha256": "89ee8d1a6f419d0b44c280fd78306ef01bbf7a9254e2f3f2754e50e7c77afbed",
+  "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+  "candidate_branch": "feature/issue45-rpc-readonly-20261016",
+  "candidate_runtime_code_sha": "4c630306489df241077615e6058dc81024475d11",
+  "integrated_v1_qualified": false,
+  "historical_pass_does_not_qualify_candidate": true,
+  "branch_map": {
+    "common_base": "995ff12d29832048ad07aba99e6795d9166aa21a",
+    "rc1": "144d87700b87a241467172adfad3692b41e1d273",
+    "main": "50e1ea94df61b8400cbab3bffe0fbdd285c6b419",
+    "included_by_ancestry": {
+      "PR38": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+      "PR39": "995ff12d29832048ad07aba99e6795d9166aa21a",
+      "PR41": "bcc985891296dab0dec4eafd69fa71bc9a7b8f7a",
+      "PR43": "125dbd671f5ffb703a62c86bd11a3dffa97df4f1"
+    },
+    "separate_PR44": "1ace4e23e5b31702376a215be2339d0003ddb58b",
+    "PR44_cherry_pick": "90ed9be",
+    "read_rpc_code": "4c630306489df241077615e6058dc81024475d11"
+  },
+  "core_profiles": {
+    "macos-arm64": {
+      "version": "v0.1.11",
+      "trust": "official-signed",
+      "wamd_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+      "wam_cli_sha256": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+    },
+    "windows-x64": {
+      "version": "v0.1.11",
+      "trust": "official-signed",
+      "wamd_sha256": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+      "wam_cli_sha256": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+    },
+    "linux-x86_64": {
+      "version": "v0.1.11",
+      "trust": "separately-reviewed-developer-build",
+      "wamd_sha256": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+      "wam_cli_sha256": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652"
+    }
+  },
+  "wsp_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "entries": [
+    {
+      "id": "B-01",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "B-02",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "B-03",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "B-04",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "B-05",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "B-06",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "T-01",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "T-02",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "T-03",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "T-04",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "T-05",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "T-06",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "T-07",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "T-08",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "T-09",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "K-01",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "K-02",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "K-03",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "K-04",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "K-05",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "K-06",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "K-07",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "K-08",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "K-09",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "K-10",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-01",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-02",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-03",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-04",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-05",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-06",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-07",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-08",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-09",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-10",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "F-11",
+      "priority": "P1",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "R-01",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "R-02",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "R-03",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "R-04",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "R-05",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "R-06",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q01",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q02",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q03",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q04",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q05",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q06",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q07",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q08",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q09",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q10",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q11",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q12",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q13",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q14",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q15",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q16",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q17",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q18",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q19",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "id": "Q20",
+      "priority": "P0",
+      "owner": "ENGINEERING",
+      "status": "PENDING",
+      "code_sha": "4c630306489df241077615e6058dc81024475d11",
+      "observed_utc": "2026-10-16T09:57:52.013008+00:00",
+      "blocking_dependency": "Current integrated native/Core/frozen scenario evidence missing; see canonical Issue45 critical path",
+      "next_action": "T-01/T-02 native direct-RPC proof then T-03/T-04, before custody/UI activation",
+      "platforms": {
+        "macos-arm64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "windows-x64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        },
+        "linux-x86_64": {
+          "SOURCE": "PENDING",
+          "CORE_E2E": "PENDING",
+          "FROZEN": "PENDING",
+          "PHYSICAL": "PENDING",
+          "DEV_REVIEWED": "PENDING"
+        }
+      },
+      "evidence_refs": []
+    }
+  ]
+}
