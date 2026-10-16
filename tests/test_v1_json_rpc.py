@@ -16,3 +16,13 @@ class ReadRpcContracts(unittest.TestCase):
             else:self.fail('MALFORMED_REPLY_ACCEPTED')
         with self.assertRaises(RpcError):_reply(b'{"id":1,"error":null,"result":{"chain":"main","blocks":0}}',1,'getblockchaininfo')
         self.assertEqual(_reply(b'{"id":1,"error":null,"result":101}',1,'getblockcount'),101)
+
+    def test_wrong_genesis_and_closed_session_are_quarantined(self):
+        import threading
+        client=object.__new__(ManagedReadRpc)
+        client._lock=threading.RLock();client._closed=False;client._auth=None;client._connection=None
+        client._request=lambda method,params: {'chain':'regtest','blocks':0} if method=='getblockchaininfo' else '0'*64
+        with self.assertRaisesRegex(RpcError,'^RPC_GENESIS_DENIED$'):client.attest()
+        self.assertTrue(client._closed)
+        del client._request
+        with self.assertRaisesRegex(RpcError,'^RPC_SESSION_CLOSED$'):client.call('getblockcount')

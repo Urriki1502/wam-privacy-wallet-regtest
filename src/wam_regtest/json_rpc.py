@@ -141,8 +141,12 @@ class ManagedReadRpc:
             return info if method=='getblockchaininfo' else self._request(method,args)
 
     def close(self):
-        if self._connection is not None:self._connection.close()
-        self._closed=True;self._auth=None
+        # Serialize teardown with reads; concurrent close must not erase the
+        # authentication header halfway through a request. RLock permits a
+        # fail-closed request/attest path to quarantine its own connection.
+        with self._lock:
+            self._closed=True;self._auth=None
+            if self._connection is not None:self._connection.close()
 
     def __enter__(self):return self
     def __exit__(self,*_):self.close()
