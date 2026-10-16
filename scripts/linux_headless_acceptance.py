@@ -1,6 +1,10 @@
 """Ephemeral Ubuntu acceptance operator; no automatic service install in app."""
 import argparse
 import json
+import os
+import platform
+import re
+from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
 import sys
@@ -35,5 +39,17 @@ try:
     assert wallet['confirmed_recipient_atoms']==100000
     if not args.qt:assert wallet['actual_reorg_depths']==[1,12,100]
     else:assert wallet['qt_platform']=='xcb' and wallet['fresh_core_same_keys_reservations'] is True
+    checkout=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
+    head=os.environ.get('WAM_SOURCE_HEAD',checkout)
+    assert re.fullmatch('[0-9a-f]{40}',head) and re.fullmatch('[0-9a-f]{40}',checkout)
+    subprocess.run(['git','merge-base','--is-ancestor',head,checkout],cwd=root,check=True)
+    assert re.fullmatch('[0-9a-f]{64}',record['wam_cli_sha256'])
+    record.update(source_head_sha=head,checkout_sha=checkout,
+        tested_utc=datetime.now(timezone.utc).isoformat(),
+        acceptance_environment={'os':platform.system(),'release':platform.release(),
+            'architecture':platform.machine(),'python':platform.python_version(),
+            'frozen_entrypoint':args.executable is not None,'qt':args.qt},
+        wsp_commit='ac55f13423620252bdbf848c7e8a280c3b84721e')
+    report.write_text(json.dumps(record,indent=2)+'\n')
     print('LINUX_REAL_CORE_ROOT_WITNESS_'+('NATIVE_QT' if args.qt else 'NO_QT_HEADLESS')+'_WALLET_PASS')
 finally:NativeRootWitness.tearDownClass()

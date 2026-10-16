@@ -12,6 +12,8 @@ on:
       - 'tests/data/bip39_reference.json'
       - 'pyproject.toml'
   workflow_dispatch:
+env:
+  WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
 permissions:
   contents: read
   actions: read

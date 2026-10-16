@@ -405,6 +405,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     if wsp_receipt is not None else False
                 ),
                 "platform": receipt["platform"], "node_sha256": receipt["wamd_sha256"],
+                "wam_cli_sha256": receipt["wam_cli_sha256"],
                 "chain": "regtest",
                 "block_height": final_height,
                 "tip": final_tip,
