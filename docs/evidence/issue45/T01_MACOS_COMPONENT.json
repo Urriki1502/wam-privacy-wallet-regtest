@@ -1,0 +1,28 @@
+{
+  "task_ids": [
+    "T-01",
+    "T-02",
+    "T-03",
+    "T-04"
+  ],
+  "scope": "initial read-only managed-session component; not complete P0 acceptance",
+  "source_sha": "4c630306489df241077615e6058dc81024475d11",
+  "module_sha256": "78e3c42e5ea759298b4737d85026aa6058c77e3326c9264782068dccd0a97a62",
+  "platform": "macos-arm64",
+  "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+  "wam_cli_sha256": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+  "real_authenticated_http_regtest": true,
+  "genesis_verified": true,
+  "repeated_reads": 8,
+  "subprocess_and_rehash_forbidden_after_session_open": true,
+  "write_denied_before_wire": true,
+  "genuine_core_invalid_auth_denied": true,
+  "synthetic_rpc": false,
+  "owner_data_accessed": false,
+  "scanner_gui_integrated": false,
+  "intended_process_attestation_complete": false,
+  "frozen_feature_qualified": false,
+  "physical_accepted": false,
+  "mainnet_allowed": false,
+  "production_qualified": false
+}
