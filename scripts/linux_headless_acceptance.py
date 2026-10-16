@@ -36,6 +36,8 @@ try:
     assert record['mining_account_component']['status']=='REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS'
     assert record['owned_http_read_component']['status']=='REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS'
     wallet=record['wallet_live_core']
+    assert wallet['operational_snapshot_http']['cli_and_rehash_forbidden'] is True
+    assert wallet['operational_snapshot_http']['transport']=='owned-http'
     assert wallet['status']==('REAL_LINUX_CORE_ROOT_WITNESS_NATIVE_QT_WALLET_E2E_PASS' if args.qt else 'REAL_LINUX_CORE_ROOT_WITNESS_HEADLESS_WALLET_E2E_PASS')
     assert record['qt_imported'] is args.qt and record['official_signed_release'] is False
     assert wallet['synthetic_rpc'] is False and wallet['mainnet_allowed'] is False

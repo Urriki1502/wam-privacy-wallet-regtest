@@ -351,7 +351,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         super().closeEvent(event)
 
 
-def launch_disposable_wallet(core_dir,datadir,source,mining_address):
+def launch_disposable_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
     app=qt_application()
     choice,ok=QInputDialog.getItem(None,"Disposable REGTEST wallet",
         "Fresh test chain · no personal keys or real funds",
@@ -375,10 +375,10 @@ def launch_disposable_wallet(core_dir,datadir,source,mining_address):
             break
         QMessageBox.warning(None,"Passphrase length","Use a longer passphrase (at least 12 characters).")
     if backup is None:
-        session=WalletSession.create(core_dir,datadir,source,encoded,mining_address,authorized=True)
+        session=WalletSession.create(core_dir,datadir,source,encoded,mining_address,authorized=True,read_rpc=read_rpc)
     else:
         session=WalletSession.from_backup(core_dir,datadir,source,backup.parent,backup.name,
-                                           encoded,mining_address,authorized=True)
+                                           encoded,mining_address,authorized=True,read_rpc=read_rpc)
     encoded=None
     password=""
     window=OperationalWalletWindow(session)

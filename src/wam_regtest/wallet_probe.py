@@ -10,6 +10,7 @@ from .fusion_pages import PaymentApproval
 from .fusion_ui import fusion_palette
 from .wallet_session import WalletSession, WalletSessionError, WalletCoreCli
 from .operational_gui import OperationalWalletWindow
+from .http_session_probe import forbid_core_cli_reads, prove_session_reads
 
 
 class WalletProbeError(ValueError):
@@ -63,7 +64,35 @@ def _operation(app,window,action,trigger,*,denied=False):
     return result.get('value')
 
 
-def probe_wallet(core_dir,datadir,source,mining_address):
+@forbid_core_cli_reads()
+def background_snapshot(app,window):
+    loop=QEventLoop();observed=[];failures=[]
+    def ready(snap):
+        # Stop at signal delivery, not after the nested loop returns: worker
+        # teardown/processEvents may otherwise dispatch another 50ms timeout.
+        window._sync_timer.stop()
+        observed.append(snap);loop.quit()
+    def denied(code):
+        from .gui_errors import public_code
+        window._sync_timer.stop()
+        failures.append(public_code(code));loop.quit()
+    deadline=QTimer();deadline.setSingleShot(True);deadline.timeout.connect(loop.quit)
+    window.snapshot_updated.connect(ready);window.snapshot_failed.connect(denied)
+    try:
+        window._sync_timer.setInterval(50);deadline.start(15000);loop.exec()
+        window._sync_timer.stop()
+        if window._worker is not None:assert window._worker.wait(15000)
+        app.processEvents();QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+        if len(observed)!=1 or window._worker is not None:
+            print('QT_BACKGROUND_COUNT='+str(len(observed))+';BUSY='+str(window._worker is not None)+';SAFE_FAILURE='+(','.join(failures) or 'NONE'),flush=True)
+        assert len(observed)==1 and window._worker is None
+        return observed[0]
+    finally:
+        deadline.stop();window.snapshot_updated.disconnect(ready);window.snapshot_failed.disconnect(denied)
+        window._sync_timer.setInterval(30000);window._sync_timer.start()
+
+
+def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
     from wam_sp.keystore import Keyring
     from wam_sp.scanner import Scanner
     session=recipient=recipient_scan=window=None
@@ -80,7 +109,8 @@ def probe_wallet(core_dir,datadir,source,mining_address):
             created=True
         stage="CREATE"
         print("WALLET_E2E_STAGE=CREATE",flush=True)
-        session=WalletSession.create(core_dir,datadir,source,password,mining_address,authorized=True,keychain=keychain)
+        session=WalletSession.create(core_dir,datadir,source,password,mining_address,authorized=True,keychain=keychain,read_rpc=read_rpc)
+        http_proof=prove_session_reads(session)
         initial=session.snapshot()
         assert initial.height==104 and initial.confirmed_utxos==1
         recipient=Keyring()
@@ -99,33 +129,8 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         assert "REGTEST VERIFIED" in window.dashboard.live_badge.text()
         assert window.dashboard.go_send.isEnabled() and window.dashboard.open_security.isEnabled()
         assert window._sync_timer.interval()==30_000
-        # Exercise an actual Qt timer-triggered background worker with live
-        # Core. Accelerate only the test interval, then restore the real 30s.
-        sync_loop=QEventLoop()
-        sync_result={}
-        def background_ready(snap):
-            sync_result['snap']=snap
-            sync_loop.quit()
-        def background_denied(reason):
-            sync_loop.quit()
-        deadline=QTimer()
-        deadline.setSingleShot(True)
-        deadline.timeout.connect(sync_loop.quit)
-        window.snapshot_updated.connect(background_ready)
-        window.snapshot_failed.connect(background_denied)
-        window._sync_timer.setInterval(50)
-        deadline.start(15_000)
-        sync_loop.exec()
-        window._sync_timer.stop()
-        deadline.stop()
-        window.snapshot_updated.disconnect(background_ready)
-        window.snapshot_failed.disconnect(background_denied)
-        if window._worker is not None:
-            assert window._worker.wait(15_000)
-            app.processEvents()
-        window._sync_timer.setInterval(30_000)
-        window._sync_timer.start()
-        assert sync_result.get('snap')==initial and window._worker is None
+        # Actual worker and timer, with CLI/full-Core hash paths forbidden.
+        assert background_snapshot(app,window)==initial
         assert not window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
         for index,color in ((2,fusion_palette('dark')['bg']),(1,fusion_palette('light')['bg'])):
             window.appearance.setCurrentIndex(index)
@@ -382,6 +387,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
             'authenticated_selected_local_disclosure':True,'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
             'native_psbtv2_payjoin_bip352_fail_closed':True,'payjoin_signing_authorized':False,'payjoin_transport_implemented':False,
+            'operational_snapshot_http':http_proof,
             'exact_intent_approval_required':True,'real_core_mempool_accepted':True,
             'real_core_confirmed_recipient_atoms':100000,'native_sender_change_confirmed':True,
             'encrypted_reservations_before_network':True,'actual_send_reorg_depth':1,

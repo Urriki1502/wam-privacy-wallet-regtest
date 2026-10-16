@@ -1,7 +1,8 @@
 """Managed, authenticated loopback REGTEST reads; no CLI per request.
 
 Typed owned scanner reads with no attach/cookie/write/lifecycle authority.
-Operational GUI/session migration and hardened loader qualification remain open.
+Operational snapshots borrow this owned capability; hardened loader qualification
+and explicit external-Core attachment remain open.
 """
 import base64
 from decimal import Decimal

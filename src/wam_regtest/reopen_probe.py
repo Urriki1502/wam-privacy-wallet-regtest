@@ -11,14 +11,16 @@ class ReopenProbeError(ValueError):
     pass
 
 
-def probe_reopened_wallet(core_dir,datadir,source,mining_address,case):
+def probe_reopened_wallet(core_dir,datadir,source,mining_address,case,*,read_rpc):
     directory,name,password,keychain,expected_code=case
     session=window=None
     try:
         if sys.platform=='win32':print('WIN_REOPEN_STAGE=FROM_BACKUP',flush=True)
         session=WalletSession.from_backup(core_dir,datadir,source,directory,name,password,
-                                           mining_address,authorized=True,keychain=keychain)
+                                           mining_address,authorized=True,keychain=keychain,read_rpc=read_rpc)
         if sys.platform=='win32':print('WIN_REOPEN_STAGE=SNAPSHOT',flush=True)
+        from .http_session_probe import prove_session_reads
+        http_proof=prove_session_reads(session)
         snap=session.snapshot()
         assert session.ring.accounts()[0].payment_code()==expected_code
         assert snap.receive_code!=expected_code and session.ring.accounts()[-1].epoch==1
@@ -47,6 +49,7 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case):
             'stale_before_native_signature_denied':sys.platform=='win32',
             'stale_before_real_broadcast_denied':sys.platform=='win32',
             'status':('REAL_CORE_CROSS_SESSION_CREDENTIAL_BACKUP_REOPEN_PASS' if sys.platform=='win32' else 'REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS'),
+            'operational_snapshot_http':http_proof,
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
             'same_test_keys_recovered':True,'old_reservations_retained':True,
             'fresh_chain_rescanned_before_balance':True,'new_testing_epoch_funded':True,

@@ -16,6 +16,12 @@ class ErrorPrivacy(unittest.TestCase):
   code=operation_error('prepare',ValueError('INSUFFICIENT_SINGLE_CLUSTER_FUNDS'))
   self.assertIn(code,INPUT_ERRORS)
   self.assertNotIn(operation_error('broadcast',ValueError('INSUFFICIENT_SINGLE_CLUSTER_FUNDS')),INPUT_ERRORS)
+ def test_exact_transport_categories_are_actionable_without_secret_echo(self):
+  from wam_regtest.json_rpc import RpcError
+  for code in ('RPC_NODE_BUSY','RPC_AUTHENTICATION_DENIED','RPC_SESSION_CLOSED','RPC_CONNECTION_UNCERTAIN_READ_FAILED'):
+   self.assertEqual(operation_error('sync',RpcError(code)),code)
+   self.assertNotIn('private-test-marker',error_text(code))
+   self.assertEqual(operation_error('sync',RpcError(code+' private-test-marker')),'WALLET_SYNC_UNVERIFIED')
  def test_unknown_long_or_non_string_codes_have_constant_fallback(self):
   fallback=error_text('UNKNOWN')
   for code in (None,1,object(),'x'*10000,'/private/user/wallet.sqlite'):

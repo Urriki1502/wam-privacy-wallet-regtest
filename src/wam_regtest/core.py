@@ -308,11 +308,10 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             wsp_receipt = None
             if wsp_source is not None:
                 from .wsp_live import scan_actual_core_blocks, RealWspScanError
-                if not interactive_demo:
-                    from .core_process import OwnedCoreBinding
-                    from .json_rpc import ManagedReadRpc
-                    read_rpc=ManagedReadRpc(core_dir,datadir,authorized_readonly=True,
-                        binding=OwnedCoreBinding(proc,core_dir,datadir))
+                from .core_process import OwnedCoreBinding
+                from .json_rpc import ManagedReadRpc
+                read_rpc=ManagedReadRpc(core_dir,datadir,authorized_readonly=True,
+                    binding=OwnedCoreBinding(proc,core_dir,datadir))
                 try:
                     wsp_receipt = scan_actual_core_blocks(
                         cli, datadir, wsp_source, expected_height=height,
@@ -349,7 +348,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                           flush=True)
                     if operational_demo:
                         from .operational_gui import launch_disposable_wallet
-                        exit_status = launch_disposable_wallet(core_dir,datadir,wsp_source,mine_to)
+                        exit_status = launch_disposable_wallet(core_dir,datadir,wsp_source,mine_to,read_rpc=read_rpc)
                     else:
                         exit_status = launch_readonly_wallet(core_dir,datadir,wsp_source)
                     if exit_status != 0:
@@ -373,18 +372,18 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     raise CoreSmokeError(str(exc)) from None
             wallet_receipt = None
             if headless_callback is not None:
-                wallet_receipt=headless_callback(core_dir,datadir,wsp_source,mine_to)
+                wallet_receipt=headless_callback(core_dir,datadir,wsp_source,mine_to,read_rpc=read_rpc)
             if wallet_e2e:
                 from .wallet_probe import probe_wallet, WalletProbeError
                 try:
-                    wallet_receipt = probe_wallet(core_dir,datadir,wsp_source,mine_to)
+                    wallet_receipt = probe_wallet(core_dir,datadir,wsp_source,mine_to,read_rpc=read_rpc)
                 except WalletProbeError as exc:
                     raise CoreSmokeError(str(exc)) from None
             recovery_receipt = None
             if recovery_case is not None:
                 from .reopen_probe import probe_reopened_wallet, ReopenProbeError
                 try:
-                    recovery_receipt = probe_reopened_wallet(core_dir,datadir,wsp_source,mine_to,recovery_case)
+                    recovery_receipt = probe_reopened_wallet(core_dir,datadir,wsp_source,mine_to,recovery_case,read_rpc=read_rpc)
                 except ReopenProbeError as exc:
                     raise CoreSmokeError(str(exc)) from None
             final_height = _read_cli(prefix + ["getblockcount"])

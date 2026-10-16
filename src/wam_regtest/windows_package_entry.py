@@ -79,6 +79,7 @@ def main():
                 if proof['owned_http_read_component']['status'] != 'REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS':
                     raise ValueError('WIN_BUNDLE_OWNED_HTTP_DENIED')
                 wallet=proof['wallet_live_core'];security=proof['security_live_core']
+                assert wallet['operational_snapshot_http']['cli_and_rehash_forbidden'] is True
                 if (proof['platform']!='windows-x64' or proof['block_height']!=105
                         or proof['mainnet_allowed'] is not False
                         or wallet['status']!='WIN64_REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS'
