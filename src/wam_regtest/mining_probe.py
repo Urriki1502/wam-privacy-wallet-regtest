@@ -81,6 +81,14 @@ def _owned_chain(core):
 
 
 def probe_core_mining(core,source):
+    try:return _probe_core_mining(core,source)
+    except Exception as error:
+        from .acceptance_failure import failure_site
+        print('MINING_FAILURE_SITE='+failure_site(error),flush=True)
+        raise
+
+
+def _probe_core_mining(core,source):
     start=time.monotonic();external=public_regtest_mining_address(source)
     with _owned_chain(core) as (rpc,receipt):
         rpc('createwallet','test')
