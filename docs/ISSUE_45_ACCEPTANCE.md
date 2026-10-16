@@ -341,3 +341,19 @@ The requested one-shot heartbeat arrived20:48:21.727UTC16Oct (03:48:21.727UTC+7
 same still-held lease94867, without a second writer. The same automation is now
 verified PAUSED; no future run or recurring retry was created. Current native/
 frozen evidence is preserved separately from latest docs-only checkpoint CI.
+
+## Mining Account GUI component (17Oct2026, qualification in progress)
+
+PR53 exact head c5edaeff086947f25dd673955846c5c7615c4634 now has10/10 checks
+SUCCESS. Downloaded Windows artifact12076012325 actual354 members/AMD64 PE/Core
+pair, inner archive f5b5e90f34db6a073b072c3b94f5c3d08de722f9d1fff1569754d9ca79e35858,
+125/150% actual frozen receipts inspected; see separate evidence JSON. This does
+not qualify the successor runtime.
+
+New fixed owned-Core read-only Mining Account page is a focused F01/F02/Q11
+component. Core eligible/trusted/untrusted/immature projections are separate from
+WSP payment funds; treasury ownership overlaps and moving snapshots are denied.
+No Core signer/import/transfer capability added. First actual mining GUI maturity
+probe passed;167 supplemental tests134PASS/33platformSKIP. Source full recovery
+assertion updated for seventh page after observed first-run FAIL. Native/frozen
+successor evidence remains pending; no global Q or physical status promoted.

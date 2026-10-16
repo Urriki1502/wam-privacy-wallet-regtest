@@ -95,7 +95,7 @@ def _result(method,value):
     return value
 
 
-def _reply(raw,identifier,method):
+def _reply(raw,identifier,method,*,mining=False):
     try:
         if type(raw) is not bytes or not 1<=len(raw)<=(MAX_BLOCK_REPLY if method=='getblock' else MAX_REPLY):raise ValueError
         data=json.loads(raw.decode('utf8'),object_pairs_hook=_unique,parse_float=Decimal,
@@ -103,6 +103,9 @@ def _reply(raw,identifier,method):
         if (type(data) is not dict or set(data)!={'result','error','id'}
                 or type(data['id']) is not int or data['id']!=identifier):raise ValueError
         if data['error'] is not None:raise RpcError('RPC_CORE_READ_REFUSED')
+        if mining:
+            from .mining_read import mining_result
+            return mining_result(method,data['result'])
         return _result(method,data['result'])
     except RpcError:raise
     except (ValueError,UnicodeError,TypeError,KeyError,RecursionError):
@@ -179,10 +182,12 @@ class ManagedReadRpc:
         if sha256(_private_config(self._config_directory)).digest()!=self._config_digest:
             raise RpcError('RPC_CONFIG_CHANGED')
 
-    def _request(self,method,params):
-        _params(method,params)  # All write methods denied before retry logic.
+    def _request(self,method,params,*,mining=False):
+        self._scope_params(method,params,mining)  # All write methods denied before retry logic.
         for attempt in range(3):
-            try:return self._request_once(method,params)
+            try:
+                return (self._request_once(method,params,mining=True) if mining else
+                        self._request_once(method,params))
             except RpcError as error:
                 if error.args!=('RPC_NODE_BUSY',) or attempt==2:raise
                 # Only a positively rejected idempotent read is replayed.
@@ -198,9 +203,23 @@ class ManagedReadRpc:
             self._connection.close()
             self._last_completed=None
 
-    def _request_once(self,method,params):
+    @staticmethod
+    def _scope_params(method,params,mining):
+        if mining is True:
+            from .mining_read import mining_params
+            mining_params(method,params)
+        elif mining is False:_params(method,params)
+        else:raise RpcError('RPC_READ_SCOPE_DENIED')
+
+    def mining_snapshot(self,*,authorized_readonly=False):
+        # No wallet selector, endpoint override, write or key-export method.
+        if authorized_readonly is not True:raise RpcError('RPC_EXPLICIT_READ_CONSENT_REQUIRED')
+        from .mining_read import read_mining_snapshot
+        with self._lock:return read_mining_snapshot(self)
+
+    def _request_once(self,method,params,*,mining=False):
         if self._closed:raise RpcError('RPC_SESSION_CLOSED')
-        _params(method,params)
+        self._scope_params(method,params,mining)
         # Deny before sending any HTTP bytes. A subsequent explicit read may
         # proceed only if the EXACT protected original config is restored;
         # this never retries an operation or changes the running node config.
@@ -209,14 +228,14 @@ class ManagedReadRpc:
         try:
             self._discard_idle_connection()
             body=json.dumps({'jsonrpc':'1.0','id':self._identifier,'method':method,'params':params},separators=(',',':')).encode('ascii')
-            self._connection.request('POST','/',body,{'Authorization':self._auth,'Content-Type':'application/json','Connection':'keep-alive'})
+            self._connection.request('POST','/wallet/test' if mining else '/',body,{'Authorization':self._auth,'Content-Type':'application/json','Connection':'keep-alive'})
             response=self._connection.getresponse()
             raw=response.read((MAX_BLOCK_REPLY if method=='getblock' else MAX_REPLY)+1)
             if response.status==401:raise RpcError('RPC_AUTHENTICATION_DENIED')
             if response.status==503:raise RpcError('RPC_NODE_BUSY')
             if response.status!=200 or response.getheader('Content-Type','').split(';')[0].strip()!='application/json':
                 raise RpcError('RPC_HTTP_DENIED')
-            result=_reply(raw,self._identifier,method)
+            result=_reply(raw,self._identifier,method,mining=mining)
             if method=='getblock' and result['hash']!=params[0]:raise RpcError('RPC_BLOCK_HASH_DENIED')
             self._last_completed=time.monotonic()
             return result

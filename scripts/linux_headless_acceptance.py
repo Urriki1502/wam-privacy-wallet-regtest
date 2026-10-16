@@ -34,6 +34,8 @@ try:
     assert record['wsp_live_scan']['scanner_transport']=='owned-http'
     assert record['wsp_live_scan']['cli_and_rehash_forbidden_during_scan'] is True
     assert record['mining_account_component']['status']=='REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS'
+    assert record['mining_account_component']['owned_http_matches_independent_cli'] is True
+    assert record['mining_account_component']['native_gui_depths']==([99,100,101] if args.qt else [])
     assert record['owned_http_read_component']['idle_read_component']['status']=='REAL_CORE_IDLE_READ_RECONNECT_PASS'
     assert record['owned_http_read_component']['node_busy_read_component']['status']=='REAL_CORE_BUSY_READ_RECOVERY_PASS'
     assert record['owned_http_read_component']['status']=='REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS'

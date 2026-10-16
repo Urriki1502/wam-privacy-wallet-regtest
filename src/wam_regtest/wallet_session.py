@@ -230,6 +230,9 @@ class WalletSession:
                 raise WalletSessionError("WALLET_CHAIN_CHANGED_DENIED")
             if result.blocks or result.rollback:
                 self._save()
+            mining = rpc.mining_snapshot(authorized_readonly=True)
+            if (mining.height,mining.tip) != tip:
+                raise WalletSessionError("WALLET_CHAIN_CHANGED_DENIED")
             wallet = Wallet(self.scanner)
             balance = wallet.balance()
             history = tuple(HistoryRow(r["txid"],r["height"],r["confirmations"],r["credit"],r["debit"])
@@ -238,7 +241,7 @@ class WalletSession:
                 "regtest",tip[0],tip[1],self.ring.accounts()[-1].payment_code(),
                 balance["confirmed_atoms"],len(self.scanner.coins()),history,
                 receipt["wamd_sha256"],
-                signer_allowed=True,broadcast_allowed=True,
+                signer_allowed=True,broadcast_allowed=True,mining=mining,
             )
 
     def prepare(self, code, atoms, fee):

@@ -116,7 +116,9 @@ def main() -> int:
             if (result['wsp_live_scan']['scanner_transport'] != 'owned-http'
                     or result['wsp_live_scan']['cli_and_rehash_forbidden_during_scan'] is not True):
                 raise BundleLaunchError('BUNDLE_SCANNER_HTTP_REQUIRED')
-            if result['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS':
+            if (result['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS'
+                    or result['mining_account_component']['native_gui_depths'] != [99,100,101]
+                    or result['mining_account_component']['owned_http_matches_independent_cli'] is not True):
                 raise BundleLaunchError('BUNDLE_MINING_ACCEPTANCE_DENIED')
             if result['owned_http_read_component']['idle_read_component']['status'] != 'REAL_CORE_IDLE_READ_RECONNECT_PASS':
                 raise BundleLaunchError('BUNDLE_IDLE_READ_REQUIRED')
