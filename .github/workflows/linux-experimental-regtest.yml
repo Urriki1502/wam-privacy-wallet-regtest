@@ -8,6 +8,9 @@ on:
       - 'scripts/linux_headless_acceptance.py'
       - 'src/wam_regtest/*.py'
       - 'tests/test_linux*.py'
+      - 'tests/test_v1*.py'
+      - 'tests/data/bip39_reference.json'
+      - 'pyproject.toml'
   workflow_dispatch:
 permissions:
   contents: read
