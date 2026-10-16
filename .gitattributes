@@ -1,0 +1,3 @@
+
+# Byte-identical pinned upstream source: no platform newline conversion.
+tests/source_contract/v0.1.11/** -text

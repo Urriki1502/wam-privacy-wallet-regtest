@@ -180,3 +180,23 @@ source-contract evidence; no mainnet binary/network is launched. High-height
 nonzero-subsidy sunset runtime proof remains PENDING because the unchanged
 REGTEST binary exhausts subsidy at4951. F01/F02/Q11 integrated V1 remain PENDING
 until matching platform/frozen/UI and remaining boundary evidence is complete.
+
+## F-01 independent height/source vectors
+
+Code193aa4e compiles original v0.1.11 subsidy.cpp/.h and wam-params.h, checks
+Git blob5659e868f191f2c497950d690829f0369aa912d1 /43e2e8c11a58b1b56141c63de470acb4743544ad /
+d798155e1964adbdb3ccc48b44dd48fcde3b1602. Minimal explicit test type/parameter
+shims are documented, not presented as node validation. [Mac native64 source
+receipt](evidence/issue45/F01_PINNED_SOURCE_MACOS.json) PASSED production-parameter
+vectors0(genesis separate),1,200000,200001,399999,400000,400001,600000,600001;
+750000WAM lifetime treasury, independent cutoff with fixed nonzero subsidy,
+REGTEST150interval and source lifetime749.99998050WAM. No mainnet process or
+network, no upstream modification and no Core Update Manager. Existing native
+jobs compile and publish this separate source-contract receipt on eachOS.
+Windows/Linux source contract and changed-code native/frozen checks PENDING.
+
+This does NOT qualify runtime400000 sunset or a full mining-account GUI. Source
+contract, genuine REGTEST block/UTXO proof, packaged app and physical acceptance
+remain independent layers. Owner's new DEV test-host agreement in Issue45 is
+acknowledged: only clean isolated hosts, never a treasury-signing computer;
+actual external execution still PENDING until evidence is received.
