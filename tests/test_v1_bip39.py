@@ -32,7 +32,7 @@ class Bip39Compatibility(unittest.TestCase):
                 self.assertTrue(account.scan_secret==int.from_bytes(expected.secret,'big'),f'BIP352_PATH_{i}_DENIED')
                 with self.keys(phrase,passphrase='TREZOR') as restored:
                     self.assertTrue(keys.public_metadata()==restored.public_metadata(),f'RESTORE_{i}_DENIED')
-                self.assertTrue(account.payment_code().startswith('wamrtsp1'))
+                self.assertTrue(account.payment_code()==v['receive_code'],f'CROSS_OS_RECEIVE_CODE_{i}_DENIED')
 
     def test_nfkd_phrase_whitespace_and_optional_passphrase(self):
         phrase=Mnemonic('english').to_mnemonic(bytes(16))
