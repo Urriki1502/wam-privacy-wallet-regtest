@@ -1,0 +1,48 @@
+{
+  "native_process_proof": {
+    "status": "REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS",
+    "rpc_compatibility_profile": {
+      "version": 111,
+      "subversion": "/WAM:0.1.11/",
+      "protocolversion": 70016
+    },
+    "repeated_authenticated_reads": 8,
+    "height": 102,
+    "process_image_and_established_socket_before_auth": true,
+    "wrong_process_endpoint_denied_before_any_http_bytes": true,
+    "genuine_core_invalid_auth_denied": true,
+    "write_denied_before_wire": true,
+    "synthetic_core_rpc": false,
+    "scanner_gui_transport_integrated": false,
+    "hardened_loader_attestation_qualified": false,
+    "mainnet_allowed": false
+  },
+  "task_ids": [
+    "T-01",
+    "T-02",
+    "T-03",
+    "T-04"
+  ],
+  "scope": "initial read-only managed-session component; not complete P0 acceptance",
+  "source_sha": "ea5ff6c4f40aa4c3256ea59dbf50975fa6199ecc",
+  "module_sha256": "3badc54ca9876b967210e3babe423e48fb98db4174af8a3946bba74ec7d29b6a",
+  "platform": "macos-arm64",
+  "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+  "wam_cli_sha256": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+  "real_authenticated_http_regtest": true,
+  "genesis_verified": true,
+  "repeated_reads": 8,
+  "subprocess_and_rehash_forbidden_after_session_open": true,
+  "write_denied_before_wire": true,
+  "genuine_core_invalid_auth_denied": true,
+  "synthetic_rpc": false,
+  "owner_data_accessed": false,
+  "scanner_gui_integrated": false,
+  "owned_pid_image_and_established_socket_verified_before_auth": true,
+  "hardened_loader_attestation_qualified": false,
+  "frozen_feature_qualified": false,
+  "physical_accepted": false,
+  "mainnet_allowed": false,
+  "production_qualified": false,
+  "recorded_utc": "2026-10-16T10:44:13.161251+00:00"
+}
