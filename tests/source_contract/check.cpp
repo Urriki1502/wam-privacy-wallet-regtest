@@ -9,6 +9,7 @@
 
 static void require(bool ok) { if (!ok) throw std::runtime_error("PINNED_SUBSIDY_CONTRACT_DENIED"); }
 struct Row { int height; int64_t subsidy; int64_t treasury; };
+static_assert(sizeof(void*)==8, "SOURCE_CONTRACT_REQUIRES_64BIT_NATIVE_BUILD");
 int main() {
     try {
         const Consensus::Params production{200000}, regtest{150};
