@@ -42,7 +42,11 @@ try:
     checkout=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
     head=os.environ.get('WAM_SOURCE_HEAD',checkout)
     assert re.fullmatch('[0-9a-f]{40}',head) and re.fullmatch('[0-9a-f]{40}',checkout)
-    subprocess.run(['git','merge-base','--is-ancestor',head,checkout],cwd=root,check=True)
+    # actions/checkout may be shallow: inspect the commit's raw parent header,
+    # without fetching network history or accepting an unrelated declared SHA.
+    header=subprocess.check_output(['git','cat-file','-p',checkout],cwd=root,text=True).split('\n\n',1)[0]
+    parents={line[7:] for line in header.splitlines() if line.startswith('parent ')}
+    assert head==checkout or head in parents, 'LINUX_SOURCE_CHECKOUT_IDENTITY_DENIED'
     assert re.fullmatch('[0-9a-f]{64}',record['wam_cli_sha256'])
     record.update(source_head_sha=head,checkout_sha=checkout,
         tested_utc=datetime.now(timezone.utc).isoformat(),
