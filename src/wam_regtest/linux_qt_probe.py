@@ -19,9 +19,11 @@ PASSWORD=b'public-disposable-linux-qt-acceptance'
 
 
 def background_snapshot(app,window):
-    loop=QEventLoop();observed=[]
+    loop=QEventLoop();observed=[];failures=[]
     def ready(snap):observed.append(snap);loop.quit()
-    def denied(_):loop.quit()
+    def denied(code):
+        from .gui_errors import public_code
+        failures.append(public_code(code));loop.quit()
     deadline=QTimer();deadline.setSingleShot(True);deadline.timeout.connect(loop.quit)
     window.snapshot_updated.connect(ready);window.snapshot_failed.connect(denied)
     try:
@@ -29,6 +31,8 @@ def background_snapshot(app,window):
         window._sync_timer.stop()
         if window._worker is not None:assert window._worker.wait(15000)
         app.processEvents();QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+        if len(observed)!=1 or window._worker is not None:
+            print('LINUX_QT_BACKGROUND_COUNT='+str(len(observed))+';BUSY='+str(window._worker is not None)+';SAFE_FAILURE='+(','.join(failures) or 'NONE'),flush=True)
         assert len(observed)==1 and window._worker is None
         return observed[0]
     finally:
@@ -41,6 +45,11 @@ def probe(core,datadir,source,mining):
     from wam_sp.scanner import Scanner
     from .core import smoke_real_core
     app=qt_application();session=window=receiver=scan=None;stage='CREATE'
+    prior_quit=app.quitOnLastWindowClosed()
+    # This opted-in multi-window acceptance process must survive the deliberate
+    # no-window interval while a fresh owned Core is built. Interactive app
+    # shutdown behavior remains unchanged and is restored even on failure.
+    app.setQuitOnLastWindowClosed(False)
     try:
         assert app.platformName()=='xcb','LINUX_NATIVE_XCB_REQUIRED'
         session=WalletSession.create(core,datadir,source,PASSWORD,mining,authorized=True)
@@ -127,7 +136,9 @@ def probe(core,datadir,source,mining):
             'desktop_os_appearance_signoff':'PENDING_OPERATOR','visual_signoff':'PENDING_OPERATOR',
             'native_input_feedback_cases':validation_cases,'submitted_confirmation_feedback':True,
             'production_qualified':False}
-    except Exception:
+    except Exception as error:
+        from .acceptance_failure import failure_site
+        print('LINUX_QT_FAILURE_SITE='+failure_site(error),flush=True)
         print('LINUX_QT_FAILED_STAGE='+stage,flush=True)
         raise
     finally:
@@ -136,3 +147,4 @@ def probe(core,datadir,source,mining):
             app.processEvents();window.close()
         for item in (session,scan,receiver):
             if item is not None:item.close()
+        app.setQuitOnLastWindowClosed(prior_quit)

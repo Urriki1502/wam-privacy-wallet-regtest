@@ -213,6 +213,10 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
         if (sys.platform!='linux' or not callable(headless_callback) or not wsp_payment_e2e
                 or gui_e2e or interactive_demo or security_e2e or wallet_e2e or recovery_case is not None):
             raise CoreSmokeError('CORE_HEADLESS_SCOPE_DENIED')
+    mining_receipt=None
+    if (wallet_e2e or headless_callback is not None) and not interactive_demo:
+        from .mining_probe import probe_core_mining
+        mining_receipt=probe_core_mining(core_dir,wsp_source)
     node, cli, receipt = verified_core_paths(core_dir)
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
@@ -384,6 +388,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     or _read_cli(prefix+["getconnectioncount"])!=0):
                 raise CoreSmokeError("CORE_FINAL_CHAIN_ATTESTATION_DENIED")
             return {
+                "mining_account_component": mining_receipt,
                 "owned_http_read_component": owned_rpc_receipt,
                 "wallet_live_core": wallet_receipt,
                 "recovery_live_core": recovery_receipt,

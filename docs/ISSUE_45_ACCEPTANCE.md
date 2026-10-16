@@ -147,3 +147,36 @@ unchanged independently pinned metadata; no path-match bypass or weaker hash.
 New CI must verify this fix, not treat earlier successful staged-binary probes
 as all-path qualification. Shared transport/V1 test-only changes now trigger
 existing Windows native/frozen and Linux jobs; no new job/workflow added.
+
+## F-01/F-02 priority continuation — 16 October 2026
+
+Owner prioritizes treasury/miner accounting and maturity; Core Update Manager
+remains deferredP1, no implementation. [Live46–50 review](evidence/issue45/PR46_50_REVIEW.json)
+verified47/49/50 all native/frozen gatesSUCCESS;48 has one conditional developer
+buildSKIP, not a PASS.46 historical GUI raceFAIL was fixed and qualified in48,
+not replayed. All50 ancestors included once; main and RC1 are unchanged.
+
+Runtime8789176 adds a REGTEST-only miner read model: treasury from subsidy only,
+100%fees miner-owned, exact output-script ownership and independent gettxout,
+trusted/pending/immature/available separated, depth101 wallet eligibility, safe/
+solvable/spendable gating, locked UTXOs not guessed from trusted total. This is
+not a GUI account integration, global reservation authority or import custody.
+
+[Actual Mac Core proof](evidence/issue45/F01_F02_MACOS_COMPONENT.json): depth99/
+100 sends rejected with47.5immature and0available; depth101 accepted and confirmed.
+First miner47.5/treasury2.5, fee1410atoms entirely added to miner coinbase,
+confirmed change reconciled, native Core lock makes available0 while trusted
+remains unchanged. No Fusion signed/uncertain reservation is released. Actual
+REGTEST blocks150/151,300/301,450/451 match exact Core devfee audit and ownership.
+Same fixture is required by existing source/frozen wallet acceptance entrypoints,
+not interactive startup. New native/frozen threeOS results PENDING on this code.
+154local unit tests121PASS/33SKIP/0FAIL; units supplement real Core.
+
+**Important measured parameter distinction:** pinned v0.1.11 REGTEST uses
+halving interval150, not200000. Thus at301 treasury is0.625 on subsidy12.5;
+sunset remains independent height400000. Do not display the production schedule
+as REGTEST balances. Native source vectors for200000/400000/600000 are separate
+source-contract evidence; no mainnet binary/network is launched. High-height
+nonzero-subsidy sunset runtime proof remains PENDING because the unchanged
+REGTEST binary exhausts subsidy at4951. F01/F02/Q11 integrated V1 remain PENDING
+until matching platform/frozen/UI and remaining boundary evidence is complete.

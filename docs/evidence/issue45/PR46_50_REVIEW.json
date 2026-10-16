@@ -1,0 +1,612 @@
+{
+  "observed_utc": "2026-10-16T14:58:18.730315+00:00",
+  "baseline": "a9d96ac6b13c647ee5ee865f569abd0d40ccdc8a",
+  "prs": [
+    {
+      "number": 46,
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/46",
+      "headRefOid": "90561d159cf3e79cd4d4c60cd5f04c491c108718",
+      "baseRefName": "feature/v1-bip39-engine-20261016",
+      "isDraft": true,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:07:17Z",
+          "conclusion": "FAILURE",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448364/job/116918679085",
+          "name": "win64-native-credential-cas",
+          "startedAt": "2026-10-16T10:01:36Z",
+          "status": "COMPLETED",
+          "workflowName": "Windows x64 native credential checkpoint anchor contract"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:01:56Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448324/job/116918678650",
+          "name": "native-contracts",
+          "startedAt": "2026-10-16T10:01:36Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:03:22Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448515/job/116918679979",
+          "name": "Real signed Core \u2192 WSP BIP352 \u2192 native Qt Receive Balance History",
+          "startedAt": "2026-10-16T10:01:41Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:02:42Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448165/job/116918678434",
+          "name": "Signed Core + real WSP BIP352 receive / SQLite restart",
+          "startedAt": "2026-10-16T10:01:37Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL Windows x64 WAM Core + WSP BIP352 confirmed receive"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:02:17Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448365/job/116918679213",
+          "name": "win64-real-core-101-blocks",
+          "startedAt": "2026-10-16T10:01:37Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL signed WAM Core v0.1.11 Windows x64 REGTEST smoke"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:02:01Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448554/job/116918680262",
+          "name": "canonical-vectors",
+          "startedAt": "2026-10-16T10:01:42Z",
+          "status": "COMPLETED",
+          "workflowName": "WSP-1 canonical 28 BIP352 vectors (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:03:08Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448209/job/116918678350",
+          "name": "Signed real Core + real WSP SQLite -> native Qt GUI",
+          "startedAt": "2026-10-16T10:01:37Z",
+          "status": "COMPLETED",
+          "workflowName": "Windows x64 native Qt REAL Core WSP read-only E2E"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:03:14Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448324/job/116918822566",
+          "name": "headless-wallet",
+          "startedAt": "2026-10-16T10:01:59Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:06:18Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448515/job/116919348736",
+          "name": "Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E",
+          "startedAt": "2026-10-16T10:03:31Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:03:06Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448324/job/116918822559",
+          "name": "native-qt-wallet",
+          "startedAt": "2026-10-16T10:02:00Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:01:57Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448324/job/116918824273",
+          "name": "developer-core",
+          "startedAt": "2026-10-16T10:01:57Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:05:05Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448324/job/116919299444",
+          "name": "frozen-wallet (headless)",
+          "startedAt": "2026-10-16T10:03:17Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:05:36Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38884448324/job/116919299355",
+          "name": "frozen-wallet (desktop)",
+          "startedAt": "2026-10-16T10:03:17Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        }
+      ]
+    },
+    {
+      "number": 47,
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/47",
+      "headRefOid": "e61ed4bd50f065d839c4e326ee4dcbeb42086f29",
+      "baseRefName": "feature/issue45-rpc-readonly-20261016",
+      "isDraft": true,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:43:08Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014788/job/116933689880",
+          "name": "native-contracts",
+          "startedAt": "2026-10-16T10:42:42Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:44:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014828/job/116933690089",
+          "name": "Real signed Core \u2192 WSP BIP352 \u2192 native Qt Receive Balance History",
+          "startedAt": "2026-10-16T10:42:46Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:43:46Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014795/job/116933690045",
+          "name": "Signed Core + real WSP BIP352 receive / SQLite restart",
+          "startedAt": "2026-10-16T10:42:43Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL Windows x64 WAM Core + WSP BIP352 confirmed receive"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:43:24Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014826/job/116933690101",
+          "name": "win64-real-core-101-blocks",
+          "startedAt": "2026-10-16T10:42:43Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL signed WAM Core v0.1.11 Windows x64 REGTEST smoke"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:43:01Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014814/job/116933690219",
+          "name": "canonical-vectors",
+          "startedAt": "2026-10-16T10:42:47Z",
+          "status": "COMPLETED",
+          "workflowName": "WSP-1 canonical 28 BIP352 vectors (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:44:31Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014787/job/116933689950",
+          "name": "Signed real Core + real WSP SQLite -> native Qt GUI",
+          "startedAt": "2026-10-16T10:42:42Z",
+          "status": "COMPLETED",
+          "workflowName": "Windows x64 native Qt REAL Core WSP read-only E2E"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:57:44Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014779/job/116933689926",
+          "name": "win64-native-credential-cas",
+          "startedAt": "2026-10-16T10:42:43Z",
+          "status": "COMPLETED",
+          "workflowName": "Windows x64 native credential checkpoint anchor contract"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:44:25Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014788/job/116933865255",
+          "name": "headless-wallet",
+          "startedAt": "2026-10-16T10:43:11Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:47:07Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014828/job/116934440195",
+          "name": "Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E",
+          "startedAt": "2026-10-16T10:44:52Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:44:24Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014788/job/116933865270",
+          "name": "native-qt-wallet",
+          "startedAt": "2026-10-16T10:43:11Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:58:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014788/job/116933865431",
+          "name": "developer-core",
+          "startedAt": "2026-10-16T10:43:11Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:46:12Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014788/job/116934323844",
+          "name": "frozen-wallet (headless)",
+          "startedAt": "2026-10-16T10:44:28Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:46:55Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889014788/job/116934323938",
+          "name": "frozen-wallet (desktop)",
+          "startedAt": "2026-10-16T10:44:28Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        }
+      ]
+    },
+    {
+      "number": 48,
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/48",
+      "headRefOid": "17ccbbd868ee0f10cd124f4cca61933ffb7f8c3d",
+      "baseRefName": "feature/issue45-owned-rpc-endpoint-20261016",
+      "isDraft": true,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:43:20Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889045717/job/116933800564",
+          "name": "native-contracts",
+          "startedAt": "2026-10-16T10:43:01Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:45:27Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889045746/job/116933793636",
+          "name": "Real signed Core \u2192 WSP BIP352 \u2192 native Qt Receive Balance History",
+          "startedAt": "2026-10-16T10:43:17Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:43:26Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889045712/job/116933793175",
+          "name": "canonical-vectors",
+          "startedAt": "2026-10-16T10:43:14Z",
+          "status": "COMPLETED",
+          "workflowName": "WSP-1 canonical 28 BIP352 vectors (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:58:08Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889045778/job/116933794427",
+          "name": "win64-native-credential-cas",
+          "startedAt": "2026-10-16T10:43:00Z",
+          "status": "COMPLETED",
+          "workflowName": "Windows x64 native credential checkpoint anchor contract"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:44:33Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889045717/job/116933935469",
+          "name": "headless-wallet",
+          "startedAt": "2026-10-16T10:43:23Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:48:31Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889045746/job/116934694797",
+          "name": "Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E",
+          "startedAt": "2026-10-16T10:45:36Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:44:29Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889045717/job/116933935470",
+          "name": "native-qt-wallet",
+          "startedAt": "2026-10-16T10:43:23Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:43:20Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889045717/job/116933936935",
+          "name": "developer-core",
+          "startedAt": "2026-10-16T10:43:20Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:46:16Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889045717/job/116934368548",
+          "name": "frozen-wallet (headless)",
+          "startedAt": "2026-10-16T10:44:36Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:47:02Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889045717/job/116934368654",
+          "name": "frozen-wallet (desktop)",
+          "startedAt": "2026-10-16T10:44:36Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        }
+      ]
+    },
+    {
+      "number": 49,
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/49",
+      "headRefOid": "0ea42e61b638200e2f00c01fed3741c1642f0846",
+      "baseRefName": "fix/issue45-approval-sync-race-20261016",
+      "isDraft": true,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:44:54Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889211809/job/116934338062",
+          "name": "native-contracts",
+          "startedAt": "2026-10-16T10:44:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:46:36Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889211784/job/116934337398",
+          "name": "Real signed Core \u2192 WSP BIP352 \u2192 native Qt Receive Balance History",
+          "startedAt": "2026-10-16T10:44:40Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:45:01Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889211843/job/116934337668",
+          "name": "canonical-vectors",
+          "startedAt": "2026-10-16T10:44:46Z",
+          "status": "COMPLETED",
+          "workflowName": "WSP-1 canonical 28 BIP352 vectors (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:59:14Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889211782/job/116934337416",
+          "name": "win64-native-credential-cas",
+          "startedAt": "2026-10-16T10:44:30Z",
+          "status": "COMPLETED",
+          "workflowName": "Windows x64 native credential checkpoint anchor contract"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:46:15Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889211809/job/116934493587",
+          "name": "headless-wallet",
+          "startedAt": "2026-10-16T10:44:57Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:48:59Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889211784/job/116935101455",
+          "name": "Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E",
+          "startedAt": "2026-10-16T10:46:42Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:46:35Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889211809/job/116934493617",
+          "name": "native-qt-wallet",
+          "startedAt": "2026-10-16T10:44:57Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:59:05Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889211809/job/116934493550",
+          "name": "developer-core",
+          "startedAt": "2026-10-16T10:44:57Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:48:18Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889211809/job/116935098195",
+          "name": "frozen-wallet (headless)",
+          "startedAt": "2026-10-16T10:46:38Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:49:02Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889211809/job/116935098365",
+          "name": "frozen-wallet (desktop)",
+          "startedAt": "2026-10-16T10:46:38Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        }
+      ]
+    },
+    {
+      "number": 50,
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/50",
+      "headRefOid": "a9d96ac6b13c647ee5ee865f569abd0d40ccdc8a",
+      "baseRefName": "feature/issue45-rpc-compatibility-20261016",
+      "isDraft": true,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:51:21Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889916425/job/116936626564",
+          "name": "native-contracts",
+          "startedAt": "2026-10-16T10:51:00Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:53:19Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889916300/job/116936625865",
+          "name": "Real signed Core \u2192 WSP BIP352 \u2192 native Qt Receive Balance History",
+          "startedAt": "2026-10-16T10:51:09Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:51:28Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889916314/job/116936625711",
+          "name": "canonical-vectors",
+          "startedAt": "2026-10-16T10:51:07Z",
+          "status": "COMPLETED",
+          "workflowName": "WSP-1 canonical 28 BIP352 vectors (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T11:06:28Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889916413/job/116936626449",
+          "name": "win64-native-credential-cas",
+          "startedAt": "2026-10-16T10:51:01Z",
+          "status": "COMPLETED",
+          "workflowName": "Windows x64 native credential checkpoint anchor contract"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:52:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889916425/job/116936765175",
+          "name": "headless-wallet",
+          "startedAt": "2026-10-16T10:51:24Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:56:16Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889916300/job/116937464227",
+          "name": "Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E",
+          "startedAt": "2026-10-16T10:53:28Z",
+          "status": "COMPLETED",
+          "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:52:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889916425/job/116936765147",
+          "name": "native-qt-wallet",
+          "startedAt": "2026-10-16T10:51:24Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T11:07:07Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889916425/job/116936765229",
+          "name": "developer-core",
+          "startedAt": "2026-10-16T10:51:24Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:54:39Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889916425/job/116937259771",
+          "name": "frozen-wallet (headless)",
+          "startedAt": "2026-10-16T10:52:48Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-16T10:55:12Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38889916425/job/116937259683",
+          "name": "frozen-wallet (desktop)",
+          "startedAt": "2026-10-16T10:52:48Z",
+          "status": "COMPLETED",
+          "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+        }
+      ]
+    }
+  ],
+  "PR46_failure": "Historical modal/sync failure fixed once by PR48, inherited by PR50; not marked PASS on PR46 and not replayed."
+}
