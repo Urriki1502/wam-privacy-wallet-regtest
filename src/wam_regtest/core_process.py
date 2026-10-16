@@ -133,8 +133,13 @@ class OwnedCoreBinding:
     def _assert_image(self):
         if self.process.args!=self._argv or self.process.poll() is not None:
             raise CoreBindingError('RPC_OWNED_PROCESS_EXITED')
-        if os.path.normcase(_image(self.process.pid,self.directory))!=os.path.normcase(self._image_path):
-            raise CoreBindingError('RPC_PROCESS_IMAGE_DENIED')
+        image=_image(self.process.pid,self.directory)
+        # Windows may report the process launch's 8.3 alias while Path.resolve
+        # returns its long name. Compare native file identity, not spelling;
+        # the independently pinned metadata below must still be unchanged.
+        same=(os.path.samefile(image,self.node) if sys.platform=='win32' else
+              os.path.normcase(image)==os.path.normcase(self._image_path))
+        if not same:raise CoreBindingError('RPC_PROCESS_IMAGE_DENIED')
         if self._files!=(_metadata(self.node),_metadata(self.cli)):
             raise CoreBindingError('RPC_EXECUTABLE_CHANGED')
 
