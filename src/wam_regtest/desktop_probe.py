@@ -12,13 +12,10 @@ import os
 import sys
 
 
-from .qt_probe_lifetime import acceptance_application
-
 class NativeGuiProbeError(ValueError):
     pass
 
 
-@acceptance_application()
 def probe_running_real_core_gui(
     core_dir: Path, datadir: Path, source_root: Path,
     *, expected_height: int, expected_txid: str, expected_atoms: int,

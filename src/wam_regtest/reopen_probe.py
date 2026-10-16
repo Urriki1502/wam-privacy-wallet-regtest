@@ -7,13 +7,10 @@ from .operational_gui import OperationalWalletWindow
 from .wallet_session import WalletSession
 
 
-from .qt_probe_lifetime import acceptance_application
-
 class ReopenProbeError(ValueError):
     pass
 
 
-@acceptance_application()
 def probe_reopened_wallet(core_dir,datadir,source,mining_address,case,*,read_rpc):
     directory,name,password,keychain,expected_code=case
     session=window=None

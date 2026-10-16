@@ -18,6 +18,7 @@ _MESSAGES={
  'WALLET_RECOVERY_REFUSED':'Recovery was refused: backup authentication, freshness or custody could not be verified. The wallet remains locked; use the latest same-platform backup.',
  'WALLET_BACKUP_DIRECTORY_DENIED':'Backup destination was refused. Choose a new private folder owned by this account, without links or inherited access.',
  'WALLET_LOCKED_OR_FAULTED':'Wallet is locked or faulted. Balances are hidden and sensitive operations are unavailable; reservations remain protected.',
+ 'RPC_CONFIG_CHANGED':'The managed Core configuration changed. Reads are refused until the original protected configuration is verified. Wallet custody and reservations are retained.',
  'RPC_NODE_BUSY':'The local REGTEST node is busy. Balances are hidden until a verified Sync succeeds. No payment is retried.',
  'RPC_AUTHENTICATION_DENIED':'Local Core authentication failed. Balances are hidden; verify the managed node session without resetting wallet custody.',
  'RPC_SESSION_CLOSED':'The verified local Core read session is closed. Balances are hidden; reopen the disposable session. Signed reservations remain protected.',

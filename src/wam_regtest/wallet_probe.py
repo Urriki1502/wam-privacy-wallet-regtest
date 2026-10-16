@@ -13,8 +13,6 @@ from .operational_gui import OperationalWalletWindow
 from .http_session_probe import forbid_core_cli_reads, prove_session_reads
 
 
-from .qt_probe_lifetime import acceptance_application
-
 class WalletProbeError(ValueError):
     pass
 
@@ -41,8 +39,6 @@ def _operation(app,window,action,trigger,*,denied=False):
             result['success']=True
             loop.quit()
     def failure(_code):
-        from .gui_errors import public_code
-        result['public_code']=public_code(_code)
         result['denied']=True
         loop.quit()
     timer=QTimer()
@@ -51,17 +47,10 @@ def _operation(app,window,action,trigger,*,denied=False):
     window.operation_completed.connect(success)
     window.operation_failed.connect(failure)
     timer.start(90_000)
-    # The normal sync timer may win the event queue AFTER _await_gui_idle.
-    # Dispatch the fixture action exactly once, only when controls are idle.
-    # A real busy/disabled user action must not be mistaken for backend denial.
-    dispatch=QTimer();dispatch.setInterval(10)
-    def when_idle():
-        if window._worker is not None:return
-        dispatch.stop();result['triggered']=True;trigger()
-    dispatch.timeout.connect(when_idle);dispatch.start()
+    # Parsing failures may emit synchronously; connect and enter the loop first.
+    QTimer.singleShot(0,trigger)
     loop.exec()
-    early_exit=timer.isActive()
-    dispatch.stop();timer.stop()
+    timer.stop()
     window.operation_completed.disconnect(success)
     window.operation_failed.disconnect(failure)
     worker=window._worker
@@ -71,7 +60,6 @@ def _operation(app,window,action,trigger,*,denied=False):
         app.processEvents()
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
     if (denied and not result.get('denied')) or (not denied and not result.get('success')):
-        print('WALLET_GUI_ACTION='+action+';TRIGGERED='+str(result.get('triggered',False))+';PUBLIC='+result.get('public_code','NONE')+';EARLY_LOOP_EXIT='+str(early_exit),flush=True)
         raise WalletProbeError("WALLET_GUI_OPERATION_"+action.upper()+"_DENIED")
     return result.get('value')
 
@@ -104,7 +92,6 @@ def background_snapshot(app,window):
         window._sync_timer.setInterval(30000);window._sync_timer.start()
 
 
-@acceptance_application()
 def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
     from wam_sp.keystore import Keyring
     from wam_sp.scanner import Scanner

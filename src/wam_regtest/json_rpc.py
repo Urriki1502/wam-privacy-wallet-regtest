@@ -5,6 +5,7 @@ Operational snapshots borrow this owned capability; hardened loader qualificatio
 and explicit external-Core attachment remain open.
 """
 import base64
+from hashlib import sha256
 from decimal import Decimal
 import http.client
 import json
@@ -144,6 +145,7 @@ class ManagedReadRpc:
         self._connection=None;self._auth=None;self._closed=False;self._lock=threading.RLock();self._identifier=0
         try:
             raw=_private_config(directory);port=parse_local_config(raw)
+            self._config_directory=directory;self._config_digest=sha256(raw).digest()
             values=dict(line.split('=',1) for line in raw.decode('ascii').splitlines()[3:])
             self._auth='Basic '+base64.b64encode((values['rpcuser']+':'+values['rpcpassword']).encode('ascii')).decode('ascii')
             self._connection=_BoundConnection(port,timeout,binding)
@@ -161,14 +163,27 @@ class ManagedReadRpc:
             if self._closed:raise RpcError('RPC_SESSION_CLOSED')
             binding=self._connection._binding
             if binding.core!=core or binding.directory!=directory:raise RpcError('RPC_SESSION_SCOPE_DENIED')
+            self._assert_config()
             try:binding._assert_image()
             except Exception:
                 self.close();raise RpcError('RPC_MANAGED_PROCESS_CHANGED') from None
             return dict(binding.receipt)
 
+    def _assert_config(self):
+        # Preserve the original per-operation native custody/config gate.
+        # Hash only this bounded 4KiB private config, never the Core binaries.
+        # No credentials or port are adopted from a changed configuration.
+        if sha256(_private_config(self._config_directory)).digest()!=self._config_digest:
+            raise RpcError('RPC_CONFIG_CHANGED')
+
     def _request(self,method,params):
         if self._closed:raise RpcError('RPC_SESSION_CLOSED')
-        _params(method,params);self._identifier+=1
+        _params(method,params)
+        # Deny before sending any HTTP bytes. A subsequent explicit read may
+        # proceed only if the EXACT protected original config is restored;
+        # this never retries an operation or changes the running node config.
+        self._assert_config()
+        self._identifier+=1
         try:
             body=json.dumps({'jsonrpc':'1.0','id':self._identifier,'method':method,'params':params},separators=(',',':')).encode('ascii')
             self._connection.request('POST','/',body,{'Authorization':self._auth,'Content-Type':'application/json','Connection':'keep-alive'})

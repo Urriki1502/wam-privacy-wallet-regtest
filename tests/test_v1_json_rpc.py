@@ -32,6 +32,24 @@ class ReadRpcContracts(unittest.TestCase):
         with self.assertRaises(RpcError):ManagedReadRpc(None,None)
         _params('getblockhash',[0])
 
+    def test_config_drift_is_denied_before_wire_and_never_adopts_new_auth(self):
+        from hashlib import sha256
+        from pathlib import Path
+        from unittest.mock import patch
+        client=object.__new__(ManagedReadRpc)
+        client._closed=False;client._identifier=0
+        client._config_directory=Path('/not-opened-by-unit')
+        client._config_digest=sha256(b'original-protected-profile').digest()
+        client._auth='PRIVATE_UNIT_CANARY'
+        with patch('wam_regtest.json_rpc._private_config',return_value=b'changed-profile'):
+            with self.assertRaisesRegex(RpcError,'^RPC_CONFIG_CHANGED$'):
+                client._request('getblockcount',[])
+        self.assertEqual(client._identifier,0)  # Refused before any connection.
+        self.assertEqual(client._auth,'PRIVATE_UNIT_CANARY')
+        self.assertFalse(client._closed)
+        with patch('wam_regtest.json_rpc._private_config',return_value=b'original-protected-profile'):
+            client._assert_config()
+
     def test_malformed_wrong_id_duplicate_and_wrong_chain_never_echo_reply(self):
         for raw in [b'not json',b'{"id":1,"id":1,"error":null,"result":0}',b'NaN',b'x'*(MAX_REPLY+1),json.dumps({'id':2,'result':0,'error':None}).encode(),json.dumps({'id':1,'result':True,'error':None}).encode(),json.dumps({'id':1,'result':None,'error':{'message':'secret-marker'}}).encode()]:
             try:_reply(raw,1,'getblockcount')
