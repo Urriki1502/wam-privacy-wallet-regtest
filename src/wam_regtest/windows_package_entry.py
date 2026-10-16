@@ -76,6 +76,8 @@ def main():
                     raise ValueError('BUNDLE_SCANNER_HTTP_REQUIRED')
                 if proof['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS':
                     raise ValueError('BUNDLE_MINING_ACCEPTANCE_DENIED')
+                if proof['owned_http_read_component']['idle_read_component']['status'] != 'REAL_CORE_IDLE_READ_RECONNECT_PASS':
+                    raise ValueError('BUNDLE_IDLE_READ_REQUIRED')
                 if proof['owned_http_read_component']['node_busy_read_component']['status'] != 'REAL_CORE_BUSY_READ_RECOVERY_PASS':
                     raise ValueError('BUNDLE_BUSY_READ_REQUIRED')
                 if proof['owned_http_read_component']['status'] != 'REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS':

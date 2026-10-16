@@ -2,7 +2,7 @@
 import json
 import threading
 import time
-from .json_rpc import _BoundConnection,RpcError
+from .json_rpc import _BoundConnection,RpcError,MAX_IDLE_REUSE_SECONDS
 
 
 def prove_busy_read(client,binding,height):
@@ -47,4 +47,18 @@ def prove_busy_read(client,binding,height):
     return {'status':'REAL_CORE_BUSY_READ_RECOVERY_PASS','read_attempt_limit':3,
         'observed_busy_attempts':attempts,'queue_response_200':statuses.count(200),
         'queue_response_503':statuses.count(503),'recovered_without_daemon_restart':True,
+        'no_synthetic_rpc':True,'mainnet_allowed':False}
+
+
+def prove_idle_read(client,height):
+    original=client._connection.sock
+    if original is None:raise ValueError('RPC_IDLE_SOCKET_REQUIRED')
+    delay=MAX_IDLE_REUSE_SECONDS+.1
+    time.sleep(delay)  # Actual idle time, never a substituted Core response.
+    if client.call('getblockcount')!=height:
+        raise ValueError('RPC_IDLE_READ_HEIGHT_DENIED')
+    if client._connection.sock is original or original.fileno()!=-1:
+        raise ValueError('RPC_IDLE_PREWIRE_RECONNECT_DENIED')
+    return {'status':'REAL_CORE_IDLE_READ_RECONNECT_PASS','observed_idle_seconds':delay,
+        'old_socket_closed_before_request':True,'request_replayed':False,
         'no_synthetic_rpc':True,'mainnet_allowed':False}

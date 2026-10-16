@@ -22,6 +22,7 @@ from .wsp_live import REGTEST_GENESIS
 
 MAX_REPLY=1024*1024
 MAX_BLOCK_REPLY=32*1024*1024
+MAX_IDLE_REUSE_SECONDS=5
 # Measured on genuine independently pinned v0.1.11, not inferred from Bitcoin.
 # Signed newer binaries require a separate compatibility qualification.
 SUPPORTED_RPC=(111, '/WAM:0.1.11/', 70016)
@@ -144,7 +145,7 @@ class ManagedReadRpc:
         if type(timeout) not in (int,float) or not 0.1<=timeout<=30:raise RpcError('RPC_TIMEOUT_DENIED')
         if type(binding) is not OwnedCoreBinding or binding.core!=core or binding.directory!=directory:
             raise RpcError('RPC_MANAGED_PROCESS_REQUIRED')
-        self._connection=None;self._auth=None;self._closed=False;self._lock=threading.RLock();self._identifier=0
+        self._connection=None;self._auth=None;self._closed=False;self._lock=threading.RLock();self._identifier=0;self._last_completed=None
         try:
             raw=_private_config(directory);port=parse_local_config(raw)
             self._config_directory=directory;self._config_digest=sha256(raw).digest()
@@ -188,6 +189,15 @@ class ManagedReadRpc:
                 # Connection/auth uncertainty and all writes are never retried.
                 time.sleep(random.SystemRandom().uniform(.05,.15)*(2**attempt))
 
+    def _discard_idle_connection(self):
+        # Windows can reset Core's stale keep-alive socket during a long CLI/
+        # custody setup. Expire it BEFORE sending, rather than replaying a
+        # failed request. Every reconnect still proves OS endpoint ownership.
+        if (self._last_completed is not None
+                and time.monotonic()-self._last_completed>=MAX_IDLE_REUSE_SECONDS):
+            self._connection.close()
+            self._last_completed=None
+
     def _request_once(self,method,params):
         if self._closed:raise RpcError('RPC_SESSION_CLOSED')
         _params(method,params)
@@ -197,6 +207,7 @@ class ManagedReadRpc:
         self._assert_config()
         self._identifier+=1
         try:
+            self._discard_idle_connection()
             body=json.dumps({'jsonrpc':'1.0','id':self._identifier,'method':method,'params':params},separators=(',',':')).encode('ascii')
             self._connection.request('POST','/',body,{'Authorization':self._auth,'Content-Type':'application/json','Connection':'keep-alive'})
             response=self._connection.getresponse()
@@ -207,6 +218,7 @@ class ManagedReadRpc:
                 raise RpcError('RPC_HTTP_DENIED')
             result=_reply(raw,self._identifier,method)
             if method=='getblock' and result['hash']!=params[0]:raise RpcError('RPC_BLOCK_HASH_DENIED')
+            self._last_completed=time.monotonic()
             return result
         except RpcError as error:
             if error.args==('RPC_NODE_BUSY',):

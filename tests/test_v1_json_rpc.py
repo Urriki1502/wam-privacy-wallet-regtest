@@ -32,6 +32,19 @@ class ReadRpcContracts(unittest.TestCase):
         with self.assertRaises(RpcError):ManagedReadRpc(None,None)
         _params('getblockhash',[0])
 
+    def test_idle_socket_expires_before_wire_without_replaying_any_request(self):
+        from unittest.mock import Mock,patch
+        client=object.__new__(ManagedReadRpc);client._connection=Mock()
+        client._last_completed=100
+        with patch('wam_regtest.json_rpc.time.monotonic',return_value=104.99):
+            client._discard_idle_connection()
+            client._connection.close.assert_not_called()
+        with patch('wam_regtest.json_rpc.time.monotonic',return_value=105):
+            client._discard_idle_connection()
+        client._connection.close.assert_called_once_with()
+        self.assertIsNone(client._last_completed)
+        client._connection.request.assert_not_called()
+
     def test_contention_acceptance_requires_a_boolean_opt_in(self):
         from pathlib import Path
         from wam_regtest.core import smoke_real_core,CoreSmokeError

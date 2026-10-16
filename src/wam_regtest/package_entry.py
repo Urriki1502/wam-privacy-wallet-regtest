@@ -118,6 +118,8 @@ def main() -> int:
                 raise BundleLaunchError('BUNDLE_SCANNER_HTTP_REQUIRED')
             if result['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS':
                 raise BundleLaunchError('BUNDLE_MINING_ACCEPTANCE_DENIED')
+            if result['owned_http_read_component']['idle_read_component']['status'] != 'REAL_CORE_IDLE_READ_RECONNECT_PASS':
+                raise BundleLaunchError('BUNDLE_IDLE_READ_REQUIRED')
             if result['owned_http_read_component']['node_busy_read_component']['status'] != 'REAL_CORE_BUSY_READ_RECOVERY_PASS':
                 raise BundleLaunchError('BUNDLE_BUSY_READ_REQUIRED')
             if result['owned_http_read_component']['status'] != 'REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS':
@@ -155,7 +157,7 @@ def main() -> int:
                 print("MACOS_COCOA_PACKAGED_AUTO_LIGHT_DARK_REAL_CORE_WALLET_PASS")
             # Public disposable-fixture facts only. Keep actual frozen evidence
             # alongside artifacts, instead of relying solely on PASS log lines.
-            from .desktop import qt_application
+            from wam_regtest.desktop import qt_application
             result.update(frozen_entrypoint=True, qt_platform=qt_application().platformName())
             report='macos-cocoa-packaged-wallet-evidence.json' if cocoa_mode else 'macos-packaged-wallet-evidence.json'
             with Path(report).open('x',encoding='utf8') as stream:
