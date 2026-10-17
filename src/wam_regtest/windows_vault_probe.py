@@ -102,8 +102,14 @@ def prove_real_windows_vault(cli,datadir,port,env,source,mining_address):
         try:
             denied(lambda:stale.save(ring,scanner,password))
         except Exception as error:
-            # Fixed exception class only, never paths, keys or OS error text.
-            stage='ANCHORED_SAVE_STALE_REJECTION_'+type(error).__name__
+            # A Python NameError carries the missing SOURCE identifier, not
+            # wallet material. Restrict it to a valid Python identifier and
+            # never report native OS exception text or private paths.
+            label=type(error).__name__
+            missing=getattr(error,'name',None)
+            if type(missing) is str and re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]{0,60}',missing):
+                label+='_'+missing
+            stage='ANCHORED_SAVE_STALE_REJECTION_'+label
             raise
         stage='BACKUP_RESTORE'
         backup=directory('encrypted-backup');vault.backup(backup,'recovery.enc')
