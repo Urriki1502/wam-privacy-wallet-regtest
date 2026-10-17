@@ -53,7 +53,7 @@ def _root(root):
         meta=ancestor.lstat()
         if not stat.S_ISDIR(meta.st_mode):
             _deny('PROFILE_ANCESTOR_DENIED')
-        if meta.st_mode & stat.S_IWOTH and not (
+        if meta.st_mode & (stat.S_IWGRP|stat.S_IWOTH) and not (
                 meta.st_uid == 0 and meta.st_mode & stat.S_ISVTX):
             _deny('PROFILE_ANCESTOR_DENIED')
     prior=root.lstat()
@@ -132,10 +132,21 @@ def create_disposable_profile(parent, *, expected_genesis, expected_node_sha256,
     if sys.platform not in ('linux','darwin') or not hasattr(os,'O_NOFOLLOW'):
         _deny('PROFILE_NATIVE_PLATFORM_UNQUALIFIED')
     if (type(parent) is not type(Path()) or not parent.is_absolute()
-            or parent.name!='wam-fusion-regtest-profiles'
-            or '..' in parent.parts or parent.resolve(strict=True)!=parent):
+            or parent.name!='wam-fusion-regtest-profiles' or '..' in parent.parts):
         _deny('PROFILE_PRIVATE_PARENT_DENIED')
-    info=parent.lstat()
+    try:
+        if parent.resolve(strict=True)!=parent:
+            _deny('PROFILE_PRIVATE_PARENT_DENIED')
+        for ancestor in reversed(parent.parents):
+            ancestor_info=ancestor.lstat()
+            if (not stat.S_ISDIR(ancestor_info.st_mode)
+                    or ancestor_info.st_mode & (stat.S_IWGRP|stat.S_IWOTH)
+                    and not (ancestor_info.st_uid==0 and ancestor_info.st_mode & stat.S_ISVTX)):
+                _deny('PROFILE_PRIVATE_PARENT_DENIED')
+        info=parent.lstat()
+    except PersistentProfileError:raise
+    except (OSError,ValueError):
+        _deny('PROFILE_PRIVATE_PARENT_DENIED')
     if (not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.geteuid()
             or stat.S_IMODE(info.st_mode)!=0o700):
         _deny('PROFILE_PRIVATE_PARENT_DENIED')
