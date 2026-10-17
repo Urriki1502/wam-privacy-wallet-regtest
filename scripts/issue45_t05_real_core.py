@@ -92,6 +92,117 @@ def _qt_process_probe(root, expected_height):
     clean()
 
 
+
+def _qt_original_wallet_live_read_probe(root, core, expected_height):
+    """Actual macOS WSP encrypted wallet -> native GUI -> managed Core IPC.
+
+    Builds a fresh disposable WSP account on the already independently owned
+    REGTEST chain, stores its *real* Keyring and Scanner in a native-anchored
+    encrypted checkpoint, and opens the real Fusion GUI twice. No mocks of
+    RPC, scanner, Core, wallet state or Qt. Only the user password dialog is
+    provided by the explicit test operator harness.
+    """
+    if sys.platform!="darwin":
+        raise AssertionError("Q05_MACOS_NATIVE_ONLY")
+    import secrets
+    from unittest.mock import patch
+    from shiboken6 import delete
+    from wam_regtest import custody
+    from wam_regtest.core import verified_core_paths
+    from wam_regtest.managed_wallet_reopen import make,publish
+    from wam_regtest.vault import CheckpointVault
+    from wam_regtest.managed_scan_client import ManagedScanRpc
+    from wam_regtest.wsp_live import _pinned_source
+    from wam_regtest.desktop import qt_application
+    from wam_regtest.managed_gui import ManagedCoreWindow
+    from wam_regtest.supervisor_client import control
+    from wam_sp.keystore import Keyring
+    from wam_sp.scanner import Scanner
+
+    wsp=Path(__file__).resolve().parents[1]/"wsp-upstream"
+    _pinned_source(wsp)
+    _,_,receipt=verified_core_paths(core)
+    password=b"q05-disposable-native-verified-regtest-only"
+    directory=root/"chain"
+    vault_dir=directory/"wallet-vault"
+    custody.create_directory(vault_dir)
+    ring=scanner=rpc=None
+    runtime=directory/"wallet-runtime.sqlite"
+    wallet_id=secrets.token_hex(16)
+    anchor=custody.anchor(wallet_id)
+    try:
+        ring=Keyring()
+        ring.backup(password)
+        original_receive=ring.accounts()[-1].payment_code()
+        scanner=Scanner(runtime,ring.accounts())
+        rpc=ManagedScanRpc(root,authorized_readonly=True)
+        scanner.sync(rpc)
+        scanner.assert_current()
+        assert scanner.store.tip()==(
+            expected_height,rpc.call("getbestblockhash"))
+        assert scanner.coins()==[]
+        vault=CheckpointVault(vault_dir,anchor,wsp)
+        vault.save(ring,scanner,password)
+        publish(vault_dir,make(wallet_id,receipt),password)
+    finally:
+        if scanner is not None:scanner.close()
+        if ring is not None:ring.close()
+        if rpc is not None:rpc.close()
+        if scanner is not None:runtime.unlink(missing_ok=True)
+
+    app=qt_application()
+    original_tip=control(root,"status",timeout=10)["height"]
+    assert original_tip==expected_height
+    for i in range(2):
+        window=ManagedCoreWindow(root,core_dir=core,wsp_source=wsp)
+        window.show()
+        try:
+            window._apply_managed_status(control(root,"status",timeout=10))
+            assert window.view_wallet_button.isEnabled()
+            with patch("wam_regtest.managed_gui.QInputDialog.getText",
+                       return_value=(password.decode("ascii"),True)):
+                window.view_wallet_button.click()
+                assert window._worker is not None
+                deadline=time.monotonic()+90
+                while window._worker is not None and time.monotonic()<deadline:
+                    app.processEvents()
+                    time.sleep(.01)
+            if window._worker is not None:
+                raise AssertionError("Q05_REAL_NATIVE_WALLET_GUI_WORKER_TIMEOUT")
+            app.processEvents()
+            snapshot=window._snapshot
+            assert snapshot is not None
+            assert snapshot.demo_account_only is False
+            assert snapshot.synthetic_rpc is False
+            assert snapshot.signer_allowed is False
+            assert snapshot.broadcast_allowed is False
+            assert snapshot.mainnet_allowed is False
+            assert snapshot.height==expected_height
+            assert snapshot.receive_code==original_receive
+            assert snapshot.confirmed_atoms==0
+            assert window.receive_page.code==original_receive
+            assert window.session is None
+            assert window.dashboard.go_send.isEnabled() is False
+            assert control(root,"status",timeout=10)["height"]==expected_height
+        finally:
+            if not window.close():
+                raise AssertionError("Q05_REAL_NATIVE_WALLET_GUI_CLOSE_DENIED")
+            delete(window)
+            app.processEvents()
+    assert not runtime.exists()
+    assert control(root,"status",timeout=10)["height"]==expected_height
+    return {
+        "real_encrypted_native_checkpoint":True,
+        "genuine_wsp_original_account":True,
+        "actual_signed_core_regtest_ipc":True,
+        "same_receive_code_two_qt_windows":True,
+        "original_wallet_zero_balance_verified":True,
+        "signer_allowed":False,
+        "broadcast_allowed":False,
+        "mainnet_allowed":False,
+        "wallet_gui_process_crash_recovery_qualified":False,
+    }
+
 def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
     # Native acceptance source identity only, never a runtime wallet authority.
     from wam_regtest.build_provenance import capture, verify, public_receipt
@@ -275,6 +386,10 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
                 evidence["independent_qt_process_reopen_same_chain"]=True
                 evidence["actual_qt_process_killed_after_authenticated_ready"]=True
                 evidence["actual_qt_crash_reconnect_same_tip"]=True
+                if sys.platform=="darwin":
+                    actual_wallet=_qt_original_wallet_live_read_probe(
+                        root,core,height)
+                    evidence["real_original_wallet_readonly_gui_macos"]=actual_wallet
             state=control(root,"shutdown",authorized=True,timeout=15)
             stopped=(state["state"]=="stopped" and state["core_process_owned"] is False)
             assert stopped
