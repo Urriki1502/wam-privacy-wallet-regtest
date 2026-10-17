@@ -131,6 +131,15 @@ def _verify_native(node: Path, cli: Path, hashes: dict, *, head: str) -> dict:
                     # output remains sealed in the disposable datadir.
                     raw = (directory / "daemon-output.log").read_bytes()[:65536].lower()
                     if b"error while loading shared libraries" in raw:
+                        # Public ELF soname only; never print arbitrary daemon
+                        # output or any filesystem/credential details.
+                        import re
+                        m = re.search(
+                            rb"error while loading shared libraries: ([a-z0-9_+.-]{1,100}\\.so(?:\\.[0-9]+)*)",
+                            raw)
+                        if m:
+                            print("V012_NATIVE_MISSING_SONAME=" +
+                                  m.group(1).decode("ascii"), file=sys.stderr)
                         _deny("V012_NATIVE_LOADER_DEPENDENCY_DENIED")
                     if b"illegal instruction" in raw or proc.returncode == -4:
                         _deny("V012_NATIVE_CPU_INSTRUCTION_DENIED")
