@@ -8,6 +8,7 @@ Q05 wallet continuity is a separate, still mandatory integration gate.
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 from PySide6.QtCore import QThread, Signal, QTimer
 from PySide6.QtWidgets import QMessageBox, QInputDialog, QLineEdit
@@ -67,6 +68,31 @@ class _LockedWalletWorker(QThread):
             self.password=None
 
 
+
+class _ManagedWalletSnapshotWorker(QThread):
+    """Explicit original WSP wallet scan, without signer or broadcast."""
+    ready = Signal(object)
+    denied = Signal(str)
+
+    def __init__(self, root, core_dir, wsp_source, password):
+        super().__init__()
+        self.root,self.core_dir,self.wsp_source=root,core_dir,wsp_source
+        self.password=password
+
+    def run(self):
+        try:
+            from .managed_wallet_snapshot import read_managed_wallet_snapshot
+            result=read_managed_wallet_snapshot(
+                self.root,self.core_dir,self.wsp_source,self.password,
+                authorized_readonly=True,authorized_persist_checkpoint=False)
+            self.ready.emit(result)
+        except Exception:
+            self.denied.emit("MANAGED_WALLET_SNAPSHOT_UNVERIFIED")
+        finally:
+            # Python cannot guarantee zeroization of immutable bytes.
+            self.password=None
+
+
 class ManagedCoreWindow(RegtestWalletWindow):
     """Fusion GUI lifecycle observer; closing this window NEVER stops Core."""
 
@@ -83,6 +109,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._managed_root = root
         self._wallet_core_dir,self._wallet_wsp_source=core_dir,wsp_source
         self._wallet_checkpoint_verified=False
+        self._wallet_read_authorized=False
+        self._managed_height=None
         # The base Fusion shell is reused; its disposable wallet data loader
         # is never called. A managed WSP session must first be restored safely.
         super().__init__(root / "chain", root / "chain", root / "chain")
@@ -103,6 +131,9 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.verify_wallet_button=action("Verify locked wallet", "security")
         toolbar.addWidget(self.verify_wallet_button)
         self.verify_wallet_button.clicked.connect(self._verify_wallet)
+        self.view_wallet_button=action("View verified wallet · read only", "sync")
+        toolbar.addWidget(self.view_wallet_button)
+        self.view_wallet_button.clicked.connect(self._view_wallet)
         self.start_core.clicked.connect(lambda: self._execute("start"))
         self.stop_core.clicked.connect(self._confirm_stop)
         # A short timer makes transitions visible without polling from Qt's
@@ -123,10 +154,12 @@ class ManagedCoreWindow(RegtestWalletWindow):
             self._managed_state in ("ready", "syncing", "busy")
         )
         self.refresh_button.setEnabled(idle)
-        self.verify_wallet_button.setEnabled(
-            idle and self._managed_authenticated and self._managed_state=="ready"
-            and self._wallet_core_dir is not None and self._wallet_wsp_source is not None
-        )
+        can_read=(idle and self._managed_authenticated
+                  and self._managed_state=="ready" and self._managed_height is not None
+                  and self._wallet_core_dir is not None
+                  and self._wallet_wsp_source is not None)
+        self.verify_wallet_button.setEnabled(can_read)
+        self.view_wallet_button.setEnabled(can_read)
 
     def _execute(self, operation: str):
         if self._worker is not None:
@@ -180,6 +213,100 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.status.setText("Checking original encrypted checkpoint and native anchor…")
         self._update_controls()
         worker.start()
+
+
+    def _view_wallet(self):
+        if (self._worker is not None or not self._managed_authenticated
+                or self._managed_state!="ready" or self._managed_height is None
+                or self._wallet_core_dir is None or self._wallet_wsp_source is None):
+            return
+        password,approved=QInputDialog.getText(
+            self,"View original REGTEST wallet",
+            "Passphrase · verify encrypted WSP wallet and live Core (read-only)",
+            QLineEdit.EchoMode.Password)
+        if not approved:
+            return
+        secret=password.encode("utf-8")
+        password=None
+        if not 12<=len(secret)<=1024:
+            self._wallet_snapshot_denied("MANAGED_WALLET_PASSWORD_DENIED")
+            return
+        self._wallet_checkpoint_verified=False
+        self._wallet_read_authorized=True
+        self._clear_balance()
+        worker=_ManagedWalletSnapshotWorker(
+            self._managed_root,self._wallet_core_dir,self._wallet_wsp_source,secret)
+        secret=None
+        self._worker=worker
+        worker.ready.connect(self._apply_wallet_snapshot)
+        worker.denied.connect(self._wallet_snapshot_denied)
+        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(worker.deleteLater)
+        self.status.setText("REGTEST · verifying original WSP account and live chain…")
+        self._update_controls()
+        worker.start()
+
+    def _apply_wallet_snapshot(self, snap):
+        from .wallet_read import WalletReadSnapshot,HistoryRow
+        # Managed original-wallet snapshots must not weaken the separate
+        # legacy demo-only window's input policy.
+        verified=(
+            self._wallet_read_authorized
+            and self._managed_authenticated and self._managed_state=="ready"
+            and type(self._managed_height) is int
+            and type(snap) is WalletReadSnapshot
+            and snap.chain=="regtest" and snap.height==self._managed_height
+            and type(snap.tip) is str and re.fullmatch(r"[0-9a-f]{64}",snap.tip)
+            and type(snap.core_sha256) is str
+            and re.fullmatch(r"[0-9a-f]{64}",snap.core_sha256)
+            and type(snap.receive_code) is str
+            and snap.receive_code.startswith("wamrtsp1")
+            and 10<=len(snap.receive_code)<=256
+            and type(snap.confirmed_atoms) is int and snap.confirmed_atoms>=0
+            and type(snap.confirmed_utxos) is int and 0<=snap.confirmed_utxos<=1_000_000
+            and type(snap.history) is tuple
+            and all(type(item) is HistoryRow for item in snap.history)
+            and snap.demo_account_only is False and snap.synthetic_rpc is False
+            and snap.signer_allowed is False and snap.broadcast_allowed is False
+            and snap.mainnet_allowed is False
+        )
+        self._wallet_read_authorized=False
+        if not verified:
+            self._wallet_snapshot_denied("MANAGED_WALLET_UNTRUSTED_SNAPSHOT")
+            return
+        try:
+            self.receive_page.render_snapshot(snap)
+            self.history_page.render_snapshot(snap)
+            self.dashboard.render_snapshot(snap,operational=False)
+        except Exception:
+            self._wallet_snapshot_denied("MANAGED_WALLET_UNTRUSTED_RENDER")
+            return
+        self._snapshot=snap
+        self._wallet_checkpoint_verified=True
+        self.dashboard.go_send.setEnabled(False)
+        self.verification_badge.setText("WSP read-only · "+str(snap.height))
+        self.status.setText(
+            "REGTEST · ORIGINAL WSP WALLET VERIFIED · height "+
+            str(snap.height)+" · signing/broadcast DISABLED · refresh re-authenticates")
+        self.snapshot_updated.emit(snap)
+        # Auto-clear by the next authenticated status cycle; no cached
+        # passphrase, unverified background rescan or indefinite stale balance.
+        self._sync_timer.setInterval(30_000)
+        self._update_controls()
+
+    def _wallet_snapshot_denied(self, _reason):
+        self._wallet_read_authorized=False
+        self._wallet_checkpoint_verified=False
+        self._clear_balance()
+        self._sync_timer.setInterval(5_000)
+        self.status.setText(
+            "REGTEST · ORIGINAL WALLET READ UNVERIFIED · no balance/history adopted")
+        self.snapshot_failed.emit("MANAGED_WALLET_SNAPSHOT_UNVERIFIED")
+        self._update_controls()
+
+    def apply_snapshot(self, snap):
+        # In particular, never adopt old public-demo snapshots on managed GUI.
+        self._wallet_snapshot_denied("MANAGED_GUI_DEMO_SNAPSHOT_DENIED")
 
     def _apply_wallet_preflight(self, proof):
         required={
@@ -245,7 +372,10 @@ class ManagedCoreWindow(RegtestWalletWindow):
             return
         self._managed_state = state
         self._managed_authenticated = True
+        self._managed_height=expected["height"] if state=="ready" else None
+        self._wallet_read_authorized=False
         self._wallet_checkpoint_verified=False
+        self._sync_timer.setInterval(5_000)
         # A supervisor attestation is NOT a scanner/history attestation.
         self._clear_balance()
         height = expected["height"]
@@ -261,6 +391,9 @@ class ManagedCoreWindow(RegtestWalletWindow):
     def _managed_denied(self, _reason):
         self._managed_state = "error"
         self._managed_authenticated = False
+        self._managed_height=None
+        self._wallet_read_authorized=False
+        self._sync_timer.setInterval(5_000)
         self._wallet_checkpoint_verified=False
         self._clear_balance()
         self.verification_badge.setText("Managed Core · UNVERIFIED")
