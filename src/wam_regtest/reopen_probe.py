@@ -36,19 +36,20 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case,*,read_rpc
         assert window.receive_code.text()==snap.receive_code and window.prepare_button.isEnabled()
         assert window.navigation.count()==7
         assert 'treasury excluded' in window.mining_page.state.text()
-        if sys.platform=='win32':
+        stale_proof={'stale_before_native_signature_denied':False,
+                     'stale_before_real_broadcast_denied':False}
+        if sys.platform in ('win32','darwin'):
             # Window close locks its session. Exercise stale writers while
             # the actual recovered wallet is open, then close it normally.
             window._sync_timer.stop()
-            print('WIN_REOPEN_STAGE=STALE_PAYMENT',flush=True)
-            _prove_windows_stale_payment(session,password)
+            print('NATIVE_REOPEN_STAGE=STALE_PAYMENT',flush=True)
+            stale_proof=_prove_native_stale_payment(session,password,keychain=keychain)
         window.close()
         window.deleteLater()
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
         window=None
         return {
-            'stale_before_native_signature_denied':sys.platform=='win32',
-            'stale_before_real_broadcast_denied':sys.platform=='win32',
+            **stale_proof,
             'status':('REAL_CORE_CROSS_SESSION_CREDENTIAL_BACKUP_REOPEN_PASS' if sys.platform=='win32' else 'REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS'),
             'operational_snapshot_http':http_proof,
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
@@ -68,7 +69,7 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case,*,read_rpc
             session.close()
 
 
-def _prove_windows_stale_payment(session,password):
+def _prove_native_stale_payment(session,password,*,keychain=None):
     """Real same-wallet writer advances from another private vault directory.
 
     Exercise both pre-sign and pre-broadcast rejection against a genuine Core
@@ -79,6 +80,11 @@ def _prove_windows_stale_payment(session,password):
     from .wallet_session import WalletSessionError, WalletCoreCli
     from wam_sp.wallet import Signer, Wallet
     from unittest.mock import patch
+    if sys.platform=='darwin' and (
+            type(keychain) is not type(Path()) or not keychain.is_absolute()
+            or session.vault.anchor.keychain!=keychain):
+        # This probe must NEVER fall back to the operator's default Keychain.
+        raise ReopenProbeError('REOPEN_DISPOSABLE_KEYCHAIN_REQUIRED')
     storage=custody.storage()
     root=session.datadir
     def competing_vault(suffix):
@@ -86,17 +92,18 @@ def _prove_windows_stale_payment(session,password):
         record=session.vault.anchor.read()
         storage.publish(directory,session.vault._filename(record[0]),
             storage.read(session.vault.directory,session.vault._filename(record[0])))
-        vault=CheckpointVault(directory,custody.anchor(session.vault.anchor.wallet_id),session.source)
+        vault=CheckpointVault(directory,custody.anchor(session.vault.anchor.wallet_id,keychain),session.source)
         ring,scan=vault.restore(root/(suffix+'.sqlite'),password)
         scan.sync(session._rpc())
         return vault,ring,scan
-    print('WIN_STALE_STAGE=PREPARE',flush=True)
+    label='MAC' if sys.platform=='darwin' else 'WIN'
+    print(label+'_STALE_STAGE=PREPARE',flush=True)
     review=session.prepare(session.ring.accounts()[0].payment_code(),100000,10000)
     proposal=session._prepared.proposal
-    print('WIN_STALE_STAGE=CLONE_BEFORE_SIGN',flush=True)
+    print(label+'_STALE_STAGE=CLONE_BEFORE_SIGN',flush=True)
     other,ring,scan=competing_vault('stale-before-sign')
     try:
-        print('WIN_STALE_STAGE=ADVANCE_BEFORE_SIGN',flush=True)
+        print(label+'_STALE_STAGE=ADVANCE_BEFORE_SIGN',flush=True)
         other.save(ring,scan,password)
         entered=[];original=Signer.sign
         def tracked_sign(*args,**kwargs):
@@ -108,18 +115,18 @@ def _prove_windows_stale_payment(session,password):
         assert not entered and session.faulted
         # This exact fixture draft never entered signing. Native WSP permits
         # unsigned cancellation; no signed/uncertain lock is released.
-        print('WIN_STALE_STAGE=CANCEL_UNSIGNED',flush=True)
+        print(label+'_STALE_STAGE=CANCEL_UNSIGNED',flush=True)
         Wallet(scan).release_draft(proposal.token)
         other.save(ring,scan,password)
         latest=root/'stale-recovery-backup';custody.create_directory(latest)
         other.backup(latest,'recovery.enc')
-        print('WIN_STALE_STAGE=RECOVER_CURRENT',flush=True)
+        print(label+'_STALE_STAGE=RECOVER_CURRENT',flush=True)
         session.lock();session.recover_backup(latest,'recovery.enc',password)
     finally:scan.close();ring.close()
     review=session.prepare(session.ring.accounts()[0].payment_code(),100000,10000)
-    print('WIN_STALE_STAGE=POSITIVE_NATIVE_SIGN',flush=True)
+    print(label+'_STALE_STAGE=POSITIVE_NATIVE_SIGN',flush=True)
     session.sign(review.commitment)  # Actual native signature, positive control.
-    print('WIN_STALE_STAGE=CLONE_BEFORE_BROADCAST',flush=True)
+    print(label+'_STALE_STAGE=CLONE_BEFORE_BROADCAST',flush=True)
     other,ring,scan=competing_vault('stale-before-broadcast')
     try:
         other.save(ring,scan,password)
@@ -138,3 +145,7 @@ def _prove_windows_stale_payment(session,password):
         except ValueError:pass
         else:raise ValueError('SIGNED_RESERVATION_RELEASED')
     finally:scan.close();ring.close()
+    return {'stale_before_native_signature_denied':True,
+            'stale_before_real_broadcast_denied':True,
+            'stale_writer_same_wallet_other_vault_directory':True,
+            'stale_writer_signed_reservation_retained':True}

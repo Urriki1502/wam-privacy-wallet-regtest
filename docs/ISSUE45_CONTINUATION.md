@@ -1,4 +1,32 @@
-# Current PR67 unit — native modal worker exclusion
+# Current PR67 unit — native Keychain stale-payment recovery proof
+
+db71f42b7207608cfb5de9b8a72033906757d380 has ALL10 exact-head CI SUCCESS,
+including native/frozen macOS, Windows, Linux and fresh pinned Linux Core build.
+Snapshot: docs/evidence/issue45/PR67_DB71F42_ALL_CI.json. Actual downloaded
+Mac/Linux package hashes, source/merge ancestry and original Core pairs were
+verified; local complete Mac app/DMG and its actual Cocoa executable exited0.
+Qt color-scheme override signals are automated evidence, not physical OS/Finder
+acceptance. Separate logs/receipts: outputs/pr67-resume-20261017T144215.
+
+Next nonduplicate P0 acceptance gap: cross-session recovery receipt had
+stale-before-native-sign/broadcast true only on Windows. Reuse its SAME genuine
+Core/native WSP competing-vault test on Mac, with an explicitly supplied
+disposable Keychain matching the session anchor; no default owner Keychain.
+Before-sign rejection must enter zero native signer calls. A positive real
+signature is then created, a second vault advances the anchor, and stale
+broadcast must enter zero sendrawtransaction calls. Its signed reservation
+must remain irreversible. Only a proven never-signed draft can be canceled.
+Mac source CI and final frozen entry now REQUIRE these proof fields; no gate
+was weakened and no wallet runtime signing algorithm was changed.
+
+Native251tests217PASS/34platformSKIP exit0, including refusal of missing,
+relative or mismatched disposable Keychain BEFORE custody access. Exact
+committed genuine-Core/source/frozen proof and successor CI remain PENDING
+at this implementation checkpoint; do not inherit db71f42 qualification.
+Independent Draft68–71 and all owner data/anchors remain untouched. Full
+managed-wallet Q05 across allOS and physical acceptance remain PENDING.
+
+# Earlier PR67 unit — native modal worker exclusion
 
 2026-10-17T17:00Z scheduled continuation, same exclusive engineering lease and
 existing PR67 branch. Predecessor93083aaa5b15e5cf2de46599ccde1440eb0d54b5

@@ -142,6 +142,11 @@ def main() -> int:
             if result["wallet_live_core"].get("cross_session_key_recovery") is not True:
                 raise BundleLaunchError("WAM_BUNDLE_CROSS_SESSION_RECOVERY_DENIED")
             wallet=result["wallet_live_core"]
+            if not all(wallet['cross_session_recovery_proof'].get(name) is True
+                       for name in ('stale_before_native_signature_denied',
+                                    'stale_before_real_broadcast_denied',
+                                    'stale_writer_signed_reservation_retained')):
+                raise BundleLaunchError('BUNDLE_REOPEN_STALE_PAYMENT_DENIED')
             if wallet['operational_snapshot_http']['cli_and_rehash_forbidden'] is not True:
                 raise BundleLaunchError('BUNDLE_WALLET_HTTP_REQUIRED')
             security=result["security_live_core"]

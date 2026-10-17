@@ -186,6 +186,18 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
         self.assertIs(self.win.dashboard.hero.window(), self.win)
         self.assertIs(self.win.receive_page.qr.window(), self.win)
 
+    @unittest.skipUnless(sys.platform=='darwin','native macOS probe scope')
+    def test_stale_reopen_probe_never_defaults_to_owner_keychain(self):
+        from types import SimpleNamespace
+        from wam_regtest.reopen_probe import _prove_native_stale_payment,ReopenProbeError
+        expected=Path.cwd()/'disposable-test.keychain-db'
+        session=SimpleNamespace(vault=SimpleNamespace(anchor=SimpleNamespace(keychain=expected)))
+        for keychain in (None,Path('relative.keychain-db'),Path.cwd()/'other.keychain-db'):
+            with self.subTest(keychain=keychain):
+                with (patch('wam_regtest.custody.storage',side_effect=AssertionError('custody touched')),
+                      self.assertRaisesRegex(ReopenProbeError,'REOPEN_DISPOSABLE_KEYCHAIN_REQUIRED')):
+                    _prove_native_stale_payment(session,b'public-regtest-password',keychain=keychain)
+
     def test_password_dialog_cannot_start_background_worker_or_allow_window_close(self):
         import threading
         import time

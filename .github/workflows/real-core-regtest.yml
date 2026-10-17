@@ -162,6 +162,9 @@ jobs:
           assert reopen['status'] == 'REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS'
           assert reopen['real_core_rpc'] is True and reopen['synthetic_rpc'] is False
           assert reopen['same_test_keys_recovered'] is True and reopen['old_reservations_retained'] is True
+          assert all(reopen.get(name) is True for name in (
+            'stale_before_native_signature_denied','stale_before_real_broadcast_denied',
+            'stale_writer_same_wallet_other_vault_directory','stale_writer_signed_reservation_retained'))
           assert reopen['observed_height'] == 103
           assert wallet['native_gui_navigation_pages'] == 7 and wallet['observed_height'] == 105
           assert proof['mining_account_component']['native_gui_depths'] == [99,100,101]
