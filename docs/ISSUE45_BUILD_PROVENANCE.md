@@ -36,3 +36,12 @@ source links, checkout changes and rewrite-to-original bytes, declared-head
 mismatch, Windows text vs byte-pinned C++ rules. No synthetic blockchain PASS.
 Source units181 total148PASS33platformSKIP; actual final three-OS frozen builds
 remain pending until exact-head qualification. Core Update Manager deferred P1.
+
+Observed Windows unit failure (0d111): lstat/CRT-fstat metadata views disagreed
+on recently written source. e35 uses existing native directory/file-info
+primitives on one deny-write/delete handle; reparse/hardlink gates remain.
+Actual Windows native source unit step passed after correction. New Mac totals
+182 tests148PASS34platformSKIP; actual Win handle test runs on Windows only.
+Complete local0d111 Mac frozen build passed with258 tracked files and source
+receipt unchanged across E2E. See committed inspection/receipt; newer e35/native
+frozen cross-platform aggregate still pending until exact-head CI completes.
