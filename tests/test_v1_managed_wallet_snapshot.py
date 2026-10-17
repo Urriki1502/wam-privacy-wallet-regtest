@@ -98,7 +98,14 @@ class ManagedOriginalWalletSnapshotContracts(unittest.TestCase):
     def test_exact_original_wallet_snapshot_disables_signing_and_demo_identity(self):
         stack,preflight,control,vaultclass,rpcclass,walletclass=self.fixture()
         with stack:
-            result=self.call()
+            try:
+                result=self.call()
+            except ManagedWalletSnapshotError as error:
+                # Fixture-only fixed-type diagnosis. Never print credential,
+                # private path or the underlying exception's message.
+                cause=error.__context__
+                raise AssertionError(
+                    "Q05_FIXTURE_CAUSE_TYPE_"+(type(cause).__name__ if cause else "NONE")) from None
             self.assertIs(type(result),WalletReadSnapshot)
             self.assertEqual(result.height,101)
             self.assertEqual(result.tip,"d"*64)
