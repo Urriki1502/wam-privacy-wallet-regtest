@@ -169,12 +169,30 @@ class ManagedOriginalWalletSnapshotContracts(unittest.TestCase):
         vaultclass.assert_not_called()
         rpcclass.assert_not_called()
 
-    def test_bad_identity_never_restores_native_anchor(self):
+    def test_wrong_core_digest_denied_before_native_anchor_restore(self):
         stack,*_=self.fixture()
         with stack,patch("wam_regtest.managed_wallet_snapshot.read_locator",
-                         return_value={**self.profile,"wallet_id":"e"*32}):
+                         return_value={**self.profile,"core_sha256":"e"*64}):
             with self.assertRaisesRegex(ManagedWalletSnapshotError,
                                         "PROFILE_MISMATCH"):
+                self.call()
+        self.vault.restore.assert_not_called()
+
+    def test_swapped_wallet_locator_without_its_native_anchor_fails_closed(self):
+        # A wallet_id identifies a SEPARATE native anchor. There is no
+        # assumption that make(wallet_id, receipt) proves that wallet exists.
+        # Native anti-rollback existence is an independent mandatory gate.
+        original="c"*32
+        def anchor_for(wallet_id,keychain):
+            if wallet_id!=original:
+                raise ValueError("NATIVE_UNKNOWN_ANCHOR_FIXTURE")
+            return self.anchor
+        stack,*_=self.fixture()
+        with stack,patch("wam_regtest.managed_wallet_snapshot.read_locator",
+                         return_value={**self.profile,"wallet_id":"e"*32}),patch(
+                         "wam_regtest.custody.anchor",side_effect=anchor_for):
+            with self.assertRaisesRegex(ManagedWalletSnapshotError,
+                                        "^MANAGED_WALLET_SNAPSHOT_UNVERIFIED$"):
                 self.call()
         self.vault.restore.assert_not_called()
 
