@@ -376,6 +376,11 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         backup=datadir/'wallet-backup'
         custody.create_directory(backup)
         _operation(app,window,'backup',lambda:window.start_operation('backup',backup,'wallet-backup.enc'))
+        # Capture exact irreversible reservation rows before GUI lock.
+        # The real vault checkpoint is the authority, never a fabricated
+        # empty reservation fixture or SQLite copied around native custody.
+        original_reservations=tuple(tuple(row) for row in session.scanner.store.db.execute(
+            "SELECT token,state FROM reservations ORDER BY token"))
         stage="LOCK"
         print("WALLET_E2E_STAGE=LOCK",flush=True)
         _operation(app,window,'lock',window.lock_button.click)
@@ -390,6 +395,22 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         assert not window.dashboard.go_send.isEnabled()
         assert not window.prepare_button.isEnabled()
         assert 'block_height' not in window.disclosure_text.text() and session._disclosure_gate is None
+        stage="MANAGED_RESERVATION_REOPEN"
+        resumed=WalletSession.reopen_managed(
+            core_dir,datadir,source,password,mining_address,authorized=True,
+            keychain=keychain,read_rpc=read_rpc)
+        try:
+            restored_reservations=tuple(tuple(row) for row in resumed.scanner.store.db.execute(
+                "SELECT token,state FROM reservations ORDER BY token"))
+            assert restored_reservations==original_reservations
+            # Reopen restores ONLY encrypted intent state; never implicitly
+            # signs, releases reservations, or rebroadcasts transactions.
+            assert resumed._prepared is None and resumed._signed is None
+            assert resumed._review is None and resumed._tip is None
+            assert resumed.vault.anchor.wallet_id==original_anchor_id
+        finally:
+            resumed.close()
+        print("WALLET_T05_REAL_CORE_IRREVERSIBLE_RESERVATION_REOPEN_PASS",flush=True)
         stage="PASSWORD"
         print("WALLET_E2E_STAGE=PASSWORD",flush=True)
         _operation(app,window,'unlock',lambda:window.start_operation('unlock',b'wrong-regtest-passphrase'),denied=True)
@@ -437,6 +458,8 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
             'managed_original_scan_accounts_preserved':True,
             'managed_original_history_preserved':True,
             'managed_original_anchor_id_preserved':True,
+            'managed_irreversible_reservations_preserved':True,
+            'managed_reopen_no_implicit_sign_or_broadcast':True,
             'cross_session_key_recovery':True,'cross_session_native_qt':True,
             'cross_session_recovery_proof':proof,
             'production_custody_qualified':False,
