@@ -39,9 +39,10 @@ def main(argv=None):
                     raise PersistentProfileError('PROFILE_TRUST_PINS_MISMATCH')
         else:
             receipt=inspect_profile(args.profile_root,**pins)
-        assert receipt['persistent_runtime_qualified'] is False
-        assert receipt['attach_authorized'] is False
-        assert receipt['signing_authorized'] is False
+        if (receipt.get('persistent_runtime_qualified') is not False
+                or receipt.get('attach_authorized') is not False
+                or receipt.get('signing_authorized') is not False):
+            raise PersistentProfileError('PROFILE_AUTHORITY_ESCALATION_DENIED')
         print(json.dumps({
             'schema':'wam-t05-operator-preflight/v1',
             'status':'PUBLIC_PROFILE_PREFLIGHT_PASS',
