@@ -135,7 +135,7 @@ def _verify_native(node: Path, cli: Path, hashes: dict, *, head: str) -> dict:
                         # output or any filesystem/credential details.
                         import re
                         m = re.search(
-                            rb"error while loading shared libraries: ([a-z0-9_+.-]{1,100}\\.so(?:\\.[0-9]+)*)",
+                            rb"error while loading shared libraries: ([a-z0-9_+.-]{1,100}\.so(?:\.[0-9]+)*)",
                             raw)
                         if m:
                             print("V012_NATIVE_MISSING_SONAME=" +
