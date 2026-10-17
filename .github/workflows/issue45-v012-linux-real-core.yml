@@ -42,7 +42,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/issue45_v012_native_linux.py \
+          python -m scripts.issue45_v012_native_linux \
             --confirm-isolated-disposable-ci-regtest \
             --output v012-linux-native-regtest.json
           python - <<'PY'
