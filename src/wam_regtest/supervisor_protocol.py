@@ -47,6 +47,22 @@ def decode_frame(raw):
     return obj
 
 
+def response_proof(secret,nonce,status):
+    """Bind the server response to the originating nonce and verified state."""
+    if (type(secret) is not bytes or len(secret)!=32 or type(nonce) is not str
+            or re.fullmatch("[0-9a-f]{32}",nonce) is None
+            or type(status) is not dict or set(status)!={
+                "protocol","state","height","core_process_owned","chain","mainnet_allowed"}):
+        raise SupervisorProtocolError("SUPERVISOR_RESPONSE_PROOF_DENIED")
+    expected=public_status(state=status["state"],chain_height=status["height"],
+        owned=status["core_process_owned"])
+    if status!=expected:
+        raise SupervisorProtocolError("SUPERVISOR_RESPONSE_STATE_DENIED")
+    payload=json.dumps(status,sort_keys=True,separators=(",",":")).encode("ascii")
+    return hmac.new(secret,b"REPLY\\n"+nonce.encode("ascii")+b"\\n"+payload,
+                    hashlib.sha256).hexdigest()
+
+
 def request_proof(secret,op,nonce):
     if (type(secret) is not bytes or len(secret)!=32 or type(op) is not str
             or op not in READ_COMMANDS|CONTROL_COMMANDS
@@ -75,6 +91,9 @@ class ReplayGuard:
             raise SupervisorProtocolError("SUPERVISOR_AUTH_DENIED")
         self.__seen.add(message["nonce"])
         return message["op"]
+
+    def sign_status(self,nonce,status):
+        return response_proof(self.__secret,nonce,status)
 
 
 def public_status(*,state,chain_height=None,owned=False):
