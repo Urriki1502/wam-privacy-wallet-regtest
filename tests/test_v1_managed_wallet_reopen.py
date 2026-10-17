@@ -133,6 +133,14 @@ class OriginalWalletIdentityContracts(unittest.TestCase):
                 preflight_existing_checkpoint(core,datadir,source,self.password)
             with patch("wam_regtest.managed_wallet_reopen.read",
                        return_value={**self.profile,"wallet_id":"a"*32}):
+                # A valid but DIFFERENT locator must not match the anchored
+                # original wallet's ciphertext payload.
+                with self.assertRaisesRegex(ManagedWalletReopenError,
+                        "MANAGED_WALLET_CHECKPOINT_MISMATCH"):
+                    preflight_existing_checkpoint(core,datadir,source,
+                                                 self.password,authorized=True)
+            with patch("wam_regtest.managed_wallet_reopen.read",
+                       return_value={**self.profile,"core_sha256":"d"*64}):
                 with self.assertRaisesRegex(ManagedWalletReopenError,
                         "MANAGED_WALLET_CORE_CHANGED_DENIED"):
                     preflight_existing_checkpoint(core,datadir,source,
