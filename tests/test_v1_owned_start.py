@@ -7,6 +7,25 @@ from wam_regtest.core import CoreSmokeError
 
 
 class OwnedStartupContracts(unittest.TestCase):
+    def test_tcp_timeout_before_any_auth_may_wait_but_permissions_never_authenticate(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock,MagicMock,patch
+        from wam_regtest.owned_start import _ready
+        binding=SimpleNamespace(process=Mock(),directory=Path('/not-opened'),core=Path('/not-opened'),assert_socket=Mock())
+        binding.process.poll.return_value=None
+        read=Mock();read.attest.return_value={'blocks':0}
+        with patch('wam_regtest.owned_start.socket.create_connection',side_effect=[socket.timeout(),MagicMock()]) as connect, \
+             patch('wam_regtest.owned_start.time.monotonic',return_value=1), \
+             patch('wam_regtest.owned_start.time.sleep'), \
+             patch('wam_regtest.owned_start.ManagedReadRpc',return_value=read) as client:
+            self.assertIs(_ready(binding,12345,100),read)
+            self.assertEqual(connect.call_count,2);client.assert_called_once();binding.assert_socket.assert_called_once()
+        with patch('wam_regtest.owned_start.socket.create_connection',side_effect=PermissionError(13,'PRIVATE_CANARY')), \
+             patch('wam_regtest.owned_start.time.monotonic',return_value=1), \
+             patch('wam_regtest.owned_start.ManagedReadRpc') as client:
+            with self.assertRaisesRegex(CoreSmokeError,'^CORE_START_TCP_PROBE_DENIED_13$'):_ready(binding,12345,100)
+            client.assert_not_called()
+
     def test_consent_scope_and_budget_fail_before_any_process(self):
         for consent in (False,None,1,'yes'):
             with self.assertRaisesRegex(CoreSmokeError,'^CORE_START_EXPLICIT_DISPOSABLE_CONSENT_REQUIRED$'):

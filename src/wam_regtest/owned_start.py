@@ -50,7 +50,17 @@ def _ready(binding, port, deadline):
     while time.monotonic() < deadline:
         _exited(binding.process, binding.directory)
         try:
-            with socket.create_connection(('127.0.0.1', port), timeout=.25) as probe:
+            probe=socket.create_connection(('127.0.0.1',port),timeout=.25)
+        except (ConnectionRefusedError,socket.timeout):
+            # Windows may time out before returning a loopback TCP refusal.
+            # No RPC/auth bytes exist yet; this is not a request replay.
+            time.sleep(min(.05,max(0,deadline-time.monotonic())));continue
+        except OSError as error:
+            code=getattr(error,'winerror',None) or error.errno
+            suffix=str(code) if type(code) is int and 0<=code<=65535 else 'UNKNOWN'
+            raise CoreSmokeError('CORE_START_TCP_PROBE_DENIED_'+suffix) from None
+        try:
+            with probe:
                 # Raw TCP only; this sends ZERO HTTP/authentication bytes.
                 binding.assert_socket(probe)
             read = ManagedReadRpc(binding.core, binding.directory,
@@ -60,16 +70,11 @@ def _ready(binding, port, deadline):
                 return read
             except BaseException:
                 read.close();raise
-        except ConnectionRefusedError:
-            # Positive refusal before any auth is sent, not replay of a request.
-            time.sleep(.05)
         except RpcError as error:
             if error.args!=('RPC_CORE_WARMUP',):raise
             warmups+=1
             if warmups>=30:raise CoreSmokeError('CORE_START_WARMUP_LIMIT') from None
             time.sleep(min(.05*(2**(warmups-1)),1,max(0,deadline-time.monotonic())))
-        except (socket.timeout,OSError):
-            raise CoreSmokeError('CORE_START_TCP_PROBE_DENIED') from None
         except CoreBindingError:
             # A competing listener may precede Core's own bind-failure exit.
             # Only the actual owned process's private log + EXIT permits retry.
