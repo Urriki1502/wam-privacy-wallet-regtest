@@ -164,6 +164,63 @@ def _qt_original_wallet_live_read_probe(root, core, expected_height, funding_add
     assert funded_height==expected_height+1 and expected_atoms>0
     payment_account=None
 
+    # A THIRD interpreter holds a REAL native GUI, reads the encrypted
+    # original wallet through authenticated supervisor RPC, then terminates
+    # abruptly. It sends no transaction and does not control/stop Core.
+    # Password travels only through a bounded private test stdin pipe, never
+    # in process arguments, logs, CLI flags or the supervisor protocol.
+    crashed_gui=r'''
+import json,os,sys,time
+from pathlib import Path
+from unittest.mock import patch
+from wam_regtest.desktop import qt_application
+from wam_regtest.managed_gui import ManagedCoreWindow
+from wam_regtest.supervisor_client import control
+root,core,wsp=(Path(x) for x in sys.argv[1:4])
+password=sys.stdin.buffer.readline(1025).strip()
+if not 12<=len(password)<=1024:raise SystemExit(2)
+app=qt_application()
+window=ManagedCoreWindow(root,core_dir=core,wsp_source=wsp)
+window.show()
+window._apply_managed_status(control(root,"status",timeout=10))
+if not window.view_wallet_button.isEnabled():raise SystemExit(2)
+with patch("wam_regtest.managed_gui.QInputDialog.getText",
+           return_value=(password.decode("ascii"),True)):
+    window.view_wallet_button.click()
+deadline=time.monotonic()+90
+while window._worker is not None and time.monotonic()<deadline:
+    app.processEvents()
+    time.sleep(.01)
+app.processEvents()
+snap=window._snapshot
+if (snap is None or snap.signer_allowed or snap.broadcast_allowed
+        or snap.demo_account_only or snap.synthetic_rpc
+        or window.session is not None):raise SystemExit(2)
+print(json.dumps({"status":"Q05_REAL_ORIGINAL_WALLET_GUI_READY_BEFORE_KILL",
+                  "height":snap.height,"confirmed_atoms":snap.confirmed_atoms,
+                  "history_txid":snap.history[0].txid if snap.history else None,
+                  "mainnet_allowed":False},sort_keys=True),flush=True)
+os._exit(41)
+'''
+    killed=subprocess.run(
+        [sys.executable,"-X","faulthandler","-c",crashed_gui,
+         str(root),str(core),str(wsp)],
+        input=password+b"\n",stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
+        timeout=110,check=False)
+    assert killed.returncode==41
+    killed_receipt=json.loads(killed.stdout)
+    assert killed_receipt=={
+        "status":"Q05_REAL_ORIGINAL_WALLET_GUI_READY_BEFORE_KILL",
+        "height":funded_height,
+        "confirmed_atoms":expected_atoms,
+        "history_txid":txid,"mainnet_allowed":False,
+    }
+    assert not runtime.exists()
+    assert control(root,"status",timeout=10)["height"]==funded_height
+    assert _read_cli([str(native_cli),f"-datadir={directory}",
+                     "getblockhash",str(funded_height)])==payment_rpc.call(
+                         "getblockhash",[funded_height])
+
     app=qt_application()
     original_tip=control(root,"status",timeout=10)["height"]
     assert original_tip==funded_height
@@ -217,6 +274,8 @@ def _qt_original_wallet_live_read_probe(root, core, expected_height, funding_add
         "actual_signed_core_regtest_ipc":True,
         "same_receive_code_two_qt_windows":True,
         "genuine_bip352_funded_receive_history_verified":True,
+        "real_native_gui_killed_after_wallet_verification":True,
+        "real_native_gui_reopened_after_kill_same_wallet":True,
         "confirmed_real_payment_txid":txid,
         "confirmed_atoms":expected_atoms,
         "actual_chain_height":funded_height,
