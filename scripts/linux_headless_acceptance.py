@@ -33,6 +33,8 @@ try:
     record=json.loads(report.read_text())
     assert record['wsp_live_scan']['scanner_transport']=='owned-http'
     assert record['wsp_live_scan']['cli_and_rehash_forbidden_during_scan'] is True
+    assert record['owned_startup_component']['status']=='REAL_CORE_OWNED_STARTUP_COLLISION_AND_PREAUTH_PASS'
+    assert record['owned_startup_component']['competing_listener_received_bytes']==0
     assert record['mining_account_component']['status']=='REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS'
     assert record['mining_account_component']['owned_http_matches_independent_cli'] is True
     assert record['mining_account_component']['native_gui_depths']==([99,100,101] if args.qt else [])

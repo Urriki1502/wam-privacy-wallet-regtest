@@ -102,7 +102,13 @@ def _reply(raw,identifier,method,*,mining=False):
                         parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
         if (type(data) is not dict or set(data)!={'result','error','id'}
                 or type(data['id']) is not int or data['id']!=identifier):raise ValueError
-        if data['error'] is not None:raise RpcError('RPC_CORE_READ_REFUSED')
+        if data['error'] is not None:
+            error=data['error']
+            if (data['result'] is None and type(error) is dict and set(error)=={'code','message'}
+                    and type(error['code']) is int and error['code']==-28
+                    and type(error['message']) is str and len(error['message'])<=4096):
+                raise RpcError('RPC_CORE_WARMUP')
+            raise RpcError('RPC_CORE_READ_REFUSED')
         if mining:
             from .mining_read import mining_result
             return mining_result(method,data['result'])
@@ -233,6 +239,11 @@ class ManagedReadRpc:
             raw=response.read((MAX_BLOCK_REPLY if method=='getblock' else MAX_REPLY)+1)
             if response.status==401:raise RpcError('RPC_AUTHENTICATION_DENIED')
             if response.status==503:raise RpcError('RPC_NODE_BUSY')
+            if response.status==500 and response.getheader('Content-Type','').split(';')[0].strip()=='application/json':
+                # Parse a positively refused Core error (not an uncertain IO).
+                # A successful JSON result with HTTP500 is never accepted.
+                _reply(raw,self._identifier,method,mining=mining)
+                raise RpcError('RPC_HTTP_DENIED')
             if response.status!=200 or response.getheader('Content-Type','').split(';')[0].strip()!='application/json':
                 raise RpcError('RPC_HTTP_DENIED')
             result=_reply(raw,self._identifier,method,mining=mining)

@@ -2,6 +2,7 @@
 INPUT_ERRORS=frozenset(('WALLET_INPUT_AMOUNT_INVALID','WALLET_INPUT_FEE_INVALID',
                         'WALLET_INPUT_RECIPIENT_INVALID','WALLET_INPUT_FUNDS_UNAVAILABLE'))
 _MESSAGES={
+ 'RPC_CORE_WARMUP':'The verified local Core node is still initializing. Balances are hidden; wait for startup and verify Sync. No transaction is retried.',
  'RPC_MINING_RECONCILIATION_DENIED':'Core mining-account ownership or UTXO balances could not be reconciled. Balances are hidden. No keys or reservations are changed.',
  'RPC_MINING_CHAIN_CHANGED':'The chain changed while reading the mining account. Balances are hidden; use Sync to verify again.',
  'RPC_MINING_RESULT_DENIED':'Core mining-account data is unavailable or exceeds the supported read limit. Balances are hidden; no account is imported or selected automatically.',

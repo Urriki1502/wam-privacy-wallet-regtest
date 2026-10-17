@@ -1,3 +1,42 @@
+# Current resume — owned startup component after qualified Draft54
+
+2026-10-17T01:52:55Z session. Refresh actual branch/HEAD/CI; this checkpoint is
+not a current lock. Acquire scripts/engineering_lease.py --hold (exit73 REFUSE).
+Current branch feature/issue45-owned-startup-20261017 stacks on54/bfd2400.
+New component: docs/ISSUE45_OWNED_STARTUP.md. Preliminary172units139PASS33SKIP;
+actual six-process Core collision/pre-auth/cleanup probe PASS. Exact source,
+native/frozen cross-platform successor CI remains pending at this commit.
+No main/RC1/owner data/upstream/other branch changes, force push or auto-merge.
+
+Live Issue45 unchanged from last full read (updated2026-10-16T14:26:40Z,54004
+characters). Draft54 bfd2400 all10 checks SUCCESS, now historical qualification
+for the new runtime. Independent55–59 fork fromc5edaef, NOT descendants of54.
+Reviewed intake/candidate RPC/WSP scope and actual source diff; no merges/rebases
+or edits to their branches.59 d26fc8f genuine Linux signed v0.1.12→WSP BIP352→
+SQLite job38992178458 PASS. Downloaded actual artifact12085985164 outerSHA
+18fcd64bf08318d0caba0493c509c3befeb9aa9b9e92e3dd3caa2abbce344283; receipt
+source=d26fc8f, amount4749990000 at102, restart no duplicate. Signed node/CLI
+9d13b329f451486930a3cf799b360237bcc7e858e94a964f817df520428374db /
+455d85aa1ce35f70c71da6947a79b549f33c4116168ff7ecdc41b067a3fbe907.
+Candidate-only: Fusion activation/signing/frozen/physical false.59 Windows still
+running at last refresh. v0.1.11 runtime pins stay unchanged. Core Update Manager
+remains deferred P1. Do not duplicate the candidate work or promote v0.1.12.
+
+Current lease PTY53937. Separate outputs/issue45-session-20261017T015255/
+RESUME_LOG.md records exact final CI/artifacts and actual lease release. Existing
+5-hour recurring schedule remains authorized; do not shift original T0 or create
+another task. Usage read ordinaryAllowed=true,primary1%,weekly31%,credits0;
+no reset/purchase performed or assumed. This is an owner-requested immediate run,
+not an early scheduled dispatch; the next recurring nominal boundary remains
+2026-10-17T04:39:35Z (11:39:35 UTC+7).
+
+Next: complete current real-Core source/frozen qualification, fix actual CI on
+same branch/PR; then next unblocked P0 real multi-node lab / persistent owned Core
+lifecycle, explicit read-only attach and durable wallet/custody workflows. Do not
+call the disposable startup helper a persistent wallet or replace T05/T06 gates.
+
+## Historical Mining Account checkpoint (superseded CI snapshot)
+
 # Issue45 continuation — Mining Account read GUI; integrated V1 still pending
 
 Refresh FULL live Issue45, actual Git/PR graph and exact-head CI first. REGTEST
