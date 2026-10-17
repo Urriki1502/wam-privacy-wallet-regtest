@@ -13,6 +13,7 @@ import secrets
 import socket
 import stat
 import subprocess
+import sys
 import tempfile
 import time
 
@@ -216,7 +217,6 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             or not wsp_payment_e2e or interactive_demo or gui_e2e or security_e2e or wallet_e2e):
         raise CoreSmokeError("CORE_RECOVERY_CASE_SCOPE_DENIED")
     if headless_callback is not None:
-        import sys
         if (sys.platform!='linux' or not callable(headless_callback) or not wsp_payment_e2e
                 or gui_e2e or interactive_demo or security_e2e or wallet_e2e or recovery_case is not None):
             raise CoreSmokeError('CORE_HEADLESS_SCOPE_DENIED')
