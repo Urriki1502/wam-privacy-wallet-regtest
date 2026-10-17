@@ -164,6 +164,45 @@ def _qt_original_wallet_live_read_probe(root, core, expected_height, funding_add
     assert funded_height==expected_height+1 and expected_atoms>0
     payment_account=None
 
+    # Native WSP reservation: prepare a disposable signed PSBT from a
+    # GENUINE confirmed coin, anchor the irreversible lock BEFORE signing,
+    # and never broadcast it. The supervisor never sees the spending key.
+    from wam_sp.wallet import Wallet,Intent,Signer
+    from wam_sp.psbt import PSBT
+    locked_ring=locked_scanner=locked_rpc=recipient=None
+    try:
+        locked_ring,locked_scanner=vault.restore(runtime,password)
+        locked_rpc=ManagedScanRpc(root,authorized_readonly=True)
+        locked_scanner.sync(locked_rpc)
+        locked_scanner.assert_current()
+        locked_wallet=Wallet(locked_scanner)
+        assert locked_wallet.balance()["confirmed_atoms"]==expected_atoms
+        recipient=Keyring()
+        approved_intent=Intent(recipient.accounts()[0].payment_code(),100_000)
+        approved_fee=10_000
+        proposal=locked_wallet.propose((approved_intent,),approved_fee)
+        prepared=Signer(locked_ring).prepare(proposal)
+        locked_wallet.mark_signed(proposal.token)
+        vault.save(locked_ring,locked_scanner,password)
+        signed=Signer(locked_ring).sign(
+            prepared,proposal.intents,approved_fee)
+        assert PSBT.decode(signed).finalize()
+        reservation_rows=tuple(locked_scanner.store.db.execute(
+            "SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout"))
+        assert len(reservation_rows)==1
+        assert reservation_rows[0][2]==proposal.token
+        assert reservation_rows[0][3]=="signed"
+        assert locked_wallet.balance()["available_atoms"]==0
+        anchored_reservation=anchor.read()
+        assert anchored_reservation==vault._expected
+    finally:
+        if locked_scanner is not None:locked_scanner.close()
+        if locked_ring is not None:locked_ring.close()
+        if locked_rpc is not None:locked_rpc.close()
+        if recipient is not None:recipient.close()
+        if locked_scanner is not None:runtime.unlink(missing_ok=True)
+    assert not runtime.exists()
+
     # A THIRD interpreter holds a REAL native GUI, reads the encrypted
     # original wallet through authenticated supervisor RPC, then terminates
     # abruptly. It sends no transaction and does not control/stop Core.
@@ -268,6 +307,21 @@ os._exit(41)
             app.processEvents()
     assert not runtime.exists()
     assert control(root,"status",timeout=10)["height"]==funded_height
+    assert anchor.read()==anchored_reservation
+    # Prove that both GUI reads and an abrupt GUI death preserved the actual
+    # committed WSP signed reservation. A new process may restore this state,
+    # but NO GUI action may release/retry an uncertain transaction.
+    verify_ring=verify_scan=None
+    try:
+        verify_ring,verify_scan=vault.restore(runtime,password)
+        current_rows=tuple(verify_scan.store.db.execute(
+            "SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout"))
+        assert current_rows==reservation_rows
+    finally:
+        if verify_scan is not None:verify_scan.close()
+        if verify_ring is not None:verify_ring.close()
+        if verify_scan is not None:runtime.unlink(missing_ok=True)
+    assert not runtime.exists()
     return {
         "real_encrypted_native_checkpoint":True,
         "genuine_wsp_original_account":True,
@@ -276,6 +330,8 @@ os._exit(41)
         "genuine_bip352_funded_receive_history_verified":True,
         "real_native_gui_killed_after_wallet_verification":True,
         "real_native_gui_reopened_after_kill_same_wallet":True,
+        "actual_signed_psbt_reservation_anchored_before_crypto":True,
+        "irreversible_signed_utxo_reserved_after_gui_crash":True,
         "confirmed_real_payment_txid":txid,
         "confirmed_atoms":expected_atoms,
         "actual_chain_height":funded_height,
