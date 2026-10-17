@@ -144,6 +144,20 @@ def run(args):
     except Exception as error:
         import re
         text=str(error)
+        # Opt-in disposable E2E may expose a reviewed source FILE:LINE and a
+        # fixed exception class, never raw exception strings, paths or keys.
+        # Native/frozen CI needs this when a packaged-only failure precedes
+        # Qt's own detailed stage marker. Interactive GUI remains unchanged.
+        if args.confirm_headless_e2e or args.confirm_qt_e2e:
+            from .acceptance_failure import failure_site
+            kind=type(error).__name__
+            if kind not in ('AssertionError','AttributeError','FileNotFoundError',
+                            'ImportError','ModuleNotFoundError','KeyError',
+                            'OSError','PermissionError','RuntimeError',
+                            'TypeError','ValueError','TimeoutError'):
+                kind='OTHER'
+            print('LINUX_E2E_FAILURE_KIND='+kind,file=sys.stderr)
+            print('LINUX_E2E_FAILURE_SITE='+failure_site(error),file=sys.stderr)
         print(text if type(error).__name__ in ('WalletSessionError','CoreSmokeError','LinuxCoreError','LinuxWitnessError','LinuxStorageError')
             and re.fullmatch('[A-Z0-9_]{5,120}',text) else 'LINUX_HEADLESS_REGTEST_DENIED',file=sys.stderr)
         return 2
