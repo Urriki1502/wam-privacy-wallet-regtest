@@ -1,3 +1,19 @@
+# Latest PR67 regression fix — native image exit race
+
+41c14bd all10CI SUCCESS is verified predecessor evidence. Successor6f973d1
+real independentGUIprocess proof passes Mac native/source and Linux nativeQt,
+but Linuxfrozen desktop failed at actual startup collision: Core exits between
+poll() and /proc/PID/exe readlink, FileNotFoundError escaped the ownership-denial
+handler. Fix normalizes native image lookup OSError to CoreBindingError, NEVER
+accepts ownership. Existing startup handler retries ONLY actual exited+private
+bind-denial proof, zero auth bytes to competitor; other failure denies. Native
+regression verifies missing image is denied/redacted. No new retry after yield.
+Inspect newest actualHEAD/CI; do not infer successor qualification from41c14bd.
+
+Latest source/runtime fix requires new exact-head real collision/native/frozen
+qualification on allOS. Do not expandQ05 until CI recovered. Same existingPR67
+only, no auto-merge/otherbranch/Core/ownerwallet changes. Lease and logs below.
+
 # Current checkpoint — PR67 native Qt crash fixed; Q05 remains partial
 
 Use ONLY existing branch feature/issue45-t05-gui-continuity-q05-20261017,
