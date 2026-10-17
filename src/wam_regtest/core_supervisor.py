@@ -163,8 +163,13 @@ class CoreSupervisor:
         return {"PATH":"/usr/bin:/bin:/usr/sbin:/sbin",
                 "HOME":str(self.directory),"LC_ALL":"C"}
 
-    def _ready(self,deadline):
-        rpcport=local_rpc_port(self.directory)
+    def _ready(self,deadline,rpcport):
+        # The protected config was strictly validated BEFORE spawning Core.
+        # Don't re-open it during the process/config handoff: ManagedReadRpc
+        # independently verifies that exact local config and the OS-bound Core
+        # endpoint before any authenticated read. A changed port is denied.
+        if type(rpcport) is not int or not 1<=rpcport<=65535:
+            raise ManagedCoreError("MANAGED_CONFIG_PORT_DENIED")
         while time.monotonic()<deadline:
             if self.process.poll() is not None:
                 raise ManagedCoreError("MANAGED_CHILD_EXITED")
@@ -179,6 +184,10 @@ class CoreSupervisor:
                 read=ManagedReadRpc(self.core,self.directory,
                     authorized_readonly=True,binding=self.binding)
                 try:
+                    # This socket has already been attested to our Popen-owned
+                    # binary. Reject any config port drift, never adopt it.
+                    if read._connection.port!=rpcport:
+                        raise ManagedCoreError("MANAGED_CONFIG_PORT_CHANGED")
                     info=read.attest()
                     if info.get("chain")!="regtest":
                         raise ManagedCoreError("MANAGED_CHAIN_IDENTITY_DENIED")
@@ -202,7 +211,8 @@ class CoreSupervisor:
             try:
                 # Chain stays in a durable owner-only directory. Config is
                 # create-once, never changed to evade conflicts.
-                if local_rpc_port(self.directory) not in range(1,65536):
+                rpcport=local_rpc_port(self.directory)
+                if type(rpcport) is not int or not 1<=rpcport<=65535:
                     raise ManagedCoreError("MANAGED_CONFIG_DENIED")
                 env=self._child_environment()
                 # Never open an untrusted reusable log path. Core writes its
@@ -214,7 +224,7 @@ class CoreSupervisor:
                     env=env,creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0) if sys.platform=="win32" else 0,
                 )
                 self.binding=OwnedCoreBinding(self.process,self.core,self.directory)
-                self.read=self._ready(time.monotonic()+timeout)
+                self.read=self._ready(time.monotonic()+timeout,rpcport)
                 self._consecutive_failures=0
                 self._state="ready"
             except BaseException:
