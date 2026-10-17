@@ -210,6 +210,28 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
                     assert observed_tip==client_scan.call("getblockhash",[3])
                     assert scanner.ready is False
                     evidence["authenticated_wsp_scan_first_three_real_blocks"]=True
+                    # Close the actual WSP SQLite store and transport. A new
+                    # scanner and independently authenticated IPC session
+                    # must continue the *same* canonical chain without
+                    # replacing the stored scan account or resetting history.
+                    original_account=scanner.accounts[0].identity()
+                    scanner.close()
+                    scanner=None
+                    client_scan.close()
+                    client_scan=ManagedScanRpc(root,authorized_readonly=True)
+                    assert client_scan.attest()["blocks"]==height
+                    scanner=Scanner(root/"q05-public-scan-fixture.sqlite",
+                                    (ScanAccount(0,1,pub(2),birthday=1),))
+                    assert scanner.accounts[0].identity()==original_account
+                    assert scanner.store.tip()==(3,observed_tip)
+                    resumed=scanner.sync(client_scan,max_blocks=5)
+                    assert resumed.blocks==5
+                    assert scanner.store.tip()==(8,client_scan.call("getblockhash",[8]))
+                    assert scanner.ready is False
+                    assert client_scan.call("getblockhash",[height])==tip
+                    assert server.poll() is None
+                    evidence["authenticated_wsp_sqlite_resume_same_tip"]=True
+                    evidence["authenticated_wsp_reopened_client_same_supervisor"]=True
                     evidence["scanner_read_only_partial_sync_only"]=True
                 finally:
                     if scanner is not None:scanner.close()
