@@ -42,6 +42,10 @@ def main() -> int:
     wallet.add_argument("--wsp-source-root",required=True,type=Path)
     wallet.add_argument("--confirm-disposable-regtest",action="store_true")
     wallet.add_argument("--confirm-public-fixture-payment",action="store_true")
+    managed = sub.add_parser("managed-gui",
+        help="Open Fusion's authenticated persistent REGTEST supervisor view; no wallet creation or external attach")
+    managed.add_argument("--root",type=Path,required=True)
+    managed.add_argument("--confirm-regtest-managed-core",action="store_true")
     linux=sub.add_parser('linux-wallet',help='Experimental Linux headless wallet; approved developer manifest and root witness required')
     linux.add_argument('--core-dir',type=Path,required=True)
     linux.add_argument('--manifest-sha256',required=True)
@@ -56,6 +60,14 @@ def main() -> int:
     linux.add_argument('--report',type=Path)
     args = ap.parse_args()
     try:
+        if args.command == "managed-gui":
+            if args.confirm_regtest_managed_core is not True:
+                raise CoreSmokeError("MANAGED_GUI_EXPLICIT_REGTEST_CONSENT_REQUIRED")
+            from .managed_gui import launch_managed_gui
+            from .supervisor_store import _root
+            root=args.root.expanduser().absolute()
+            _root(root)
+            return launch_managed_gui(root)
         if args.command=='linux-wallet':
             from .linux_headless import run
             return run(args)
