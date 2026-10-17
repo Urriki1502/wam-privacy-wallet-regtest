@@ -15,9 +15,10 @@ enabled for a Fusion wallet from this work.
 - For a disposable CI-owned Core process, create a loopback TCP socket,
   independently confirm that its server endpoint belongs to the **owned
   signed Core process** before sending any HTTP authentication bytes, then
-  make exactly four bounded read-only calls:
+  make exactly five bounded read-only calls:
   `getnetworkinfo`, `getblockchaininfo`, `getblockhash(0)`,
-  `getblockcount`.
+  `getblockcount`, `getconnectioncount`. The peer count must be observed
+  directly over the authenticated socket, not assumed.
 - Deliberately assert that existing `ManagedReadRpc` v0.1.11 response
   validation **DENIES** the v0.1.12 network profile. The separate candidate
   parser accepts only the independently measured exact triplet.
