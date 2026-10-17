@@ -78,7 +78,9 @@ jobs:
           assert p['real_bip352_receive_credited'] is True
           assert p['actual_core_consensus_broadcast_confirmed'] is True
           assert p['sqlite_restart_no_double_credit'] is True
-          assert p['received_atoms']>0 and p['zero_external_peers'] is True
+          assert p['received_atoms']==4749990000 and p['zero_external_peers'] is True
+          assert r['binary_sha256']['wamd']['sha256']=='9d13b329f451486930a3cf799b360237bcc7e858e94a964f817df520428374db'
+          assert r['binary_sha256']['wam-cli']['sha256']=='455d85aa1ce35f70c71da6947a79b549f33c4116168ff7ecdc41b067a3fbe907'
           assert r['linux_wsp_v012_component_qualified'] is True
           for key in ('macos_wsp_v012_qualified','windows_wsp_v012_qualified',
                       'fusion_walletsession_v012_qualified','operational_signer_authorized',
