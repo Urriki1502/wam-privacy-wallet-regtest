@@ -12,7 +12,7 @@ import re
 
 FILENAME = "managed-reopen.enc"
 SCHEMA = "wam-t05-managed-wallet-reopen/v1"
-CONTEXT = b"t05-managed-wallet-reopen-v1"
+CONTEXT = b"recovery"  # Existing WSP purpose allowlist; exact schema isolates content.
 
 
 class ManagedWalletReopenError(ValueError):
