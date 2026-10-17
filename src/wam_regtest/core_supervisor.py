@@ -98,7 +98,7 @@ class CoreSupervisor:
         self.genesis=REGTEST_GENESIS
         self.process=None;self.binding=None;self.read=None
         self.directory=root/"chain";self.listener=None;self.stack=ExitStack()
-        self._state="stopped";self._boot_attempts=0
+        self._state="stopped";self._consecutive_failures=0
         self._lock=threading.RLock()
         self._guard=None
         self._init()
@@ -120,10 +120,15 @@ class CoreSupervisor:
                     raise ManagedCoreError("MANAGED_CORE_VERSION_OR_CHAIN_MISMATCH")
                 self.listener=_listener(profile["control_port"])
             except ManagedCoreError as error:
-                # A missing profile is NOT permission to adopt an existing chain.
+                # A corrupt or partially written profile is NEVER treated as a
+                # fresh install. Provision only when both named files are absent.
                 if error.args!=("MANAGED_PROFILE_READ_DENIED",):raise
-                if self.directory.exists() or self.directory.is_symlink():
-                    raise ManagedCoreError("MANAGED_UNOWNED_CHAIN_DENIED") from None
+                if (self.directory.exists() or self.directory.is_symlink()
+                        or (self.root/"supervisor.profile").exists()
+                        or (self.root/"supervisor.profile").is_symlink()
+                        or (self.root/"supervisor.token").exists()
+                        or (self.root/"supervisor.token").is_symlink()):
+                    raise ManagedCoreError("MANAGED_UNOWNED_OR_PARTIAL_PROFILE_DENIED") from None
                 self.listener=_listener(0)
                 port=self.listener.getsockname()[1]
                 if port<1024:raise ManagedCoreError("MANAGED_CONTROL_PORT_DENIED")
@@ -191,9 +196,8 @@ class CoreSupervisor:
         with self._lock:
             if (type(timeout) is not int or not 10<=timeout<=240
                     or self.process is not None
-                    or self._boot_attempts>=3):
+                    or self._consecutive_failures>=3):
                 raise ManagedCoreError("MANAGED_START_NOT_ALLOWED")
-            self._boot_attempts+=1
             self._state="starting"
             try:
                 # Chain stays in a durable owner-only directory. Config is
@@ -201,18 +205,20 @@ class CoreSupervisor:
                 if local_rpc_port(self.directory) not in range(1,65536):
                     raise ManagedCoreError("MANAGED_CONFIG_DENIED")
                 env=self._child_environment()
-                log=self.directory/"core-output.log"
-                with log.open("ab") as output:
-                    self.process=subprocess.Popen(
-                        [str(self.node),f"-datadir={self.directory}","-daemon=0"],
-                        stdin=subprocess.DEVNULL,stdout=output,stderr=subprocess.STDOUT,
-                        cwd=self.node.parent if sys.platform=="win32" else self.directory,
-                        env=env,creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0) if sys.platform=="win32" else 0,
-                    )
+                # Never open an untrusted reusable log path. Core writes its
+                # own protected chain logs; application stdout is discarded.
+                self.process=subprocess.Popen(
+                    [str(self.node),f"-datadir={self.directory}","-daemon=0"],
+                    stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+                    cwd=self.node.parent if sys.platform=="win32" else self.directory,
+                    env=env,creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0) if sys.platform=="win32" else 0,
+                )
                 self.binding=OwnedCoreBinding(self.process,self.core,self.directory)
                 self.read=self._ready(time.monotonic()+timeout)
+                self._consecutive_failures=0
                 self._state="ready"
             except BaseException:
+                self._consecutive_failures+=1
                 self._state="recovery-needed"
                 if self.process is not None and self.process.poll() is None:
                     # No unverified PID termination, even when launch fails.
