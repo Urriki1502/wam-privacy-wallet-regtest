@@ -27,7 +27,13 @@ def prove(core):
     # the test, NOT the actual managed Core lifecycle.
     with tempfile.TemporaryDirectory(prefix="wam-t05-public-fixture-") as temporary:
         root=Path(temporary).resolve()/"wam-fusion-core-0123456789abcdef"
-        root.mkdir(mode=0o700)
+        # Native Windows requires explicit owner-only NTFS DACL, not mkdir's
+        # inherited permissions or chmod emulation. POSIX retains mode 0700.
+        if sys.platform=="win32":
+            from wam_regtest.custody import create_directory
+            create_directory(root)
+        else:
+            root.mkdir(mode=0o700)
         owner=CoreSupervisor(root,core,authorized=True)
         try:
             # Distinct supervisor must not acquire an existing owner lock.
