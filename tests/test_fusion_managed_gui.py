@@ -1,5 +1,8 @@
 """Fusion managed-Core widget contracts. Not Q05 real-Core/frozen evidence."""
 from pathlib import Path
+import os
+import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -86,3 +89,91 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
             self.win._managed_denied("never display secret")
             self.win.start_core.click()
             command.assert_not_called()
+
+    def test_hidden_panels_already_belong_to_window(self):
+        # A never-shown window must own every responsive panel immediately;
+        # waiting for resizeEvent leaves native widgets outside its lifetime.
+        from wam_regtest.fusion_ui import ResponsiveRow
+        for row in self.win.findChildren(ResponsiveRow):
+            for child in row._children:
+                self.assertIs(child.parentWidget(), row)
+                self.assertIs(child.window(), self.win)
+        self.assertIs(self.win.dashboard.hero.window(), self.win)
+        self.assertIs(self.win.receive_page.qr.window(), self.win)
+
+    def test_close_waits_for_worker_then_stops_window_timers(self):
+        import threading
+        import time
+        from PySide6.QtCore import QCoreApplication, QEvent
+        from shiboken6 import isValid
+        started, release = threading.Event(), threading.Event()
+        def status(*args, **kwargs):
+            started.set()
+            if not release.wait(5):
+                raise AssertionError("test worker was not released")
+            return public_status(state="ready", owned=True, chain_height=101)
+        # Supplemental lifetime fixture only. Genuine Core/IPC acceptance is
+        # separately required by issue45_t05_real_core.py --qt-e2e.
+        with patch("wam_regtest.managed_gui.control", side_effect=status):
+            self.win.request_sync()
+            worker = self.win._worker
+            try:
+                self.assertTrue(started.wait(3))
+                self.assertFalse(self.win.close())
+                self.assertTrue(worker.isRunning())
+                self.assertTrue(self.win._sync_timer.isActive())
+            finally:
+                release.set()
+                self.assertTrue(worker.wait(5000))
+            deadline = time.monotonic() + 3
+            while self.win._worker is not None and time.monotonic() < deadline:
+                self.app.processEvents()
+            self.assertIsNone(self.win._worker)
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            self.assertFalse(isValid(worker))
+        self.assertTrue(self.win.close())
+        self.assertFalse(self.win._sync_timer.isActive())
+        self.assertFalse(self.win._theme_timer.isActive())
+        self.assertFalse(self.win._appearance_connected)
+
+
+class NativeQtLifetime(unittest.TestCase):
+    def test_repeated_hidden_and_visible_gui_destruction_and_clean_process_exit(self):
+        program = r'''
+from pathlib import Path
+from PySide6.QtCore import QCoreApplication, QEvent
+from PySide6.QtWidgets import QApplication, QWidget
+from shiboken6 import delete, isValid
+from wam_regtest.desktop import qt_application, shutdown_qt
+from wam_regtest.managed_gui import ManagedCoreWindow
+app = qt_application()
+root = Path("C:/wam-fusion-core-0123456789abcdef" if __import__("sys").platform == "win32"
+            else "/tmp/wam-fusion-core-0123456789abcdef")
+for visible in (False, True) * 6:
+    window = ManagedCoreWindow(root)
+    assert qt_application() is app and QApplication.instance() is app
+    assert window.dashboard.hero.window() is window
+    assert window.receive_page.qr.window() is window
+    if visible:
+        window.show()
+        app.processEvents()
+        window.resize(900, 680)
+        app.processEvents()
+    children = window.findChildren(QWidget)
+    assert window.close()
+    assert not window._sync_timer.isActive() and not window._theme_timer.isActive()
+    delete(window)
+    assert not isValid(window) and all(not isValid(child) for child in children)
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    app.processEvents()
+assert not QApplication.topLevelWidgets()
+shutdown_qt()
+assert not isValid(app) and QApplication.instance() is None
+shutdown_qt()  # idempotent: no second native destruction
+print("QT_LIFETIME_AND_SHUTDOWN_PASS", flush=True)
+'''
+        result = subprocess.run([sys.executable, "-X", "faulthandler", "-c", program],
+                                env=os.environ.copy(), capture_output=True,
+                                text=True, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr[-5000:])
+        self.assertIn("QT_LIFETIME_AND_SHUTDOWN_PASS", result.stdout)
