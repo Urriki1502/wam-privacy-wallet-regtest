@@ -5,6 +5,9 @@ deletes its datadir, including clean close and simulated daemon crash.
 """
 import argparse
 import json
+import subprocess
+import sys
+import time
 from pathlib import Path
 import tempfile
 from wam_regtest.core_supervisor import CoreSupervisor,ManagedCoreError
@@ -66,6 +69,66 @@ def prove(core):
             evidence["daemon_crash_recovery_same_tip"]=True
             restarted.shutdown()
         finally:_closed(restarted)
+        # Independently launched owner stays alive across disposable GUI/client exits.
+        # No Core adoption: the new supervisor owns a newly started Popen itself.
+        from wam_regtest.supervisor_client import control
+        server=subprocess.Popen([
+            sys.executable,"-m","wam_regtest.supervisor_cli","serve",
+            "--root",str(root),"--core-dir",str(core),
+            "--confirm-regtest-managed-core"],
+            stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        stopped=False
+        try:
+            deadline=time.monotonic()+15
+            while time.monotonic()<deadline:
+                if server.poll() is not None:
+                    raise AssertionError("T05_SUPERVISOR_PROCESS_DIED")
+                try:
+                    state=control(root,"status",timeout=3)
+                    if state["state"]=="stopped":break
+                except Exception:time.sleep(.1)
+            else:raise AssertionError("T05_SUPERVISOR_IPC_NOT_READY")
+            state=control(root,"start",authorized=True,timeout=15)
+            assert state["core_process_owned"] is True
+            assert state["height"]==height
+            # This second, independent interpreter represents a GUI re-open.
+            client=subprocess.run([
+                sys.executable,"-m","wam_regtest.supervisor_cli",
+                "status","--root",str(root)],
+                stdin=subprocess.DEVNULL,capture_output=True,timeout=20)
+            assert client.returncode==0
+            observed=json.loads(client.stdout)
+            assert observed["core_process_owned"] is True
+            assert observed["height"]==height
+            assert _read_cli([str(restarted.cli),f"-datadir={root/'chain'}",
+                              "getblockhash",str(height)])==tip
+            evidence["independent_gui_client_reopen_same_chain"]=True
+            # A GUI crash must not terminate the independent supervisor.
+            crashed=subprocess.run([
+                sys.executable,"-c",
+                "import os,sys;from wam_regtest.supervisor_client import control;"
+                "control(__import__('pathlib').Path(sys.argv[1]));os._exit(41)",str(root)],
+                stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,timeout=20)
+            assert crashed.returncode==41
+            assert server.poll() is None
+            assert control(root,"status",timeout=15)["height"]==height
+            evidence["disconnected_gui_client_core_survived"]=True
+            state=control(root,"shutdown",authorized=True,timeout=15)
+            stopped=(state["state"]=="stopped" and state["core_process_owned"] is False)
+            assert stopped
+        finally:
+            # Never terminate an unverified live Core owner to hide a test fail.
+            if not stopped and server.poll() is None:
+                try:
+                    state=control(root,"shutdown",authorized=True,timeout=15)
+                    stopped=(state["state"]=="stopped" and state["core_process_owned"] is False)
+                except Exception:pass
+            if stopped and server.poll() is None:
+                server.terminate()
+                server.wait(timeout=15)
+            if not stopped:
+                raise AssertionError("T05_SUPERVISOR_SHUTDOWN_UNVERIFIED")
         assert (root/"supervisor.profile").is_file()
         assert (root/"supervisor.token").is_file()
         evidence["persistent_datadir_reused"]=True
