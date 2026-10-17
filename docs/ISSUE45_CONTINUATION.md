@@ -1,3 +1,38 @@
+# Current PR67 unit — bounded authenticated IPC deadlines
+
+2026-10-17T14:42:15Z continuation. Existing branch
+feature/issue45-t05-gui-continuity-q05-20261017 only; live parent
+90a7918519101330d790e1306da66a88aa809db4 all10CI SUCCESS independently saved
+in docs/evidence/issue45/PR67_90A7918_ALL_CI.json. Earlier Qt and native-image
+fixes are included by ancestry; do not repeat them.
+
+Reviewed independent Draft68/94a7649,69/d3aa1f3,70/a4a8257 read-only. They own
+original-wallet snapshot, read-only GUI and funded signed-reservation crash
+acceptance work; do not duplicate, rebase, overwrite or merge those branches.
+Their green regression jobs do not imply full cross-platform funded Q05.
+This turn only hardens PR67 control/scanner transport, no wallet/signing change.
+
+Confirmed bug: native socket inactivity timeout restarted on every reply chunk.
+A real TCP peer sending20ms whitespace delayed both control(.15s) and scan(.5s)
+for3s until fixture EOF. Both regression tests FAIL on90a7918. A single monotonic
+deadline now covers local profile/auth preparation, connect, send, all receives
+and final authenticated result. Expiry denies; no reconnect/replay or new RPC.
+Tests use a public token and an unverified local peer, never synthetic Core PASS.
+Fixed real-TCP tests PASS in .655s; full native247tests213PASS34platformSKIP,
+process exits0 including Qt shutdown. Exact committed realCore/WSP/Qt and native/
+frozen cross-platform successor CI must still run. Do not inherit90a qualification.
+
+Use repository engineering lease and refuse overlaps. Current holder is recorded
+only in outputs/pr67-resume-20261017T144215/RESUME_LOG.md, not a future lock proof.
+Official v0.1.11 and WSP pins unchanged; v0.1.12 candidate-only. No owner funds,
+anchors/miner, mainnet, upstream Core, main/RC1 edits, new PR, force-push or merge.
+Core Update Manager remains P1. Full managed-wallet Q05, frozen managed GUI and
+physical tests remain PENDING; preserve irreversible reservations and original
+wallet identity. Next: verify latest exact-head CI, fix failures, then audit the
+remaining unclaimed security/acceptance gap without duplicating68–70.
+
+# Earlier checkpoints (historical)
+
 # Latest PR67 regression fix — native image exit race
 
 41c14bd all10CI SUCCESS is verified predecessor evidence. Successor6f973d1
