@@ -24,7 +24,8 @@ from scripts.verify_v012_signed_release import (
 from wam_regtest.core import _port, _write_private_config
 from wam_regtest.core_release_preflight import ASSETS, review_offline
 from wam_regtest.v012_candidate_compat import (
-    exact_signed_linux_candidate, CANDIDATE_VERSION)
+    exact_signed_linux_candidate, CANDIDATE_VERSION,
+    CANDIDATE_LINUX_WAMD_SHA, CANDIDATE_LINUX_CLI_SHA)
 from wam_regtest.v012_wsp_linux import prove_public_receive
 from wam_regtest.wsp_live import (
     _pinned_source, public_regtest_mining_address, REGTEST_GENESIS)
@@ -162,6 +163,9 @@ def run(source: Path) -> dict:
         binary_dir=stage/"bins"
         binary_dir.mkdir(mode=0o700)
         node,cli,hashes=_member_copy(archive,binary_dir)
+        if (hashes["wamd"]["sha256"] != CANDIDATE_LINUX_WAMD_SHA
+                or hashes["wam-cli"]["sha256"] != CANDIDATE_LINUX_CLI_SHA):
+            _deny("V012_WSP_EXACT_CORE_BINARY_PIN_DENIED")
         return run_real_wsp(node,cli,hashes,proof,source,os.environ["WAM_SOURCE_HEAD"])
 
 
