@@ -1,0 +1,80 @@
+name: Issue45 real signed WAM Core v0.1.12 Linux REGTEST (COMPONENT)
+on:
+  pull_request:
+    paths:
+      - 'scripts/issue45_v012_native_linux.py'
+      - 'tests/test_v1_v012_native_linux.py'
+      - '.github/workflows/issue45-v012-linux-real-core.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  official-v012-real-linux-regtest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require native ephemeral runner and exact code HEAD
+        shell: bash
+        run: |
+          test "$RUNNER_OS" = Linux
+          test "$(uname -m)" = x86_64
+          test "$(git rev-parse HEAD)" = "$WAM_SOURCE_HEAD"
+          test "$GITHUB_ACTIONS" = true
+      - name: Run negative-only release execution safety tests
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gnupg libevent-2.1-7t64
+          python -m pip install --disable-pip-version-check -e .
+          python -m unittest discover -s tests -p 'test_v1_v012_native_linux.py' -v
+      - name: Execute signed WAM v0.1.12 in fresh disconnected REGTEST
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m scripts.issue45_v012_native_linux \
+            --confirm-isolated-disposable-ci-regtest \
+            --output v012-linux-native-regtest.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads(Path('v012-linux-native-regtest.json').read_text())
+          assert r['source_head']==os.environ['WAM_SOURCE_HEAD']
+          assert r['status']=='V012_SIGNED_LINUX_CORE_REGTEST_COMPONENT_PASS'
+          assert r['core_version']=='v0.1.12' and r['network']=='regtest'
+          assert r['real_disposable_core'] is True and r['synthetic_rpc'] is False
+          assert r['mined_block_count']==151 and r['zero_external_peers'] is True
+          assert [x['depth'] for x in r['maturity']]==[99,100,101]
+          assert [x['eligible'] for x in r['maturity']]==[False,False,True]
+          assert [x['height'] for x in r['coinbase_boundaries']]==[1,149,150,151]
+          import re
+          assert set(r['linux_binary_sha256'])=={'wamd','wam-cli'}
+          assert all(isinstance(v,dict) and
+                     re.fullmatch(r'[0-9a-f]{64}',v.get('sha256','')) and
+                     isinstance(v.get('size'),int) and v['size']>0
+                     for v in r['linux_binary_sha256'].values())
+          assert all(not r[k] for k in (
+              'macos_v012_qualified','windows_v012_qualified',
+              'wallet_fusion_v012_runtime_authorized','bip94_regtest_full_qualified',
+              'regtest_fusion_e2e_qualified','frozen_v012_qualified',
+              'physical_reviewed','mainnet_allowed','treasury_cutoff_tested_at_400001'))
+          print('V012_SIGNED_LINUX_REAL_CORE_151_BLOCKS_COMPONENT_ONLY')
+          PY
+      - name: Publish exact-HEAD component evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue45-v012-linux-core-${{ github.sha }}
+          path: v012-linux-native-regtest.json
+          if-no-files-found: error
+          retention-days: 14
