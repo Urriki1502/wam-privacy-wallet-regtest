@@ -127,7 +127,24 @@ def _verify_native(node: Path, cli: Path, hashes: dict, *, head: str) -> dict:
             deadline = time.monotonic() + 90
             while True:
                 if proc.poll() is not None:
-                    _deny("V012_NATIVE_CORE_EARLY_EXIT_DENIED")
+                    # Only publish safe error categories and exit code. Raw Core
+                    # output remains sealed in the disposable datadir.
+                    raw = (directory / "daemon-output.log").read_bytes()[:65536].lower()
+                    if b"error while loading shared libraries" in raw:
+                        _deny("V012_NATIVE_LOADER_DEPENDENCY_DENIED")
+                    if b"illegal instruction" in raw or proc.returncode == -4:
+                        _deny("V012_NATIVE_CPU_INSTRUCTION_DENIED")
+                    if b"segmentation fault" in raw or proc.returncode == -11:
+                        _deny("V012_NATIVE_PROCESS_CRASH_DENIED")
+                    if b"cannot obtain a lock" in raw or b"already running" in raw:
+                        _deny("V012_NATIVE_DATADIR_LOCK_DENIED")
+                    if b"failed to bind" in raw or b"address already in use" in raw:
+                        _deny("V012_NATIVE_BIND_DENIED")
+                    if b"error parsing" in raw or b"not allowed in the default section" in raw:
+                        _deny("V012_NATIVE_CONFIG_PARSE_DENIED")
+                    if b"cannot open" in raw or b"no such file" in raw:
+                        _deny("V012_NATIVE_RESOURCE_DENIED")
+                    _deny("V012_NATIVE_CORE_EARLY_EXIT_RC_" + str(abs(proc.returncode)))
                 try:
                     chain = rpc("getblockchaininfo")
                     break
