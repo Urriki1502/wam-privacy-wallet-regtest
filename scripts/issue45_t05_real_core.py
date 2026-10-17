@@ -322,7 +322,138 @@ os._exit(41)
         if verify_ring is not None:verify_ring.close()
         if verify_scan is not None:runtime.unlink(missing_ok=True)
     assert not runtime.exists()
+
+    # Kill a DIFFERENT interpreter inside an open genuine SQLite write
+    # transaction after restoring the original encrypted/anchored WSP state.
+    # A rollback journal/private runtime may remain. Neither our GUI nor
+    # vault is permitted to "repair" that unexplained file automatically.
+    sqlite_crash=r'''
+import os,sys
+from pathlib import Path
+from wam_regtest import custody
+from wam_regtest.vault import CheckpointVault
+root=Path(sys.argv[1])
+wsp=Path(sys.argv[2])
+wallet_id=sys.argv[3]
+password=sys.stdin.buffer.readline(1025).strip()
+if not 12<=len(password)<=1024:raise SystemExit(2)
+folder=root/"chain"/"wallet-vault"
+runtime=root/"chain"/"wallet-runtime.sqlite"
+anchor=custody.anchor(wallet_id)
+vault=CheckpointVault(folder,anchor,wsp)
+ring,scanner=vault.restore(runtime,password)
+with scanner.store.transaction():
+    scanner.store.db.execute(
+        "INSERT INTO contacts(id,name,code) VALUES(?,?,?)",
+        ("crash-test-contact","NOT_COMMITTED",ring.accounts()[-1].payment_code()))
+    print("Q05_REAL_SQLITE_TRANSACTION_OPEN_BEFORE_COMMIT",flush=True)
+    os._exit(42)
+'''
+    from hashlib import sha256 as _sha256
+    checkpoint_file=vault_dir/CheckpointVault._filename(anchored_reservation[0])
+    checkpoint_digest=_sha256(checkpoint_file.read_bytes()).hexdigest()
+    crashed_sqlite=subprocess.run(
+        [sys.executable,"-c",sqlite_crash,str(root),str(wsp),wallet_id],
+        input=password+b"\n",stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
+        timeout=90,check=False)
+    assert crashed_sqlite.returncode==42
+    assert crashed_sqlite.stdout.strip()==b"Q05_REAL_SQLITE_TRANSACTION_OPEN_BEFORE_COMMIT"
+    assert runtime.is_file()
+    sqlite_leftover=_sha256(runtime.read_bytes()).hexdigest()
+    assert anchor.read()==anchored_reservation
+    assert _sha256(checkpoint_file.read_bytes()).hexdigest()==checkpoint_digest
+    # A real native GUI must reject the unexplained plaintext runtime and
+    # clear balance, even though the sealed checkpoint is otherwise valid.
+    denied_window=ManagedCoreWindow(root,core_dir=core,wsp_source=wsp)
+    denied_window.show()
+    try:
+        denied_window._apply_managed_status(control(root,"status",timeout=10))
+        with patch("wam_regtest.managed_gui.QInputDialog.getText",
+                   return_value=(password.decode("ascii"),True)):
+            denied_window.view_wallet_button.click()
+            deadline=time.monotonic()+90
+            while denied_window._worker is not None and time.monotonic()<deadline:
+                app.processEvents()
+                time.sleep(.01)
+        assert denied_window._worker is None
+        assert denied_window._snapshot is None
+        assert not denied_window.dashboard.go_send.isEnabled()
+        assert "UNVERIFIED" in denied_window.status.text()
+        assert _sha256(runtime.read_bytes()).hexdigest()==sqlite_leftover
+    finally:
+        assert denied_window.close()
+        delete(denied_window)
+        app.processEvents()
+
+    # Inject a second native-process crash precisely AFTER atomic encrypted
+    # generation publication but BEFORE Keychain CAS. Never mutate production
+    # vault code for tests: patch only the child process's anchor write point.
+    envelope_crash=r'''
+import os,sys
+from pathlib import Path
+from wam_regtest import custody
+from wam_regtest.vault import CheckpointVault
+from wam_regtest.managed_scan_client import ManagedScanRpc
+root,wsp=map(Path,sys.argv[1:3])
+wallet_id=sys.argv[3]
+password=sys.stdin.buffer.readline(1025).strip()
+if not 12<=len(password)<=1024:raise SystemExit(2)
+anchor=custody.anchor(wallet_id)
+vault=CheckpointVault(root/"chain"/"wallet-vault",anchor,wsp)
+runtime=root/"chain"/"crash-envelope-runtime.sqlite"
+ring,scanner=vault.restore(runtime,password)
+rpc=ManagedScanRpc(root,authorized_readonly=True)
+scanner.sync(rpc)
+scanner.assert_current()
+def kill_before_anchor(previous,current):
+    assert current[0]==previous[0]+1
+    assert (root/"chain"/"wallet-vault"/CheckpointVault._filename(current[0])).is_file()
+    print("Q05_NATIVE_ENVELOPE_PUBLISHED_BEFORE_ANCHOR_CAS",flush=True)
+    os._exit(43)
+anchor._advance_unlocked=kill_before_anchor
+vault.save(ring,scanner,password)
+raise SystemExit(2)
+'''
+    pending_serial=anchored_reservation[0]+1
+    assert not (vault_dir/CheckpointVault._filename(pending_serial)).exists()
+    crash_envelope=subprocess.run(
+        [sys.executable,"-c",envelope_crash,str(root),str(wsp),wallet_id],
+        input=password+b"\n",stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
+        timeout=110,check=False)
+    assert crash_envelope.returncode==43
+    assert crash_envelope.stdout.strip()==b"Q05_NATIVE_ENVELOPE_PUBLISHED_BEFORE_ANCHOR_CAS"
+    orphan=vault_dir/CheckpointVault._filename(pending_serial)
+    assert orphan.is_file()
+    orphan_hash=_sha256(orphan.read_bytes()).hexdigest()
+    assert anchor.read()==anchored_reservation
+    assert _sha256(checkpoint_file.read_bytes()).hexdigest()==checkpoint_digest
+    from wam_regtest.vault import VaultError
+    from wam_regtest.managed_wallet_reopen import preflight_existing_checkpoint,ManagedWalletReopenError
+    try:
+        with anchor.lease():
+            vault._load_payload(password,anchored_reservation)
+    except VaultError as error:
+        assert str(error)=="VAULT_UNANCHORED_GENERATION_DENIED"
+    else:
+        raise AssertionError("Q05_ORPHAN_CHECKPOINT_INCORRECTLY_ACCEPTED")
+    try:
+        preflight_existing_checkpoint(core,directory,wsp,password,authorized=True)
+    except ManagedWalletReopenError as error:
+        assert str(error)=="MANAGED_WALLET_PREFLIGHT_DENIED"
+    else:
+        raise AssertionError("Q05_ORPHAN_CHECKPOINT_PREFLIGHT_ACCEPTED")
+    assert orphan.is_file() and _sha256(orphan.read_bytes()).hexdigest()==orphan_hash
+    assert _sha256(runtime.read_bytes()).hexdigest()==sqlite_leftover
+    assert anchor.read()==anchored_reservation
+    assert control(root,"status",timeout=10)["height"]==funded_height
+
     return {
+        "real_sqlite_crash_during_uncommitted_transaction":True,
+        "unexplained_runtime_gui_fail_closed":True,
+        "runtime_not_silently_deleted":True,
+        "real_encrypted_envelope_crash_before_native_anchor":True,
+        "unanchored_future_generation_rejected":True,
+        "anchor_and_signed_reservations_preserved":True,
         "real_encrypted_native_checkpoint":True,
         "genuine_wsp_original_account":True,
         "actual_signed_core_regtest_ipc":True,

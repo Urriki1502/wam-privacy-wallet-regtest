@@ -143,6 +143,29 @@ class CheckpointVault:
     def _filename(serial):
         return f"snapshot-{serial:09d}.enc"
 
+    def _reject_unanchored_publication(self, record):
+        """Crash residue may contain a newer checkpoint; NEVER guess its fate.
+
+        Only inspect names inside an already validated native-private vault.
+        No file is deleted, decrypted, adopted, downgraded or rewritten here.
+        Scan while holding the existing native wallet lease and vault lock.
+        """
+        try:
+            anchored=0 if record is None else record[0]
+            if type(anchored) is not int or anchored<0:
+                raise VaultError("VAULT_ANCHOR_GENERATION_DENIED")
+            for entry in self.directory.iterdir():
+                name=entry.name
+                if re.fullmatch(r"\.stage-[0-9a-f]{32}",name):
+                    raise VaultError("VAULT_INTERRUPTED_PUBLICATION_DENIED")
+                match=re.fullmatch(r"snapshot-([0-9]{9})\.enc",name)
+                if match and int(match.group(1))>anchored:
+                    raise VaultError("VAULT_UNANCHORED_GENERATION_DENIED")
+        except VaultError:
+            raise
+        except OSError:
+            raise VaultError("VAULT_PUBLICATION_SCAN_DENIED") from None
+
     def save(self, ring, scanner, password):
         from wam_sp.file_lock import exclusive_file_lock
         from wam_sp.keystore import seal
@@ -154,6 +177,7 @@ class CheckpointVault:
             previous = self.anchor.read()
             if previous != self._expected:
                 raise VaultError("VAULT_STALE_WRITER_DENIED")
+            self._reject_unanchored_publication(previous)
             if previous is not None:
                 self._load_payload(password, previous)
             serial = 1 if previous is None else previous[0] + 1
@@ -176,6 +200,7 @@ class CheckpointVault:
     def _load_payload(self, password, record):
         from wam_sp.keystore import unseal
         from wam_sp.watcher import GENESIS
+        self._reject_unanchored_publication(record)
         ciphertext = self._storage.read(self.directory, self._filename(record[0]))
         if sha256(ciphertext).hexdigest() != record[1]:
             raise VaultError("VAULT_ROLLBACK_OR_TAMPER_DENIED")
@@ -215,6 +240,11 @@ class CheckpointVault:
                 record = self.anchor.read()
                 if record is None:
                     raise VaultError("VAULT_ANCHOR_MISSING_DENIED")
+                # Explicit lock/unlock can reattach to a legitimately newer
+                # *native-anchored* checkpoint written by another authorized
+                # owner. Authentication and signed reservations remain bound
+                # to the new record; an unanchored future generation is
+                # independently refused by _load_payload.
                 payload = self._load_payload(password, record)
                 ring = Keyring.restore(base64.b64decode(payload["keys"], validate=True), password)
                 runtime_created = True
@@ -244,6 +274,7 @@ class CheckpointVault:
             record = self.anchor.read()
             if record is None:
                 raise VaultError("VAULT_ANCHOR_MISSING_DENIED")
+            self._reject_unanchored_publication(record)
             ciphertext = self._storage.read(self.directory, self._filename(record[0]))
             if sha256(ciphertext).hexdigest() != record[1]:
                 raise VaultError("VAULT_ROLLBACK_OR_TAMPER_DENIED")

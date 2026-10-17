@@ -176,10 +176,19 @@ def probe_security(cli, datadir, source, mining_address):
         assert read(orphan_dir,orphan_vault._filename(stable[0]+1))
         try:
             orphan_vault.save(ring,scanner,password)
-        except EncryptedStorageError:
-            pass
+        except VaultError as error:
+            assert str(error)=="VAULT_UNANCHORED_GENERATION_DENIED"
         else:
             raise SecurityProbeError("SECURITY_ORPHAN_OVERWRITTEN")
+        # Earlier test expected the create-once storage layer to refuse an
+        # existing name. New stricter vault detects the orphan BEFORE trying
+        # decryption/publish or touching the native Keychain anchor.
+        try:
+            orphan_vault._load_payload(password,stable)
+        except VaultError as error:
+            assert str(error)=="VAULT_UNANCHORED_GENERATION_DENIED"
+        else:
+            raise SecurityProbeError("SECURITY_ORPHAN_PREVIOUS_ACCEPTED")
         assert orphan_anchor.read()==stable
         stage = "PASSWORD"
         # Wrong passphrase cannot restore even a correctly anchored envelope.
