@@ -17,13 +17,25 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
     def setUp(self):
         self.win = ManagedCoreWindow(Path("/tmp/wam-fusion-core-0123456789abcdef")
             if __import__("sys").platform!="win32" else Path("C:/wam-fusion-core-0123456789abcdef"))
-        self.addCleanup(self.win.close)
+        # Deterministically dispose native Qt windows before the interpreter
+        # tears down QApplication. Merely closing leaves a QMainWindow object
+        # and its native signal connections alive until Python GC at exit.
+        self.addCleanup(self._dispose_window)
         # Constructing a GUI cannot start, stop or connect to an unverified Core.
         self.assertEqual(self.win._managed_state, "error")
         self.assertIsNone(self.win.session)
         self.assertIsNone(self.win._snapshot)
         self.assertFalse(self.win.start_core.isEnabled())
         self.assertFalse(self.win.stop_core.isEnabled())
+
+    def _dispose_window(self):
+        from PySide6.QtCore import QCoreApplication,QEvent
+        if self.win is not None:
+            self.assertTrue(self.win.close())
+            self.win.deleteLater()
+            QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+            self.app.processEvents()
+            self.win = None
 
     def test_all_allowed_supervisor_states_are_rendered_without_wallet_adoption(self):
         for state in VISIBLE_STATES:
