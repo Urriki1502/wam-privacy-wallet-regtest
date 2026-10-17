@@ -129,13 +129,25 @@ def prove_real_windows_vault(cli,datadir,port,env,source,mining_address):
         denied(lambda:vault.restore(datadir/'rollback.sqlite',password))
         latest.write_bytes(original)
         stage='ORPHAN_SNAPSHOT'
-        payload=vault._load_payload(password,second);payload['generation']=second[0]+1
+        # Authenticate the currently anchored ciphertext BEFORE inducing an
+        # orphan. Once the orphan exists, any subsequent old-checkpoint read
+        # must be denied; the original decrypted fixture is kept only in this
+        # disposable E2E interpreter.
+        original_payload=vault._load_payload(password,second)
+        payload=dict(original_payload);payload['generation']=second[0]+1
         orphan=seal(json.dumps(payload,sort_keys=True).encode(),password,b'recovery')
         storage.publish(vault.directory,vault._filename(second[0]+1),orphan)
-        from .windows_private_storage import WindowsCustodyError
+        from .vault import VaultError
         try:vault.save(ring,scanner,password)
-        except WindowsCustodyError:pass
+        except VaultError as error:
+            assert str(error)=='VAULT_UNANCHORED_GENERATION_DENIED'
         else:raise WindowsVaultProbeError('WIN_VAULT_ORPHAN_REPLACED')
+        # Before this fix the older anchored generation was still readable in
+        # the presence of a newer unanchored encrypted snapshot. Fail closed.
+        try:vault._load_payload(password,second)
+        except VaultError as error:
+            assert str(error)=='VAULT_UNANCHORED_GENERATION_DENIED'
+        else:raise WindowsVaultProbeError('WIN_VAULT_ORPHAN_WAS_ADOPTED')
         assert current_anchor.read()==second
         stage='ANCHOR_LOSS_REPLACEMENT_AND_RESTORE_CLEANUP'
         bad_anchor=anchor();bad_dir=directory('bad-checkpoint')
@@ -159,7 +171,7 @@ def prove_real_windows_vault(cli,datadir,port,env,source,mining_address):
         denied(lambda:malformed.restore(failed,password))
         stage='NATIVE_PLATFORM_BINDING'
         foreign_anchor=anchor();foreign_dir=directory('foreign-profile')
-        foreign=vault._load_payload(password,second)
+        foreign=dict(original_payload)
         foreign.pop('custody_platform');foreign['version']=1;foreign['generation']=1;foreign['wallet_id']=foreign_anchor.wallet_id
         envelope=seal(json.dumps(foreign).encode(),password,b'recovery')
         storage.publish(foreign_dir,vault._filename(1),envelope)
