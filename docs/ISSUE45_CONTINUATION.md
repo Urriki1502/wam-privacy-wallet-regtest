@@ -1,4 +1,30 @@
-# Resume checkpoint — PR67 qualified components, full Q05 pending
+# Resume checkpoint — frozen managed process acceptance, PR67 only
+
+2026-10-17T22:00:14Z scheduled continuation, exclusive engineering lease held.
+Refreshed f3ebe6ac3dd95c735c1f3a507bc02c03d3566d9a: ALL10 exact-head CI
+SUCCESS. Issue45 unchanged; independent68–71 unchanged/read-only. No duplicated
+original-wallet view or funded crash work. Same67 branch, no new PR or merge.
+
+Next unit closes a narrower evidence gap: previous T05 probes still spawned
+host Python even from Linux frozen acceptance. Final platform bootloader now
+has three explicit disposable CI roles (supervisor, public WSP scan, GUI), with
+bundled/pinned resources only. The source harness launches those actual frozen
+children: two independent scans resume the same SQLite0→3→8, and three real Qt
+processes clean-close/kill-after-authenticated-ready/reopen against the same
+owned Core/tip. The test-only supervisor exits0 after verified owned-Core stop.
+Windows readiness uses a NEW separate native-private/create-only/bounded report
+fixture, never stdout emulation or a source fallback. No wallet/anchor/signing
+authority added; no source or native Core/custody gates removed. Linux still
+requires its independently approved developer manifest and real root witness.
+
+Local native unit suite:256 tests,222 PASS/34 platform SKIP, exit0. Actual final
+Mac build/bootloader, exact-head CI, Windows/Linux frozen execution and artifact
+inspection are PENDING until their real results exist. Native-source test
+orchestrator identity and final executable hash are recorded separately.
+Full managed-wallet Q05 remains false; physical acceptance remains pending.
+Separate resume log: outputs/pr67-resume-20261017T220014/RESUME_LOG.md.
+
+# Prior qualified checkpoint — PR67 components, full Q05 pending
 
 Tested code060183affb7a75c0af2f8b1d786b4d55c960e3e0: ALL10 exact-head CI
 SUCCESS, including Mac/Windows/Linux native/frozen, canonical vectors and fresh

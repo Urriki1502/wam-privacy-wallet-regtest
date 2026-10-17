@@ -75,6 +75,7 @@ try:
         module=importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         proof=module.prove(args.core_dir.absolute(),qt=True,
+            frozen_executable=args.executable.absolute() if args.executable else None,
             linux_manifest='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
             linux_witness=NativeRootWitness.root/'anchor.sock')
         required=('clean_restart_same_tip','daemon_crash_recovery_same_tip',
@@ -90,6 +91,13 @@ try:
         record['t05_real_managed_qt']={name:proof[name] for name in required}
         record['t05_real_managed_qt']['test_source_provenance']=proof['test_source_provenance']
         record['t05_real_managed_qt']['full_wallet_q05_pending']=True
+        if args.executable:
+            assert all(proof.get(name) is True for name in (
+                'frozen_supervisor_scan_gui_processes','frozen_gui_clean_kill_reopen_same_tip',
+                'frozen_supervisor_verified_shutdown_exit_zero'))
+            with Path('linux-frozen-managed-core-evidence.json').open('x') as stream:
+                json.dump(proof,stream,sort_keys=True,indent=2);stream.write('\n')
+            record['t05_real_managed_qt']['frozen_process_roles']=True
         print('LINUX_T05_REAL_CORE_NATIVE_QT_GUI_REOPEN_PASS_NOT_WALLET_Q05')
     report.write_text(json.dumps(record,indent=2)+'\n')
     print('LINUX_REAL_CORE_ROOT_WITNESS_'+('NATIVE_QT' if args.qt else 'NO_QT_HEADLESS')+'_WALLET_PASS')

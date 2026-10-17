@@ -62,6 +62,15 @@ def main():
     if sys.stderr is None:sys.stderr=io.StringIO()
     ci=sys.argv[1:]==['--ci-real-core-wallet']
     try:
+        from wam_regtest.frozen_managed_probe import FLAG, arguments, run as managed_probe
+        if sys.argv[1:2] == [FLAG]:
+            args=arguments(sys.argv[2:])
+            core,source=_resources()
+            if args.role!='supervisor':
+                return managed_probe(sys.argv[2:],core,source)
+            with tempfile.TemporaryDirectory(prefix='wam-win-frozen-supervisor-') as t:
+                stage=Path(t).absolute()/'core';_stage_original_core(core,stage)
+                return managed_probe(sys.argv[2:],stage,source)
         if sys.argv[1:] and not ci:raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
         core,source=_resources()
         from wam_regtest.core import smoke_real_core

@@ -10,7 +10,7 @@ import sys
 import time
 
 
-def probe(root, height, *, wait_for_crash=False):
+def probe(root, height, *, wait_for_crash=False, report=None):
     from .supervisor_store import _root
     _root(root)
     if (type(height) is not int or not 0 <= height <= 1_000_000
@@ -20,6 +20,8 @@ def probe(root, height, *, wait_for_crash=False):
     from .managed_gui import ManagedCoreWindow
     from PySide6.QtCore import QTimer
     from shiboken6 import delete, isValid
+    if report is None:
+        report = lambda value: print(json.dumps(value), flush=True)
     app = qt_application()
     window = ManagedCoreWindow(root)
     window.show()
@@ -38,8 +40,8 @@ def probe(root, height, *, wait_for_crash=False):
         if wait_for_crash:
             # Bounded real event loop. The harness must observe this readiness
             # before abruptly killing ONLY this owned GUI child, never Core.
-            print(json.dumps({"height": height, "wallet_adopted": False,
-                              "authenticated_gui_ready": True}), flush=True)
+            report({"height": height, "wallet_adopted": False,
+                    "authenticated_gui_ready": True})
             QTimer.singleShot(30_000, app.quit)
             app.exec()
             raise ValueError("T05_GUI_PROBE_CRASH_NOT_INJECTED")
@@ -56,9 +58,9 @@ def probe(root, height, *, wait_for_crash=False):
         assert not isValid(window)
         app.processEvents()
         shutdown_qt()
-    print(json.dumps({"height": height, "wallet_adopted": False,
-                      "authenticated_gui_ready": True,
-                      "native_shutdown_completed": True}), flush=True)
+    report({"height": height, "wallet_adopted": False,
+            "authenticated_gui_ready": True,
+            "native_shutdown_completed": True})
 
 
 def main():

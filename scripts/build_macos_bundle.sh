@@ -133,6 +133,9 @@ assert head==checkout or head in parents, 'MACOS_FROZEN_SOURCE_CHECKOUT_IDENTITY
 evidence.update(source_head_sha=head,checkout_sha=checkout)
 Path('package-output/macos-packaged-wallet-evidence.json').write_text(json.dumps(evidence,sort_keys=True,indent=2)+'\n')
 print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_PASS", flush=True)
+subprocess.run([sys.executable,'scripts/frozen_managed_acceptance.py',
+    '--core-dir',str(Path('core').absolute()),'--executable',str(Path(binary).absolute()),
+    '--output','package-output/frozen-managed-core-evidence.json'],check=True,timeout=600)
 PY
 test -s real-regtest-gui-preview.png
 test -s real-regtest-wallet-preview.png

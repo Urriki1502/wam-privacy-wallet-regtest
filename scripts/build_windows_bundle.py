@@ -67,6 +67,14 @@ def main():
     assert result.returncode==0,'WIN_FROZEN_REAL_WALLET_DENIED'
     evidence=json.loads(Path('windows-packaged-wallet-evidence.json').read_text())
     assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
+    from wam_regtest.windows_package_entry import _stage_original_core
+    with tempfile.TemporaryDirectory(prefix='wam-win-frozen-test-operator-') as t:
+        private_core=Path(t).absolute()/'core'
+        _stage_original_core(next(bundle.rglob('wamd.exe')).parent,private_core)
+        subprocess.run([sys.executable,'scripts/frozen_managed_acceptance.py',
+            '--core-dir',str(private_core),'--executable',str(executable),
+            '--output',str(output/'frozen-managed-core-evidence.json')],
+            env=environment,stdin=subprocess.DEVNULL,check=True,timeout=600)
     # Actual native qwindows + genuine Core again at Windows125%/150%.
     # Distinct cwd keeps create-only evidence and screenshots independent.
     scales={}

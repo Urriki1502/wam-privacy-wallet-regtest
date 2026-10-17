@@ -15,6 +15,79 @@ from wam_regtest.core_supervisor import CoreSupervisor,ManagedCoreError
 from wam_regtest.core import _read_cli
 
 
+class _FrozenChildren:
+    """Host test operator, actual FINAL bootloader for every named child role."""
+    def __init__(self, executable, root, linux_manifest, linux_witness):
+        from hashlib import sha256
+        if (type(executable) is not type(Path()) or not executable.is_absolute()
+                or executable.is_symlink() or not executable.is_file()):
+            raise ValueError('T05_FROZEN_EXECUTABLE_DENIED')
+        self.executable=executable
+        self.digest=sha256(executable.read_bytes()).hexdigest()
+        self.root=root
+        self.policy=[]
+        if sys.platform=='linux':
+            self.policy=['--linux-developer-manifest',linux_manifest,
+                         '--linux-root-witness',str(linux_witness)]
+
+    def command(self, role, *arguments):
+        return [str(self.executable),'--ci-managed-process',role,
+            '--root',str(self.root),'--confirm-disposable-regtest-probe',
+            *self.policy,*arguments]
+
+    def report_command(self, role, *arguments):
+        import secrets
+        from wam_regtest.custody import create_directory
+        # A NEW separate directory per process, no stale readiness reuse and
+        # no new names/permissions in the real supervisor control namespace.
+        report=self.root.parent/('wam-fusion-core-'+secrets.token_hex(8))
+        create_directory(report)
+        return self.command(role,'--report-root',str(report),*arguments),report
+
+    @staticmethod
+    def read(report):
+        from wam_regtest.supervisor_store import read_exact
+        return json.loads(read_exact(report,'supervisor.profile'))
+
+    def run(self, role, *arguments):
+        command,report=self.report_command(role,*arguments)
+        reply=subprocess.run(command,stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=100)
+        if reply.returncode!=0:
+            raise AssertionError('T05_FROZEN_CHILD_EXIT_DENIED')
+        return self.read(report)
+
+    def gui_crash(self, height, expected):
+        command,report=self.report_command('gui','--expected-height',str(height),
+                                           '--wait-for-crash')
+        child=subprocess.Popen(command,stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        try:
+            deadline=time.monotonic()+35
+            while time.monotonic()<deadline:
+                if child.poll() is not None:
+                    raise AssertionError('T05_FROZEN_GUI_EARLY_EXIT')
+                # Publication is create-only/fsynced, but a reader can race
+                # the initial write. Never accept or kill on a partial record.
+                try:ready=self.read(report)
+                except (ValueError,OSError):
+                    time.sleep(.05);continue
+                assert ready==expected
+                break
+            else:raise AssertionError('T05_FROZEN_GUI_READY_TIMEOUT')
+            assert child.poll() is None
+            child.kill()
+            assert child.wait(timeout=15)!=0
+        finally:
+            if child.poll() is None:
+                child.kill();child.wait(timeout=15)
+
+    def verify(self):
+        from hashlib import sha256
+        assert not self.executable.is_symlink()
+        assert sha256(self.executable.read_bytes()).hexdigest()==self.digest
+
+
 def _closed(owner):
     owner.close_listener()
     owner.stack.close()
@@ -75,7 +148,7 @@ def _qt_reopen_probe(root, expected_height, core, wsp_source):
             app.processEvents()
 
 
-def _qt_process_probe(root, expected_height):
+def _qt_process_probe(root, expected_height, frozen=None):
     """Three real GUI interpreters: clean close, abrupt crash, verified reopen."""
     import queue
     import threading
@@ -85,12 +158,20 @@ def _qt_process_probe(root, expected_height):
     expected = {"height": expected_height, "wallet_adopted": False,
                 "authenticated_gui_ready": True}
     def clean():
+        if frozen is not None:
+            assert frozen.run('gui','--expected-height',str(expected_height)) == {
+                **expected, 'native_shutdown_completed':True}
+            return
         result = subprocess.run(command, stdin=subprocess.DEVNULL,
             capture_output=True, timeout=40)
         if result.returncode != 0:
             raise AssertionError("T05_GUI_CLEAN_PROCESS_EXIT_DENIED")
         assert json.loads(result.stdout) == {**expected, "native_shutdown_completed": True}
     clean()
+    if frozen is not None:
+        frozen.gui_crash(expected_height,expected)
+        clean()
+        return
     child = subprocess.Popen(command + ["--wait-for-crash"],
         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     line = queue.Queue(maxsize=1)
@@ -115,7 +196,8 @@ def _qt_process_probe(root, expected_height):
     clean()
 
 
-def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
+def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
+          frozen_executable=None):
     # Native acceptance source identity only, never a runtime wallet authority.
     from wam_regtest.build_provenance import capture, verify, public_receipt
     source_root = Path(__file__).resolve().parents[1]
@@ -143,6 +225,10 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
             create_directory(root)
         else:
             root.mkdir(mode=0o700)
+        frozen=(_FrozenChildren(frozen_executable,root,linux_manifest,linux_witness)
+                if frozen_executable is not None else None)
+        if frozen is not None and not qt:
+            raise ValueError('T05_FROZEN_DESKTOP_PROBE_REQUIRED')
         owner=CoreSupervisor(root,core,authorized=True)
         evidence["wamd_sha256"] = owner.receipt["wamd_sha256"]
         evidence["wam_cli_sha256"] = owner.receipt["wam_cli_sha256"]
@@ -195,6 +281,7 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
         if sys.platform=="linux":
             command.extend(["--linux-developer-manifest",linux_manifest,
                             "--linux-root-witness",str(linux_witness)])
+        if frozen is not None:command=frozen.command('supervisor')
         server=subprocess.Popen(command,
             stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         stopped=False
@@ -228,11 +315,15 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
                 def scan_child(before,count):
                     args=command+["--expected-before",str(before),
                                   "--max-blocks",str(count)]
-                    reply=subprocess.run(args,stdin=subprocess.DEVNULL,
-                        capture_output=True,timeout=100,check=False)
-                    if reply.returncode!=0:
-                        raise AssertionError("Q05_REAL_WSP_INDEPENDENT_PROCESS_DENIED")
-                    evidence=json.loads(reply.stdout)
+                    if frozen is not None:
+                        evidence=frozen.run('scan','--expected-before',str(before),
+                                            '--max-blocks',str(count))
+                    else:
+                        reply=subprocess.run(args,stdin=subprocess.DEVNULL,
+                            capture_output=True,timeout=100,check=False)
+                        if reply.returncode!=0:
+                            raise AssertionError("Q05_REAL_WSP_INDEPENDENT_PROCESS_DENIED")
+                        evidence=json.loads(reply.stdout)
                     assert evidence["status"]=="Q05_INDEPENDENT_REAL_WSP_SCAN_PASS"
                     assert evidence["before"]==before
                     assert evidence["processed"]==count
@@ -291,7 +382,7 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
                 assert control(root,"status",timeout=15)["height"]==height
                 evidence["real_qt_gui_close_reopen_same_core"]=True
                 evidence["real_qt_modal_cancel_no_concurrent_worker"]=True
-                _qt_process_probe(root,height)
+                _qt_process_probe(root,height,frozen)
                 assert server.poll() is None
                 assert control(root,"status",timeout=15)["height"]==height
                 assert _read_cli([str(restarted.cli),f"-datadir={root/'chain'}",
@@ -302,6 +393,16 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
             state=control(root,"shutdown",authorized=True,timeout=15)
             stopped=(state["state"]=="stopped" and state["core_process_owned"] is False)
             assert stopped
+            if frozen is not None:
+                assert server.wait(timeout=20)==0
+                frozen.verify()
+                evidence['frozen_supervisor_scan_gui_processes']=True
+                evidence['frozen_gui_clean_kill_reopen_same_tip']=True
+                evidence['frozen_supervisor_verified_shutdown_exit_zero']=True
+                evidence['frozen_executable_sha256']=frozen.digest
+                evidence['frozen_public_scan_processes']=2
+                evidence['frozen_gui_processes']=3
+                evidence['acceptance_orchestrator']='native-source-test-harness'
         finally:
             # Never terminate an unverified live Core owner to hide a test fail.
             if not stopped and server.poll() is None:
@@ -331,10 +432,12 @@ def main():
     p.add_argument("--qt-e2e",action="store_true")
     p.add_argument("--linux-developer-manifest")
     p.add_argument("--linux-root-witness",type=Path)
+    p.add_argument("--frozen-executable",type=Path)
     args=p.parse_args()
     result=prove(args.core_dir.resolve(strict=True),qt=args.qt_e2e,
                  linux_manifest=args.linux_developer_manifest,
-                 linux_witness=args.linux_root_witness)
+                 linux_witness=args.linux_root_witness,
+                 frozen_executable=args.frozen_executable)
     with args.output.open("x") as f:json.dump(result,f,sort_keys=True,indent=2);f.write("\n")
     print("T05_REAL_CORE_PERSISTENT_DATADIR_CLEAN_AND_CRASH_RESTART_PASS")
 

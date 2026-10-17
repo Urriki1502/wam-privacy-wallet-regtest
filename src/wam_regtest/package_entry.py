@@ -61,6 +61,9 @@ def _check_bundle() -> tuple[Path, Path]:
 def main() -> int:
     try:
         core_dir, source = _check_bundle()
+        from wam_regtest.frozen_managed_probe import FLAG, run as managed_probe
+        if sys.argv[1:2] == [FLAG]:
+            return managed_probe(sys.argv[2:], core_dir, source)
         from wam_regtest.core import smoke_real_core
         # Hidden CI mode: actual signed Core + genuine BIP352 + Qt screen.
         cocoa_mode = sys.argv[1:] == ["--ci-real-core-wallet-cocoa"]
