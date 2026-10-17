@@ -74,22 +74,49 @@ class _ManagedWalletSnapshotWorker(QThread):
     ready = Signal(object)
     denied = Signal(str)
 
-    def __init__(self, root, core_dir, wsp_source, password):
+    def __init__(self, root, core_dir, wsp_source, password, *,
+                 persist_checkpoint=False):
         super().__init__()
         self.root,self.core_dir,self.wsp_source=root,core_dir,wsp_source
         self.password=password
+        self.persist_checkpoint=persist_checkpoint
 
     def run(self):
         try:
             from .managed_wallet_snapshot import read_managed_wallet_snapshot
             result=read_managed_wallet_snapshot(
                 self.root,self.core_dir,self.wsp_source,self.password,
-                authorized_readonly=True,authorized_persist_checkpoint=False)
+                authorized_readonly=True,
+                authorized_persist_checkpoint=self.persist_checkpoint)
             self.ready.emit(result)
         except Exception:
             self.denied.emit("MANAGED_WALLET_SNAPSHOT_UNVERIFIED")
         finally:
             # Python cannot guarantee zeroization of immutable bytes.
+            self.password=None
+
+
+
+class _ManagedWalletCreateWorker(QThread):
+    """Create exactly one OS-anchored WSP wallet after user opt-in."""
+    ready = Signal(object)
+    denied = Signal(str)
+
+    def __init__(self,root,core_dir,wsp_source,password):
+        super().__init__()
+        self.root,self.core_dir,self.wsp_source=root,core_dir,wsp_source
+        self.password=password
+
+    def run(self):
+        try:
+            from .managed_wallet_create import create_managed_wallet
+            value=create_managed_wallet(
+                self.root,self.core_dir,self.wsp_source,self.password,
+                authorized=True)
+            self.ready.emit(value)
+        except Exception:
+            self.denied.emit("MANAGED_WALLET_CREATE_UNVERIFIED")
+        finally:
             self.password=None
 
 
@@ -133,7 +160,15 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.verify_wallet_button.clicked.connect(self._verify_wallet)
         self.view_wallet_button=action("View verified wallet · read only", "sync")
         toolbar.addWidget(self.view_wallet_button)
-        self.view_wallet_button.clicked.connect(self._view_wallet)
+        self.view_wallet_button.clicked.connect(
+            lambda: self._view_wallet(persist_checkpoint=False))
+        self.sync_wallet_button=action("Sync + save encrypted checkpoint", "sync")
+        toolbar.addWidget(self.sync_wallet_button)
+        self.sync_wallet_button.clicked.connect(
+            lambda: self._view_wallet(persist_checkpoint=True))
+        self.create_wallet_button=action("Create REGTEST WSP wallet", "security")
+        toolbar.addWidget(self.create_wallet_button)
+        self.create_wallet_button.clicked.connect(self._create_wallet)
         self.start_core.clicked.connect(lambda: self._execute("start"))
         self.stop_core.clicked.connect(self._confirm_stop)
         # A short timer makes transitions visible without polling from Qt's
@@ -160,6 +195,9 @@ class ManagedCoreWindow(RegtestWalletWindow):
                   and self._wallet_wsp_source is not None)
         self.verify_wallet_button.setEnabled(can_read)
         self.view_wallet_button.setEnabled(can_read)
+        self.sync_wallet_button.setEnabled(can_read)
+        self.create_wallet_button.setEnabled(
+            can_read and not (self._managed_root/"chain"/"wallet-vault").exists())
 
     def _execute(self, operation: str):
         if self._worker is not None:
@@ -215,14 +253,81 @@ class ManagedCoreWindow(RegtestWalletWindow):
         worker.start()
 
 
-    def _view_wallet(self):
+
+    def _create_wallet(self):
         if (self._worker is not None or not self._managed_authenticated
                 or self._managed_state!="ready" or self._managed_height is None
-                or self._wallet_core_dir is None or self._wallet_wsp_source is None):
+                or self._wallet_core_dir is None or self._wallet_wsp_source is None
+                or (self._managed_root/"chain"/"wallet-vault").exists()):
+            return
+        answer=QMessageBox.question(
+            self,"Create original REGTEST WSP wallet",
+            "Create one new encrypted WSP wallet attached to this Fusion-owned "
+            "REGTEST Core? Existing wallets will never be replaced. "
+            "This action does not enable signing or mainnet.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if answer!=QMessageBox.StandardButton.Yes:
+            return
+        first,ok=QInputDialog.getText(
+            self,"New REGTEST WSP wallet",
+            "New encryption passphrase (12–1024 UTF-8 bytes)",
+            QLineEdit.EchoMode.Password)
+        if not ok:return
+        second,ok=QInputDialog.getText(
+            self,"Confirm new REGTEST wallet",
+            "Re-enter the exact encryption passphrase",
+            QLineEdit.EchoMode.Password)
+        if not ok:return
+        secret=first.encode("utf-8")
+        matching=(first==second)
+        first=second=None
+        if not matching or not 12<=len(secret)<=1024:
+            self._wallet_snapshot_denied("MANAGED_WALLET_CREATE_PASSWORD_MISMATCH")
+            return
+        self._wallet_read_authorized=False
+        self._wallet_checkpoint_verified=False
+        self._clear_balance()
+        worker=_ManagedWalletCreateWorker(
+            self._managed_root,self._wallet_core_dir,self._wallet_wsp_source,secret)
+        secret=None
+        self._worker=worker
+        worker.ready.connect(self._apply_wallet_created)
+        worker.denied.connect(self._wallet_snapshot_denied)
+        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(worker.deleteLater)
+        self.status.setText("Creating native-encrypted REGTEST WSP wallet…")
+        self._update_controls()
+        worker.start()
+
+    def _apply_wallet_created(self,proof):
+        expected={"status":"MANAGED_REGTEST_WSP_WALLET_CREATED_LOCKED",
+                  "network":"regtest","wallet_locked":True,
+                  "signer_allowed":False,"broadcast_allowed":False,
+                  "mainnet_allowed":False}
+        if (type(proof) is not dict or proof!=expected
+                or not self._managed_authenticated or self._managed_state!="ready"):
+            self._wallet_snapshot_denied("MANAGED_WALLET_CREATION_NOT_VERIFIED")
+            return
+        self._wallet_read_authorized=False
+        self._wallet_checkpoint_verified=False
+        self._clear_balance()
+        self.status.setText(
+            "REGTEST · ORIGINAL WSP WALLET CREATED AND ENCRYPTED · "
+            "use Sync and save to display your verified receive address · no signing")
+        self._update_controls()
+
+    def _view_wallet(self, *, persist_checkpoint=False):
+        if (self._worker is not None or not self._managed_authenticated
+                or self._managed_state!="ready" or self._managed_height is None
+                or self._wallet_core_dir is None or self._wallet_wsp_source is None
+                or type(persist_checkpoint) is not bool):
             return
         password,approved=QInputDialog.getText(
-            self,"View original REGTEST wallet",
-            "Passphrase · verify encrypted WSP wallet and live Core (read-only)",
+            self,"Sync original REGTEST wallet",
+            ("Passphrase · live WSP scan and SAVE encrypted checkpoint"
+             if persist_checkpoint else
+             "Passphrase · view live REGTEST wallet without checkpoint write"),
             QLineEdit.EchoMode.Password)
         if not approved:
             return
@@ -235,14 +340,18 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._wallet_read_authorized=True
         self._clear_balance()
         worker=_ManagedWalletSnapshotWorker(
-            self._managed_root,self._wallet_core_dir,self._wallet_wsp_source,secret)
+            self._managed_root,self._wallet_core_dir,self._wallet_wsp_source,
+            secret,persist_checkpoint=persist_checkpoint)
         secret=None
         self._worker=worker
         worker.ready.connect(self._apply_wallet_snapshot)
         worker.denied.connect(self._wallet_snapshot_denied)
         worker.finished.connect(self._worker_finished)
         worker.finished.connect(worker.deleteLater)
-        self.status.setText("REGTEST · verifying original WSP account and live chain…")
+        self.status.setText(
+            "REGTEST · syncing WSP and sealing native checkpoint…"
+            if persist_checkpoint else
+            "REGTEST · reading original WSP wallet against live Core…")
         self._update_controls()
         worker.start()
 
