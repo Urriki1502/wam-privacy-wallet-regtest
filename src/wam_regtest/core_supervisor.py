@@ -1,8 +1,8 @@
 """T05 owned-Core supervisor process (REGTEST only).
 
 Independent of GUI lifetime. Only this process owns subprocess.Popen; another
-process must never adopt a PID, datadir lock or foreign Core. IPC exports
-control/status ONLY, never credentials, RPC, signing or mining.
+process must never adopt a PID, datadir lock or foreign Core. IPC exposes authenticated control/status and a separate strict WSP read-only
+block subset. No generic RPC, credentials, wallet keys, signing or mining.
 """
 from __future__ import annotations
 from contextlib import ExitStack
@@ -148,6 +148,8 @@ class CoreSupervisor:
                 profile=_profile_read(self.root)
             self.profile=profile
             self._guard=ReplayGuard(token)
+            self._scan_secret=token
+            self._scan_seen=set()
             # No token, password, datadir path or RPC port in public evidence.
         except BaseException:
             self.close_listener();self.stack.close();raise
@@ -310,8 +312,18 @@ class CoreSupervisor:
         return {**status,"nonce":message["nonce"],
                 "proof":self._guard.sign_status(message["nonce"],status)}
 
+    def _scan_handle(self,raw):
+        """Only pinned WSP read methods through the owned process's RPC."""
+        from .managed_scan_protocol import decode_request,encode_reply
+        method,params,nonce=decode_request(raw,self._scan_secret,self._scan_seen)
+        # A non-owned or busy Core never provides chain data to a GUI.
+        if self.status()["state"]!="ready" or self.read is None:
+            raise ManagedCoreError("MANAGED_SCAN_CORE_NOT_READY")
+        result=self.read.call(method,params)
+        return encode_reply(self._scan_secret,method,nonce,result)
+
     def _serve_client(self,conn):
-        """Bound each control frame; a failed GUI must not terminate its Core owner."""
+        """Bound control/scan frames; failed GUI never terminates Core owner."""
         deadline=time.monotonic()+3.0
         try:
             payload=bytearray()
@@ -324,7 +336,21 @@ class CoreSupervisor:
                 if not block:break
                 payload.extend(block)
                 if b"\n" in block:break
-            reply=self.handle(bytes(payload))
+            raw=bytes(payload)
+            # Dispatch ONLY on a fully parsed, unique protocol field. Neither
+            # request body nor arbitrary RPC method is used for routing.
+            from .supervisor_protocol import _distinct
+            from .managed_scan_protocol import SCAN_PROTOCOL
+            try:
+                frame=json.loads(raw.decode("ascii"),object_pairs_hook=_distinct)
+            except (ValueError,UnicodeError):
+                frame=None
+            if type(frame) is dict and frame.get("protocol")==SCAN_PROTOCOL:
+                scan_reply=self._scan_handle(raw)
+                conn.settimeout(15.0)
+                conn.sendall(scan_reply)
+                return
+            reply=self.handle(raw)
         except (SupervisorProtocolError,ManagedCoreError,RpcError,
                 SupervisorStorageError,CoreBindingError,OSError,ValueError):
             # Never echo exceptions or secret values to an untrusted peer.
