@@ -108,10 +108,11 @@ class OriginalWalletIdentityContracts(unittest.TestCase):
                 return {"wallet_id":anchor.wallet_id,"generation":record[0]}
         class Storage:
             def validate_directory(self,path):pass
-        core=Path("/verified-core");datadir=Path("/private-chain")
-        source=Path("/pinned-wsp")
+        # Use host-native absolute fixture paths: /foo is not absolute on Win32.
+        core=Path.cwd()/"verified-core";datadir=Path.cwd()/"private-chain"
+        source=Path.cwd()/"pinned-wsp"
         with (patch("wam_regtest.core.verified_core_paths",return_value=(
-                    Path("/verified-core/wamd"),Path("/verified-core/wam-cli"),
+                    core/"wamd",core/"wam-cli",
                     {**self.receipt,"platform":"macos-arm64"})),
               patch("wam_regtest.wsp_live._pinned_source"),
               patch("wam_regtest.custody.platform_name",return_value="macos-arm64"),
@@ -152,8 +153,8 @@ class OriginalWalletIdentityContracts(unittest.TestCase):
                    side_effect=ValueError("PRIVATE_CORE_PATH_CANARY")):
             with self.assertRaisesRegex(ManagedWalletReopenError,
                     "^MANAGED_WALLET_PREFLIGHT_DENIED$") as error:
-                preflight_existing_checkpoint(Path("/unknown"),
-                    Path("/unknown-chain"),Path("/unknown-source"),
+                preflight_existing_checkpoint(Path.cwd()/"unknown",
+                    Path.cwd()/"unknown-chain",Path.cwd()/"unknown-source",
                     self.password,authorized=True)
             self.assertNotIn("CANARY",str(error.exception))
 
