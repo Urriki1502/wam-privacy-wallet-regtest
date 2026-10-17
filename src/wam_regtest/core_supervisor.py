@@ -300,25 +300,37 @@ class CoreSupervisor:
         return {**status,"nonce":message["nonce"],
                 "proof":self._guard.sign_status(message["nonce"],status)}
 
+    def _serve_client(self,conn):
+        """Bound each control frame; a failed GUI must not terminate its Core owner."""
+        deadline=time.monotonic()+3.0
+        try:
+            payload=bytearray()
+            while len(payload)<MAX_FRAME:
+                remaining=deadline-time.monotonic()
+                if remaining<=0:
+                    raise SupervisorProtocolError("SUPERVISOR_FRAME_TIMEOUT")
+                conn.settimeout(remaining)
+                block=conn.recv(min(256,MAX_FRAME-len(payload)))
+                if not block:break
+                payload.extend(block)
+                if b"\n" in block:break
+            reply=self.handle(bytes(payload))
+        except (SupervisorProtocolError,ManagedCoreError,RpcError,
+                SupervisorStorageError,CoreBindingError,OSError,ValueError):
+            # Never echo exceptions or secret values to an untrusted peer.
+            reply=public_status(state="error",owned=False)
+        try:
+            conn.settimeout(3.0)
+            conn.sendall((json.dumps(reply,sort_keys=True,separators=(",",":"))+"\n").encode("ascii"))
+        except OSError:
+            # Broken pipe/peer abort is normal on GUI restart. Keep the owner
+            # process and held native Core binding alive.
+            return
+
     def serve(self):
         if self.listener is None:raise ManagedCoreError("MANAGED_NO_LISTENER")
         # GUI may come and go; this process and Core remain alive.
         while True:
             try:conn,_=self.listener.accept()
             except socket.timeout:continue
-            with conn:
-                conn.settimeout(3)
-                try:
-                    payload=bytearray()
-                    while len(payload)<MAX_FRAME:
-                        block=conn.recv(1)
-                        if not block:break
-                        payload.extend(block)
-                        if block==b"\n":break
-                    reply=self.handle(bytes(payload))
-                except (SupervisorProtocolError,ManagedCoreError,
-                        RpcError,SupervisorStorageError,CoreBindingError):
-                    reply={"protocol":PROTOCOL,"state":"error",
-                           "height":None,"core_process_owned":False,
-                           "chain":"regtest","mainnet_allowed":False}
-                conn.sendall((json.dumps(reply,sort_keys=True)+"\n").encode("ascii"))
+            with conn:self._serve_client(conn)
