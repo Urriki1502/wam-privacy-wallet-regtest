@@ -23,7 +23,7 @@ from .json_rpc import ManagedReadRpc,RpcError
 from .network_policy import local_rpc_port
 from .owned_start import _reserved_ports,_early_exit_category
 from .supervisor_protocol import (
-    PROTOCOL,ReplayGuard,SupervisorProtocolError,public_status,MAX_FRAME,
+    PROTOCOL,ReplayGuard,SupervisorProtocolError,public_status,decode_frame,MAX_FRAME,
 )
 from .supervisor_store import create_once,read_exact,exclusive_lease,SupervisorStorageError
 
@@ -286,12 +286,15 @@ class CoreSupervisor:
 
     def handle(self,raw):
         # All request authorization is checked before state, Core or RPC.
+        message=decode_frame(raw)
         op=self._guard.verify(raw)
         if op=="start":
             if self.process is None:self.start()
         elif op=="shutdown":
             self.shutdown()
-        return self.status()
+        status=self.status()
+        return {**status,"nonce":message["nonce"],
+                "proof":self._guard.sign_status(message["nonce"],status)}
 
     def serve(self):
         if self.listener is None:raise ManagedCoreError("MANAGED_NO_LISTENER")
