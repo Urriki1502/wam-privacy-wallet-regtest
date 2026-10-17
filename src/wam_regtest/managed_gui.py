@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import QThread, Signal, QTimer
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox, QInputDialog, QLineEdit
 
 from .desktop import RegtestWalletWindow, qt_application
 from .fusion_ui import action
@@ -46,13 +46,43 @@ class _ManagedStatusWorker(QThread):
             self.denied.emit("MANAGED_SUPERVISOR_UNVERIFIED")
 
 
+class _LockedWalletWorker(QThread):
+    ready = Signal(object)
+    denied = Signal(str)
+
+    def __init__(self, root, core_dir, wsp_source, password):
+        super().__init__()
+        self.root,self.core_dir,self.wsp_source=root,core_dir,wsp_source
+        self.password=password
+
+    def run(self):
+        try:
+            from .managed_wallet_binding import verify_locked_wallet
+            value=verify_locked_wallet(self.root,self.core_dir,self.wsp_source,
+                                       self.password,authorized=True)
+            self.ready.emit(value)
+        except Exception:
+            self.denied.emit("MANAGED_WALLET_CHECKPOINT_UNVERIFIED")
+        finally:
+            self.password=None
+
+
 class ManagedCoreWindow(RegtestWalletWindow):
     """Fusion GUI lifecycle observer; closing this window NEVER stops Core."""
 
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, *, core_dir=None, wsp_source=None):
         if type(root) is not type(Path()) or not root.is_absolute():
             raise ValueError("MANAGED_GUI_ROOT_DENIED")
+        if (core_dir is None) is not (wsp_source is None):
+            raise ValueError("MANAGED_GUI_WALLET_PATHS_DENIED")
+        if core_dir is not None and (
+            type(core_dir) is not type(Path()) or not core_dir.is_absolute()
+            or type(wsp_source) is not type(Path()) or not wsp_source.is_absolute()
+        ):
+            raise ValueError("MANAGED_GUI_WALLET_PATHS_DENIED")
         self._managed_root = root
+        self._wallet_core_dir,self._wallet_wsp_source=core_dir,wsp_source
+        self._wallet_checkpoint_verified=False
         # The base Fusion shell is reused; its disposable wallet data loader
         # is never called. A managed WSP session must first be restored safely.
         super().__init__(root / "chain", root / "chain", root / "chain")
@@ -70,6 +100,9 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.stop_core = action("Stop owned Core", "core")
         toolbar.addWidget(self.start_core)
         toolbar.addWidget(self.stop_core)
+        self.verify_wallet_button=action("Verify locked wallet", "security")
+        toolbar.addWidget(self.verify_wallet_button)
+        self.verify_wallet_button.clicked.connect(self._verify_wallet)
         self.start_core.clicked.connect(lambda: self._execute("start"))
         self.stop_core.clicked.connect(self._confirm_stop)
         # A short timer makes transitions visible without polling from Qt's
@@ -90,6 +123,10 @@ class ManagedCoreWindow(RegtestWalletWindow):
             self._managed_state in ("ready", "syncing", "busy")
         )
         self.refresh_button.setEnabled(idle)
+        self.verify_wallet_button.setEnabled(
+            idle and self._managed_authenticated and self._managed_state=="ready"
+            and self._wallet_core_dir is not None and self._wallet_wsp_source is not None
+        )
 
     def _execute(self, operation: str):
         if self._worker is not None:
@@ -114,6 +151,63 @@ class ManagedCoreWindow(RegtestWalletWindow):
         worker.finished.connect(worker.deleteLater)
         self._update_controls()
         worker.start()
+
+    def _verify_wallet(self):
+        if (self._worker is not None or not self._managed_authenticated
+                or self._managed_state!="ready"
+                or self._wallet_core_dir is None or self._wallet_wsp_source is None):
+            return
+        password,ok=QInputDialog.getText(
+            self,"Verify existing REGTEST wallet",
+            "Wallet passphrase (checkpoint verification only; no unlock/signing)",
+            QLineEdit.EchoMode.Password)
+        if not ok:
+            return
+        secret=password.encode("utf-8")
+        password=None
+        if not 12<=len(secret)<=1024:
+            self._wallet_preflight_denied("MANAGED_WALLET_PASSWORD_DENIED")
+            return
+        worker=_LockedWalletWorker(self._managed_root,self._wallet_core_dir,
+                                   self._wallet_wsp_source,secret)
+        secret=None
+        self._wallet_checkpoint_verified=False
+        self._worker=worker
+        worker.ready.connect(self._apply_wallet_preflight)
+        worker.denied.connect(self._wallet_preflight_denied)
+        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(worker.deleteLater)
+        self.status.setText("Checking original encrypted checkpoint and native anchor…")
+        self._update_controls()
+        worker.start()
+
+    def _apply_wallet_preflight(self, proof):
+        required={
+            "status":"MANAGED_WALLET_ORIGINAL_CHECKPOINT_VERIFIED_LOCKED",
+            "network":"regtest","wallet_locked":True,
+            "signer_allowed":False,"broadcast_allowed":False,
+            "balance_verified":False,"original_native_anchor_verified":True,
+            "original_encrypted_checkpoint_verified":True,
+            "mainnet_allowed":False,"supervisor_authenticated":True,
+            "supervisor_core_identity_verified":True,
+        }
+        if (type(proof) is not dict or proof!=required
+                or not self._managed_authenticated or self._managed_state!="ready"):
+            self._wallet_preflight_denied("MANAGED_WALLET_CHECKPOINT_UNVERIFIED")
+            return
+        self._wallet_checkpoint_verified=True
+        self._clear_balance()
+        self.status.setText(
+            "REGTEST · ORIGINAL CHECKPOINT VERIFIED · WALLET STILL LOCKED · "
+            "Balance/history/signing NOT verified · no broadcast")
+        self._update_controls()
+
+    def _wallet_preflight_denied(self, _reason):
+        self._wallet_checkpoint_verified=False
+        self._clear_balance()
+        self.status.setText(
+            "REGTEST · WALLET CHECKPOINT UNVERIFIED · no signer/balance adoption")
+        self._update_controls()
 
     def request_sync(self):
         self._execute("status")
@@ -151,6 +245,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
             return
         self._managed_state = state
         self._managed_authenticated = True
+        self._wallet_checkpoint_verified=False
         # A supervisor attestation is NOT a scanner/history attestation.
         self._clear_balance()
         height = expected["height"]
@@ -166,6 +261,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
     def _managed_denied(self, _reason):
         self._managed_state = "error"
         self._managed_authenticated = False
+        self._wallet_checkpoint_verified=False
         self._clear_balance()
         self.verification_badge.setText("Managed Core · UNVERIFIED")
         self.status.setText(
@@ -184,11 +280,11 @@ class ManagedCoreWindow(RegtestWalletWindow):
         super().closeEvent(event)
 
 
-def launch_managed_gui(root: Path) -> int:
+def launch_managed_gui(root: Path, *, core_dir=None, wsp_source=None) -> int:
     from .supervisor_store import _root
     _root(root)
     app = qt_application()
-    window = ManagedCoreWindow(root)
+    window = ManagedCoreWindow(root,core_dir=core_dir,wsp_source=wsp_source)
     window.show()
     QTimer.singleShot(0, window.request_sync)
     return app.exec()
