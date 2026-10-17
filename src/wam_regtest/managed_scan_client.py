@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import secrets
 import socket
+import time
 from pathlib import Path
 
 from .core_supervisor import _profile_read
@@ -39,6 +40,11 @@ class ManagedScanRpc:
         if self._closed:
             raise ManagedScanError("SCAN_CLIENT_CLOSED")
         try:
+            deadline=time.monotonic()+self._timeout
+            def remaining():
+                left=deadline-time.monotonic()
+                if left<=0:raise TimeoutError
+                return left
             _scope(method,params)
             # Refuse a changed supervisor profile before any read. Rebind or
             # Core upgrade needs a new, explicitly reauthorized GUI session.
@@ -47,16 +53,19 @@ class ManagedScanRpc:
             nonce=secrets.token_hex(16)
             frame=encode_request(self._secret,method,params,nonce)
             with socket.create_connection(
-                    ("127.0.0.1",self._profile["control_port"]),timeout=self._timeout) as conn:
-                conn.settimeout(self._timeout)
+                    ("127.0.0.1",self._profile["control_port"]),timeout=remaining()) as conn:
+                conn.settimeout(remaining())
                 conn.sendall(frame)
                 answer=bytearray()
                 while len(answer)<=MAX_SCAN_REPLY:
+                    conn.settimeout(remaining())
                     chunk=conn.recv(min(65536,MAX_SCAN_REPLY+1-len(answer)))
                     if not chunk:break
                     answer.extend(chunk)
                     if b"\n" in chunk:break
-            return decode_reply(bytes(answer),self._secret,method,nonce)
+            result=decode_reply(bytes(answer),self._secret,method,nonce)
+            remaining()
+            return result
         except ManagedScanError:
             raise
         except Exception:
