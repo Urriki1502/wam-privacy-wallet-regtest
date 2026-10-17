@@ -3,7 +3,10 @@ on:
   pull_request:
     paths:
       - 'scripts/issue45_v012_native_linux.py'
+      - 'src/wam_regtest/v012_candidate_compat.py'
+      - 'src/wam_regtest/v012_candidate_http.py'
       - 'tests/test_v1_v012_native_linux.py'
+      - 'tests/test_v1_v012_candidate_compat.py'
       - '.github/workflows/issue45-v012-linux-real-core.yml'
   workflow_dispatch:
 
@@ -38,6 +41,7 @@ jobs:
           sudo apt-get install -y gnupg libevent-2.1-7t64
           python -m pip install --disable-pip-version-check -e .
           python -m unittest discover -s tests -p 'test_v1_v012_native_linux.py' -v
+          python -m unittest discover -s tests -p 'test_v1_v012_candidate_compat.py' -v
       - name: Execute signed WAM v0.1.12 in fresh disconnected REGTEST
         shell: bash
         run: |
@@ -54,6 +58,17 @@ jobs:
           assert r['core_version']=='v0.1.12' and r['network']=='regtest'
           assert r['real_disposable_core'] is True and r['synthetic_rpc'] is False
           assert r['mined_block_count']==151 and r['zero_external_peers'] is True
+          h=r['v012_http_candidate']
+          assert h['signed_real_core_http_reads'] is True
+          assert h['read_count']==4 and h['authenticated_loopback'] is True
+          assert h['kernel_owned_socket'] is True
+          assert h['candidate_rpc_profile']=={'version':112,'subversion':'/WAM:0.1.12/','protocolversion':70016}
+          assert h['candidate_height']==151
+          assert h['current_app_v011_refuses_v012'] is True
+          assert h['fusion_v012_activated'] is False
+          assert h['user_core_install_authorized'] is False
+          assert h['wsp_gui_signing_qualified'] is False
+          assert h['mainnet_allowed'] is False
           assert [x['depth'] for x in r['maturity']]==[99,100,101]
           assert [x['eligible'] for x in r['maturity']]==[False,False,True]
           assert [x['height'] for x in r['coinbase_boundaries']]==[1,149,150,151]
