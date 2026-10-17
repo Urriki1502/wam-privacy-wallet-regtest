@@ -7,7 +7,7 @@ from wam_regtest.supervisor_protocol import (
     public_status,request_proof,
 )
 
-SECRET=b"public-test-only-32-byte-key-00000"
+SECRET=b"t"*32
 NONCE="a"*32
 
 
