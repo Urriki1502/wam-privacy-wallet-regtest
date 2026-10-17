@@ -43,6 +43,9 @@ class ManagedOriginalWalletSnapshotContracts(unittest.TestCase):
         self.ring=Mock()
         self.ring.accounts.return_value=self.accounts
         self.scanner=Mock()
+        # unittest.mock reserves assert_* names; the real WSP scanner has
+        # an explicit assert_current() method, not a mock assertion helper.
+        self.scanner.assert_current=Mock()
         self.scanner.accounts=self.accounts
         self.scanner.store.tip.return_value=(101,"d"*64)
         self.scanner.sync.return_value=SimpleNamespace(blocks=0,rollback=0)
@@ -98,14 +101,7 @@ class ManagedOriginalWalletSnapshotContracts(unittest.TestCase):
     def test_exact_original_wallet_snapshot_disables_signing_and_demo_identity(self):
         stack,preflight,control,vaultclass,rpcclass,walletclass=self.fixture()
         with stack:
-            try:
-                result=self.call()
-            except ManagedWalletSnapshotError as error:
-                # Fixture-only fixed-type diagnosis. Never print credential,
-                # private path or the underlying exception's message.
-                cause=error.__context__
-                raise AssertionError(
-                    "Q05_FIXTURE_CAUSE_TYPE_"+(type(cause).__name__ if cause else "NONE")) from None
+            result=self.call()
             self.assertIs(type(result),WalletReadSnapshot)
             self.assertEqual(result.height,101)
             self.assertEqual(result.tip,"d"*64)
