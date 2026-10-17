@@ -93,6 +93,62 @@ class OriginalWalletIdentityContracts(unittest.TestCase):
                 Path("/no-wsp"),self.password,"unused",authorized=True,
                 read_rpc=object())
 
+    def test_original_checkpoint_preflight_is_readonly_locked_no_balance(self):
+        from contextlib import nullcontext
+        from wam_regtest.managed_wallet_reopen import preflight_existing_checkpoint
+        class Anchor:
+            wallet_id="c"*32
+            def lease(self):return nullcontext()
+            def read(self):return (3,"f"*64)
+        anchor=Anchor()
+        class Vault:
+            def __init__(self,folder,owned,source):
+                self._expected=owned.read()
+            def _load_payload(self,password,record):
+                return {"wallet_id":anchor.wallet_id,"generation":record[0]}
+        class Storage:
+            def validate_directory(self,path):pass
+        core=Path("/verified-core");datadir=Path("/private-chain")
+        source=Path("/pinned-wsp")
+        with (patch("wam_regtest.core.verified_core_paths",return_value=(
+                    Path("/verified-core/wamd"),Path("/verified-core/wam-cli"),
+                    {**self.receipt,"platform":"macos-arm64"})),
+              patch("wam_regtest.wsp_live._pinned_source"),
+              patch("wam_regtest.custody.platform_name",return_value="macos-arm64"),
+              patch("wam_regtest.custody.storage",return_value=Storage()),
+              patch("wam_regtest.custody.anchor",return_value=anchor),
+              patch("wam_regtest.vault.CheckpointVault",Vault),
+              patch("wam_regtest.managed_wallet_reopen.read",return_value=self.profile)):
+            proof=preflight_existing_checkpoint(core,datadir,source,
+                                                self.password,authorized=True)
+            self.assertEqual(proof["status"],
+                             "MANAGED_WALLET_ORIGINAL_CHECKPOINT_VERIFIED_LOCKED")
+            self.assertFalse(proof["signer_allowed"])
+            self.assertFalse(proof["broadcast_allowed"])
+            self.assertFalse(proof["balance_verified"])
+            self.assertTrue(proof["wallet_locked"])
+            self.assertTrue(proof["original_native_anchor_verified"])
+            with self.assertRaisesRegex(ManagedWalletReopenError,
+                    "MANAGED_WALLET_PREFLIGHT_CONSENT_REQUIRED"):
+                preflight_existing_checkpoint(core,datadir,source,self.password)
+            with patch("wam_regtest.managed_wallet_reopen.read",
+                       return_value={**self.profile,"wallet_id":"a"*32}):
+                with self.assertRaisesRegex(ManagedWalletReopenError,
+                        "MANAGED_WALLET_CORE_CHANGED_DENIED"):
+                    preflight_existing_checkpoint(core,datadir,source,
+                                                 self.password,authorized=True)
+
+    def test_preflight_cannot_read_without_real_signed_core(self):
+        from wam_regtest.managed_wallet_reopen import preflight_existing_checkpoint
+        with patch("wam_regtest.core.verified_core_paths",
+                   side_effect=ValueError("PRIVATE_CORE_PATH_CANARY")):
+            with self.assertRaisesRegex(ManagedWalletReopenError,
+                    "^MANAGED_WALLET_PREFLIGHT_DENIED$") as error:
+                preflight_existing_checkpoint(Path("/unknown"),
+                    Path("/unknown-chain"),Path("/unknown-source"),
+                    self.password,authorized=True)
+            self.assertNotIn("CANARY",str(error.exception))
+
     def test_disposable_wallet_never_publishes_reopen_locator_implicitly(self):
         import inspect
         source=inspect.getsource(WalletSession.create)
