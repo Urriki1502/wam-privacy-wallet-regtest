@@ -188,6 +188,32 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
             state=control(root,"start",authorized=True,timeout=15)
             assert state["core_process_owned"] is True
             assert state["height"]==height
+            if qt:
+                # True WSP-1 Scanner.sync over authenticated, separately owned
+                # Core read IPC. Test only first 3 REAL blocks to bound CI;
+                # this does NOT qualify full-wallet scanning or Q05.
+                from wam_regtest.managed_scan_client import ManagedScanRpc
+                from wam_sp.keystore import ScanAccount
+                from wam_sp.core import pub
+                from wam_sp.scanner import Scanner
+                client_scan=ManagedScanRpc(root,authorized_readonly=True)
+                scanner=None
+                try:
+                    assert client_scan.attest()["blocks"]==height
+                    assert client_scan.call("getblockhash",[height])==tip
+                    scanner=Scanner(root/"q05-public-scan-fixture.sqlite",
+                                    (ScanAccount(0,1,pub(2),birthday=1),))
+                    progress=scanner.sync(client_scan,max_blocks=3)
+                    assert progress.blocks==3
+                    observed_height,observed_tip=scanner.store.tip()
+                    assert observed_height==3
+                    assert observed_tip==client_scan.call("getblockhash",[3])
+                    assert scanner.ready is False
+                    evidence["authenticated_wsp_scan_first_three_real_blocks"]=True
+                    evidence["scanner_read_only_partial_sync_only"]=True
+                finally:
+                    if scanner is not None:scanner.close()
+                    client_scan.close()
             # This second, independent interpreter represents a GUI re-open.
             client=subprocess.run([
                 sys.executable,"-m","wam_regtest.supervisor_cli",
