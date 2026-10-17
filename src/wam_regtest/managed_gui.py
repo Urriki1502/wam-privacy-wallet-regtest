@@ -1,9 +1,9 @@
-"""T05 Fusion GUI for the *owned* persistent REGTEST Core supervisor.
+"""Fusion GUI bound to one authenticated persistent REGTEST Core owner.
 
-This is the actual Fusion Qt shell, not a synthetic console/status mock.
-Only the independently authenticated supervisor's status is displayed.
-No WSP wallet is created, adopted, unlocked, signed or broadcast here.
-Q05 wallet continuity is a separate, still mandatory integration gate.
+Operator-initiated onboarding creates exactly one native encrypted WSP wallet.
+Separate read-only and explicitly checkpoint-persisting sync actions use the
+narrow authenticated WSP IPC scanner. No Core wallet RPC, signer, broadcast,
+mainnet or automatic wallet replacement is exposed by this GUI.
 """
 from __future__ import annotations
 
