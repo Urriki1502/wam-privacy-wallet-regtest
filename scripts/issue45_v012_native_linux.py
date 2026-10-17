@@ -235,8 +235,8 @@ def _verify_native(node: Path, cli: Path, hashes: dict, *, head: str) -> dict:
                 count = height - rpc("getblockcount")
                 if count <= 0:
                     _deny("V012_NATIVE_BOUNDARY_HEIGHT_DENIED")
-                hashes = rpc("generatetoaddress", str(count), address, timeout=90)
-                boundary.append(audit(hashes[-1], height))
+                mined_blocks = rpc("generatetoaddress", str(count), address, timeout=90)
+                boundary.append(audit(mined_blocks[-1], height))
             schedule = rpc("getemissionschedule")
             if ([(e["first_height"], e["last_height"]) for e in schedule[:3]]
                     != [(1, 150), (151, 300), (301, 450)] or
