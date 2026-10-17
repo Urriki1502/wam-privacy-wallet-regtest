@@ -11,7 +11,11 @@ No aggregate95% or inherited RC1 PASS is asserted. Missing/SKIP is PENDING;
 changed tested source/OS/Core/WSP invalidates prior PASS to STALE.
 `acceptance_evidence.py` tests these rules without treating JSON as a trust oracle.
 
-## Current PR67 final-bootloader component evidence
+## Current PR67 frozen-owned Core fault component evidence
+
+[c21bbd1 matrix/artifacts/receipts](PR67_FROZEN_CORE_CRASH_ACCEPTANCE.md): ALL10 exact-head CI SUCCESS. Actual final executable-owned Core image-checked kill/restart preserves chain/tip, with explicit fault consent, inner frozen guard and six pre-state refusals on Mac/Windows/Linux desktop. All integrated task/Q and physical gates remain PENDING. No acceptance-registry promotion.
+
+## Earlier PR67 final-bootloader component evidence
 
 [e960dff matrix, exact artifacts and receipts](PR67_FROZEN_MANAGED_ACCEPTANCE.md): ALL10 exact-head CI SUCCESS; final Mac/Windows/Linux desktop supervisor/WSP/Qt children and five scope refusals verified. Local Cocoa and actual downloaded bytes verified separately. Full managed-wallet Q05, all integrated V1 gates and physical acceptance remain PENDING. No registry task/Q promotion.
 

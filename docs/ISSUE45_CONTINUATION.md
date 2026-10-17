@@ -1,3 +1,59 @@
+# Resume checkpoint — c21bbd1 frozen-owned Core fault qualified, V1/Q05 pending
+
+Tested runtime c21bbd1b06f5db9bd40375e8dc43ba19ed7ca150 has ALL10 exact-head
+CI SUCCESS. [Current matrix, exact packages/checksums and limitations](PR67_FROZEN_CORE_CRASH_ACCEPTANCE.md).
+Public receipts: docs/evidence/issue45/PR67_C21BBD1_*.json. Verified CI merge
+518a7b48e74f7161edce0ab59b1299b3415fa40c parents66/71a1e7b +67/c21bbd1.
+Later documentation-head CI is separate; never relabel these tested binaries.
+
+Completed two successive P0 acceptance units on SAME Draft67: e960dff actual
+frozen supervisor/two WSP/three Qt processes with source/frozen separation;
+c21bbd1 adds real Core fault INSIDE that final owner, exact image check before
+own-Popen kill, expected-9POSIX/1Windows, recovery-needed, same protected chain/
+height101/tip and new owned restart. The source operator independently checks
+Core before scanner/GUI tests. Separate explicit fault consent and inner frozen
+scope guard; six actual pre-state refusals. Normal supervisor_cli/Core runtime
+unchanged. No external PID/key/anchor/reservation/signing/broadcast authority.
+
+Native local259tests=225PASS/34platformSKIP,exit0. Complete final Mac app/DMG,
+actual Cocoa fault/operational/security/recovery/stale-writer/reorg1/12/100 PASS.
+Actual downloaded all3OS packages/source/RC/file manifests verified, original
+Core pairs unchanged; Windows354files and125/150%DPI, Linux193/454files and25safe
+links. Frozen fault receipts matched actual tested executable hash/backend and
+source inventory. Mac copied-resource node/CLI/WSP tamper denials repeated; no
+modified Core executed, no blockchain E2E substitution. Full managed Q05 false.
+
+Same feature/issue45-t05-gui-continuity-q05-20261017, Draft67 only. No new PR,
+rebase, force-push, merge, upstream/main/RC1/owner wallet/anchor/miner modification.
+Independent68/94a7649,69/d3aa1f3,70/a4a8257,71/75433cb remain read-only/unchanged.
+Their funded/original-wallet view/crash-during-write integration remains pending;
+69 additional password prompt needs modal exclusion. Do not duplicate or merge
+active independent work; old-base green cannot qualify changed integration.
+v0.1.12 candidate-only, Core Update Manager P1 deferred. No mainnet/real funds.
+
+Core fault is on a quiescent isolated stable chain, not crash-during-Core-write
+or power-loss proof. Full original-wallet Q05, physical Finder/focus/fonts/retina/
+camera/OS Auto/sleep-wake/human usability remain PENDING_OPERATOR. Cua normal Mac
+app-path attempt blocked by locked screen,0matching app processes, no bypass or
+default-owner-Keychain action. Programmatic Cocoa signals are not physical OS
+settings. No local Windows/Linux execution or physical host PASS claimed.
+
+Acquire and HOLD scripts/engineering_lease.py --hold; refuse contention. Current
+separate log: outputs/pr67-resume-20261017T220014/RESUME_LOG.md; do not infer a
+future lease. No actual quota failure, credit reset assumption or purchase.
+Single5h automation ACTIVE, next nominal10:00VN18Oct2026/current dispatcher
+10:03:25VN, verify live. Only OWN superseded heads were canceled after later
+runtime pushes; qualified and independent runs untouched. No recurring retries.
+
+Next: refresh documentation-head exact CI and real failures first. Keep native/
+frozen/physical classification and inspect actual artifact provenance. Full
+funded managed-wallet Q05 needs qualified integration of independently owned
+work, not duplicate67 implementations. Preserve custody/rollback/leases/Core+
+WSP pins and all signed/uncertain reservations. Do not repair/delete anchors,
+release uncertain locks, retry uncertain signing/broadcast or attach T06 Core.
+
+# Historical checkpoints — not current orders or lease ownership
+
 # Active next P0 unit — actual frozen-owned Core crash/restart
 
 After e960dff ALL10 CI and the6dc2e4b evidence checkpoint, this unit moves an

@@ -1,3 +1,5 @@
+Latest: [c21bbd1 actual frozen-owned Core crash/restart qualification](PR67_FROZEN_CORE_CRASH_ACCEPTANCE.md). The e960dff report below is historical.
+
 # PR67 final executable component qualification
 
 Tested code: `e960dff5c1abcd16f6a3ad2272e589d1a4b86e90`.

@@ -1,0 +1,19 @@
+{
+  "status": "DOWNLOADED_WINDOWS_NATIVE_REAL_CORE_RECEIPTS_VERIFIED",
+  "source_head_sha": "c21bbd1b06f5db9bd40375e8dc43ba19ed7ca150",
+  "checkout_sha": "518a7b48e74f7161edce0ab59b1299b3415fa40c",
+  "artifact_id": 12117353701,
+  "artifact_outer_sha256": "c78297520ae25508ac02fda5770cad4e92124c663874cc3143bd3efa418f67e4",
+  "native_qt_operational_wallet": true,
+  "native_t05_process_lifecycle": true,
+  "actual_reorg_depths": [
+    1,
+    12,
+    100
+  ],
+  "frozen_runtime_evidence": false,
+  "local_windows_execution": false,
+  "full_managed_wallet_q05_qualified": false,
+  "physical_acceptance": "PENDING_OPERATOR",
+  "mainnet_allowed": false
+}
