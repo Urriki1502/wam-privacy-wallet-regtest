@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import re
+import secrets
 import stat
 import sys
 
@@ -112,4 +113,76 @@ def inspect_profile(root, *, expected_genesis, expected_node_sha256,
         _deny('PROFILE_READ_UNVERIFIED')
     finally:
         if receipt is not None:os.close(receipt)
+        if directory is not None:os.close(directory)
+
+
+def create_disposable_profile(parent, *, expected_genesis, expected_node_sha256,
+                              expected_cli_sha256, authorized=False):
+    """Create a new public identity receipt, never a chain or wallet.
+
+    Requires an operator-provisioned private parent named specifically for
+    Fusion REGTEST profiles. Uses create-once namespace/file, fsync and bounded
+    self-inspection. An interrupted creation is *not* silently deleted/reused.
+    """
+    if authorized is not True:
+        _deny('PROFILE_CREATE_EXPLICIT_CONSENT_REQUIRED')
+    if not all(_hex(x,64) for x in
+               (expected_genesis,expected_node_sha256,expected_cli_sha256)):
+        _deny('PROFILE_INDEPENDENT_PIN_REQUIRED')
+    if sys.platform not in ('linux','darwin') or not hasattr(os,'O_NOFOLLOW'):
+        _deny('PROFILE_NATIVE_PLATFORM_UNQUALIFIED')
+    if (type(parent) is not type(Path()) or not parent.is_absolute()
+            or parent.name!='wam-fusion-regtest-profiles'
+            or '..' in parent.parts or parent.resolve(strict=True)!=parent):
+        _deny('PROFILE_PRIVATE_PARENT_DENIED')
+    info=parent.lstat()
+    if (not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.geteuid()
+            or stat.S_IMODE(info.st_mode)!=0o700):
+        _deny('PROFILE_PRIVATE_PARENT_DENIED')
+    directory=None
+    try:
+        directory=os.open(parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC)
+        current=os.fstat(directory)
+        if (current.st_dev,current.st_ino)!=(info.st_dev,info.st_ino):
+            _deny('PROFILE_PARENT_CHANGED')
+        name='wam-fusion-owned-regtest-'+secrets.token_hex(8)
+        try:
+            os.mkdir(name,0o700,dir_fd=directory)
+        except FileExistsError:
+            _deny('PROFILE_NEW_NAMESPACE_CONFLICT')
+        # No cleanup on failure: never overwrite/reuse a potentially partial
+        # receipt or erase user files. The operator must review recovery.
+        sub=os.open(name,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC,
+                    dir_fd=directory)
+        try:
+            fd=os.open('profile.json',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,
+                       0o600,dir_fd=sub)
+            try:
+                data={'schema':SCHEMA,'network':'regtest','core_version':'v0.1.11',
+                      'genesis_hash':expected_genesis,'node_sha256':expected_node_sha256,
+                      'cli_sha256':expected_cli_sha256,'profile_id':secrets.token_hex(16)}
+                raw=json.dumps(data,sort_keys=True,separators=(',',':')).encode('ascii')
+                if len(raw)>MAX_RECEIPT_BYTES:_deny('PROFILE_RECEIPT_SIZE_DENIED')
+                offset=0
+                while offset<len(raw):
+                    written=os.write(fd,raw[offset:])
+                    if written<=0:_deny('PROFILE_RECEIPT_WRITE_DENIED')
+                    offset+=written
+                os.fsync(fd)
+            finally:os.close(fd)
+            os.fsync(sub)
+        finally:os.close(sub)
+        os.fsync(directory)
+        root=parent/name
+        again=parent.lstat()
+        if (again.st_dev,again.st_ino)!=(current.st_dev,current.st_ino):
+            _deny('PROFILE_PARENT_CHANGED')
+        result=inspect_profile(root,expected_genesis=expected_genesis,
+                               expected_node_sha256=expected_node_sha256,
+                               expected_cli_sha256=expected_cli_sha256)
+        return root,result
+    except PersistentProfileError:raise
+    except (OSError,ValueError,TypeError):
+        _deny('PROFILE_CREATE_UNVERIFIED')
+    finally:
         if directory is not None:os.close(directory)
