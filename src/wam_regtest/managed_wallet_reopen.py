@@ -102,3 +102,69 @@ def read(directory,password):
     except Exception:
         # Neither private file paths nor decryption errors go to the GUI.
         raise ManagedWalletReopenError("MANAGED_WALLET_READ_DENIED") from None
+
+
+def preflight_existing_checkpoint(core_dir, datadir, wsp_source, password, *,
+                                  authorized=False, keychain=None):
+    """Explicit READ-ONLY reattachment preflight; not a live wallet/session.
+
+    Validate exact signed Core binary, pinned WSP code, native custody, original
+    wallet identity, original OS anti-rollback anchor and encrypted checkpoint.
+    No database, scanner, keyring or wallet RPC is instantiated. A positive
+    receipt NEVER permits balance display, signing or broadcast.
+    """
+    from pathlib import Path
+    from . import custody
+    from .core import verified_core_paths
+    from .vault import CheckpointVault
+    from .wsp_live import _pinned_source
+    if authorized is not True:
+        raise ManagedWalletReopenError("MANAGED_WALLET_PREFLIGHT_CONSENT_REQUIRED")
+    if (type(core_dir) is not type(Path()) or not core_dir.is_absolute()
+            or type(datadir) is not type(Path()) or not datadir.is_absolute()
+            or type(wsp_source) is not type(Path()) or not wsp_source.is_absolute()):
+        raise ManagedWalletReopenError("MANAGED_WALLET_PREFLIGHT_PATH_DENIED")
+    if type(password) is not bytes or not 12<=len(password)<=1024:
+        raise ManagedWalletReopenError("MANAGED_WALLET_PASSWORD_DENIED")
+    try:
+        _,_,receipt=verified_core_paths(core_dir)
+        _pinned_source(wsp_source)
+        if receipt["platform"]!=custody.platform_name():
+            raise ManagedWalletReopenError("MANAGED_WALLET_PREFLIGHT_PLATFORM_DENIED")
+        storage=custody.storage()
+        storage.validate_directory(datadir)
+        folder=datadir/"wallet-vault"
+        storage.validate_directory(folder)
+        profile=read(folder,password)
+        if profile!=make(profile["wallet_id"],receipt):
+            raise ManagedWalletReopenError("MANAGED_WALLET_CORE_CHANGED_DENIED")
+        anchor=custody.anchor(profile["wallet_id"],keychain)
+        vault=CheckpointVault(folder,anchor,wsp_source)
+        # Stable native wallet lease excludes an in-flight anchor generation
+        # replacement while the existing sealed snapshot is authenticated.
+        with anchor.lease():
+            record=anchor.read()
+            if record is None or vault._expected!=record:
+                raise ManagedWalletReopenError("MANAGED_WALLET_ANCHOR_CHANGED_DENIED")
+            payload=vault._load_payload(password,record)
+            if payload["wallet_id"]!=profile["wallet_id"] or payload["generation"]!=record[0]:
+                raise ManagedWalletReopenError("MANAGED_WALLET_CHECKPOINT_MISMATCH")
+            if anchor.read()!=record:
+                raise ManagedWalletReopenError("MANAGED_WALLET_ANCHOR_CHANGED_DENIED")
+        return {
+            "status":"MANAGED_WALLET_ORIGINAL_CHECKPOINT_VERIFIED_LOCKED",
+            "network":"regtest",
+            "wallet_locked":True,
+            "signer_allowed":False,
+            "broadcast_allowed":False,
+            "balance_verified":False,
+            "original_native_anchor_verified":True,
+            "original_encrypted_checkpoint_verified":True,
+            "mainnet_allowed":False,
+        }
+    except ManagedWalletReopenError:
+        raise
+    except Exception:
+        # No errors, failed credential details, file paths or secret values
+        # may escape into GUI/logs. Never auto-create a replacement wallet.
+        raise ManagedWalletReopenError("MANAGED_WALLET_PREFLIGHT_DENIED") from None
