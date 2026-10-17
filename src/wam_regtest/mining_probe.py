@@ -6,13 +6,9 @@ only fixed public scalar/address observations leave the temporary directory.
 from contextlib import contextmanager
 from dataclasses import asdict
 from pathlib import Path
-import subprocess
 import sys
-import tempfile
 import time
-from .core import verified_core_paths,_port,_write_private_config,_read_cli,CoreSmokeError
-from .core_process import OwnedCoreBinding
-from .json_rpc import ManagedReadRpc
+from .core import _read_cli,CoreSmokeError
 from .mining_account import CoinbaseAudit,MiningWalletBalance,RewardSplit,COIN
 from .v1_contracts import rpc_atoms
 from .wsp_live import REGTEST_GENESIS,public_regtest_mining_address
@@ -42,20 +38,9 @@ def _presentation(enabled):
 
 @contextmanager
 def _owned_chain(core):
-    node,cli,receipt=verified_core_paths(core)
-    with tempfile.TemporaryDirectory(prefix='wam-mining-owned-') as temp:
-        root=Path(temp).resolve();data=root
-        if sys.platform=='win32':
-            from .custody import create_directory
-            data=root/'chain';create_directory(data)
-            from .windows_core_regtest_smoke import _host_env
-            env=_host_env(data)
-        else:
-            data.chmod(0o700);env={'PATH':'/usr/bin:/bin:/usr/sbin:/sbin','HOME':str(data),'LC_ALL':'C'}
-        rpc_port,peer_port=_port(),_port()
-        if rpc_port==peer_port:raise ValueError('MINING_FIXTURE_PORT_COLLISION_DENIED')
-        _write_private_config(data,rpc_port,peer_port)
-        proc=None
+    from .owned_start import disposable_core
+    with disposable_core(core,authorized=True) as owned:
+        data,cli,receipt,env=owned.directory,owned.cli,owned.receipt,owned.environment
         def rpc(*args,timeout=30):
             if sys.platform!='win32':return _read_cli([str(cli),f'-datadir={data}',*args],timeout=timeout)
             # This private acceptance context owns a newly generated datadir,
@@ -74,32 +59,7 @@ def _owned_chain(core):
             if checked_cli!=cli:raise ValueError('MINING_FIXTURE_CLI_IDENTITY_DENIED')
             try:return _rpc(cli,data,local_rpc_port(data),env,*args,timeout=timeout)
             except (ValueError,OSError):raise CoreSmokeError('MINING_FIXTURE_WINDOWS_RPC_DENIED') from None
-        try:
-            with (data/'core-output.log').open('xb') as log:
-                proc=subprocess.Popen([str(node),f'-datadir={data}','-daemon=0'],
-                    stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,
-                    cwd=node.parent if sys.platform=='win32' else data,env=env,
-                    creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0) if sys.platform=='win32' else 0)
-            deadline=time.monotonic()+90
-            while True:
-                if proc.poll() is not None:raise ValueError('MINING_FIXTURE_CORE_EXITED')
-                try:
-                    if rpc('getblockchaininfo')['chain']=='regtest':break
-                except CoreSmokeError:pass
-                if time.monotonic()>deadline:raise ValueError('MINING_FIXTURE_START_TIMEOUT')
-                time.sleep(.2)
-            binding=OwnedCoreBinding(proc,core,data)
-            with ManagedReadRpc(core,data,authorized_readonly=True,binding=binding) as read:
-                if read.call('getblockhash',[0])!=REGTEST_GENESIS or rpc('getconnectioncount')!=0:
-                    raise ValueError('MINING_FIXTURE_NETWORK_DENIED')
-                yield rpc,receipt,read
-        finally:
-            if proc is not None and proc.poll() is None:
-                try:rpc('stop',timeout=8);proc.wait(timeout=15)
-                except Exception:
-                    proc.terminate()
-                    try:proc.wait(timeout=8)
-                    except subprocess.TimeoutExpired:proc.kill();proc.wait(timeout=8)
+        yield rpc,receipt,owned.read
 
 
 def probe_core_mining(core,source,*,gui=False):

@@ -220,68 +220,21 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
         if (sys.platform!='linux' or not callable(headless_callback) or not wsp_payment_e2e
                 or gui_e2e or interactive_demo or security_e2e or wallet_e2e or recovery_case is not None):
             raise CoreSmokeError('CORE_HEADLESS_SCOPE_DENIED')
+    startup_receipt=None
+    if (wallet_e2e or rpc_contention_e2e) and not interactive_demo:
+        from .startup_probe import prove_startup
+        startup_receipt=prove_startup(core_dir)
     mining_receipt=None
     if (wallet_e2e or headless_callback is not None) and not interactive_demo:
         from .mining_probe import probe_core_mining
         mining_receipt=probe_core_mining(core_dir,wsp_source,gui=(wallet_e2e or mining_gui_e2e))
-    node, cli, receipt = verified_core_paths(core_dir)
-    # The caller runs on a dedicated CI runner or owner-approved macOS test host.
-    # We intentionally do NOT claim fd-to-loader or hardened process provenance.
-    with tempfile.TemporaryDirectory(prefix="wam-real-regtest-") as temp:
-        # Canonicalize the OS-created temporary directory: macOS /var is a
-        # system symlink. Private storage then walks canonical ancestors with
-        # O_NOFOLLOW rather than relaxing its symlink checks.
-        import sys
-        if sys.platform == "win32":
-            from .custody import create_directory
-            datadir = Path(temp).absolute()/"chain"
-            create_directory(datadir)
-            from .windows_core_regtest_smoke import _host_env
-            child_env=_host_env(datadir)
-        else:
-            datadir = Path(temp).resolve(strict=True)
-            datadir.chmod(0o700)
-            child_env={"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(datadir), "LC_ALL": "C"}
-        rpc, p2p = _port(), _port()
-        if rpc == p2p:
-            raise CoreSmokeError("CORE_PORT_COLLISION_DENIED")
-        _write_private_config(datadir, rpc, p2p)
-        prefix = [str(cli), f"-datadir={datadir}"]
-        proc = None
-        read_rpc = None
+    from .owned_start import disposable_core
+    with disposable_core(core_dir,authorized=True,timeout=timeout) as owned:
+        node,cli,receipt=owned.node,owned.cli,owned.receipt
+        datadir,proc,child_env=owned.directory,owned.process,owned.environment
+        prefix=[str(cli),f'-datadir={datadir}']
+        read_rpc=owned.read
         try:
-            with (datadir / "core-output.log").open("xb") as log:
-                # Only the exact path/hash from signed receipt; no shell or user keys.
-                proc = subprocess.Popen(
-                    [str(node), f"-datadir={datadir}", "-daemon=0"],
-                    stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
-                    cwd=node.parent if sys.platform=="win32" else datadir,
-                    env=child_env,
-                    creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0) if sys.platform=="win32" else 0,
-                )
-            end = time.monotonic() + timeout
-            info = None
-            while time.monotonic() < end:
-                if proc.poll() is not None:
-                    code = proc.returncode
-                    status = _early_exit_category(datadir)
-                    # Process status is a bounded integer; no paths, passwords
-                    # or uncontrolled log text are emitted.
-                    if type(code) is int and -255 <= code <= 255:
-                        status += "_STATUS_" + ("NEG" if code < 0 else "POS") + str(abs(code))
-                    raise CoreSmokeError(status)
-                try:
-                    candidate = _read_cli(prefix + ["getblockchaininfo"], timeout=5)
-                    if isinstance(candidate, dict):
-                        info = candidate
-                        break
-                except CoreSmokeError:
-                    pass
-                time.sleep(0.5)
-            if info is None or info.get("chain") != "regtest":
-                raise CoreSmokeError("CORE_WRONG_CHAIN_DENIED")
-            if _read_cli(prefix + ["getconnectioncount"]) != 0:
-                raise CoreSmokeError("CORE_EXTERNAL_PEERS_DENIED")
             _read_cli(prefix + ["createwallet", "test"])
             addr = _read_cli(prefix + ["-rpcwallet=test", "getnewaddress"])
             if not isinstance(addr, str) or not 20 <= len(addr) <= 120:
@@ -316,10 +269,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             wsp_receipt = None
             if wsp_source is not None:
                 from .wsp_live import scan_actual_core_blocks, RealWspScanError
-                from .core_process import OwnedCoreBinding
-                from .json_rpc import ManagedReadRpc
-                read_rpc=ManagedReadRpc(core_dir,datadir,authorized_readonly=True,
-                    binding=OwnedCoreBinding(proc,core_dir,datadir))
+                read_rpc=owned.read
                 try:
                     wsp_receipt = scan_actual_core_blocks(
                         cli, datadir, wsp_source, expected_height=height,
@@ -402,6 +352,9 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 raise CoreSmokeError("CORE_FINAL_CHAIN_ATTESTATION_DENIED")
             return {
                 "mining_account_component": mining_receipt,
+                "owned_startup_component": startup_receipt,
+                "owned_startup_attempts": owned.attempts,
+                "startup_auth_after_native_endpoint_proof": True,
                 "owned_http_read_component": owned_rpc_receipt,
                 "wallet_live_core": wallet_receipt,
                 "recovery_live_core": recovery_receipt,
@@ -437,18 +390,3 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             }
         finally:
             if read_rpc is not None:read_rpc.close()
-            if proc is not None:
-                if proc.poll() is None:
-                    try:
-                        _read_cli(prefix + ["stop"], timeout=8)
-                    except CoreSmokeError:
-                        pass
-                    try:
-                        proc.wait(timeout=12)
-                    except subprocess.TimeoutExpired:
-                        proc.terminate()
-                        try:
-                            proc.wait(timeout=6)
-                        except subprocess.TimeoutExpired:
-                            proc.kill()
-                            proc.wait(timeout=6)
