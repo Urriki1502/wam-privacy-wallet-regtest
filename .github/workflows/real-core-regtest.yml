@@ -52,8 +52,10 @@ jobs:
         run: python scripts/check_wam_subsidy_source.py --output source-subsidy-contract.json
       - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
         run: python -m wam_regtest.release --platform macos-arm64 --destination core
-      - name: T05 persistent managed Core real-process acceptance (not GUI Q05)
-        run: python scripts/issue45_t05_real_core.py --core-dir core --output t05-real-core-evidence.json
+      - name: T05 real persistent Core + actual Fusion GUI close/reopen (wallet continuity pending)
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python scripts/issue45_t05_real_core.py --core-dir core --qt-e2e --output t05-real-core-evidence.json
       - name: Independently evaluate wallet security contracts
         run: python scripts/audit_wallet_security.py --root . --core core --output independent-wallet-security.json
       - name: Inspect signed node dynamic library requirements (real ARM64 bytes)
