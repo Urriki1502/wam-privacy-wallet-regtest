@@ -65,6 +65,7 @@ class Core012IntakeUnitTests(unittest.TestCase):
         archive = self.archive()
         for kw in ({"installed": "v0.1.12"}, {"installed": "v0.1.13"},
                    {"minimum": "v0.1.13"}, {"installed": "v0.1.8"},
+                   {"minimum": "v0.1.8"}, {"installed": "v0.1.8", "minimum": "v0.1.8"},
                    {"installed": "v0.1.x"}):
             with self.subTest(kw=kw), self.assertRaises(IntakeError):
                 self.review(archive, **kw)
