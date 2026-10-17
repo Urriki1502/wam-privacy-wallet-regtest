@@ -23,8 +23,15 @@ Core hashes unchanged. Follow-up review fixed duplicate one-shot Linux scan
 policy initialization and Windows CI-role failures opening modal dialogs.
 Added actual child Qt-platform/frozen reporting and Windows path triggers.
 Local updated native unit suite:257 tests,223 PASS/34 platform SKIP, exit0.
-Updated final Mac build/bootloader, exact-head CI, Windows/Linux frozen execution
-and artifact inspection are PENDING until their real results exist. Native-source test
+Follow-up cff605a40a5c701f578672cf12bd5fefcb9d66da also passed full local
+Mac app/DMG and frozen-process/platform proof. Next hardening captures child Qt
+platform BEFORE teardown, explicitly shuts down the native harness QApplication,
+and requires five actual frozen entry refusals before any supervisor state:
+missing consent, external Core/WSP override, role-incompatible crash flag and
+report/control-root alias. No modal, fallback, Core startup or state write is
+permitted for these refused commands. Updated exact-head CI/Windows/Linux
+execution and artifact inspection remain PENDING until their actual results.
+Native-source test
 orchestrator identity and final executable hash are recorded separately.
 Full managed-wallet Q05 remains false; physical acceptance remains pending.
 Separate resume log: outputs/pr67-resume-20261017T220014/RESUME_LOG.md.

@@ -79,9 +79,12 @@ def run(argv, core, source):
     if args.role == 'gui':
         from .managed_gui_probe import probe
         from .desktop import qt_application
+        # Capture while QApplication is alive. The clean probe publishes its
+        # result AFTER shutdown_qt; never recreate/access QApplication there.
+        qt_platform = qt_application().platformName()
         def report(value):
             publish_report(args.report_root, {**value, 'frozen_entrypoint': True,
-                'qt_platform': qt_application().platformName()})
+                'qt_platform': qt_platform})
         probe(args.root, args.expected_height, wait_for_crash=args.wait_for_crash,
               report=report)
     elif args.role == 'scan':

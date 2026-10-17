@@ -35,6 +35,26 @@ class _FrozenChildren:
             '--root',str(self.root),'--confirm-disposable-regtest-probe',
             *self.policy,*arguments]
 
+    def refusals(self):
+        # Actual bootloader negatives, before creating any supervisor state.
+        # In particular missing consent raises an exception on Windows: a
+        # modal error dialog would hang instead of producing the required2.
+        assert list(self.root.iterdir())==[]
+        normal=self.command('supervisor')
+        cases=[
+            [arg for arg in normal if arg!='--confirm-disposable-regtest-probe'],
+            normal+['--core-dir',str(self.root/'external-core')],
+            normal+['--wsp-source-root',str(self.root/'external-wsp')],
+            normal+['--wait-for-crash'],
+            self.command('gui','--report-root',str(self.root),'--expected-height','101'),
+        ]
+        for command in cases:
+            reply=subprocess.run(command,stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=25)
+            assert reply.returncode==2, 'T05_FROZEN_SCOPE_REFUSAL_DENIED'
+            assert list(self.root.iterdir())==[], 'T05_FROZEN_REFUSAL_TOUCHED_STATE'
+        return len(cases)
+
     def report_command(self, role, *arguments):
         import secrets
         from wam_regtest.custody import create_directory
@@ -232,6 +252,9 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
                 if frozen_executable is not None else None)
         if frozen is not None and not qt:
             raise ValueError('T05_FROZEN_DESKTOP_PROBE_REQUIRED')
+        if frozen is not None:
+            evidence['frozen_scope_refusals_before_supervisor']=frozen.refusals()
+            evidence['frozen_scope_refusals_prompt_free']=True
         owner=CoreSupervisor(root,core,authorized=True)
         evidence["wamd_sha256"] = owner.receipt["wamd_sha256"]
         evidence["wam_cli_sha256"] = owner.receipt["wam_cli_sha256"]
