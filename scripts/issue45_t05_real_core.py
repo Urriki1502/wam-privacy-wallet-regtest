@@ -104,12 +104,12 @@ def _qt_original_wallet_live_read_probe(root, core, expected_height, funding_add
     """
     if sys.platform!="darwin":
         raise AssertionError("Q05_MACOS_NATIVE_ONLY")
-    import secrets
     from unittest.mock import patch
     from shiboken6 import delete
     from wam_regtest import custody
     from wam_regtest.core import verified_core_paths
-    from wam_regtest.managed_wallet_reopen import make,publish
+    from wam_regtest.managed_wallet_create import create_managed_wallet
+    from wam_regtest.managed_wallet_reopen import read
     from wam_regtest.vault import CheckpointVault
     from wam_regtest.managed_scan_client import ManagedScanRpc
     from wam_regtest.wsp_live import _pinned_source
@@ -117,7 +117,6 @@ def _qt_original_wallet_live_read_probe(root, core, expected_height, funding_add
     from wam_regtest.managed_gui import ManagedCoreWindow
     from wam_regtest.supervisor_client import control
     from wam_sp.keystore import Keyring
-    from wam_sp.scanner import Scanner
 
     wsp=Path(__file__).resolve().parents[1]/"wsp-upstream"
     _pinned_source(wsp)
@@ -125,30 +124,29 @@ def _qt_original_wallet_live_read_probe(root, core, expected_height, funding_add
     password=b"q05-disposable-native-verified-regtest-only"
     directory=root/"chain"
     vault_dir=directory/"wallet-vault"
-    custody.create_directory(vault_dir)
-    ring=scanner=rpc=None
     runtime=directory/"wallet-runtime.sqlite"
-    wallet_id=secrets.token_hex(16)
+
+    # This is now the SAME operator-facing create-once path used by Fusion.
+    # No manual test-only Keyring/Scanner provisioning or direct supervisor
+    # wallet creation is substituted. A real native Keychain anchor is written.
+    created=create_managed_wallet(root,core,wsp,password,authorized=True)
+    assert created=={
+        "status":"MANAGED_REGTEST_WSP_WALLET_CREATED_LOCKED",
+        "network":"regtest","wallet_locked":True,
+        "signer_allowed":False,"broadcast_allowed":False,"mainnet_allowed":False}
+    profile=read(vault_dir,password)
+    wallet_id=profile["wallet_id"]
     anchor=custody.anchor(wallet_id)
+    vault=CheckpointVault(vault_dir,anchor,wsp)
+    ring=scanner=None
     try:
-        ring=Keyring()
-        ring.backup(password)
+        ring,scanner=vault.restore(runtime,password)
         original_receive=ring.accounts()[-1].payment_code()
         payment_account=ring.accounts()[-1]
-        scanner=Scanner(runtime,ring.accounts())
-        rpc=ManagedScanRpc(root,authorized_readonly=True)
-        scanner.sync(rpc)
-        scanner.assert_current()
-        assert scanner.store.tip()==(
-            expected_height,rpc.call("getbestblockhash"))
-        assert scanner.coins()==[]
-        vault=CheckpointVault(vault_dir,anchor,wsp)
-        vault.save(ring,scanner,password)
-        publish(vault_dir,make(wallet_id,receipt),password)
+        assert vault._expected==anchor.read()
     finally:
         if scanner is not None:scanner.close()
         if ring is not None:ring.close()
-        if rpc is not None:rpc.close()
         if scanner is not None:runtime.unlink(missing_ok=True)
 
     # The public REGTEST miner coinbase was generated to scalar=31 at height
@@ -454,6 +452,7 @@ raise SystemExit(2)
         "real_encrypted_envelope_crash_before_native_anchor":True,
         "unanchored_future_generation_rejected":True,
         "anchor_and_signed_reservations_preserved":True,
+        "real_application_wallet_create_on_owned_core":True,
         "real_encrypted_native_checkpoint":True,
         "genuine_wsp_original_account":True,
         "actual_signed_core_regtest_ipc":True,
