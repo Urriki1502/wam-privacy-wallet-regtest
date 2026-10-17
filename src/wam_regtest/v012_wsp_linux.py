@@ -28,8 +28,13 @@ def _deny(code: str):
 class CandidateLinuxWspRpc:
     """Read-only scanner adapter; two write methods ONLY for known public fixture."""
 
-    def __init__(self, core_rpc):
+    def __init__(self, core_rpc, fixture_mining_address: str):
+        if (type(fixture_mining_address) is not str
+                or not fixture_mining_address.startswith("wamrt1q")
+                or not 30 <= len(fixture_mining_address) <= 120):
+            _deny("V012_WSP_FIXTURE_MINING_ADDRESS_DENIED")
         self._rpc = core_rpc
+        self._mining_address = fixture_mining_address
         self._genesis = None
 
     def _call(self, method: str, args: list[str]):
@@ -44,8 +49,8 @@ class CandidateLinuxWspRpc:
                     or re.fullmatch(r"[0-9a-f]+", args[0]) is None):
                 _deny("V012_WSP_PUBLIC_FIXTURE_TX_DENIED")
         elif method == "generatetoaddress":
-            if (len(args) != 2 or args[0] != "1" or
-                    not args[1].startswith("wamrt1q") or len(args[1]) > 120):
+            if (len(args) != 2 or args[0] != "1"
+                    or args[1] != self._mining_address):
                 _deny("V012_WSP_PUBLIC_FIXTURE_MINE_DENIED")
         elif method in ("getblockcount", "getbestblockhash", "getconnectioncount", "getblockchaininfo"):
             if args: _deny("V012_WSP_READ_PARAMS_DENIED")
@@ -112,7 +117,7 @@ def prove_public_receive(rpc_call, datadir: Path, wsp_source: Path, mining_addre
 
     if GENESIS != REGTEST_GENESIS:
         _deny("V012_WSP_SOURCE_GENESIS_DENIED")
-    rpc = CandidateLinuxWspRpc(rpc_call)
+    rpc = CandidateLinuxWspRpc(rpc_call, mining_address)
     rpc.attest()
     if rpc.call("getblockcount") != 101:
         _deny("V012_WSP_INITIAL_HEIGHT_DENIED")
