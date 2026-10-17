@@ -57,6 +57,12 @@ jobs:
           assert [x['depth'] for x in r['maturity']]==[99,100,101]
           assert [x['eligible'] for x in r['maturity']]==[False,False,True]
           assert [x['height'] for x in r['coinbase_boundaries']]==[1,149,150,151]
+          import re
+          assert set(r['linux_binary_sha256'])=={'wamd','wam-cli'}
+          assert all(isinstance(v,dict) and
+                     re.fullmatch(r'[0-9a-f]{64}',v.get('sha256','')) and
+                     isinstance(v.get('size'),int) and v['size']>0
+                     for v in r['linux_binary_sha256'].values())
           assert all(not r[k] for k in (
               'macos_v012_qualified','windows_v012_qualified',
               'wallet_fusion_v012_runtime_authorized','bip94_regtest_full_qualified',
