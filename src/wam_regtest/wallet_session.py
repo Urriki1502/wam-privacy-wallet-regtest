@@ -179,6 +179,93 @@ class WalletSession:
                 ring.close()
             raise WalletSessionError("WALLET_CROSS_SESSION_RECOVERY_DENIED") from None
 
+    def enable_managed_reopen(self, *, authorized=False):
+        """Explicitly seal a persistent locator for an ALREADY verified wallet.
+
+        This is never called automatically by a disposable demo or GUI startup.
+        No account rotation, wallet creation or config mutation occurs.
+        """
+        from .managed_wallet_reopen import make,publish
+        if authorized is not True:
+            raise WalletSessionError("MANAGED_WALLET_REOPEN_CONSENT_REQUIRED")
+        with self._lock:
+            self.snapshot()  # Actual owned Core and WSP/SQLite tip, never cached GUI data.
+            if (self.locked or self.faulted
+                    or self.vault.directory != self.datadir/"wallet-vault"
+                    or self.runtime != self.datadir/"wallet-runtime.sqlite"):
+                raise WalletSessionError("MANAGED_WALLET_RUNTIME_SCOPE_DENIED")
+            receipt=self._require_owned_read(self.core_dir,self.datadir,self._read_rpc)
+            profile=make(self.vault.anchor.wallet_id,receipt)
+            try:
+                with self.vault.anchor.lease():
+                    record=self.vault.anchor.read()
+                    if record is None or record!=self.vault._expected:
+                        raise WalletSessionError("MANAGED_WALLET_ANCHOR_DENIED")
+                    self.vault._load_payload(self._password,record)
+                    publish(self.vault.directory,profile,self._password)
+            except WalletSessionError:
+                raise
+            except Exception:
+                raise WalletSessionError("MANAGED_WALLET_ENABLE_DENIED") from None
+            return True
+
+    @classmethod
+    def reopen_managed(cls, core_dir, datadir, source, password, mining_address,
+                       *, authorized=False, keychain=None, read_rpc=None):
+        """Restore original accounts and encrypted reservations, never fresh keys.
+
+        Requires a genuine same-process OwnedCoreBinding-backed read session.
+        Dedicated-supervisor GUI IPC integration is a DIFFERENT, unqualified gate.
+        A crashed session's existing runtime SQLite is refused, never deleted.
+        """
+        from .managed_wallet_reopen import read
+        from .vault import CheckpointVault
+        if authorized is not True:
+            raise WalletSessionError("MANAGED_WALLET_REOPEN_CONSENT_REQUIRED")
+        cls._require_owned_read(core_dir,datadir,read_rpc)
+        _pinned_source(source)
+        ring=scanner=session=None
+        try:
+            storage=custody.storage()
+            storage.validate_directory(datadir)
+            folder=datadir/"wallet-vault"
+            storage.validate_directory(folder)
+            _,cli,receipt=verified_core_paths(core_dir)
+            if receipt["platform"]!=custody.platform_name():
+                raise WalletSessionError("MANAGED_WALLET_CORE_PLATFORM_DENIED")
+            profile=read(folder,password)
+            from .managed_wallet_reopen import make
+            if profile!=make(profile["wallet_id"],receipt):
+                raise WalletSessionError("MANAGED_WALLET_CORE_CHANGED_DENIED")
+            anchor=custody.anchor(profile["wallet_id"],keychain)
+            if anchor.read() is None:
+                raise WalletSessionError("MANAGED_WALLET_ANCHOR_MISSING")
+            vault=CheckpointVault(folder,anchor,source)
+            # Do not require the original height=102/103 or rotate an account.
+            # Encrypted vault restore itself requires a fresh PRIVATE runtime.
+            rpc=WalletCoreCli(cli,datadir)
+            rpc.attest()
+            ring,scanner=vault.restore(datadir/"wallet-runtime.sqlite",password)
+            if ring.accounts()!=scanner.accounts:
+                raise WalletSessionError("MANAGED_WALLET_ACCOUNT_MISMATCH")
+            session=cls(core_dir,datadir,source,ring,scanner,vault,password,
+                        mining_address,read_rpc)
+            session.snapshot()  # Actual Core tip checked before any GUI balance.
+            return session
+        except Exception:
+            if session is not None:
+                try:session.lock()
+                except Exception:pass
+            else:
+                if scanner is not None:
+                    try:scanner.close()
+                    except Exception:pass
+                if ring is not None:
+                    try:ring.close()
+                    except Exception:pass
+            # Never replace/correct/recover an uncertain vault automatically.
+            raise WalletSessionError("MANAGED_WALLET_REOPEN_DENIED") from None
+
     @staticmethod
     def _require_owned_read(core_dir, datadir, rpc):
         from .json_rpc import ManagedReadRpc
