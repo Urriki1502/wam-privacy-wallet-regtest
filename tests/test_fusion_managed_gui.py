@@ -29,13 +29,19 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
         self.assertFalse(self.win.stop_core.isEnabled())
 
     def _dispose_window(self):
-        from PySide6.QtCore import QCoreApplication,QEvent
+        import gc
+        from shiboken6 import delete, isValid
         if self.win is not None:
-            self.assertTrue(self.win.close())
-            self.win.deleteLater()
-            QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+            window=self.win
+            self.assertTrue(window.close())
+            # deleteLater() alone depends on the event loop and has left
+            # native Qt wrappers alive at Python interpreter finalization.
+            delete(window)
+            self.assertFalse(isValid(window))
+            self.win=None
+            del window
+            gc.collect()
             self.app.processEvents()
-            self.win = None
 
     def test_all_allowed_supervisor_states_are_rendered_without_wallet_adoption(self):
         for state in VISIBLE_STATES:
