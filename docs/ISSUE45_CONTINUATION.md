@@ -1,3 +1,57 @@
+# Current checkpoint — PR67 native Qt crash fixed; Q05 remains partial
+
+Use ONLY existing branch feature/issue45-t05-gui-continuity-q05-20261017,
+DraftPR67, basePR66/71a1e7b. User explicitly authorized takeover. Do not create
+PR68 or change PR66/61/60/main/RC1/upstream/owner data/anchors. REGTEST only,
+v0.1.11 independent pins unchanged, no merge/rebase/force-push or T06 attach.
+Acquire engineering lease before work; refuse concurrent work. Current turn's
+tracked lease87623 is not evidence of a future holder; actual release in
+outputs/pr67-qt-20261017/RESUME_LOG.md. Earlier checkpoints below are historical.
+
+41c14bd687a5f6fbda066d3d1e306e1e8f1d2177 fixed the native shutdown crash.
+ResponsiveRow had left panels unparented until resizeEvent; hidden windows left
+independent widgets for PySide's unordered destruction visitor. Eager layout
+ownership fixes it, retaining QApplication.shutdown and native destruction.
+Mac native OS stack and baseline5tests exit139 reproduced; fixed targeted8,
+full209(175PASS/34platformSKIP),10independent runner exits and Cocoa8 all exit0.
+See docs/PR67_QT_LIFETIME.md. Actual41c14bd all10CI jobs SUCCESS independently
+verified, including Windows native/frozen, Mac native/frozen, Linux native,
+frozen desktop/headless and developer-Core rebuild. Committed exact snapshot
+PR67_41C14BD_ALL_CI.json is predecessor evidence, not successor qualification.
+
+Local41c14bd finalMac app/DMG actually ran Core/WSP/SQLite/Qt operational,
+security/recovery/reorg E2E and exited0; bytes/hashes/source provenance verified.
+Original Core pair unchanged. Mac ZIPa0fe9088bd5798ef2ae68c960be025b56ba606edea1ac59fc77c0e3432ea17ff,
+DMGbcc351718b5b16359150278482684c929775b64b86c63097e2b1a658a763337c.
+ActualLinux downloaded archives inspected193headless/454desktop file hashes,
+25safe desktop links, x86_64ELF/Core pins and exact41c14bd/8ae4141 checkout.
+No localWindows/Linux execution or physical approval claimed. Windowsfrozen
+artifact12097376351 downloadexec12663 in progress at checkpoint; inspect once
+complete, never hash partialfile. All receipt/public logs in separate outputdir.
+
+Additional real defect: downloadedWindows nativeT05 JSON has literal backslash-n
+trailer and cannot parse; operational JSON is valid. Successor fixes newline and
+adds actual JSON round-trip assertion. Do not relabel that oldT05 receipt valid.
+
+Next acceptance unit adds THREE genuine independent nativeQt GUI processes:
+clean close, abrupt kill AFTER authenticated status/Qt readiness, clean reconnect;
+assert original supervisor and same chain tip survive. Prior client os._exit test
+remains a separate IPC-disconnect case. No signing/network retry or wallet
+adoption. New public receipt records independent Core pair and reused clean-source
+provenance before/after native probe. Probe is explicitly consented, control/status
+only, not runtime wallet authority. Local realCore three-GUI proof passed before
+source-provenance additions; exact committed-head rerun and successorCI pending.
+
+Next: inspect latest67 CI, fix failures first. Verify actual successor nativeCore
+three-GUI proof on Mac/Win/Linux and source/artifact identities. Only then extend
+managed WSP wallet reopen preserving identity/history/irreversible reservations
+and permission-scoped IPC capability. Current managed GUI still session=None,
+snapshot=None; full_gui_q05_qualified=false is mandatory. No fresh-wallet creation,
+reset, automatic adoption or releasing uncertain reservations to make Q05 pass.
+Final frozen managed-Q05 and operator/physical remain PENDING.
+
+# Historical records
+
 # Final current checkpoint — own Draft60 / Draft61
 
 2026-10-17 resumed at01:52:55Z. Active branch

@@ -1,0 +1,19 @@
+{
+  "status": "DOWNLOADED_LINUX_FROZEN_BYTES_AND_RECEIPT_VERIFIED",
+  "source_head_sha": "41c14bd687a5f6fbda066d3d1e306e1e8f1d2177",
+  "checkout_sha": "8ae4141fdae148bc7d9a75a8fbdd589969392a87",
+  "frontend": "desktop",
+  "outer_sha256": "d84d73adf264bef7b4917ca09108576bf1d514d6a056c54fd9838cd20d180f54",
+  "archive_sha256": "248944327e217a3dbaa4f92cc4b615c9b30af9b718c95b4c0ba6c8d42be47c1b",
+  "bundle_files_verified": 454,
+  "safe_internal_links_verified": 25,
+  "core_sha256": {
+    "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+    "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652"
+  },
+  "build_source_provenance_verified": true,
+  "local_linux_execution": false,
+  "physical": "PENDING_OPERATOR",
+  "full_managed_wallet_q05_qualified": false,
+  "mainnet_allowed": false
+}

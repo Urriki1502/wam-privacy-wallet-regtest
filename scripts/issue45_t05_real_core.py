@@ -5,6 +5,7 @@ deletes its datadir, including clean close and simulated daemon crash.
 """
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -39,7 +40,7 @@ def _qt_reopen_probe(root, expected_height):
                 time.sleep(.01)
             else:raise AssertionError("T05_FUSION_GUI_SYNC_TIMEOUT")
             assert "READY" in window.verification_badge.text()
-            assert "height "+str(expected_height) in window.status.text()
+            assert " · height "+str(expected_height)+" · " in window.status.text()
             assert window._snapshot is None and window.session is None
             assert window.dashboard.go_send.isEnabled() is False
         finally:
@@ -51,7 +52,51 @@ def _qt_reopen_probe(root, expected_height):
             app.processEvents()
 
 
+def _qt_process_probe(root, expected_height):
+    """Three real GUI interpreters: clean close, abrupt crash, verified reopen."""
+    import queue
+    import threading
+    command = [sys.executable, "-m", "wam_regtest.managed_gui_probe",
+        "--root", str(root), "--expected-height", str(expected_height),
+        "--confirm-disposable-regtest-probe"]
+    expected = {"height": expected_height, "wallet_adopted": False,
+                "authenticated_gui_ready": True}
+    def clean():
+        result = subprocess.run(command, stdin=subprocess.DEVNULL,
+            capture_output=True, timeout=40)
+        if result.returncode != 0:
+            raise AssertionError("T05_GUI_CLEAN_PROCESS_EXIT_DENIED")
+        assert json.loads(result.stdout) == {**expected, "native_shutdown_completed": True}
+    clean()
+    child = subprocess.Popen(command + ["--wait-for-crash"],
+        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    line = queue.Queue(maxsize=1)
+    # Portable bounded pipe readiness; Windows does not support select on pipes.
+    reader = threading.Thread(target=lambda: line.put(child.stdout.readline(1025)), daemon=True)
+    reader.start()
+    try:
+        ready = line.get(timeout=35)
+        assert len(ready) <= 1024 and json.loads(ready) == expected
+        assert child.poll() is None
+        # Kill only the actual GUI Popen created above, after real Qt and IPC
+        # verification. No synthetic os._exit stand-in for this acceptance case.
+        child.kill()
+        assert child.wait(timeout=10) != 0
+    finally:
+        if child.poll() is None:
+            child.kill()
+            child.wait(timeout=10)
+        reader.join(timeout=3)
+        child.stdout.close()
+        assert not reader.is_alive()
+    clean()
+
+
 def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
+    # Native acceptance source identity only, never a runtime wallet authority.
+    from wam_regtest.build_provenance import capture, verify, public_receipt
+    source_root = Path(__file__).resolve().parents[1]
+    source = capture(source_root)
     if sys.platform=="linux":
         if type(linux_manifest) is not str or linux_witness is None:
             raise ManagedCoreError("T05_LINUX_NATIVE_WITNESS_REQUIRED")
@@ -61,7 +106,9 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
         configure(core,linux_manifest,linux_witness,authorized=True)
     evidence={"schema":"wam-t05-real-owned-core/v1","chain":"regtest",
               "synthetic_rpc":False,"mainnet_allowed":False,
-              "full_gui_q05_qualified":False}
+              "full_gui_q05_qualified":False,
+              "test_source_provenance":public_receipt(source,
+                  source_head=os.environ.get("WAM_SOURCE_HEAD"))}
     # The testing harness deletes its private disposable fixture after
     # the test, NOT the actual managed Core lifecycle.
     with tempfile.TemporaryDirectory(prefix="wam-t05-public-fixture-") as temporary:
@@ -74,6 +121,8 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
         else:
             root.mkdir(mode=0o700)
         owner=CoreSupervisor(root,core,authorized=True)
+        evidence["wamd_sha256"] = owner.receipt["wamd_sha256"]
+        evidence["wam_cli_sha256"] = owner.receipt["wam_cli_sha256"]
         try:
             # Distinct supervisor must not acquire an existing owner lock.
             try:CoreSupervisor(root,core,authorized=True)
@@ -167,6 +216,14 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
                 assert server.poll() is None
                 assert control(root,"status",timeout=15)["height"]==height
                 evidence["real_qt_gui_close_reopen_same_core"]=True
+                _qt_process_probe(root,height)
+                assert server.poll() is None
+                assert control(root,"status",timeout=15)["height"]==height
+                assert _read_cli([str(restarted.cli),f"-datadir={root/'chain'}",
+                                  "getblockhash",str(height)])==tip
+                evidence["independent_qt_process_reopen_same_chain"]=True
+                evidence["actual_qt_process_killed_after_authenticated_ready"]=True
+                evidence["actual_qt_crash_reconnect_same_tip"]=True
             state=control(root,"shutdown",authorized=True,timeout=15)
             stopped=(state["state"]=="stopped" and state["core_process_owned"] is False)
             assert stopped
@@ -188,6 +245,7 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
         evidence["unrelated_core_stopped"]=False
         evidence["verified_core_version"]="v0.1.11"
         evidence["real_process_lifecycle_pass"]=True
+    verify(source_root, source)
     return evidence
 
 

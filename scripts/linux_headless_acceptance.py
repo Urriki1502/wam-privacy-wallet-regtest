@@ -80,11 +80,15 @@ try:
         required=('clean_restart_same_tip','daemon_crash_recovery_same_tip',
                   'independent_gui_client_reopen_same_chain',
                   'disconnected_gui_client_core_survived',
+                  'independent_qt_process_reopen_same_chain',
+                  'actual_qt_process_killed_after_authenticated_ready',
+                  'actual_qt_crash_reconnect_same_tip',
                   'real_qt_gui_close_reopen_same_core','persistent_datadir_reused',
                   'simultaneous_owner_denied')
         assert all(proof.get(name) is True for name in required)
         assert proof['full_gui_q05_qualified'] is False
         record['t05_real_managed_qt']={name:proof[name] for name in required}
+        record['t05_real_managed_qt']['test_source_provenance']=proof['test_source_provenance']
         record['t05_real_managed_qt']['full_wallet_q05_pending']=True
         print('LINUX_T05_REAL_CORE_NATIVE_QT_GUI_REOPEN_PASS_NOT_WALLET_Q05')
     report.write_text(json.dumps(record,indent=2)+'\n')
