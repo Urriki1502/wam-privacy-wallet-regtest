@@ -189,53 +189,56 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
             assert state["core_process_owned"] is True
             assert state["height"]==height
             if qt:
-                # True WSP-1 Scanner.sync over authenticated, separately owned
-                # Core read IPC. Test only first 3 REAL blocks to bound CI;
-                # this does NOT qualify full-wallet scanning or Q05.
-                from wam_regtest.managed_scan_client import ManagedScanRpc
-                from wam_sp.keystore import ScanAccount
-                from wam_sp.core import pub
-                from wam_sp.scanner import Scanner
-                client_scan=ManagedScanRpc(root,authorized_readonly=True)
-                scanner=None
-                try:
-                    assert client_scan.attest()["blocks"]==height
-                    assert client_scan.call("getblockhash",[height])==tip
-                    scanner=Scanner(root/"q05-public-scan-fixture.sqlite",
-                                    (ScanAccount(0,1,pub(2),birthday=1),))
-                    progress=scanner.sync(client_scan,max_blocks=3)
-                    assert progress.blocks==3
-                    observed_height,observed_tip=scanner.store.tip()
-                    assert observed_height==3
-                    assert observed_tip==client_scan.call("getblockhash",[3])
-                    assert scanner.ready is False
-                    evidence["authenticated_wsp_scan_first_three_real_blocks"]=True
-                    # Close the actual WSP SQLite store and transport. A new
-                    # scanner and independently authenticated IPC session
-                    # must continue the *same* canonical chain without
-                    # replacing the stored scan account or resetting history.
-                    original_account=scanner.accounts[0].identity()
-                    scanner.close()
-                    scanner=None
-                    client_scan.close()
-                    client_scan=ManagedScanRpc(root,authorized_readonly=True)
-                    assert client_scan.attest()["blocks"]==height
-                    scanner=Scanner(root/"q05-public-scan-fixture.sqlite",
-                                    (ScanAccount(0,1,pub(2),birthday=1),))
-                    assert scanner.accounts[0].identity()==original_account
-                    assert scanner.store.tip()==(3,observed_tip)
-                    resumed=scanner.sync(client_scan,max_blocks=5)
-                    assert resumed.blocks==5
-                    assert scanner.store.tip()==(8,client_scan.call("getblockhash",[8]))
-                    assert scanner.ready is False
-                    assert client_scan.call("getblockhash",[height])==tip
-                    assert server.poll() is None
-                    evidence["authenticated_wsp_sqlite_resume_same_tip"]=True
-                    evidence["authenticated_wsp_reopened_client_same_supervisor"]=True
-                    evidence["scanner_read_only_partial_sync_only"]=True
-                finally:
-                    if scanner is not None:scanner.close()
-                    client_scan.close()
+                # Two independent REAL WSP-1 scanner interpreters. They share
+                # only the OS-protected SQLite fixture, not an RPC object,
+                # memory account, Core PID handle or process lifetime.
+                # This still proves a public scanner fixture, NOT owner-wallet
+                # restore, signer activation or complete Q05.
+                wsp_source=source_root/"wsp-upstream"
+                command=[sys.executable,"-m","wam_regtest.managed_scan_probe",
+                    "--root",str(root),"--wsp-source",str(wsp_source),
+                    "--confirm-public-regtest-scan"]
+                if sys.platform=="linux":
+                    command.extend(["--core-dir",str(core),
+                        "--linux-developer-manifest",linux_manifest,
+                        "--linux-root-witness",str(linux_witness)])
+                def scan_child(before,count):
+                    args=command+["--expected-before",str(before),
+                                  "--max-blocks",str(count)]
+                    reply=subprocess.run(args,stdin=subprocess.DEVNULL,
+                        capture_output=True,timeout=100,check=False)
+                    if reply.returncode!=0:
+                        raise AssertionError("Q05_REAL_WSP_INDEPENDENT_PROCESS_DENIED")
+                    evidence=json.loads(reply.stdout)
+                    assert evidence["status"]=="Q05_INDEPENDENT_REAL_WSP_SCAN_PASS"
+                    assert evidence["before"]==before
+                    assert evidence["processed"]==count
+                    assert evidence["height"]==before+count
+                    assert evidence["core_height"]==height
+                    assert evidence["read_only"] is True
+                    assert evidence["wallet_adopted"] is False
+                    assert evidence["signer_allowed"] is False
+                    assert evidence["broadcast_allowed"] is False
+                    assert evidence["mainnet_allowed"] is False
+                    assert evidence["synthetic_rpc"] is False
+                    return evidence
+                scan1=scan_child(0,3)
+                assert scan1["scanner_ready"] is False
+                assert scan1["tip"]==_read_cli([str(restarted.cli),
+                    f"-datadir={root/'chain'}","getblockhash","3"])
+                assert server.poll() is None
+                scan2=scan_child(3,5)
+                assert scan2["scanner_ready"] is False
+                assert scan2["tip"]==_read_cli([str(restarted.cli),
+                    f"-datadir={root/'chain'}","getblockhash","8"])
+                assert scan1["tip"]!=scan2["tip"]
+                assert server.poll() is None
+                assert control(root,"status",timeout=15)["height"]==height
+                evidence["authenticated_wsp_scan_first_three_real_blocks"]=True
+                evidence["authenticated_wsp_sqlite_resume_same_tip"]=True
+                evidence["authenticated_wsp_reopened_client_same_supervisor"]=True
+                evidence["two_independent_wsp_scanner_processes_same_sqlite"]=True
+                evidence["scanner_read_only_partial_sync_only"]=True
             # This second, independent interpreter represents a GUI re-open.
             client=subprocess.run([
                 sys.executable,"-m","wam_regtest.supervisor_cli",
