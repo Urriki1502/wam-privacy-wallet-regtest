@@ -23,7 +23,7 @@ class FixtureCalls:
 class BIP352FixtureAdapterTests(unittest.TestCase):
     def setUp(self):
         self.fake=FixtureCalls()
-        self.rpc=CandidateLinuxWspRpc(self.fake)
+        self.rpc=CandidateLinuxWspRpc(self.fake, "wamrt1q"+"q"*42)
 
     def test_scanner_reads_not_allowed_until_real_chain_attestation(self):
         with self.assertRaisesRegex(CandidateWspDenied,"V012_WSP_SCANNER_READ_ONLY_DENIED"):
@@ -70,7 +70,7 @@ class BIP352FixtureAdapterTests(unittest.TestCase):
             class WrongRpc:
                 def __call__(self,called,*args):
                     return wrong if called==method else old(called,*args)
-            r=CandidateLinuxWspRpc(WrongRpc())
+            r=CandidateLinuxWspRpc(WrongRpc(), "wamrt1q"+"q"*42)
             with self.subTest(method=method), self.assertRaises(CandidateWspDenied):
                 r.attest()
 
