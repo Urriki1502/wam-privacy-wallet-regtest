@@ -61,6 +61,7 @@ def main():
     if sys.stdout is None:sys.stdout=io.StringIO()
     if sys.stderr is None:sys.stderr=io.StringIO()
     ci=sys.argv[1:]==['--ci-real-core-wallet']
+    managed=sys.argv[1:2]==['--ci-managed-process']
     try:
         from wam_regtest.frozen_managed_probe import FLAG, arguments, run as managed_probe
         if sys.argv[1:2] == [FLAG]:
@@ -118,7 +119,7 @@ def main():
         if ci:
             with Path('windows-packaged-wallet-denied.json').open('x',encoding='utf8') as out:
                 json.dump({'status':'WIN_BUNDLE_DENIED','mainnet_allowed':False},out)
-        else:
+        elif not managed:
             from PySide6.QtWidgets import QApplication,QMessageBox
             app=QApplication.instance() or QApplication([])
             QMessageBox.critical(None,'WAM Privacy Wallet REGTEST',

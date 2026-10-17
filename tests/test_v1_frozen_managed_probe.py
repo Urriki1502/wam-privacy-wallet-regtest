@@ -45,6 +45,15 @@ class FrozenManagedProbeScope(unittest.TestCase):
             capture_output=True,timeout=15)
         self.assertEqual(child.returncode,0)
 
+    @unittest.skipUnless(sys.platform in ('darwin','win32'),'Native Qt installed')
+    def test_windowed_probe_refusal_exits_without_modal_dialog(self):
+        child=subprocess.run([sys.executable,'-c',
+            "import sys;from wam_regtest.windows_package_entry import main;"
+            "sys.argv=['test','--ci-managed-process','supervisor','--root',sys.argv[1],"
+            "'--confirm-disposable-regtest-probe'];raise SystemExit(main())",self.root],
+            capture_output=True,timeout=15)
+        self.assertEqual(child.returncode,2)
+
     @unittest.skipUnless(sys.platform in ('darwin','win32'),'Native Mac/Windows fixture custody')
     def test_native_report_is_bounded_create_only_and_rejects_symlink(self):
         from wam_regtest.custody import create_directory

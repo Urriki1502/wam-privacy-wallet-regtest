@@ -71,18 +71,25 @@ def run(argv, core, source):
     if sys.platform == 'linux':
         if args.linux_developer_manifest is None or args.linux_root_witness is None:
             raise ValueError('FROZEN_PROBE_LINUX_WITNESS_REQUIRED')
-        from .linux_runtime import configure
-        configure(core, args.linux_developer_manifest, args.linux_root_witness, authorized=True)
+        if args.role != 'scan':
+            # Existing scan entry performs its own one-shot binding. Never
+            # rebind LinuxPolicy or suppress LINUX_POLICY_ALREADY_BOUND.
+            from .linux_runtime import configure
+            configure(core, args.linux_developer_manifest, args.linux_root_witness, authorized=True)
     if args.role == 'gui':
         from .managed_gui_probe import probe
+        from .desktop import qt_application
+        def report(value):
+            publish_report(args.report_root, {**value, 'frozen_entrypoint': True,
+                'qt_platform': qt_application().platformName()})
         probe(args.root, args.expected_height, wait_for_crash=args.wait_for_crash,
-              report=lambda value: publish_report(args.report_root, value))
+              report=report)
     elif args.role == 'scan':
         from .managed_scan_probe import run as scan
         result = scan(args.root, source, max_blocks=args.max_blocks,
             expected_before=args.expected_before, authorized=True, core_dir=core,
             linux_manifest=args.linux_developer_manifest, linux_witness=args.linux_root_witness)
-        publish_report(args.report_root, result)
+        publish_report(args.report_root, {**result, 'frozen_entrypoint': True})
     else:
         from .core_supervisor import CoreSupervisor
         owner = CoreSupervisor(args.root, core, authorized=True)

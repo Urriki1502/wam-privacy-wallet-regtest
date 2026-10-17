@@ -17,9 +17,14 @@ fixture, never stdout emulation or a source fallback. No wallet/anchor/signing
 authority added; no source or native Core/custody gates removed. Linux still
 requires its independently approved developer manifest and real root witness.
 
-Local native unit suite:256 tests,222 PASS/34 platform SKIP, exit0. Actual final
-Mac build/bootloader, exact-head CI, Windows/Linux frozen execution and artifact
-inspection are PENDING until their real results exist. Native-source test
+Initial implementation6e8e4af35b5b0fcdbbc6c5518484ab234b8b2d76: local full
+Mac app/DMG and actual frozen managed-process test PASS/exit0, both official
+Core hashes unchanged. Follow-up review fixed duplicate one-shot Linux scan
+policy initialization and Windows CI-role failures opening modal dialogs.
+Added actual child Qt-platform/frozen reporting and Windows path triggers.
+Local updated native unit suite:257 tests,223 PASS/34 platform SKIP, exit0.
+Updated final Mac build/bootloader, exact-head CI, Windows/Linux frozen execution
+and artifact inspection are PENDING until their real results exist. Native-source test
 orchestrator identity and final executable hash are recorded separately.
 Full managed-wallet Q05 remains false; physical acceptance remains pending.
 Separate resume log: outputs/pr67-resume-20261017T220014/RESUME_LOG.md.

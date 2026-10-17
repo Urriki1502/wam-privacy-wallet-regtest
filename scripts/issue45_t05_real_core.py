@@ -54,7 +54,7 @@ class _FrozenChildren:
         reply=subprocess.run(command,stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=100)
         if reply.returncode!=0:
-            raise AssertionError('T05_FROZEN_CHILD_EXIT_DENIED')
+            raise AssertionError('T05_FROZEN_'+role.upper()+'_EXIT_DENIED')
         return self.read(report)
 
     def gui_crash(self, height, expected):
@@ -157,6 +157,9 @@ def _qt_process_probe(root, expected_height, frozen=None):
         "--confirm-disposable-regtest-probe"]
     expected = {"height": expected_height, "wallet_adopted": False,
                 "authenticated_gui_ready": True}
+    if frozen is not None:
+        from wam_regtest.desktop import qt_application
+        expected.update(frozen_entrypoint=True,qt_platform=qt_application().platformName())
     def clean():
         if frozen is not None:
             assert frozen.run('gui','--expected-height',str(expected_height)) == {
@@ -318,6 +321,7 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
                     if frozen is not None:
                         evidence=frozen.run('scan','--expected-before',str(before),
                                             '--max-blocks',str(count))
+                        assert evidence['frozen_entrypoint'] is True
                     else:
                         reply=subprocess.run(args,stdin=subprocess.DEVNULL,
                             capture_output=True,timeout=100,check=False)
@@ -402,6 +406,8 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
                 evidence['frozen_executable_sha256']=frozen.digest
                 evidence['frozen_public_scan_processes']=2
                 evidence['frozen_gui_processes']=3
+                from wam_regtest.desktop import qt_application
+                evidence['frozen_qt_platform']=qt_application().platformName()
                 evidence['acceptance_orchestrator']='native-source-test-harness'
         finally:
             # Never terminate an unverified live Core owner to hide a test fail.
