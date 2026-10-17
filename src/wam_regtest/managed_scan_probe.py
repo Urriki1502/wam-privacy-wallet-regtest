@@ -17,7 +17,8 @@ class IndependentScanProbeError(ValueError):
     pass
 
 
-def run(root, wsp_source, *, max_blocks, expected_before=None, authorized=False):
+def run(root, wsp_source, *, max_blocks, expected_before=None, authorized=False,
+        core_dir=None, linux_manifest=None, linux_witness=None):
     if authorized is not True or type(root) is not type(Path()) or not root.is_absolute():
         raise IndependentScanProbeError("Q05_PUBLIC_SCAN_CONSENT_REQUIRED")
     _root(root)
@@ -26,6 +27,13 @@ def run(root, wsp_source, *, max_blocks, expected_before=None, authorized=False)
             or expected_before is not None and
                 (type(expected_before) is not int or not 0<=expected_before<=1_000_000)):
         raise IndependentScanProbeError("Q05_PUBLIC_SCAN_SCOPE_DENIED")
+    if sys.platform=="linux":
+        if (type(core_dir) is not type(Path()) or not core_dir.is_absolute()
+                or type(linux_manifest) is not str
+                or type(linux_witness) is not type(Path()) or not linux_witness.is_absolute()):
+            raise IndependentScanProbeError("Q05_LINUX_ROOT_WITNESS_REQUIRED")
+        from .linux_runtime import configure
+        configure(core_dir,linux_manifest,linux_witness,authorized=True)
     from .wsp_live import _pinned_source
     _pinned_source(wsp_source)
     from wam_sp.keystore import ScanAccount
@@ -79,12 +87,17 @@ def main(argv=None):
     ap.add_argument("--max-blocks",type=int,required=True)
     ap.add_argument("--expected-before",type=int)
     ap.add_argument("--confirm-public-regtest-scan",action="store_true")
+    ap.add_argument("--core-dir",type=Path)
+    ap.add_argument("--linux-developer-manifest")
+    ap.add_argument("--linux-root-witness",type=Path)
     args=ap.parse_args(argv)
     if not args.confirm_public_regtest_scan:
         return 2
     try:
         evidence=run(args.root,args.wsp_source,max_blocks=args.max_blocks,
-            expected_before=args.expected_before,authorized=True)
+            expected_before=args.expected_before,authorized=True,
+            core_dir=args.core_dir,linux_manifest=args.linux_developer_manifest,
+            linux_witness=args.linux_root_witness)
         print(json.dumps(evidence,sort_keys=True,separators=(",",":")),flush=True)
         return 0
     except Exception:
