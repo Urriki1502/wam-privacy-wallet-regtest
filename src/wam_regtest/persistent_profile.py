@@ -52,7 +52,7 @@ def _root(root):
         meta=ancestor.lstat()
         if not stat.S_ISDIR(meta.st_mode):
             _deny('PROFILE_ANCESTOR_DENIED')
-        if meta.st_mode & stat.S_IWOTH and not (
+        if meta.st_mode & (stat.S_IWGRP|stat.S_IWOTH) and not (
                 meta.st_uid == 0 and meta.st_mode & stat.S_ISVTX):
             _deny('PROFILE_ANCESTOR_DENIED')
     prior=root.lstat()
