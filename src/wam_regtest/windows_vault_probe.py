@@ -102,10 +102,9 @@ def prove_real_windows_vault(cli,datadir,port,env,source,mining_address):
         try:
             denied(lambda:stale.save(ring,scanner,password))
         except Exception as error:
-            # Fixed exception class only, never print private paths, keys or
-            # the native OS exception message.
-            raise WindowsVaultProbeError(
-                'WIN_VAULT_STALE_REJECTION_'+type(error).__name__) from None
+            # Fixed exception class only, never paths, keys or OS error text.
+            stage='ANCHORED_SAVE_STALE_REJECTION_'+type(error).__name__
+            raise
         stage='BACKUP_RESTORE'
         backup=directory('encrypted-backup');vault.backup(backup,'recovery.enc')
         recovery=directory('recovered-vault')
