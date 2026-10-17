@@ -60,7 +60,9 @@ jobs:
           assert r['mined_block_count']==151 and r['zero_external_peers'] is True
           h=r['v012_http_candidate']
           assert h['signed_real_core_http_reads'] is True
-          assert h['read_count']==4 and h['authenticated_loopback'] is True
+          assert h['read_count']==5 and h['authenticated_loopback'] is True
+          assert h['linux_candidate_rpc_shape_checked'] is True
+          assert h['observed_zero_peers'] is True
           assert h['kernel_owned_socket'] is True
           assert h['candidate_rpc_profile']=={'version':112,'subversion':'/WAM:0.1.12/','protocolversion':70016}
           assert h['candidate_height']==151
