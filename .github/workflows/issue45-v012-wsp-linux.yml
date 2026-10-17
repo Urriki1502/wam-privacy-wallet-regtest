@@ -1,0 +1,98 @@
+name: Issue45 v0.1.12 REAL Linux WSP BIP352 Receive (CI FIXTURE ONLY)
+on:
+  pull_request:
+    paths:
+      - 'src/wam_regtest/v012_wsp_linux.py'
+      - 'scripts/issue45_v012_wsp_linux.py'
+      - 'tests/test_v1_v012_wsp_linux.py'
+      - '.github/workflows/issue45-v012-wsp-linux.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  genuine-v012-linux-bip352-receive:
+    name: Signed Core 0.1.12 + pinned WSP confirmed public receive / SQLite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate exact source HEAD, upstream WSP and isolated runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_ACTIONS" = true
+          test "$RUNNER_OS" = Linux
+          test "$(uname -m)" = x86_64
+          test "$(git rev-parse HEAD)" = "$WAM_SOURCE_HEAD"
+          test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
+      - name: Install pinned WSP engine and run safe refusal/unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y gnupg libevent-2.1-7t64
+          python -m pip install --disable-pip-version-check -e . -e ./wsp-upstream
+          python -m pip check
+          python -m unittest discover -s tests -p 'test_v1_v012_wsp_linux.py' -v
+      - name: Run REAL on-chain signed v0.1.12 -> WSP BIP352 -> SQLite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m scripts.issue45_v012_wsp_linux \
+            --confirm-disposable-ci-regtest \
+            --wsp-source "$(pwd)/wsp-upstream" \
+            --output v012-linux-wsp-receive.json
+          python - <<'PY'
+          import json,os,re
+          from pathlib import Path
+          r=json.loads(Path('v012-linux-wsp-receive.json').read_text())
+          assert r['source_head']==os.environ['WAM_SOURCE_HEAD']
+          assert r['linux_real_signed_core_version']=='v0.1.12'
+          assert r['real_native_core_used'] is True
+          assert r['synthetic_rpc'] is False
+          assert r['network']=='regtest' and r['regtest_network_only'] is True
+          assert r['core_version_rpc']=={'version':112,'subversion':'/WAM:0.1.12/','protocolversion':70016}
+          assert set(r['binary_sha256'])=={'wamd','wam-cli'}
+          assert all(re.fullmatch(r'[a-f0-9]{64}',x['sha256']) for x in r['binary_sha256'].values())
+          p=r['pinned_wsp_receipt']
+          assert p['status']=='V012_LINUX_REAL_WSP1_BIP352_CONFIRMED_RECEIVE_COMPONENT_PASS'
+          assert p['wsp_source_commit']=='ac55f13423620252bdbf848c7e8a280c3b84721e'
+          assert p['confirmation_height']==102
+          assert p['native_scanner_blocks']==101 and p['scan_after_payment_blocks']==1
+          assert p['real_bip352_receive_credited'] is True
+          assert p['actual_core_consensus_broadcast_confirmed'] is True
+          assert p['sqlite_restart_no_double_credit'] is True
+          assert p['received_atoms']==4749990000 and p['zero_external_peers'] is True
+          assert r['binary_sha256']['wamd']['sha256']=='9d13b329f451486930a3cf799b360237bcc7e858e94a964f817df520428374db'
+          assert r['binary_sha256']['wam-cli']['sha256']=='455d85aa1ce35f70c71da6947a79b549f33c4116168ff7ecdc41b067a3fbe907'
+          assert r['linux_wsp_v012_component_qualified'] is True
+          for key in ('macos_wsp_v012_qualified','windows_wsp_v012_qualified',
+                      'fusion_walletsession_v012_qualified','operational_signer_authorized',
+                      'frozen_app_v012_qualified','physical_dev_accepted','mainnet_allowed'):
+              assert r[key] is False
+          print('V012_LINUX_REAL_WSP_BIP352_ONCHAIN_RECEIVE_COMPONENT_PASS_NOT_FUSION_PRODUCTION')
+          PY
+      - name: Preserve exact HEAD public fixture acceptance evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue45-v012-wsp-linux-${{ github.sha }}
+          path: v012-linux-wsp-receive.json
+          if-no-files-found: error
+          retention-days: 14
