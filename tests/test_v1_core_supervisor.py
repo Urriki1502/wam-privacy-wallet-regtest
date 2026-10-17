@@ -124,7 +124,9 @@ class SupervisorTransportResilience(unittest.TestCase):
         owner.core=Path.cwd()/"fixture-core"
         owner.process=Mock()
         owner.process.poll.return_value=None
-        owner.binding=Mock()
+        # Explicit method stub: unittest.mock reserves names starting with
+        # 'assert_' unless declared on the object.
+        owner.binding=SimpleNamespace(assert_socket=Mock())
         class FakeSocket:
             def __enter__(self):return self
             def __exit__(self,*args):return False
@@ -154,7 +156,9 @@ class SupervisorTransportResilience(unittest.TestCase):
         owner.core=Path.cwd()/"fixture-core"
         owner.process=Mock()
         owner.process.poll.return_value=None
-        owner.binding=Mock()
+        # Explicit method stub: unittest.mock reserves names starting with
+        # 'assert_' unless declared on the object.
+        owner.binding=SimpleNamespace(assert_socket=Mock())
         class FakeSocket:
             def __enter__(self):return self
             def __exit__(self,*args):return False
