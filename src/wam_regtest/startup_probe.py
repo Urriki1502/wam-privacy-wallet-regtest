@@ -1,6 +1,7 @@
 """Actual Core startup collisions; instrumentation never synthesizes RPC data."""
 from contextlib import contextmanager, ExitStack
 import socket
+import sys
 from pathlib import Path
 from unittest.mock import patch
 from . import owned_start
@@ -31,6 +32,7 @@ def prove_startup(core):
             if len(calls)<=count:
                 server=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
                 try:
+                    if sys.platform=='win32':server.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
                     server.bind(('127.0.0.1',ports[0]));server.listen(8)
                 except BaseException:server.close();raise
                 blockers.append(server)
