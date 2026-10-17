@@ -33,7 +33,33 @@ def _metadata(s):
     return [s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns]
 
 
+def _windows_file(path):
+    # lstat and CRT fstat can report different cached Windows timestamps after
+    # writes. Use ONE native identity/size/write-time API on the locked handle;
+    # deny write/delete sharing and hold every parent against reparse changes.
+    from . import windows_private_storage as native
+    with native.directory_guard(path.parent,private=False):
+        handle=native.create(str(path),0x81,1,None,3,0x200000,None)
+        if handle in (None,native.INVALID):raise BuildSourceError('BUILD_SOURCE_FILE_DENIED')
+        try:
+            before=native._metadata(handle);size=before[3]
+            if size>128*1024*1024:raise BuildSourceError('BUILD_SOURCE_FILE_DENIED')
+            buffer=native.c.create_string_buffer(65536);chunks=[];total=0
+            while True:
+                got=native.w.DWORD()
+                if not native.readfile(handle,buffer,len(buffer),native.c.byref(got),None):
+                    raise BuildSourceError('BUILD_SOURCE_FILE_DENIED')
+                if not got.value:break
+                total+=got.value
+                if total>size:raise BuildSourceError('BUILD_SOURCE_CHANGED')
+                chunks.append(buffer.raw[:got.value])
+            if total!=size or native._metadata(handle)!=before:raise BuildSourceError('BUILD_SOURCE_CHANGED')
+            return b''.join(chunks),list(before)
+        finally:native.close(handle)
+
+
 def _file(path):
+    if os.name=='nt':return _windows_file(path)
     before=path.lstat()
     if (not stat.S_ISREG(before.st_mode) or before.st_nlink!=1
             or getattr(before,'st_file_attributes',0)&0x400 or before.st_size>128*1024*1024):

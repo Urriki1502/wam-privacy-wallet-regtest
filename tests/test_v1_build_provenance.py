@@ -66,3 +66,16 @@ class BuildSourceContracts(unittest.TestCase):
             capture(self.root)
             pinned.write_bytes(b'// PUBLIC_PINNED_SOURCE\r\n')
             with self.assertRaisesRegex(BuildSourceError,'^BUILD_SOURCE_DIRTY$'):capture(self.root)
+    @unittest.skipUnless(os.name=='nt','Windows native handle sharing contract')
+    def test_windows_source_handle_denies_writer_during_read(self):
+        from unittest.mock import patch
+        from wam_regtest import windows_private_storage as native
+        from wam_regtest.build_provenance import _windows_file
+        read=native.readfile;attempts=[]
+        def observed(*args):
+            with self.assertRaises(PermissionError):
+                with self.file.open('wb'):pass
+            attempts.append(True)
+            return read(*args)
+        with patch.object(native,'readfile',side_effect=observed):raw,metadata=_windows_file(self.file)
+        self.assertTrue(attempts);self.assertEqual(raw.replace(b'\r\n',b'\n'),b'VALUE=1\n')
