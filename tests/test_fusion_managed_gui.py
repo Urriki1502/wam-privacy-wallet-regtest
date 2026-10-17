@@ -297,6 +297,88 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
             self.assertNotIn("CANARY",self.win.status.text())
         self.assertTrue(self.win.close())
 
+
+    def test_manual_create_original_wallet_and_explicit_read_only_gui_state(self):
+        import time
+        from PySide6.QtCore import QCoreApplication,QEvent
+        proof={"status":"MANAGED_REGTEST_WSP_WALLET_CREATED_LOCKED",
+               "network":"regtest","wallet_locked":True,
+               "signer_allowed":False,"broadcast_allowed":False,
+               "mainnet_allowed":False}
+        self.win._wallet_core_dir=Path.cwd()/"pinned-core"
+        self.win._wallet_wsp_source=Path.cwd()/"pinned-wsp"
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        self.assertTrue(self.win.create_wallet_button.isEnabled())
+        with (patch.object(QMessageBox,"question",
+                           return_value=QMessageBox.StandardButton.Yes),
+              patch("wam_regtest.managed_gui.QInputDialog.getText",
+                    side_effect=[("regtest-passphrase-only",True),
+                                 ("regtest-passphrase-only",True)]),
+              patch("wam_regtest.managed_wallet_create.create_managed_wallet",
+                    return_value=proof) as create):
+            self.win.create_wallet_button.click()
+            self.assertIsNotNone(self.win._worker)
+            deadline=time.monotonic()+6
+            while self.win._worker is not None and time.monotonic()<deadline:
+                self.app.processEvents()
+                time.sleep(.005)
+            self.assertIsNone(self.win._worker)
+            QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+            create.assert_called_once()
+            self.assertTrue(create.call_args.kwargs["authorized"])
+            self.assertIsNone(self.win._snapshot)
+            self.assertIsNone(self.win.session)
+            self.assertFalse(self.win.dashboard.go_send.isEnabled())
+            self.assertIn("CREATED AND ENCRYPTED",self.win.status.text())
+
+    def test_create_mismatched_password_and_cancel_never_touch_custody(self):
+        self.win._wallet_core_dir=Path.cwd()/"pinned-core"
+        self.win._wallet_wsp_source=Path.cwd()/"pinned-wsp"
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        with patch("wam_regtest.managed_wallet_create.create_managed_wallet") as create:
+            with patch.object(QMessageBox,"question",
+                              return_value=QMessageBox.StandardButton.No):
+                self.win.create_wallet_button.click()
+            create.assert_not_called()
+            with (patch.object(QMessageBox,"question",
+                               return_value=QMessageBox.StandardButton.Yes),
+                  patch("wam_regtest.managed_gui.QInputDialog.getText",
+                        side_effect=[("regtest-one-password",True),
+                                     ("regtest-other-password",True)])):
+                self.win.create_wallet_button.click()
+            create.assert_not_called()
+        self.assertIsNone(self.win._snapshot)
+        self.assertFalse(self.win.dashboard.go_send.isEnabled())
+
+    def test_explicit_sync_saves_checkpoint_but_plain_view_does_not(self):
+        import time
+        from PySide6.QtCore import QCoreApplication,QEvent
+        snap=self._original_wallet_fixture()
+        self.win._wallet_core_dir=Path.cwd()/"pinned-core"
+        self.win._wallet_wsp_source=Path.cwd()/"pinned-wsp"
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        for button,persist in ((self.win.view_wallet_button,False),
+                               (self.win.sync_wallet_button,True)):
+            with (patch("wam_regtest.managed_gui.QInputDialog.getText",
+                        return_value=("regtest-passphrase-only",True)),
+                  patch("wam_regtest.managed_wallet_snapshot.read_managed_wallet_snapshot",
+                        return_value=snap) as reader):
+                button.click()
+                deadline=time.monotonic()+6
+                while self.win._worker is not None and time.monotonic()<deadline:
+                    self.app.processEvents()
+                    time.sleep(.005)
+                self.assertIsNone(self.win._worker)
+                QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+                self.assertEqual(reader.call_count,1)
+                self.assertIs(reader.call_args.kwargs["authorized_persist_checkpoint"],persist)
+                self.assertIs(reader.call_args.kwargs["authorized_readonly"],True)
+                self.assertIs(self.win._snapshot,snap)
+                self.assertFalse(self.win.dashboard.go_send.isEnabled())
+
     def test_hidden_panels_already_belong_to_window(self):
         # A never-shown window must own every responsive panel immediately;
         # waiting for resizeEvent leaves native widgets outside its lifetime.
