@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
@@ -37,6 +38,7 @@ jobs:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$WAM_SOURCE_HEAD" || { echo V012_SOURCE_HEAD_MISMATCH; exit 1; }
           python scripts/verify_v012_signed_release.py > v012-signed-intake.json
           python - <<'PY'
           import json, os
