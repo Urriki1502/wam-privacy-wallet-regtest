@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 
-from wam_regtest.frozen_managed_probe import arguments, publish_report, run
+from wam_regtest.frozen_managed_probe import arguments, publish_report, run, _crash_owned_core
 
 
 class FrozenManagedProbeScope(unittest.TestCase):
@@ -22,7 +22,8 @@ class FrozenManagedProbeScope(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'FROZEN_PROBE_CONSENT_REQUIRED'):
             arguments(['supervisor','--root',self.root])
         for values in (
-            ['supervisor','--root',self.root,'--report-root',self.report,'--wait-for-crash'],
+            ['supervisor','--root',self.root,'--report-root',self.report,
+             '--confirm-owned-core-crash','--wait-for-crash'],
             ['gui','--root',self.root,'--report-root',self.root,'--expected-height','101'],
             ['gui','--root',self.root,'--report-root',self.report,'--expected-height','-1'],
             ['scan','--root',self.root,'--report-root',self.report,'--expected-before','0',
@@ -32,13 +33,23 @@ class FrozenManagedProbeScope(unittest.TestCase):
                 arguments([*values,*self.consent])
 
     def test_supervisor_report_must_be_distinct_and_explicit(self):
-        valid=['supervisor','--root',self.root,*self.consent]
+        valid=['supervisor','--root',self.root,*self.consent,'--confirm-owned-core-crash']
         with self.assertRaises(ValueError):arguments(valid)
         with self.assertRaisesRegex(ValueError,'FROZEN_PROBE_REPORT_ROOT_DENIED'):
             arguments([*valid,'--report-root',self.root])
         args=arguments([*valid,'--report-root',self.report])
         self.assertEqual(args.role,'supervisor')
         self.assertNotEqual(args.root,args.report_root)
+
+    def test_core_fault_requires_separate_consent_and_actual_frozen_context(self):
+        base=['--root',self.root,'--report-root',self.report,*self.consent]
+        with self.assertRaisesRegex(ValueError,'FROZEN_PROBE_CORE_CRASH_CONSENT_REQUIRED'):
+            arguments(['supervisor',*base])
+        with self.assertRaisesRegex(ValueError,'FROZEN_PROBE_ROLE_ARGUMENT_DENIED'):
+            arguments(['gui',*base,'--expected-height','101','--confirm-owned-core-crash'])
+        for authorized in (False,True,1,'yes'):
+            with self.assertRaisesRegex(ValueError,'FROZEN_PROBE_CORE_CRASH_SCOPE_DENIED'):
+                _crash_owned_core(object(),Path(self.report),authorized=authorized)
 
     def test_no_arbitrary_module_or_external_core_or_abbreviated_consent(self):
         for extra in (['--core-dir','external'],['--wsp-source','external'],

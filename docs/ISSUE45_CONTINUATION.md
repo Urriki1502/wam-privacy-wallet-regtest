@@ -10,7 +10,12 @@ operator independently checks the recovered Core before scanner/GUI tests.
 Normal supervisor_cli/runtime Core code is unchanged. No wallet keys, anchor,
 reservation release, PID adoption or retry of signing/broadcast is introduced.
 
-Local native258tests=224PASS/34platformSKIP,exit0. New native/frozen macOS,
+Intermediate c2edbcfa485da347020fcd306e33005225828408 complete local Mac
+app/DMG and actual frozen-owned Core kill(-9)/restart/same-tip proof PASS,exit0.
+Follow-up requires separate --confirm-owned-core-crash consent, six actual
+frozen refusals and an inner frozen-context guard before any Core access, so
+ordinary Python cannot emit a false frozen fault receipt. Other roles reject
+fault consent. Local native259tests=225PASS/34platformSKIP,exit0. New native/frozen macOS,
 Windows/Linux qualification and actual artifact inspection are PENDING until
 real results exist. The prior e960dff matrix below remains the completed
 component evidence, not a PASS for changed runtime. Same Draft67 branch only;

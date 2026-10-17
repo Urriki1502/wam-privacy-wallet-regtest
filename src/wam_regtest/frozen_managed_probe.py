@@ -25,6 +25,7 @@ def arguments(argv):
     parser.add_argument('--linux-developer-manifest')
     parser.add_argument('--linux-root-witness', type=Path)
     parser.add_argument('--confirm-disposable-regtest-probe', action='store_true')
+    parser.add_argument('--confirm-owned-core-crash', action='store_true')
     args = parser.parse_args(argv)
     from .supervisor_store import _root
     _root(args.root)
@@ -34,11 +35,15 @@ def arguments(argv):
     if args.report_root == args.root:
         raise ValueError('FROZEN_PROBE_REPORT_ROOT_DENIED')
     if args.role == 'supervisor':
+        if not args.confirm_owned_core_crash:
+            raise ValueError('FROZEN_PROBE_CORE_CRASH_CONSENT_REQUIRED')
         if (args.expected_height is not None
                 or args.wait_for_crash or args.expected_before is not None
                 or args.max_blocks is not None):
             raise ValueError('FROZEN_PROBE_ROLE_ARGUMENT_DENIED')
     else:
+        if args.confirm_owned_core_crash:
+            raise ValueError('FROZEN_PROBE_ROLE_ARGUMENT_DENIED')
         if args.role == 'gui':
             if (type(args.expected_height) is not int
                     or not 0 <= args.expected_height <= 1_000_000
@@ -64,8 +69,11 @@ def publish_report(root, value):
     create_once(root, 'supervisor.profile', raw)
 
 
-def _crash_owned_core(owner, report_root):
+def _crash_owned_core(owner, report_root, *, authorized=False):
     """CI-only fault on this supervisor's actual verified Popen, never a PID."""
+    if (authorized is not True or not getattr(sys, 'frozen', False)
+            or not hasattr(sys, '_MEIPASS')):
+        raise ValueError('FROZEN_PROBE_CORE_CRASH_SCOPE_DENIED')
     if owner.status()['state'] != 'ready':
         raise ValueError('FROZEN_PROBE_CORE_CRASH_NOT_READY')
     height = owner.read.call('getblockcount', [])
@@ -94,6 +102,7 @@ def _crash_owned_core(owner, report_root):
         raise ValueError('FROZEN_PROBE_CORE_CRASH_RESTART_DENIED')
     publish_report(report_root, {
         'frozen_entrypoint': True,
+        'explicit_owned_core_crash_authorized': True,
         'owned_core_image_verified_before_kill': True,
         'actual_owned_core_kill_observed': True,
         'owned_core_crash_exit_code': exit_code,
@@ -157,7 +166,8 @@ def run(argv, core, source):
                     owner._serve_client(conn)
                 started = started or owner.process is not None
                 if started and not crashed and owner.process is not None:
-                    _crash_owned_core(owner, args.report_root)
+                    _crash_owned_core(owner, args.report_root,
+                                      authorized=args.confirm_owned_core_crash)
                     crashed = True
                 if started and owner.process is None and owner.status()['state'] == 'stopped':
                     stopped = True

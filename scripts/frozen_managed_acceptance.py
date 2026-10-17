@@ -20,7 +20,7 @@ def main():
         'frozen_owned_core_crash_restart_same_tip',
         'authenticated_wsp_sqlite_resume_same_tip'))
     assert proof['frozen_public_scan_processes']==2 and proof['frozen_gui_processes']==3
-    assert proof['frozen_scope_refusals_before_supervisor']==5
+    assert proof['frozen_scope_refusals_before_supervisor']==6
     assert proof['frozen_scope_refusals_prompt_free'] is True
     assert proof['full_gui_q05_qualified'] is False and proof['mainnet_allowed'] is False
     with args.output.open('x',encoding='utf8') as stream:

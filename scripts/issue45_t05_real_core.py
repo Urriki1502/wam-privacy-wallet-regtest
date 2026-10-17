@@ -43,9 +43,11 @@ class _FrozenChildren:
         # Syntactically valid DISTINCT report path, never created/used by a
         # refusal. This keeps each negative attributable to its own bad input.
         report=self.root.parent/'wam-fusion-core-fedcba9876543210'
-        normal=self.command('supervisor','--report-root',str(report))
+        normal=self.command('supervisor','--report-root',str(report),
+                            '--confirm-owned-core-crash')
         cases=[
             [arg for arg in normal if arg!='--confirm-disposable-regtest-probe'],
+            [arg for arg in normal if arg!='--confirm-owned-core-crash'],
             normal+['--core-dir',str(self.root/'external-core')],
             normal+['--wsp-source-root',str(self.root/'external-wsp')],
             normal+['--wait-for-crash'],
@@ -311,7 +313,7 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
             command.extend(["--linux-developer-manifest",linux_manifest,
                             "--linux-root-witness",str(linux_witness)])
         if frozen is not None:
-            command,server_report=frozen.report_command('supervisor')
+            command,server_report=frozen.report_command('supervisor','--confirm-owned-core-crash')
         server=subprocess.Popen(command,
             stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         stopped=False
@@ -341,7 +343,8 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
                         time.sleep(.05);continue
                     break
                 else:raise AssertionError('T05_FROZEN_CORE_RESTART_REPORT_TIMEOUT')
-                booleans=('frozen_entrypoint','owned_core_image_verified_before_kill',
+                booleans=('frozen_entrypoint','explicit_owned_core_crash_authorized',
+                    'owned_core_image_verified_before_kill',
                     'actual_owned_core_kill_observed','same_tip_after_core_restart',
                     'persistent_chain_after_core_crash','core_restart_owned')
                 assert set(crash_proof)==set(booleans)|{'crash_state',
