@@ -1,0 +1,58 @@
+{
+  "binary_sha256": {
+    "wam-cli": {
+      "sha256": "455d85aa1ce35f70c71da6947a79b549f33c4116168ff7ecdc41b067a3fbe907",
+      "size": 1015248
+    },
+    "wamd": {
+      "sha256": "9d13b329f451486930a3cf799b360237bcc7e858e94a964f817df520428374db",
+      "size": 12132344
+    }
+  },
+  "core_version_rpc": {
+    "protocolversion": 70016,
+    "subversion": "/WAM:0.1.12/",
+    "version": 112
+  },
+  "frozen_app_v012_qualified": false,
+  "fusion_walletsession_v012_qualified": false,
+  "genesis": "b88f3d262f285e38e184f50bf3eea1c8e615486ae67d3d9eaf0976fbd6d3d30d",
+  "linux_real_signed_core_version": "v0.1.12",
+  "linux_wsp_v012_component_qualified": true,
+  "macos_wsp_v012_qualified": false,
+  "mainnet_allowed": false,
+  "network": "regtest",
+  "observed_utc": "2026-10-17T01:45:44.917232+00:00",
+  "operational_signer_authorized": false,
+  "physical_dev_accepted": false,
+  "pinned_wsp_receipt": {
+    "actual_core_consensus_broadcast_confirmed": true,
+    "confirmation_height": 102,
+    "core_genesis": "b88f3d262f285e38e184f50bf3eea1c8e615486ae67d3d9eaf0976fbd6d3d30d",
+    "fusion_v012_activated": false,
+    "mainnet_allowed": false,
+    "native_scanner_blocks": 101,
+    "operational_signing_authorized": false,
+    "public_known_scalar_only": true,
+    "real_bip352_receive_credited": true,
+    "real_signed_v012_core": true,
+    "received_atoms": 4749990000,
+    "scan_after_payment_blocks": 1,
+    "source_qualified": true,
+    "sqlite_restart_no_double_credit": true,
+    "status": "V012_LINUX_REAL_WSP1_BIP352_CONFIRMED_RECEIVE_COMPONENT_PASS",
+    "wsp_gui_walletsession_v012_qualified": false,
+    "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+    "zero_external_peers": true
+  },
+  "public_fixture_disposable_datadir_only": true,
+  "real_native_core_used": true,
+  "real_signed_archive_verified": true,
+  "regtest_network_only": true,
+  "schema": "wam-issue45-v012-linux-wsp-receive/v1",
+  "signed_archive_sha256": "4bc22c1b315deb214596b20bbaf42f6845f58d3e52c490362b706000334a24d1",
+  "signed_release_key": "4BD4A8D3AFD43F5CBCB500E23798462FE00ADBA4",
+  "source_head": "d26fc8f27fb67848556e793ed17e222f4d949e8b",
+  "synthetic_rpc": false,
+  "windows_wsp_v012_qualified": false
+}

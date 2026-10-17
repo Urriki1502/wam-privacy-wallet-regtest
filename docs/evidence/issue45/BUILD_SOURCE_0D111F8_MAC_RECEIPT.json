@@ -1,0 +1,11 @@
+{
+  "checkout_sha": "0d111f804e9dfcc02af88ccca7dd1c8bffc2efd6",
+  "dependency_supply_chain_qualified": false,
+  "native_source_inventory_sha256": "679a2cdda7b4f3fb179d927480cc48cf324245161f3976671098061bfec75782",
+  "same_uid_host_tamper_proof": false,
+  "schema": "wam-build-source/v1",
+  "source_head_sha": "0d111f804e9dfcc02af88ccca7dd1c8bffc2efd6",
+  "source_unchanged_across_build": true,
+  "tracked_files": 258,
+  "tracked_source_matches_head": true
+}
