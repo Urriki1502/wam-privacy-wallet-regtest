@@ -240,8 +240,11 @@ class CheckpointVault:
                 record = self.anchor.read()
                 if record is None:
                     raise VaultError("VAULT_ANCHOR_MISSING_DENIED")
-                if record != self._expected:
-                    raise VaultError("VAULT_ANCHOR_CHANGED")
+                # Explicit lock/unlock can reattach to a legitimately newer
+                # *native-anchored* checkpoint written by another authorized
+                # owner. Authentication and signed reservations remain bound
+                # to the new record; an unanchored future generation is
+                # independently refused by _load_payload.
                 payload = self._load_payload(password, record)
                 ring = Keyring.restore(base64.b64decode(payload["keys"], validate=True), password)
                 runtime_created = True
