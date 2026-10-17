@@ -45,10 +45,9 @@ def _qt_reopen_probe(root, expected_height):
         finally:
             if not window.close():
                 raise AssertionError("T05_FUSION_GUI_CLOSE_DENIED")
-            # Clean up QWidget/native Qt resources before QApplication exits.
-            from PySide6.QtCore import QCoreApplication,QEvent
-            window.deleteLater()
-            QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+            # Deterministically release QWidget before Python's Qt teardown.
+            from shiboken6 import delete
+            delete(window)
             app.processEvents()
 
 
