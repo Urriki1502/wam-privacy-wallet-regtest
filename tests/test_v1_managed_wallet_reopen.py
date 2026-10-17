@@ -36,7 +36,7 @@ class OriginalWalletIdentityContracts(unittest.TestCase):
             with self.subTest(changed=changed),self.assertRaises(ManagedWalletReopenError):
                 _validate({**self.profile,**changed})
 
-    def test_storage_seals_create_only_with_separate_domain(self):
+    def test_storage_seals_create_only_with_pinned_recovery_purpose(self):
         from wam_sp.keystore import unseal
         class PrivateStore:
             def __init__(self):
@@ -61,9 +61,9 @@ class OriginalWalletIdentityContracts(unittest.TestCase):
                 publish(directory,self.profile,self.password)
             with self.assertRaises(ManagedWalletReopenError):
                 read(directory,b"incorrect-passphrase-xxxx")
-            # Correct ciphertext cannot be decrypted using the recovery domain.
+            # Correct ciphertext cannot be opened under a DIFFERENT approved purpose.
             with self.assertRaises(Exception):
-                unseal(payload,self.password,b"recovery")
+                unseal(payload,self.password,b"keys")
 
     def test_duplicate_json_fields_rejected_even_inside_valid_envelope(self):
         from wam_sp.keystore import seal
