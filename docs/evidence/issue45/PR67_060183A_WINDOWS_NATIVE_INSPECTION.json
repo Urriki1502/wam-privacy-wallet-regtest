@@ -1,0 +1,41 @@
+{
+  "source": {
+    "checkout_sha": "2b66256120423d3ed9cf12fc948ad5771f82f2c6",
+    "dependency_supply_chain_qualified": false,
+    "native_source_inventory_sha256": "ce17bed402afd7e0bcce9a5e8c2c434cbd7e3f2cc3865250dcbf4f21411f37a0",
+    "same_uid_host_tamper_proof": false,
+    "schema": "wam-build-source/v1",
+    "source_head_sha": "060183affb7a75c0af2f8b1d786b4d55c960e3e0",
+    "source_unchanged_across_build": true,
+    "tracked_files": 296,
+    "tracked_source_matches_head": true
+  },
+  "native_modal_cancel": true,
+  "native_stale_proof": {
+    "cross_mac_anchor_migration_allowed": false,
+    "fresh_chain_rescanned_before_balance": true,
+    "mainnet_allowed": false,
+    "native_qt_recovered_receive_balance": true,
+    "new_testing_epoch_funded": true,
+    "observed_height": 103,
+    "old_reservations_retained": true,
+    "operational_snapshot_http": {
+      "cli_and_rehash_forbidden": true,
+      "repeated_reads": 3,
+      "synthetic_rpc": false,
+      "transport": "owned-http"
+    },
+    "real_core_rpc": true,
+    "same_test_keys_recovered": true,
+    "stale_before_native_signature_denied": true,
+    "stale_before_real_broadcast_denied": true,
+    "stale_writer_same_wallet_other_vault_directory": true,
+    "stale_writer_signed_reservation_retained": true,
+    "status": "REAL_CORE_CROSS_SESSION_CREDENTIAL_BACKUP_REOPEN_PASS",
+    "synthetic_rpc": false
+  },
+  "artifact_id": 12109370586,
+  "artifact_sha256": "35593f06b7c47fd82b1ba05a46653cf6e2afbaff400e927abbc1338874fb0cdd",
+  "physical_acceptance": "PENDING_OPERATOR",
+  "full_q05": false
+}

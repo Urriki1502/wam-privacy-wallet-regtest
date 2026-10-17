@@ -1,0 +1,34 @@
+{
+  "source_head_sha": "060183affb7a75c0af2f8b1d786b4d55c960e3e0",
+  "frozen_executable_matches_qualified_zip": true,
+  "executable_sha256": "da4ef3284201ea6e943eaadb8d09e4266f67db6e3b57f00dc128edde6487b8bc",
+  "frozen_cocoa_e2e_exit_code": 0,
+  "stale_payment_proof": {
+    "cross_mac_anchor_migration_allowed": false,
+    "fresh_chain_rescanned_before_balance": true,
+    "mainnet_allowed": false,
+    "native_qt_recovered_receive_balance": true,
+    "new_testing_epoch_funded": true,
+    "observed_height": 103,
+    "old_reservations_retained": true,
+    "operational_snapshot_http": {
+      "cli_and_rehash_forbidden": true,
+      "repeated_reads": 3,
+      "synthetic_rpc": false,
+      "transport": "owned-http"
+    },
+    "real_core_rpc": true,
+    "same_test_keys_recovered": true,
+    "stale_before_native_signature_denied": true,
+    "stale_before_real_broadcast_denied": true,
+    "stale_writer_same_wallet_other_vault_directory": true,
+    "stale_writer_signed_reservation_retained": true,
+    "status": "REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS",
+    "synthetic_rpc": false
+  },
+  "qt_local_color_scheme_signals_verified": true,
+  "macos_preferences_changed": false,
+  "physical_acceptance": "PENDING_OPERATOR",
+  "full_managed_wallet_q05_qualified": false,
+  "raw_receipt_sha256": "dc1995e98433d5bd458d3b6e38435d2b9d3611385295321928442af6075eded6"
+}

@@ -1,3 +1,57 @@
+# Resume checkpoint — PR67 qualified components, full Q05 pending
+
+Tested code060183affb7a75c0af2f8b1d786b4d55c960e3e0: ALL10 exact-head CI
+SUCCESS, including Mac/Windows/Linux native/frozen, canonical vectors and fresh
+pinned Linux Core build. [Platform matrix, artifact links, exact hashes and
+remaining findings](PR67_PLATFORM_QUALIFICATION.md); machine receipts and full
+CI snapshot are under docs/evidence/issue45/PR67_060183A_*. A subsequent docs-only
+checkpoint commit does not relabel these binaries or inherit exact-head CI.
+Refresh actual live HEAD and CI before further engineering.
+
+Current branch remains feature/issue45-t05-gui-continuity-q05-20261017, Draft67.
+No new PR, rebase, force-push, merge, upstream/main/RC1/owner-data modification.
+Independent68/94a7649,69/d3aa1f3,70/a4a8257,71/75433cb unchanged. Their original
+wallet view/funded crash/crash-DURING-write work is not integrated here. Do not
+copy, overwrite, rebase or merge active branches. Full managed original-wallet
+Prepare/Review/Sign/Broadcast and funded cross-platform Q05 remain PENDING.
+PR69 extra wallet-view prompt needs the modal exclusion when independently
+integrated. Its green old-base jobs cannot qualify a changed integration base.
+
+Completed units:93083aa bounded IPC deadline;db71f42 native modal worker/lifetime
+exclusion;060183a genuine Mac fresh-chain native Keychain stale-sign/broadcast
+proof reused from Windows. Mac251units217PASS/34platformSKIP, full genuine
+Core/WSP/SQLite/Qt/new-Core/reorg1/12/100, complete final app/DMG and separate
+Cocoa executable all exit0. Downloaded all3OS final artifacts verified byte by
+byte against manifests; Core hashes unchanged. Linux remains the reviewed
+pinned developer build/root-witness policy; v0.1.12 remains candidate-only.
+Source/native/frozen/physical are separate. No production/final qualification.
+
+Normal LaunchServices/Finder UI attempt was blocked by Mac lock screen, no
+successful UI state or app process observed. PENDING_OPERATOR; owner may unlock
+manually (never send password). Programmatic Qt/Cocoa tests already passed;
+no lock-screen bypass or owner default-Keychain operation. Physical Win/Linux,
+retina/font/camera/actual OS appearance and human usability remain separate.
+
+Acquire and hold scripts/engineering_lease.py --hold before work; refuse overlap.
+Current holder/release evidence is in the SEPARATE log
+outputs/pr67-resume-20261017T144215/RESUME_LOG.md; never infer a future lease
+from this file. Temporary local WSP symlink was acceptance scaffolding only;
+its target is the existing pinned read-only sibling WSP checkout, never modify
+legacy wallet/upstream. Keep PYTHONPATH=src plus recorded reference-deps when
+using the sibling venv (its editable package points to an older checkout).
+
+Existing single5h schedule ACTIVE, verified one active schedule for this task.
+At this checkpoint next nominal05:00 18Oct2026 Asia/Ho_Chi_Minh, dispatch may
+occur04:56:58; wait bounded until the nominal slot and acquire lease before
+engineering. No duplicate scheduler, automatic merge, Core Update Manager,
+credit reset assumption, purchase or recurring quota retry. No actual new
+usage-limit failure occurred. Keep unknown runtime/orphan, ownership, custody,
+rollback, reservation and signing gates fail closed. Next: refresh docs-head CI,
+fix any actual failure on67, then choose an unclaimed in-scope P0; do not redo
+qualified tests or duplicate68–71 to manufacture progress.
+
+# Historical implementation checkpoints
+
 # Current PR67 unit — native Keychain stale-payment recovery proof
 
 db71f42b7207608cfb5de9b8a72033906757d380 has ALL10 exact-head CI SUCCESS,

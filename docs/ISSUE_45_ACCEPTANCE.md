@@ -11,6 +11,16 @@ No aggregate95% or inherited RC1 PASS is asserted. Missing/SKIP is PENDING;
 changed tested source/OS/Core/WSP invalidates prior PASS to STALE.
 `acceptance_evidence.py` tests these rules without treating JSON as a trust oracle.
 
+## Current PR67 component evidence (17 October 2026 UTC)
+
+[Exact-code platform matrix and packages](PR67_PLATFORM_QUALIFICATION.md) records
+060183a ALL10 CI SUCCESS, genuine source/final-frozen Core/WSP/Qt/security proof,
+all3OS downloaded-byte inspection, preserved pins and pending physical/full Q05.
+No integrated task/Q gate is promoted from these component results. Current
+resume actions are in ISSUE45_CONTINUATION.md. Earlier phases and their old
+Next/lease/schedule notes below are historical observations, not current work
+orders or evidence of lease ownership.
+
 ## B-01 branch/inspection evidence
 
 Clean integration from PR43 `125dbd6`, containing PR41/39/38 by ancestry.

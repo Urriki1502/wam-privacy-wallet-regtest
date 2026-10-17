@@ -1,3 +1,5 @@
+Latest Issue45 component evidence: [PR67 platform qualification](docs/PR67_PLATFORM_QUALIFICATION.md) (tested code060183a; full V1/Q05 remains pending).
+
 # WAM Privacy Wallet — Real REGTEST candidates
 
 Owner-acceptance audit and proposed UX fix: [results, defects and requalification](docs/OWNER_ACCEPTANCE_AUDIT.md). The qualified RC1 baseline remains unchanged.

@@ -1,0 +1,7 @@
+{
+  "check": "normal LaunchServices/Finder UI bootstrap and initial-dialog Cancel",
+  "status": "PENDING_OPERATOR",
+  "reason": "Cua reported Mac locked; automatic unlock unavailable. No UI state or successful launch observed.",
+  "required_action": "Owner manually unlocks Mac; do not provide credentials to agent.",
+  "native_and_frozen_cocoa_results": "Separate programmatic Qt/Core tests already passed; no physical UI acceptance inferred."
+}
