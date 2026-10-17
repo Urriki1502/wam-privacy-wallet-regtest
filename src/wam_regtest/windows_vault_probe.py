@@ -80,7 +80,7 @@ def prove_real_windows_vault(cli,datadir,port,env,source,mining_address):
         scanner.sync(rpc)
         assert scanner.ready and height==103 and len(scanner.coins())==1
         assert scanner.coins()[0]['txid']==txid and scanner.coins()[0]['atoms']==amount
-        stage='ANCHORED_SAVE'
+        stage='ANCHORED_SAVE_FIRST'
         first=vault.save(ring,scanner,password)
         first_bytes=storage.read(vault.directory,vault._filename(first[0]))
         duplicate=directory('stale-vault-copy')
@@ -95,8 +95,10 @@ def prove_real_windows_vault(cli,datadir,port,env,source,mining_address):
         scanner.store.db.execute("UPDATE reservations SET state='uncertain' WHERE token=?",(proposal.token,))
         locks=[tuple(row) for row in scanner.store.db.execute('SELECT * FROM reservations ORDER BY txid,vout')]
         assert locks and all(row[3]=='uncertain' for row in locks)
+        stage='ANCHORED_SAVE_SECOND'
         second=vault.save(ring,scanner,password)
         assert second[0]==first[0]+1
+        stage='ANCHORED_SAVE_STALE_REJECTION'
         denied(lambda:stale.save(ring,scanner,password))
         stage='BACKUP_RESTORE'
         backup=directory('encrypted-backup');vault.backup(backup,'recovery.enc')
