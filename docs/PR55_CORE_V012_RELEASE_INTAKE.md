@@ -13,6 +13,8 @@
 | Actual REGTEST v0.1.12 native/frozen E2E, BIP94 behavior, 3 OS and DEV physical review | PENDING |
 | Issue #45 integrated V1 R-01/R-02 PASS | PENDING |
 
+**Anti-rollback scope:** The preflight now refuses any caller-supplied installed/minimum version below its independently pinned v0.1.11 floor, even if both arguments are reduced together. CLI arguments are **not** a tamper-resistant highest-accepted-version anchor; production update activation remains prohibited and a future manager must read its monotonic version from protected OS custody.
+
 The code reuses the **existing** isolated GPG primary fingerprint and detached-signature verifier from wam_regtest.release (hard-pinned 4BD4 A8D3 AFD4 3F5C BCB5 00E2 3798 462F E00A DBA4). It enforces exact parsed installed/minimum versions, authenticates the archive against the **signed** manifest, examines archive member paths and sizes without extraction, and reports installation_authorized=false and wallet_signing_authorized=false even after success. An unexpected key, missing/invalid signature, bad digest, unsafe ZIP/tar path, missing node or CLI, or old version yields a redacted refusal. This is **not** a user-facing updater.
 
 The release body's first nonempty MANDATORY: line is **not** itself covered by the detached OpenPGP checksum signature; the CLI treats its urgency as **UNVERIFIED advisory** rather than proof of consensus or permission to install. Missing data is **UNKNOWN**, never “up-to-date”.
