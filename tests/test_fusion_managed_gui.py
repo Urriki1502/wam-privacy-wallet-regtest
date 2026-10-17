@@ -90,6 +90,91 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
             self.win.start_core.click()
             command.assert_not_called()
 
+    def test_verify_wallet_requires_opt_in_resources_and_ready_supervisor(self):
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        self.assertFalse(self.win.verify_wallet_button.isEnabled())
+        self.win._wallet_core_dir=Path.cwd()/"pinned-core"
+        self.win._wallet_wsp_source=Path.cwd()/"pinned-wsp"
+        self.win._update_controls()
+        self.assertTrue(self.win.verify_wallet_button.isEnabled())
+        with patch("wam_regtest.managed_gui.QInputDialog.getText",
+                   return_value=("test-only-regtest-password",False)) as dialog:
+            self.win.verify_wallet_button.click()
+            self.assertEqual(dialog.call_count,1)
+            self.assertIsNone(self.win._worker)
+        self.win._managed_denied("untrusted")
+        self.assertFalse(self.win.verify_wallet_button.isEnabled())
+        self.assertFalse(self.win._wallet_checkpoint_verified)
+
+    def test_locked_wallet_verification_never_grants_balance_or_spending(self):
+        proof={
+            "status":"MANAGED_WALLET_ORIGINAL_CHECKPOINT_VERIFIED_LOCKED",
+            "network":"regtest","wallet_locked":True,
+            "signer_allowed":False,"broadcast_allowed":False,
+            "balance_verified":False,"original_native_anchor_verified":True,
+            "original_encrypted_checkpoint_verified":True,
+            "mainnet_allowed":False,"supervisor_authenticated":True,
+            "supervisor_core_identity_verified":True,
+        }
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        self.win._apply_wallet_preflight(proof)
+        self.assertTrue(self.win._wallet_checkpoint_verified)
+        self.assertIn("WALLET STILL LOCKED",self.win.status.text())
+        self.assertIsNone(self.win.session)
+        self.assertIsNone(self.win._snapshot)
+        self.assertFalse(self.win.dashboard.go_send.isEnabled())
+        for mutation in ({"signer_allowed":True},{"balance_verified":True},
+                         {"mainnet_allowed":True},{"wallet_locked":False}):
+            with self.subTest(mutation=mutation):
+                self.win._apply_wallet_preflight({**proof,**mutation})
+                self.assertFalse(self.win._wallet_checkpoint_verified)
+                self.assertNotIn("WALLET STILL LOCKED",self.win.status.text())
+                self.assertFalse(self.win.dashboard.go_send.isEnabled())
+        self.win._apply_wallet_preflight(proof)
+        self.win._apply_managed_status(public_status(
+            state="busy",owned=True))
+        self.assertFalse(self.win._wallet_checkpoint_verified)
+
+    def test_native_worker_verifies_original_checkpoint_only_with_manual_password(self):
+        import time
+        from PySide6.QtWidgets import QLineEdit
+        from PySide6.QtCore import QCoreApplication,QEvent
+        from wam_regtest.managed_wallet_binding import verify_locked_wallet
+        self.win._wallet_core_dir=Path.cwd()/"pinned-core"
+        self.win._wallet_wsp_source=Path.cwd()/"pinned-wsp"
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        proof={
+            "status":"MANAGED_WALLET_ORIGINAL_CHECKPOINT_VERIFIED_LOCKED",
+            "network":"regtest","wallet_locked":True,
+            "signer_allowed":False,"broadcast_allowed":False,
+            "balance_verified":False,"original_native_anchor_verified":True,
+            "original_encrypted_checkpoint_verified":True,
+            "mainnet_allowed":False,"supervisor_authenticated":True,
+            "supervisor_core_identity_verified":True,
+        }
+        with (patch("wam_regtest.managed_gui.QInputDialog.getText",
+                    return_value=("public-regtest-password",True)),
+              patch("wam_regtest.managed_wallet_binding.verify_locked_wallet",
+                    return_value=proof) as locked):
+            self.win.verify_wallet_button.click()
+            self.assertIsNotNone(self.win._worker)
+            self.assertFalse(self.win.close())
+            deadline=time.monotonic()+5
+            while self.win._worker is not None and time.monotonic()<deadline:
+                self.app.processEvents()
+                time.sleep(.005)
+            self.assertIsNone(self.win._worker)
+            QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+            self.assertTrue(self.win._wallet_checkpoint_verified)
+            self.assertEqual(locked.call_count,1)
+            self.assertEqual(locked.call_args.kwargs,{"authorized":True})
+        self.assertIsNone(self.win.session)
+        self.assertIsNone(self.win._snapshot)
+        self.assertFalse(self.win.dashboard.go_send.isEnabled())
+
     def test_hidden_panels_already_belong_to_window(self):
         # A never-shown window must own every responsive panel immediately;
         # waiting for resizeEvent leaves native widgets outside its lifetime.
