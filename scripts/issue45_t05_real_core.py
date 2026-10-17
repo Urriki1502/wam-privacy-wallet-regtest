@@ -20,13 +20,15 @@ def _closed(owner):
     owner.stack.close()
 
 
-def _qt_reopen_probe(root, expected_height):
+def _qt_reopen_probe(root, expected_height, core, wsp_source):
     """Drive actual Fusion widgets with genuine supervisor IPC; no wallet mock."""
     from wam_regtest.desktop import qt_application
     from wam_regtest.managed_gui import ManagedCoreWindow
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QInputDialog
     app=qt_application()
     for reopen in range(2):
-        window=ManagedCoreWindow(root)
+        window=ManagedCoreWindow(root,core_dir=core,wsp_source=wsp_source)
         window.show()
         try:
             window.request_sync()
@@ -41,6 +43,27 @@ def _qt_reopen_probe(root, expected_height):
             else:raise AssertionError("T05_FUSION_GUI_SYNC_TIMEOUT")
             assert "READY" in window.verification_badge.text()
             assert " · height "+str(expected_height)+" · " in window.status.text()
+            assert window._snapshot is None and window.session is None
+            assert window.dashboard.go_send.isEnabled() is False
+            # Drive the actual native password dialog, including its nested
+            # event loop. Cancel supplies no password or wallet authority.
+            modal=[]
+            def cancel_dialog():
+                dialog=app.activeModalWidget()
+                try:
+                    window.request_sync()
+                    modal.extend((isinstance(dialog,QInputDialog),
+                        window._managed_dialog_open,window._worker is None,
+                        not window.close()))
+                finally:
+                    if isinstance(dialog,QInputDialog):
+                        dialog.reject()
+            assert window.verify_wallet_button.isEnabled()
+            QTimer.singleShot(100,cancel_dialog)
+            window._verify_wallet()
+            assert modal==[True,True,True,True]
+            assert window._managed_dialog_open is False
+            assert window._worker is None
             assert window._snapshot is None and window.session is None
             assert window.dashboard.go_send.isEnabled() is False
         finally:
@@ -263,10 +286,11 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
             assert control(root,"status",timeout=15)["height"]==height
             evidence["disconnected_gui_client_core_survived"]=True
             if qt:
-                _qt_reopen_probe(root,height)
+                _qt_reopen_probe(root,height,core,source_root/"wsp-upstream")
                 assert server.poll() is None
                 assert control(root,"status",timeout=15)["height"]==height
                 evidence["real_qt_gui_close_reopen_same_core"]=True
+                evidence["real_qt_modal_cancel_no_concurrent_worker"]=True
                 _qt_process_probe(root,height)
                 assert server.poll() is None
                 assert control(root,"status",timeout=15)["height"]==height

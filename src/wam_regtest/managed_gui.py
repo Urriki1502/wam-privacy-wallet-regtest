@@ -8,6 +8,7 @@ Q05 wallet continuity is a separate, still mandatory integration gate.
 from __future__ import annotations
 
 from pathlib import Path
+from contextlib import contextmanager
 
 from PySide6.QtCore import QThread, Signal, QTimer
 from PySide6.QtWidgets import QMessageBox, QInputDialog, QLineEdit
@@ -81,6 +82,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
         ):
             raise ValueError("MANAGED_GUI_WALLET_PATHS_DENIED")
         self._managed_root = root
+        self._managed_dialog_open = False
         self._wallet_core_dir,self._wallet_wsp_source=core_dir,wsp_source
         self._wallet_checkpoint_verified=False
         # The base Fusion shell is reused; its disposable wallet data loader
@@ -113,7 +115,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
     def _update_controls(self):
         if not hasattr(self, "start_core"):
             return
-        idle = self._worker is None
+        idle = self._worker is None and not self._managed_dialog_open
         self.start_core.setEnabled(
             idle and self._managed_authenticated and
             self._managed_state in ("stopped", "recovery-needed")
@@ -129,7 +131,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
         )
 
     def _execute(self, operation: str):
-        if self._worker is not None:
+        if self._worker is not None or self._managed_dialog_open:
             return
         if operation not in ("status", "start", "shutdown"):
             raise ValueError("MANAGED_GUI_OPERATION_DENIED")
@@ -152,16 +154,33 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._update_controls()
         worker.start()
 
+    @contextmanager
+    def _managed_confirmation(self):
+        # A native modal dialog runs a nested Qt event loop. Keep timers from
+        # creating another worker or lifecycle operation during that loop.
+        self._managed_dialog_open=True
+        self._update_controls()
+        try:
+            yield
+        finally:
+            self._managed_dialog_open=False
+            self._update_controls()
+
     def _verify_wallet(self):
-        if (self._worker is not None or not self._managed_authenticated
+        if (self._worker is not None or self._managed_dialog_open or not self._managed_authenticated
                 or self._managed_state!="ready"
                 or self._wallet_core_dir is None or self._wallet_wsp_source is None):
             return
-        password,ok=QInputDialog.getText(
-            self,"Verify existing REGTEST wallet",
-            "Wallet passphrase (checkpoint verification only; no unlock/signing)",
-            QLineEdit.EchoMode.Password)
-        if not ok:
+        with self._managed_confirmation():
+            password,ok=QInputDialog.getText(
+                self,"Verify existing REGTEST wallet",
+                "Wallet passphrase (checkpoint verification only; no unlock/signing)",
+                QLineEdit.EchoMode.Password)
+        # Recheck authority/state after the nested loop; a denied state must
+        # never be overwritten by a new checkpoint worker.
+        if (not ok or self._worker is not None or not self._managed_authenticated
+                or self._managed_state!="ready"):
+            password=None
             return
         secret=password.encode("utf-8")
         password=None
@@ -213,15 +232,17 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._execute("status")
 
     def _confirm_stop(self):
-        if self._managed_state not in ("ready", "syncing", "busy"):
+        if (self._worker is not None or self._managed_dialog_open
+                or self._managed_state not in ("ready", "syncing", "busy")):
             return
-        answer = QMessageBox.question(
-            self, "Stop managed REGTEST Core",
-            "Stop only the verified Fusion-owned REGTEST Core?\n"
-            "Blockchain datadir will be preserved; unrelated Core/miners will not be stopped.",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
+        with self._managed_confirmation():
+            answer = QMessageBox.question(
+                self, "Stop managed REGTEST Core",
+                "Stop only the verified Fusion-owned REGTEST Core?\n"
+                "Blockchain datadir will be preserved; unrelated Core/miners will not be stopped.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
         if answer == QMessageBox.StandardButton.Yes:
             self._execute("shutdown")
 
@@ -277,6 +298,9 @@ class ManagedCoreWindow(RegtestWalletWindow):
     def closeEvent(self, event):
         # RegtestWalletWindow prevents deleting in-flight QThreads. It never
         # sends Core stop on window close. Our managed subclass preserves that.
+        if self._managed_dialog_open:
+            event.ignore()
+            return
         super().closeEvent(event)
 
 

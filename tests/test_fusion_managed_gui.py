@@ -186,6 +186,73 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
         self.assertIs(self.win.dashboard.hero.window(), self.win)
         self.assertIs(self.win.receive_page.qr.window(), self.win)
 
+    def test_password_dialog_cannot_start_background_worker_or_allow_window_close(self):
+        import threading
+        import time
+        from PySide6.QtCore import QEventLoop,QTimer
+        released=threading.Event();workers=[];observed=[]
+        self.win._wallet_core_dir=Path.cwd()/"pinned-core"
+        self.win._wallet_wsp_source=Path.cwd()/"pinned-wsp"
+        self.win._apply_managed_status(public_status(state="ready",owned=True,chain_height=101))
+        def status(*args,**kwargs):
+            released.wait(3)
+            return public_status(state="ready",owned=True,chain_height=101)
+        def dialog(*args,**kwargs):
+            loop=QEventLoop()
+            def tick():
+                self.win.request_sync()  # Actual Qt delivery inside nested dialog loop.
+                if self.win._worker is not None:workers.append(self.win._worker)
+                observed.append(self.win._worker is None)
+                observed.append(not self.win.close())
+                loop.quit()
+            QTimer.singleShot(0,tick)
+            loop.exec()
+            return "",False
+        try:
+            with (patch("wam_regtest.managed_gui.control",side_effect=status),
+                  patch("wam_regtest.managed_gui.QInputDialog.getText",side_effect=dialog)):
+                self.win._verify_wallet()
+                self.assertEqual(observed,[True,True])
+        finally:
+            released.set()
+            for worker in workers:self.assertTrue(worker.wait(5000))
+            deadline=time.monotonic()+3
+            while self.win._worker is not None and time.monotonic()<deadline:
+                self.app.processEvents();time.sleep(.005)
+
+    def test_stop_confirmation_suspends_background_sync_and_always_restores_guard(self):
+        self.win._apply_managed_status(public_status(state="ready",owned=True,chain_height=101))
+        def confirm(*args,**kwargs):
+            self.win.request_sync()
+            return QMessageBox.StandardButton.No
+        try:
+            with (patch("wam_regtest.managed_gui.QMessageBox.question",side_effect=confirm),
+                  patch("wam_regtest.managed_gui._ManagedStatusWorker") as worker):
+                self.win._confirm_stop()
+                worker.assert_not_called()
+        finally:
+            # A failing old implementation may have assigned the mock worker.
+            # It is never a real thread; keep the failure's cleanup independent.
+            self.win._worker=None
+        self.assertFalse(self.win._managed_dialog_open)
+        self.assertTrue(self.win.refresh_button.isEnabled())
+
+    def test_password_dialog_failure_clears_guard_and_stale_state_never_starts_verification(self):
+        self.win._wallet_core_dir=Path.cwd()/"pinned-core"
+        self.win._wallet_wsp_source=Path.cwd()/"pinned-wsp"
+        self.win._apply_managed_status(public_status(state="ready",owned=True,chain_height=101))
+        with patch("wam_regtest.managed_gui.QInputDialog.getText",side_effect=RuntimeError("fixture")):
+            with self.assertRaises(RuntimeError):self.win._verify_wallet()
+        self.assertFalse(self.win._managed_dialog_open)
+        def changed(*args,**kwargs):
+            self.win._managed_denied("fixture-state-changed")
+            return "public-regtest-password",True
+        with (patch("wam_regtest.managed_gui.QInputDialog.getText",side_effect=changed),
+              patch("wam_regtest.managed_gui._LockedWalletWorker") as worker):
+            self.win._verify_wallet()
+            worker.assert_not_called()
+        self.assertIsNone(self.win._worker)
+
     def test_close_waits_for_worker_then_stops_window_timers(self):
         import threading
         import time

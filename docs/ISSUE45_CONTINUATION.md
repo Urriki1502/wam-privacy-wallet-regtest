@@ -1,4 +1,33 @@
-# Current PR67 unit — bounded authenticated IPC deadlines
+# Current PR67 unit — native modal worker exclusion
+
+2026-10-17T17:00Z scheduled continuation, same exclusive engineering lease and
+existing PR67 branch. Predecessor93083aaa5b15e5cf2de46599ccde1440eb0d54b5
+has ALL10 exact-head CI jobs SUCCESS; full snapshot is
+docs/evidence/issue45/PR67_93083AA_ALL_CI.json. This includes Mac/Windows/Linux
+native and frozen regression, not physical acceptance or complete wallet Q05.
+
+Confirmed managed-GUI race: QInputDialog runs a nested Qt event loop, allowing
+the sync timer to create a status QThread while a password prompt is open.
+Verification could then overwrite _worker, losing its lifetime guard. Native
+Qt negative reproduction failed on the predecessor. Stop confirmation had the
+same reentry gap. A scoped modal guard now prevents background/lifecycle workers
+and window destruction during approval; authority/state are checked again after
+the prompt. Cancel/exception always restore controls. No new wallet, signing,
+broadcast, reservation or Core shutdown authority is granted.
+
+Native targeted14 PASS; full250 tests216PASS/34platformSKIP, runner exit0.
+Real Core/Qt harness now opens and cancels the actual native password dialog,
+attempting sync/close inside its nested loop; committed-source Core/WSP proof
+and successor native/frozen CI still PENDING at this implementation checkpoint.
+Do not inherit93083aa qualification for changed runtime. No physical claim.
+
+Independent Draft68–71 reviewed READ ONLY. They own original-wallet snapshots,
+GUI read view, funded crash/reopen and crash-during-write refusal; do not copy,
+rebase, overwrite or merge their work. PR69's additional _view_wallet dialog
+will need the same exclusion when independently integrated; not modified here.
+Full funded managed Q05 across all platforms remains PENDING. No new PR or merge.
+
+# Earlier PR67 unit — bounded authenticated IPC deadlines
 
 2026-10-17T14:42:15Z continuation. Existing branch
 feature/issue45-t05-gui-continuity-q05-20261017 only; live parent
