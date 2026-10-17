@@ -175,6 +175,128 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
         self.assertIsNone(self.win._snapshot)
         self.assertFalse(self.win.dashboard.go_send.isEnabled())
 
+
+    def _original_wallet_fixture(self):
+        from wam_sp.keystore import ScanAccount
+        from wam_sp.core import pub
+        from wam_regtest.wallet_read import WalletReadSnapshot,HistoryRow
+        code=ScanAccount(0,1,pub(2),birthday=1).payment_code()
+        return WalletReadSnapshot(
+            chain="regtest",height=101,tip="b"*64,receive_code=code,
+            confirmed_atoms=27000,confirmed_utxos=1,
+            history=(HistoryRow("a"*64,101,1,27000,0),),
+            core_sha256="c"*64,synthetic_rpc=False,demo_account_only=False,
+            signer_allowed=False,broadcast_allowed=False,mainnet_allowed=False)
+
+    def test_original_wallet_snapshot_never_adopted_without_manual_approval(self):
+        snap=self._original_wallet_fixture()
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        self.win._apply_wallet_snapshot(snap)
+        self.assertIsNone(self.win._snapshot)
+        self.assertFalse(self.win.dashboard.go_send.isEnabled())
+        self.assertIn("UNVERIFIED",self.win.status.text())
+        self.assertFalse(self.win._wallet_read_authorized)
+
+    def test_valid_original_wallet_renders_real_readonly_pages_no_spending(self):
+        snap=self._original_wallet_fixture()
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        self.win._wallet_read_authorized=True
+        self.win._apply_wallet_snapshot(snap)
+        self.assertIs(self.win._snapshot,snap)
+        self.assertTrue(self.win._wallet_checkpoint_verified)
+        self.assertEqual(self.win.receive_page.code,snap.receive_code)
+        self.assertIsNone(self.win.session)
+        self.assertFalse(self.win.dashboard.go_send.isEnabled())
+        self.assertIn("signing/broadcast DISABLED",self.win.status.text())
+        self.assertEqual(self.win._sync_timer.interval(),30_000)
+        # Any authenticated status refresh removes stale verified balances,
+        # even when the observed block height is unchanged.
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        self.assertIsNone(self.win._snapshot)
+        self.assertFalse(self.win._wallet_checkpoint_verified)
+        self.assertFalse(self.win.dashboard.go_send.isEnabled())
+        self.assertEqual(self.win._sync_timer.interval(),5_000)
+
+    def test_reject_fabricated_demo_mainnet_signer_or_wrong_height(self):
+        from dataclasses import replace
+        snap=self._original_wallet_fixture()
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        cases=(
+            {"demo_account_only":True},{"synthetic_rpc":True},
+            {"signer_allowed":True},{"broadcast_allowed":True},
+            {"mainnet_allowed":True},{"height":102},
+            {"receive_code":"mainnet-wrong-address"},
+            {"core_sha256":"unknown"},
+        )
+        for change in cases:
+            with self.subTest(change=change):
+                self.win._wallet_read_authorized=True
+                self.win._apply_wallet_snapshot(replace(snap,**change))
+                self.assertIsNone(self.win._snapshot)
+                self.assertFalse(self.win._wallet_read_authorized)
+                self.assertFalse(self.win.dashboard.go_send.isEnabled())
+        # Never let the inherited public-demo path show any balance.
+        from wam_regtest.wallet_read import WalletReadSnapshot
+        self.win.apply_snapshot(replace(snap,demo_account_only=True))
+        self.assertIsNone(self.win._snapshot)
+
+    def test_native_manual_gui_wallet_scan_worker_and_clean_qthread_teardown(self):
+        import time
+        from PySide6.QtCore import QCoreApplication,QEvent
+        from PySide6.QtWidgets import QLineEdit
+        snap=self._original_wallet_fixture()
+        self.win._wallet_core_dir=Path.cwd()/"pinned-core"
+        self.win._wallet_wsp_source=Path.cwd()/"pinned-wsp"
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        self.assertTrue(self.win.view_wallet_button.isEnabled())
+        with (patch("wam_regtest.managed_gui.QInputDialog.getText",
+                    return_value=("public-test-only-regtest-password",True)) as dialog,
+              patch("wam_regtest.managed_wallet_snapshot.read_managed_wallet_snapshot",
+                    return_value=snap) as source):
+            self.win.view_wallet_button.click()
+            self.assertIsNotNone(self.win._worker)
+            self.assertFalse(self.win.close())  # In-flight native QThread
+            deadline=time.monotonic()+8
+            while self.win._worker is not None and time.monotonic()<deadline:
+                self.app.processEvents()
+                time.sleep(.005)
+            self.assertIsNone(self.win._worker)
+            QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+            self.assertEqual(dialog.call_count,1)
+            self.assertEqual(source.call_count,1)
+            self.assertTrue(source.call_args.kwargs["authorized_readonly"])
+            self.assertFalse(source.call_args.kwargs["authorized_persist_checkpoint"])
+            self.assertIs(self.win._snapshot,snap)
+            self.assertFalse(self.win.dashboard.go_send.isEnabled())
+        self.assertTrue(self.win.close())
+
+    def test_native_gui_wallet_scan_failure_redacts_secret_and_clears_balance(self):
+        import time
+        self.win._wallet_core_dir=Path.cwd()/"pinned-core"
+        self.win._wallet_wsp_source=Path.cwd()/"pinned-wsp"
+        self.win._apply_managed_status(public_status(
+            state="ready",owned=True,chain_height=101))
+        with (patch("wam_regtest.managed_gui.QInputDialog.getText",
+                    return_value=("public-test-only-regtest-password",True)),
+              patch("wam_regtest.managed_wallet_snapshot.read_managed_wallet_snapshot",
+                    side_effect=ValueError("PRIVATE_SECRET_CANARY"))):
+            self.win.view_wallet_button.click()
+            deadline=time.monotonic()+8
+            while self.win._worker is not None and time.monotonic()<deadline:
+                self.app.processEvents()
+                time.sleep(.005)
+            self.assertIsNone(self.win._worker)
+            self.assertIsNone(self.win._snapshot)
+            self.assertFalse(self.win._wallet_checkpoint_verified)
+            self.assertFalse(self.win.dashboard.go_send.isEnabled())
+            self.assertNotIn("CANARY",self.win.status.text())
+        self.assertTrue(self.win.close())
+
     def test_hidden_panels_already_belong_to_window(self):
         # A never-shown window must own every responsive panel immediately;
         # waiting for resizeEvent leaves native widgets outside its lifetime.
