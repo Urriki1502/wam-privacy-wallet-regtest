@@ -45,6 +45,8 @@ def main() -> int:
     managed = sub.add_parser("managed-gui",
         help="Open Fusion's authenticated persistent REGTEST supervisor view; no wallet creation or external attach")
     managed.add_argument("--root",type=Path,required=True)
+    managed.add_argument("--core-dir",type=Path,help="Explicit pinned Core for optional locked-wallet verification")
+    managed.add_argument("--wsp-source-root",type=Path,help="Explicit pinned WSP source for optional locked-wallet verification")
     managed.add_argument("--confirm-regtest-managed-core",action="store_true")
     linux=sub.add_parser('linux-wallet',help='Experimental Linux headless wallet; approved developer manifest and root witness required')
     linux.add_argument('--core-dir',type=Path,required=True)
@@ -67,7 +69,11 @@ def main() -> int:
             from .supervisor_store import _root
             root=args.root.expanduser().absolute()
             _root(root)
-            return launch_managed_gui(root)
+            if (args.core_dir is None) is not (args.wsp_source_root is None):
+                raise CoreSmokeError("MANAGED_GUI_WALLET_PATHS_REQUIRED_TOGETHER")
+            core=(args.core_dir.expanduser().absolute() if args.core_dir is not None else None)
+            wsp=(args.wsp_source_root.expanduser().absolute() if args.wsp_source_root is not None else None)
+            return launch_managed_gui(root,core_dir=core,wsp_source=wsp)
         if args.command=='linux-wallet':
             from .linux_headless import run
             return run(args)
