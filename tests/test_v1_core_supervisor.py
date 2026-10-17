@@ -80,3 +80,58 @@ class CoreSupervisorContracts(unittest.TestCase):
                 self.assertRegex(reply["proof"],r"^[0-9a-f]{64}$")
                 with self.assertRaises(Exception):owner.handle(frame)
             finally:owner.close_listener();owner.stack.close()
+
+
+class SupervisorTransportResilience(unittest.TestCase):
+    """GUI/client crashes must never tear down the long-lived Core owner."""
+
+    class _Client:
+        def __init__(self,frames,*,drop_on_reply=False):
+            self.frames=list(frames)
+            self.drop_on_reply=drop_on_reply
+            self.sent=b""
+            self.timeouts=[]
+
+        def settimeout(self,seconds):
+            self.timeouts.append(seconds)
+
+        def recv(self,limit):
+            if not self.frames:return b""
+            data=self.frames.pop(0)
+            if isinstance(data,Exception):raise data
+            if len(data)>limit:raise AssertionError("unbounded IPC read")
+            return data
+
+        def sendall(self,data):
+            if self.drop_on_reply:raise BrokenPipeError("disposable client disconnected")
+            self.sent+=data
+
+    def _owner(self):
+        from wam_regtest.supervisor_protocol import SupervisorProtocolError
+        owner=CoreSupervisor.__new__(CoreSupervisor)
+        def deny(_):
+            raise SupervisorProtocolError("SUPERVISOR_FRAME_DENIED")
+        owner.handle=deny
+        return owner
+
+    def test_client_disappears_before_reply_supervisor_survives(self):
+        client=self._Client([b"bad\\n"],drop_on_reply=True)
+        self._owner()._serve_client(client)
+        self.assertTrue(client.timeouts)
+
+    def test_stalled_or_aborted_client_is_rejected_without_server_crash(self):
+        import socket
+        for failure in (socket.timeout("slow client"),ConnectionResetError("abort")):
+            client=self._Client([failure])
+            self._owner()._serve_client(client)
+            status=json.loads(client.sent)
+            self.assertEqual(status["state"],"error")
+            self.assertFalse(status["mainnet_allowed"])
+            self.assertEqual(status["chain"],"regtest")
+            self.assertNotIn("abort",client.sent.decode())
+
+    def test_oversized_unterminated_frame_is_denied(self):
+        client=self._Client([b"x"*256]*16)
+        self._owner()._serve_client(client)
+        self.assertEqual(json.loads(client.sent)["state"],"error")
+        self.assertTrue(all(0<timeout<=3.0 for timeout in client.timeouts))
