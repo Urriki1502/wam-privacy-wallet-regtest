@@ -1,3 +1,60 @@
+# Resume checkpoint — PR67 frozen process components qualified, V1/Q05 pending
+
+Tested runtime e960dff5c1abcd16f6a3ad2272e589d1a4b86e90 has ALL10 exact-head
+CI SUCCESS. [New matrix, exact packages/SHA-256 and residual findings](PR67_FROZEN_MANAGED_ACCEPTANCE.md).
+Public receipts: docs/evidence/issue45/PR67_E960DFF_*.json. CI merge checkout
+36d56d9f424dcc9476fcff715d337b3d34d34d8b has parents66/71a1e7b +67/e960dff.
+Later documentation commits keep their own CI; never relabel these binaries.
+
+Completed on existing67 only: actual FINAL bootloader supervisor, two WSP scans
+sharing SQLite0→3→8, three Qt processes clean/kill-after-ready/reopen against
+same Core/tip101; verified owned-Core shutdown/server exit0. Five actual frozen
+consent/resource/role/report-alias refusals before any supervisor state. Separate
+native-private Windows report channel; no console/source fallback. Fixed
+one-shot Linux policy initialization and prompt-free Windows CI refusal, captured
+Qt platform before teardown and explicitly cleaned up the native test QApplication.
+Source harness initial daemon crash/modal/ancillary tests remain SOURCE/NATIVE;
+newly labelled supervisor/scan/GUI children are FROZEN. Full wallet Q05 remains false.
+
+Local Mac257units=223PASS/34platformSKIP,exit0; complete app/DMG and actual Cocoa
+operational wallet/security/fresh-chain recovery/stale-sign/broadcast/reorg1/12/100
+PASS. Separate Cocoa frozen-process proof PASS. Downloaded all3OS final artifacts
+verified byte-by-byte against API/RC/file manifests; original Core pairs unchanged.
+Windows354files, native125/150%DPI; Linux193/454files and25safe desktop links.
+Extra actual Mac bootloader node/CLI/WSP-copy tamper denials exit2; original files
+unchanged, modified Core never executed, not a blockchain E2E substitute.
+
+Same branch feature/issue45-t05-gui-continuity-q05-20261017, Draft67. No new PR,
+rebase, force-push, merge or upstream/main/RC1/owner wallet/anchor/miner changes.
+Independent68/94a7649,69/d3aa1f3,70/a4a8257,71/75433cb remain untouched/read-only.
+Their original-wallet/funded crash work is not integrated.69 additional password
+prompt needs modal exclusion at eventual integration. Old-base green cannot
+qualify changed ancestry. v0.1.12 remains candidate-only, Core Update Manager P1.
+
+Cua actual normal app-path/LaunchServices attempt again blocked by locked Mac;
+readonlyps found0 matching app processes. PENDING_OPERATOR; no bypass or default
+owner Keychain action. Programmatic Cocoa is separate from Finder/physical OS
+preferences, fonts/retina/camera/sleep-wake/human usability. No physical Win/Linux
+host or local Win/Linux executable run claimed. Preserve all documented production,
+plaintext SQLite/memory, power-loss, loader/supply-chain and original-wallet gaps.
+
+Acquire and HOLD scripts/engineering_lease.py --hold before engineering; refuse
+contention. Current separate log: outputs/pr67-resume-20261017T220014/RESUME_LOG.md.
+Never infer a future lease from this file. Initial f3ebe6a10/10 was refreshed;
+new runtime e960dff got its OWN10/10. Superseded own cff605a Windows/Linux runs
+were canceled, never substituted for current checks. No actual quota failure,
+reset assumption, credit purchase or duplicate scheduler. Single5h automation
+ACTIVE, next nominal10:00VN18Oct2026, current dispatcher10:03:25VN (verify live).
+
+Next: refresh this documentation head's exact CI, fix real failures on67 before
+more P0. Further frozen owned-Core crash/restart proof is still distinct from
+this harness's native daemon-crash case. Full funded managed-wallet Q05 requires
+qualified integration of independently owned active work; do not duplicate or
+merge68–71. Keep signed/uncertain reservations, custody, rollback, ownership,
+unknown-runtime/orphan, Core/WSP pins and explicit signing/broadcast gates.
+
+# Historical checkpoints (not current work orders or lease ownership)
+
 # Resume checkpoint — frozen managed process acceptance, PR67 only
 
 2026-10-17T22:00:14Z scheduled continuation, exclusive engineering lease held.

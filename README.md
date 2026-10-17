@@ -1,4 +1,4 @@
-Latest Issue45 component evidence: [PR67 platform qualification](docs/PR67_PLATFORM_QUALIFICATION.md) (tested code060183a; full V1/Q05 remains pending).
+Latest Issue45 component evidence: [PR67 final-bootloader qualification](docs/PR67_FROZEN_MANAGED_ACCEPTANCE.md) (tested codee960dff; all10 exact-head checks PASS; full V1/Q05 remains pending).
 
 # WAM Privacy Wallet — Real REGTEST candidates
 

@@ -1,3 +1,5 @@
+Latest runtime qualification: [e960dff final-bootloader matrix and exact artifacts](PR67_FROZEN_MANAGED_ACCEPTANCE.md). The060183a report below is historical.
+
 # PR67 component qualification — REGTEST only
 
 Tested code: `060183affb7a75c0af2f8b1d786b4d55c960e3e0`.
