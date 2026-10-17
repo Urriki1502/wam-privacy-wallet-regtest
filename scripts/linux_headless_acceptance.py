@@ -94,7 +94,8 @@ try:
         if args.executable:
             assert all(proof.get(name) is True for name in (
                 'frozen_supervisor_scan_gui_processes','frozen_gui_clean_kill_reopen_same_tip',
-                'frozen_supervisor_verified_shutdown_exit_zero'))
+                'frozen_supervisor_verified_shutdown_exit_zero',
+                'frozen_owned_core_crash_restart_same_tip'))
             assert proof['frozen_scope_refusals_before_supervisor']==5
             assert proof['frozen_scope_refusals_prompt_free'] is True
             with Path('linux-frozen-managed-core-evidence.json').open('x') as stream:

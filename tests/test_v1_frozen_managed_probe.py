@@ -22,7 +22,7 @@ class FrozenManagedProbeScope(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'FROZEN_PROBE_CONSENT_REQUIRED'):
             arguments(['supervisor','--root',self.root])
         for values in (
-            ['supervisor','--root',self.root,'--wait-for-crash'],
+            ['supervisor','--root',self.root,'--report-root',self.report,'--wait-for-crash'],
             ['gui','--root',self.root,'--report-root',self.root,'--expected-height','101'],
             ['gui','--root',self.root,'--report-root',self.report,'--expected-height','-1'],
             ['scan','--root',self.root,'--report-root',self.report,'--expected-before','0',
@@ -30,6 +30,15 @@ class FrozenManagedProbeScope(unittest.TestCase):
         ):
             with self.subTest(values=values),self.assertRaises(ValueError):
                 arguments([*values,*self.consent])
+
+    def test_supervisor_report_must_be_distinct_and_explicit(self):
+        valid=['supervisor','--root',self.root,*self.consent]
+        with self.assertRaises(ValueError):arguments(valid)
+        with self.assertRaisesRegex(ValueError,'FROZEN_PROBE_REPORT_ROOT_DENIED'):
+            arguments([*valid,'--report-root',self.root])
+        args=arguments([*valid,'--report-root',self.report])
+        self.assertEqual(args.role,'supervisor')
+        self.assertNotEqual(args.root,args.report_root)
 
     def test_no_arbitrary_module_or_external_core_or_abbreviated_consent(self):
         for extra in (['--core-dir','external'],['--wsp-source','external'],

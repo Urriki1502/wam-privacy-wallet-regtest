@@ -30,15 +30,15 @@ def arguments(argv):
     _root(args.root)
     if not args.confirm_disposable_regtest_probe:
         raise ValueError('FROZEN_PROBE_CONSENT_REQUIRED')
+    _root(args.report_root)
+    if args.report_root == args.root:
+        raise ValueError('FROZEN_PROBE_REPORT_ROOT_DENIED')
     if args.role == 'supervisor':
-        if (args.report_root is not None or args.expected_height is not None
+        if (args.expected_height is not None
                 or args.wait_for_crash or args.expected_before is not None
                 or args.max_blocks is not None):
             raise ValueError('FROZEN_PROBE_ROLE_ARGUMENT_DENIED')
     else:
-        _root(args.report_root)
-        if args.report_root == args.root:
-            raise ValueError('FROZEN_PROBE_REPORT_ROOT_DENIED')
         if args.role == 'gui':
             if (type(args.expected_height) is not int
                     or not 0 <= args.expected_height <= 1_000_000
@@ -62,6 +62,46 @@ def publish_report(root, value):
     from .supervisor_store import create_once
     raw = (json.dumps(value, sort_keys=True, separators=(',', ':')) + '\n').encode('ascii')
     create_once(root, 'supervisor.profile', raw)
+
+
+def _crash_owned_core(owner, report_root):
+    """CI-only fault on this supervisor's actual verified Popen, never a PID."""
+    if owner.status()['state'] != 'ready':
+        raise ValueError('FROZEN_PROBE_CORE_CRASH_NOT_READY')
+    height = owner.read.call('getblockcount', [])
+    tip = owner.read.call('getblockhash', [height])
+    process = owner.process
+    # Last check before the destructive test fault: retain the real ownership,
+    # exact image/metadata and live-Popen boundary. No lookup/adoption by PID.
+    owner.binding._assert_image()
+    if process is None or process.poll() is not None:
+        raise ValueError('FROZEN_PROBE_CORE_CRASH_OWNERSHIP_DENIED')
+    process.kill()
+    if process.wait(timeout=15) == 0:
+        raise ValueError('FROZEN_PROBE_CORE_CRASH_NOT_OBSERVED')
+    if owner.status()['state'] != 'recovery-needed':
+        raise ValueError('FROZEN_PROBE_CORE_CRASH_STATE_DENIED')
+    del process
+    if not (owner.directory/'regtest').is_dir():
+        raise ValueError('FROZEN_PROBE_CORE_CRASH_DATADIR_LOST')
+    owner.start()
+    if (owner.status()['core_process_owned'] is not True
+            or owner.read.call('getblockcount', []) != height
+            or owner.read.call('getblockhash', [height]) != tip):
+        raise ValueError('FROZEN_PROBE_CORE_CRASH_RESTART_DENIED')
+    publish_report(report_root, {
+        'frozen_entrypoint': True,
+        'owned_core_image_verified_before_kill': True,
+        'actual_owned_core_kill_observed': True,
+        'crash_state': 'recovery-needed',
+        'same_tip_after_core_restart': True,
+        'same_height_after_core_restart': height,
+        'persistent_chain_after_core_crash': True,
+        'core_restart_owned': True,
+        'wamd_sha256': owner.receipt['wamd_sha256'],
+        'wam_cli_sha256': owner.receipt['wam_cli_sha256'],
+        'mainnet_allowed': False, 'synthetic_rpc': False,
+    })
 
 
 def run(argv, core, source):
@@ -98,6 +138,7 @@ def run(argv, core, source):
         owner = CoreSupervisor(args.root, core, authorized=True)
         started = False
         stopped = False
+        crashed = False
         deadline = time.monotonic() + 300
         try:
             # Existing authenticated request dispatch, replay protection and
@@ -111,10 +152,13 @@ def run(argv, core, source):
                 with conn:
                     owner._serve_client(conn)
                 started = started or owner.process is not None
+                if started and not crashed and owner.process is not None:
+                    _crash_owned_core(owner, args.report_root)
+                    crashed = True
                 if started and owner.process is None and owner.status()['state'] == 'stopped':
                     stopped = True
                     break
-            if not stopped:
+            if not stopped or not crashed:
                 raise ValueError('FROZEN_PROBE_SUPERVISOR_TIMEOUT')
         finally:
             # No kill or unverified PID cleanup. shutdown retains the existing

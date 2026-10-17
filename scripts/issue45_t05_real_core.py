@@ -40,7 +40,10 @@ class _FrozenChildren:
         # In particular missing consent raises an exception on Windows: a
         # modal error dialog would hang instead of producing the required2.
         assert list(self.root.iterdir())==[]
-        normal=self.command('supervisor')
+        # Syntactically valid DISTINCT report path, never created/used by a
+        # refusal. This keeps each negative attributable to its own bad input.
+        report=self.root.parent/'wam-fusion-core-fedcba9876543210'
+        normal=self.command('supervisor','--report-root',str(report))
         cases=[
             [arg for arg in normal if arg!='--confirm-disposable-regtest-probe'],
             normal+['--core-dir',str(self.root/'external-core')],
@@ -307,7 +310,8 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
         if sys.platform=="linux":
             command.extend(["--linux-developer-manifest",linux_manifest,
                             "--linux-root-witness",str(linux_witness)])
-        if frozen is not None:command=frozen.command('supervisor')
+        if frozen is not None:
+            command,server_report=frozen.report_command('supervisor')
         server=subprocess.Popen(command,
             stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         stopped=False
@@ -324,6 +328,38 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
             state=control(root,"start",authorized=True,timeout=15)
             assert state["core_process_owned"] is True
             assert state["height"]==height
+            if frozen is not None:
+                # Start's reply precedes the actual frozen owner's fault.
+                # Wait for its bounded private report BEFORE sending scan/GUI
+                # requests; no polling RPC against a restarting Core.
+                deadline=time.monotonic()+75
+                while time.monotonic()<deadline:
+                    if server.poll() is not None:
+                        raise AssertionError('T05_FROZEN_CORE_RESTART_OWNER_DIED')
+                    try:crash_proof=frozen.read(server_report)
+                    except (ValueError,OSError):
+                        time.sleep(.05);continue
+                    break
+                else:raise AssertionError('T05_FROZEN_CORE_RESTART_REPORT_TIMEOUT')
+                booleans=('frozen_entrypoint','owned_core_image_verified_before_kill',
+                    'actual_owned_core_kill_observed','same_tip_after_core_restart',
+                    'persistent_chain_after_core_crash','core_restart_owned')
+                assert set(crash_proof)==set(booleans)|{'crash_state',
+                    'same_height_after_core_restart','wamd_sha256','wam_cli_sha256',
+                    'mainnet_allowed','synthetic_rpc'}
+                assert all(crash_proof.get(k) is True for k in booleans)
+                assert crash_proof['crash_state']=='recovery-needed'
+                assert type(crash_proof['same_height_after_core_restart']) is int
+                assert crash_proof['same_height_after_core_restart']==height
+                assert crash_proof['wamd_sha256']==evidence['wamd_sha256']
+                assert crash_proof['wam_cli_sha256']==evidence['wam_cli_sha256']
+                assert crash_proof['mainnet_allowed'] is False
+                assert crash_proof['synthetic_rpc'] is False
+                assert control(root,'status',timeout=15)['core_process_owned'] is True
+                assert _read_cli([str(restarted.cli),f"-datadir={root/'chain'}",
+                                  'getblockhash',str(height)])==tip
+                evidence['frozen_owned_core_crash_restart_same_tip']=True
+                evidence['frozen_owned_core_crash_proof']=crash_proof
             if qt:
                 # Two independent REAL WSP-1 scanner interpreters. They share
                 # only the OS-protected SQLite fixture, not an RPC object,

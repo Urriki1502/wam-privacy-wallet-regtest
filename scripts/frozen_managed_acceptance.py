@@ -17,6 +17,7 @@ def main():
     assert all(proof.get(name) is True for name in (
         'frozen_supervisor_scan_gui_processes','frozen_gui_clean_kill_reopen_same_tip',
         'frozen_supervisor_verified_shutdown_exit_zero','actual_qt_crash_reconnect_same_tip',
+        'frozen_owned_core_crash_restart_same_tip',
         'authenticated_wsp_sqlite_resume_same_tip'))
     assert proof['frozen_public_scan_processes']==2 and proof['frozen_gui_processes']==3
     assert proof['frozen_scope_refusals_before_supervisor']==5

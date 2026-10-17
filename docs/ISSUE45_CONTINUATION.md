@@ -1,3 +1,24 @@
+# Active next P0 unit — actual frozen-owned Core crash/restart
+
+After e960dff ALL10 CI and the6dc2e4b evidence checkpoint, this unit moves an
+additional genuine daemon-crash case into the FINAL executable's CI supervisor.
+Only its own live Popen is eligible, after READY/RPC reads and an immediate
+native image check. A real kill must produce nonzero exit and recovery-needed;
+restart must preserve the protected datadir, original height/tip and owned
+process. A separate native-private/create-only report is required; the source
+operator independently checks the recovered Core before scanner/GUI tests.
+Normal supervisor_cli/runtime Core code is unchanged. No wallet keys, anchor,
+reservation release, PID adoption or retry of signing/broadcast is introduced.
+
+Local native258tests=224PASS/34platformSKIP,exit0. New native/frozen macOS,
+Windows/Linux qualification and actual artifact inspection are PENDING until
+real results exist. The prior e960dff matrix below remains the completed
+component evidence, not a PASS for changed runtime. Same Draft67 branch only;
+independent68–71 and owner/main/RC1/upstream boundaries remain unchanged.
+Separate log: outputs/pr67-resume-20261017T220014/RESUME_LOG.md.
+
+# Last completed component checkpoint
+
 # Resume checkpoint — PR67 frozen process components qualified, V1/Q05 pending
 
 Tested runtime e960dff5c1abcd16f6a3ad2272e589d1a4b86e90 has ALL10 exact-head
