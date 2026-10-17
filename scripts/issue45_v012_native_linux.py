@@ -25,6 +25,7 @@ from wam_regtest.core_release_preflight import ASSETS, review_offline
 from wam_regtest.mining_account import CoinbaseAudit, RewardSplit
 from wam_regtest.v1_contracts import rpc_atoms
 from wam_regtest.wsp_live import REGTEST_GENESIS
+from wam_regtest.v012_candidate_http import probe_candidate_http
 from scripts.verify_v012_signed_release import KEY, RELEASE, _RestrictedRedirect, _download, LIMITS
 from urllib import request
 
@@ -106,7 +107,8 @@ def _private_rpc(cli: Path, directory: Path, rpc_port: int, env: dict):
     return call
 
 
-def _verify_native(node: Path, cli: Path, hashes: dict, *, head: str) -> dict:
+def _verify_native(node: Path, cli: Path, hashes: dict, *, head: str,
+                   signer: str, archive_sha: str, signed_archive_verified: bool) -> dict:
     with tempfile.TemporaryDirectory(prefix="wam-v012-exclusive-regtest-") as td:
         directory = Path(td).resolve(strict=True)
         directory.chmod(0o700)
@@ -242,8 +244,17 @@ def _verify_native(node: Path, cli: Path, hashes: dict, *, head: str) -> dict:
                     != [(1, 150), (151, 300), (301, 450)] or
                     rpc("getconnectioncount") != 0):
                 _deny("V012_NATIVE_REGTEST_SCHEDULE_DENIED")
+            # Probe genuine Core 0.1.12 authenticated HTTP via a separately
+            # pinned, test-only candidate path. Never relax ManagedReadRpc.
+            http_read = probe_candidate_http(
+                node=node, process=proc, directory=directory, port=rpc_port,
+                official_signer=signer, official_archive_sha=archive_sha,
+                signed_archive_verified=signed_archive_verified,
+                node_sha=hashes["wamd"]["sha256"], cli_sha=hashes["wam-cli"]["sha256"],
+                expected_height=151)
             return {
                 "schema": "wam-v012-official-linux-regtest-smoke/v1",
+                "v012_http_candidate": http_read,
                 "status": "V012_SIGNED_LINUX_CORE_REGTEST_COMPONENT_PASS",
                 "observed_utc": datetime.now(timezone.utc).isoformat(),
                 "source_head": head, "core_version": "v0.1.12",
@@ -306,7 +317,10 @@ def run(*, authorized: bool) -> dict:
         binary_dir = stage / "bins"
         binary_dir.mkdir(mode=0o700)
         node, cli, hashes = _member_copy(archive, binary_dir)
-        outcome = _verify_native(node, cli, hashes, head=os.environ["WAM_SOURCE_HEAD"])
+        outcome = _verify_native(node, cli, hashes, head=os.environ["WAM_SOURCE_HEAD"],
+                                 signer=trust["signer_fingerprint"],
+                                 archive_sha=trust["archive_sha256"],
+                                 signed_archive_verified=trust["signed_archive_verified"])
         outcome.update({
             "signer_fingerprint": trust["signer_fingerprint"],
             "official_archive_sha256": trust["archive_sha256"],
