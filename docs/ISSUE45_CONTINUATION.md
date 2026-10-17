@@ -1,3 +1,396 @@
+# Resume checkpoint — c21bbd1 frozen-owned Core fault qualified, V1/Q05 pending
+
+Tested runtime c21bbd1b06f5db9bd40375e8dc43ba19ed7ca150 has ALL10 exact-head
+CI SUCCESS. [Current matrix, exact packages/checksums and limitations](PR67_FROZEN_CORE_CRASH_ACCEPTANCE.md).
+Public receipts: docs/evidence/issue45/PR67_C21BBD1_*.json. Verified CI merge
+518a7b48e74f7161edce0ab59b1299b3415fa40c parents66/71a1e7b +67/c21bbd1.
+Later documentation-head CI is separate; never relabel these tested binaries.
+
+Completed two successive P0 acceptance units on SAME Draft67: e960dff actual
+frozen supervisor/two WSP/three Qt processes with source/frozen separation;
+c21bbd1 adds real Core fault INSIDE that final owner, exact image check before
+own-Popen kill, expected-9POSIX/1Windows, recovery-needed, same protected chain/
+height101/tip and new owned restart. The source operator independently checks
+Core before scanner/GUI tests. Separate explicit fault consent and inner frozen
+scope guard; six actual pre-state refusals. Normal supervisor_cli/Core runtime
+unchanged. No external PID/key/anchor/reservation/signing/broadcast authority.
+
+Native local259tests=225PASS/34platformSKIP,exit0. Complete final Mac app/DMG,
+actual Cocoa fault/operational/security/recovery/stale-writer/reorg1/12/100 PASS.
+Actual downloaded all3OS packages/source/RC/file manifests verified, original
+Core pairs unchanged; Windows354files and125/150%DPI, Linux193/454files and25safe
+links. Frozen fault receipts matched actual tested executable hash/backend and
+source inventory. Mac copied-resource node/CLI/WSP tamper denials repeated; no
+modified Core executed, no blockchain E2E substitution. Full managed Q05 false.
+
+Same feature/issue45-t05-gui-continuity-q05-20261017, Draft67 only. No new PR,
+rebase, force-push, merge, upstream/main/RC1/owner wallet/anchor/miner modification.
+Independent68/94a7649,69/d3aa1f3,70/a4a8257,71/75433cb remain read-only/unchanged.
+Their funded/original-wallet view/crash-during-write integration remains pending;
+69 additional password prompt needs modal exclusion. Do not duplicate or merge
+active independent work; old-base green cannot qualify changed integration.
+v0.1.12 candidate-only, Core Update Manager P1 deferred. No mainnet/real funds.
+
+Core fault is on a quiescent isolated stable chain, not crash-during-Core-write
+or power-loss proof. Full original-wallet Q05, physical Finder/focus/fonts/retina/
+camera/OS Auto/sleep-wake/human usability remain PENDING_OPERATOR. Cua normal Mac
+app-path attempt blocked by locked screen,0matching app processes, no bypass or
+default-owner-Keychain action. Programmatic Cocoa signals are not physical OS
+settings. No local Windows/Linux execution or physical host PASS claimed.
+
+Acquire and HOLD scripts/engineering_lease.py --hold; refuse contention. Current
+separate log: outputs/pr67-resume-20261017T220014/RESUME_LOG.md; do not infer a
+future lease. No actual quota failure, credit reset assumption or purchase.
+Single5h automation ACTIVE, next nominal10:00VN18Oct2026/current dispatcher
+10:03:25VN, verify live. Only OWN superseded heads were canceled after later
+runtime pushes; qualified and independent runs untouched. No recurring retries.
+
+Next: refresh documentation-head exact CI and real failures first. Keep native/
+frozen/physical classification and inspect actual artifact provenance. Full
+funded managed-wallet Q05 needs qualified integration of independently owned
+work, not duplicate67 implementations. Preserve custody/rollback/leases/Core+
+WSP pins and all signed/uncertain reservations. Do not repair/delete anchors,
+release uncertain locks, retry uncertain signing/broadcast or attach T06 Core.
+
+# Historical checkpoints — not current orders or lease ownership
+
+# Active next P0 unit — actual frozen-owned Core crash/restart
+
+After e960dff ALL10 CI and the6dc2e4b evidence checkpoint, this unit moves an
+additional genuine daemon-crash case into the FINAL executable's CI supervisor.
+Only its own live Popen is eligible, after READY/RPC reads and an immediate
+native image check. A real kill must produce nonzero exit and recovery-needed;
+restart must preserve the protected datadir, original height/tip and owned
+process. A separate native-private/create-only report is required; the source
+operator independently checks the recovered Core before scanner/GUI tests.
+Normal supervisor_cli/runtime Core code is unchanged. No wallet keys, anchor,
+reservation release, PID adoption or retry of signing/broadcast is introduced.
+
+Intermediate c2edbcfa485da347020fcd306e33005225828408 complete local Mac
+app/DMG and actual frozen-owned Core kill(-9)/restart/same-tip proof PASS,exit0.
+Follow-up requires separate --confirm-owned-core-crash consent, six actual
+frozen refusals and an inner frozen-context guard before any Core access, so
+ordinary Python cannot emit a false frozen fault receipt. Other roles reject
+fault consent. Local native259tests=225PASS/34platformSKIP,exit0. New native/frozen macOS,
+Windows/Linux qualification and actual artifact inspection are PENDING until
+real results exist. The prior e960dff matrix below remains the completed
+component evidence, not a PASS for changed runtime. Same Draft67 branch only;
+independent68–71 and owner/main/RC1/upstream boundaries remain unchanged.
+Separate log: outputs/pr67-resume-20261017T220014/RESUME_LOG.md.
+
+# Last completed component checkpoint
+
+# Resume checkpoint — PR67 frozen process components qualified, V1/Q05 pending
+
+Tested runtime e960dff5c1abcd16f6a3ad2272e589d1a4b86e90 has ALL10 exact-head
+CI SUCCESS. [New matrix, exact packages/SHA-256 and residual findings](PR67_FROZEN_MANAGED_ACCEPTANCE.md).
+Public receipts: docs/evidence/issue45/PR67_E960DFF_*.json. CI merge checkout
+36d56d9f424dcc9476fcff715d337b3d34d34d8b has parents66/71a1e7b +67/e960dff.
+Later documentation commits keep their own CI; never relabel these binaries.
+
+Completed on existing67 only: actual FINAL bootloader supervisor, two WSP scans
+sharing SQLite0→3→8, three Qt processes clean/kill-after-ready/reopen against
+same Core/tip101; verified owned-Core shutdown/server exit0. Five actual frozen
+consent/resource/role/report-alias refusals before any supervisor state. Separate
+native-private Windows report channel; no console/source fallback. Fixed
+one-shot Linux policy initialization and prompt-free Windows CI refusal, captured
+Qt platform before teardown and explicitly cleaned up the native test QApplication.
+Source harness initial daemon crash/modal/ancillary tests remain SOURCE/NATIVE;
+newly labelled supervisor/scan/GUI children are FROZEN. Full wallet Q05 remains false.
+
+Local Mac257units=223PASS/34platformSKIP,exit0; complete app/DMG and actual Cocoa
+operational wallet/security/fresh-chain recovery/stale-sign/broadcast/reorg1/12/100
+PASS. Separate Cocoa frozen-process proof PASS. Downloaded all3OS final artifacts
+verified byte-by-byte against API/RC/file manifests; original Core pairs unchanged.
+Windows354files, native125/150%DPI; Linux193/454files and25safe desktop links.
+Extra actual Mac bootloader node/CLI/WSP-copy tamper denials exit2; original files
+unchanged, modified Core never executed, not a blockchain E2E substitute.
+
+Same branch feature/issue45-t05-gui-continuity-q05-20261017, Draft67. No new PR,
+rebase, force-push, merge or upstream/main/RC1/owner wallet/anchor/miner changes.
+Independent68/94a7649,69/d3aa1f3,70/a4a8257,71/75433cb remain untouched/read-only.
+Their original-wallet/funded crash work is not integrated.69 additional password
+prompt needs modal exclusion at eventual integration. Old-base green cannot
+qualify changed ancestry. v0.1.12 remains candidate-only, Core Update Manager P1.
+
+Cua actual normal app-path/LaunchServices attempt again blocked by locked Mac;
+readonlyps found0 matching app processes. PENDING_OPERATOR; no bypass or default
+owner Keychain action. Programmatic Cocoa is separate from Finder/physical OS
+preferences, fonts/retina/camera/sleep-wake/human usability. No physical Win/Linux
+host or local Win/Linux executable run claimed. Preserve all documented production,
+plaintext SQLite/memory, power-loss, loader/supply-chain and original-wallet gaps.
+
+Acquire and HOLD scripts/engineering_lease.py --hold before engineering; refuse
+contention. Current separate log: outputs/pr67-resume-20261017T220014/RESUME_LOG.md.
+Never infer a future lease from this file. Initial f3ebe6a10/10 was refreshed;
+new runtime e960dff got its OWN10/10. Superseded own cff605a Windows/Linux runs
+were canceled, never substituted for current checks. No actual quota failure,
+reset assumption, credit purchase or duplicate scheduler. Single5h automation
+ACTIVE, next nominal10:00VN18Oct2026, current dispatcher10:03:25VN (verify live).
+
+Next: refresh this documentation head's exact CI, fix real failures on67 before
+more P0. Further frozen owned-Core crash/restart proof is still distinct from
+this harness's native daemon-crash case. Full funded managed-wallet Q05 requires
+qualified integration of independently owned active work; do not duplicate or
+merge68–71. Keep signed/uncertain reservations, custody, rollback, ownership,
+unknown-runtime/orphan, Core/WSP pins and explicit signing/broadcast gates.
+
+# Historical checkpoints (not current work orders or lease ownership)
+
+# Resume checkpoint — frozen managed process acceptance, PR67 only
+
+2026-10-17T22:00:14Z scheduled continuation, exclusive engineering lease held.
+Refreshed f3ebe6ac3dd95c735c1f3a507bc02c03d3566d9a: ALL10 exact-head CI
+SUCCESS. Issue45 unchanged; independent68–71 unchanged/read-only. No duplicated
+original-wallet view or funded crash work. Same67 branch, no new PR or merge.
+
+Next unit closes a narrower evidence gap: previous T05 probes still spawned
+host Python even from Linux frozen acceptance. Final platform bootloader now
+has three explicit disposable CI roles (supervisor, public WSP scan, GUI), with
+bundled/pinned resources only. The source harness launches those actual frozen
+children: two independent scans resume the same SQLite0→3→8, and three real Qt
+processes clean-close/kill-after-authenticated-ready/reopen against the same
+owned Core/tip. The test-only supervisor exits0 after verified owned-Core stop.
+Windows readiness uses a NEW separate native-private/create-only/bounded report
+fixture, never stdout emulation or a source fallback. No wallet/anchor/signing
+authority added; no source or native Core/custody gates removed. Linux still
+requires its independently approved developer manifest and real root witness.
+
+Initial implementation6e8e4af35b5b0fcdbbc6c5518484ab234b8b2d76: local full
+Mac app/DMG and actual frozen managed-process test PASS/exit0, both official
+Core hashes unchanged. Follow-up review fixed duplicate one-shot Linux scan
+policy initialization and Windows CI-role failures opening modal dialogs.
+Added actual child Qt-platform/frozen reporting and Windows path triggers.
+Local updated native unit suite:257 tests,223 PASS/34 platform SKIP, exit0.
+Follow-up cff605a40a5c701f578672cf12bd5fefcb9d66da also passed full local
+Mac app/DMG and frozen-process/platform proof. Next hardening captures child Qt
+platform BEFORE teardown, explicitly shuts down the native harness QApplication,
+and requires five actual frozen entry refusals before any supervisor state:
+missing consent, external Core/WSP override, role-incompatible crash flag and
+report/control-root alias. No modal, fallback, Core startup or state write is
+permitted for these refused commands. Updated exact-head CI/Windows/Linux
+execution and artifact inspection remain PENDING until their actual results.
+Native-source test
+orchestrator identity and final executable hash are recorded separately.
+Full managed-wallet Q05 remains false; physical acceptance remains pending.
+Separate resume log: outputs/pr67-resume-20261017T220014/RESUME_LOG.md.
+
+# Prior qualified checkpoint — PR67 components, full Q05 pending
+
+Tested code060183affb7a75c0af2f8b1d786b4d55c960e3e0: ALL10 exact-head CI
+SUCCESS, including Mac/Windows/Linux native/frozen, canonical vectors and fresh
+pinned Linux Core build. [Platform matrix, artifact links, exact hashes and
+remaining findings](PR67_PLATFORM_QUALIFICATION.md); machine receipts and full
+CI snapshot are under docs/evidence/issue45/PR67_060183A_*. A subsequent docs-only
+checkpoint commit does not relabel these binaries or inherit exact-head CI.
+Refresh actual live HEAD and CI before further engineering.
+
+Current branch remains feature/issue45-t05-gui-continuity-q05-20261017, Draft67.
+No new PR, rebase, force-push, merge, upstream/main/RC1/owner-data modification.
+Independent68/94a7649,69/d3aa1f3,70/a4a8257,71/75433cb unchanged. Their original
+wallet view/funded crash/crash-DURING-write work is not integrated here. Do not
+copy, overwrite, rebase or merge active branches. Full managed original-wallet
+Prepare/Review/Sign/Broadcast and funded cross-platform Q05 remain PENDING.
+PR69 extra wallet-view prompt needs the modal exclusion when independently
+integrated. Its green old-base jobs cannot qualify a changed integration base.
+
+Completed units:93083aa bounded IPC deadline;db71f42 native modal worker/lifetime
+exclusion;060183a genuine Mac fresh-chain native Keychain stale-sign/broadcast
+proof reused from Windows. Mac251units217PASS/34platformSKIP, full genuine
+Core/WSP/SQLite/Qt/new-Core/reorg1/12/100, complete final app/DMG and separate
+Cocoa executable all exit0. Downloaded all3OS final artifacts verified byte by
+byte against manifests; Core hashes unchanged. Linux remains the reviewed
+pinned developer build/root-witness policy; v0.1.12 remains candidate-only.
+Source/native/frozen/physical are separate. No production/final qualification.
+
+Normal LaunchServices/Finder UI attempt was blocked by Mac lock screen, no
+successful UI state or app process observed. PENDING_OPERATOR; owner may unlock
+manually (never send password). Programmatic Qt/Cocoa tests already passed;
+no lock-screen bypass or owner default-Keychain operation. Physical Win/Linux,
+retina/font/camera/actual OS appearance and human usability remain separate.
+
+Acquire and hold scripts/engineering_lease.py --hold before work; refuse overlap.
+Current holder/release evidence is in the SEPARATE log
+outputs/pr67-resume-20261017T144215/RESUME_LOG.md; never infer a future lease
+from this file. Temporary local WSP symlink was acceptance scaffolding only;
+its target is the existing pinned read-only sibling WSP checkout, never modify
+legacy wallet/upstream. Keep PYTHONPATH=src plus recorded reference-deps when
+using the sibling venv (its editable package points to an older checkout).
+
+Existing single5h schedule ACTIVE, verified one active schedule for this task.
+At this checkpoint next nominal05:00 18Oct2026 Asia/Ho_Chi_Minh, dispatch may
+occur04:56:58; wait bounded until the nominal slot and acquire lease before
+engineering. No duplicate scheduler, automatic merge, Core Update Manager,
+credit reset assumption, purchase or recurring quota retry. No actual new
+usage-limit failure occurred. Keep unknown runtime/orphan, ownership, custody,
+rollback, reservation and signing gates fail closed. Next: refresh docs-head CI,
+fix any actual failure on67, then choose an unclaimed in-scope P0; do not redo
+qualified tests or duplicate68–71 to manufacture progress.
+
+# Historical implementation checkpoints
+
+# Current PR67 unit — native Keychain stale-payment recovery proof
+
+db71f42b7207608cfb5de9b8a72033906757d380 has ALL10 exact-head CI SUCCESS,
+including native/frozen macOS, Windows, Linux and fresh pinned Linux Core build.
+Snapshot: docs/evidence/issue45/PR67_DB71F42_ALL_CI.json. Actual downloaded
+Mac/Linux package hashes, source/merge ancestry and original Core pairs were
+verified; local complete Mac app/DMG and its actual Cocoa executable exited0.
+Qt color-scheme override signals are automated evidence, not physical OS/Finder
+acceptance. Separate logs/receipts: outputs/pr67-resume-20261017T144215.
+
+Next nonduplicate P0 acceptance gap: cross-session recovery receipt had
+stale-before-native-sign/broadcast true only on Windows. Reuse its SAME genuine
+Core/native WSP competing-vault test on Mac, with an explicitly supplied
+disposable Keychain matching the session anchor; no default owner Keychain.
+Before-sign rejection must enter zero native signer calls. A positive real
+signature is then created, a second vault advances the anchor, and stale
+broadcast must enter zero sendrawtransaction calls. Its signed reservation
+must remain irreversible. Only a proven never-signed draft can be canceled.
+Mac source CI and final frozen entry now REQUIRE these proof fields; no gate
+was weakened and no wallet runtime signing algorithm was changed.
+
+Native251tests217PASS/34platformSKIP exit0, including refusal of missing,
+relative or mismatched disposable Keychain BEFORE custody access. Exact
+committed genuine-Core/source/frozen proof and successor CI remain PENDING
+at this implementation checkpoint; do not inherit db71f42 qualification.
+Independent Draft68–71 and all owner data/anchors remain untouched. Full
+managed-wallet Q05 across allOS and physical acceptance remain PENDING.
+
+# Earlier PR67 unit — native modal worker exclusion
+
+2026-10-17T17:00Z scheduled continuation, same exclusive engineering lease and
+existing PR67 branch. Predecessor93083aaa5b15e5cf2de46599ccde1440eb0d54b5
+has ALL10 exact-head CI jobs SUCCESS; full snapshot is
+docs/evidence/issue45/PR67_93083AA_ALL_CI.json. This includes Mac/Windows/Linux
+native and frozen regression, not physical acceptance or complete wallet Q05.
+
+Confirmed managed-GUI race: QInputDialog runs a nested Qt event loop, allowing
+the sync timer to create a status QThread while a password prompt is open.
+Verification could then overwrite _worker, losing its lifetime guard. Native
+Qt negative reproduction failed on the predecessor. Stop confirmation had the
+same reentry gap. A scoped modal guard now prevents background/lifecycle workers
+and window destruction during approval; authority/state are checked again after
+the prompt. Cancel/exception always restore controls. No new wallet, signing,
+broadcast, reservation or Core shutdown authority is granted.
+
+Native targeted14 PASS; full250 tests216PASS/34platformSKIP, runner exit0.
+Real Core/Qt harness now opens and cancels the actual native password dialog,
+attempting sync/close inside its nested loop; committed-source Core/WSP proof
+and successor native/frozen CI still PENDING at this implementation checkpoint.
+Do not inherit93083aa qualification for changed runtime. No physical claim.
+
+Independent Draft68–71 reviewed READ ONLY. They own original-wallet snapshots,
+GUI read view, funded crash/reopen and crash-during-write refusal; do not copy,
+rebase, overwrite or merge their work. PR69's additional _view_wallet dialog
+will need the same exclusion when independently integrated; not modified here.
+Full funded managed Q05 across all platforms remains PENDING. No new PR or merge.
+
+# Earlier PR67 unit — bounded authenticated IPC deadlines
+
+2026-10-17T14:42:15Z continuation. Existing branch
+feature/issue45-t05-gui-continuity-q05-20261017 only; live parent
+90a7918519101330d790e1306da66a88aa809db4 all10CI SUCCESS independently saved
+in docs/evidence/issue45/PR67_90A7918_ALL_CI.json. Earlier Qt and native-image
+fixes are included by ancestry; do not repeat them.
+
+Reviewed independent Draft68/94a7649,69/d3aa1f3,70/a4a8257 read-only. They own
+original-wallet snapshot, read-only GUI and funded signed-reservation crash
+acceptance work; do not duplicate, rebase, overwrite or merge those branches.
+Their green regression jobs do not imply full cross-platform funded Q05.
+This turn only hardens PR67 control/scanner transport, no wallet/signing change.
+
+Confirmed bug: native socket inactivity timeout restarted on every reply chunk.
+A real TCP peer sending20ms whitespace delayed both control(.15s) and scan(.5s)
+for3s until fixture EOF. Both regression tests FAIL on90a7918. A single monotonic
+deadline now covers local profile/auth preparation, connect, send, all receives
+and final authenticated result. Expiry denies; no reconnect/replay or new RPC.
+Tests use a public token and an unverified local peer, never synthetic Core PASS.
+Fixed real-TCP tests PASS in .655s; full native247tests213PASS34platformSKIP,
+process exits0 including Qt shutdown. Exact committed realCore/WSP/Qt and native/
+frozen cross-platform successor CI must still run. Do not inherit90a qualification.
+
+Use repository engineering lease and refuse overlaps. Current holder is recorded
+only in outputs/pr67-resume-20261017T144215/RESUME_LOG.md, not a future lock proof.
+Official v0.1.11 and WSP pins unchanged; v0.1.12 candidate-only. No owner funds,
+anchors/miner, mainnet, upstream Core, main/RC1 edits, new PR, force-push or merge.
+Core Update Manager remains P1. Full managed-wallet Q05, frozen managed GUI and
+physical tests remain PENDING; preserve irreversible reservations and original
+wallet identity. Next: verify latest exact-head CI, fix failures, then audit the
+remaining unclaimed security/acceptance gap without duplicating68–70.
+
+# Earlier checkpoints (historical)
+
+# Latest PR67 regression fix — native image exit race
+
+41c14bd all10CI SUCCESS is verified predecessor evidence. Successor6f973d1
+real independentGUIprocess proof passes Mac native/source and Linux nativeQt,
+but Linuxfrozen desktop failed at actual startup collision: Core exits between
+poll() and /proc/PID/exe readlink, FileNotFoundError escaped the ownership-denial
+handler. Fix normalizes native image lookup OSError to CoreBindingError, NEVER
+accepts ownership. Existing startup handler retries ONLY actual exited+private
+bind-denial proof, zero auth bytes to competitor; other failure denies. Native
+regression verifies missing image is denied/redacted. No new retry after yield.
+Inspect newest actualHEAD/CI; do not infer successor qualification from41c14bd.
+
+Latest source/runtime fix requires new exact-head real collision/native/frozen
+qualification on allOS. Do not expandQ05 until CI recovered. Same existingPR67
+only, no auto-merge/otherbranch/Core/ownerwallet changes. Lease and logs below.
+
+# Current checkpoint — PR67 native Qt crash fixed; Q05 remains partial
+
+Use ONLY existing branch feature/issue45-t05-gui-continuity-q05-20261017,
+DraftPR67, basePR66/71a1e7b. User explicitly authorized takeover. Do not create
+PR68 or change PR66/61/60/main/RC1/upstream/owner data/anchors. REGTEST only,
+v0.1.11 independent pins unchanged, no merge/rebase/force-push or T06 attach.
+Acquire engineering lease before work; refuse concurrent work. Current turn's
+tracked lease87623 is not evidence of a future holder; actual release in
+outputs/pr67-qt-20261017/RESUME_LOG.md. Earlier checkpoints below are historical.
+
+41c14bd687a5f6fbda066d3d1e306e1e8f1d2177 fixed the native shutdown crash.
+ResponsiveRow had left panels unparented until resizeEvent; hidden windows left
+independent widgets for PySide's unordered destruction visitor. Eager layout
+ownership fixes it, retaining QApplication.shutdown and native destruction.
+Mac native OS stack and baseline5tests exit139 reproduced; fixed targeted8,
+full209(175PASS/34platformSKIP),10independent runner exits and Cocoa8 all exit0.
+See docs/PR67_QT_LIFETIME.md. Actual41c14bd all10CI jobs SUCCESS independently
+verified, including Windows native/frozen, Mac native/frozen, Linux native,
+frozen desktop/headless and developer-Core rebuild. Committed exact snapshot
+PR67_41C14BD_ALL_CI.json is predecessor evidence, not successor qualification.
+
+Local41c14bd finalMac app/DMG actually ran Core/WSP/SQLite/Qt operational,
+security/recovery/reorg E2E and exited0; bytes/hashes/source provenance verified.
+Original Core pair unchanged. Mac ZIPa0fe9088bd5798ef2ae68c960be025b56ba606edea1ac59fc77c0e3432ea17ff,
+DMGbcc351718b5b16359150278482684c929775b64b86c63097e2b1a658a763337c.
+ActualLinux downloaded archives inspected193headless/454desktop file hashes,
+25safe desktop links, x86_64ELF/Core pins and exact41c14bd/8ae4141 checkout.
+No localWindows/Linux execution or physical approval claimed. Windowsfrozen
+artifact12097376351 downloadexec12663 in progress at checkpoint; inspect once
+complete, never hash partialfile. All receipt/public logs in separate outputdir.
+
+Additional real defect: downloadedWindows nativeT05 JSON has literal backslash-n
+trailer and cannot parse; operational JSON is valid. Successor fixes newline and
+adds actual JSON round-trip assertion. Do not relabel that oldT05 receipt valid.
+
+Next acceptance unit adds THREE genuine independent nativeQt GUI processes:
+clean close, abrupt kill AFTER authenticated status/Qt readiness, clean reconnect;
+assert original supervisor and same chain tip survive. Prior client os._exit test
+remains a separate IPC-disconnect case. No signing/network retry or wallet
+adoption. New public receipt records independent Core pair and reused clean-source
+provenance before/after native probe. Probe is explicitly consented, control/status
+only, not runtime wallet authority. Local realCore three-GUI proof passed before
+source-provenance additions; exact committed-head rerun and successorCI pending.
+
+Next: inspect latest67 CI, fix failures first. Verify actual successor nativeCore
+three-GUI proof on Mac/Win/Linux and source/artifact identities. Only then extend
+managed WSP wallet reopen preserving identity/history/irreversible reservations
+and permission-scoped IPC capability. Current managed GUI still session=None,
+snapshot=None; full_gui_q05_qualified=false is mandatory. No fresh-wallet creation,
+reset, automatic adoption or releasing uncertain reservations to make Q05 pass.
+Final frozen managed-Q05 and operator/physical remain PENDING.
+
+# Historical records
+
 # Final current checkpoint — own Draft60 / Draft61
 
 2026-10-17 resumed at01:52:55Z. Active branch

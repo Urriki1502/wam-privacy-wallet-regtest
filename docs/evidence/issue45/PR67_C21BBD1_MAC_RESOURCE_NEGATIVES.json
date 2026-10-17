@@ -1,0 +1,28 @@
+{
+  "status": "ACTUAL_FROZEN_RESOURCE_PREFLIGHT_NEGATIVES_PASS",
+  "source_head_sha": "c21bbd1b06f5db9bd40375e8dc43ba19ed7ca150",
+  "frozen_executable_sha256": "b20fb005f5289f17f3f9a700d6baf35f57f8c841f9b93e4669cc819f5e051c6d",
+  "mode": "--check-bundle",
+  "independent_node_cli_and_wsp_denials": {
+    "Contents/Resources/core/wamd": {
+      "exit_code": 2,
+      "fixed_denial": "CORE_EXACT_BINARY_DENIED",
+      "only_disposable_copy_modified": true
+    },
+    "Contents/Resources/core/wam-cli": {
+      "exit_code": 2,
+      "fixed_denial": "CORE_EXACT_BINARY_DENIED",
+      "only_disposable_copy_modified": true
+    },
+    "Contents/Resources/wsp-source/src/wam_sp/scanner.py": {
+      "exit_code": 2,
+      "fixed_denial": "WSP_FROZEN_SOURCE_HASH_DENIED",
+      "only_disposable_copy_modified": true
+    }
+  },
+  "original_bundle_files_unchanged": true,
+  "core_runtime_start_requested": false,
+  "blockchain_e2e_substitute": false,
+  "owner_wallet_or_anchor_access": false,
+  "mainnet_allowed": false
+}

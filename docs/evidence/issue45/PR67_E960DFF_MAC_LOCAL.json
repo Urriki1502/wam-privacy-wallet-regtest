@@ -1,0 +1,39 @@
+{
+  "status": "ACTUAL_LOCAL_MACOS_APP_DMG_AND_FROZEN_ROLE_BYTES_VERIFIED",
+  "source_head_sha": "e960dff5c1abcd16f6a3ad2272e589d1a4b86e90",
+  "files": {
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip": {
+      "sha256": "860b4eb1554f9bbb511390baed27921b3ab51d4832199e2cb5eb3bc4e49baf00",
+      "size_bytes": 55851238
+    },
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg": {
+      "sha256": "a7aeccef2ac7d28a09193f7229a2e2465c62d72e36ea639056e6c0d3f905e220",
+      "size_bytes": 63488734
+    }
+  },
+  "original_core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "frozen_executable_sha256": "2e11bd40377802a168bf2912799bebfa7c6e7bf355f36099e7e5e3de827b4c0e",
+  "clean_source_provenance": {
+    "checkout_sha": "e960dff5c1abcd16f6a3ad2272e589d1a4b86e90",
+    "dependency_supply_chain_qualified": false,
+    "native_source_inventory_sha256": "6352e8768633617e6d860a83341952334d0ea4ce5a6ea080e429c0212aacb387",
+    "same_uid_host_tamper_proof": false,
+    "schema": "wam-build-source/v1",
+    "source_head_sha": "e960dff5c1abcd16f6a3ad2272e589d1a4b86e90",
+    "source_unchanged_across_build": true,
+    "tracked_files": 310,
+    "tracked_source_matches_head": true
+  },
+  "frozen_managed_backends": [
+    "offscreen",
+    "cocoa"
+  ],
+  "five_frozen_scope_refusals_before_state": true,
+  "native_arm64_macho_verified": true,
+  "full_managed_wallet_q05_qualified": false,
+  "physical_acceptance": "PENDING_OPERATOR",
+  "mainnet_allowed": false
+}

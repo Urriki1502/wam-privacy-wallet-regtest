@@ -187,12 +187,19 @@ class ResponsiveRow(QWidget):
     def __init__(self,*children,weights=None,breakpoint=760):
         super().__init__();self.setObjectName('FusionTransparent');self._break=breakpoint;self._children=children;self._weights=weights or [1]*len(children);self._vertical=None
         self._grid=QGridLayout(self);self._grid.setContentsMargins(0,0,0,0);self._grid.setSpacing(18)
-    def resizeEvent(self,event):
+        # Establish native ownership immediately, including never-shown windows.
+        # Waiting for resizeEvent leaves whole panels as independent top-level
+        # widgets. PySide's application cleanup can then destroy their children
+        # before their parents, revisiting stale native pointers at shutdown.
+        self._arrange()
+    def _arrange(self):
         vertical=self.width()<self._break
         if vertical!=self._vertical:
             self._vertical=vertical
             for i,child in enumerate(self._children):self._grid.addWidget(child,i if vertical else 0,0 if vertical else i)
             for i,w in enumerate(self._weights):self._grid.setColumnStretch(i,0 if vertical else w)
+    def resizeEvent(self,event):
+        self._arrange()
         super().resizeEvent(event)
 
 

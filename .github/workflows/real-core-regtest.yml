@@ -16,6 +16,7 @@ jobs:
     env:
       PYTHONUNBUFFERED: '1'
       PYTHONDONTWRITEBYTECODE: '1'
+      WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,13 +48,15 @@ jobs:
           python -m pip install --disable-pip-version-check -e '.[gui]' -e ./wsp-upstream
           python -m pip check
       - name: Run fail-closed unit contracts (not E2E)
-        run: python -m unittest discover -s tests -v
+        run: python -X faulthandler scripts/run_native_unittest.py --pattern 'test*.py'
       - name: Compile unchanged pinned WAM subsidy source vectors (not Core E2E)
         run: python scripts/check_wam_subsidy_source.py --output source-subsidy-contract.json
       - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
         run: python -m wam_regtest.release --platform macos-arm64 --destination core
-      - name: T05 persistent managed Core real-process acceptance (not GUI Q05)
-        run: python scripts/issue45_t05_real_core.py --core-dir core --output t05-real-core-evidence.json
+      - name: T05 real persistent Core + actual Fusion GUI close/reopen (wallet continuity pending)
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python scripts/issue45_t05_real_core.py --core-dir core --qt-e2e --output t05-real-core-evidence.json
       - name: Independently evaluate wallet security contracts
         run: python scripts/audit_wallet_security.py --root . --core core --output independent-wallet-security.json
       - name: Inspect signed node dynamic library requirements (real ARM64 bytes)
@@ -159,6 +162,9 @@ jobs:
           assert reopen['status'] == 'REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS'
           assert reopen['real_core_rpc'] is True and reopen['synthetic_rpc'] is False
           assert reopen['same_test_keys_recovered'] is True and reopen['old_reservations_retained'] is True
+          assert all(reopen.get(name) is True for name in (
+            'stale_before_native_signature_denied','stale_before_real_broadcast_denied',
+            'stale_writer_same_wallet_other_vault_directory','stale_writer_signed_reservation_retained'))
           assert reopen['observed_height'] == 103
           assert wallet['native_gui_navigation_pages'] == 7 and wallet['observed_height'] == 105
           assert proof['mining_account_component']['native_gui_depths'] == [99,100,101]
@@ -245,6 +251,7 @@ jobs:
             package-output/BUILD_SOURCE_PROVENANCE.json
             package-output/INDEPENDENT-WALLET-SECURITY.json
             package-output/macos-packaged-wallet-evidence.json
+            package-output/frozen-managed-core-evidence.json
             package-output/RELEASE_CANDIDATE_MANIFEST.json
             package-output/SHA256SUMS.txt
             package-output/OWNER_REGTEST_ACCEPTANCE.md

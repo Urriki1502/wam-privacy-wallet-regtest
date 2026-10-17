@@ -1,8 +1,8 @@
 """T05 owned-Core supervisor process (REGTEST only).
 
 Independent of GUI lifetime. Only this process owns subprocess.Popen; another
-process must never adopt a PID, datadir lock or foreign Core. IPC exports
-control/status ONLY, never credentials, RPC, signing or mining.
+process must never adopt a PID, datadir lock or foreign Core. IPC exposes authenticated control/status and a separate strict WSP read-only
+block subset. No generic RPC, credentials, wallet keys, signing or mining.
 """
 from __future__ import annotations
 from contextlib import ExitStack
@@ -148,6 +148,8 @@ class CoreSupervisor:
                 profile=_profile_read(self.root)
             self.profile=profile
             self._guard=ReplayGuard(token)
+            self._scan_secret=token
+            self._scan_seen=set()
             # No token, password, datadir path or RPC port in public evidence.
         except BaseException:
             self.close_listener();self.stack.close();raise
@@ -163,8 +165,13 @@ class CoreSupervisor:
         return {"PATH":"/usr/bin:/bin:/usr/sbin:/sbin",
                 "HOME":str(self.directory),"LC_ALL":"C"}
 
-    def _ready(self,deadline):
-        rpcport=local_rpc_port(self.directory)
+    def _ready(self,deadline,rpcport):
+        # The protected config was strictly validated BEFORE spawning Core.
+        # Don't re-open it during the process/config handoff: ManagedReadRpc
+        # independently verifies that exact local config and the OS-bound Core
+        # endpoint before any authenticated read. A changed port is denied.
+        if type(rpcport) is not int or not 1<=rpcport<=65535:
+            raise ManagedCoreError("MANAGED_CONFIG_PORT_DENIED")
         while time.monotonic()<deadline:
             if self.process.poll() is not None:
                 raise ManagedCoreError("MANAGED_CHILD_EXITED")
@@ -179,6 +186,10 @@ class CoreSupervisor:
                 read=ManagedReadRpc(self.core,self.directory,
                     authorized_readonly=True,binding=self.binding)
                 try:
+                    # This socket has already been attested to our Popen-owned
+                    # binary. Reject any config port drift, never adopt it.
+                    if read._connection.port!=rpcport:
+                        raise ManagedCoreError("MANAGED_CONFIG_PORT_CHANGED")
                     info=read.attest()
                     if info.get("chain")!="regtest":
                         raise ManagedCoreError("MANAGED_CHAIN_IDENTITY_DENIED")
@@ -202,7 +213,8 @@ class CoreSupervisor:
             try:
                 # Chain stays in a durable owner-only directory. Config is
                 # create-once, never changed to evade conflicts.
-                if local_rpc_port(self.directory) not in range(1,65536):
+                rpcport=local_rpc_port(self.directory)
+                if type(rpcport) is not int or not 1<=rpcport<=65535:
                     raise ManagedCoreError("MANAGED_CONFIG_DENIED")
                 env=self._child_environment()
                 # Never open an untrusted reusable log path. Core writes its
@@ -214,7 +226,7 @@ class CoreSupervisor:
                     env=env,creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0) if sys.platform=="win32" else 0,
                 )
                 self.binding=OwnedCoreBinding(self.process,self.core,self.directory)
-                self.read=self._ready(time.monotonic()+timeout)
+                self.read=self._ready(time.monotonic()+timeout,rpcport)
                 self._consecutive_failures=0
                 self._state="ready"
             except BaseException:
@@ -300,8 +312,18 @@ class CoreSupervisor:
         return {**status,"nonce":message["nonce"],
                 "proof":self._guard.sign_status(message["nonce"],status)}
 
+    def _scan_handle(self,raw):
+        """Only pinned WSP read methods through the owned process's RPC."""
+        from .managed_scan_protocol import decode_request,encode_reply
+        method,params,nonce=decode_request(raw,self._scan_secret,self._scan_seen)
+        # A non-owned or busy Core never provides chain data to a GUI.
+        if self.status()["state"]!="ready" or self.read is None:
+            raise ManagedCoreError("MANAGED_SCAN_CORE_NOT_READY")
+        result=self.read.call(method,params)
+        return encode_reply(self._scan_secret,method,nonce,result)
+
     def _serve_client(self,conn):
-        """Bound each control frame; a failed GUI must not terminate its Core owner."""
+        """Bound control/scan frames; failed GUI never terminates Core owner."""
         deadline=time.monotonic()+3.0
         try:
             payload=bytearray()
@@ -314,7 +336,21 @@ class CoreSupervisor:
                 if not block:break
                 payload.extend(block)
                 if b"\n" in block:break
-            reply=self.handle(bytes(payload))
+            raw=bytes(payload)
+            # Dispatch ONLY on a fully parsed, unique protocol field. Neither
+            # request body nor arbitrary RPC method is used for routing.
+            from .supervisor_protocol import _distinct
+            from .managed_scan_protocol import SCAN_PROTOCOL
+            try:
+                frame=json.loads(raw.decode("ascii"),object_pairs_hook=_distinct)
+            except (ValueError,UnicodeError):
+                frame=None
+            if type(frame) is dict and frame.get("protocol")==SCAN_PROTOCOL:
+                scan_reply=self._scan_handle(raw)
+                conn.settimeout(15.0)
+                conn.sendall(scan_reply)
+                return
+            reply=self.handle(raw)
         except (SupervisorProtocolError,ManagedCoreError,RpcError,
                 SupervisorStorageError,CoreBindingError,OSError,ValueError):
             # Never echo exceptions or secret values to an untrusted peer.

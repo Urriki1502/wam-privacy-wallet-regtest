@@ -1,3 +1,5 @@
+Latest completed Issue45 component evidence: [PR67 frozen-owned Core crash qualification](docs/PR67_FROZEN_CORE_CRASH_ACCEPTANCE.md) (tested codec21bbd1; all10 exact-head checks PASS; full V1/Q05 remains pending).
+
 # WAM Privacy Wallet — Real REGTEST candidates
 
 Owner-acceptance audit and proposed UX fix: [results, defects and requalification](docs/OWNER_ACCEPTANCE_AUDIT.md). The qualified RC1 baseline remains unchanged.

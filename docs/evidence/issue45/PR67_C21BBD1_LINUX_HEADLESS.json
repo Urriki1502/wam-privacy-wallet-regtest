@@ -1,0 +1,21 @@
+{
+  "actual_frozen_owned_core_crash_restart_verified": false,
+  "frozen_managed_process_roles_verified": false,
+  "status": "DOWNLOADED_LINUX_FROZEN_BYTES_AND_RECEIPT_VERIFIED",
+  "source_head_sha": "c21bbd1b06f5db9bd40375e8dc43ba19ed7ca150",
+  "checkout_sha": "518a7b48e74f7161edce0ab59b1299b3415fa40c",
+  "frontend": "headless",
+  "outer_sha256": "65300ec71fa5e4addeb56eefaeb04173d3063df7ba1a44055481c5a222d911fd",
+  "archive_sha256": "5e281b5293f941b5262d176c6a7d04c40d6f9884650fbf6b2a8f396c660daecc",
+  "bundle_files_verified": 193,
+  "safe_internal_links_verified": 0,
+  "core_sha256": {
+    "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+    "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652"
+  },
+  "build_source_provenance_verified": true,
+  "local_linux_execution": false,
+  "physical": "PENDING_OPERATOR",
+  "full_managed_wallet_q05_qualified": false,
+  "mainnet_allowed": false
+}

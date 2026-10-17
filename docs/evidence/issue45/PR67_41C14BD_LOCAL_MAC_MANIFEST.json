@@ -1,0 +1,21 @@
+{
+  "files": {
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip": {
+      "sha256": "a0fe9088bd5798ef2ae68c960be025b56ba606edea1ac59fc77c0e3432ea17ff",
+      "size_bytes": 55817345
+    },
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg": {
+      "sha256": "bcc351718b5b16359150278482684c929775b64b86c63097e2b1a658a763337c",
+      "size_bytes": 63603951
+    }
+  },
+  "independent_contract_receipt_sha256": "be0df82d144c41fbcd740191824c8fb122b1a08c73629d3e969086da97276e30",
+  "mainnet_allowed": false,
+  "original_brand_sha256": "1b189fb54969e6229a984f27ade4524bf4c327bb447d6da9fdbef3a8c2c30989",
+  "real_core_packaged_e2e": true,
+  "source": "signed WAM Core v0.1.11 + pinned WSP-1",
+  "source_commit": "41c14bd687a5f6fbda066d3d1e306e1e8f1d2177",
+  "status": "UNNOTARIZED_REAL_REGTEST_MACOS_ARM64_PREVIEW",
+  "wam_cli_sha256": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+  "wamd_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+}

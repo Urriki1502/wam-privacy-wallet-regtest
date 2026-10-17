@@ -97,6 +97,8 @@ def main():
             (('PySide6','qrcode') if args.desktop else ())+('PyInstaller','coincurve','cryptography')}}
     (output/'LINUX_PACKAGE_MANIFEST.json').write_text(json.dumps(manifest,sort_keys=True,indent=2)+'\n')
     shutil.copyfile(evidence,output/evidence.name)
+    if args.desktop:
+        shutil.copyfile('linux-frozen-managed-core-evidence.json',output/'frozen-managed-core-evidence.json')
     # Public helper source is for explicit administrator review/provisioning.
     shutil.copyfile('src/wam_regtest/linux_anchor_witness.py',output/'root-witness-review-only.py')
     shutil.copyfile('docs/LINUX_ROOT_WITNESS_POLICY.md',output/'ROOT_WITNESS_POLICY.md')

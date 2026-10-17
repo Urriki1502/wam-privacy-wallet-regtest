@@ -114,6 +114,40 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         http_proof=prove_session_reads(session)
         initial=session.snapshot()
         assert initial.height==104 and initial.confirmed_utxos==1
+        # Genuine same-owned-Core, same-datadir, same native anchor reopen.
+        # This is an independently gated wallet/SQLite checkpoint unit; the
+        # dedicated supervisor's cross-process RPC bridge remains unqualified.
+        stage="MANAGED_WALLET_ORIGINAL_IDENTITY_REOPEN"
+        original_accounts=tuple(session.ring.accounts())
+        original_history=tuple(initial.history)
+        original_anchor_id=session.vault.anchor.wallet_id
+        assert session.enable_managed_reopen(authorized=True) is True
+        assert (datadir/"wallet-vault"/"managed-reopen.enc").is_file()
+        from .managed_wallet_reopen import preflight_existing_checkpoint
+        checkpoint_preflight=preflight_existing_checkpoint(
+            core_dir,datadir,source,password,authorized=True,keychain=keychain)
+        assert checkpoint_preflight["status"]=="MANAGED_WALLET_ORIGINAL_CHECKPOINT_VERIFIED_LOCKED"
+        assert checkpoint_preflight["original_encrypted_checkpoint_verified"] is True
+        assert checkpoint_preflight["original_native_anchor_verified"] is True
+        assert checkpoint_preflight["wallet_locked"] is True
+        assert checkpoint_preflight["balance_verified"] is False
+        assert checkpoint_preflight["signer_allowed"] is False
+        assert checkpoint_preflight["broadcast_allowed"] is False
+        print("WALLET_T05_REAL_CORE_NATIVE_ANCHORED_PREFLIGHT_PASS",flush=True)
+        session.close()
+        assert not (datadir/"wallet-runtime.sqlite").exists()
+        session=WalletSession.reopen_managed(
+            core_dir,datadir,source,password,mining_address,authorized=True,
+            keychain=keychain,read_rpc=read_rpc)
+        same_wallet=session.snapshot()
+        assert session.vault.anchor.wallet_id==original_anchor_id
+        assert tuple(session.ring.accounts())==original_accounts
+        assert same_wallet.receive_code==initial.receive_code
+        assert same_wallet.confirmed_atoms==initial.confirmed_atoms
+        assert same_wallet.history==original_history
+        assert same_wallet.tip==initial.tip
+        assert same_wallet.mainnet_allowed is False
+        print("WALLET_T05_REAL_CORE_ORIGINAL_IDENTITY_CHECKPOINT_REOPEN_PASS",flush=True)
         recipient=Keyring()
         code=recipient.accounts()[0].payment_code()
         from .desktop import qt_application
@@ -353,6 +387,11 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         backup=datadir/'wallet-backup'
         custody.create_directory(backup)
         _operation(app,window,'backup',lambda:window.start_operation('backup',backup,'wallet-backup.enc'))
+        # Capture exact irreversible reservation rows before GUI lock.
+        # The real vault checkpoint is the authority, never a fabricated
+        # empty reservation fixture or SQLite copied around native custody.
+        original_reservations=tuple(tuple(row) for row in session.scanner.store.db.execute(
+            "SELECT token,state FROM reservations ORDER BY token"))
         stage="LOCK"
         print("WALLET_E2E_STAGE=LOCK",flush=True)
         _operation(app,window,'lock',window.lock_button.click)
@@ -367,6 +406,22 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         assert not window.dashboard.go_send.isEnabled()
         assert not window.prepare_button.isEnabled()
         assert 'block_height' not in window.disclosure_text.text() and session._disclosure_gate is None
+        stage="MANAGED_RESERVATION_REOPEN"
+        resumed=WalletSession.reopen_managed(
+            core_dir,datadir,source,password,mining_address,authorized=True,
+            keychain=keychain,read_rpc=read_rpc)
+        try:
+            restored_reservations=tuple(tuple(row) for row in resumed.scanner.store.db.execute(
+                "SELECT token,state FROM reservations ORDER BY token"))
+            assert restored_reservations==original_reservations
+            # Reopen restores ONLY encrypted intent state; never implicitly
+            # signs, releases reservations, or rebroadcasts transactions.
+            assert resumed._prepared is None and resumed._signed is None
+            assert resumed._review is None and resumed._tip is None
+            assert resumed.vault.anchor.wallet_id==original_anchor_id
+        finally:
+            resumed.close()
+        print("WALLET_T05_REAL_CORE_IRREVERSIBLE_RESERVATION_REOPEN_PASS",flush=True)
         stage="PASSWORD"
         print("WALLET_E2E_STAGE=PASSWORD",flush=True)
         _operation(app,window,'unlock',lambda:window.start_operation('unlock',b'wrong-regtest-passphrase'),denied=True)
@@ -410,6 +465,13 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
             'background_sync_production_interval_ms':30000,'background_sync_test_interval_ms':50,
             'native_gui_navigation_pages':7,'observed_height':105,
             'qt_manual_light_dark_verified':True,'qt_auto_system_events_verified':auto_verified,
+            'managed_original_wallet_reopen_real_core':True,
+            'managed_original_scan_accounts_preserved':True,
+            'managed_original_history_preserved':True,
+            'managed_original_anchor_id_preserved':True,
+            'managed_native_anchored_read_only_preflight':True,
+            'managed_irreversible_reservations_preserved':True,
+            'managed_reopen_no_implicit_sign_or_broadcast':True,
             'cross_session_key_recovery':True,'cross_session_native_qt':True,
             'cross_session_recovery_proof':proof,
             'production_custody_qualified':False,

@@ -133,7 +133,13 @@ class OwnedCoreBinding:
     def _assert_image(self):
         if self.process.args!=self._argv or self.process.poll() is not None:
             raise CoreBindingError('RPC_OWNED_PROCESS_EXITED')
-        image=_image(self.process.pid,self.directory)
+        try:
+            image=_image(self.process.pid,self.directory)
+        except OSError:
+            # A child may exit between poll() and the native image lookup.
+            # Never treat the missing image as ownership. Startup may classify
+            # an actual exited bind collision; every other caller still denies.
+            raise CoreBindingError('RPC_PROCESS_IMAGE_DENIED') from None
         # Windows may report the process launch's 8.3 alias while Path.resolve
         # returns its long name. Compare native file identity, not spelling;
         # the independently pinned metadata below must still be unchanged.
