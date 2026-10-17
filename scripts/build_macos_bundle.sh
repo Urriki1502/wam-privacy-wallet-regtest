@@ -22,6 +22,8 @@ export WAM_BUILD_CHECKOUT="$(git rev-parse HEAD)"
 mkdir -p bundle-input package-output
 SOURCE_STAGE=$(mktemp -d "$(pwd)/bundle-input/build-XXXXXX")
 trap 'rm -rf "$SOURCE_STAGE"' EXIT
+export WAM_BUILD_SOURCE_STAMP="$SOURCE_STAGE/build-source.json"
+python -m wam_regtest.build_provenance capture --stamp "$WAM_BUILD_SOURCE_STAMP"
 python -m wam_regtest.package_manifest \
   --source-root "$(pwd)/wsp-upstream" \
   --output "$SOURCE_STAGE/wsp-source"
@@ -90,6 +92,7 @@ print("MACOS_APP_STAGE=OUTER_APP_SIGNED_CORE_HASH_STILL_PASS", flush=True)
 PY
 python scripts/audit_wallet_security.py --root "$(pwd)" --core "$(pwd)/core" \
   --app "$(pwd)/$APP" --output package-output/INDEPENDENT-WALLET-SECURITY.json
+python -m wam_regtest.build_provenance verify --stamp "$WAM_BUILD_SOURCE_STAMP"
 BIN="$APP/Contents/MacOS/WAM Privacy Wallet REGTEST"
 test -d "$APP"
 test -x "$BIN"
@@ -149,6 +152,7 @@ python scripts/create_verified_dmg.py \
   --app "$APP" \
   --output "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
 echo "MACOS_APP_STAGE=DMG_VERIFIED"
+python -m wam_regtest.build_provenance verify --stamp "$WAM_BUILD_SOURCE_STAMP" --receipt package-output/BUILD_SOURCE_PROVENANCE.json
 
 python - <<'PY'
 from hashlib import sha256

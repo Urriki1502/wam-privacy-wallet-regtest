@@ -32,6 +32,9 @@ def main():
     from wam_regtest.branding import brand_image
     core=args.core_dir.absolute();verify(core,APPROVED,authorized=True)
     name='wam-regtest-desktop' if args.desktop else 'wam-regtest-headless'
+    from wam_regtest.build_provenance import capture,verify as verify_source,public_receipt
+    build_source=capture(Path.cwd())
+    source_provenance=public_receipt(build_source,source_head=os.environ.get("WAM_SOURCE_HEAD"),dispatch=os.environ.get("GITHUB_EVENT_NAME")=="workflow_dispatch")
     output=Path('linux-package-output');output.mkdir()
     with tempfile.TemporaryDirectory(prefix='wam-linux-package-') as temporary:
         stage=Path(temporary);wsp=stage/'wsp-source'
@@ -55,12 +58,15 @@ def main():
     assert len(manifests)==1 and sha256(manifests[0].read_bytes()).hexdigest()==APPROVED
     if not args.desktop:
         assert not any('pyside6' in p.as_posix().lower() or 'shiboken' in p.as_posix().lower() for p in bundle.rglob('*'))
+    verify_source(Path.cwd(),build_source)
     # Execute final bootloader, bundled Python/WSP/crypto and unchanged Core.
     # Test harness alone provisions its disposable root witness, never the app.
     environment={k:v for k,v in os.environ.items() if k not in ('PYTHONPATH','PYTHONHOME')}
     subprocess.run([sys.executable,'scripts/linux_headless_acceptance.py','--core-dir',str(core),
         '--executable',str(binary),*(['--qt'] if args.desktop else [])],env=environment,check=True,timeout=900)
     evidence=Path('linux-qt-evidence.json' if args.desktop else 'linux-headless-evidence.json')
+    verify_source(Path.cwd(),build_source)
+    (output/'BUILD_SOURCE_PROVENANCE.json').write_text(json.dumps(source_provenance,sort_keys=True,indent=2)+'\n')
     record=json.loads(evidence.read_text());wallet=record['wallet_live_core']
     assert record['frozen_runtime'] is True
     assert record['platform']=='linux-x86_64' and not record['official_signed_release']

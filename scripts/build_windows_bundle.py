@@ -24,6 +24,9 @@ def main():
     from wam_regtest.branding import brand_image
     source=Path('wsp-upstream').absolute()
     assert subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip()=='ac55f13423620252bdbf848c7e8a280c3b84721e'
+    from wam_regtest.build_provenance import capture,verify as verify_source,public_receipt
+    build_source=capture(Path.cwd())
+    source_provenance=public_receipt(build_source,source_head=os.environ.get("WAM_SOURCE_HEAD"),dispatch=os.environ.get("GITHUB_EVENT_NAME")=="workflow_dispatch")
     output=Path('windows-package-output');output.mkdir()
     with tempfile.TemporaryDirectory(prefix='wam-win-build-') as t:
         stage=Path(t);core=stage/'core';core.mkdir()
@@ -57,6 +60,7 @@ def main():
     for name,digest in BINARY_SHA256.items():
         matches=[p for p in bundle.rglob(name) if p.is_file()]
         assert len(matches)==1 and not matches[0].is_symlink() and sha256(matches[0].read_bytes()).hexdigest()==digest
+    verify_source(Path.cwd(),build_source)
     environment={**os.environ,'QT_QPA_PLATFORM':'windows'}
     result=subprocess.run([str(executable),'--ci-real-core-wallet'],env=environment,stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
@@ -79,6 +83,8 @@ def main():
         shutil.copytree(review/'fusion-ui-review',target/'fusion-ui-review')
         shutil.copyfile(review/'windows-packaged-wallet-evidence.json',target/'windows-packaged-wallet-evidence.json')
         scales[factor]={'native_qwindows_real_frozen_e2e':True,'device_pixel_ratio':record['device_pixel_ratio']}
+    verify_source(Path.cwd(),build_source)
+    (output/'BUILD_SOURCE_PROVENANCE.json').write_text(json.dumps(source_provenance,sort_keys=True,indent=2)+'\n')
     members={p.relative_to(bundle).as_posix():sha256(p.read_bytes()).hexdigest() for p in bundle.rglob('*') if p.is_file()}
     assert not any(p.is_symlink() for p in bundle.rglob('*'))
     head=os.environ['WAM_SOURCE_HEAD'];archive=output/('WAM-Privacy-Wallet-REGTEST-windows-x64-'+head+'.zip')

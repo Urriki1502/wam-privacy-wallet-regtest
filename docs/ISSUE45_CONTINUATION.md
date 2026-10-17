@@ -1,3 +1,44 @@
+# Current next unit — frozen source provenance (R03/R04), stacked on Draft60
+
+Own active branch feature/issue45-build-source-provenance-20261017. Read FULL
+live Issue45 and refresh exact-head CI before engineering. Acquire exclusive lease
+first, refuse exit73; current session PTY53937, actual release in separate log.
+Second P0 unit: docs/ISSUE45_BUILD_PROVENANCE.md. All181 supplemental units
+148PASS33platformSKIP; source dirty-tree denial tested without deleting work.
+Source/native/frozen/physical statuses are separate; new frozen builds pending.
+Do not modify/rebase/merge independent55–59, upstream Core, main/RC1 or owner data.
+No automatic merge. v0.1.12 candidate-only; Core Update Manager remains deferred.
+
+Draft60 own startup unit:7f13cd1 +d905f3e platform-scope fix, c33c3ba raw TCP
+readiness timeout correction, db12108 exclusive Windows collision-fixture port.
+PR60 remote head=db12108 (verify live). Local owned-startup branch pointer may
+lag remote because isolated fixes were fast-forward pushed from the common
+successor HEAD before its own changes were committed. No rebase/merge/force push.
+Actual Mac full Core/WSP/Qt operational/security/new-Core recovery/reorg source
+PASS after platform fix; actual startup6-process/zero-auth-byte proof PASS. First
+Windows CI failed generic raw TCP readiness category; positive pre-auth raw TCP
+timeouts may now wait (never HTTP request replay), permission errors fail with
+safe numeric category. Collision fixture uses Windows exclusive bind. Native
+Mac/Linux checks passed atd905; successor Windows/frozen checks must be refreshed.
+
+PR54 bfd2400 all10 native/frozen SUCCESS. Actual downloaded Windows package
+12082059503 outer0e3f4661b9a58eacb4a8c255db725e0897198ea190e7372cd1d81ae14c7f6482;
+inner048671e4d066806fe1e61bdca3b6eff82e55db69bca12132a7d71293acee1af1.
+354 file hashes, independent Core pair,7 pages, actual mining GUI99/100/101,
+125/150% frozen receipts inspected; NO local Windows execution/physical claim.
+PR59 actual candidate receipt retained separately; its Linux native WSP proof is
+NOT Fusion WalletSession/GUI/frozen/signing activation. No pin advances.
+
+Continue exact-head regression/frozen testing and fixes on existing own PRs.
+Existing recurring5h schedule remains anchored at original T0, no duplicates or
+rescheduling. Separate outputs/issue45-session-20261017T015255/RESUME_LOG.md
+records actual final SHA/CI/artifacts/usage/lease. Next after qualified current
+units: persistent owned lifecycle T05, explicit safe attach T06, real peer-node
+lab and remaining durable wallet/custody/import workflows; do not duplicate
+already verified Mining Account or v0.1.12 candidate components.
+
+## Historical startup and Mining Account checkpoints
+
 # Current resume — owned startup component after qualified Draft54
 
 2026-10-17T01:52:55Z session. Refresh actual branch/HEAD/CI; this checkpoint is
