@@ -85,6 +85,89 @@ class CoreSupervisorContracts(unittest.TestCase):
 class SupervisorTransportResilience(unittest.TestCase):
     """GUI/client crashes must never tear down the long-lived Core owner."""
 
+    def test_supervisor_core_start_uses_once_verified_rpc_port(self):
+        # Unit fixture: the real E2E on each runner separately starts Core.
+        from unittest.mock import Mock
+        import threading
+        owner=CoreSupervisor.__new__(CoreSupervisor)
+        owner._lock=threading.RLock()
+        owner._consecutive_failures=0
+        owner.process=None
+        owner.binding=None
+        owner.read=None
+        owner._state="stopped"
+        owner.directory=Path.cwd()/"fixture-chain"
+        owner.core=Path.cwd()/"fixture-core"
+        owner.node=owner.core/"wamd"
+        owner._child_environment=lambda:{"PATH":"/usr/bin"}
+        proc=Mock()
+        proc.poll.return_value=None
+        with (patch("wam_regtest.core_supervisor.local_rpc_port",return_value=27319) as port,
+              patch("wam_regtest.core_supervisor.subprocess.Popen",return_value=proc) as spawn,
+              patch("wam_regtest.core_supervisor.OwnedCoreBinding") as binding,
+              patch.object(owner,"_ready",return_value="verified-owned-read") as ready):
+            owner.start()
+        port.assert_called_once_with(owner.directory)
+        spawn.assert_called_once()
+        binding.assert_called_once_with(proc,owner.core,owner.directory)
+        self.assertEqual(ready.call_count,1)
+        self.assertEqual(ready.call_args.args[1],27319)
+        self.assertEqual(owner.read,"verified-owned-read")
+        self.assertEqual(owner._state,"ready")
+
+    def test_ready_does_not_reopen_rpc_config_after_launch(self):
+        from unittest.mock import Mock
+        from types import SimpleNamespace
+        import time
+        owner=CoreSupervisor.__new__(CoreSupervisor)
+        owner.directory=Path.cwd()/"fixture-chain"
+        owner.core=Path.cwd()/"fixture-core"
+        owner.process=Mock()
+        owner.process.poll.return_value=None
+        owner.binding=Mock()
+        class FakeSocket:
+            def __enter__(self):return self
+            def __exit__(self,*args):return False
+        reader=Mock()
+        reader._connection=SimpleNamespace(port=27319)
+        reader.attest.return_value={"chain":"regtest","blocks":101}
+        with (patch("wam_regtest.core_supervisor.local_rpc_port",
+                    side_effect=AssertionError("second config read forbidden")) as port,
+              patch("wam_regtest.core_supervisor.socket.create_connection",
+                    return_value=FakeSocket()) as connect,
+              patch("wam_regtest.core_supervisor.ManagedReadRpc",
+                    return_value=reader) as read):
+            actual=owner._ready(time.monotonic()+3,27319)
+        self.assertIs(actual,reader)
+        port.assert_not_called()
+        connect.assert_called_once_with(("127.0.0.1",27319),timeout=.25)
+        owner.binding.assert_socket.assert_called_once()
+        read.assert_called_once()
+        reader.attest.assert_called_once()
+
+    def test_ready_rejects_unauthorized_config_port_drift(self):
+        from unittest.mock import Mock
+        from types import SimpleNamespace
+        import time
+        owner=CoreSupervisor.__new__(CoreSupervisor)
+        owner.directory=Path.cwd()/"fixture-chain"
+        owner.core=Path.cwd()/"fixture-core"
+        owner.process=Mock()
+        owner.process.poll.return_value=None
+        owner.binding=Mock()
+        class FakeSocket:
+            def __enter__(self):return self
+            def __exit__(self,*args):return False
+        reader=Mock()
+        reader._connection=SimpleNamespace(port=27320)
+        with (patch("wam_regtest.core_supervisor.socket.create_connection",
+                    return_value=FakeSocket()),
+              patch("wam_regtest.core_supervisor.ManagedReadRpc",return_value=reader),
+              self.assertRaisesRegex(ManagedCoreError,"MANAGED_CONFIG_PORT_CHANGED")):
+            owner._ready(time.monotonic()+3,27319)
+        reader.close.assert_called_once()
+        reader.attest.assert_not_called()
+
     class _Client:
         def __init__(self,frames,*,drop_on_reply=False):
             self.frames=list(frames)
