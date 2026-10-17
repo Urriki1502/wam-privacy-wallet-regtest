@@ -47,7 +47,7 @@ jobs:
           python -m pip install --disable-pip-version-check -e '.[gui]' -e ./wsp-upstream
           python -m pip check
       - name: Run fail-closed unit contracts (not E2E)
-        run: python -X faulthandler -m unittest discover -s tests -v
+        run: python -X faulthandler scripts/run_native_unittest.py --pattern 'test*.py'
       - name: Compile unchanged pinned WAM subsidy source vectors (not Core E2E)
         run: python scripts/check_wam_subsidy_source.py --output source-subsidy-contract.json
       - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
