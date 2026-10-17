@@ -12,7 +12,13 @@ from wam_regtest.supervisor_protocol import public_status
 class ManagedFusionWidgetContracts(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        import atexit
+        from wam_regtest.desktop import shutdown_qt
         cls.app = qt_application()
+        # The production CLI explicitly calls shutdown_qt() before Python
+        # unloads shiboken/Qt. unittest runners do not call CLI's finally;
+        # mirror that native shutdown here, after *all* unittest classes.
+        atexit.register(shutdown_qt)
 
     def setUp(self):
         self.win = ManagedCoreWindow(Path("/tmp/wam-fusion-core-0123456789abcdef")
