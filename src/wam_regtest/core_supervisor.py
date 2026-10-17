@@ -280,9 +280,13 @@ class CoreSupervisor:
                     except subprocess.TimeoutExpired:
                         process.kill();process.wait(timeout=5)
             finally:
-                if self.read is not None:self.read.close()
-                self.process=None;self.read=None;self.binding=None
-                self._state="stopped"
+                # Never report STOPPED if termination remains uncertain.
+                if process.poll() is None:
+                    self._state="recovery-needed"
+                else:
+                    if self.read is not None:self.read.close()
+                    self.process=None;self.read=None;self.binding=None
+                    self._state="stopped"
 
     def handle(self,raw):
         # All request authorization is checked before state, Core or RPC.
