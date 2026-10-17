@@ -155,7 +155,12 @@ def review_offline(archive: Path, signing_key: Path, sums: Path, signature: Path
     """Pure offline signed intake; does not install, execute, or approve Core."""
     if type(platform) is not str or platform not in ASSETS:
         _deny("CORE_RELEASE_PLATFORM_DENIED")
-    if (_version(CANDIDATE) <= _version(installed)
+    # Caller-provided installed/minimum arguments cannot lower the invariant
+    # independently pinned v0.1.11 floor. A real update manager must read its
+    # highest-accepted version from protected OS custody, not CLI arguments.
+    if (_version(installed) < _version(CURRENT_APPROVED)
+            or _version(minimum) < _version(CURRENT_APPROVED)
+            or _version(CANDIDATE) <= _version(installed)
             or _version(CANDIDATE) < _version(minimum)
             or _version(installed) < _version(minimum)):
         _deny("CORE_RELEASE_ROLLBACK_DENIED")
