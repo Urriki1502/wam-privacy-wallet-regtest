@@ -93,7 +93,7 @@ def _qt_process_probe(root, expected_height):
 
 
 
-def _qt_original_wallet_live_read_probe(root, core, expected_height):
+def _qt_original_wallet_live_read_probe(root, core, expected_height, funding_address):
     """Actual macOS WSP encrypted wallet -> native GUI -> managed Core IPC.
 
     Builds a fresh disposable WSP account on the already independently owned
@@ -121,7 +121,7 @@ def _qt_original_wallet_live_read_probe(root, core, expected_height):
 
     wsp=Path(__file__).resolve().parents[1]/"wsp-upstream"
     _pinned_source(wsp)
-    _,_,receipt=verified_core_paths(core)
+    _,native_cli,receipt=verified_core_paths(core)
     password=b"q05-disposable-native-verified-regtest-only"
     directory=root/"chain"
     vault_dir=directory/"wallet-vault"
@@ -134,6 +134,7 @@ def _qt_original_wallet_live_read_probe(root, core, expected_height):
         ring=Keyring()
         ring.backup(password)
         original_receive=ring.accounts()[-1].payment_code()
+        payment_account=ring.accounts()[-1]
         scanner=Scanner(runtime,ring.accounts())
         rpc=ManagedScanRpc(root,authorized_readonly=True)
         scanner.sync(rpc)
@@ -150,9 +151,22 @@ def _qt_original_wallet_live_read_probe(root, core, expected_height):
         if rpc is not None:rpc.close()
         if scanner is not None:runtime.unlink(missing_ok=True)
 
+    # The public REGTEST miner coinbase was generated to scalar=31 at height
+    # 1. This submits and CONFIRMS a genuine BIP352 payment to the ORIGINAL
+    # encrypted WSP account after its initial checkpoint was sealed.
+    from wam_regtest.wallet_session import WalletCoreCli
+    from wam_regtest.wsp_live import _public_fixture_payment
+    payment_rpc=WalletCoreCli(native_cli,directory)
+    payment_rpc.attest()
+    txid,expected_atoms,funded_height=_public_fixture_payment(
+        payment_rpc,payment_account,funding_address,
+        funding_height=1,expected_before_height=expected_height)
+    assert funded_height==expected_height+1 and expected_atoms>0
+    payment_account=None
+
     app=qt_application()
     original_tip=control(root,"status",timeout=10)["height"]
-    assert original_tip==expected_height
+    assert original_tip==funded_height
     for i in range(2):
         window=ManagedCoreWindow(root,core_dir=core,wsp_source=wsp)
         window.show()
@@ -177,26 +191,35 @@ def _qt_original_wallet_live_read_probe(root, core, expected_height):
             assert snapshot.signer_allowed is False
             assert snapshot.broadcast_allowed is False
             assert snapshot.mainnet_allowed is False
-            assert snapshot.height==expected_height
+            assert snapshot.height==funded_height
             assert snapshot.receive_code==original_receive
-            assert snapshot.confirmed_atoms==0
+            assert snapshot.confirmed_atoms==expected_atoms
+            assert snapshot.confirmed_utxos==1
+            assert len(snapshot.history)==1
+            assert snapshot.history[0].txid==txid
+            assert snapshot.history[0].credit_atoms==expected_atoms
+            assert snapshot.history[0].confirmations==1
+            assert window.history_page.table.rowCount()==1
             assert window.receive_page.code==original_receive
             assert window.session is None
             assert window.dashboard.go_send.isEnabled() is False
-            assert control(root,"status",timeout=10)["height"]==expected_height
+            assert control(root,"status",timeout=10)["height"]==funded_height
         finally:
             if not window.close():
                 raise AssertionError("Q05_REAL_NATIVE_WALLET_GUI_CLOSE_DENIED")
             delete(window)
             app.processEvents()
     assert not runtime.exists()
-    assert control(root,"status",timeout=10)["height"]==expected_height
+    assert control(root,"status",timeout=10)["height"]==funded_height
     return {
         "real_encrypted_native_checkpoint":True,
         "genuine_wsp_original_account":True,
         "actual_signed_core_regtest_ipc":True,
         "same_receive_code_two_qt_windows":True,
-        "original_wallet_zero_balance_verified":True,
+        "genuine_bip352_funded_receive_history_verified":True,
+        "confirmed_real_payment_txid":txid,
+        "confirmed_atoms":expected_atoms,
+        "actual_chain_height":funded_height,
         "signer_allowed":False,
         "broadcast_allowed":False,
         "mainnet_allowed":False,
@@ -244,6 +267,11 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
             prefix=[str(owner.cli),f"-datadir={owner.directory}"]
             _read_cli(prefix+["createwallet","test"])
             address=_read_cli(prefix+["-rpcwallet=test","getnewaddress"])
+            if sys.platform=="darwin" and qt:
+                # Dedicated Q05 funded-wallet proof uses a globally known
+                # test-only scalar. Never run the signer fixture on mainnet.
+                from wam_regtest.wsp_live import public_regtest_mining_address
+                address=public_regtest_mining_address(source_root/"wsp-upstream")
             blocks=_read_cli(prefix+["generatetoaddress","101",address],timeout=90)
             assert len(blocks)==101
             height=owner.read.call("getblockcount",[])
@@ -388,7 +416,7 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
                 evidence["actual_qt_crash_reconnect_same_tip"]=True
                 if sys.platform=="darwin":
                     actual_wallet=_qt_original_wallet_live_read_probe(
-                        root,core,height)
+                        root,core,height,address)
                     evidence["real_original_wallet_readonly_gui_macos"]=actual_wallet
             state=control(root,"shutdown",authorized=True,timeout=15)
             stopped=(state["state"]=="stopped" and state["core_process_owned"] is False)
