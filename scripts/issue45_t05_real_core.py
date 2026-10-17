@@ -51,7 +51,14 @@ def _qt_reopen_probe(root, expected_height):
             app.processEvents()
 
 
-def prove(core, *, qt=False):
+def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
+    if sys.platform=="linux":
+        if type(linux_manifest) is not str or linux_witness is None:
+            raise ManagedCoreError("T05_LINUX_NATIVE_WITNESS_REQUIRED")
+        # Same verified developer-Core policy as existing Linux wallet; no
+        # foreign signer, backup or weaker root anchor.
+        from wam_regtest.linux_runtime import configure
+        configure(core,linux_manifest,linux_witness,authorized=True)
     evidence={"schema":"wam-t05-real-owned-core/v1","chain":"regtest",
               "synthetic_rpc":False,"mainnet_allowed":False,
               "full_gui_q05_qualified":False}
@@ -110,10 +117,13 @@ def prove(core, *, qt=False):
         # Independently launched owner stays alive across disposable GUI/client exits.
         # No Core adoption: the new supervisor owns a newly started Popen itself.
         from wam_regtest.supervisor_client import control
-        server=subprocess.Popen([
-            sys.executable,"-m","wam_regtest.supervisor_cli","serve",
+        command=[sys.executable,"-m","wam_regtest.supervisor_cli","serve",
             "--root",str(root),"--core-dir",str(core),
-            "--confirm-regtest-managed-core"],
+            "--confirm-regtest-managed-core"]
+        if sys.platform=="linux":
+            command.extend(["--linux-developer-manifest",linux_manifest,
+                            "--linux-root-witness",str(linux_witness)])
+        server=subprocess.Popen(command,
             stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         stopped=False
         try:
@@ -186,8 +196,12 @@ def main():
     p.add_argument("--core-dir",required=True,type=Path)
     p.add_argument("--output",required=True,type=Path)
     p.add_argument("--qt-e2e",action="store_true")
+    p.add_argument("--linux-developer-manifest")
+    p.add_argument("--linux-root-witness",type=Path)
     args=p.parse_args()
-    result=prove(args.core_dir.resolve(strict=True),qt=args.qt_e2e)
+    result=prove(args.core_dir.resolve(strict=True),qt=args.qt_e2e,
+                 linux_manifest=args.linux_developer_manifest,
+                 linux_witness=args.linux_root_witness)
     with args.output.open("x") as f:json.dump(result,f,sort_keys=True,indent=2);f.write("\n")
     print("T05_REAL_CORE_PERSISTENT_DATADIR_CLEAN_AND_CRASH_RESTART_PASS")
 
