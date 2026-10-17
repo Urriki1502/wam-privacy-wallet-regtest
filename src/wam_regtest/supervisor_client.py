@@ -9,7 +9,7 @@ import re
 import secrets
 import socket
 
-from .supervisor_protocol import PROTOCOL,request_proof,public_status,SupervisorProtocolError
+from .supervisor_protocol import PROTOCOL,request_proof,response_proof,public_status,SupervisorProtocolError
 from .supervisor_store import read_exact,SupervisorStorageError
 from .core_supervisor import _profile_read,ManagedCoreError
 
@@ -42,13 +42,19 @@ def control(root,op="status",*,authorized=False,timeout=3):
             raise ManagedClientError("MANAGED_CLIENT_REPLY_DENIED")
         response=json.loads(result.decode("ascii"))
         if (type(response) is not dict or set(response)!={
-            "protocol","state","height","core_process_owned","chain","mainnet_allowed"}
+            "protocol","state","height","core_process_owned","chain",
+            "mainnet_allowed","nonce","proof"}
                 or response["protocol"]!=PROTOCOL or response["chain"]!="regtest"
-                or response["mainnet_allowed"] is not False):
+                or response["mainnet_allowed"] is not False or response["nonce"]!=nonce
+                or type(response["proof"]) is not str
+                or not re.fullmatch("[0-9a-f]{64}",response["proof"])):
             raise ManagedClientError("MANAGED_CLIENT_WRONG_SERVER_DENIED")
-        verified=public_status(state=response["state"],
-            chain_height=response["height"],owned=response["core_process_owned"])
-        if verified!=response:raise ManagedClientError("MANAGED_CLIENT_REPLY_DENIED")
+        public={k:v for k,v in response.items() if k not in ("nonce","proof")}
+        verified=public_status(state=public["state"],
+            chain_height=public["height"],owned=public["core_process_owned"])
+        if (verified!=public or not secrets.compare_digest(response["proof"],
+              response_proof(token,nonce,verified))):
+            raise ManagedClientError("MANAGED_CLIENT_REPLY_NOT_AUTHENTICATED")
         return verified
     except ManagedClientError:raise
     except (OSError,ValueError,UnicodeError,SupervisorStorageError,ManagedCoreError,
