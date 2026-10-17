@@ -24,7 +24,7 @@ from .v012_candidate_compat import (
     exact_signed_linux_candidate, CANDIDATE_LINUX_WAMD_SHA)
 from .wsp_live import REGTEST_GENESIS
 
-_READS = ("getnetworkinfo", "getblockchaininfo", "getblockhash", "getblockcount")
+_READS = ("getnetworkinfo", "getblockchaininfo", "getblockhash", "getblockcount", "getconnectioncount")
 
 
 def _deny(code):
@@ -120,7 +120,7 @@ def probe_candidate_http(*, node: Path, process: subprocess.Popen,
             archive_sha=official_archive_sha, node_sha=node_sha, cli_sha=cli_sha,
             process_is_owned=process.poll() is None,
             chain=values["getblockchaininfo"]["chain"],
-            genesis=values["getblockhash"], peers=0)
+            genesis=values["getblockhash"], peers=values["getconnectioncount"])
         if (values["getblockcount"] != expected_height or
                 values["getblockchaininfo"]["blocks"] != expected_height or
                 values["getblockhash"] != REGTEST_GENESIS):
@@ -128,6 +128,8 @@ def probe_candidate_http(*, node: Path, process: subprocess.Popen,
         result = candidate_scope_status()
         result.update({
             "signed_real_core_http_reads": True,
+            "linux_candidate_rpc_shape_checked": True,
+            "observed_zero_peers": values["getconnectioncount"] == 0,
             "read_count": len(_READS),
             "authenticated_loopback": True,
             "kernel_owned_socket": True,
