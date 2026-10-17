@@ -19,7 +19,36 @@ def _closed(owner):
     owner.stack.close()
 
 
-def prove(core):
+def _qt_reopen_probe(root, expected_height):
+    """Drive actual Fusion widgets with genuine supervisor IPC; no wallet mock."""
+    from wam_regtest.desktop import qt_application
+    from wam_regtest.managed_gui import ManagedCoreWindow
+    app=qt_application()
+    for reopen in range(2):
+        window=ManagedCoreWindow(root)
+        window.show()
+        try:
+            window.request_sync()
+            deadline=time.monotonic()+25
+            while time.monotonic()<deadline:
+                app.processEvents()
+                if window._worker is None:
+                    if window._managed_authenticated and window._managed_state=="ready":
+                        break
+                    raise AssertionError("T05_FUSION_GUI_CORE_UNVERIFIED")
+                time.sleep(.01)
+            else:raise AssertionError("T05_FUSION_GUI_SYNC_TIMEOUT")
+            assert "READY" in window.verification_badge.text()
+            assert "height "+str(expected_height) in window.status.text()
+            assert window._snapshot is None and window.session is None
+            assert window.dashboard.go_send.isEnabled() is False
+        finally:
+            if not window.close():
+                raise AssertionError("T05_FUSION_GUI_CLOSE_DENIED")
+            app.processEvents()
+
+
+def prove(core, *, qt=False):
     evidence={"schema":"wam-t05-real-owned-core/v1","chain":"regtest",
               "synthetic_rpc":False,"mainnet_allowed":False,
               "full_gui_q05_qualified":False}
@@ -120,6 +149,11 @@ def prove(core):
             assert server.poll() is None
             assert control(root,"status",timeout=15)["height"]==height
             evidence["disconnected_gui_client_core_survived"]=True
+            if qt:
+                _qt_reopen_probe(root,height)
+                assert server.poll() is None
+                assert control(root,"status",timeout=15)["height"]==height
+                evidence["real_qt_gui_close_reopen_same_core"]=True
             state=control(root,"shutdown",authorized=True,timeout=15)
             stopped=(state["state"]=="stopped" and state["core_process_owned"] is False)
             assert stopped
@@ -148,8 +182,9 @@ def main():
     p=argparse.ArgumentParser()
     p.add_argument("--core-dir",required=True,type=Path)
     p.add_argument("--output",required=True,type=Path)
+    p.add_argument("--qt-e2e",action="store_true")
     args=p.parse_args()
-    result=prove(args.core_dir.resolve(strict=True))
+    result=prove(args.core_dir.resolve(strict=True),qt=args.qt_e2e)
     with args.output.open("x") as f:json.dump(result,f,sort_keys=True,indent=2);f.write("\n")
     print("T05_REAL_CORE_PERSISTENT_DATADIR_CLEAN_AND_CRASH_RESTART_PASS")
 
