@@ -123,6 +123,17 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         original_anchor_id=session.vault.anchor.wallet_id
         assert session.enable_managed_reopen(authorized=True) is True
         assert (datadir/"wallet-vault"/"managed-reopen.enc").is_file()
+        from .managed_wallet_reopen import preflight_existing_checkpoint
+        checkpoint_preflight=preflight_existing_checkpoint(
+            core_dir,datadir,source,password,authorized=True,keychain=keychain)
+        assert checkpoint_preflight["status"]=="MANAGED_WALLET_ORIGINAL_CHECKPOINT_VERIFIED_LOCKED"
+        assert checkpoint_preflight["original_encrypted_checkpoint_verified"] is True
+        assert checkpoint_preflight["original_native_anchor_verified"] is True
+        assert checkpoint_preflight["wallet_locked"] is True
+        assert checkpoint_preflight["balance_verified"] is False
+        assert checkpoint_preflight["signer_allowed"] is False
+        assert checkpoint_preflight["broadcast_allowed"] is False
+        print("WALLET_T05_REAL_CORE_NATIVE_ANCHORED_PREFLIGHT_PASS",flush=True)
         session.close()
         assert not (datadir/"wallet-runtime.sqlite").exists()
         session=WalletSession.reopen_managed(
@@ -458,6 +469,7 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
             'managed_original_scan_accounts_preserved':True,
             'managed_original_history_preserved':True,
             'managed_original_anchor_id_preserved':True,
+            'managed_native_anchored_read_only_preflight':True,
             'managed_irreversible_reservations_preserved':True,
             'managed_reopen_no_implicit_sign_or_broadcast':True,
             'cross_session_key_recovery':True,'cross_session_native_qt':True,
