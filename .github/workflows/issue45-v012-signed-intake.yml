@@ -1,0 +1,67 @@
+name: Issue45 signed WAM Core v0.1.12 candidate (NO EXEC)
+on:
+  pull_request:
+    paths:
+      - 'scripts/verify_v012_signed_release.py'
+      - 'src/wam_regtest/core_release_preflight.py'
+      - 'tests/test_v1_release_preflight.py'
+      - 'tests/test_v1_signed_release_audit.py'
+      - '.github/workflows/issue45-v012-signed-intake.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  official-v012-signed-intake-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run fail-closed unit contracts without launching Core
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gnupg
+          python -m pip install --disable-pip-version-check -e .
+          python -m unittest discover -s tests -p 'test_v1_release_preflight.py' -v
+          python -m unittest discover -s tests -p 'test_v1_signed_release_audit.py' -v
+      - name: Authenticate real official signature plus all three WAM Core archives
+        shell: bash
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$WAM_SOURCE_HEAD" || { echo V012_SOURCE_HEAD_MISMATCH; exit 1; }
+          python scripts/verify_v012_signed_release.py > v012-signed-intake.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads(Path('v012-signed-intake.json').read_text())
+          assert r['checkout_head']==os.environ['WAM_SOURCE_HEAD']
+          assert r['status']=='OFFICIAL_V012_SIGNED_ARCHIVES_VALIDATED_RUNTIME_PENDING'
+          assert r['signer_fingerprint']=='4BD4A8D3AFD43F5CBCB500E23798462FE00ADBA4'
+          assert set(r['platforms'])=={'macos-arm64','windows-x64','linux-x64'}
+          assert not any(r[key] for key in (
+              'native_core_e2e_qualified','wallet_signing_authorized',
+              'installation_authorized','mainnet_allowed'))
+          for p in r['platforms'].values():
+              assert p['signed_manifest_verified'] is True
+              assert p['native_binary_executed'] is False
+              assert p['runtime_approved'] is False
+          print('V012_SIGNED_ARCHIVES_AUTHENTICATED_RUNTIME_NOT_QUALIFIED')
+          PY
+      - name: Attach SHA and GPG-scoped proof
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue45-v012-signed-intake-${{ github.sha }}
+          path: v012-signed-intake.json
+          if-no-files-found: error
+          retention-days: 14
