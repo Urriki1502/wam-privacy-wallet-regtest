@@ -99,18 +99,7 @@ def prove_real_windows_vault(cli,datadir,port,env,source,mining_address):
         second=vault.save(ring,scanner,password)
         assert second[0]==first[0]+1
         stage='ANCHORED_SAVE_STALE_REJECTION'
-        try:
-            denied(lambda:stale.save(ring,scanner,password))
-        except Exception as error:
-            # A Python NameError carries the missing SOURCE identifier, not
-            # wallet material. Restrict it to a valid Python identifier and
-            # never report native OS exception text or private paths.
-            label=type(error).__name__
-            missing=getattr(error,'name',None)
-            if type(missing) is str and re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]{0,60}',missing):
-                label+='_'+missing
-            stage='ANCHORED_SAVE_STALE_REJECTION_'+label
-            raise
+        denied(lambda:stale.save(ring,scanner,password))
         stage='BACKUP_RESTORE'
         backup=directory('encrypted-backup');vault.backup(backup,'recovery.enc')
         recovery=directory('recovered-vault')
@@ -150,7 +139,8 @@ def prove_real_windows_vault(cli,datadir,port,env,source,mining_address):
         payload=dict(original_payload);payload['generation']=second[0]+1
         orphan=seal(json.dumps(payload,sort_keys=True).encode(),password,b'recovery')
         storage.publish(vault.directory,vault._filename(second[0]+1),orphan)
-        from .vault import VaultError
+        # VaultError is imported at module scope: do not shadow it with a
+        # function-local import (the earlier denied() closure needs it).
         try:vault.save(ring,scanner,password)
         except VaultError as error:
             assert str(error)=='VAULT_UNANCHORED_GENERATION_DENIED'
