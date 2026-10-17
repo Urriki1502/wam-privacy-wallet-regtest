@@ -77,7 +77,10 @@ def _crash_owned_core(owner, report_root):
     if process is None or process.poll() is not None:
         raise ValueError('FROZEN_PROBE_CORE_CRASH_OWNERSHIP_DENIED')
     process.kill()
-    if process.wait(timeout=15) == 0:
+    exit_code = process.wait(timeout=15)
+    # Popen.kill is SIGKILL on POSIX, TerminateProcess(..., 1) on Windows.
+    # A different failure must not be relabelled as our injected kill.
+    if exit_code != (1 if sys.platform == 'win32' else -9):
         raise ValueError('FROZEN_PROBE_CORE_CRASH_NOT_OBSERVED')
     if owner.status()['state'] != 'recovery-needed':
         raise ValueError('FROZEN_PROBE_CORE_CRASH_STATE_DENIED')
@@ -93,6 +96,7 @@ def _crash_owned_core(owner, report_root):
         'frozen_entrypoint': True,
         'owned_core_image_verified_before_kill': True,
         'actual_owned_core_kill_observed': True,
+        'owned_core_crash_exit_code': exit_code,
         'crash_state': 'recovery-needed',
         'same_tip_after_core_restart': True,
         'same_height_after_core_restart': height,

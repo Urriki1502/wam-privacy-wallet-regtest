@@ -346,8 +346,10 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
                     'persistent_chain_after_core_crash','core_restart_owned')
                 assert set(crash_proof)==set(booleans)|{'crash_state',
                     'same_height_after_core_restart','wamd_sha256','wam_cli_sha256',
-                    'mainnet_allowed','synthetic_rpc'}
+                    'mainnet_allowed','synthetic_rpc','owned_core_crash_exit_code'}
                 assert all(crash_proof.get(k) is True for k in booleans)
+                assert type(crash_proof['owned_core_crash_exit_code']) is int
+                assert crash_proof['owned_core_crash_exit_code']==(1 if sys.platform=='win32' else -9)
                 assert crash_proof['crash_state']=='recovery-needed'
                 assert type(crash_proof['same_height_after_core_restart']) is int
                 assert crash_proof['same_height_after_core_restart']==height
