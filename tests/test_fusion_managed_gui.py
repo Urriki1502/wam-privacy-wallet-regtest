@@ -641,6 +641,41 @@ class Bip39WizardContracts(unittest.TestCase):
         with self.assertRaises(ValueError):
             stand_alone.take_wallet_material()
 
+    def test_k03_native_wsp_wallet_create_handoff_retains_verified_passphrase_once(self):
+        dialog=Bip39CreationDialog(create_wallet=True)
+        self.addCleanup(self.cleanup_dialog,dialog)
+        self.assertIn("CREATE A NEW",dialog.warning.text())
+        dialog.ack.setChecked(True)
+        dialog.word_count.setCurrentIndex(0)
+        with patch("wam_regtest.bip39_gui.generate_phrase",return_value=PUBLIC_12):
+            dialog._generate()
+        dialog._advance()
+        dialog.confirm_text.setPlainText(PUBLIC_12)
+        dialog.passphrase.setText("PUBLIC_REGTEST_BIP39_TEST_ONLY")
+        dialog.passphrase_confirmation.setText("PUBLIC_REGTEST_BIP39_TEST_ONLY")
+        dialog.extra_ack.setChecked(True)
+        dialog._verify()
+        self.assertTrue(dialog.confirmed)
+        phrase,passphrase=dialog.take_wallet_material()
+        self.assertEqual(phrase,PUBLIC_12)
+        self.assertEqual(passphrase,"PUBLIC_REGTEST_BIP39_TEST_ONLY")
+        self.assertIsNone(dialog._phrase)
+        self.assertEqual(dialog.passphrase.text(),"")
+        with self.assertRaisesRegex(ValueError,"K03_WALLET_MATERIAL_UNVERIFIED"):
+            dialog.take_wallet_material()
+        # No BIP39 material is returned through a UI status/signal.
+
+    def test_k03_cancel_never_hands_off_bip39_seed_or_passphrase(self):
+        dialog=Bip39CreationDialog(create_wallet=True)
+        self.addCleanup(self.cleanup_dialog,dialog)
+        dialog.ack.setChecked(True)
+        with patch("wam_regtest.bip39_gui.generate_phrase",return_value=PUBLIC_24):
+            dialog._generate()
+        dialog.reject()
+        with self.assertRaises(ValueError):
+            dialog.take_wallet_material()
+        self.assertIsNone(dialog._wallet_material)
+
     def test_wordlist_failure_clears_ui_without_core_or_fallback(self):
         dialog=self.make()
         with patch("wam_regtest.bip39_gui.generate_phrase",
