@@ -69,6 +69,7 @@ def probe_owned_reads(process, core, directory, height, *, contention=False):
         'idle_read_component':idle_proof,
         'repeated_authenticated_reads': 8, 'height': height,
         't03_live_height_tip_parity_on_owned_core': True,
+        't04_post_launch_pair_stable_during_core_hash': True,
         'process_image_and_established_socket_before_auth': True,
         'wrong_process_endpoint_denied_before_any_http_bytes': True,
         'genuine_core_invalid_auth_denied': True, 'write_denied_before_wire': True,

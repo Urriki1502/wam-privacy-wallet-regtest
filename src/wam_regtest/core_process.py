@@ -121,11 +121,30 @@ class OwnedCoreBinding:
         if type(process) is not subprocess.Popen or type(core) is not type(Path()) or type(directory) is not type(Path()):
             raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
         self.process,self.core,self.directory=process,core,directory
+        # T-04: pin BOTH executable file identities before the potentially
+        # lengthy signed-byte verification, and demand the same identities
+        # immediately after it. This closes the obvious replace-during-hash
+        # window without ever rehashing Core/CLI for ordinary RPC requests.
+        # This is NOT fd-to-loader attestation against compromised same-UID/OS.
+        if (type(process.args) is not list or len(process.args)!=3
+                or type(process.args[0]) is not str):
+            raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
+        requested=Path(process.args[0])
+        if (requested.parent!=core or requested.name not in ('wamd','wamd.exe')
+                or process.args!=[str(requested),f'-datadir={directory}','-daemon=0']
+                or process.poll() is not None):
+            raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
+        expected_cli=core/('wam-cli.exe' if requested.name=='wamd.exe' else 'wam-cli')
+        before=(_metadata(requested),_metadata(expected_cli))
         self.node,self.cli,self.receipt=verified_core_paths(core)
+        if self.node!=requested or self.cli!=expected_cli:
+            raise CoreBindingError('RPC_EXECUTABLE_PAIR_DENIED')
+        after=(_metadata(self.node),_metadata(self.cli))
+        if before!=after:
+            raise CoreBindingError('RPC_EXECUTABLE_CHANGED_DURING_VERIFY')
+        self._files=after
         self._image_path=str(self.node.resolve(strict=True))
         self._argv=[str(self.node),f'-datadir={directory}','-daemon=0']
-        if process.args!=self._argv or process.poll() is not None:raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
-        self._files=(_metadata(self.node),_metadata(self.cli))
         self._assert_image()
 
     def __repr__(self):return '<OwnedCoreBinding public-process-scope>'
