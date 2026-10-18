@@ -123,6 +123,12 @@ evidence=json.loads(report.read_text())
 assert evidence['frozen_entrypoint'] is True and evidence['qt_platform']=='offscreen'
 assert evidence['mainnet_allowed'] is False
 assert evidence['owned_http_read_component']['node_busy_read_component']['status']=='REAL_CORE_BUSY_READ_RECOVERY_PASS'
+t09=evidence['t09_direct_rpc_evidence']
+assert t09['status']=='T09_REAL_CORE_DIRECT_RPC_COMPONENT_PASS'
+assert t09['platform']=='macos-arm64' and t09['frozen_entrypoint'] is True
+assert t09['genuine_busy_idle_recovery_checked'] is True
+assert t09['operational_wallet_checked'] is True
+assert t09['physical_accepted'] is False and t09['dev_reviewed'] is False
 assert evidence['wallet_live_core']['operational_snapshot_http']['cli_and_rehash_forbidden'] is True
 checkout=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
 assert checkout==os.environ['WAM_BUILD_CHECKOUT'], 'MACOS_CHECKOUT_CHANGED_DURING_BUILD'

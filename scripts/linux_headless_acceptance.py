@@ -41,6 +41,17 @@ try:
     assert record['owned_http_read_component']['idle_read_component']['status']=='REAL_CORE_IDLE_READ_RECONNECT_PASS'
     assert record['owned_http_read_component']['node_busy_read_component']['status']=='REAL_CORE_BUSY_READ_RECOVERY_PASS'
     assert record['owned_http_read_component']['status']=='REAL_CORE_OWNED_HTTP_READ_COMPONENT_PASS'
+    # T-09: exact native OR actually executed frozen Core/WSP RPC receipt.
+    t09=record['t09_direct_rpc_evidence']
+    assert t09['status']=='T09_REAL_CORE_DIRECT_RPC_COMPONENT_PASS'
+    assert t09['platform']=='linux-x86_64'
+    assert t09['genuine_busy_idle_recovery_checked'] is True
+    assert t09['native_core_authenticated'] is True
+    assert t09['real_bip352_receive_and_sqlite'] is True
+    assert t09['frozen_entrypoint'] is (args.executable is not None)
+    assert t09['physical_accepted'] is False
+    assert t09['dev_reviewed'] is False
+    assert t09['synthetic_rpc'] is False and t09['mainnet_allowed'] is False
     wallet=record['wallet_live_core']
     assert wallet['operational_snapshot_http']['cli_and_rehash_forbidden'] is True
     assert wallet['operational_snapshot_http']['transport']=='owned-http'

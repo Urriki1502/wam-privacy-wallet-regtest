@@ -67,6 +67,12 @@ def main():
     assert result.returncode==0,'WIN_FROZEN_REAL_WALLET_DENIED'
     evidence=json.loads(Path('windows-packaged-wallet-evidence.json').read_text())
     assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
+    t09=evidence['t09_direct_rpc_evidence']
+    assert t09['status']=='T09_REAL_CORE_DIRECT_RPC_COMPONENT_PASS'
+    assert t09['platform']=='windows-x64' and t09['frozen_entrypoint'] is True
+    assert t09['genuine_busy_idle_recovery_checked'] is True
+    assert t09['operational_wallet_checked'] is True
+    assert t09['physical_accepted'] is False and t09['dev_reviewed'] is False
     # Actual native qwindows + genuine Core again at Windows125%/150%.
     # Distinct cwd keeps create-only evidence and screenshots independent.
     scales={}
