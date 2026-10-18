@@ -124,6 +124,10 @@ class AttachedCoreBinding:
             raise AttachedCoreError("ATTACH_CORE_REPLACED_DURING_VERIFY")
         self._files=after
         self._image_path=str(self.node.resolve(strict=True))
+        if sys.platform=="linux":
+            expected=(str(self.node).encode(),f"-datadir={directory}".encode(),b"-daemon=0")
+            if self._birth_id[2]!=expected:
+                raise AttachedCoreError("ATTACH_PROCESS_ARGS_DENIED")
         self._assert_image()
 
     def __repr__(self):
