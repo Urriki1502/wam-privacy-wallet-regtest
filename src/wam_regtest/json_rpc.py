@@ -232,9 +232,10 @@ class ManagedReadRpc:
     def mining_snapshot(self,*,authorized_readonly=False):
         # No wallet selector, endpoint override, write or key-export method.
         # An external attached Core never authorizes Core-wallet introspection.
-        if type(self._connection._binding) is not OwnedCoreBinding:
-            raise RpcError('RPC_ATTACHED_WALLET_READ_DENIED')
         if authorized_readonly is not True:raise RpcError('RPC_EXPLICIT_READ_CONSENT_REQUIRED')
+        if (not hasattr(self,'_connection') or self._connection is None
+                or type(self._connection._binding) is not OwnedCoreBinding):
+            raise RpcError('RPC_ATTACHED_WALLET_READ_DENIED')
         from .mining_read import read_mining_snapshot
         with self._lock:return read_mining_snapshot(self)
 
