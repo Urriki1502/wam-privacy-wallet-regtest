@@ -57,6 +57,26 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: python scripts/issue45_t05_real_core.py --core-dir core --qt-e2e --output t05-real-core-evidence.json
+      - name: Genuine original managed WSP PSBTv2 send and confirmation through owned Core
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          python scripts/issue45_managed_spend_e2e.py --core-dir core --wsp-source wsp-upstream --output managed-spend-real-core-evidence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('managed-spend-real-core-evidence.json').read_text())
+          assert p['status']=='MANAGED_ORIGINAL_WSP_REAL_SPEND_E2E_PASS'
+          for field in ('real_confirmed_bip352_funding','genuine_wsp_psbtv2_native_signature',
+                        'send_via_authenticated_owned_http',
+                        'signed_reservation_anchored_before_crypto',
+                        'broadcast_reservation_persisted_before_rpc',
+                        'exact_original_identity_after_close_reopen',
+                        'real_core_mempool_and_confirmed'):
+              assert p[field] is True,field
+          assert p['unattended_broadcast_retry'] is False
+          assert p['mainnet_allowed'] is False
+          PY
       - name: Independently evaluate wallet security contracts
         run: python scripts/audit_wallet_security.py --root . --core core --output independent-wallet-security.json
       - name: Inspect signed node dynamic library requirements (real ARM64 bytes)
