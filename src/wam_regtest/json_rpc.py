@@ -90,7 +90,15 @@ def _result(method,value):
                and type(value.get('protocolversion')) is int and type(value.get('subversion')) is str
                and (value['version'],value['subversion'],value['protocolversion'])==SUPPORTED_RPC)
         if not valid:raise RpcError('RPC_VERSION_CAPABILITY_DENIED')
-    else:valid=(type(value) is dict and value.get('chain')=='regtest' and type(value.get('blocks')) is int and 0<=value['blocks']<=1_000_000)
+    else:
+        # T-03: an unauthenticated-looking chain label and height alone are
+        # insufficient to publish a verified wallet/GUI observation. Require
+        # the exact live tip shape supplied by the qualified WAM Core RPC.
+        valid=(type(value) is dict and value.get('chain')=='regtest'
+               and type(value.get('blocks')) is int
+               and 0<=value['blocks']<=1_000_000
+               and type(value.get('bestblockhash')) is str
+               and re.fullmatch('[0-9a-f]{64}',value['bestblockhash']) is not None)
     if not valid:raise RpcError('RPC_RESULT_OR_NETWORK_DENIED')
     return value
 
@@ -268,6 +276,15 @@ class ManagedReadRpc:
             self._request('getnetworkinfo',[])
             if self._request('getconnectioncount',[])!=0:
                 self.close();raise RpcError('RPC_EXTERNAL_PEERS_DENIED')
+            # T-03: pin chain identity to the SAME live best block. A daemon
+            # changing chains during this observation must never cause the
+            # supervisor/GUI to publish an apparently authenticated balance.
+            # Ordinary reads remain direct owned HTTP, never CLI or rehash.
+            height=info['blocks']
+            tip=info['bestblockhash']
+            if (self._request('getblockhash',[height])!=tip
+                    or self._request('getbestblockhash',[])!=tip):
+                self.close();raise RpcError('RPC_TIP_IDENTITY_DENIED')
             return info
 
     def call(self,method,params=None):
