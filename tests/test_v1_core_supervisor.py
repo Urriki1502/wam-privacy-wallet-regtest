@@ -149,6 +149,65 @@ class CoreSupervisorContracts(unittest.TestCase):
 class SupervisorTransportResilience(unittest.TestCase):
     """GUI/client crashes must never tear down the long-lived Core owner."""
 
+    def test_t07_positive_503_status_cooldown_coalesces_reads_and_recovers(self):
+        from unittest.mock import Mock
+        import threading
+        from wam_regtest.json_rpc import RpcError
+        from wam_regtest.core_supervisor import BUSY_STATUS_COOLDOWN_SECONDS
+        self.assertEqual(BUSY_STATUS_COOLDOWN_SECONDS,12)
+        owner=CoreSupervisor.__new__(CoreSupervisor)
+        owner._lock=threading.RLock()
+        owner._state="ready"
+        owner._busy_until=0.0
+        owner.process=Mock()
+        owner.process.poll.return_value=None
+        owner.binding=Mock()
+        owner.read=Mock()
+        owner.read.attest.side_effect=[
+            RpcError("RPC_NODE_BUSY"),
+            {"chain":"regtest","blocks":101,"initialblockdownload":False},
+        ]
+        with patch("wam_regtest.core_supervisor.time.monotonic",
+                   side_effect=(100.0,105.0,113.0)):
+            first=owner.status()  # Only Core's positive 503 begins cooldown.
+            second=owner.status() # Reuses an authenticated busy state, NO RPC.
+            third=owner.status()  # Cooldown elapsed; reattest from live Core.
+        self.assertEqual(first["state"],"busy")
+        self.assertEqual(second["state"],"busy")
+        self.assertIsNone(first["height"])
+        self.assertIsNone(second["height"])
+        self.assertTrue(first["core_process_owned"])
+        self.assertEqual(owner.read.attest.call_count,2)
+        self.assertEqual(owner.binding._assert_image.call_count,3)
+        self.assertEqual(third["state"],"ready")
+        self.assertEqual(third["height"],101)
+        self.assertEqual(owner._busy_until,0.0)
+        self.assertFalse(third["mainnet_allowed"])
+
+    def test_t07_busy_never_masks_core_exit_or_image_change(self):
+        from unittest.mock import Mock
+        import threading
+        for failure in ("exited","changed_image"):
+            with self.subTest(failure=failure):
+                owner=CoreSupervisor.__new__(CoreSupervisor)
+                owner._lock=threading.RLock()
+                owner._state="busy"
+                owner._busy_until=100000000.0
+                owner.process=Mock()
+                owner.process.poll.return_value=(1 if failure=="exited" else None)
+                owner.binding=Mock()
+                if failure=="changed_image":
+                    owner.binding._assert_image.side_effect=ValueError("tamper")
+                owner.read=Mock()
+                status=owner.status()
+                self.assertEqual(status["state"],"recovery-needed")
+                self.assertFalse(status["core_process_owned"])
+                self.assertIsNone(status["height"])
+                self.assertEqual(owner._busy_until,0.0)
+                owner.read.attest.assert_not_called()
+                if failure=="exited":
+                    owner.read.close.assert_called_once()
+
     def test_supervisor_core_start_uses_once_verified_rpc_port(self):
         # Unit fixture: the real E2E on each runner separately starts Core.
         from unittest.mock import Mock
