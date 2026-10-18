@@ -139,7 +139,7 @@ class CoreSqlitePreflightContracts(unittest.TestCase):
             chain="regtest",genesis=REGTEST_GENESIS,
             wallet_info=info,descriptor_listing=a)
         self.assertEqual(accepted["status"],
-                         "K04_CORE_SQLITE_REGTEST_RESTORE_VERIFIED")
+                         "K04_CORE_SQLITE_PUBLIC_METADATA_VALIDATED")
         self.assertFalse(accepted["wallet_spend_authorized"])
         for wrong in (
             {"chain":"main","genesis":REGTEST_GENESIS},
