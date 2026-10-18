@@ -1,8 +1,8 @@
 """K-05 fail-closed classification of wallet backup *envelopes*, REGTEST only.
 
 An old Berkeley DB wallet.dat is deprecated, never converted or auto-loaded.
-Only a 32-byte header is examined after the K-04 SQLite preflight denies its
-format; no BDB parser, private descriptor, secret or BIP39 words are read.
+Only a 32-byte header is examined BEFORE K-04 custody checks, for rejection
+classification only; no BDB parser, private descriptor, secret or BIP39 words are read.
 A recognized BDB page magic is a *candidate*, not provenance/network proof.
 All source files remain unchanged. No Core RPC/write/signing capability.
 """
@@ -24,7 +24,7 @@ _ALLOWED_NAMES=frozenset((".dat",".enc",".txt"))
 
 
 def _looks_like_bdb(source):
-    """Read at most 32 bytes of already refused .dat; never interpret keys."""
+    """Read max 32 header bytes for refusal; never trust/copy or parse keys."""
     if (type(source) is not type(Path()) or not source.is_absolute()
             or source.suffix.lower()!=".dat"
             or not 1<=len(source.name)<=MAX_QUARANTINE_NAME
@@ -41,10 +41,12 @@ def _looks_like_bdb(source):
                | getattr(os,"O_CLOEXEC",0))
         fd=os.open(source,flags)
         before=os.fstat(fd)
+        # Only non-authoritative FORMAT classification. Many legitimate old
+        # backups come from ZIP/USB with mode 0644 or a different POSIX UID.
+        # K-04 MUST still enforce native owner-only custody BEFORE any copy,
+        # quarantine or Core restore. Never weaken that acceptance gate.
         if (not stat.S_ISREG(before.st_mode) or before.st_nlink!=1
-                or not MIN_SQLITE<=before.st_size<=MAX_SQLITE
-                or os.name!="nt" and
-                (before.st_uid!=os.geteuid() or (before.st_mode&0o077)!=0)):
+                or not MIN_SQLITE<=before.st_size<=MAX_SQLITE):
             raise CoreSqliteImportError("K05_SOURCE_UNTRUSTED")
         header=os.read(fd,32)
         after=os.fstat(fd)
@@ -83,12 +85,19 @@ def inspect_backup_format(source):
         raise CoreSqliteImportError("K05_MNEMONIC_TEXT_NOT_WALLET_DAT")
     if ext!=".dat":
         raise CoreSqliteImportError("K05_UNKNOWN_BACKUP_TYPE_DENIED")
-    try:
-        # No new positive path: exact K-04 SQLite checks remain mandatory.
-        return inspect_sqlite_backup(source)
-    except CoreSqliteImportError as error:
-        if error.args!=("K04_NOT_SQLITE_CORE_BACKUP",):
-            raise
+    # DEV WAM review: K-04 insists on mode 0600/owner UID before looking
+    # at the header, which made K-05's user-facing BDB explanation unreachable
+    # for a normal ZIP/USB export (0644). A HEADER READ is not a migration.
+    # Classification-first grants no new positive path and reads max 32 bytes.
     if _looks_like_bdb(source):
         raise CoreSqliteImportError("K05_BDB_DEPRECATED_UNSUPPORTED")
-    raise CoreSqliteImportError("K05_UNKNOWN_CORE_DAT_DENIED")
+    try:
+        # All actual SQLite acceptance / file copying still goes through
+        # the UNCHANGED K-04 native custody + full-file identity checks.
+        return inspect_sqlite_backup(source)
+    except CoreSqliteImportError as error:
+        if error.args==("K04_NOT_SQLITE_CORE_BACKUP",):
+            raise CoreSqliteImportError("K05_UNKNOWN_CORE_DAT_DENIED") from None
+        if error.args==("K04_SQLITE_SOURCE_CUSTODY_DENIED",):
+            raise CoreSqliteImportError("K05_SQLITE_PRIVATE_CUSTODY_REQUIRED") from None
+        raise
