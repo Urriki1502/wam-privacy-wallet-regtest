@@ -102,6 +102,35 @@ try:
         record['t05_real_managed_qt']['test_source_provenance']=proof['test_source_provenance']
         record['t05_real_managed_qt']['full_wallet_q05_pending']=True
         print('LINUX_T05_REAL_CORE_NATIVE_QT_GUI_REOPEN_PASS_NOT_WALLET_Q05')
+        # K-03: same qualified developer-Core native root-witness and actual
+        # xcb Qt signer, now with a separately typed full 64-byte BIP39 seed.
+        # This never tests or touches a real user's miner/datadir.
+        k03_path=root/'scripts'/'issue45_managed_spend_e2e.py'
+        k03_spec=importlib.util.spec_from_file_location(
+            'k03_linux_real_core',k03_path)
+        assert k03_spec is not None and k03_spec.loader is not None
+        k03_module=importlib.util.module_from_spec(k03_spec)
+        k03_spec.loader.exec_module(k03_module)
+        k03=k03_module.prove(
+            args.core_dir.absolute(),(root/'wsp-upstream').absolute(),
+            bip39=True,
+            linux_manifest='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
+            linux_witness=NativeRootWitness.root/'anchor.sock')
+        assert k03['status']=='K03_BIP39_DURABLE_REAL_WSP_SPEND_E2E_PASS'
+        assert all(k03[name] is True for name in (
+            'k03_bip39_native_seed_to_signer',
+            'genuine_wsp_psbtv2_native_signature',
+            'exact_original_identity_after_close_reopen',
+            'signed_reservation_anchored_before_crypto',
+            'broadcast_reservation_persisted_before_rpc',
+            'actual_native_fusion_qt_send_sign_broadcast'))
+        assert k03['synthetic_rpc'] is False and k03['mainnet_allowed'] is False
+        record['k03_bip39_real_managed_qt']={
+            'status':k03['status'],
+            'actual_wsp_native_bip39_sign_and_reopen':True,
+            'synthetic_rpc':False,'mainnet_allowed':False,
+        }
+        print('LINUX_K03_BIP39_NATIVE_WSP_SIGN_REOPEN_PASS')
     report.write_text(json.dumps(record,indent=2)+'\n')
     print('LINUX_REAL_CORE_ROOT_WITNESS_'+('NATIVE_QT' if args.qt else 'NO_QT_HEADLESS')+'_WALLET_PASS')
 finally:
