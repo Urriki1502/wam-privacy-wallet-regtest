@@ -80,7 +80,7 @@ class OwnedEndpointContracts(unittest.TestCase):
                 displaced=core/"discarded-public-cli"
                 cli.replace(displaced)
                 # Same name AND same length, but a different native inode.
-                cli.write_bytes(b"ALTERED_CLI_FIXTURE")
+                cli.write_bytes(b"ALTERD_CLI_FIXTURE")
                 return node,cli,receipt
             with (patch("wam_regtest.core_process.subprocess.Popen",FakePopen),
                   patch("wam_regtest.core_process.verified_core_paths",
