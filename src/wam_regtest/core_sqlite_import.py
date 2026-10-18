@@ -192,3 +192,41 @@ def verify_restored_core_wallet(*, chain, genesis, wallet_info,
                 "wallet_spend_authorized":False,"mainnet_allowed":False}
     except (ValueError,KeyError,TypeError,WalletContractError):
         raise CoreSqliteImportError("K04_CORE_WALLET_UNVERIFIED") from None
+
+
+def _public_descriptor_set(response):
+    """Public descriptor comparison via official Core listdescriptors(false).
+
+    Never examine SQLite wallet table content or retrieve private descriptors.
+    Refuse unexpected scalar key material rather than producing diagnostics.
+    """
+    try:
+        entries=response["descriptors"]
+        if type(entries) is not list or not 1<=len(entries)<=1000:
+            raise ValueError
+        distinct=set()
+        for item in entries:
+            if (type(item) is not dict or
+                    type(item.get("desc")) is not str or
+                    not 1<=len(item["desc"])<=10000 or
+                    type(item.get("internal")) is not bool):
+                raise ValueError
+            desc=item["desc"]
+            if any(marker in desc.lower() for marker in (
+                    "xprv","tprv","prv","private_key","wif")):
+                raise ValueError
+            key=(desc,item["internal"])
+            if key in distinct:raise ValueError
+            distinct.add(key)
+        return frozenset(distinct)
+    except (KeyError,TypeError,ValueError):
+        raise CoreSqliteImportError("K04_PUBLIC_DESCRIPTOR_SHAPE_DENIED") from None
+
+
+def require_distinct_descriptors(existing,imported):
+    """Refuse any exact duplicate OR partially overlapping Core identities."""
+    a=_public_descriptor_set(existing)
+    b=_public_descriptor_set(imported)
+    if a & b:
+        raise CoreSqliteImportError("K04_CORE_ACCOUNT_OVERLAP_DENIED")
+    return True
