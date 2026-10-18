@@ -22,7 +22,7 @@ VISIBLE_STATES = {
     "stopped": "STOPPED",
     "starting": "STARTING",
     "syncing": "SYNCING",
-    "busy": "BUSY · retry later",
+    "busy": "NODE BUSY · RETRYING",
     "ready": "READY",
     "recovery-needed": "RECOVERY NEEDED",
     "error": "ERROR · supervisor refused",
@@ -589,7 +589,10 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._managed_height=expected["height"] if state=="ready" else None
         self._wallet_read_authorized=False
         self._wallet_checkpoint_verified=False
-        self._sync_timer.setInterval(5_000)
+        # Back pressure on the GUI's periodic status polling: after the
+        # supervisor reports a genuine busy RPC queue, do not re-poll every
+        # five seconds. Manual refresh still requires a free GUI worker.
+        self._sync_timer.setInterval(15_000 if state=="busy" else 5_000)
         # A supervisor attestation is NOT a scanner/history attestation.
         self._clear_balance()
         height = expected["height"]

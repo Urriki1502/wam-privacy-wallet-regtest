@@ -29,6 +29,9 @@ from .supervisor_store import create_once,read_exact,exclusive_lease,SupervisorS
 
 PROFILE_SCHEMA="wam-fusion-owned-supervisor-profile/v1"
 SUPPORTED_VERSION="v0.1.11"
+# T-07: protect a busy RPC worker queue from repeated GUI/status polling.
+# This is only set after Core positively rejects idempotent reads with 503.
+BUSY_STATUS_COOLDOWN_SECONDS=12
 
 
 class ManagedCoreError(ValueError):
@@ -125,6 +128,7 @@ class CoreSupervisor:
         self.process=None;self.binding=None;self.read=None
         self.directory=root/"chain";self.listener=None;self.stack=ExitStack()
         self._state="stopped";self._consecutive_failures=0
+        self._busy_until=0.0
         self._lock=threading.RLock()
         self._guard=None
         self._init()
@@ -249,6 +253,7 @@ class CoreSupervisor:
                     or self._consecutive_failures>=3):
                 raise ManagedCoreError("MANAGED_START_NOT_ALLOWED")
             self._state="starting"
+            self._busy_until=0.0
             try:
                 # Chain stays in a durable owner-only directory. Config is
                 # create-once, never changed to evade conflicts.
@@ -267,6 +272,7 @@ class CoreSupervisor:
                 self.binding=OwnedCoreBinding(self.process,self.core,self.directory)
                 self.read=self._ready(time.monotonic()+timeout,rpcport)
                 self._consecutive_failures=0
+                self._busy_until=0.0
                 self._state="ready"
             except BaseException:
                 self._consecutive_failures+=1
@@ -289,23 +295,35 @@ class CoreSupervisor:
         with self._lock:
             if self.process is None:return public_status(state=self._state)
             if self.process.poll() is not None:
+                self._busy_until=0.0
                 self._state="recovery-needed"
                 if self.read is not None:self.read.close();self.read=None
                 self.binding=None;self.process=None
                 return public_status(state=self._state)
             try:
+                # Always recheck native ownership even while Core is busy;
+                # an exited/swapped Core can NEVER be reported as busy/owned.
                 self.binding._assert_image()
+                if (self._state=="busy"
+                        and time.monotonic()<getattr(self,"_busy_until",0.0)):
+                    # Coalesce repeated status/refresh/scanner requests into
+                    # one bounded cooling-off interval. NO stale tip/balance.
+                    return public_status(state="busy",owned=True)
                 info=self.read.attest()
                 height=info["blocks"]
+                self._busy_until=0.0
                 self._state="syncing" if info.get("initialblockdownload") is True else "ready"
                 return public_status(state=self._state,owned=True,chain_height=height)
             except RpcError as error:
                 if error.args==("RPC_NODE_BUSY",):
+                    self._busy_until=time.monotonic()+BUSY_STATUS_COOLDOWN_SECONDS
                     self._state="busy"
                     return public_status(state="busy",owned=True)
+                self._busy_until=0.0
                 self._state="recovery-needed"
                 return public_status(state=self._state)
             except Exception:
+                self._busy_until=0.0
                 self._state="recovery-needed"
                 return public_status(state=self._state)
 
