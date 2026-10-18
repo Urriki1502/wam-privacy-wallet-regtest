@@ -22,12 +22,72 @@ from wam_regtest.v1_contracts import core_descriptor_identity
 from wam_regtest.wsp_live import REGTEST_GENESIS
 
 
-def _wallet_rpc(owned,wallet,method,*params):
-    # CLI is the officially supported WAM Core RPC client, strictly scoped
-    # to freshly spawned and kernel-attested isolated REGTEST test process.
-    # No argument or result is printed; no mainnet/external miner access.
+def _wallet_rpc(owned,wallet,method,*params,backup_target=None,restore_source=None):
+    """Strictly scoped test-only Core CLI; NEVER widen managed RPC authority.
+
+    This wrapper only operates on a caller-held disposable_core() instance
+    whose actual process, loopback socket and WAM REGTEST chain are attested.
+    Wallet names and method/parameter arity are fixed for this PUBLIC fixture.
+    """
+    commands={
+        (None,"createwallet"):("k04-source",),
+        ("k04-source","getwalletinfo"):(),
+        ("k04-source","getnewaddress"):(),
+        (None,"generatetoaddress"):None,
+        (None,"getblockchaininfo"):(),
+        (None,"getblockhash"):("0",),
+        ("k04-source","listdescriptors"):("false",),
+        ("k04-source","backupwallet"):None,
+        (None,"restorewallet"):None,
+        ("k04-reviewed","getwalletinfo"):(),
+        ("k04-reviewed","listdescriptors"):("false",),
+    }
+    key=(wallet,method)
+    if (key not in commands or
+            (commands[key] is not None and params!=commands[key])):
+        raise ValueError("K04_FIXTURE_RPC_SCOPE_DENIED")
+    if key==(None,"generatetoaddress"):
+        if (len(params)!=2 or params[0]!="101"
+                or type(params[1]) is not str
+                or not 15<=len(params[1])<=150):
+            raise ValueError("K04_FIXTURE_MINING_SCOPE_DENIED")
+    if key==("k04-source","backupwallet"):
+        if (type(backup_target) is not type(Path())
+                or not backup_target.is_absolute()
+                or backup_target.name!="core-wallet-backup.dat"
+                or params!=(str(backup_target),)):
+            raise ValueError("K04_FIXTURE_BACKUP_PATH_DENIED")
+    elif backup_target is not None:
+        raise ValueError("K04_FIXTURE_BACKUP_UNEXPECTED")
+    if key==(None,"restorewallet"):
+        if (type(restore_source) is not type(Path())
+                or not restore_source.is_absolute()
+                or restore_source.suffix!=".dat"
+                or params!=("k04-reviewed",str(restore_source))):
+            raise ValueError("K04_FIXTURE_RESTORE_PATH_DENIED")
+    elif restore_source is not None:
+        raise ValueError("K04_FIXTURE_RESTORE_UNEXPECTED")
+    if owned.process.poll() is not None:
+        raise ValueError("K04_FIXTURE_OWNED_CORE_EXITED")
+    observed=owned.read.attest()
+    if observed.get("chain")!="regtest" or observed.get("blocks",0)<0:
+        raise ValueError("K04_FIXTURE_CHAIN_UNVERIFIED")
     base=[str(owned.cli),f"-datadir={owned.directory}"]
-    if wallet is not None:base.append(f"-rpcwallet={wallet}")
+    if wallet is not None:
+        base.append(f"-rpcwallet={wallet}")
+    if __import__("sys").platform=="win32":
+        # Global Windows read_cli deliberately rejects wallet-specific RPC.
+        # Scope ONLY this disposable fixture's verified WAM Core CLI; do not
+        # grant getwalletinfo/restorewallet to GUI, scanner or common RPC.
+        from wam_regtest.windows_core_regtest_smoke import _rpc,_host_env
+        from wam_regtest.windows_core_transport import verified_core_paths
+        from wam_regtest.network_policy import local_rpc_port
+        _,verified_cli,_=verified_core_paths(owned.cli.parent)
+        if verified_cli!=owned.cli:
+            raise ValueError("K04_FIXTURE_CLI_IDENTITY_DENIED")
+        return _rpc(owned.cli,owned.directory,local_rpc_port(owned.directory),
+                    _host_env(owned.directory),*(base[2:]+[method,*params]),
+                    timeout=45)
     return _read_cli(base+[method,*params],timeout=45)
 
 
@@ -59,7 +119,8 @@ def prove(core):
                 raise ValueError("K04_SOURCE_NETWORK_DENIED")
             source_desc=_wallet_rpc(source,"k04-source","listdescriptors","false")
             source_identity=core_descriptor_identity(source_desc)
-            _wallet_rpc(source,"k04-source","backupwallet",str(exported))
+            _wallet_rpc(source,"k04-source","backupwallet",str(exported),
+                        backup_target=exported)
             source_sha=sha256(exported.read_bytes()).hexdigest()
             preliminary=inspect_sqlite_backup(exported)
             if preliminary.file_sha256!=source_sha:
@@ -77,7 +138,8 @@ def prove(core):
                 # No Python SQL query, seed extraction, importdescriptors,
                 # rescan-driven auto-sweep or arbitrary wallet RPC forwarding.
                 restored=_wallet_rpc(target,None,"restorewallet",
-                                     "k04-reviewed",str(staged))
+                                     "k04-reviewed",str(staged),
+                                     restore_source=staged)
                 if (type(restored) is not dict
                         or restored.get("name")!="k04-reviewed"
                         or "warnings" in restored and restored["warnings"]):
