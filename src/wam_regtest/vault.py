@@ -246,7 +246,14 @@ class CheckpointVault:
                 # to the new record; an unanchored future generation is
                 # independently refused by _load_payload.
                 payload = self._load_payload(password, record)
-                ring = Keyring.restore(base64.b64decode(payload["keys"], validate=True), password)
+                # K-03: mutually exclusive authenticated WSP key envelopes.
+                # Existing v2/v3 original 32-byte wallets are restored exactly
+                # as before. A versioned BIP39 seed uses 64 bytes and its own
+                # strict 352'/1'/account'/role'/0 REGTEST contract; never
+                # interpret legacy seed bytes as a mnemonic or vice versa.
+                from .bip39_durable import restore_keyring
+                ring = restore_keyring(
+                    base64.b64decode(payload["keys"], validate=True),password)
                 runtime_created = True
                 scanner = Scanner(runtime_path, ring.accounts())
                 scanner.restore(base64.b64decode(payload["checkpoint"], validate=True), password)
