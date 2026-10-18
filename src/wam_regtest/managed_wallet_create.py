@@ -114,6 +114,11 @@ def create_managed_wallet(root, core_dir, wsp_source, password, *,
                 tip!=rpc.call("getblockhash",[height])):
             raise ManagedWalletCreateError("MANAGED_WALLET_SCAN_UNVERIFIED")
         wallet_id=secrets.token_hex(16)
+        # K-06: fail closed BEFORE creating a native rollback anchor or
+        # publishing keys, if the scanner and native signer disagree on any
+        # account, role, spend public key or BIP39-vs-legacy wallet authority.
+        from .account_isolation import require_native_wsp_accounts
+        require_native_wsp_accounts(ring,scanner,wallet_id)
         anchor=custody.anchor(wallet_id,keychain)
         vault=CheckpointVault(vault_dir,anchor,wsp_source)
         if vault._expected is not None:

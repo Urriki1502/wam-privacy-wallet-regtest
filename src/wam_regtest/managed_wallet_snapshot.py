@@ -91,6 +91,10 @@ def read_managed_wallet_snapshot(root,core_dir,wsp_source,password,*,
             restored=True
             if ring.accounts()!=scanner.accounts or not ring.accounts():
                 raise ManagedWalletSnapshotError("MANAGED_WALLET_ACCOUNTS_CHANGED")
+            from .account_isolation import require_native_wsp_accounts
+            # A read-only snapshot must not accidentally present mining/Core
+            # descriptor balances as the original WSP/BIP352 account.
+            require_native_wsp_accounts(ring,scanner,profile["wallet_id"])
             metrics=scanner.sync(rpc)
             scanner.assert_current()
             height,tip=scanner.store.tip()

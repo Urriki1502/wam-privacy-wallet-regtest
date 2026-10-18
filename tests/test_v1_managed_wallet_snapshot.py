@@ -81,6 +81,13 @@ class ManagedOriginalWalletSnapshotContracts(unittest.TestCase):
             side_effect=statuses or [self.status,self.status]))
         stack.enter_context(patch("wam_regtest.core.verified_core_paths",
             return_value=(self.core/"wamd",self.core/"wam-cli",self.receipt)))
+        # This pre-existing test intentionally injects Mock() ScanAccounts,
+        # not genuine WSP secret/public pairs. The NEW K-06 native signer
+        # contract is exercised independently with actual pinned WSP Keyring
+        # and BIP39 keyrings in test_v1_k06_account_isolation.py and real E2E.
+        native=stack.enter_context(patch(
+            "wam_regtest.account_isolation.require_native_wsp_accounts",
+            return_value=Mock()))
         store=Mock()
         stack.enter_context(patch("wam_regtest.custody.storage",return_value=store))
         stack.enter_context(patch("wam_regtest.custody.anchor",return_value=self.anchor))

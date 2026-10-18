@@ -118,6 +118,9 @@ jobs:
                        "source_immutable","real_core_restorewallet_rpc",
                        "source_and_restored_descriptors_identical",
                        "duplicate_descriptor_identity_denied",
+                       "k06_genuine_core_descriptor_owner_isolation",
+                       "k06_core_duplicate_owner_refused",
+                       "k06_core_keys_not_reinterpreted_as_wsp",
                        "wallet_loaded_only_inside_disposable_quarantine",
                        "original_managed_core_wallet_unmodified"):
               assert p[name] is True,name

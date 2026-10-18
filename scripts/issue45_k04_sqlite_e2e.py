@@ -148,6 +148,17 @@ def prove(core):
                 raise ValueError("K04_SOURCE_NETWORK_DENIED")
             source_desc=_wallet_rpc(source,"k04-source","listdescriptors","false")
             source_identity=core_descriptor_identity(source_desc)
+            # K-06: native Core descriptor identities cannot become WSP
+            # scan/spend identities, regardless of wallet name or .dat path.
+            from wam_regtest.account_isolation import (
+                CoreAccount,AccountRegistry,AccountIsolationError,
+            )
+            source_account=CoreAccount.from_core_public(
+                name="k04-source",chain=chain["chain"],genesis=genesis,
+                wallet_info=source_info,descriptors=source_desc)
+            if AccountRegistry(core=(source_account,)).public_summary()[
+                    "balances_aggregated"] is not False:
+                raise ValueError("K06_CORE_BALANCE_MIX_DENIED")
             _wallet_rpc(source,"k04-source","backupwallet",str(exported),
                         backup_target=exported)
             preliminary=_stable_disposable_core_backup(exported)
@@ -183,6 +194,23 @@ def prove(core):
                     wallet_info=target_info,descriptor_listing=target_desc)
                 if observed["descriptor_identity_sha256"]!=source_identity:
                     raise ValueError("K04_CORE_DESCRIPTORS_MISMATCH")
+                restored_account=CoreAccount.from_core_public(
+                    name="k04-reviewed",chain=target_chain["chain"],
+                    genesis=target_genesis,wallet_info=target_info,
+                    descriptors=target_desc)
+                if (restored_account.descriptor_identity
+                        !=source_account.descriptor_identity):
+                    raise ValueError("K06_CORE_IDENTITY_CHANGED")
+                # The SAME descriptor set under a different Core wallet
+                # name must never be registered as a second independent
+                # owner; no WSP signer can ever claim this Core identity.
+                try:
+                    AccountRegistry(core=(source_account,restored_account))
+                except AccountIsolationError as err:
+                    if err.args!=("K06_CORE_DESCRIPTOR_OVERLAP_DENIED",):
+                        raise
+                else:
+                    raise ValueError("K06_DUPLICATE_CORE_OWNER_NOT_REFUSED")
                 # Explicit duplicate/overlap refusal operates ONLY on Core's
                 # public listdescriptors(false), never SQLite/xprv parsing.
                 from wam_regtest.core_sqlite_import import require_distinct_descriptors
@@ -202,6 +230,9 @@ def prove(core):
                     "real_core_restorewallet_rpc":True,
                     "source_and_restored_descriptors_identical":True,
                     "duplicate_descriptor_identity_denied":True,
+                    "k06_genuine_core_descriptor_owner_isolation":True,
+                    "k06_core_duplicate_owner_refused":True,
+                    "k06_core_keys_not_reinterpreted_as_wsp":True,
                     "wallet_loaded_only_inside_disposable_quarantine":True,
                     "original_managed_core_wallet_unmodified":True,
                     "fusion_signer_authorized":False,
