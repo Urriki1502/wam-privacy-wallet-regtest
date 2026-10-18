@@ -110,7 +110,10 @@ class Bip39RegtestKeys:
         account, scan/spend role or payment code through mutable metadata.
         """
         expected=self.public_metadata(account)
-        if type(observed) is not dict or observed!=expected:
+        if (type(observed) is not dict or set(observed)!=set(expected)
+                or any(type(observed[key]) is not type(expected[key])
+                       for key in expected)
+                or observed!=expected):
             raise MnemonicWalletError('BIP39_PUBLIC_PROFILE_IDENTITY_DENIED')
         require_derivation_profile_receipt(observed['derivation_contract'],
                                           account=account)
