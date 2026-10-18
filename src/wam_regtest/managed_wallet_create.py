@@ -15,7 +15,8 @@ class ManagedWalletCreateError(ValueError):
 
 
 def create_managed_wallet(root, core_dir, wsp_source, password, *,
-                          authorized=False, keychain=None):
+                          authorized=False, keychain=None,
+                          bip39_phrase=None, bip39_passphrase=None):
     """Create-only native vault + encrypted account locator, fail closed.
 
     On a crash midway the private vault/runtime may remain. This is deliberate:
@@ -29,6 +30,14 @@ def create_managed_wallet(root, core_dir, wsp_source, password, *,
             or type(wsp_source) is not type(Path()) or not wsp_source.is_absolute()
             or type(password) is not bytes or not 12 <= len(password) <= 1024):
         raise ManagedWalletCreateError("MANAGED_WALLET_CREATE_INPUT_DENIED")
+    # No ambiguous legacy-vs-BIP39 conversion. New 64-byte profile requires
+    # explicitly supplied BIP39 phrase/passphrase and never mutates old wallets.
+    if (bip39_phrase is None and bip39_passphrase is not None or
+            bip39_phrase is not None and
+            (type(bip39_phrase) is not str or
+             type(bip39_passphrase) is not str or
+             len(bip39_passphrase)>1024)):
+        raise ManagedWalletCreateError("MANAGED_WALLET_BIP39_INPUT_DENIED")
     ring=scanner=rpc=None
     runtime=root/"chain"/"wallet-runtime.sqlite"
     runtime_created=False
@@ -78,10 +87,20 @@ def create_managed_wallet(root, core_dir, wsp_source, password, *,
                     "getblockhash",[first["height"]])):
             raise ManagedWalletCreateError("MANAGED_WALLET_CHAIN_UNVERIFIED")
         # Atomic private mkdir is also our create-once collision gate.
-        custody.create_directory(vault_dir)
-        ring=Keyring()
+        if bip39_phrase is None:
+            ring=Keyring()
+        else:
+            # K-03: 64-byte BIP39 seed is kept ONLY in the separately typed
+            # encrypted keys envelope of this native-anchored recovery vault.
+            # No mnemonic/passphrase is published to Core, IPC, filesystem or
+            # GUI result; preflight before creating the vault directory.
+            from .bip39_durable import Bip39DurableKeyring
+            ring=Bip39DurableKeyring.from_phrase(
+                bip39_phrase,source=wsp_source,
+                passphrase=bip39_passphrase,authorized=True)
         ring.backup(password)
         accounts=ring.accounts()
+        custody.create_directory(vault_dir)
         if not accounts:
             raise ManagedWalletCreateError("MANAGED_WALLET_ACCOUNT_DENIED")
         scanner=Scanner(runtime,accounts)
