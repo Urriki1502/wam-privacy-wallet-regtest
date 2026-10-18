@@ -106,15 +106,19 @@ def _pinned_source(root: Path) -> None:
              "--untracked-files=all", "--", "src/wam_sp"],
             capture_output=True, timeout=6, check=True,
         ).stdout
+        # Refuse dirty tracked/untracked source immediately. A source tree
+        # already known to be altered must not proceed to the manifest step.
+        if dirty.strip():
+            raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED")
         tree = subprocess.run(
             ["git", "-C", str(root), "ls-tree", "-r", "--name-only",
              "-z", "HEAD", "--", "src/wam_sp"],
             capture_output=True, timeout=6, check=True,
         ).stdout
+    except RealWspScanError:
+        raise
     except (OSError, subprocess.SubprocessError):
         raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED") from None
-    if dirty.strip():
-        raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED")
     try:
         base = root / "src" / "wam_sp"
         if base.is_symlink() or not base.is_dir():
