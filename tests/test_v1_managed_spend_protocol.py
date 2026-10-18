@@ -86,3 +86,88 @@ class SpendIpcContracts(unittest.TestCase):
 
 if __name__=="__main__":
     unittest.main()
+
+
+class ManagedWalletReadTransportContracts(unittest.TestCase):
+    """Supplemental native file-identity negatives; NOT Core E2E evidence."""
+
+    @staticmethod
+    def _session():
+        from pathlib import Path
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        from wam_regtest.managed_scan_client import ManagedScanRpc
+        from wam_regtest.managed_spend_session import ManagedWalletSession
+        session=object.__new__(ManagedWalletSession)
+        session.ring=object()
+        session.faulted=False
+        session.source=Path("/unit-source-not-opened")
+        session._managed_root=Path("/unit-supervisor-not-opened")
+        reader=object.__new__(ManagedScanRpc)
+        reader._root=session._managed_root
+        reader.attest=Mock(return_value={"chain":"regtest","blocks":10})
+        session._read_rpc=reader
+        session.vault=SimpleNamespace(
+            anchor=SimpleNamespace(read=Mock(return_value="original-native-anchor")),
+            _expected="original-native-anchor",
+        )
+        session._core_member_paths=(Path("/unit-node-not-opened"),
+                                    Path("/unit-cli-not-opened"))
+        session._core_member_metadata=("node-identity","cli-identity")
+        session._verified_core_receipt={
+            "platform":"macos-arm64","wamd_sha256":"a"*64,
+        }
+        return session,reader
+
+    def test_managed_reads_reuse_one_time_signed_receipt_without_full_rehash(self):
+        from unittest.mock import patch
+        session,reader=self._session()
+        status={"state":"ready","core_process_owned":True}
+        with (patch("wam_regtest.managed_spend_session._pinned_source"),
+              patch("wam_regtest.core_process._metadata",
+                    side_effect=["node-identity","cli-identity"]) as metadata,
+              patch("wam_regtest.custody.platform_name",return_value="macos-arm64"),
+              patch("wam_regtest.supervisor_client.control",return_value=status) as control,
+              patch("wam_regtest.core.verified_core_paths",
+                    side_effect=AssertionError("PER_READ_CORE_REHASH_FORBIDDEN"))):
+            rpc,receipt=session._read()
+        self.assertIs(rpc,reader)
+        self.assertIs(receipt,session._verified_core_receipt)
+        self.assertFalse(session.faulted)
+        self.assertEqual(metadata.call_count,2)
+        control.assert_called_once()
+        reader.attest.assert_called_once()
+
+    def test_native_node_or_cli_replacement_faults_before_network(self):
+        from unittest.mock import patch
+        from wam_regtest.managed_spend_session import ManagedWalletSpendError
+        for changed in (("replaced-node","cli-identity"),
+                        ("node-identity","replaced-cli")):
+            with self.subTest(changed=changed):
+                session,reader=self._session()
+                with (patch("wam_regtest.managed_spend_session._pinned_source"),
+                      patch("wam_regtest.core_process._metadata",side_effect=changed),
+                      patch("wam_regtest.custody.platform_name",return_value="macos-arm64"),
+                      patch("wam_regtest.supervisor_client.control") as control):
+                    with self.assertRaisesRegex(
+                            ManagedWalletSpendError,"^MANAGED_SPEND_CORE_CHANGED$"):
+                        session._read()
+                self.assertTrue(session.faulted)
+                control.assert_not_called()
+                reader.attest.assert_not_called()
+
+    def test_missing_one_time_identity_fails_closed(self):
+        from unittest.mock import patch
+        from wam_regtest.managed_spend_session import ManagedWalletSpendError
+        session,reader=self._session()
+        del session._core_member_metadata
+        with (patch("wam_regtest.managed_spend_session._pinned_source"),
+              patch("wam_regtest.core_process._metadata") as metadata,
+              patch("wam_regtest.custody.platform_name",return_value="macos-arm64"),
+              patch("wam_regtest.supervisor_client.control") as control):
+            with self.assertRaisesRegex(
+                    ManagedWalletSpendError,"^MANAGED_SPEND_CORE_CHANGED$"):
+                session._read()
+        self.assertTrue(session.faulted)
+        control.assert_not_called()
+        reader.attest.assert_not_called()
