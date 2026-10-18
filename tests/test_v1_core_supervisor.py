@@ -57,6 +57,70 @@ class CoreSupervisorContracts(unittest.TestCase):
                 self.assertFalse(owner.status()["mainnet_allowed"])
             finally:owner.close_listener();owner.stack.close()
 
+    def test_control_scan_spend_tokens_are_distinct_and_persistent(self):
+        from wam_regtest.managed_scan_protocol import (
+            encode_request as scan_request,ScanProtocolError)
+        from wam_regtest.managed_spend_protocol import (
+            encode_request as spend_request,SpendProtocolError)
+        from wam_regtest.supervisor_protocol import SupervisorProtocolError
+        with self.patched():
+            owner=CoreSupervisor(self.root,self.core,authorized=True)
+            try:
+                control=read_exact(self.root,"supervisor.token",length=32)
+                scan=read_exact(self.root,"supervisor.scan.token",length=32)
+                spend=read_exact(self.root,"supervisor.spend.token",length=32)
+                self.assertEqual(len({control,scan,spend}),3)
+                nonce="a"*32
+                raw=spend_request(scan,"sendrawtransaction",["01"],nonce)
+                with self.assertRaises(SpendProtocolError):
+                    owner._spend_handle(raw)
+                raw=scan_request(spend,"getblockcount",[],nonce)
+                with self.assertRaises(ScanProtocolError):
+                    owner._scan_handle(raw)
+                raw=(json.dumps({"protocol":PROTOCOL,"op":"start",
+                    "nonce":nonce,"proof":request_proof(scan,"start",nonce)})+"\\n").encode("ascii")
+                with self.assertRaises(SupervisorProtocolError):
+                    owner.handle(raw)
+                self.assertIsNone(owner.process)
+            finally:
+                owner.close_listener();owner.stack.close()
+            other=CoreSupervisor(self.root,self.core,authorized=True)
+            try:
+                self.assertEqual(read_exact(self.root,"supervisor.token"),control)
+                self.assertEqual(read_exact(self.root,"supervisor.scan.token"),scan)
+                self.assertEqual(read_exact(self.root,"supervisor.spend.token"),spend)
+            finally:other.close_listener();other.stack.close()
+
+    def test_existing_profile_scoped_upgrade_once_and_partial_refusal(self):
+        with self.patched():
+            owner=CoreSupervisor(self.root,self.core,authorized=True)
+            try:
+                old_profile=read_exact(self.root,"supervisor.profile")
+                old_control=read_exact(self.root,"supervisor.token")
+                chain=owner.directory
+            finally:owner.close_listener();owner.stack.close()
+            # Simulate an authenticated legacy v1 node created before separate
+            # IPC credentials existed: the chain, wallet and profile remain.
+            (self.root/"supervisor.scan.token").unlink()
+            (self.root/"supervisor.spend.token").unlink()
+            upgraded=CoreSupervisor(self.root,self.core,authorized=True)
+            try:
+                self.assertEqual(chain,upgraded.directory)
+                self.assertEqual(read_exact(self.root,"supervisor.profile"),old_profile)
+                self.assertEqual(read_exact(self.root,"supervisor.token"),old_control)
+                self.assertTrue(read_exact(self.root,"supervisor.scan.token",length=32))
+                self.assertTrue(read_exact(self.root,"supervisor.spend.token",length=32))
+            finally:upgraded.close_listener();upgraded.stack.close()
+            # An interrupted upgrade is ambiguous: never overwrite/reset it.
+            retained=read_exact(self.root,"supervisor.scan.token",length=32)
+            (self.root/"supervisor.spend.token").unlink()
+            with self.assertRaisesRegex(ManagedCoreError,
+                    "^MANAGED_IPC_SCOPE_UPGRADE_REQUIRED$"):
+                CoreSupervisor(self.root,self.core,authorized=True)
+            self.assertEqual(read_exact(self.root,"supervisor.scan.token"),retained)
+            self.assertFalse((self.root/"supervisor.spend.token").exists())
+            self.assertEqual(read_exact(self.root,"supervisor.profile"),old_profile)
+
     def test_partial_control_receipt_does_not_adopt_or_reset(self):
         self.root.joinpath("supervisor.profile").write_text("untrusted")
         self.root.joinpath("supervisor.profile").chmod(0o600)
