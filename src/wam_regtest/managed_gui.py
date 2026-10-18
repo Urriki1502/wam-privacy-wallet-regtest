@@ -102,22 +102,28 @@ class _ManagedWalletCreateWorker(QThread):
     ready = Signal(object)
     denied = Signal(str)
 
-    def __init__(self,root,core_dir,wsp_source,password):
+    def __init__(self,root,core_dir,wsp_source,password,*,
+                 bip39_phrase=None,bip39_passphrase=None):
         super().__init__()
         self.root,self.core_dir,self.wsp_source=root,core_dir,wsp_source
         self.password=password
+        self.bip39_phrase=bip39_phrase
+        self.bip39_passphrase=bip39_passphrase
 
     def run(self):
         try:
             from .managed_wallet_create import create_managed_wallet
             value=create_managed_wallet(
                 self.root,self.core_dir,self.wsp_source,self.password,
-                authorized=True)
+                authorized=True,bip39_phrase=self.bip39_phrase,
+                bip39_passphrase=self.bip39_passphrase)
             self.ready.emit(value)
         except Exception:
             self.denied.emit("MANAGED_WALLET_CREATE_UNVERIFIED")
         finally:
             self.password=None
+            self.bip39_phrase=None
+            self.bip39_passphrase=None
 
 
 
@@ -194,6 +200,11 @@ class ManagedCoreWindow(RegtestWalletWindow):
             "Create legacy WSP wallet (NOT BIP39)", "security")
         toolbar.addWidget(self.create_wallet_button)
         self.create_wallet_button.clicked.connect(self._create_wallet)
+        self.create_bip39_wallet_button=action(
+            "Create NEW BIP39 WSP wallet (REGTEST)", "security")
+        toolbar.addWidget(self.create_bip39_wallet_button)
+        self.create_bip39_wallet_button.clicked.connect(
+            self._create_bip39_wallet)
         # K-01 is a local, separate, non-persisting BIP39 backup workflow.
         # These words MUST NOT be represented as the legacy WSP wallet seed.
         self.bip39_button=action("BIP39 backup words (not wallet)", "security")
@@ -231,6 +242,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.view_wallet_button.setEnabled(can_read)
         self.sync_wallet_button.setEnabled(can_read)
         self.create_wallet_button.setEnabled(
+            can_read and not (self._managed_root/"chain"/"wallet-vault").exists())
+        self.create_bip39_wallet_button.setEnabled(
             can_read and not (self._managed_root/"chain"/"wallet-vault").exists())
         self.spend_wallet_button.setEnabled(
             can_read and (self._managed_root/"chain"/"wallet-vault").is_dir())
@@ -384,6 +397,72 @@ class ManagedCoreWindow(RegtestWalletWindow):
             dialog._clear_sensitive()
             dialog.deleteLater()
             self._update_controls()
+
+    def _create_bip39_wallet(self):
+        # This is *not* K-01's offline-only backup phrase action. New BIP39
+        # wallet must be created through exactly the existing managed Core
+        # native vault+anchor, with explicit original-wallet create-only gate.
+        if (self._worker is not None or self._spend_window is not None
+                or not self._managed_authenticated
+                or self._managed_state!="ready"
+                or self._managed_height is None or self._wallet_core_dir is None
+                or self._wallet_wsp_source is None
+                or (self._managed_root/"chain"/"wallet-vault").exists()):
+            return
+        approved=QMessageBox.question(
+            self,"Create new BIP39 WSP wallet (REGTEST only)",
+            "Create ONE NEW native-encrypted BIP39 WSP wallet on this "
+            "verified Fusion-owned REGTEST Core? Existing legacy WSP wallets "
+            "are never converted or overwritten. The 12/24 recovery words "
+            "and optional BIP39 passphrase must be backed up offline. "
+            "Signing requires a separate exact-intent approval.",
+            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if approved!=QMessageBox.StandardButton.Yes:return
+        first,ok=QInputDialog.getText(
+            self,"Encrypt new BIP39 WSP wallet",
+            "New NATIVE vault encryption password (different from BIP39 passphrase)",
+            QLineEdit.EchoMode.Password)
+        if not ok:return
+        second,ok=QInputDialog.getText(
+            self,"Confirm native wallet encryption password",
+            "Re-enter the EXACT native encryption password",
+            QLineEdit.EchoMode.Password)
+        if not ok:return
+        secret=first.encode("utf8")
+        matching=(first==second)
+        first=second=None
+        if not matching or not 12<=len(secret)<=1024:
+            self._wallet_snapshot_denied("MANAGED_WALLET_CREATE_PASSWORD_MISMATCH")
+            return
+        from .bip39_gui import Bip39CreationDialog
+        dialog=Bip39CreationDialog(self,create_wallet=True)
+        mnemonic=passphrase=None
+        try:
+            confirmed=dialog.exec()
+            if (confirmed!=Bip39CreationDialog.DialogCode.Accepted
+                    or not dialog.confirmed):
+                return
+            mnemonic,passphrase=dialog.take_wallet_material()
+        finally:
+            dialog._clear_sensitive()
+            dialog.deleteLater()
+        self._wallet_read_authorized=False
+        self._wallet_checkpoint_verified=False
+        self._clear_balance()
+        worker=_ManagedWalletCreateWorker(
+            self._managed_root,self._wallet_core_dir,self._wallet_wsp_source,
+            secret,bip39_phrase=mnemonic,bip39_passphrase=passphrase)
+        secret=mnemonic=passphrase=None
+        self._worker=worker
+        worker.ready.connect(self._apply_wallet_created)
+        worker.denied.connect(self._wallet_snapshot_denied)
+        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(worker.deleteLater)
+        self.status.setText(
+            "Creating NEW BIP39 WSP wallet · encrypted native checkpoint · REGTEST")
+        self._update_controls()
+        worker.start()
 
     def _create_wallet(self):
         if (self._worker is not None or not self._managed_authenticated
