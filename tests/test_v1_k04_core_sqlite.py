@@ -56,9 +56,16 @@ class CoreSqlitePreflightContracts(unittest.TestCase):
                 with self.assertRaises(CoreSqliteImportError):
                     inspect_sqlite_backup(candidate)
         alias=self.root/"alias.dat"
-        alias.symlink_to(self.source)
-        with self.assertRaises(CoreSqliteImportError):
-            inspect_sqlite_backup(alias)
+        # Windows CI can deny creation of symlinks to unprivileged test
+        # processes. The production importer ALWAYS rejects symlinks; only
+        # the local fixture construction is platform-capability-dependent.
+        try:
+            alias.symlink_to(self.source)
+        except (OSError,NotImplementedError):
+            if os.name!="nt":raise
+        else:
+            with self.assertRaises(CoreSqliteImportError):
+                inspect_sqlite_backup(alias)
         linked=self.root/"linked.dat"
         os.link(self.source,linked)
         with self.assertRaises(CoreSqliteImportError):
