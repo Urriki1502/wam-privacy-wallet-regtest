@@ -78,6 +78,26 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
         self.assertEqual(self.win._sync_timer.interval(),5_000)
         self.assertEqual(self.win._managed_height,101)
 
+    def test_k01_bip39_wizard_is_separate_from_locked_managed_wallet(self):
+        from PySide6.QtWidgets import QDialog
+        self.assertTrue(self.win.bip39_button.isEnabled())
+        self.assertFalse(self.win.create_wallet_button.isEnabled())
+        self.assertIn("NOT BIP39",self.win.create_wallet_button.text())
+        self.assertIn("not wallet",self.win.bip39_button.text())
+        before=self.win.status.text()
+        # A local BIP39 dialog must not touch the Core, wallet vault or
+        # generate an original 32-byte WSP keyring on cancelled flow.
+        with (patch("wam_regtest.bip39_gui.Bip39CreationDialog.exec",
+                    return_value=QDialog.DialogCode.Rejected) as wizard,
+              patch("wam_regtest.managed_gui.control",
+                    side_effect=AssertionError("K01_MUST_NOT_CONTACT_CORE"))):
+            self.win.bip39_button.click()
+            wizard.assert_called_once()
+        self.assertEqual(self.win.status.text(),before)
+        self.assertFalse(self.win._managed_authenticated)
+        self.assertFalse(self.win.create_wallet_button.isEnabled())
+        self.assertIsNone(self.win.session)
+
     def test_wrong_network_and_fabricated_ready_are_rejected_before_wallet(self):
         good = public_status(state="ready",owned=True,chain_height=105)
         for update in ({"chain":"mainnet"},{"mainnet_allowed":True},
