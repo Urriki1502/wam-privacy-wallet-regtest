@@ -95,12 +95,18 @@ def inspect_sqlite_backup(source):
                 raise CoreSqliteImportError("K04_SQLITE_SIZE_CHANGED")
             digest.update(block)
         after=os.fstat(fd)
-        if (amount!=identity.st_size
-                or (identity.st_dev,identity.st_ino,identity.st_size,
-                    identity.st_mtime_ns,identity.st_ctime_ns)
-                !=(after.st_dev,after.st_ino,after.st_size,
-                   after.st_mtime_ns,after.st_ctime_ns)):
-            raise CoreSqliteImportError("K04_SQLITE_SOURCE_CHANGED")
+        # These fixed categories contain NO file path, timestamp, private
+        # descriptor, digest or other wallet data. Keep every fail-closed
+        # comparison while diagnosing native Windows metadata differences.
+        if amount!=identity.st_size or amount!=after.st_size:
+            raise CoreSqliteImportError("K04_SQLITE_SIZE_OR_SHORT_READ_CHANGED")
+        if ((identity.st_dev,identity.st_ino)
+                !=(after.st_dev,after.st_ino)):
+            raise CoreSqliteImportError("K04_SQLITE_NATIVE_FILE_ID_CHANGED")
+        if identity.st_mtime_ns!=after.st_mtime_ns:
+            raise CoreSqliteImportError("K04_SQLITE_MTIME_CHANGED")
+        if identity.st_ctime_ns!=after.st_ctime_ns:
+            raise CoreSqliteImportError("K04_SQLITE_CTIME_CHANGED")
         return CoreSqliteReceipt(digest.hexdigest(),amount)
     except CoreSqliteImportError:raise
     except OSError:
