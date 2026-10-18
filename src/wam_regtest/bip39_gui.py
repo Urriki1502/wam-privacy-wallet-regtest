@@ -207,6 +207,7 @@ class Bip39CreationDialog(QDialog):
         entered=self.passphrase.text()
         repeated=self.passphrase_confirmation.text()
         seed=None
+        verified_passphrase=None
         try:
             canonical=normalize_phrase(candidate)
             if not secrets.compare_digest(
@@ -225,6 +226,11 @@ class Bip39CreationDialog(QDialog):
             seed=bytearray(Mnemonic.to_seed(self._phrase,passphrase=entered))
             if len(seed)!=64:
                 raise MnemonicWalletError("BIP39_SEED_LENGTH_DENIED")
+            # Capture ONLY after the full recovery phrase, optional passphrase
+            # confirmation and BIP39 PBKDF2 derivation have all succeeded.
+            # Python immutable strings cannot be reliably zeroized.
+            if self._wallet_mode:
+                verified_passphrase=entered
         except Exception:
             self.status.setText(
                 "BIP39_CONFIRMATION_DENIED · re-enter words/passphrase")
@@ -241,7 +247,7 @@ class Bip39CreationDialog(QDialog):
             # Same-process one-time handoff, never a Qt signal, file, log,
             # clipboard or GUI result. Worker encrypts the derived 64-byte
             # seed under the original native vault + OS anti-rollback anchor.
-            self._wallet_material=(self._phrase,entered)
+            self._wallet_material=(self._phrase,verified_passphrase)
         self._clear_sensitive()
         self.accept()
 
