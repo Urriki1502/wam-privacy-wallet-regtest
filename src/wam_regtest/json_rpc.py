@@ -160,7 +160,11 @@ class ManagedReadRpc:
     def __init__(self,core,directory,*,authorized_readonly=False,timeout=5,binding=None):
         if authorized_readonly is not True:raise RpcError('RPC_EXPLICIT_READ_CONSENT_REQUIRED')
         if type(timeout) not in (int,float) or not 0.1<=timeout<=30:raise RpcError('RPC_TIMEOUT_DENIED')
-        if type(binding) is not OwnedCoreBinding or binding.core!=core or binding.directory!=directory:
+        # T-06 non-owning attach is a distinct, strictly read-only binding.
+        # It can never be turned into a supervisor writer or process owner.
+        from .attached_core import AttachedCoreBinding
+        if (type(binding) not in (OwnedCoreBinding,AttachedCoreBinding)
+                or binding.core!=core or binding.directory!=directory):
             raise RpcError('RPC_MANAGED_PROCESS_REQUIRED')
         self._connection=None;self._auth=None;self._closed=False;self._lock=threading.RLock();self._identifier=0;self._last_completed=None
         try:
@@ -227,6 +231,9 @@ class ManagedReadRpc:
 
     def mining_snapshot(self,*,authorized_readonly=False):
         # No wallet selector, endpoint override, write or key-export method.
+        # An external attached Core never authorizes Core-wallet introspection.
+        if type(self._connection._binding) is not OwnedCoreBinding:
+            raise RpcError('RPC_ATTACHED_WALLET_READ_DENIED')
         if authorized_readonly is not True:raise RpcError('RPC_EXPLICIT_READ_CONSENT_REQUIRED')
         from .mining_read import read_mining_snapshot
         with self._lock:return read_mining_snapshot(self)
@@ -303,6 +310,10 @@ class ManagedReadRpc:
         before any HTTP bytes by _BoundConnection. No dynamic wallet selector.
         """
         from .managed_spend_protocol import _params as spend_params,_result as spend_result
+        # Critical T-06: even a caller passing authorized=True MUST NOT turn
+        # non-owning attachment into a broadcaster via the shared transport.
+        if type(self._connection._binding) is not OwnedCoreBinding:
+            raise RpcError("RPC_ATTACHED_WRITE_DENIED")
         if authorized is not True:
             raise RpcError("RPC_SPEND_EXPLICIT_CONSENT_REQUIRED")
         spend_params(method,params)
