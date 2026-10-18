@@ -68,6 +68,11 @@ def main():
     verify_source(Path.cwd(),build_source)
     (output/'BUILD_SOURCE_PROVENANCE.json').write_text(json.dumps(source_provenance,sort_keys=True,indent=2)+'\n')
     record=json.loads(evidence.read_text());wallet=record['wallet_live_core']
+    t09=record['t09_direct_rpc_evidence']
+    assert t09['status']=='T09_REAL_CORE_DIRECT_RPC_COMPONENT_PASS'
+    assert t09['platform']=='linux-x86_64' and t09['frozen_entrypoint'] is True
+    assert t09['genuine_busy_idle_recovery_checked'] is True
+    assert t09['physical_accepted'] is False and t09['dev_reviewed'] is False
     assert record['frozen_runtime'] is True
     assert record['platform']=='linux-x86_64' and not record['official_signed_release']
     assert wallet['synthetic_rpc'] is False and wallet['mainnet_allowed'] is False
