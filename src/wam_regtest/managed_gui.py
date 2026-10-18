@@ -495,7 +495,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
         # descriptor bytes, mnemonic content or exception text.
         messages={
             "K05_BDB_DEPRECATED_UNSUPPORTED":
-                "Fusion does NOT import or convert BDB wallets. "
+                "Fusion does NOT import or convert Berkeley DB (BDB) wallets. "
                 "WAM Core v0.1.12 wamd/wam-cli on Windows x64 and macOS arm64 "
                 "can migrate one using migratewallet; Linux x64 v0.1.12 "
                 "node binaries cannot. Keep the original backup safe, "
