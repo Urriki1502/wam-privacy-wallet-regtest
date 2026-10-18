@@ -564,6 +564,35 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
             assert owner.read.call("getblockhash",[height])==tip
             assert _public_fixture_sha(_private_config(owner.directory)).digest()==config_before
             evidence["t06_existing_core_independent_readonly_attach_no_mutation"]=True
+            if qt and sys.platform=="darwin":
+                # Same REAL externally-running Core through the production
+                # read-only GUI. No wallet keys, mining, Sign or stop buttons.
+                from wam_regtest.attached_core_gui import ExistingCoreReadOnlyWindow
+                from wam_regtest.desktop import qt_application
+                app=qt_application()
+                inspector=ExistingCoreReadOnlyWindow(
+                    core,owner.directory,owner.process.pid)
+                inspector.show()
+                inspector.request_refresh()
+                deadline=time.monotonic()+25
+                while (inspector._worker is not None or inspector._proof is None) and time.monotonic()<deadline:
+                    app.processEvents()
+                    time.sleep(.02)
+                app.processEvents()
+                proof=inspector._proof
+                assert proof is not None
+                assert proof["chain"]=="regtest" and proof["height"]==height
+                assert proof["tip"]==tip and proof["read_only"] is True
+                assert proof["mainnet_allowed"] is False
+                assert not hasattr(inspector,"start_core")
+                assert not hasattr(inspector,"stop_core")
+                assert not hasattr(inspector,"spend_wallet_button")
+                assert not hasattr(inspector,"create_wallet_button")
+                inspector.close()
+                app.processEvents()
+                assert owner.process.pid==observed_pid and owner.process.poll() is None
+                assert _public_fixture_sha(_private_config(owner.directory)).digest()==config_before
+                evidence["t06_existing_core_real_gui_readonly_macos"]=True
             owner.shutdown()
             assert owner.directory.is_dir()
             assert (owner.directory/"regtest").is_dir()
