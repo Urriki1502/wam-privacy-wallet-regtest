@@ -52,6 +52,9 @@ class ExistingCoreAttachContracts(unittest.TestCase):
                     reader.write_owned_regtest(method,args,authorized=True)
         with self.assertRaisesRegex(RpcError,"^RPC_ATTACHED_WALLET_READ_DENIED$"):
             reader.mining_snapshot(authorized_readonly=True)
+        reader._closed=False
+        with self.assertRaisesRegex(RpcError,"^RPC_ATTACHED_WALLET_READ_DENIED$"):
+            reader._request_once("getbalances",[],mining=True)
         reader._connection.request.assert_not_called()
 
     def test_readonly_wrapper_denies_all_core_mutations_before_socket(self):
