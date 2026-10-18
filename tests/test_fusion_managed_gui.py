@@ -612,6 +612,35 @@ class Bip39WizardContracts(unittest.TestCase):
         self.assertTrue(dialog.confirmed)
         self.assertIsNone(dialog._phrase)
 
+    def test_k03_confirmed_mnemonic_handoff_is_one_time_new_wallet_only(self):
+        dialog=Bip39CreationDialog(create_wallet=True)
+        self.addCleanup(self.cleanup_dialog,dialog)
+        dialog.word_count.setCurrentIndex(0)
+        dialog.ack.setChecked(True)
+        with patch("wam_regtest.bip39_gui.generate_phrase",return_value=PUBLIC_12):
+            dialog._generate()
+        dialog._advance()
+        dialog.confirm_text.setPlainText(PUBLIC_12)
+        dialog.passphrase.setText("K03-public-optional-passphrase")
+        dialog.passphrase_confirmation.setText("K03-public-optional-passphrase")
+        dialog.extra_ack.setChecked(True)
+        dialog._verify()
+        self.assertTrue(dialog.confirmed)
+        self.assertIn("CREATE A NEW",dialog.warning.text())
+        self.assertIsNone(dialog._phrase)
+        self.assertEqual(dialog.words_view.text(),"")
+        self.assertEqual(dialog.confirm_text.toPlainText(),"")
+        phrase,passphrase=dialog.take_wallet_material()
+        self.assertEqual(phrase,PUBLIC_12)
+        self.assertEqual(passphrase,"K03-public-optional-passphrase")
+        with self.assertRaises(ValueError):
+            dialog.take_wallet_material()
+        dialog.reject()
+        self.assertIsNone(dialog._wallet_material)
+        stand_alone=self.make(12)
+        with self.assertRaises(ValueError):
+            stand_alone.take_wallet_material()
+
     def test_wordlist_failure_clears_ui_without_core_or_fallback(self):
         dialog=self.make()
         with patch("wam_regtest.bip39_gui.generate_phrase",
