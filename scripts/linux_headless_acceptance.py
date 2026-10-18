@@ -131,6 +131,27 @@ try:
             'synthetic_rpc':False,'mainnet_allowed':False,
         }
         print('LINUX_K03_BIP39_NATIVE_WSP_SIGN_REOPEN_PASS')
+        # K-04: verified developer Core + independent root witness remain
+        # process-wide immutable. Quarantine restores Core-native SQLite
+        # backup only to a second disposable REGTEST daemon, never the user's
+        # managed WSP signer or any external miner.
+        k04_path=root/'scripts'/'issue45_k04_sqlite_e2e.py'
+        k04_spec=importlib.util.spec_from_file_location(
+            'k04_linux_core_sqlite',k04_path)
+        assert k04_spec is not None and k04_spec.loader is not None
+        k04_module=importlib.util.module_from_spec(k04_spec)
+        k04_spec.loader.exec_module(k04_module)
+        k04=k04_module.prove(args.core_dir.absolute())
+        assert k04['status']=='K04_REAL_CORE_SQLITE_RESTORE_QUARANTINE_PASS'
+        assert k04['real_core_restorewallet_rpc'] is True
+        assert k04['source_immutable'] is True
+        assert k04['duplicate_descriptor_identity_denied'] is True
+        assert k04['mainnet_allowed'] is False and k04['synthetic_rpc'] is False
+        record['k04_core_sqlite_quarantine']={
+            'status':k04['status'],
+            'real_core_restorewallet':True,'original_wallet_unmodified':True,
+            'synthetic_rpc':False,'mainnet_allowed':False}
+        print('LINUX_K04_NATIVE_CORE_SQLITE_QUARANTINE_PASS')
     report.write_text(json.dumps(record,indent=2)+'\n')
     print('LINUX_REAL_CORE_ROOT_WITNESS_'+('NATIVE_QT' if args.qt else 'NO_QT_HEADLESS')+'_WALLET_PASS')
 finally:
