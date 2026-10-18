@@ -241,6 +241,11 @@ class ManagedReadRpc:
 
     def _request_once(self,method,params,*,mining=False):
         if self._closed:raise RpcError('RPC_SESSION_CLOSED')
+        # Do not allow a caller to bypass the public mining_snapshot gate
+        # via the transport's private _request(..., mining=True) path.
+        if (mining is True and
+                type(self._connection._binding) is not OwnedCoreBinding):
+            raise RpcError('RPC_ATTACHED_WALLET_READ_DENIED')
         self._scope_params(method,params,mining)
         # Deny before sending any HTTP bytes. A subsequent explicit read may
         # proceed only if the EXACT protected original config is restored;
