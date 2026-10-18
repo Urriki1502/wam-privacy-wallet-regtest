@@ -49,7 +49,10 @@ def _native_source_open(source):
         if entry.exists() or entry.is_symlink():
             # A live SQLite wallet may have uncheckpointed transactions.
             raise CoreSqliteImportError("K04_SQLITE_LIVE_OR_PARTIAL_BACKUP_DENIED")
-    flags=os.O_RDONLY | getattr(os,"O_NOFOLLOW",0)
+    # On Windows CRT file descriptors MUST be opened O_BINARY. Without
+    # this flag _O_TEXT may translate CRLF bytes or treat 0x1A as EOF,
+    # making an authentic SQLite/Core wallet read shorter than st_size.
+    flags=os.O_RDONLY | getattr(os,"O_NOFOLLOW",0) | getattr(os,"O_BINARY",0)
     if hasattr(os,"O_CLOEXEC"):flags|=os.O_CLOEXEC
     if hasattr(os,"O_NONBLOCK"):flags|=os.O_NONBLOCK
     try:
@@ -139,8 +142,10 @@ def stage_verified_backup(source, staging, *, authorized=False):
     try:
         if len(name)>MAX_QUARANTINE_NAME:
             raise CoreSqliteImportError("K04_STAGE_NAME_DENIED")
+        # Copy SQLite as raw bytes on Windows too; _O_TEXT here would
+        # corrupt SQLite page data by translating LF to CRLF.
         fd=os.open(destination,os.O_WRONLY|os.O_CREAT|os.O_EXCL
-                   |getattr(os,"O_NOFOLLOW",0),0o600)
+                   |getattr(os,"O_NOFOLLOW",0)|getattr(os,"O_BINARY",0),0o600)
         digest=sha256()
         total=0
         while True:
