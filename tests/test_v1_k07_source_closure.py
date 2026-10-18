@@ -76,7 +76,9 @@ class WspPinnedSourceClosureContracts(unittest.TestCase):
 
     def test_missing_tracked_source_refused(self):
         (self.package/"scanner.py").unlink()
-        with self.assertRaisesRegex(RealWspScanError,"WSP_SOURCE_CLOSURE_DENIED"):
+        # Existing PIN guard already refuses missing scanner.py BEFORE
+        # K-07's exact tree-closure guard. Both are fail-closed and correct.
+        with self.assertRaisesRegex(RealWspScanError,"WSP_SOURCE_PIN_DENIED"):
             self.verify()
 
     def test_unexpected_tree_manifest_refused(self):
