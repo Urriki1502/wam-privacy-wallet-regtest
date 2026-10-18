@@ -21,10 +21,15 @@ class CoreSqlitePreflightContracts(unittest.TestCase):
         self.root=Path(self.temp.name).resolve()
         if os.name!="nt":self.root.chmod(0o700)
         self.source=self.root/"k04-public-test.dat"
-        with sqlite3.connect(self.source) as sql:
+        # sqlite3.Connection as a context manager commits but does NOT
+        # close the native Windows file handle. Close explicitly so the
+        # create-only disposable fixture can always be removed after test.
+        sql=sqlite3.connect(self.source)
+        try:
             sql.execute("CREATE TABLE public_dummy(id INTEGER PRIMARY KEY)")
             sql.execute("INSERT INTO public_dummy VALUES (1)")
             sql.commit()
+        finally:sql.close()
         if os.name!="nt":self.source.chmod(0o600)
 
     def test_real_sqlite_magic_hash_and_no_private_descriptor_parsing(self):
