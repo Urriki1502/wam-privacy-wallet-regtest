@@ -344,6 +344,18 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     recovery_receipt = probe_reopened_wallet(core_dir,datadir,wsp_source,mine_to,recovery_case,read_rpc=read_rpc)
                 except ReopenProbeError as exc:
                     raise CoreSmokeError(str(exc)) from None
+            # T-09: mandatory REAL-Core direct-RPC component evidence on
+            # native/frozen, native-Qt and Linux headless qualified E2E entry.
+            # Historical green checks and mock/unit-only receipts cannot
+            # satisfy this gate. No live Core/WSP call is substituted.
+            t09_receipt=None
+            if wallet_e2e or rpc_contention_e2e:
+                from .t09_rpc_acceptance import require_direct_rpc_evidence
+                t09_receipt=require_direct_rpc_evidence(
+                    platform=receipt["platform"],height=height,
+                    owned=owned_rpc_receipt,wsp=wsp_receipt,wallet=wallet_receipt,
+                    contention=True,operational=wallet_e2e)
+                t09_receipt["frozen_entrypoint"]=bool(getattr(sys,"frozen",False))
             final_height = _read_cli(prefix + ["getblockcount"])
             final_tip = _read_cli(prefix + ["getbestblockhash"])
             if (type(final_height) is not int or not 101<=final_height<=1_000_000
@@ -356,6 +368,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 "owned_startup_attempts": owned.attempts,
                 "startup_auth_after_native_endpoint_proof": True,
                 "owned_http_read_component": owned_rpc_receipt,
+                "t09_direct_rpc_evidence": t09_receipt,
                 "wallet_live_core": wallet_receipt,
                 "recovery_live_core": recovery_receipt,
                 "security_live_core": security_receipt,
