@@ -108,23 +108,53 @@ def prove(core_dir,wsp_source):
             assert initial.history and initial.history[0].txid==funded_txid
             recipient=Keyring()
             payment_code=recipient.accounts()[0].payment_code()
-            review=session.prepare(payment_code,100000,10000)
+            # Exercise the REAL Fusion Qt Send UI and its modal approval
+            # dialogs. It invokes the inherited WSP coordinator, but only
+            # through the dedicated authenticated owned-Core spend transport.
+            from wam_regtest.desktop import qt_application
+            from wam_regtest.managed_operational_gui import ManagedOperationalWalletWindow
+            from wam_regtest.wallet_probe import _operation,_approve_dialog
+            from shiboken6 import delete
+            app=qt_application()
+            window=ManagedOperationalWalletWindow(session)
+            window.show()
+            app.processEvents()
+            window.apply_snapshot(initial)
+            assert window._snapshot is initial
+            assert window.prepare_button.isEnabled()
+            assert not window.mine_button.isEnabled()
+            assert not window.recover_button.isEnabled()
+            window.recipient.setText(payment_code)
+            window.amount.setText("0.00100000")
+            window.fee.setText("0.00010000")
+            review=_operation(app,window,"prepare",window.prepare_button.click)
             assert review.code==payment_code and review.input_count==1
+            assert not window.broadcast_button.isEnabled()
             # Inherited WalletSession.sign marks selected UTXO 'signed' in
             # native encrypted checkpoint BEFORE calling real WSP Signer.
-            session.sign(review.commitment)
+            signed_review=_operation(
+                app,window,"sign",
+                lambda:_approve_dialog(app,window,window.sign_button))
+            assert signed_review.commitment==review.commitment
             signed_locks=tuple(session.scanner.store.db.execute(
                 "SELECT txid,vout,state FROM reservations ORDER BY txid,vout"))
             assert signed_locks and signed_locks[0][2]=="signed"
             signed_anchor=session.vault.anchor.read()
             assert signed_anchor and signed_anchor[0]>record[0]
-            txid=session.broadcast(review.commitment)
+            txid=_operation(
+                app,window,"broadcast",
+                lambda:_approve_dialog(app,window,window.broadcast_button))
             assert len(txid)==64 and txid in rpc._call("getrawmempool",[])
+            assert window._submitted_txid==txid
             pending=tuple(session.scanner.store.db.execute(
                 "SELECT txid,vout,state FROM reservations ORDER BY txid,vout"))
             assert pending and pending[0][2]=="broadcast"
             last_anchor=session.vault.anchor.read()
-            session.close();session=None
+            assert window.close()
+            delete(window)
+            app.processEvents()
+            window=None
+            session=None  # closeEvent locked and closed original WSP session
             assert not (directory/"wallet-runtime.sqlite").exists()
             # Read-only reconnect retains both original keys and the
             # irreversible reservation. No second broadcast or auto retry.
@@ -149,6 +179,7 @@ def prove(core_dir,wsp_source):
                     "signed_core_sha256":receipt["wamd_sha256"],
                     "real_confirmed_bip352_funding":True,
                     "genuine_wsp_psbtv2_native_signature":True,
+                    "actual_native_fusion_qt_send_sign_broadcast":True,
                     "send_via_authenticated_owned_http":True,
                     "signed_reservation_anchored_before_crypto":True,
                     "broadcast_reservation_persisted_before_rpc":True,
@@ -177,7 +208,11 @@ def main():
     parser.add_argument("--wsp-source",type=Path,required=True)
     parser.add_argument("--output",type=Path)
     args=parser.parse_args()
-    result=prove(args.core_dir.resolve(),args.wsp_source.resolve())
+    from wam_regtest.desktop import shutdown_qt
+    try:
+        result=prove(args.core_dir.resolve(),args.wsp_source.resolve())
+    finally:
+        shutdown_qt()
     if args.output:
         if args.output.exists():
             raise SystemExit("MANAGED_SPEND_RECEIPT_PATH_OCCUPIED")
