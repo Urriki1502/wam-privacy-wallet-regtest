@@ -108,9 +108,11 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
         self.assertIn("NO IMPORT",self.win.sqlite_inspect_button.text())
         with tempfile.TemporaryDirectory(prefix="k04-gui-public-") as d:
             path=Path(d)/"fixture.dat"
-            with sqlite3.connect(path) as sql:
+            sql=sqlite3.connect(path)
+            try:
                 sql.execute("CREATE TABLE public_test(value INT)")
                 sql.commit()
+            finally:sql.close()
             if __import__("os").name!="nt":path.chmod(0o600)
             # The native Qt worker emits non-secret FORMAT ONLY. No
             # Core/managed wallet RPC may be contacted.
