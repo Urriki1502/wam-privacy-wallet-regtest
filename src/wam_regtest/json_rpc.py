@@ -277,6 +277,56 @@ class ManagedReadRpc:
             info=self.attest()  # Reattest chain/genesis, not files or subprocesses.
             return info if method=='getblockchaininfo' else self._request(method,args)
 
+    def write_owned_regtest(self, method, params, *, authorized=False):
+        """One explicit native-process-bound transaction operation, no retry.
+
+        ONLY CoreSupervisor's separately authenticated spend dispatcher may
+        invoke this method. Scanner/ordinary call() still deny all writes.
+        Connection, credential/config and native process/socket are checked
+        before any HTTP bytes by _BoundConnection. No dynamic wallet selector.
+        """
+        from .managed_spend_protocol import _params as spend_params,_result as spend_result
+        if authorized is not True:
+            raise RpcError("RPC_SPEND_EXPLICIT_CONSENT_REQUIRED")
+        spend_params(method,params)
+        with self._lock:
+            if self._closed:
+                raise RpcError("RPC_SPEND_SESSION_CLOSED")
+            self.attest()
+            self._assert_config()
+            self._identifier+=1
+            identifier=self._identifier
+            try:
+                self._discard_idle_connection()
+                body=json.dumps({"jsonrpc":"1.0","id":identifier,
+                                 "method":method,"params":params},
+                                separators=(",",":")).encode("ascii")
+                if len(body)>16384:
+                    raise RpcError("RPC_SPEND_REQUEST_TOO_LARGE")
+                self._connection.request("POST","/",body,
+                    {"Authorization":self._auth,"Content-Type":"application/json",
+                     "Connection":"keep-alive"})
+                reply=self._connection.getresponse()
+                raw=reply.read(8193)
+                if (reply.status!=200 or len(raw)>8192
+                        or reply.getheader("Content-Type","").split(";")[0].strip()
+                           !="application/json"):
+                    raise RpcError("RPC_SPEND_REFUSED_OR_UNCERTAIN")
+                record=json.loads(raw.decode("utf8"),object_pairs_hook=_unique,
+                    parse_float=Decimal,
+                    parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
+                if (type(record) is not dict or set(record)!={"result","error","id"}
+                        or record["id"]!=identifier or record["error"] is not None):
+                    raise RpcError("RPC_SPEND_CORE_RESULT_DENIED")
+                value=spend_result(method,record["result"])
+                self._last_completed=time.monotonic()
+                return value
+            except Exception:
+                # The transaction MAY have reached Core. Never replay this
+                # operation, reopen sockets or release wallet reservations.
+                self.close()
+                raise RpcError("RPC_SPEND_UNCERTAIN_NO_RETRY") from None
+
     def close(self):
         # Serialize teardown with reads; concurrent close must not erase the
         # authentication header halfway through a request. RLock permits a
