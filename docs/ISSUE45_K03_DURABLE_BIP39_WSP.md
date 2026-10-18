@@ -1,0 +1,26 @@
+# Issue #45 — K-03: Durable REGTEST BIP39 64-byte WSP seed-to-signer
+
+ONE K-03 Draft PR on the completed-green K-02 profile. This enables creation of a new, native-custodied BIP39 WSP wallet without changing, guessing or overwriting any old 32-byte WSP account. Mainnet, personal wallets, wallet.dat import, OS migration and unattended broadcast are prohibited.
+
+## Distinct key envelope
+
+The existing original wallet's legacy WSP Keyring is **32 bytes** with encrypted key backup version 2/3. Its format is preserved without migration.
+
+The new `Bip39DurableKeyring` derives the full 64-byte BIP39 PBKDF2 seed from 12/24 mnemonic words plus an optional *BIP39 passphrase*. This seed uses immutable K-02 `352'/1'/account'/role'/0` REGTEST BIP352 scan/spend paths, independent account ID and payment code. It implements `accounts`, `spend_secret`, `backup`, `restore` and `close`, the exact interface consumed by the pinned native WSP scanner and real PSBTv2 Signer. No mnemonic or mnemonic passphrase is written to disk, Core config/RPC, logs, QR or public CI evidence. The seed is sealed as an exact typed version-4 `wam-fusion-bip39-wsp-keyring/v1` record with the pinned REGTEST genesis, account, birthday, K-02 derivation contract, `legacy_wsp32_interpretable=false` and `mainnet_allowed=false`. The record is AES-GCM/scrypt-sealed with the native wallet encryption password under the already pinned WSP `keys` purpose, then held inside the **unchanged native-anchored encrypted CheckpointVault recovery envelope**. Python temporary plaintext and Qt strings are best-effort cleared, not guaranteed zeroized against a compromised OS.
+
+The encrypted vault's `restore_keyring` only accepts version 2/3 through unchanged upstream `Keyring.restore` or version 4 through strict BIP39 restore. It refuses unknown versions, ambiguous/corrupted/mismatched network/profile, duplicate fields, wrong password and accidental 32-to-64 conversion. All snapshot/generation/anti-rollback, same-wallet single writer lease, Core trust, SQLite checkpoint/reservation integrity and uncertain-broadcast fail-closed contracts remain the original ones.
+
+## GUI/new-wallet workflow
+
+Fusion managed GUI adds `Create NEW BIP39 WSP wallet (REGTEST)` as a separate explicit action from `Create legacy WSP wallet (NOT BIP39)` and K-01's standalone local mnemonic wizard. The K-03 action is available only against an authenticated owner-managed ready Core with no preexisting wallet vault or active signer. It asks for explicit creation consent, a NEW native vault encryption password and confirmation, then 12/24 fresh words, paper/offline confirmation of the entire phrase and optional BIP39 passphrase with confirmation. Only a one-time same-process handoff of the confirmed words is passed to the creation worker; no mnemonic-bearing Qt signal, UI result or IPC. The worker performs actual K-03 seed derivation and original `create_managed_wallet` native anchor/checkpoint publication. A preexisting, even partially written/uncertain, wallet-vault directory is never deleted/replaced. Normal managed GUI Verify/Sync, locked-wallet reopen and Send/Sign/Broadcast thereafter reuse the *same existing codepaths* and exact-intent approvals.
+
+**Crucial owner guidance:** Native wallet password decrypts the local encrypted checkpoint; BIP39 optional passphrase changes the mnemonic-derived seed and must be separately preserved. The original legacy 32-byte wallet cannot be recovered using any newly generated BIP39 words. K-08 clean-device bootstrap and cross-OS anti-rollback transition are NOT implemented here.
+
+## Exact tests
+
+- New headless unit contracts verify BIP39 12/24 seed+optional passphrase, independent WSP scan and spending scalar, authenticated versioned keys envelope, legacy-format compatibility and many profile/account/network/type/malformed negatives.
+- Existing original legacy wallet E2E remains mandatory in macOS CI. The new BIP39 flag drives **the same real managed WAM Core v0.1.11 and Qt PSBTv2 payment coordinator** on disposable REGTEST, from original BIP352 funding to exact-intent Sign/Broadcast, confirmed transaction, GUI close, vault reopen, unchanged receiving address and irreversible reservation state.
+- Native macOS, Windows and Linux independent-root-witness xcb qualification run separate genuine-Core K-03 proofs with *PUBLIC test-only deterministic BIP39 words*, never a live user's mnemonic. The real crypto/signing, native CSPRNG creation (GUI feature), attached chain/transport and OS custody use the existing implementation. Windows final frozen, Linux frozen/headless and macOS DMG regressions remain mandatory and may require further acceptance integration.
+- Physical GUI backup usability, screenshots, process/OS memory zeroization, operator recovery across a clean machine, portable/OS anchor reset, true power-loss tests and Codex/DEV review remain **PENDING**. A green CI job on this PR is not an independent release approval.
+
+No key export to renderer, no persistence of raw phrase or human secret, no Core write except explicitly approved, isolated REGTEST payment fixture. No automatic merge, default branch mutation or personal Core attachment.
