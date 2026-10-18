@@ -72,6 +72,15 @@ class ManagedWalletSession(WalletSession):
                 ring,scanner=vault.restore(runtime,password)
                 if ring.accounts()!=scanner.accounts or not ring.accounts():
                     raise ManagedWalletSpendError("MANAGED_SPEND_ACCOUNT_MISMATCH")
+                # K-06: no Core .dat private keys, duplicated WSP accounts,
+                # mistaken BIP39/legacy identities or swap of spend/scan keys
+                # can be admitted as native WSP signing authority.
+                from .account_isolation import require_native_wsp_accounts
+                registry=require_native_wsp_accounts(
+                    ring,scanner,identity["wallet_id"])
+                if (not registry.wsp or registry.core
+                        or registry.public_summary()["balances_aggregated"]):
+                    raise ManagedWalletSpendError("K06_MANAGED_SPEND_ISOLATION_DENIED")
                 session=cls(core_dir,directory,source,ring,scanner,vault,
                             password,"",reader)
                 session._managed_root=root
@@ -148,6 +157,11 @@ class ManagedWalletSession(WalletSession):
         from wam_sp.wallet import Wallet
         with self._lock:
             rpc,receipt=self._read()
+            from .account_isolation import require_native_wsp_accounts
+            # Re-check account identity before reading/persisting scanner
+            # state, not only during initial unlock.
+            require_native_wsp_accounts(
+                self.ring,self.scanner,self.vault.anchor.wallet_id)
             observed=rpc.attest()
             delta=self.scanner.sync(rpc)
             self.scanner.assert_current()
