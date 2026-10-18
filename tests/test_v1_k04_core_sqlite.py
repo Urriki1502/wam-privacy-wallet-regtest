@@ -71,6 +71,43 @@ class CoreSqlitePreflightContracts(unittest.TestCase):
         with self.assertRaises(CoreSqliteImportError):
             inspect_sqlite_backup(self.source)
 
+    def test_binary_sqlite_copy_preserves_ctrl_z_crlf_and_exact_sha(self):
+        # Explicitly reproduces the Windows _O_TEXT failure: without
+        # os.O_BINARY, the CRT may treat 0x1a as EOF or convert CRLF.
+        # A real SQLite file contains arbitrary binary page bytes.
+        sql=sqlite3.connect(self.source)
+        try:
+            sql.execute("CREATE TABLE public_blob(payload BLOB)")
+            sql.execute("INSERT INTO public_blob VALUES (?)",
+                        (sqlite3.Binary(b"PUBLIC\x1a\r\nZERO" * 3072),))
+            sql.commit()
+        finally:
+            sql.close()
+        if os.name!="nt":self.source.chmod(0o600)
+        raw=self.source.read_bytes()
+        self.assertIn(b"\x1a\r\n",raw)
+        from hashlib import sha256
+        observed=inspect_sqlite_backup(self.source)
+        self.assertEqual(observed.byte_count,len(raw))
+        self.assertEqual(observed.file_sha256,sha256(raw).hexdigest())
+        stage=self.root/"private-binary-stage"
+        stage.mkdir(mode=0o700)
+        if os.name!="nt":stage.chmod(0o700)
+        class TestPrivateStorage:
+            @staticmethod
+            def validate_directory(path):
+                info=path.lstat()
+                if (path.is_symlink() or not path.is_dir()
+                        or os.name!="nt" and info.st_mode&0o077):
+                    raise ValueError("K04_TEST_PRIVATE_FOLDER_REQUIRED")
+        with patch("wam_regtest.custody.storage",
+                   return_value=TestPrivateStorage()):
+            copied,receipt=stage_verified_backup(
+                self.source,stage,authorized=True)
+        self.assertEqual(receipt,observed)
+        self.assertEqual(copied.read_bytes(),raw)
+        self.assertEqual(inspect_sqlite_backup(copied),observed)
+
     def test_live_wal_shm_or_journal_denied_before_read(self):
         for extension in ("-wal","-shm","-journal"):
             path=self.source.with_name(self.source.name+extension)
