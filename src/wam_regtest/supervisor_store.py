@@ -11,7 +11,8 @@ import stat
 import sys
 
 MAX_CONTROL_FILE=4096
-CONTROL_NAMES=frozenset({"supervisor.token","supervisor.profile","supervisor.lock"})
+CONTROL_NAMES=frozenset({"supervisor.token","supervisor.scan.token",
+                         "supervisor.spend.token","supervisor.profile","supervisor.lock"})
 
 
 class SupervisorStorageError(ValueError):pass
