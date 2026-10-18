@@ -50,7 +50,7 @@ modal cases with the same isolated PYTHONPATH and native teardown.
 
 ## Concrete patch proposal — NOT applied or qualified
 
-[Single-file patch](evidence/issue45/PR81_DA0B27D_MODAL_PROPOSAL.patch), exact
+[Single-file patch](evidence/issue45/PR81_DA0B27D_MODAL_PROPOSAL.patch.txt), exact
 base GUI SHA256 `e7cba6ed79af87724ae028db088103188ff8dd2340bc32cd0f5d405522f5bb08`.
 Reuses PR67's existing `try/finally` modal exclusion, blocks timer/lifecycle and
 window close while approval is pending, rechecks current authority/resources
