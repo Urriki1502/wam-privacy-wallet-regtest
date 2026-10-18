@@ -210,6 +210,63 @@ class SupervisorTransportResilience(unittest.TestCase):
                     reader.close.assert_called_once()
                     self.assertIsNone(owner.read)
 
+    def test_t08_foreign_loopback_port_refused_before_spawning_managed_core(self):
+        import socket
+        import threading
+        from unittest.mock import Mock
+        from wam_regtest.core_supervisor import _reserve_existing_rpc_port
+        with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as foreign:
+            if os.name=="nt":
+                foreign.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
+            else:
+                # A live competing listener that ALSO uses REUSEADDR must
+                # still be denied by the preflight's bind+listen gate.
+                foreign.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+            foreign.bind(("127.0.0.1",0))
+            foreign.listen(1)
+            occupied=foreign.getsockname()[1]
+            owner=CoreSupervisor.__new__(CoreSupervisor)
+            owner._lock=threading.RLock()
+            owner._consecutive_failures=0
+            owner._state="stopped"
+            owner.process=None
+            owner.binding=None
+            owner.read=None
+            owner.directory=Path.cwd()/"t08-public-fixture-chain"
+            owner.node=Path.cwd()/"t08-fake-wamd"
+            owner.core=Path.cwd()/"t08-public-core"
+            owner._child_environment=Mock(return_value={"PATH":"/usr/bin"})
+            with (patch("wam_regtest.core_supervisor.local_rpc_port",
+                        return_value=occupied) as trusted_port,
+                  patch("wam_regtest.core_supervisor.subprocess.Popen") as spawn,
+                  self.assertRaisesRegex(
+                      ManagedCoreError,"^MANAGED_RPC_PORT_OCCUPIED$")):
+                owner.start()
+            trusted_port.assert_called_once_with(owner.directory)
+            spawn.assert_not_called()  # No foreign process adoption or signal.
+            self.assertIsNone(owner.process)
+            self.assertEqual(owner._state,"recovery-needed")
+            self.assertEqual(owner._consecutive_failures,1)
+        # Once another process releases its listener, the same configured
+        # port can be reserved again. No config, wallet or datadir mutation.
+        with _reserve_existing_rpc_port(occupied):
+            with self.assertRaises(OSError):
+                probe=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+                try:
+                    if os.name!="nt":
+                        probe.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+                    probe.bind(("127.0.0.1",occupied))
+                    probe.listen(1)
+                finally:probe.close()
+
+    def test_t08_invalid_ports_refused_before_socket_allocation(self):
+        from wam_regtest.core_supervisor import _reserve_existing_rpc_port
+        for port in (None,True,0,-1,65536,"8332"):
+            with self.subTest(port=port):
+                with self.assertRaisesRegex(ManagedCoreError,"^MANAGED_RPC_PORT_INVALID$"):
+                    with _reserve_existing_rpc_port(port):
+                        self.fail("INVALID_PORT_RESERVED")
+
     def test_supervisor_core_start_uses_once_verified_rpc_port(self):
         # Unit fixture: the real E2E on each runner separately starts Core.
         from unittest.mock import Mock

@@ -507,8 +507,34 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
             try:CoreSupervisor(root,core,authorized=True)
             except Exception:evidence["simultaneous_owner_denied"]=True
             else:raise AssertionError("T05_CONCURRENT_SUPERVISOR_ACCEPTED")
+            # T-08: REAL managed REGTEST profile has a create-once RPC
+            # port. A competing local listener MUST prevent Core launch
+            # before any auth bytes, CLI/wallet mutation or daemon signal.
+            from wam_regtest.network_policy import local_rpc_port
+            from wam_regtest.json_rpc import _private_config
+            from hashlib import sha256 as t08_sha256
+            import socket
+            original_config=t08_sha256(_private_config(owner.directory)).digest()
+            configured_rpc=local_rpc_port(owner.directory)
+            with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as competing:
+                if sys.platform=="win32":
+                    competing.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
+                competing.bind(("127.0.0.1",configured_rpc))
+                competing.listen(1)
+                try:owner.start()
+                except ManagedCoreError as error:
+                    assert error.args==("MANAGED_RPC_PORT_OCCUPIED",)
+                else:raise AssertionError("T08_FOREIGN_PORT_ADOPTED")
+                assert owner.process is None and owner.read is None
+                assert owner.status()["state"]=="recovery-needed"
+                assert t08_sha256(_private_config(owner.directory)).digest()==original_config
+            # Retry is explicit only AFTER that foreign listener is gone:
+            # original datadir, credentials and port are never rewritten.
             owner.start()
             assert owner.status()["core_process_owned"] is True
+            assert t08_sha256(_private_config(owner.directory)).digest()==original_config
+            evidence["t08_foreign_rpc_port_prelaunch_denied"]=True
+            evidence["t08_same_config_safe_restart_after_port_release"]=True
             prefix=[str(owner.cli),f"-datadir={owner.directory}"]
             _read_cli(prefix+["createwallet","test"])
             address=_read_cli(prefix+["-rpcwallet=test","getnewaddress"])
