@@ -83,6 +83,19 @@ class K06AuthorityIsolation(unittest.TestCase):
                 with self.assertRaises(AccountIsolationError):
                     core(name,B,info,chain,genesis)
 
+    def test_direct_forged_core_descriptor_receipt_never_bypasses_registry(self):
+        first=core("miner",A)
+        from dataclasses import replace
+        forged=replace(first,descriptor_identity="f"*64)
+        with self.assertRaisesRegex(
+                AccountIsolationError,"K06_CORE_DESCRIPTOR_IDENTITY_DENIED"):
+            AccountRegistry(core=(forged,))
+        forged=replace(first,descriptor_set=frozenset((
+            ("tr(PUBLIC_FORGED)#11111111",False),)))
+        with self.assertRaisesRegex(
+                AccountIsolationError,"K06_CORE_DESCRIPTOR_IDENTITY_DENIED"):
+            AccountRegistry(core=(forged,))
+
     def test_legacy_wsp_32byte_keys_are_not_bip39_or_core(self):
         with Keyring(seed=b"\x11"*32) as ring:
             scanner=SimpleNamespace(accounts=ring.accounts())
