@@ -72,7 +72,8 @@ jobs:
                         'signed_reservation_anchored_before_crypto',
                         'broadcast_reservation_persisted_before_rpc',
                         'exact_original_identity_after_close_reopen',
-                        'real_core_mempool_and_confirmed'):
+                        'real_core_mempool_and_confirmed',
+                        'actual_native_fusion_qt_send_sign_broadcast'):
               assert p[field] is True,field
           assert p['unattended_broadcast_retry'] is False
           assert p['mainnet_allowed'] is False
