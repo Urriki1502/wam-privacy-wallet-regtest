@@ -150,6 +150,7 @@ class CoreSupervisor:
             self._guard=ReplayGuard(token)
             self._scan_secret=token
             self._scan_seen=set()
+            self._spend_seen=set()
             # No token, password, datadir path or RPC port in public evidence.
         except BaseException:
             self.close_listener();self.stack.close();raise
@@ -322,17 +323,31 @@ class CoreSupervisor:
         result=self.read.call(method,params)
         return encode_reply(self._scan_secret,method,nonce,result)
 
+    def _spend_handle(self,raw):
+        """One non-retried payment method via the SAME native-owned HTTP Core.
+
+        The GUI owns the WSP keyring, PSBT and anchored reservation. This
+        supervisor never receives a secret key or signs a transaction.
+        """
+        from .managed_spend_protocol import decode_request,encode_reply
+        method,params,nonce=decode_request(raw,self._scan_secret,self._spend_seen)
+        if self.status()["state"]!="ready" or self.read is None:
+            raise ManagedCoreError("MANAGED_SPEND_CORE_NOT_READY")
+        result=self.read.write_owned_regtest(method,params,authorized=True)
+        return encode_reply(self._scan_secret,method,nonce,result)
+
     def _serve_client(self,conn):
-        """Bound control/scan frames; failed GUI never terminates Core owner."""
+        """Bound control/scan/spend frames; no failed GUI can stop Core."""
         deadline=time.monotonic()+3.0
+        from .managed_spend_protocol import MAX_SPEND_REQUEST,SPEND_PROTOCOL
         try:
             payload=bytearray()
-            while len(payload)<MAX_FRAME:
+            while len(payload)<MAX_SPEND_REQUEST:
                 remaining=deadline-time.monotonic()
                 if remaining<=0:
                     raise SupervisorProtocolError("SUPERVISOR_FRAME_TIMEOUT")
                 conn.settimeout(remaining)
-                block=conn.recv(min(256,MAX_FRAME-len(payload)))
+                block=conn.recv(min(256,MAX_SPEND_REQUEST-len(payload)))
                 if not block:break
                 payload.extend(block)
                 if b"\n" in block:break
@@ -349,6 +364,11 @@ class CoreSupervisor:
                 scan_reply=self._scan_handle(raw)
                 conn.settimeout(15.0)
                 conn.sendall(scan_reply)
+                return
+            if type(frame) is dict and frame.get("protocol")==SPEND_PROTOCOL:
+                spend_reply=self._spend_handle(raw)
+                conn.settimeout(15.0)
+                conn.sendall(spend_reply)
                 return
             reply=self.handle(raw)
         except (SupervisorProtocolError,ManagedCoreError,RpcError,
