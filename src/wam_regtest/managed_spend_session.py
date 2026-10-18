@@ -163,10 +163,11 @@ class ManagedWalletSession(WalletSession):
         raise ManagedWalletSpendError("MANAGED_SPEND_BACKUP_REPLACEMENT_DENIED")
 
     def lock(self):
+        # Lock destroys native Keyring, scanner and transient plaintext SQLite,
+        # but leaves the isolated read IPC handle available for explicit
+        # passphrase-based unlock. No spend-capable session is kept.
         super().lock()
-        # Ensure the ephemeral authenticated IPC token is no longer retained
-        # once the WSP session has been intentionally locked.
-        if self._read_rpc is not None:self._read_rpc.close()
 
     def close(self):
         self.lock()
+        if self._read_rpc is not None:self._read_rpc.close()
