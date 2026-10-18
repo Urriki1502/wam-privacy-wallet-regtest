@@ -1,0 +1,41 @@
+{
+  "evidence_layer": "ISOLATED_REVIEW_ONLY_SOURCE_GUARD_CANDIDATE_NOT_CORE_E2E",
+  "base_pr": 88,
+  "base_head": "eb5033381c5c0b00af1e44d07815cd4592c46ab7",
+  "base_guard_sha256": "0c6d650b90273f26553ac94fd3b67198d3a032e949daba757e449603d835f4fc",
+  "wsp_pin": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "candidate_guard_sha256": "89dc2b33f4300f23a25574fe13a2b9f82b42f43ba5efbed4e313c1297b475938",
+  "patch_sha256": "e6c3ba4426843213cb31db109f45f7c65e820593e2addfb4abf9d566a33dd5cd",
+  "test_source_sha256": "c73480eceea29f0040b30d3566522e9f70caf3286b324ec2d59e3918f1de4128",
+  "actual_probe_receipts": [
+    "PR88_EB503_CANDIDATE_PRIMARY.json",
+    "PR88_EB503_CANDIDATE_FILESYSTEM.json",
+    "PR88_EB503_CANDIDATE_GIT_REPLACE.json"
+  ],
+  "adversarial_cases_denied": 6,
+  "ordinary_untracked_denials": 2,
+  "controls_passed": 7,
+  "candidate_k07_contracts": {
+    "passed": 12,
+    "failed": 0,
+    "includes": "exact PR88 EB503 K-07 contracts with proposed fixture update"
+  },
+  "candidate_general_contracts": {
+    "passed": 12,
+    "failed": 0,
+    "source": "exact PR88 EB503 tests/test_contracts.py"
+  },
+  "pycache_policy": "Accept only standard interpreter bytecode whose source maps to an exact pinned blob and whose code-object structure matches recompilation of those exact bytes; altered pyc denied without execution.",
+  "patch_dry_run_and_apply_exact_eb503": true,
+  "patch_bytes_match_candidate": true,
+  "native_platform": "darwin",
+  "wam_sp_import_executed": false,
+  "official_core_used": false,
+  "keys_or_anchors_used": false,
+  "real_core_e2e": false,
+  "frozen_e2e": false,
+  "native_windows_linux_qualification": false,
+  "same_uid_race_or_import_hook_attestation": false,
+  "independent_pr_branch_modified": false,
+  "mainnet_allowed": false
+}

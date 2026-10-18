@@ -188,3 +188,17 @@ qualification for current `eb503338`. PR88's maintainer still owns K-07. The
 appropriate next action is a coordinated correction on that existing PR, then
 rerun exact-head adversarial tests and required native/Core/frozen gates across
 platforms. No duplicate implementation, branch edit, or merge was performed.
+
+## Exact-current-base correction candidate — `eb503338`
+
+A fresh patch was generated from the exact PR88 `eb5033381c5c0b00af1e44d07815cd4592c46ab7` source and K-07 tests, not the earlier #67 checkout or obsolete `08f4686` base. It keeps the early dirty-worktree refusal, requests the literal pinned commit tree with `git --no-replace-objects`, binds each native Python file to the Git blob using existing stable-file helpers, rejects ignored executable/native files, symlinks and hardlinks, and checks the installed source path. It also checks standard `.pyc` caches without executing them: cache source must map to a pinned blob, header/version/metadata must match, and its code-object fields must equal recompilation of the pinned source. The proposed K-07 fixture uses real blob-form tree rows and asserts the pinned no-replacement command; it adds an altered-bytecode refusal case.
+
+The exact-base proposal and receipts are
+[patch](evidence/issue45/PR88_EB503_SOURCE_GUARD_CANDIDATE.patch),
+[scope/results](evidence/issue45/PR88_EB503_CANDIDATE_REVIEW.json),
+[primary probes](evidence/issue45/PR88_EB503_CANDIDATE_PRIMARY.json),
+[filesystem probes](evidence/issue45/PR88_EB503_CANDIDATE_FILESYSTEM.json), and
+[Git-replacement probe](evidence/issue45/PR88_EB503_CANDIDATE_GIT_REPLACE.json).
+Candidate guard SHA256 is `89dc2b33f4300f23a25574fe13a2b9f82b42f43ba5efbed4e313c1297b475938`; patch SHA256 is `e6c3ba4426843213cb31db109f45f7c65e820593e2addfb4abf9d566a33dd5cd`. Patch dry-run/application to an isolated snapshot of exact `eb503338` succeeded and resulting bytes matched the tested candidate. Exact-PR88 K-07 source contracts: 12 PASS; exact-PR88 general contracts: 12 PASS. Native macOS disposable-clone probes deny all six previously accepted adversarial cases, while standard unmodified caches and clean controls pass. The altered `.pyc` test constructs bytes only; it never imports or executes them.
+
+This remains a proposal, not an implementation or qualification: no independent branch was modified, no Core/WSP module was imported, and no real-Core E2E, frozen binary, Windows/Linux, same-user hostile process, import-hook, or validation-to-import race guarantee is claimed. The existing PR88 maintainer owns integration and must rerun all affected source, signed-Core, frozen and native platform gates on the resulting exact head. K-07 stays HOLD until then.

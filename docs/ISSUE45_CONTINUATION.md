@@ -869,3 +869,48 @@ or purchase was observed/assumed. Existing five-hour heartbeat automation was ve
 23:00 UTC / 2026-10-19 06:00 Asia/Ho_Chi_Minh. Separate session log is
 `outputs/pr67-resume-20261018T180335/RESUME_LOG.md`; exact document commit and
 its own CI result are recorded after push.
+
+# 19 Oct 2026 06:01 ICT — scheduled continuation, PR88 exact-base candidate
+
+T0 `2026-10-18T23:01:05Z`; authorized existing Draft PR67 branch
+`feature/issue45-t05-gui-continuity-q05-20261017`, starting clean at
+`2033ca635923901a6cdca3859c228ff7d33b927e`, based on PR66
+`71a1e7b4336054bf0dabf3ca0ee6de174b462154`. Acquired exclusive
+`scripts/engineering_lease.py --hold` first (PTY 59629). Current live Issue45
+is OPEN; owner rule remains one named requirement per Draft and preserve active
+independent branches.
+
+Live exact-head CI refresh: PR67 at `2033ca6` is 10/10 SUCCESS (including genuine
+signed macOS Core/WSP/Qt E2E, Windows credential CAS, Linux native contracts,
+headless/native Qt/developer Core and both frozen-wallet jobs). PR88 remains
+Draft at `eb5033381c5c0b00af1e44d07815cd4592c46ab7`, based on
+`b32b8db7ae956bc6fca58c29e6f16696dac9a6b0`; its current checks are 9 SUCCESS
+and `developer-core` SKIPPED. PR89 K-08 remains independent. No failures were
+hidden; SKIP is not a pass. The exact source guard at PR88 is still vulnerable
+to the six source/filesystem/Git adversarial cases recorded in the previous
+section, so normal CI green does not clear K-07.
+
+Prepared a review-only correction against exact PR88 `eb503338` plus its K-07
+test fixture. It authenticates file bytes against literal pinned Git blobs,
+uses `--no-replace-objects`, denies extra executable/native files, links,
+hardlinks and altered bytecode, and retains early dirty refusal. Six prior
+bypasses denied; ordinary untracked Python/native injection denied; standard
+interpreter cache and clean controls accepted. Exact PR88 K-07 contracts 12/12
+and general contracts 12/12 passed on native macOS; patch dry-run and actual
+application on an isolated snapshot matched candidate bytes. Receipt and patch
+are under `docs/evidence/issue45/PR88_EB503_CANDIDATE_*` and
+`PR88_EB503_SOURCE_GUARD_CANDIDATE.patch`; full analysis in
+`docs/PR88_SOURCE_GUARD_REVIEW_20261018.md`. No WSP module, Core, key, or anchor
+was run/accessed. This is not Core E2E, frozen, Windows/Linux, import-hook,
+same-user, or TOCTOU qualification. PR88 owns integration; no branch/PR was
+modified or duplicated.
+
+No runtime changes, no merge, no main/RC1/upstream/Core/owner wallet/anchor/
+miner changes. REGTEST/disposable only, Core v0.1.11 and pinned WSP; v0.1.12
+candidate-only; Core Update Manager deferred P1. Release remains HOLD; physical
+Windows/Linux remain PENDING_OPERATOR. No usage-limit failure occurred or was
+assumed; no reset/purchase. Existing unique automation remains ACTIVE and
+T0-anchored; next nominal run is `2026-10-19T04:00:00Z` / `2026-10-19 11:00`
+Asia/Ho_Chi_Minh. Separate current log:
+`outputs/pr67-resume-20261018T230105/RESUME_LOG.md`; current commit/checks and
+lease release are appended after final push/verification.
