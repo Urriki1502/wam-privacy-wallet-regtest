@@ -33,6 +33,7 @@ class ManagedWalletSession(WalletSession):
             from .managed_wallet_reopen import read as read_locator,make
             from .vault import CheckpointVault
             from .core import verified_core_paths
+            from .core_process import _metadata
             from .managed_scan_client import ManagedScanRpc
             from .supervisor_client import control
             from . import custody
@@ -51,7 +52,11 @@ class ManagedWalletSession(WalletSession):
             folder=directory/"wallet-vault"
             custody.storage().validate_directory(directory)
             custody.storage().validate_directory(folder)
-            _,_,receipt=verified_core_paths(core_dir)
+            # Authenticate Core/CLI bytes once on explicit wallet reopen.
+            # The live supervisor subsequently proves native process/socket
+            # ownership; ordinary snapshots must not rehash either binary.
+            node,cli,receipt=verified_core_paths(core_dir)
+            pair_metadata=(_metadata(node),_metadata(cli))
             identity=read_locator(folder,password)
             if (identity!=make(identity["wallet_id"],receipt)
                     or receipt["platform"]!=custody.platform_name()):
@@ -70,6 +75,9 @@ class ManagedWalletSession(WalletSession):
                 session=cls(core_dir,directory,source,ring,scanner,vault,
                             password,"",reader)
                 session._managed_root=root
+                session._verified_core_receipt=dict(receipt)
+                session._core_member_paths=(node,cli)
+                session._core_member_metadata=pair_metadata
                 snapshot=session.snapshot()  # Real Core + native checkpoint CAS
                 if (snapshot.synthetic_rpc or snapshot.demo_account_only
                         or snapshot.signer_allowed is not True
@@ -97,7 +105,7 @@ class ManagedWalletSession(WalletSession):
 
     def _read(self):
         from .managed_scan_client import ManagedScanRpc
-        from .core import verified_core_paths
+        from .core_process import _metadata
         from .supervisor_client import control
         from . import custody
         if (self.locked or self.faulted
@@ -107,10 +115,23 @@ class ManagedWalletSession(WalletSession):
             self.faulted=True
             raise ManagedWalletSpendError("MANAGED_SPEND_SESSION_STALE")
         _pinned_source(self.source)
-        _,_,receipt=verified_core_paths(self.core_dir)
-        if receipt["platform"]!=custody.platform_name():
+        # Native file identity is checked on EVERY ordinary read, but the
+        # expensive signed-byte SHA-256 qualification happens only once on
+        # explicit reopen. The supervisor independently attests the owned
+        # process, established socket, chain and protected RPC configuration.
+        # Replacement/alias/metadata drift fails closed without CLI fallback.
+        try:
+            paths=self._core_member_paths
+            receipt=self._verified_core_receipt
+            if (type(paths) is not tuple or len(paths)!=2
+                    or type(receipt) is not dict
+                    or receipt["platform"]!=custody.platform_name()
+                    or (_metadata(paths[0]),_metadata(paths[1]))
+                       !=self._core_member_metadata):
+                raise ValueError("CORE_FILE_IDENTITY_CHANGED")
+        except Exception:
             self.faulted=True
-            raise ManagedWalletSpendError("MANAGED_SPEND_CORE_CHANGED")
+            raise ManagedWalletSpendError("MANAGED_SPEND_CORE_CHANGED") from None
         status=control(self._managed_root,"status",timeout=3)
         if status["state"]!="ready" or status["core_process_owned"] is not True:
             self.faulted=True
