@@ -1,0 +1,91 @@
+--- a/src/wam_regtest/wsp_live.py
++++ b/src/wam_regtest/wsp_live.py
+@@ -106,9 +106,11 @@
+              "--untracked-files=all", "--", "src/wam_sp"],
+             capture_output=True, timeout=6, check=True,
+         ).stdout
++        if dirty.strip():
++            raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED")
+         tree = subprocess.run(
+-            ["git", "-C", str(root), "ls-tree", "-r", "--name-only",
+-             "-z", "HEAD", "--", "src/wam_sp"],
++            ["git", "--no-replace-objects", "-C", str(root), "ls-tree", "-r",
++             "-z", PINNED_WSP_COMMIT, "--", "src/wam_sp"],
+             capture_output=True, timeout=6, check=True,
+         ).stdout
+     except (OSError, subprocess.SubprocessError):
+@@ -116,20 +118,64 @@
+     if dirty.strip():
+         raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED")
+     try:
++        # Git status is supplemental: assume-unchanged/skip-worktree can hide
++        # modified tracked source. Bind native bytes to the PINNED commit's
++        # blob IDs, not the mutable index or a second observation of HEAD.
++        from .build_provenance import _file, _blob
+         base = root / "src" / "wam_sp"
+-        if base.is_symlink() or not base.is_dir():
++        for directory in (root / "src", base):
++            info = directory.lstat()
++            if (not stat.S_ISDIR(info.st_mode)
++                    or getattr(info, "st_file_attributes", 0) & 0x400):
++                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
++        if len(tree) > 65536:
+             raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+-        declared = {
+-            Path(raw.decode("utf-8")).as_posix()
+-            for raw in tree.split(b"\0") if raw.endswith(b".py")
+-        }
++        declared = {}
++        for row in tree.split(b"\0"):
++            if not row:
++                continue
++            header, name = row.split(b"\t", 1)
++            mode, kind, oid = header.decode("ascii").split()
++            relative = name.decode("utf-8")
++            parts = Path(relative)
++            if (mode not in ("100644", "100755") or kind != "blob"
++                    or not re.fullmatch("[0-9a-f]{40}", oid)
++                    or not relative.startswith("src/wam_sp/")
++                    or parts.is_absolute() or ".." in parts.parts
++                    or "\\" in relative or parts.suffix != ".py"
++                    or relative in declared):
++                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
++            declared[relative] = oid
+         actual = set()
+-        for file in base.rglob("*.py"):
+-            if file.is_symlink() or not file.is_file():
+-                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+-            actual.add(file.relative_to(root).as_posix())
+-        if not 2 <= len(declared) <= 200 or declared != actual:
++        for count, member in enumerate(base.rglob("*"), 1):
++            if count > 2000:
++                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
++            info = member.lstat()
++            if (stat.S_ISLNK(info.st_mode)
++                    or getattr(info, "st_file_attributes", 0) & 0x400):
++                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
++            if stat.S_ISDIR(info.st_mode):
++                continue
++            if not stat.S_ISREG(info.st_mode):
++                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
++            relative = member.relative_to(root).as_posix()
++            suffix = member.suffix.lower()
++            if suffix == ".py":
++                if relative not in declared:
++                    raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
++                raw, _ = _file(member)  # Native stable handle; no hardlink/reparse.
++                if (_blob(raw) != declared[relative]
++                        and _blob(raw.replace(b"\r\n", b"\n")) != declared[relative]):
++                    raise RealWspScanError("WSP_SOURCE_HASH_DENIED")
++                actual.add(relative)
++            elif suffix in (".pyw", ".so", ".pyd", ".dll", ".dylib", ".pyo"):
++                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
++            elif suffix == ".pyc" and member.parent.name != "__pycache__":
++                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
++        if not 2 <= len(declared) <= 200 or set(declared) != actual:
+             raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
++        # Interpreter-managed __pycache__ remains permitted, as in the source
++        # build policy. This is NOT bytecode, import-hook or host attestation.
+     except RealWspScanError:
+         raise
+     except (OSError,ValueError,UnicodeError):

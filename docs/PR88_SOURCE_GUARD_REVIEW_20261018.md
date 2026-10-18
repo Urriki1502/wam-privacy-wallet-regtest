@@ -15,6 +15,35 @@ operations. No WSP module, injected code, native extension, Core, key or anchor
 was executed. These are source-guard tests, not blockchain E2E or proof of
 unauthorized signing/funds loss. WSP upstream is unchanged.
 
+## Follow-up: Git replacement is also mutable metadata
+
+**The first proposal below is superseded; do not integrate it unchanged.**
+A further actual disposable-Git test confirms a sixth bypass on PR88 and on
+the first candidate: `git replace` leaves `rev-parse HEAD` pinned while
+`ls-tree PINNED_WSP_COMMIT` follows the replacement commit. The modified
+scanner bytes then match the substituted tree. This requires no broken Git
+object hashes, so the original Git-object-store caveat alone is insufficient.
+No WSP import/Core/keys/anchors were used; fixtures and replacement refs were
+restored. [PR88 result](evidence/issue45/PR88_08F4686_GIT_REPLACE_PROBE.json),
+[first-candidate failure](evidence/issue45/PR88_08F4686_V1_GIT_REPLACE_PROBE.json),
+[disposable reproducer](evidence/issue45/PR88_08F4686_GIT_REPLACE_REPRO.py).
+The reproducer requires the same explicit disposable marker as the other tests.
+
+[Revised exact-base proposal](evidence/issue45/PR88_08F4686_SOURCE_GUARD_V2.patch.txt)
+adds `git --no-replace-objects` to the pinned tree query.
+[V2 scope, exact hash and actual apply check](evidence/issue45/PR88_08F4686_V2_SCOPE_AND_APPLY.json).
+Actual candidate guard SHA256:
+`1f2066ef5343ed74927fbe9904eef7ea647aaf71df3b708303768f929a2ce387`.
+[V2 primary](evidence/issue45/PR88_08F4686_V2_SOURCE_PROBE.json),
+[V2 filesystem](evidence/issue45/PR88_08F4686_V2_EXTRA_PROBE.json),
+[V2 replacement](evidence/issue45/PR88_08F4686_V2_GIT_REPLACE_PROBE.json):
+**14/14 expected behavioral results** and all **12 existing exact88 contracts**
+PASS, native Mac only. Actual exact-base apply/check/bytes also PASS.
+This is still review-only, with the same bytecode/import-hook/host/import-race
+and missing native3OS/Core/frozen qualification limits. No independent branch
+or runtime has been changed. The original 11-case evidence below is preserved
+as historical evidence; it was never a complete security qualification.
+
 ## Exact-head findings and evidence
 
 [Public summary and file hashes](evidence/issue45/PR88_08F4686_REVIEW_SUMMARY.json),

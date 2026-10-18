@@ -1,0 +1,27 @@
+{
+  "source_label": "REVIEW_ONLY_V2",
+  "actual_guard_sha256": "1f2066ef5343ed74927fbe9904eef7ea647aaf71df3b708303768f929a2ce387",
+  "rows": [
+    {
+      "case": "clean_before",
+      "accepted": true,
+      "safe_error": null
+    },
+    {
+      "case": "modified_tracked_source_hidden_by_git_replace",
+      "accepted": false,
+      "safe_error": "WSP_SOURCE_HASH_DENIED"
+    },
+    {
+      "case": "restored_clean",
+      "accepted": true,
+      "safe_error": null
+    }
+  ],
+  "native_platform": "darwin",
+  "disposable_clone_only": true,
+  "wam_sp_import_executed": false,
+  "core_or_keys_or_anchors_used": false,
+  "real_core_e2e": false,
+  "mainnet_allowed": false
+}

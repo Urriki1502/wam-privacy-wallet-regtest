@@ -1,3 +1,20 @@
+# Latest follow-up — sixth K07 bypass and revised review-only proposal
+
+The additional Git replacement test FAILS both actual88/08f4686 and initial
+candidate50ecd3c: replacement refs alter the tree lookup while HEAD stayspinned.
+[Updated review and V2 evidence](PR88_SOURCE_GUARD_REVIEW_20261018.md).
+Initial patch superseded, do not apply unchanged. V2 addsno-replace-objects,
+14actualMac/Git/FSbehavioral cases +12existing exact88contracts PASS; exactbase
+apply/check/bytes PASS. V2notintegrated andnotCore/native3OS/frozenqualified.
+Independent88stillownsfix, no duplicateimplementation. Source67runtimeunchanged.
+
+Parent98e39e8 nowhasOWN10/10CI SUCCESS; actualMac/Linuxpackageinspectionsand
+localMacbootloadercheckPASS, Windowsactualartifact12139086010inspectionin
+currentseparatelog. Do notinherit98checks/artifactsforthisnewpublicdatahead.
+Exact98CIcheckout51e494b verifiedparents/tree. Currentlog remains
+outputs/pr67-resume-20261018T130215/RESUME_LOG.md. Refuseconcurrentengineering;
+no futureleaseownershipinferred. ReleaseHOLD, REGTESTonly, allpriorboundaries.
+
 # Resume checkpoint — independent K07 source-integrity findings, release HOLD
 
 18 October2026UTC scheduled13:00 slot, actual T0 13:02:15Z. Existing Draft67
