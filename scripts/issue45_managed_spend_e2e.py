@@ -32,8 +32,23 @@ def prove(core_dir,wsp_source,*,bip39=False,
         # the existing real Linux xcb/headless wallet acceptance.
         if type(linux_manifest) is not str or linux_witness is None:
             raise ValueError("K03_LINUX_NATIVE_WITNESS_REQUIRED")
-        from wam_regtest.linux_runtime import configure
-        configure(core_dir,linux_manifest,linux_witness,authorized=True)
+        from wam_regtest.linux_runtime import configure,policy
+        from wam_regtest.linux_developer_core import LinuxCoreError
+        try:
+            existing=policy()
+        except LinuxCoreError as error:
+            if error.args!=('LINUX_EXPLICIT_CORE_AND_WITNESS_POLICY_REQUIRED',):
+                raise
+            configure(core_dir,linux_manifest,linux_witness,authorized=True)
+        else:
+            # Policy is immutable process-wide and already authenticated by
+            # native Linux wallet acceptance. Reuse only the EXACT approved
+            # pinned Core, immutable developer manifest and independent
+            # root witness; never reset policy or accept foreign selectors.
+            if (existing.core!=core_dir
+                    or existing.manifest_sha256!=linux_manifest
+                    or existing.witness!=linux_witness):
+                raise ValueError('K03_LINUX_BOUND_POLICY_MISMATCH')
     with tempfile.TemporaryDirectory(prefix="wam-managed-spend-e2e-") as temporary:
         root=Path(temporary).resolve()/"wam-fusion-core-0123456789abcdef"
         if sys.platform=="win32":
