@@ -228,8 +228,16 @@ def _public_descriptor_set(response):
                     type(item.get("internal")) is not bool):
                 raise ValueError
             desc=item["desc"]
-            if any(marker in desc.lower() for marker in (
-                    "xprv","tprv","prv","private_key","wif")):
+            # A broad substring "prv" is unsafe here: a VALID public
+            # xpub/base58 descriptor can randomly contain those 3 letters
+            # and be falsely rejected by the live Core/SQLite restore gate.
+            # Refuse known extended private prefixes and explicit private
+            # marker *tokens*, not arbitrary fragments of public base58.
+            lower=desc.lower()
+            if (any(prefix in lower for prefix in (
+                    "xprv","tprv","yprv","zprv","uprv","vprv",
+                    "private_key","wif"))
+                    or re.search(r"(?<![a-z0-9])prv(?![a-z0-9])",lower)):
                 raise ValueError
             key=(desc,item["internal"])
             if key in distinct:raise ValueError
