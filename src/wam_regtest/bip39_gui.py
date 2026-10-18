@@ -36,8 +36,9 @@ class Bip39CreationDialog(QDialog):
         layout=QVBoxLayout(self)
         self.warning=QLabel(
             "LOCAL BIP39 BACKUP ONLY · NOT LINKED TO YOUR CURRENT WSP WALLET.\n"
-            "K-02/K-03 must integrate a confirmed derivation profile and native "
-            "custody before these words can back a usable wallet. "
+            "K-02 pins the experimental REGTEST path m/352'/1'/account'/role'/0. "
+            "K-03 native custody/signing is NOT integrated: these words "
+            "cannot yet restore a usable Fusion wallet. "
             "Never use real funds or treat this as a completed wallet backup.")
         self.warning.setWordWrap(True)
         layout.addWidget(self.warning)

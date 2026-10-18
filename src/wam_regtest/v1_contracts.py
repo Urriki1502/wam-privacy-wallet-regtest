@@ -1,11 +1,24 @@
 """Versioned experimental wallet boundaries; never infer ownership from a suffix."""
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
+from hashlib import sha256
+import json
 from .wsp_live import REGTEST_GENESIS
 
 BIP39_PROFILE = 'fusion-bip39-bip32-bip352-regtest-v1'
 CORE_PROFILE = 'wam-core-sqlite-descriptor-regtest-v1'
 RC1_PROFILE = 'wsp1-rc1-unchanged'
+
+# K-02: one immutable *experimental REGTEST* derivation contract. These are
+# BIP352's purpose, Bitcoin testnet/regtest coin type and native WSP role
+# indices, NOT a DEV-approved WAM mainnet SLIP-44/derivation decision.
+DERIVATION_SCHEMA = 'wam-fusion-regtest-bip352-derivation/v1'
+DERIVATION_VERSION = 1
+REGTEST_BIP352_PURPOSE = 352
+REGTEST_COIN_TYPE = 1
+REGTEST_ACCOUNT_LIMIT = 16
+REGTEST_SPEND_ROLE = 0
+REGTEST_SCAN_ROLE = 1
 
 
 class WalletContractError(ValueError):
@@ -20,9 +33,60 @@ def require_regtest(chain, genesis):
 def derivation_paths(profile, account=0):
     if type(profile) is not str or profile != BIP39_PROFILE:
         raise WalletContractError('V1_DERIVATION_PROFILE_DENIED')
-    if type(account) is not int or not 0 <= account < 16:
+    if type(account) is not int or not 0 <= account < REGTEST_ACCOUNT_LIMIT:
         raise WalletContractError('V1_ACCOUNT_LIMIT')
-    return {'spend': f"m/352'/1'/{account}'/0'/0", 'scan': f"m/352'/1'/{account}'/1'/0"}
+    path = lambda role: (
+        f"m/{REGTEST_BIP352_PURPOSE}'/{REGTEST_COIN_TYPE}'/"
+        f"{account}'/{role}'/0")
+    return {'spend': path(REGTEST_SPEND_ROLE),
+            'scan': path(REGTEST_SCAN_ROLE)}
+
+
+def derivation_profile_receipt(profile, account=0):
+    """K-02 public REGTEST mapping, including a canonical drift-detection SHA.
+
+    SHA is an identity checksum, NOT a trust anchor or authorization to
+    reconstruct a wallet. Caller must still verify the seed-derived identity,
+    immutable native custody, chain and profile before any K-03 wallet use.
+    """
+    paths=derivation_paths(profile,account)
+    record={
+        'schema': DERIVATION_SCHEMA,
+        'version': DERIVATION_VERSION,
+        'profile': BIP39_PROFILE,
+        'chain': 'regtest',
+        'genesis': REGTEST_GENESIS,
+        'purpose': REGTEST_BIP352_PURPOSE,
+        'coin_type': REGTEST_COIN_TYPE,
+        'account': account,
+        'account_limit_exclusive': REGTEST_ACCOUNT_LIMIT,
+        'spend_role': REGTEST_SPEND_ROLE,
+        'scan_role': REGTEST_SCAN_ROLE,
+        'paths': paths,
+        'legacy_wsp32_interpretable': False,
+        'mainnet_allowed': False,
+        'production_qualified': False,
+    }
+    raw=json.dumps(record,sort_keys=True,separators=(',',':'),
+                   ensure_ascii=True,allow_nan=False).encode('ascii')
+    return {**record,'fingerprint_sha256':sha256(raw).hexdigest()}
+
+
+def require_derivation_profile_receipt(value, *, account=0):
+    """Never silently fall back to another coin type, role or account index."""
+    expected=derivation_profile_receipt(BIP39_PROFILE,account)
+    if (type(value) is not dict or set(value)!=set(expected)
+            or any(type(value[key]) is not type(expected[key])
+                   for key in expected)
+            or type(value.get('paths')) is not dict
+            or set(value['paths'])!=set(expected['paths'])
+            or any(type(value['paths'][role]) is not str
+                   for role in expected['paths'])
+            or value!=expected):
+        # Python considers True == 1 and False == 0. A derived wallet
+        # identity MUST NOT accept boolean-as-integer/account/coin aliases.
+        raise WalletContractError('V1_DERIVATION_RECEIPT_DENIED')
+    return expected
 
 
 def metadata(profile):

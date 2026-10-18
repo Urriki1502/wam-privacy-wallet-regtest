@@ -6,7 +6,10 @@ This engine is not yet a persistent wallet or an anchored signing coordinator.
 from hashlib import sha256
 import unicodedata
 from mnemonic import Mnemonic
-from .v1_contracts import BIP39_PROFILE, derivation_paths, metadata
+from .v1_contracts import (
+    BIP39_PROFILE, derivation_paths, derivation_profile_receipt,
+    require_derivation_profile_receipt, metadata,
+)
 from .wsp_live import _pinned_source
 
 WORDLIST_SHA256 = '2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda'
@@ -76,9 +79,15 @@ class Bip39RegtestKeys:
     def _key(self, account, role):
         if self._closed:
             raise MnemonicWalletError('BIP39_KEYS_CLOSED')
-        derivation_paths(BIP39_PROFILE,account)
+        profile=derivation_profile_receipt(BIP39_PROFILE,account)
+        require_derivation_profile_receipt(profile,account=account)
+        if role not in ('scan','spend'):
+            raise MnemonicWalletError('BIP39_ROLE_DENIED')
+        # Coin type and role are derived ONLY from the same versioned K-02
+        # contract advertised for restoration. No hidden mainnet fallback.
         from wam_sp.hd import silent_key
-        return silent_key(bytes(self._seed), account, role, coin_type=1)
+        return silent_key(bytes(self._seed), account, role,
+                          coin_type=profile['coin_type'])
 
     def scan_account(self, account=0, *, birthday=1):
         from wam_sp.keystore import ScanAccount
@@ -87,9 +96,28 @@ class Bip39RegtestKeys:
 
     def public_metadata(self, account=0):
         a=self.scan_account(account)
+        receipt=derivation_profile_receipt(BIP39_PROFILE,account)
+        require_derivation_profile_receipt(receipt,account=account)
         return {**metadata(BIP39_PROFILE), 'account':account,
-                'paths':derivation_paths(BIP39_PROFILE,account),'account_id':a.account_id,
+                'paths':derivation_paths(BIP39_PROFILE,account),
+                'derivation_contract':receipt,'account_id':a.account_id,
                 'receive_code':a.payment_code()}
+
+    def require_public_metadata(self, observed, account=0):
+        """K-02 fail closed if a GUI/recovery claim describes a different wallet.
+
+        Same cryptographic keys can never authorize a different chain/profile,
+        account, scan/spend role or payment code through mutable metadata.
+        """
+        expected=self.public_metadata(account)
+        if (type(observed) is not dict or set(observed)!=set(expected)
+                or any(type(observed[key]) is not type(expected[key])
+                       for key in expected)
+                or observed!=expected):
+            raise MnemonicWalletError('BIP39_PUBLIC_PROFILE_IDENTITY_DENIED')
+        require_derivation_profile_receipt(observed['derivation_contract'],
+                                          account=account)
+        return expected
 
     def close(self):
         self._seed[:]=bytes(len(self._seed))
