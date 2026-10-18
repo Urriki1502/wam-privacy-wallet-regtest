@@ -148,6 +148,21 @@ class CoreSqlitePreflightContracts(unittest.TestCase):
         self.assertTrue(copied.name.endswith(".dat"))
         self.assertNotIn(self.source.name,copied.name)
 
+    def test_public_descriptor_base58_fragment_prv_not_a_private_key(self):
+        # A public xpub's base58 body may naturally contain the substring
+        # "prv". That cannot be interpreted as an extended PRIVATE key.
+        from wam_regtest.core_sqlite_import import _public_descriptor_set
+        public={"descriptors":[{
+            "desc":"wpkh([f00df00d/84h/1h/0h]xpubPUBLICprvFRAGMENT/0/*)#check",
+            "internal":False}]}
+        self.assertEqual(len(_public_descriptor_set(public)),1)
+        for private in ("xprvSECRET","tprvSECRET","private_key",
+                        "wpkh(prv)"):
+            with self.subTest(private=private):
+                with self.assertRaises(CoreSqliteImportError):
+                    _public_descriptor_set({"descriptors":[{
+                        "desc":private,"internal":False}]})
+
     def test_public_core_descriptor_overlap_and_chain_refusals(self):
         a={"descriptors":[
             {"desc":"wpkh(PUBLIC_A)#check","internal":False},
