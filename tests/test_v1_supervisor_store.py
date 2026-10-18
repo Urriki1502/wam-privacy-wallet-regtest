@@ -30,6 +30,20 @@ class SupervisorStoreContracts(unittest.TestCase):
             create_once(self.root,"supervisor.token",TOKEN)
         self.assertEqual(read_exact(self.root,"supervisor.token"),TOKEN)
 
+    def test_read_and_spend_credentials_are_separate_native_private_files(self):
+        first=b"a"*32
+        second=b"b"*32
+        create_once(self.root,"supervisor.scan.token",first)
+        create_once(self.root,"supervisor.spend.token",second)
+        self.assertEqual(read_exact(self.root,"supervisor.scan.token",length=32),first)
+        self.assertEqual(read_exact(self.root,"supervisor.spend.token",length=32),second)
+        with self.assertRaises(SupervisorStorageError):
+            create_once(self.root,"supervisor.scan.token",second)
+        with self.assertRaises(SupervisorStorageError):
+            create_once(self.root,"supervisor.spend.token",first)
+        self.assertEqual(read_exact(self.root,"supervisor.scan.token"),first)
+        self.assertEqual(read_exact(self.root,"supervisor.spend.token"),second)
+
     def test_invalid_name_and_public_root_refused_without_mutation(self):
         for name in ("../private-key","wallet.dat","supervisor.lock","../../wam.conf"):
             with self.assertRaises(SupervisorStorageError):

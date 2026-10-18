@@ -70,6 +70,7 @@ jobs:
           for field in ('real_confirmed_bip352_funding','genuine_wsp_psbtv2_native_signature',
                         'send_via_authenticated_owned_http',
                         't01_managed_reads_without_cli_or_binary_rehash',
+                        't02_scoped_ipc_cross_authority_real_supervisor_denied',
                         'signed_reservation_anchored_before_crypto',
                         'broadcast_reservation_persisted_before_rpc',
                         'exact_original_identity_after_close_reopen',

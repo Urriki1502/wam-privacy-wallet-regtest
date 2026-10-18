@@ -32,7 +32,7 @@ class ManagedSpendRpc:
         self._profile=_profile_read(root)
         if self._profile!=read_rpc._profile:
             raise ManagedSpendError("SPEND_SESSION_PROFILE_DENIED")
-        self._secret=read_exact(root,"supervisor.token",length=32)
+        self._secret=read_exact(root,"supervisor.spend.token",length=32)
         self._closed=False
 
     def attest(self):

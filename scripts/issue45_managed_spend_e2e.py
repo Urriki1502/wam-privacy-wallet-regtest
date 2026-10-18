@@ -62,6 +62,45 @@ def prove(core_dir,wsp_source):
                                "generatetoaddress","101",mine],timeout=90)
             assert len(blocks)==101
             assert control(root,"status",timeout=10)["height"]==101
+            # T-02: exercise cross-capability refusal against the REAL,
+            # native Core-owning supervisor socket before funding any wallet.
+            # No Core JSON-RPC response is mocked and no transaction is sent.
+            from wam_regtest.core_supervisor import _profile_read
+            from wam_regtest.supervisor_store import read_exact
+            from wam_regtest.managed_scan_protocol import encode_request as scan_request
+            from wam_regtest.managed_spend_protocol import encode_request as spend_request
+            from wam_regtest.supervisor_protocol import PROTOCOL,request_proof
+            import secrets
+            import socket
+            profile_port=_profile_read(root)["control_port"]
+            control_token=read_exact(root,"supervisor.token",length=32)
+            scan_token=read_exact(root,"supervisor.scan.token",length=32)
+            spend_token=read_exact(root,"supervisor.spend.token",length=32)
+            assert len({control_token,scan_token,spend_token})==3
+            nonce=secrets.token_hex(16)
+            bad_control=(json.dumps({"protocol":PROTOCOL,"op":"shutdown",
+                "nonce":nonce,"proof":request_proof(scan_token,"shutdown",nonce)},
+                sort_keys=True,separators=(",",":"))+"\n").encode("ascii")
+            invalid_frames=(
+                spend_request(scan_token,"gettxout",["a"*64,0,True],
+                              secrets.token_hex(16)),
+                scan_request(spend_token,"getblockcount",[],secrets.token_hex(16)),
+                bad_control,
+            )
+            before_cross_scope=control(root,"status",timeout=10)
+            for frame in invalid_frames:
+                with socket.create_connection(("127.0.0.1",profile_port),timeout=3) as conn:
+                    conn.settimeout(3)
+                    conn.sendall(frame)
+                    received=bytearray()
+                    while len(received)<1024:
+                        chunk=conn.recv(min(1024-len(received),256))
+                        if not chunk:break
+                        received.extend(chunk)
+                        if b"\n" in chunk:break
+                refusal=json.loads(bytes(received).decode("ascii"))
+                assert refusal["state"]=="error" and refusal["mainnet_allowed"] is False
+            assert control(root,"status",timeout=10)==before_cross_scope
             password=b"managed-regtest-spending-e2e-public-test"
             created=create_managed_wallet(
                 root,core_dir,wsp_source,password,authorized=True)
@@ -192,6 +231,7 @@ def prove(core_dir,wsp_source):
                     "actual_native_fusion_qt_send_sign_broadcast":True,
                     "send_via_authenticated_owned_http":True,
                     "t01_managed_reads_without_cli_or_binary_rehash":True,
+                    "t02_scoped_ipc_cross_authority_real_supervisor_denied":True,
                     "signed_reservation_anchored_before_crypto":True,
                     "broadcast_reservation_persisted_before_rpc":True,
                     "exact_original_identity_after_close_reopen":True,
