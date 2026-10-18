@@ -201,6 +201,7 @@ jobs:
           path: |
             real-core-evidence.json
             t05-real-core-evidence.json
+            managed-spend-real-core-evidence.json
             source-subsidy-contract.json
             independent-wallet-security.json
             fusion-ui-review/
