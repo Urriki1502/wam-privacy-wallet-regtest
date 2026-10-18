@@ -25,8 +25,12 @@ from .bip39_wallet import generate_phrase, normalize_phrase, MnemonicWalletError
 class Bip39CreationDialog(QDialog):
     """Explicit disposable 12/24-word BIP39 backup wizard, no wallet authority."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, create_wallet=False):
         super().__init__(parent)
+        if type(create_wallet) is not bool:
+            raise ValueError("K03_WIZARD_MODE_DENIED")
+        self._wallet_mode=create_wallet
+        self._wallet_material=None
         self._phrase=None
         self._phase="setup"
         self._verified=False
@@ -34,12 +38,22 @@ class Bip39CreationDialog(QDialog):
         self.setMinimumSize(710,410)
 
         layout=QVBoxLayout(self)
-        self.warning=QLabel(
-            "LOCAL BIP39 BACKUP ONLY · NOT LINKED TO YOUR CURRENT WSP WALLET.\n"
-            "K-02 pins the experimental REGTEST path m/352'/1'/account'/role'/0. "
-            "K-03 native custody/signing is NOT integrated: these words "
-            "cannot yet restore a usable Fusion wallet. "
-            "Never use real funds or treat this as a completed wallet backup.")
+        if create_wallet:
+            warning=(
+                "CREATE A NEW BIP39 WSP REGTEST WALLET · NEVER REPLACE AN "
+                "EXISTING WALLET. The 12/24 words AND optional BIP39 "
+                "passphrase are its seed source. Write them on paper. "
+                "A separate wallet encryption password protects the native "
+                "vault and is NOT the BIP39 passphrase. REGTEST ONLY.")
+        else:
+            warning=(
+                "LOCAL BIP39 BACKUP ONLY · NOT LINKED TO YOUR CURRENT WSP WALLET.\n"
+                "K-02 pins the experimental REGTEST path m/352'/1'/account'/role'/0. "
+                "These STANDALONE words are not bound to ANY wallet. "
+                "A NEW BIP39 WSP wallet can only be created using the "
+                "SEPARATE create-new-wallet action after REGTEST Core verification. "
+                "These words never restore an existing legacy 32-byte WSP wallet.")
+        self.warning=QLabel(warning)
         self.warning.setWordWrap(True)
         layout.addWidget(self.warning)
 
@@ -193,6 +207,7 @@ class Bip39CreationDialog(QDialog):
         entered=self.passphrase.text()
         repeated=self.passphrase_confirmation.text()
         seed=None
+        verified_passphrase=None
         try:
             canonical=normalize_phrase(candidate)
             if not secrets.compare_digest(
@@ -211,6 +226,11 @@ class Bip39CreationDialog(QDialog):
             seed=bytearray(Mnemonic.to_seed(self._phrase,passphrase=entered))
             if len(seed)!=64:
                 raise MnemonicWalletError("BIP39_SEED_LENGTH_DENIED")
+            # Capture ONLY after the full recovery phrase, optional passphrase
+            # confirmation and BIP39 PBKDF2 derivation have all succeeded.
+            # Python immutable strings cannot be reliably zeroized.
+            if self._wallet_mode:
+                verified_passphrase=entered
         except Exception:
             self.status.setText(
                 "BIP39_CONFIRMATION_DENIED · re-enter words/passphrase")
@@ -223,6 +243,11 @@ class Bip39CreationDialog(QDialog):
                 seed[:]=b"\0"*len(seed)  # best effort, not OS memory sanitization
             candidate=entered=repeated=None
         self._verified=True
+        if self._wallet_mode:
+            # Same-process one-time handoff, never a Qt signal, file, log,
+            # clipboard or GUI result. Worker encrypts the derived 64-byte
+            # seed under the original native vault + OS anti-rollback anchor.
+            self._wallet_material=(self._phrase,verified_passphrase)
         self._clear_sensitive()
         self.accept()
 
@@ -241,12 +266,24 @@ class Bip39CreationDialog(QDialog):
 
     def reject(self):
         self._verified=False
+        self._wallet_material=None
         self._clear_sensitive()
         super().reject()
 
     def closeEvent(self,event):
+        if not self._verified:
+            self._wallet_material=None
         self._clear_sensitive()
         super().closeEvent(event)
+
+    def take_wallet_material(self):
+        """One-shot in-process creation handoff, no mnemonic IPC/Qt signal."""
+        if (not self._wallet_mode or not self.confirmed
+                or type(self._wallet_material) is not tuple):
+            raise ValueError("K03_WALLET_MATERIAL_UNVERIFIED")
+        payload=self._wallet_material
+        self._wallet_material=None
+        return payload
 
     @property
     def confirmed(self):

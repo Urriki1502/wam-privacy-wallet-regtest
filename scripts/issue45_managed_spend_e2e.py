@@ -25,13 +25,43 @@ from wam_regtest import custody
 from wam_sp.keystore import Keyring
 
 
-def prove(core_dir,wsp_source):
+def prove(core_dir,wsp_source,*,bip39=False,
+          linux_manifest=None,linux_witness=None):
+    if sys.platform=="linux":
+        # Same independent root witness and developer Core trust policy as
+        # the existing real Linux xcb/headless wallet acceptance.
+        if type(linux_manifest) is not str or linux_witness is None:
+            raise ValueError("K03_LINUX_NATIVE_WITNESS_REQUIRED")
+        from wam_regtest.linux_runtime import configure,policy
+        from wam_regtest.linux_developer_core import LinuxCoreError
+        try:
+            existing=policy()
+        except LinuxCoreError as error:
+            if error.args!=('LINUX_EXPLICIT_CORE_AND_WITNESS_POLICY_REQUIRED',):
+                raise
+            configure(core_dir,linux_manifest,linux_witness,authorized=True)
+        else:
+            # Policy is immutable process-wide and already authenticated by
+            # native Linux wallet acceptance. Reuse only the EXACT approved
+            # pinned Core, immutable developer manifest and independent
+            # root witness; never reset policy or accept foreign selectors.
+            if (existing.core!=core_dir
+                    or existing.manifest_sha256!=linux_manifest
+                    or existing.witness!=linux_witness):
+                raise ValueError('K03_LINUX_BOUND_POLICY_MISMATCH')
     with tempfile.TemporaryDirectory(prefix="wam-managed-spend-e2e-") as temporary:
         root=Path(temporary).resolve()/"wam-fusion-core-0123456789abcdef"
-        root.mkdir(mode=0o700)
+        if sys.platform=="win32":
+            from wam_regtest.custody import create_directory
+            create_directory(root)  # native NTFS DACL, not chmod emulation
+        else:
+            root.mkdir(mode=0o700)
         command=[sys.executable,"-m","wam_regtest.supervisor_cli","serve",
             "--root",str(root),"--core-dir",str(core_dir),
             "--confirm-regtest-managed-core"]
+        if sys.platform=="linux":
+            command.extend(["--linux-developer-manifest",linux_manifest,
+                            "--linux-root-witness",str(linux_witness)])
         server=subprocess.Popen(command,stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         stopped=False
@@ -102,8 +132,18 @@ def prove(core_dir,wsp_source):
                 assert refusal["state"]=="error" and refusal["mainnet_allowed"] is False
             assert control(root,"status",timeout=10)==before_cross_scope
             password=b"managed-regtest-spending-e2e-public-test"
+            k03_phrase=k03_passphrase=None
+            if bip39:
+                # Public deterministic REGTEST fixture ONLY; never private
+                # owner words. Native K-03 wallet uses separate 64-byte keys,
+                # authenticated native vault and the SAME real WSP signer.
+                from mnemonic import Mnemonic
+                k03_phrase=Mnemonic("english").to_mnemonic(bytes([0x42])*32)
+                k03_passphrase="public-K03-bip39-test"
             created=create_managed_wallet(
-                root,core_dir,wsp_source,password,authorized=True)
+                root,core_dir,wsp_source,password,authorized=True,
+                bip39_phrase=k03_phrase,bip39_passphrase=k03_passphrase)
+            k03_phrase=k03_passphrase=None
             assert created["wallet_locked"] and not created["signer_allowed"]
             profile=read(directory/"wallet-vault",password)
             anchor=custody.anchor(profile["wallet_id"])
@@ -114,7 +154,21 @@ def prove(core_dir,wsp_source):
             ring,scanner=CheckpointVault(
                 directory/"wallet-vault",anchor,wsp_source).restore(
                     directory/"wallet-runtime.sqlite",password)
-            try:original_code=ring.accounts()[-1].payment_code()
+            try:
+                original_code=ring.accounts()[-1].payment_code()
+                if bip39:
+                    from wam_regtest.bip39_durable import Bip39DurableKeyring
+                    from wam_regtest.bip39_wallet import Bip39RegtestKeys
+                    from mnemonic import Mnemonic
+                    assert type(ring) is Bip39DurableKeyring
+                    with Bip39RegtestKeys(
+                        Mnemonic("english").to_mnemonic(bytes([0x42])*32),
+                        source=wsp_source,passphrase="public-K03-bip39-test",
+                        authorized_disposable=True) as independent:
+                        assert original_code==independent.public_metadata(0)["receive_code"]
+                        assert ring.spend_secret(0)==independent._key(0,"spend")
+                else:
+                    assert type(ring) is Keyring
             finally:
                 scanner.close();ring.close()
                 (directory/"wallet-runtime.sqlite").unlink(missing_ok=True)
@@ -210,6 +264,11 @@ def prove(core_dir,wsp_source):
             session=ManagedWalletSession.reopen_spending(
                 root,core_dir,wsp_source,password,authorized=True)
             assert session.ring.accounts()[-1].payment_code()==original_code
+            if bip39:
+                from wam_regtest.bip39_durable import Bip39DurableKeyring
+                assert type(session.ring) is Bip39DurableKeyring
+            else:
+                assert type(session.ring) is Keyring
             assert session.vault.anchor.read()==last_anchor
             reopened=tuple(session.scanner.store.db.execute(
                 "SELECT txid,vout,state FROM reservations ORDER BY txid,vout"))
@@ -223,7 +282,11 @@ def prove(core_dir,wsp_source):
                 row.txid==txid and row.confirmations>0 for row in after.history)
             assert session.vault.anchor.read()[0]>=last_anchor[0]
             assert control(root,"status",timeout=10)["height"]==103
-            return {"status":"MANAGED_ORIGINAL_WSP_REAL_SPEND_E2E_PASS",
+            return {"status":("K03_BIP39_DURABLE_REAL_WSP_SPEND_E2E_PASS"
+                              if bip39 else
+                              "MANAGED_ORIGINAL_WSP_REAL_SPEND_E2E_PASS"),
+                    "k03_bip39_native_seed_to_signer":bip39,
+                    "k03_legacy_wsp32_preserved":not bip39,
                     "network":"regtest","synthetic_rpc":False,
                     "signed_core_sha256":receipt["wamd_sha256"],
                     "real_confirmed_bip352_funding":True,
@@ -257,11 +320,18 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--core-dir",type=Path,required=True)
     parser.add_argument("--wsp-source",type=Path,required=True)
+    parser.add_argument("--bip39",action="store_true",
+                        help="Only public deterministic BIP39 REGTEST test wallet")
+    parser.add_argument("--linux-developer-manifest")
+    parser.add_argument("--linux-root-witness",type=Path)
     parser.add_argument("--output",type=Path)
     args=parser.parse_args()
     from wam_regtest.desktop import shutdown_qt
     try:
-        result=prove(args.core_dir.resolve(),args.wsp_source.resolve())
+        result=prove(args.core_dir.resolve(),args.wsp_source.resolve(),
+                     bip39=args.bip39,
+                     linux_manifest=args.linux_developer_manifest,
+                     linux_witness=args.linux_root_witness)
     finally:
         shutdown_qt()
     if args.output:

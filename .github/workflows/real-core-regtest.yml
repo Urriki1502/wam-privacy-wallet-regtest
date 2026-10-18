@@ -80,6 +80,32 @@ jobs:
           assert p['unattended_broadcast_retry'] is False
           assert p['mainnet_allowed'] is False
           PY
+      - name: K-03 genuine BIP39 64-byte native-vault WSP Send Sign Broadcast and reopen
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          python scripts/issue45_managed_spend_e2e.py --bip39 --core-dir core --wsp-source wsp-upstream --output k03-bip39-native-core-evidence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          proof=json.loads(Path("k03-bip39-native-core-evidence.json").read_text())
+          assert proof["status"]=="K03_BIP39_DURABLE_REAL_WSP_SPEND_E2E_PASS"
+          for name in (
+              "k03_bip39_native_seed_to_signer",
+              "real_confirmed_bip352_funding",
+              "genuine_wsp_psbtv2_native_signature",
+              "signed_reservation_anchored_before_crypto",
+              "broadcast_reservation_persisted_before_rpc",
+              "exact_original_identity_after_close_reopen",
+              "actual_native_fusion_qt_send_sign_broadcast",
+              "real_core_mempool_and_confirmed",
+          ):
+              assert proof[name] is True,name
+          assert proof["k03_legacy_wsp32_preserved"] is False
+          assert proof["mainnet_allowed"] is False
+          assert proof["synthetic_rpc"] is False
+          assert proof["unattended_broadcast_retry"] is False
+          PY
       - name: Independently evaluate wallet security contracts
         run: python scripts/audit_wallet_security.py --root . --core core --output independent-wallet-security.json
       - name: Inspect signed node dynamic library requirements (real ARM64 bytes)
