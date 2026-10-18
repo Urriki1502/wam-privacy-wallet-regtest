@@ -118,16 +118,17 @@ def _reserve_existing_rpc_port(port):
     if type(port) is not int or not 1<=port<=65535:
         raise ManagedCoreError("MANAGED_RPC_PORT_INVALID")
     candidate=None
+    acquired=False
     try:
         candidate=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         if sys.platform=="win32":
             candidate.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
         candidate.bind(("127.0.0.1",port))
+        acquired=True
     except OSError:
         raise ManagedCoreError("MANAGED_RPC_PORT_OCCUPIED") from None
     finally:
-        # On acquisition failure, free only OUR local kernel socket.
-        if candidate is not None and candidate.getsockname()[1]!=port:
+        if not acquired and candidate is not None:
             candidate.close()
     try:
         yield
