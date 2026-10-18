@@ -120,6 +120,29 @@ class _ManagedWalletCreateWorker(QThread):
             self.password=None
 
 
+
+class _ManagedSpendSessionWorker(QThread):
+    ready=Signal(object)
+    denied=Signal(str)
+
+    def __init__(self,root,core_dir,wsp_source,password):
+        super().__init__()
+        self.root,self.core_dir,self.wsp_source=root,core_dir,wsp_source
+        self.password=password
+
+    def run(self):
+        try:
+            from .managed_spend_session import ManagedWalletSession
+            session=ManagedWalletSession.reopen_spending(
+                self.root,self.core_dir,self.wsp_source,self.password,
+                authorized=True)
+            self.ready.emit(session)
+        except Exception:
+            self.denied.emit("MANAGED_SPEND_SESSION_OPEN_DENIED")
+        finally:
+            self.password=None
+
+
 class ManagedCoreWindow(RegtestWalletWindow):
     """Fusion GUI lifecycle observer; closing this window NEVER stops Core."""
 
@@ -138,6 +161,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._wallet_checkpoint_verified=False
         self._wallet_read_authorized=False
         self._managed_height=None
+        self._spend_window=None
         # The base Fusion shell is reused; its disposable wallet data loader
         # is never called. A managed WSP session must first be restored safely.
         super().__init__(root / "chain", root / "chain", root / "chain")
@@ -169,6 +193,9 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.create_wallet_button=action("Create REGTEST WSP wallet", "security")
         toolbar.addWidget(self.create_wallet_button)
         self.create_wallet_button.clicked.connect(self._create_wallet)
+        self.spend_wallet_button=action("Open REGTEST Send / Sign", "send")
+        toolbar.addWidget(self.spend_wallet_button)
+        self.spend_wallet_button.clicked.connect(self._open_spending_wallet)
         self.start_core.clicked.connect(lambda: self._execute("start"))
         self.stop_core.clicked.connect(self._confirm_stop)
         # A short timer makes transitions visible without polling from Qt's
@@ -179,7 +206,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
     def _update_controls(self):
         if not hasattr(self, "start_core"):
             return
-        idle = self._worker is None
+        idle = self._worker is None and self._spend_window is None
         self.start_core.setEnabled(
             idle and self._managed_authenticated and
             self._managed_state in ("stopped", "recovery-needed")
@@ -198,6 +225,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.sync_wallet_button.setEnabled(can_read)
         self.create_wallet_button.setEnabled(
             can_read and not (self._managed_root/"chain"/"wallet-vault").exists())
+        self.spend_wallet_button.setEnabled(
+            can_read and (self._managed_root/"chain"/"wallet-vault").is_dir())
 
     def _execute(self, operation: str):
         if self._worker is not None:
@@ -253,6 +282,82 @@ class ManagedCoreWindow(RegtestWalletWindow):
         worker.start()
 
 
+
+
+    def _open_spending_wallet(self):
+        if (self._worker is not None or self._spend_window is not None
+                or not self._managed_authenticated or self._managed_state!="ready"
+                or self._managed_height is None or self._wallet_core_dir is None
+                or self._wallet_wsp_source is None
+                or not (self._managed_root/"chain"/"wallet-vault").is_dir()):
+            return
+        consent=QMessageBox.question(
+            self,"Open original WSP wallet for REGTEST spending",
+            "Unlock original WSP keys for disposable REGTEST signing? "
+            "Prepare, Sign and Broadcast each require separate exact-intent "
+            "approval. No mainnet, external node or automatic retries.",
+            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if consent!=QMessageBox.StandardButton.Yes:return
+        password,ok=QInputDialog.getText(
+            self,"REGTEST original WSP wallet",
+            "Original wallet passphrase · native anchor + Core must verify",
+            QLineEdit.EchoMode.Password)
+        if not ok:return
+        secret=password.encode("utf-8")
+        password=None
+        if not 12<=len(secret)<=1024:
+            self._wallet_snapshot_denied("MANAGED_SPEND_PASSWORD_DENIED")
+            return
+        self._wallet_checkpoint_verified=False
+        self._wallet_read_authorized=False
+        self._clear_balance()
+        worker=_ManagedSpendSessionWorker(
+            self._managed_root,self._wallet_core_dir,self._wallet_wsp_source,secret)
+        secret=None
+        self._worker=worker
+        worker.ready.connect(self._apply_spending_session)
+        worker.denied.connect(self._wallet_snapshot_denied)
+        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(worker.deleteLater)
+        self.status.setText("Verifying native original-wallet custody and WSP Core…")
+        self._update_controls()
+        worker.start()
+
+    def _apply_spending_session(self,session):
+        from .managed_spend_session import ManagedWalletSession
+        if (type(session) is not ManagedWalletSession
+                or not self._managed_authenticated or self._managed_state!="ready"
+                or self._spend_window is not None or session.faulted or session.locked):
+            try:session.close()
+            except Exception:pass
+            self._wallet_snapshot_denied("MANAGED_SPEND_SESSION_UNVERIFIED")
+            return
+        try:
+            from .managed_operational_gui import ManagedOperationalWalletWindow
+            window=ManagedOperationalWalletWindow(session)
+            self._spend_window=window
+            window.closed.connect(self._spend_window_closed)
+            window.show()
+            window.request_sync()
+            self.status.setText(
+                "REGTEST original WSP spending window open · "
+                "exact-intent approvals required · no automatic broadcast")
+            self._update_controls()
+        except Exception:
+            try:session.close()
+            except Exception:pass
+            self._spend_window=None
+            self._wallet_snapshot_denied("MANAGED_SPEND_GUI_DENIED")
+
+    def _spend_window_closed(self):
+        self._spend_window=None
+        self._wallet_checkpoint_verified=False
+        self._wallet_read_authorized=False
+        self._clear_balance()
+        self.status.setText(
+            "REGTEST managed WSP spending locked · rescan to verify original wallet")
+        self._update_controls()
 
     def _create_wallet(self):
         if (self._worker is not None or not self._managed_authenticated
@@ -517,8 +622,13 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._update_controls()
 
     def closeEvent(self, event):
-        # RegtestWalletWindow prevents deleting in-flight QThreads. It never
-        # sends Core stop on window close. Our managed subclass preserves that.
+        # A GUI close cannot leave an unlocked separate spending window
+        # unowned. Require explicit closing/locking of that window first.
+        if self._spend_window is not None:
+            event.ignore()
+            self.status.setText(
+                "Close and lock the REGTEST spending window before exiting Fusion")
+            return
         super().closeEvent(event)
 
 
