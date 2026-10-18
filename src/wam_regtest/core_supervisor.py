@@ -5,7 +5,7 @@ process must never adopt a PID, datadir lock or foreign Core. IPC exposes authen
 block subset. No generic RPC, credentials, wallet keys, signing or mining.
 """
 from __future__ import annotations
-from contextlib import ExitStack
+from contextlib import ExitStack,contextmanager
 import json
 import os
 from pathlib import Path
@@ -104,6 +104,35 @@ def _listener(port):
         return sock
     except BaseException:
         sock.close();raise
+
+
+@contextmanager
+def _reserve_existing_rpc_port(port):
+    """Preflight *existing* managed REGTEST RPC port without changing config.
+
+    This guard holds an exclusive native IPv4 loopback bind until immediately
+    before launching our own daemon. Kernel ownership is independently proven
+    after launch and BEFORE any HTTP/authentication bytes. A competing service
+    never receives credentials; no Core process, wallet or chain is adopted.
+    """
+    if type(port) is not int or not 1<=port<=65535:
+        raise ManagedCoreError("MANAGED_RPC_PORT_INVALID")
+    candidate=None
+    try:
+        candidate=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        if sys.platform=="win32":
+            candidate.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
+        candidate.bind(("127.0.0.1",port))
+    except OSError:
+        raise ManagedCoreError("MANAGED_RPC_PORT_OCCUPIED") from None
+    finally:
+        # On acquisition failure, free only OUR local kernel socket.
+        if candidate is not None and candidate.getsockname()[1]!=port:
+            candidate.close()
+    try:
+        yield
+    finally:
+        candidate.close()
 
 
 def _fresh_directory(root):
@@ -261,6 +290,14 @@ class CoreSupervisor:
                 if type(rpcport) is not int or not 1<=rpcport<=65535:
                     raise ManagedCoreError("MANAGED_CONFIG_DENIED")
                 env=self._child_environment()
+                # Existing durable profiles have create-once credentials and
+                # chain state. NEVER rewrite their RPC/P2P port on collision.
+                # Hold an exclusive loopback reservation for the configured
+                # port until just before Popen (Core cannot bind while held).
+                # A losing handoff is still caught by native server socket
+                # ownership proof BEFORE any HTTP or credentials are sent.
+                with _reserve_existing_rpc_port(rpcport):
+                    pass
                 # Never open an untrusted reusable log path. Core writes its
                 # own protected chain logs; application stdout is discarded.
                 self.process=subprocess.Popen(
