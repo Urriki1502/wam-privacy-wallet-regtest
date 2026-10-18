@@ -11,6 +11,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 import tempfile
+import time
 
 from wam_regtest.core import _read_cli,verified_core_paths
 from wam_regtest.custody import create_directory
@@ -91,6 +92,34 @@ def _wallet_rpc(owned,wallet,method,*params,backup_target=None,restore_source=No
     return _read_cli(base+[method,*params],timeout=45)
 
 
+def _stable_disposable_core_backup(source):
+    """Only the just-written PUBLIC REGTEST fixture may wait for its backup.
+
+    On Windows the Core SQLite backup creation and observed file length can
+    race very briefly. Never treat an inconsistent file as imported; wait
+    boundedly for two independent, byte-for-byte matching immutable reads.
+    This is NOT used by the real GUI/importer or for supplied user wallets.
+    No short/incomplete read is ever accepted.
+    """
+    from wam_regtest.core_sqlite_import import (
+        inspect_sqlite_backup,CoreSqliteImportError,
+    )
+    deadline=time.monotonic()+8
+    previous=None
+    while time.monotonic()<deadline:
+        try:
+            observed=inspect_sqlite_backup(source)
+            if observed==previous:
+                return observed
+            previous=observed
+        except CoreSqliteImportError as error:
+            if error.args!=("K04_SQLITE_SIZE_OR_SHORT_READ_CHANGED",):
+                raise
+            previous=None
+        time.sleep(.2)
+    raise ValueError("K04_DISPOSABLE_SOURCE_NOT_STABLE")
+
+
 def prove(core):
     if type(core) is not type(Path()) or not core.is_absolute():
         raise ValueError("K04_EXPLICIT_SIGNED_CORE_PATH_DENIED")
@@ -121,8 +150,10 @@ def prove(core):
             source_identity=core_descriptor_identity(source_desc)
             _wallet_rpc(source,"k04-source","backupwallet",str(exported),
                         backup_target=exported)
+            preliminary=_stable_disposable_core_backup(exported)
+            # A separate open/hash must independently agree with the two
+            # stable native-fd reads. Do not accept an incomplete backup.
             source_sha=sha256(exported.read_bytes()).hexdigest()
-            preliminary=inspect_sqlite_backup(exported)
             if preliminary.file_sha256!=source_sha:
                 raise ValueError("K04_BACKUP_CHANGED")
             with disposable_core(core,authorized=True) as target:
