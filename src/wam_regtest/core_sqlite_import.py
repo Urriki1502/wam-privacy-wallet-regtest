@@ -34,7 +34,7 @@ class CoreSqliteReceipt:
     network: str = "UNVERIFIED"  # Header does not encode WAM chain provenance.
 
     def __repr__(self):
-        return "<CoreSqliteReceipt public-only network-unverified>"
+        return "<CoreSqliteReceipt redacted network-unverified>"
 
 
 def _native_source_open(source):
