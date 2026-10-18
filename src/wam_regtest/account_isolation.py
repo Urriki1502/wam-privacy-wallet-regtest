@@ -13,6 +13,8 @@ keys of the other type, and balances/history must never be silently combined.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
+import json
 import re
 from .v1_contracts import (
     CORE_PROFILE, RC1_PROFILE, BIP39_PROFILE, require_regtest,
@@ -138,6 +140,12 @@ class AccountRegistry:
                     or type(a.descriptor_identity) is not str
                     or not ACCOUNT_ID.fullmatch(a.descriptor_identity)):
                 _fail("K06_CORE_REGISTRY_SCOPE_DENIED")
+            # Immutable direct record construction must not bypass the
+            # descriptor identity attested by Core.listdescriptors(false).
+            digest=sha256(json.dumps(sorted(a.descriptor_set),
+                     separators=(",",":")).encode("ascii")).hexdigest()
+            if digest!=a.descriptor_identity:
+                _fail("K06_CORE_DESCRIPTOR_IDENTITY_DENIED")
             if (a.name in names or a.descriptor_identity in identities
                     or not descriptors.isdisjoint(a.descriptor_set)):
                 _fail("K06_CORE_DESCRIPTOR_OVERLAP_DENIED")
