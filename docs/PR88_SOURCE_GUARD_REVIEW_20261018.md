@@ -155,3 +155,36 @@ coordinated independent-stack integration. Full integrated P0/T/Q/V1 release
 remains **HOLD**; physical Finder/OS appearance/retina/camera/sleep-wake and
 authorized clean-host checks remain PENDING_OPERATOR. REGTEST/disposable only;
 v0.1.12 candidate-only; Core Update Manager and BDB conversion remain deferred P1.
+
+## Live refresh — exact PR88 HEAD `eb5033381c5c0b00af1e44d07815cd4592c46ab7`
+
+Refreshed from GitHub at 2026-10-18 18:05 UTC. PR88 remains Draft, based on
+`b32b8db7ae956bc6fca58c29e6f16696dac9a6b0`. Its ten exact-head check runs are
+nine `SUCCESS` and `developer-core` `SKIPPED`; in particular the macOS signed
+Core/WSP/Qt and frozen `.app/.dmg` checks are successful. The earlier macOS
+`StopIteration` result above belongs to old head `08f4686`, not this head; the
+current PR changes the ordering so dirty worktree refusal happens before the
+pinned-tree subprocess call. Skipped developer-Core is not a pass.
+
+I reran the public native-Mac disposable-clone probes against the isolated
+snapshot of exact head `eb5033381c5c0b00af1e44d07815cd4592c46ab7`, guard SHA256
+`0c6d650b90273f26553ac94fd3b67198d3a032e949daba757e449603d835f4fc`, WSP pin
+`ac55f13423620252bdbf848c7e8a280c3b84721e`. Receipts are
+[primary](evidence/issue45/PR88_EB503_SOURCE_PROBE.json),
+[filesystem](evidence/issue45/PR88_EB503_EXTRA_PROBE.json), and
+[Git replacement](evidence/issue45/PR88_EB503_GIT_REPLACE_PROBE.json). Clean
+pinned controls pass; ordinary untracked `.py`/`.so` are rejected. **Six
+adversarial checks are accepted and fail the required denial:** ignored `.so`,
+tracked scanner modified under `assume-unchanged`, the same under
+`skip-worktree`, tracked source hardlink, symlinked source parent, and modified
+scanner substituted by `git replace`. Git replace demonstrates that pinning
+`rev-parse HEAD` alone does not make the tree query immutable. These checks did
+not import WSP, execute an injected module, start Core, or access keys/anchors;
+they are source-guard evidence, not wallet E2E or proof of funds/signature loss.
+
+The prior V2 patch and 14-case/12-contract results target old base `08f4686`;
+they remain review-only historical evidence and are **not** a fix or
+qualification for current `eb503338`. PR88's maintainer still owns K-07. The
+appropriate next action is a coordinated correction on that existing PR, then
+rerun exact-head adversarial tests and required native/Core/frozen gates across
+platforms. No duplicate implementation, branch edit, or merge was performed.

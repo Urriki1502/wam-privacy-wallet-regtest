@@ -1,0 +1,62 @@
+{
+  "source_head_sha": "eb5033381c5c0b00af1e44d07815cd4592c46ab7",
+  "actual_guard_file_sha256": "0c6d650b90273f26553ac94fd3b67198d3a032e949daba757e449603d835f4fc",
+  "wsp_pin": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "evidence_layer": "ACTUAL_SOURCE_GUARD_EXECUTION_NOT_CORE_E2E",
+  "rows": [
+    {
+      "case": "clean_pinned_checkout",
+      "accepted": true,
+      "safe_error": null,
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "untracked_python_module",
+      "accepted": false,
+      "safe_error": "WSP_SOURCE_WORKTREE_DENIED",
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "untracked_native_extension",
+      "accepted": false,
+      "safe_error": "WSP_SOURCE_WORKTREE_DENIED",
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "ignored_native_extension",
+      "accepted": true,
+      "safe_error": null,
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "modified_tracked_scanner_assume-unchanged",
+      "accepted": true,
+      "safe_error": null,
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "modified_tracked_scanner_skip-worktree",
+      "accepted": true,
+      "safe_error": null,
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "restored_clean_pinned_checkout",
+      "accepted": true,
+      "safe_error": null,
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    }
+  ],
+  "disposable_source_clone_only": true,
+  "original_dependency_changed": false,
+  "core_or_keys_or_anchors_used": false,
+  "synthetic_core_acceptance": false,
+  "mainnet_allowed": false
+}

@@ -826,3 +826,46 @@ release facts after this commit. Keep recurring5h ACTIVE under latest owner
 request; no second scheduler. Next P0 after current CI: persistent owned Core
 lifecycle T05, explicit read-only existing-Core T06 and bounded port collision
 T08; mining GUI is read-only and full custody/transfer/BIP39 integration remain.
+
+# 18 Oct 2026 — live refresh and PR88 exact-head source-guard review
+
+Existing authorized Draft PR67 branch only. T0 2026-10-18T18:03:34Z; branch
+`feature/issue45-t05-gui-continuity-q05-20261017`, starting HEAD
+`3ae2d1075109414adf4e8d66f58030512dd567e7`, clean and equal to origin. Lease
+acquired/held before engineering in PTY session 29947; current owner must
+release it at end and verify exit before closing this session.
+
+Live GitHub refresh: Issue #45 remains OPEN. PR67 remains Draft at
+`3ae2d1075109414adf4e8d66f58030512dd567e7`, based on
+`71a1e7b4336054bf0dabf3ca0ee6de174b462154`; its ten exact-head checks are
+SUCCESS. Independent PR88 remains Draft, head
+`eb5033381c5c0b00af1e44d07815cd4592c46ab7`, based on
+`b32b8db7ae956bc6fca58c29e6f16696dac9a6b0`; exact-head checks are 9 SUCCESS
+and `developer-core` SKIPPED. The earlier macOS dirty-source `StopIteration`
+was on obsolete `08f4686` and is fixed at current head. New independent PR89
+owns K-08 preflight; no overlap or edits made. Other independently active
+branches remain untouched.
+
+Current exact-PR88 source guard SHA256
+`0c6d650b90273f26553ac94fd3b67198d3a032e949daba757e449603d835f4fc`, pinned
+WSP commit `ac55f13423620252bdbf848c7e8a280c3b84721e`. Native macOS-only probes
+on isolated disposable clones confirmed six adversarial false accepts:
+ignored native `.so`, tracked scanner edits hidden by each of two Git index
+flags, hardlinked source, symlinked parent, and `git replace` tree substitution.
+Clean controls pass and normal untracked Python/native files deny. No WSP code
+was imported, no Core/keys/anchors touched, and no synthetic E2E claim. Exact
+JSON receipts and updated review are in `docs/evidence/issue45/PR88_EB503_*` and
+`docs/PR88_SOURCE_GUARD_REVIEW_20261018.md`. The earlier V2 candidate targets
+an obsolete PR88 base and does not qualify current code. K-07 remains owned by
+existing PR88; do not duplicate it. Current disposition remains HOLD pending
+maintainer fix and exact-head adversarial plus native/Core/frozen qualification.
+
+This session did not modify runtime, independent branches, main, RC1, Core,
+owner wallets, anchors, or miner processes; no PR was merged. Physical Windows/
+Linux acceptance remains PENDING_OPERATOR. REGTEST/disposable only, v0.1.12
+candidate-only, Core Update Manager deferred P1. No usage-limit failure, reset,
+or purchase was observed/assumed. Existing five-hour heartbeat automation was verified ACTIVE from its live config
+(`DTSTART:20261017T020000Z`, `INTERVAL=5`). Next nominal run: 2026-10-18
+23:00 UTC / 2026-10-19 06:00 Asia/Ho_Chi_Minh. Separate session log is
+`outputs/pr67-resume-20261018T180335/RESUME_LOG.md`; exact document commit and
+its own CI result are recorded after push.
