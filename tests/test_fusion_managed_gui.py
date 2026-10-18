@@ -61,6 +61,23 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
                 self.assertFalse(self.win.dashboard.go_send.isEnabled())
                 self.assertFalse(self.win.stop_core.isEnabled() if not running else self.win.start_core.isEnabled())
 
+    def test_t07_busy_state_increases_refresh_interval_without_unlocking_wallet(self):
+        ready=public_status(state="ready",owned=True,chain_height=101)
+        busy=public_status(state="busy",owned=True)
+        self.win._apply_managed_status(ready)
+        self.assertEqual(self.win._sync_timer.interval(),5_000)
+        self.win._apply_managed_status(busy)
+        self.assertEqual(self.win._sync_timer.interval(),15_000)
+        self.assertIn("NODE BUSY",self.win.status.text())
+        self.assertIn("RETRYING",self.win.status.text())
+        self.assertFalse(self.win._wallet_checkpoint_verified)
+        self.assertIsNone(self.win._snapshot)
+        self.assertIsNone(self.win._managed_height)
+        self.assertFalse(self.win.dashboard.go_send.isEnabled())
+        self.win._apply_managed_status(ready)
+        self.assertEqual(self.win._sync_timer.interval(),5_000)
+        self.assertEqual(self.win._managed_height,101)
+
     def test_wrong_network_and_fabricated_ready_are_rejected_before_wallet(self):
         good = public_status(state="ready",owned=True,chain_height=105)
         for update in ({"chain":"mainnet"},{"mainnet_allowed":True},
