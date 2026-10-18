@@ -198,15 +198,17 @@ class SupervisorTransportResilience(unittest.TestCase):
                 owner.binding=Mock()
                 if failure=="changed_image":
                     owner.binding._assert_image.side_effect=ValueError("tamper")
-                owner.read=Mock()
+                reader=Mock()
+                owner.read=reader
                 status=owner.status()
                 self.assertEqual(status["state"],"recovery-needed")
                 self.assertFalse(status["core_process_owned"])
                 self.assertIsNone(status["height"])
                 self.assertEqual(owner._busy_until,0.0)
-                owner.read.attest.assert_not_called()
+                reader.attest.assert_not_called()
                 if failure=="exited":
-                    owner.read.close.assert_called_once()
+                    reader.close.assert_called_once()
+                    self.assertIsNone(owner.read)
 
     def test_supervisor_core_start_uses_once_verified_rpc_port(self):
         # Unit fixture: the real E2E on each runner separately starts Core.
