@@ -49,9 +49,10 @@ class Bip39CreationDialog(QDialog):
             warning=(
                 "LOCAL BIP39 BACKUP ONLY · NOT LINKED TO YOUR CURRENT WSP WALLET.\n"
                 "K-02 pins the experimental REGTEST path m/352'/1'/account'/role'/0. "
-                "K-03 native custody/signing is NOT integrated: these words "
-                "cannot yet restore a usable Fusion wallet. "
-                "Never use real funds or treat this as a completed wallet backup.")
+                "These STANDALONE words are not bound to ANY wallet. "
+                "A NEW BIP39 WSP wallet can only be created using the "
+                "SEPARATE create-new-wallet action after REGTEST Core verification. "
+                "These words never restore an existing legacy 32-byte WSP wallet.")
         self.warning=QLabel(warning)
         self.warning.setWordWrap(True)
         layout.addWidget(self.warning)
