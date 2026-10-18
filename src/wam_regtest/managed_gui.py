@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 
 from PySide6.QtCore import QThread, Signal, QTimer
-from PySide6.QtWidgets import QMessageBox, QInputDialog, QLineEdit
+from PySide6.QtWidgets import QMessageBox, QInputDialog, QLineEdit, QFileDialog
 
 from .desktop import RegtestWalletWindow, qt_application
 from .fusion_ui import action
@@ -149,6 +149,30 @@ class _ManagedSpendSessionWorker(QThread):
             self.password=None
 
 
+class _CoreSqliteInspectionWorker(QThread):
+    """K-04 GUI receives ONLY redacted non-secret file format metadata."""
+    ready=Signal(object)
+    denied=Signal(str)
+
+    def __init__(self,source):
+        super().__init__()
+        self.source=source
+
+    def run(self):
+        try:
+            from .core_sqlite_import import inspect_sqlite_backup
+            record=inspect_sqlite_backup(self.source)
+            self.ready.emit({
+                "format":"sqlite","size":record.byte_count,
+                "network":"UNVERIFIED","restored":False,
+                "wallet_signer_allowed":False,"mainnet_allowed":False,
+            })
+        except Exception:
+            self.denied.emit("K04_SQLITE_SOURCE_DENIED")
+        finally:
+            self.source=None
+
+
 class ManagedCoreWindow(RegtestWalletWindow):
     """Fusion GUI lifecycle observer; closing this window NEVER stops Core."""
 
@@ -210,6 +234,12 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.bip39_button=action("BIP39 backup words (not wallet)", "security")
         toolbar.addWidget(self.bip39_button)
         self.bip39_button.clicked.connect(self._create_bip39_phrase)
+        self.sqlite_inspect_button=action(
+            "Inspect Core SQLite .dat · NO IMPORT", "security")
+        toolbar.addWidget(self.sqlite_inspect_button)
+        self.sqlite_inspect_button.clicked.connect(self._choose_core_sqlite)
+        # One local file only. A drop/picker NEVER activates Core RPC.
+        self.setAcceptDrops(True)
         self.spend_wallet_button=action("Open REGTEST Send / Sign", "send")
         toolbar.addWidget(self.spend_wallet_button)
         self.spend_wallet_button.clicked.connect(self._open_spending_wallet)
@@ -233,6 +263,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
             self._managed_state in ("ready", "syncing", "busy")
         )
         self.refresh_button.setEnabled(idle)
+        self.sqlite_inspect_button.setEnabled(idle)
         self.bip39_button.setEnabled(idle)
         can_read=(idle and self._managed_authenticated
                   and self._managed_state=="ready" and self._managed_height is not None
@@ -378,6 +409,77 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.status.setText(
             "REGTEST managed WSP spending locked · rescan to verify original wallet")
         self._update_controls()
+
+    def _inspect_core_sqlite(self,filename):
+        if self._worker is not None or self._spend_window is not None:
+            return
+        from pathlib import Path
+        try:
+            if type(filename) is not str or not filename:
+                raise ValueError
+            source=Path(filename)
+            if not source.is_absolute():
+                raise ValueError
+        except ValueError:
+            self._core_sqlite_denied("K04_PICKER_PATH_DENIED")
+            return
+        worker=_CoreSqliteInspectionWorker(source)
+        self._worker=worker
+        worker.ready.connect(self._core_sqlite_inspected)
+        worker.denied.connect(self._core_sqlite_denied)
+        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(worker.deleteLater)
+        self.status.setText(
+            "Core .dat format inspection ONLY · no wallet loaded or imported")
+        self._update_controls()
+        worker.start()
+
+    def _choose_core_sqlite(self):
+        if self._worker is not None or self._spend_window is not None:
+            return
+        name,_=QFileDialog.getOpenFileName(
+            self,"Inspect Core-native SQLite backup · REGTEST quarantine ONLY",
+            "","Core wallet backup (*.dat)")
+        if name:self._inspect_core_sqlite(name)
+
+    def dragEnterEvent(self,event):
+        # Do not import any external data silently. One local .dat at a time.
+        urls=event.mimeData().urls() if event.mimeData().hasUrls() else []
+        if (len(urls)==1 and urls[0].isLocalFile()
+                and urls[0].toLocalFile().lower().endswith(".dat")
+                and self._worker is None and self._spend_window is None):
+            event.acceptProposedAction()
+        else:event.ignore()
+
+    def dropEvent(self,event):
+        urls=event.mimeData().urls() if event.mimeData().hasUrls() else []
+        if (len(urls)!=1 or not urls[0].isLocalFile()
+                or not urls[0].toLocalFile().lower().endswith(".dat")):
+            event.ignore()
+            return
+        self._inspect_core_sqlite(urls[0].toLocalFile())
+        event.acceptProposedAction()
+
+    def _core_sqlite_inspected(self,receipt):
+        expected={"format":"sqlite","network":"UNVERIFIED",
+                  "restored":False,"wallet_signer_allowed":False,
+                  "mainnet_allowed":False}
+        if (type(receipt) is not dict or set(receipt)!=set(expected)|{"size"}
+                or any(receipt.get(k)!=v or type(receipt[k]) is not type(v)
+                       for k,v in expected.items())
+                or type(receipt["size"]) is not int
+                or not 4096<=receipt["size"]<=128*1024*1024):
+            self._core_sqlite_denied("K04_INSPECTION_SHAPE_DENIED")
+            return
+        self.status.setText(
+            "Core SQLite header verified · NETWORK/PROVENANCE UNKNOWN · "
+            "NO IMPORT / NO RESTORE · signer disabled. "
+            "Quarantine Core verification required before any wallet use.")
+
+    def _core_sqlite_denied(self,_reason):
+        self.status.setText(
+            "Core SQLite import DENIED · source unverified · "
+            "no changes made to active WSP/Core wallet.")
 
     def _create_bip39_phrase(self):
         # Local CSPRNG wizard with explicit full-phrase confirmation; no
