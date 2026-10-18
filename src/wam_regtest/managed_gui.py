@@ -160,15 +160,26 @@ class _CoreSqliteInspectionWorker(QThread):
 
     def run(self):
         try:
-            from .core_sqlite_import import inspect_sqlite_backup
-            record=inspect_sqlite_backup(self.source)
+            from .legacy_bdb_refusal import inspect_backup_format
+            record=inspect_backup_format(self.source)
             self.ready.emit({
                 "format":"sqlite","size":record.byte_count,
                 "network":"UNVERIFIED","restored":False,
                 "wallet_signer_allowed":False,"mainnet_allowed":False,
             })
-        except Exception:
-            self.denied.emit("K04_SQLITE_SOURCE_DENIED")
+        except Exception as error:
+            # Only a fixed, non-secret category crosses the Qt boundary.
+            from .core_sqlite_import import CoreSqliteImportError
+            categories={
+                "K05_BDB_DEPRECATED_UNSUPPORTED",
+                "K05_FUSION_ENCRYPTED_BACKUP_SEPARATE",
+                "K05_MNEMONIC_TEXT_NOT_WALLET_DAT",
+                "K05_UNKNOWN_CORE_DAT_DENIED",
+            }
+            reason=(error.args[0] if type(error) is CoreSqliteImportError
+                    and error.args and error.args[0] in categories
+                    else "K04_SQLITE_SOURCE_DENIED")
+            self.denied.emit(reason)
         finally:
             self.source=None
 
@@ -235,7 +246,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
         toolbar.addWidget(self.bip39_button)
         self.bip39_button.clicked.connect(self._create_bip39_phrase)
         self.sqlite_inspect_button=action(
-            "Inspect Core SQLite .dat · NO IMPORT", "security")
+            "Inspect Core .dat / Fusion .enc · NO IMPORT", "security")
         toolbar.addWidget(self.sqlite_inspect_button)
         self.sqlite_inspect_button.clicked.connect(self._choose_core_sqlite)
         # One local file only. A drop/picker NEVER activates Core RPC.
@@ -430,7 +441,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
         worker.finished.connect(self._worker_finished)
         worker.finished.connect(worker.deleteLater)
         self.status.setText(
-            "Core .dat format inspection ONLY · no wallet loaded or imported")
+            "Checking backup type only · BDB is unsupported · "
+            "no Core wallet loaded or imported")
         self._update_controls()
         worker.start()
 
@@ -439,14 +451,15 @@ class ManagedCoreWindow(RegtestWalletWindow):
             return
         name,_=QFileDialog.getOpenFileName(
             self,"Inspect Core-native SQLite backup · REGTEST quarantine ONLY",
-            "","Core wallet backup (*.dat)")
+            "","Core wallet (*.dat);;Fusion encrypted backup (*.enc);;"
+            "Mnemonic text (NOT importable) (*.txt)")
         if name:self._inspect_core_sqlite(name)
 
     def dragEnterEvent(self,event):
         # Do not import any external data silently. One local .dat at a time.
         urls=event.mimeData().urls() if event.mimeData().hasUrls() else []
         if (len(urls)==1 and urls[0].isLocalFile()
-                and urls[0].toLocalFile().lower().endswith(".dat")
+                and urls[0].toLocalFile().lower().endswith((".dat",".enc",".txt"))
                 and self._worker is None and self._spend_window is None):
             event.acceptProposedAction()
         else:event.ignore()
@@ -454,7 +467,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
     def dropEvent(self,event):
         urls=event.mimeData().urls() if event.mimeData().hasUrls() else []
         if (len(urls)!=1 or not urls[0].isLocalFile()
-                or not urls[0].toLocalFile().lower().endswith(".dat")):
+                or not urls[0].toLocalFile().lower().endswith((".dat",".enc",".txt"))):
             event.ignore()
             return
         self._inspect_core_sqlite(urls[0].toLocalFile())
@@ -477,9 +490,28 @@ class ManagedCoreWindow(RegtestWalletWindow):
             "Quarantine Core verification required before any wallet use.")
 
     def _core_sqlite_denied(self,_reason):
-        self.status.setText(
-            "Core SQLite import DENIED · source unverified · "
-            "no changes made to active WSP/Core wallet.")
+        # Fixed categories only; NEVER echo source filename, Core stderr,
+        # descriptor bytes, mnemonic content or exception text.
+        messages={
+            "K05_BDB_DEPRECATED_UNSUPPORTED":
+                "Legacy Berkeley DB (BDB) .dat detected as a candidate · "
+                "DEPRECATED / UNSUPPORTED · NO IMPORT / NO CONVERSION. "
+                "Keep the original backup safe and consult WAM Core DEV "
+                "for an approved migration procedure.",
+            "K05_FUSION_ENCRYPTED_BACKUP_SEPARATE":
+                "Fusion .enc encrypted checkpoint is NOT a Core wallet.dat · "
+                "NO IMPORT. Use the original Fusion wallet recovery workflow.",
+            "K05_MNEMONIC_TEXT_NOT_WALLET_DAT":
+                "BIP39 mnemonic text is NOT a Core .dat or Fusion .enc · "
+                "NO IMPORT. Never paste recovery words into Core file import.",
+            "K05_UNKNOWN_CORE_DAT_DENIED":
+                "Unknown .dat format · may be old BDB, corrupted or foreign · "
+                "NO IMPORT / NO CONVERSION. Source preserved.",
+        }
+        self.status.setText(messages.get(
+            _reason,
+            "Core wallet import DENIED · source unverified · "
+            "no changes made to active WSP/Core wallet."))
 
     def _create_bip39_phrase(self):
         # Local CSPRNG wizard with explicit full-phrase confirmation; no
