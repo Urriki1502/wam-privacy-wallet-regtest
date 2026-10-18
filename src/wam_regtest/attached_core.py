@@ -45,8 +45,9 @@ def _birth(pid):
                 raise AttachedCoreError("ATTACH_PROCESS_BIRTH_DENIED")
             cmd=(proc/"cmdline").read_bytes().split(b"\0")
             if cmd[-1:]==[b""]:cmd.pop()
-            if len(cmd)!=3:
-                raise AttachedCoreError("ATTACH_PROCESS_ARGS_DENIED")
+            # Arbitrary runner processes legitimately have different argv.
+            # Exact wamd/-datadir/-daemon=0 argv is enforced ONLY by the
+            # actual AttachedCoreBinding before contacting RPC.
             return ("linux",int(fields[19]),tuple(cmd))
         if sys.platform=="darwin":
             # /bin/ps reads kernel process metadata; never executes the Core
