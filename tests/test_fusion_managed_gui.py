@@ -98,6 +98,47 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
         self.assertFalse(self.win.create_wallet_button.isEnabled())
         self.assertIsNone(self.win.session)
 
+    def test_k04_core_dat_picker_is_inspection_only_without_wallet_rpc(self):
+        import tempfile
+        import sqlite3
+        from pathlib import Path
+        from unittest.mock import patch
+        from wam_regtest.managed_gui import _CoreSqliteInspectionWorker
+        self.assertTrue(self.win.sqlite_inspect_button.isEnabled())
+        self.assertIn("NO IMPORT",self.win.sqlite_inspect_button.text())
+        with tempfile.TemporaryDirectory(prefix="k04-gui-public-") as d:
+            path=Path(d)/"fixture.dat"
+            with sqlite3.connect(path) as sql:
+                sql.execute("CREATE TABLE public_test(value INT)")
+                sql.commit()
+            if __import__("os").name!="nt":path.chmod(0o600)
+            # The native Qt worker emits non-secret FORMAT ONLY. No
+            # Core/managed wallet RPC may be contacted.
+            worker=_CoreSqliteInspectionWorker(path)
+            good=[]
+            worker.ready.connect(lambda proof:good.append(proof))
+            with patch("wam_regtest.managed_gui.control",
+                       side_effect=AssertionError("K04_NO_CORE_RPC")):
+                worker.run()
+            self.assertEqual(len(good),1)
+            self.win._core_sqlite_inspected(good[0])
+            self.assertIn("NO IMPORT",self.win.status.text())
+            self.assertIn("NETWORK/PROVENANCE UNKNOWN",self.win.status.text())
+            self.assertFalse(self.win.dashboard.go_send.isEnabled())
+        self.win._core_sqlite_inspected({"network":"mainnet"})
+        self.assertIn("DENIED",self.win.status.text())
+        self.assertIsNone(self.win.session)
+
+    def test_k04_file_picker_cancel_does_not_touch_core_or_wallet(self):
+        with (patch("wam_regtest.managed_gui.QFileDialog.getOpenFileName",
+                    return_value=("","")) as picker,
+              patch("wam_regtest.managed_gui.control",
+                    side_effect=AssertionError("K04_NO_CORE_ACTION"))):
+            self.win.sqlite_inspect_button.click()
+            picker.assert_called_once()
+        self.assertIsNone(self.win._worker)
+        self.assertIsNone(self.win.session)
+
     def test_wrong_network_and_fabricated_ready_are_rejected_before_wallet(self):
         good = public_status(state="ready",owned=True,chain_height=105)
         for update in ({"chain":"mainnet"},{"mainnet_allowed":True},
