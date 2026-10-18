@@ -78,7 +78,7 @@ class CoreSupervisorContracts(unittest.TestCase):
                 with self.assertRaises(ScanProtocolError):
                     owner._scan_handle(raw)
                 raw=(json.dumps({"protocol":PROTOCOL,"op":"start",
-                    "nonce":nonce,"proof":request_proof(scan,"start",nonce)})+"\\n").encode("ascii")
+                    "nonce":nonce,"proof":request_proof(scan,"start",nonce)})+"\n").encode("ascii")
                 with self.assertRaises(SupervisorProtocolError):
                     owner.handle(raw)
                 self.assertIsNone(owner.process)
