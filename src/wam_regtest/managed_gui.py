@@ -190,9 +190,15 @@ class ManagedCoreWindow(RegtestWalletWindow):
         toolbar.addWidget(self.sync_wallet_button)
         self.sync_wallet_button.clicked.connect(
             lambda: self._view_wallet(persist_checkpoint=True))
-        self.create_wallet_button=action("Create REGTEST WSP wallet", "security")
+        self.create_wallet_button=action(
+            "Create legacy WSP wallet (NOT BIP39)", "security")
         toolbar.addWidget(self.create_wallet_button)
         self.create_wallet_button.clicked.connect(self._create_wallet)
+        # K-01 is a local, separate, non-persisting BIP39 backup workflow.
+        # These words MUST NOT be represented as the legacy WSP wallet seed.
+        self.bip39_button=action("BIP39 backup words (not wallet)", "security")
+        toolbar.addWidget(self.bip39_button)
+        self.bip39_button.clicked.connect(self._create_bip39_phrase)
         self.spend_wallet_button=action("Open REGTEST Send / Sign", "send")
         toolbar.addWidget(self.spend_wallet_button)
         self.spend_wallet_button.clicked.connect(self._open_spending_wallet)
@@ -216,6 +222,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
             self._managed_state in ("ready", "syncing", "busy")
         )
         self.refresh_button.setEnabled(idle)
+        self.bip39_button.setEnabled(idle)
         can_read=(idle and self._managed_authenticated
                   and self._managed_state=="ready" and self._managed_height is not None
                   and self._wallet_core_dir is not None
@@ -359,6 +366,25 @@ class ManagedCoreWindow(RegtestWalletWindow):
             "REGTEST managed WSP spending locked · rescan to verify original wallet")
         self._update_controls()
 
+    def _create_bip39_phrase(self):
+        # Local CSPRNG wizard with explicit full-phrase confirmation; no
+        # Core, RPC, wallet signer, checkpoint, anchor or file write.
+        if self._worker is not None or self._spend_window is not None:
+            return
+        from .bip39_gui import Bip39CreationDialog
+        dialog=Bip39CreationDialog(self)
+        try:
+            accepted=dialog.exec()
+            if (accepted==Bip39CreationDialog.DialogCode.Accepted
+                    and dialog.confirmed):
+                self.status.setText(
+                    "BIP39 phrase confirmed locally; NOT linked to the "
+                    "existing Fusion WSP wallet. K-02/K-03 pending.")
+        finally:
+            dialog._clear_sensitive()
+            dialog.deleteLater()
+            self._update_controls()
+
     def _create_wallet(self):
         if (self._worker is not None or not self._managed_authenticated
                 or self._managed_state!="ready" or self._managed_height is None
@@ -369,6 +395,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
             self,"Create original REGTEST WSP wallet",
             "Create one new encrypted WSP wallet attached to this Fusion-owned "
             "REGTEST Core? Existing wallets will never be replaced. "
+            "This legacy WSP 32-byte seed is NOT BIP39 and CANNOT be restored "
+            "using the separate BIP39 backup-words wizard. "
             "This action does not enable signing or mainnet.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)
