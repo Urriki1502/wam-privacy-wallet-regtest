@@ -34,7 +34,7 @@ class ManagedScanRpc:
         self._timeout=timeout
         self._closed=False
         self._profile=_profile_read(root)
-        self._secret=read_exact(root,"supervisor.token",length=32)
+        self._secret=read_exact(root,"supervisor.scan.token",length=32)
 
     def _request(self,method,params):
         if self._closed:
