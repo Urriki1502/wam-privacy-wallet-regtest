@@ -110,6 +110,15 @@ jobs:
           assert proof['chain']=='regtest' and proof['block_height']==105
           assert proof['live_wamd_process_observed'] is True
           assert proof['live_rpc_observed'] is True
+          # T-09 native signed WAM Core, direct HTTP and original WSP receipt:
+          t09=proof['t09_direct_rpc_evidence']
+          assert t09['status']=='T09_REAL_CORE_DIRECT_RPC_COMPONENT_PASS'
+          assert t09['platform']=='macos-arm64'
+          assert t09['genuine_busy_idle_recovery_checked'] is True
+          assert t09['operational_wallet_checked'] is True
+          assert t09['frozen_entrypoint'] is False
+          assert t09['physical_accepted'] is False
+          assert t09['mainnet_allowed'] is False
           assert proof['owned_startup_component']['status']=='REAL_CORE_OWNED_STARTUP_COLLISION_AND_PREAUTH_PASS'
           assert proof['owned_startup_component']['competing_listener_received_bytes']==0
           assert proof['wsp_bip352_e2e_pass'] is True
