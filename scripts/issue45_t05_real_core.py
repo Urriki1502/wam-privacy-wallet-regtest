@@ -523,6 +523,76 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
             assert height==101
             tip=owner.read.call("getblockhash",[height])
             evidence["original_height"]=height
+            # T-06: ANOTHER interpreter attaches read-only to this already
+            # running, independently pinned REGTEST Core by observed PID.
+            # It neither owns this Popen nor knows a process-control token.
+            # No daemon restart, Core config edit, mining or wallet RPC.
+            from hashlib import sha256 as _public_fixture_sha
+            from wam_regtest.json_rpc import _private_config
+            config_before=_public_fixture_sha(
+                _private_config(owner.directory)).digest()
+            attached_cmd=[
+                sys.executable,"-m","wam_regtest.attached_core_cli",
+                "--core-dir",str(core),"--datadir",str(owner.directory),
+                "--pid",str(owner.process.pid),
+                "--confirm-disposable-regtest-readonly-attach",
+            ]
+            if sys.platform=="linux":
+                attached_cmd.extend([
+                    "--linux-developer-manifest",linux_manifest,
+                    "--linux-root-witness",str(linux_witness),
+                ])
+            observed_pid=owner.process.pid
+            attached=subprocess.run(attached_cmd,stdin=subprocess.DEVNULL,
+                                    stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                                    timeout=55,check=False)
+            if attached.returncode:
+                raise AssertionError("T06_INDEPENDENT_READONLY_ATTACH_DENIED")
+            observed_attach=json.loads(attached.stdout)
+            assert observed_attach["status"]=="T06_EXISTING_CORE_REGTEST_READONLY_PASS"
+            assert observed_attach["height"]==height and observed_attach["tip"]==tip
+            assert observed_attach["read_only"] is True
+            assert observed_attach["process_owned_by_fusion"] is False
+            assert observed_attach["wallet_mutation"] is False
+            assert observed_attach["core_lifecycle_mutation"] is False
+            assert observed_attach["signer_allowed"] is False
+            assert observed_attach["broadcast_allowed"] is False
+            assert observed_attach["mainnet_allowed"] is False
+            assert observed_attach["synthetic_rpc"] is False
+            assert owner.process.pid==observed_pid and owner.process.poll() is None
+            assert owner.read.call("getblockcount",[])==height
+            assert owner.read.call("getblockhash",[height])==tip
+            assert _public_fixture_sha(_private_config(owner.directory)).digest()==config_before
+            evidence["t06_existing_core_independent_readonly_attach_no_mutation"]=True
+            if qt and sys.platform=="darwin":
+                # Same REAL externally-running Core through the production
+                # read-only GUI. No wallet keys, mining, Sign or stop buttons.
+                from wam_regtest.attached_core_gui import ExistingCoreReadOnlyWindow
+                from wam_regtest.desktop import qt_application
+                app=qt_application()
+                inspector=ExistingCoreReadOnlyWindow(
+                    core,owner.directory,owner.process.pid)
+                inspector.show()
+                inspector.request_refresh()
+                deadline=time.monotonic()+25
+                while (inspector._worker is not None or inspector._proof is None) and time.monotonic()<deadline:
+                    app.processEvents()
+                    time.sleep(.02)
+                app.processEvents()
+                proof=inspector._proof
+                assert proof is not None
+                assert proof["chain"]=="regtest" and proof["height"]==height
+                assert proof["tip"]==tip and proof["read_only"] is True
+                assert proof["mainnet_allowed"] is False
+                assert not hasattr(inspector,"start_core")
+                assert not hasattr(inspector,"stop_core")
+                assert not hasattr(inspector,"spend_wallet_button")
+                assert not hasattr(inspector,"create_wallet_button")
+                inspector.close()
+                app.processEvents()
+                assert owner.process.pid==observed_pid and owner.process.poll() is None
+                assert _public_fixture_sha(_private_config(owner.directory)).digest()==config_before
+                evidence["t06_existing_core_real_gui_readonly_macos"]=True
             owner.shutdown()
             assert owner.directory.is_dir()
             assert (owner.directory/"regtest").is_dir()
