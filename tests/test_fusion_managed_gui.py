@@ -150,7 +150,9 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
             body=bytearray(8192)
             body[12:16]=(0x00053162).to_bytes(4,"little")
             source.write_bytes(body)
-            if os.name!="nt":source.chmod(0o600)
+            # DEV WAM regression: ZIP/USB legacy backup frequently has
+            # mode 0644; format denial must run BEFORE SQLite custody gate.
+            if os.name!="nt":source.chmod(0o644)
             original=sha256(source.read_bytes()).hexdigest()
             reason=[]
             accepted=[]
@@ -164,12 +166,40 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
             self.assertEqual(accepted,[])
             self.win._core_sqlite_denied(reason[0])
             self.assertIn("Berkeley DB",self.win.status.text())
-            self.assertIn("UNSUPPORTED",self.win.status.text())
-            self.assertIn("NO CONVERSION",self.win.status.text())
+            self.assertIn("does NOT import",self.win.status.text())
+            self.assertIn("migratewallet",self.win.status.text())
+            self.assertIn("Linux",self.win.status.text())
+            self.assertIn("NO AUTOMATIC IMPORT OR CONVERSION",
+                          self.win.status.text())
             self.assertEqual(original,sha256(source.read_bytes()).hexdigest())
             self.assertFalse(self.win.dashboard.go_send.isEnabled())
             self.assertIsNone(self.win.session)
             self.assertIsNone(self.win._snapshot)
+
+    def test_k05_sqlite_0644_reports_owner_custody_fix_without_import(self):
+        if os.name=="nt":self.skipTest("POSIX file mode gate")
+        import tempfile
+        import sqlite3
+        from wam_regtest.managed_gui import _CoreSqliteInspectionWorker
+        with tempfile.TemporaryDirectory(prefix="k05-public-sqlite-") as d:
+            path=Path(d)/"public-fixture.dat"
+            db=sqlite3.connect(path)
+            try:
+                db.execute("CREATE TABLE public_dummy(x INT)")
+                db.commit()
+            finally:db.close()
+            path.chmod(0o644)
+            denied=[]
+            w=_CoreSqliteInspectionWorker(path)
+            w.denied.connect(denied.append)
+            with patch("wam_regtest.managed_gui.control",
+                       side_effect=AssertionError("K05_NEVER_CORE")):
+                w.run()
+            self.assertEqual(denied,["K05_SQLITE_PRIVATE_CUSTODY_REQUIRED"])
+            self.win._core_sqlite_denied(denied[0])
+            self.assertIn("0600",self.win.status.text())
+            self.assertIn("NO WALLET LOAD OR IMPORT",self.win.status.text())
+            self.assertIsNone(self.win.session)
 
     def test_k05_fusion_enc_and_bip39_text_never_become_core_dat(self):
         from wam_regtest.managed_gui import _CoreSqliteInspectionWorker
