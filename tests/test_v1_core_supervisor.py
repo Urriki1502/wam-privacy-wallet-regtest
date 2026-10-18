@@ -218,6 +218,10 @@ class SupervisorTransportResilience(unittest.TestCase):
         with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as foreign:
             if os.name=="nt":
                 foreign.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
+            else:
+                # A live competing listener that ALSO uses REUSEADDR must
+                # still be denied by the preflight's bind+listen gate.
+                foreign.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
             foreign.bind(("127.0.0.1",0))
             foreign.listen(1)
             occupied=foreign.getsockname()[1]
@@ -248,7 +252,11 @@ class SupervisorTransportResilience(unittest.TestCase):
         with _reserve_existing_rpc_port(occupied):
             with self.assertRaises(OSError):
                 probe=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-                try:probe.bind(("127.0.0.1",occupied))
+                try:
+                    if os.name!="nt":
+                        probe.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+                    probe.bind(("127.0.0.1",occupied))
+                    probe.listen(1)
                 finally:probe.close()
 
     def test_t08_invalid_ports_refused_before_socket_allocation(self):
