@@ -25,13 +25,28 @@ from wam_regtest import custody
 from wam_sp.keystore import Keyring
 
 
-def prove(core_dir,wsp_source,*,bip39=False):
+def prove(core_dir,wsp_source,*,bip39=False,
+          linux_manifest=None,linux_witness=None):
+    if sys.platform=="linux":
+        # Same independent root witness and developer Core trust policy as
+        # the existing real Linux xcb/headless wallet acceptance.
+        if type(linux_manifest) is not str or linux_witness is None:
+            raise ValueError("K03_LINUX_NATIVE_WITNESS_REQUIRED")
+        from wam_regtest.linux_runtime import configure
+        configure(core_dir,linux_manifest,linux_witness,authorized=True)
     with tempfile.TemporaryDirectory(prefix="wam-managed-spend-e2e-") as temporary:
         root=Path(temporary).resolve()/"wam-fusion-core-0123456789abcdef"
-        root.mkdir(mode=0o700)
+        if sys.platform=="win32":
+            from wam_regtest.custody import create_directory
+            create_directory(root)  # native NTFS DACL, not chmod emulation
+        else:
+            root.mkdir(mode=0o700)
         command=[sys.executable,"-m","wam_regtest.supervisor_cli","serve",
             "--root",str(root),"--core-dir",str(core_dir),
             "--confirm-regtest-managed-core"]
+        if sys.platform=="linux":
+            command.extend(["--linux-developer-manifest",linux_manifest,
+                            "--linux-root-witness",str(linux_witness)])
         server=subprocess.Popen(command,stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         stopped=False
@@ -292,12 +307,16 @@ def main():
     parser.add_argument("--wsp-source",type=Path,required=True)
     parser.add_argument("--bip39",action="store_true",
                         help="Only public deterministic BIP39 REGTEST test wallet")
+    parser.add_argument("--linux-developer-manifest")
+    parser.add_argument("--linux-root-witness",type=Path)
     parser.add_argument("--output",type=Path)
     args=parser.parse_args()
     from wam_regtest.desktop import shutdown_qt
     try:
         result=prove(args.core_dir.resolve(),args.wsp_source.resolve(),
-                     bip39=args.bip39)
+                     bip39=args.bip39,
+                     linux_manifest=args.linux_developer_manifest,
+                     linux_witness=args.linux_root_witness)
     finally:
         shutdown_qt()
     if args.output:
