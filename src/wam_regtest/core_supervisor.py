@@ -64,6 +64,32 @@ def _profile_read(root):
     return value
 
 
+
+def _scoped_ipc_tokens(root, *, allow_upgrade=False):
+    """Independent scanner/spend capability tokens, never a generic RPC key.
+
+    Explicit supervisor startup may upgrade a complete legacy REGTEST profile
+    once. Partial/uncertain token publication fails closed with no repair.
+    These owner-private files do not resist compromise of the same OS user.
+    """
+    names=("supervisor.scan.token","supervisor.spend.token")
+    present=tuple((root/name).exists() or (root/name).is_symlink()
+                  for name in names)
+    if present==(False,False) and allow_upgrade is True:
+        for name in names:
+            create_once(root,name,secrets.token_bytes(32))
+    elif present!=(True,True):
+        raise ManagedCoreError("MANAGED_IPC_SCOPE_UPGRADE_REQUIRED")
+    try:
+        scan=read_exact(root,names[0],length=32)
+        spend=read_exact(root,names[1],length=32)
+    except SupervisorStorageError:
+        raise ManagedCoreError("MANAGED_IPC_SCOPE_CUSTODY_DENIED") from None
+    if secrets.compare_digest(scan,spend):
+        raise ManagedCoreError("MANAGED_IPC_SCOPE_DUPLICATE_DENIED")
+    return scan,spend
+
+
 def _listener(port):
     sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     try:
@@ -118,6 +144,9 @@ class CoreSupervisor:
                         or profile["core_sha256"]!=self.receipt["wamd_sha256"]
                         or profile["cli_sha256"]!=self.receipt["wam_cli_sha256"]):
                     raise ManagedCoreError("MANAGED_CORE_VERSION_OR_CHAIN_MISMATCH")
+                # Authenticate the complete original chain/profile first.
+                # Separate IPC tokens do not touch wallet keys or Core files.
+                scan_token,spend_token=_scoped_ipc_tokens(self.root,allow_upgrade=True)
                 self.listener=_listener(profile["control_port"])
             except ManagedCoreError as error:
                 # A corrupt or partially written profile is NEVER treated as a
@@ -137,6 +166,10 @@ class CoreSupervisor:
                     _write_private_config(self.directory,rpc,p2p)
                 token=secrets.token_bytes(32)
                 create_once(self.root,"supervisor.token",token)
+                scan_token=secrets.token_bytes(32)
+                spend_token=secrets.token_bytes(32)
+                create_once(self.root,"supervisor.scan.token",scan_token)
+                create_once(self.root,"supervisor.spend.token",spend_token)
                 data={"schema":PROFILE_SCHEMA,"version":SUPPORTED_VERSION,
                       "network":"regtest","genesis":self.genesis,
                       "core_sha256":self.receipt["wamd_sha256"],
@@ -147,9 +180,14 @@ class CoreSupervisor:
                     (json.dumps(data,sort_keys=True,separators=(",",":"))+"\n").encode("ascii"))
                 profile=_profile_read(self.root)
             self.profile=profile
+            if (secrets.compare_digest(token,scan_token)
+                    or secrets.compare_digest(token,spend_token)
+                    or secrets.compare_digest(scan_token,spend_token)):
+                raise ManagedCoreError("MANAGED_IPC_SCOPE_DUPLICATE_DENIED")
             self._guard=ReplayGuard(token)
-            self._scan_secret=token
+            self._scan_secret=scan_token
             self._scan_seen=set()
+            self._spend_secret=spend_token
             self._spend_seen=set()
             # No token, password, datadir path or RPC port in public evidence.
         except BaseException:
@@ -330,11 +368,11 @@ class CoreSupervisor:
         supervisor never receives a secret key or signs a transaction.
         """
         from .managed_spend_protocol import decode_request,encode_reply
-        method,params,nonce=decode_request(raw,self._scan_secret,self._spend_seen)
+        method,params,nonce=decode_request(raw,self._spend_secret,self._spend_seen)
         if self.status()["state"]!="ready" or self.read is None:
             raise ManagedCoreError("MANAGED_SPEND_CORE_NOT_READY")
         result=self.read.write_owned_regtest(method,params,authorized=True)
-        return encode_reply(self._scan_secret,method,nonce,result)
+        return encode_reply(self._spend_secret,method,nonce,result)
 
     def _serve_client(self,conn):
         """Bound control/scan/spend frames; no failed GUI can stop Core."""
