@@ -14,6 +14,14 @@ def probe_owned_reads(process, core, directory, height, *, contention=False):
     with ManagedReadRpc(core, directory, authorized_readonly=True, binding=binding) as client:
         info=client.call('getnetworkinfo')
         rpc_profile={k:info[k] for k in ('version','subversion','protocolversion')}
+        # Independently qualified live Core must attest to a stable height,
+        # indexed hash, and best-tip identity through the actual owned HTTP
+        # socket. This is no synthetic RPC or GUI snapshot substitution.
+        stable=client.attest()
+        if (stable['blocks']!=height
+                or client.call('getblockhash',[height])!=stable['bestblockhash']
+                or client.call('getbestblockhash')!=stable['bestblockhash']):
+            raise ValueError('RPC_LIVE_TIP_ATTESTATION_DENIED')
         for _ in range(8):
             if client.call('getblockcount') != height:
                 raise ValueError('RPC_PROBE_HEIGHT_DENIED')
@@ -60,6 +68,7 @@ def probe_owned_reads(process, core, directory, height, *, contention=False):
         'node_busy_read_component':busy_proof,
         'idle_read_component':idle_proof,
         'repeated_authenticated_reads': 8, 'height': height,
+        't03_live_height_tip_parity_on_owned_core': True,
         'process_image_and_established_socket_before_auth': True,
         'wrong_process_endpoint_denied_before_any_http_bytes': True,
         'genuine_core_invalid_auth_denied': True, 'write_denied_before_wire': True,
