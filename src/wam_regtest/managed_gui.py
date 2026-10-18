@@ -175,6 +175,7 @@ class _CoreSqliteInspectionWorker(QThread):
                 "K05_FUSION_ENCRYPTED_BACKUP_SEPARATE",
                 "K05_MNEMONIC_TEXT_NOT_WALLET_DAT",
                 "K05_UNKNOWN_CORE_DAT_DENIED",
+                "K05_SQLITE_PRIVATE_CUSTODY_REQUIRED",
             }
             reason=(error.args[0] if type(error) is CoreSqliteImportError
                     and error.args and error.args[0] in categories
@@ -494,10 +495,12 @@ class ManagedCoreWindow(RegtestWalletWindow):
         # descriptor bytes, mnemonic content or exception text.
         messages={
             "K05_BDB_DEPRECATED_UNSUPPORTED":
-                "Legacy Berkeley DB (BDB) .dat detected as a candidate · "
-                "DEPRECATED / UNSUPPORTED · NO IMPORT / NO CONVERSION. "
-                "Keep the original backup safe and consult WAM Core DEV "
-                "for an approved migration procedure.",
+                "Fusion does NOT import or convert BDB wallets. "
+                "WAM Core v0.1.12 wamd/wam-cli on Windows x64 and macOS arm64 "
+                "can migrate one using migratewallet; Linux x64 v0.1.12 "
+                "node binaries cannot. Keep the original backup safe, "
+                "verify the actual Core binary and seek expert guidance. "
+                "NO AUTOMATIC IMPORT OR CONVERSION.",
             "K05_FUSION_ENCRYPTED_BACKUP_SEPARATE":
                 "Fusion .enc encrypted checkpoint is NOT a Core wallet.dat · "
                 "NO IMPORT. Use the original Fusion wallet recovery workflow.",
@@ -507,6 +510,11 @@ class ManagedCoreWindow(RegtestWalletWindow):
             "K05_UNKNOWN_CORE_DAT_DENIED":
                 "Unknown .dat format · may be old BDB, corrupted or foreign · "
                 "NO IMPORT / NO CONVERSION. Source preserved.",
+            "K05_SQLITE_PRIVATE_CUSTODY_REQUIRED":
+                "SQLite .dat inspection denied: file ownership or permissions "
+                "are not private. Keep the original safe; use a trustworthy "
+                "owner-only copy in a private directory (POSIX mode 0600) "
+                "and retry. NO WALLET LOAD OR IMPORT.",
         }
         self.status.setText(messages.get(
             _reason,
