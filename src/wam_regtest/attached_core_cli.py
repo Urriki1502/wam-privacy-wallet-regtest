@@ -18,12 +18,26 @@ def main(argv=None):
     ap.add_argument("--pid",required=True,type=int)
     ap.add_argument("--linux-developer-manifest")
     ap.add_argument("--linux-root-witness",type=Path)
+    ap.add_argument("--gui",action="store_true",
+                    help="Open the isolated read-only Core status window")
     ap.add_argument("--confirm-disposable-regtest-readonly-attach",action="store_true")
     args=ap.parse_args(argv)
     if not args.confirm_disposable_regtest_readonly_attach:
         print("ATTACH_EXPLICIT_CONSENT_REQUIRED",file=sys.stderr)
         return 2
     try:
+        if args.gui:
+            # Qt is optional. External-Core GUI has no wallet or stop action.
+            if sys.platform=="linux":
+                if (not args.linux_developer_manifest
+                        or args.linux_root_witness is None):
+                    raise ValueError("ATTACH_LINUX_ROOT_WITNESS_REQUIRED")
+                from .linux_runtime import configure
+                configure(args.core_dir,args.linux_developer_manifest,
+                          args.linux_root_witness,authorized=True)
+            from .attached_core_gui import launch_attached_readonly_gui
+            return launch_attached_readonly_gui(
+                args.core_dir,args.datadir,args.pid)
         if sys.platform=="linux":
             if (not args.linux_developer_manifest
                     or args.linux_root_witness is None):
