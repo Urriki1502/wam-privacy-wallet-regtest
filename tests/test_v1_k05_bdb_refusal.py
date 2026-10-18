@@ -1,6 +1,7 @@
 """K-05 P0 explicit BDB refusal; disposable PUBLIC headers only, no keys."""
 from hashlib import sha256
 import os
+import stat
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -41,6 +42,52 @@ class K05LegacyBdbRefusal(unittest.TestCase):
                     with self.assertRaises(CoreSqliteImportError):
                         inspect_sqlite_backup(source)
                     self.assertEqual(len(list(self.folder.iterdir())),1)
+
+    def test_dev_review_bdb_mode_0644_from_zip_usb_still_gets_bdb_guidance(self):
+        if os.name=="nt":
+            self.skipTest("POSIX owner-only permission ordering case")
+        for mode in (0o600,0o644):
+            for endian in ("little","big"):
+                source=self.folder/"wallet.dat"
+                data=bytearray(8192)
+                data[12:16]=(0x00053162).to_bytes(4,endian)
+                source.write_bytes(data)
+                source.chmod(mode)
+                before=sha256(source.read_bytes()).hexdigest()
+                with self.subTest(mode=oct(mode),endian=endian):
+                    with self.assertRaisesRegex(
+                            CoreSqliteImportError,
+                            "^K05_BDB_DEPRECATED_UNSUPPORTED$"):
+                        inspect_backup_format(source)
+                    self.assertEqual(sha256(source.read_bytes()).hexdigest(),
+                                     before)
+                    # BDB is NEVER allowed to enter real Core's K-04
+                    # quarantine even when format classification succeeded.
+                    with self.assertRaises(CoreSqliteImportError):
+                        inspect_sqlite_backup(source)
+                    self.assertEqual(stat.S_IMODE(source.stat().st_mode),mode)
+
+    def test_dev_review_sqlite_mode_0644_still_denied_with_clear_fix(self):
+        if os.name=="nt":
+            self.skipTest("POSIX custody case")
+        source=self.folder/"public-sqlite.dat"
+        sql=sqlite3.connect(source)
+        try:
+            sql.execute("CREATE TABLE public_fixture(id INT)")
+            sql.commit()
+        finally:sql.close()
+        source.chmod(0o644)
+        initial=sha256(source.read_bytes()).hexdigest()
+        with self.assertRaisesRegex(
+                CoreSqliteImportError,
+                "^K05_SQLITE_PRIVATE_CUSTODY_REQUIRED$"):
+            inspect_backup_format(source)
+        with self.assertRaisesRegex(
+                CoreSqliteImportError,
+                "^K04_SQLITE_SOURCE_CUSTODY_DENIED$"):
+            inspect_sqlite_backup(source)
+        self.assertEqual(sha256(source.read_bytes()).hexdigest(),initial)
+        self.assertEqual(stat.S_IMODE(source.stat().st_mode),0o644)
 
     def test_unrecognized_dat_never_approved_as_sqlite_or_bdb(self):
         source=self.folder/"unknown.dat"
