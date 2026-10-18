@@ -79,6 +79,10 @@ class StableRegtestDerivation(unittest.TestCase):
             ('genesis','f'*64),
             ('coin_type',0),
             ('coin_type',3),
+            ('coin_type',True),  # True == 1 in Python: explicitly reject.
+            ('account',True),
+            ('mainnet_allowed',0),  # False == 0, but typed receipt MUST deny.
+            ('version',True),
             ('spend_role',1),
             ('scan_role',0),
             ('account',0),
@@ -129,6 +133,10 @@ class StableRegtestDerivation(unittest.TestCase):
                 first.require_public_metadata(tampered,1)
             tampered=copy.deepcopy(first.public_metadata(1))
             tampered['derivation_contract']['coin_type']=0
+            with self.assertRaises(MnemonicWalletError):
+                first.require_public_metadata(tampered,1)
+            tampered=copy.deepcopy(first.public_metadata(1))
+            tampered['account']=True
             with self.assertRaises(MnemonicWalletError):
                 first.require_public_metadata(tampered,1)
             with self.assertRaises(MnemonicWalletError):
