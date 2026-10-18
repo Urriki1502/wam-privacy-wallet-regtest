@@ -185,11 +185,15 @@ def verify_restored_core_wallet(*, chain, genesis, wallet_info,
         identity=core_descriptor_identity(descriptor_listing)
         if type(identity) is not str or not re.fullmatch("[0-9a-f]{64}",identity):
             raise ValueError
-        return {"status":"K04_CORE_SQLITE_REGTEST_RESTORE_VERIFIED",
+        # A plain Python shape validator cannot itself attest a real
+        # daemon or unchanged source bytes. Only the independent E2E receipt
+        # may promote those properties AFTER observed Core RPC and re-hash.
+        return {"status":"K04_CORE_SQLITE_PUBLIC_METADATA_VALIDATED",
                 "format":"sqlite","chain":"regtest",
                 "descriptor_identity_sha256":identity,
                 "private_keys_enabled":wallet_info["private_keys_enabled"],
-                "source_unmodified":True,"synthetic_core":False,
+                "native_core_rpc_qualified":False,
+                "source_immutable_verified":False,
                 "wallet_spend_authorized":False,"mainnet_allowed":False}
     except (ValueError,KeyError,TypeError,WalletContractError):
         raise CoreSqliteImportError("K04_CORE_WALLET_UNVERIFIED") from None
