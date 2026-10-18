@@ -94,15 +94,50 @@ def _pinned_source(root: Path) -> None:
         raise RealWspScanError("WSP_SOURCE_PIN_DENIED") from None
     if sha != PINNED_WSP_COMMIT or not (root / "src/wam_sp/scanner.py").is_file():
         raise RealWspScanError("WSP_SOURCE_PIN_DENIED")
+    # K-07: matched pinned HEAD alone is NOT enough. Previously the source
+    # guard ignored untracked code, unlike the frozen guard's exact manifest.
+    # Both source and frozen must refuse any unexpected .py, including ignored
+    # files, before importing native WSP. Non-Python build caches are not
+    # executable source and may remain, but a symlink can NEVER substitute a
+    # pinned .py file.
     try:
         dirty = subprocess.run(
-            ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=no", "--", "src/wam_sp"],
-            capture_output=True, text=True, timeout=6, check=True,
+            ["git", "-C", str(root), "status", "--porcelain",
+             "--untracked-files=all", "--", "src/wam_sp"],
+            capture_output=True, timeout=6, check=True,
         ).stdout
+        # Refuse dirty tracked/untracked source immediately. A source tree
+        # already known to be altered must not proceed to the manifest step.
+        if dirty.strip():
+            raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED")
+        tree = subprocess.run(
+            ["git", "-C", str(root), "ls-tree", "-r", "--name-only",
+             "-z", "HEAD", "--", "src/wam_sp"],
+            capture_output=True, timeout=6, check=True,
+        ).stdout
+    except RealWspScanError:
+        raise
     except (OSError, subprocess.SubprocessError):
         raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED") from None
-    if dirty.strip():
-        raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED")
+    try:
+        base = root / "src" / "wam_sp"
+        if base.is_symlink() or not base.is_dir():
+            raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+        declared = {
+            Path(raw.decode("utf-8")).as_posix()
+            for raw in tree.split(b"\0") if raw.endswith(b".py")
+        }
+        actual = set()
+        for file in base.rglob("*.py"):
+            if file.is_symlink() or not file.is_file():
+                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+            actual.add(file.relative_to(root).as_posix())
+        if not 2 <= len(declared) <= 200 or declared != actual:
+            raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+    except RealWspScanError:
+        raise
+    except (OSError,ValueError,UnicodeError):
+        raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED") from None
     # Installed native WSP must point to exactly this checkout; never
     # silently use a PyPI package, a different editable path or a fake class.
     found = importlib.util.find_spec("wam_sp")
