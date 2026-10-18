@@ -1,0 +1,29 @@
+{
+  "actual_frozen_owned_core_crash_restart_verified": true,
+  "frozen_managed_process_roles_verified": true,
+  "frozen_qt_platform": "windows",
+  "status": "DOWNLOADED_WINDOWS_FROZEN_CONTENT_AND_RECEIPTS_VERIFIED",
+  "source_head_sha": "86bc912f9411990cbc22b0316c470e9407a669b6",
+  "checkout_sha": "d570211b48b2bfecfbf6b54da3960c2349d77208",
+  "run_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39078900380",
+  "artifact_id": 12118552689,
+  "artifact_outer_sha256": "7f438b4a489dca08e7a0a42d03aadb3aa403a66dfaefc6935720c4490b41174f",
+  "archive_sha256": "dbc48981226047bc5627f74cf19c38ec33e9cef7d164e682e620e49fe979462d",
+  "actual_bundle_files_verified": 354,
+  "independent_core_sha256": {
+    "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+    "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+  },
+  "amd64_pe_verified": true,
+  "actual_frozen_ci_receipts_inspected": true,
+  "native_dpi_scales_inspected": [
+    1.25,
+    1.5
+  ],
+  "local_windows_execution": false,
+  "physical_acceptance": "PENDING_OPERATOR",
+  "mining_gui_frozen_ci_receipt_verified": true,
+  "full_persistent_managed_startup_qualified": false,
+  "full_managed_wallet_q05_qualified": false,
+  "mainnet_allowed": false
+}

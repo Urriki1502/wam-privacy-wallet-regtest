@@ -1,0 +1,51 @@
+{
+  "actual_frozen_owned_core_crash_restart_verified": true,
+  "frozen_managed_process_roles_verified": true,
+  "frozen_qt_platform": "offscreen",
+  "status": "DOWNLOADED_MACOS_FROZEN_BYTES_AND_RECEIPT_VERIFIED",
+  "source_head_sha": "86bc912f9411990cbc22b0316c470e9407a669b6",
+  "checkout_sha": "d570211b48b2bfecfbf6b54da3960c2349d77208",
+  "artifact_id": 12117728245,
+  "artifact_outer_sha256": "c6b6507dff9d247b525c1e35a91e16d9a8bd6347f07ca64179d3b5d724773eeb",
+  "files": {
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip": {
+      "sha256": "872c1cf15e5a2d1202ea99fc499784f52104a79d42e5bc5f18be2e05326caaf4",
+      "size_bytes": 56516637
+    },
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg": {
+      "sha256": "425137589ecde6886e075ed94f9eac262d4dfd1c0420ed985ab14da9f981a34e",
+      "size_bytes": 64587940
+    }
+  },
+  "original_core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "arm64_macho_verified": true,
+  "native_source_inventory_matches_local_exact_head": true,
+  "frozen_stale_payment_proof": {
+    "cross_mac_anchor_migration_allowed": false,
+    "fresh_chain_rescanned_before_balance": true,
+    "mainnet_allowed": false,
+    "native_qt_recovered_receive_balance": true,
+    "new_testing_epoch_funded": true,
+    "observed_height": 103,
+    "old_reservations_retained": true,
+    "operational_snapshot_http": {
+      "cli_and_rehash_forbidden": true,
+      "repeated_reads": 3,
+      "synthetic_rpc": false,
+      "transport": "owned-http"
+    },
+    "real_core_rpc": true,
+    "same_test_keys_recovered": true,
+    "stale_before_native_signature_denied": true,
+    "stale_before_real_broadcast_denied": true,
+    "stale_writer_same_wallet_other_vault_directory": true,
+    "stale_writer_signed_reservation_retained": true,
+    "status": "REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS",
+    "synthetic_rpc": false
+  },
+  "full_managed_wallet_q05_qualified": false,
+  "physical_acceptance": "PENDING_OPERATOR"
+}

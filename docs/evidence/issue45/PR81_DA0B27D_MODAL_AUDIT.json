@@ -1,0 +1,49 @@
+{
+  "code_under_test_sha": "da0b27d341dc9b24317b5687ec5fb5a09c801d19",
+  "tests_run": 3,
+  "failures": 3,
+  "errors": 0,
+  "expected_safe_behavior_pass": false,
+  "native_qt_shutdown_returned": true,
+  "evidence_layer": "native Qt UNIT with explicit public/stub authority; NOT Core E2E or frozen proof",
+  "real_keys_or_anchors_opened": false,
+  "test_ids": [
+    "test_modal_regression.ManagedFusionWidgetContracts.test_password_dialog_cannot_start_background_worker_or_allow_window_close",
+    "test_modal_regression.ManagedFusionWidgetContracts.test_stop_confirmation_suspends_background_sync_and_always_restores_guard",
+    "spend_modal_repro.SpendModalAuthority.test_authority_lost_during_nested_password_loop_cannot_start_spend_worker"
+  ],
+  "recorded_utc": "2026-10-18T08:11:30.615197+00:00",
+  "code_under_test_pr": 81,
+  "source_gui_sha256": "e7cba6ed79af87724ae028db088103188ff8dd2340bc32cd0f5d405522f5bb08",
+  "all_current_pr81_ci_checks_success": true,
+  "additional_authority_loss_subcases": {
+    "verify": "FAIL_WORKER_CREATED",
+    "view": "FAIL_WORKER_CREATED",
+    "create": "FAIL_WORKER_CREATED",
+    "open_spend": "FAIL_WORKER_CREATED"
+  },
+  "additional_native_process_exit_code": 1,
+  "current_pr67_modal_controls": {
+    "source_sha": "86bc912f9411990cbc22b0316c470e9407a669b6",
+    "tests_passed": 3,
+    "exit_code": 0
+  },
+  "proposal": {
+    "base_sha": "da0b27d341dc9b24317b5687ec5fb5a09c801d19",
+    "base_gui_sha256": "e7cba6ed79af87724ae028db088103188ff8dd2340bc32cd0f5d405522f5bb08",
+    "candidate_gui_sha256": "408bf66d6e816d24f615fd837661ae29508da268d4392ebe34576c6be2a2423c",
+    "proposal_patch_sha256": "fe2f3ba22bef45914ddfc6cc70eb0781d05fed1831fdf5569bc70c1ea5784c86",
+    "applied_to_git_branch": false,
+    "review_candidate_only": true,
+    "native_core_or_frozen_qualified": false,
+    "exact_base_patch_apply_check": true,
+    "native_qt_tests_passed": 4,
+    "authority_loss_subcases_passed": 4,
+    "native_process_exit_code": 0,
+    "real_core_e2e": "PENDING_NOT_EXECUTED",
+    "all_three_os_native_frozen_qualification": "PENDING_NOT_EXECUTED"
+  },
+  "security_claim_limit": "GUI worker creation after authority loss, not demonstrated unauthorized signature/broadcast or native custody bypass",
+  "secrets_logged": false,
+  "mainnet_allowed": false
+}

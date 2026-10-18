@@ -1,0 +1,12 @@
+{
+  "source_head_sha": "86bc912f9411990cbc22b0316c470e9407a669b6",
+  "artifact_id": 12117728245,
+  "actual_executable_sha256": "36dc0a3fd9fcd2b52ef82c2742a8a7c937fcf7e9511c777b2c57e6ac022eb8ad",
+  "actual_bundle_check_exit_code": 0,
+  "actual_original_core_wsp_resource_preflight": true,
+  "earlier_cocoa_full_wallet_run": "INTERRUPTED_NO_FINAL_RECEIPT_OR_EXIT_STATUS",
+  "earlier_exact_bundle_process_count_after_interruption": 0,
+  "local_full_cocoa_wallet_pass_claimed": false,
+  "physical_acceptance": "PENDING_OPERATOR",
+  "mainnet_allowed": false
+}

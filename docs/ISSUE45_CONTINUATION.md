@@ -1,3 +1,53 @@
+# Resume checkpoint — exact86bc912 qualified; independent stack modal regression
+
+18 October2026UTC: correct official checkout on existing Draft67 branch
+feature/issue45-t05-gui-continuity-q05-20261017, initially clean86bc912.
+[Current86bc912 exact-code matrix and actual packages](PR67_86BC912_REQUALIFICATION.md)
+now has OWN all10 exact-head CI SUCCESS and all4 downloaded packages verified.
+CI merge d570211b48b2bfecfbf6b54da3960c2349d77208 parents66/71a1e7b +67/86bc912;
+merge tree equals source tree. All338 tracked native source file inventories
+reproduced, including independent Windows CRLF conversion; Core/WSP pins intact.
+Mac app/DMG, Win354 files/DPI125/150, Linux193/454 files/25safe links verified.
+This new review/checkpoint commit is docs/data only; do not relabel its CI or
+packages as86bc912. Runtime remains c21bbd1, with source/native/frozen/physical
+separated. Downloaded Mac --check-bundle exit0. Previous full Cocoa invocation
+was interrupted, no final receipt/exit => NOT local Cocoa PASS; no process from
+its exact bundle remained. Do not adopt/retry/repair interrupted test fixtures.
+
+Live Issue45 body SHA2562968296fd68712ee0016079d87efd8935b1636ff0639a0e6e8c7c08c8f424f36,
+OPEN. New18Oct02:18UTC owner comment: one numbered T/K/F/R ID per named Draft,
+T01→T09 thenK thenF thenR; avoid duplicate work. Independent72/a1b18cc,
+73/a1522f0,74/1d715c9,75/914607b,76/8646e92,77/e5d309d,78/b964bf4,
+79/ef32baa,80/fad1216,81/da0b27d exist. Do not create their counterparts or
+modify/rebase/merge independent branches. PR67 remains the existing T05 slice.
+Current81 had all10 CI SUCCESS;74 developer-Core job SKIPPED, not all-gate PASS.
+
+[Confirmed native Qt review and concrete offline patch](PR81_MODAL_REVIEW_20261018.md):
+81 exactda0b27d lacks67 modal exclusion. Three native behavior tests FAIL; all4
+Verify/View/Create/Open-Spend authority-loss cases also FAIL: worker created
+after GUI denied state inside nested dialog. No real key, Core, anchor or
+signature/broadcast bypass was exercised/claimed. Original67 modal controls
+3PASS/exit0. Review-only patch reuses known guard and rechecks state;4native
+methods/7behavior cases PASS, exit0; exact-base gitapply--check PASS. Patch was
+NOT applied to any independent branch. Its genuine-Core/all3OS/frozen acceptance
+remains PENDING. Public evidence/reproducer/patch checked in, no runtime change.
+Next actor is independent stack maintainer, coordinated correction in the
+EXISTING appropriate named T PR, then exact-head native/Core/frozen requalification.
+Do not repeat these tests unchanged or move into K/F/R ahead of owner order.
+
+Full integrated T/Q/V1 and physical gates remain PENDING. No automated merge,
+force-push, main/RC1/upstream/owner-wallet/anchor/miner changes; v012 candidate-only.
+Core Update Manager P1 deferred. REGTEST/disposable only. No anchor reset or
+signed/uncertain reservation release or automatic signing/broadcast retry.
+Engineering lease was freshly acquired PTY8198 after interrupted old PTYs became
+unknown; do not infer future ownership. Separate new log:
+outputs/pr67-resume-20261018T080012/RESUME_LOG.md; previous interrupted log/output
+outputs/pr67-resume-20261018T030605 preserved. No actual quota failure or credit
+reset/purchase assumption. One5h automation ACTIVE; next nominal20:00VN18Oct2026
+(13:00UTC), verify live; no duplicate or retry schedule created.
+
+# Historical checkpoint — preserved evidence, not current work/lease orders
+
 # Resume checkpoint — c21bbd1 frozen-owned Core fault qualified, V1/Q05 pending
 
 Tested runtime c21bbd1b06f5db9bd40375e8dc43ba19ed7ca150 has ALL10 exact-head

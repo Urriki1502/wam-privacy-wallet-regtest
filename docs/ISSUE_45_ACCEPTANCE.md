@@ -11,6 +11,17 @@ No aggregate95% or inherited RC1 PASS is asserted. Missing/SKIP is PENDING;
 changed tested source/OS/Core/WSP invalidates prior PASS to STALE.
 `acceptance_evidence.py` tests these rules without treating JSON as a trust oracle.
 
+## 18 October2026 exact-head requalification and independent stack finding
+
+[Exact86bc912 source/native/frozen component matrix](PR67_86BC912_REQUALIFICATION.md):
+own all10 CI SUCCESS, actual four packages/source inventories/Core pairs verified.
+Downloaded Mac resource preflight exit0; interrupted local Cocoa run not PASS.
+[Independent latest-stack modal regression](PR81_MODAL_REVIEW_20261018.md): exact
+PR81 da0b27d all-CI-green still fails native Qt supplemental safety tests. Offline
+single-file review patch is UNIT-tested only, not applied or Core/frozen qualified.
+No integrated task/Q promotion. Follow owner's new one-ID-per-Draft T-order;
+preserve independent branches and coordinate the correction in their existing PR.
+
 ## Current PR67 frozen-owned Core fault component evidence
 
 [c21bbd1 matrix/artifacts/receipts](PR67_FROZEN_CORE_CRASH_ACCEPTANCE.md): ALL10 exact-head CI SUCCESS. Actual final executable-owned Core image-checked kill/restart preserves chain/tip, with explicit fault consent, inner frozen guard and six pre-state refusals on Mac/Windows/Linux desktop. All integrated task/Q and physical gates remain PENDING. No acceptance-registry promotion.

@@ -1,3 +1,5 @@
+Latest PR67 exact-head component evidence: [86bc912 packages and limits](docs/PR67_86BC912_REQUALIFICATION.md); [independent stack modal finding](docs/PR81_MODAL_REVIEW_20261018.md). Integrated V1 remains PENDING.
+
 Latest completed Issue45 component evidence: [PR67 frozen-owned Core crash qualification](docs/PR67_FROZEN_CORE_CRASH_ACCEPTANCE.md) (tested codec21bbd1; all10 exact-head checks PASS; full V1/Q05 remains pending).
 
 # WAM Privacy Wallet — Real REGTEST candidates
