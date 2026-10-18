@@ -66,7 +66,8 @@ def _native_source_open(source):
         # passed to independently qualified Core's supported restore RPC.
         header=os.read(fd,100)
         if (len(header)!=100 or not header.startswith(SQLITE_MAGIC)
-                or header[20] not in (1,2) or header[21:24]!=b"\x40\x20\x20"
+                or header[18] not in (1,2) or header[19] not in (1,2)
+                or header[21:24]!=b"\x40\x20\x20"
                 or int.from_bytes(header[16:18],"big") not in
                     (512,1024,2048,4096,8192,16384,32768,1)):
             raise CoreSqliteImportError("K04_NOT_SQLITE_CORE_BACKUP")
