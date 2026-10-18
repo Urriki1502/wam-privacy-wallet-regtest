@@ -123,7 +123,15 @@ def _reserve_existing_rpc_port(port):
         candidate=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         if sys.platform=="win32":
             candidate.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
+        else:
+            # Clean Core shutdown leaves accepted TCP connections in
+            # TIME_WAIT. Do NOT mistake those as a competing listener.
+            # SO_REUSEADDR + listen() permits normal restart but still
+            # refuses an active server on the exact same loopback port.
+            # Never enable SO_REUSEPORT or change the Core RPC exposure.
+            candidate.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
         candidate.bind(("127.0.0.1",port))
+        candidate.listen(1)
         acquired=True
     except OSError:
         raise ManagedCoreError("MANAGED_RPC_PORT_OCCUPIED") from None
