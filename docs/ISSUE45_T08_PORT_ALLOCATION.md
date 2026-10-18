@@ -17,7 +17,7 @@ T-08, it launched `wamd` while that existing port might already be held
 by an unrelated process, relying on later readiness failure.
 
 T-08 now tests the previously authenticated private configured RPC port with
-a native, exclusive **127.0.0.1 TCP bind** immediately before `Popen`.
+a native **127.0.0.1 TCP bind + listen** immediately before `Popen`. Windows uses `SO_EXCLUSIVEADDRUSE`; POSIX uses `SO_REUSEADDR` solely to tolerate harmless `TIME_WAIT` after a clean Core shutdown, while the subsequent `listen` still refuses a competing active listener (no `SO_REUSEPORT`).
 If another process owns the port, it refuses **before process spawn** with
 the fixed, redacted code `MANAGED_RPC_PORT_OCCUPIED`. It does not change
 `wam.conf`, chain files, wallet, token, P2P policy, owner settings, or
