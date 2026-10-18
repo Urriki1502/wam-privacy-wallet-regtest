@@ -80,7 +80,7 @@ def prove(core_dir,wsp_source):
             nonce=secrets.token_hex(16)
             bad_control=(json.dumps({"protocol":PROTOCOL,"op":"shutdown",
                 "nonce":nonce,"proof":request_proof(scan_token,"shutdown",nonce)},
-                sort_keys=True,separators=(",",":"))+"\\n").encode("ascii")
+                sort_keys=True,separators=(",",":"))+"\n").encode("ascii")
             invalid_frames=(
                 spend_request(scan_token,"gettxout",["a"*64,0,True],
                               secrets.token_hex(16)),
@@ -97,7 +97,7 @@ def prove(core_dir,wsp_source):
                         chunk=conn.recv(min(1024-len(received),256))
                         if not chunk:break
                         received.extend(chunk)
-                        if b"\\n" in chunk:break
+                        if b"\n" in chunk:break
                 refusal=json.loads(bytes(received).decode("ascii"))
                 assert refusal["state"]=="error" and refusal["mainnet_allowed"] is False
             assert control(root,"status",timeout=10)==before_cross_scope
