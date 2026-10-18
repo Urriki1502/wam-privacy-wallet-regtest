@@ -146,6 +146,10 @@ try:
         assert k04['real_core_restorewallet_rpc'] is True
         assert k04['source_immutable'] is True
         assert k04['duplicate_descriptor_identity_denied'] is True
+        assert all(k04[key] is True for key in (
+            'k06_genuine_core_descriptor_owner_isolation',
+            'k06_core_duplicate_owner_refused',
+            'k06_core_keys_not_reinterpreted_as_wsp'))
         assert k04['mainnet_allowed'] is False and k04['synthetic_rpc'] is False
         record['k04_core_sqlite_quarantine']={
             'status':k04['status'],
