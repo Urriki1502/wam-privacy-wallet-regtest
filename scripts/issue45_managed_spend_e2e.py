@@ -103,6 +103,16 @@ def prove(core_dir,wsp_source):
             session=ManagedWalletSession.reopen_spending(
                 root,core_dir,wsp_source,password,authorized=True)
             initial=session.snapshot()
+            # T-01: genuine WSP Scanner/Qt-backed wallet observations reuse
+            # authenticated HTTP over the existing Core supervisor. After the
+            # one-time signed Core intake, block legacy CLI and Core/CLI hash
+            # entrypoints in THIS interpreter (not in the real Core process).
+            # No mocked RPC result, wallet balance or blockchain is supplied.
+            from wam_regtest.http_session_probe import forbid_core_cli_reads
+            with forbid_core_cli_reads():
+                repeat_one=session.snapshot()
+                repeat_two=session.snapshot()
+            assert repeat_one==initial and repeat_two==initial
             assert initial.confirmed_atoms==funded_atoms
             assert initial.receive_code==original_code
             assert initial.history and initial.history[0].txid==funded_txid
@@ -181,6 +191,7 @@ def prove(core_dir,wsp_source):
                     "genuine_wsp_psbtv2_native_signature":True,
                     "actual_native_fusion_qt_send_sign_broadcast":True,
                     "send_via_authenticated_owned_http":True,
+                    "t01_managed_reads_without_cli_or_binary_rehash":True,
                     "signed_reservation_anchored_before_crypto":True,
                     "broadcast_reservation_persisted_before_rpc":True,
                     "exact_original_identity_after_close_reopen":True,
