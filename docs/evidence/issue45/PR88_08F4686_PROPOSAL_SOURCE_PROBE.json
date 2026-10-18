@@ -1,0 +1,62 @@
+{
+  "source_head_sha": "REVIEW_ONLY_PATCH_OF_08f46867aefe2572c4809a23e92de01cbf6ac439",
+  "actual_guard_file_sha256": "50ecd3c1e080c4bbe4256200d809aece38a46ee59fc6f9d1604f7663c4d06ff5",
+  "wsp_pin": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "evidence_layer": "ACTUAL_SOURCE_GUARD_EXECUTION_NOT_CORE_E2E",
+  "rows": [
+    {
+      "case": "clean_pinned_checkout",
+      "accepted": true,
+      "safe_error": null,
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "untracked_python_module",
+      "accepted": false,
+      "safe_error": "WSP_SOURCE_WORKTREE_DENIED",
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "untracked_native_extension",
+      "accepted": false,
+      "safe_error": "WSP_SOURCE_WORKTREE_DENIED",
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "ignored_native_extension",
+      "accepted": false,
+      "safe_error": "WSP_SOURCE_CLOSURE_DENIED",
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "modified_tracked_scanner_assume-unchanged",
+      "accepted": false,
+      "safe_error": "WSP_SOURCE_HASH_DENIED",
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "modified_tracked_scanner_skip-worktree",
+      "accepted": false,
+      "safe_error": "WSP_SOURCE_HASH_DENIED",
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "restored_clean_pinned_checkout",
+      "accepted": true,
+      "safe_error": null,
+      "git_status_no_untracked_empty": true,
+      "wam_sp_import_executed": false
+    }
+  ],
+  "disposable_source_clone_only": true,
+  "original_dependency_changed": false,
+  "core_or_keys_or_anchors_used": false,
+  "synthetic_core_acceptance": false,
+  "mainnet_allowed": false
+}

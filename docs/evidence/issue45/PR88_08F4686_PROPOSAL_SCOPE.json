@@ -1,0 +1,10 @@
+{
+  "base_sha": "08f46867aefe2572c4809a23e92de01cbf6ac439",
+  "base_guard_sha256": "d6c011d3875d305cec7304a923760491e8a6838d792f4348c8c04cedf9bb818b",
+  "candidate_guard_sha256": "50ecd3c1e080c4bbe4256200d809aece38a46ee59fc6f9d1604f7663c4d06ff5",
+  "patch_sha256": "e3506bbfff9639582f1a6e42f20293c86d4daefeb023251e78be53e6f8930c7f",
+  "independent_branch_modified": false,
+  "candidate_only": true,
+  "bytecode_or_import_hook_integrity_qualified": false,
+  "native_core_or_frozen_candidate_qualified": false
+}

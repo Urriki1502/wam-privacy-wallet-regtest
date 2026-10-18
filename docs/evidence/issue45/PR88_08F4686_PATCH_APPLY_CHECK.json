@@ -1,0 +1,9 @@
+{
+  "base_sha": "08f46867aefe2572c4809a23e92de01cbf6ac439",
+  "git_apply_check_exit_code": 0,
+  "git_apply_exit_code": 0,
+  "actual_applied_bytes_equal_candidate": true,
+  "guard_sha256": "50ecd3c1e080c4bbe4256200d809aece38a46ee59fc6f9d1604f7663c4d06ff5",
+  "test_contracts_equal_existing67": true,
+  "no_repository_runtime_or_independent_branch_changes": true
+}

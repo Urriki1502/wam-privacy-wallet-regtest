@@ -1,0 +1,27 @@
+{
+  "tested_artifact_source_sha": "791b58ddbec80e9d595fffd6d94f8b372213659b",
+  "artifact_id": 12130806102,
+  "actual_executable_sha256": "65233367bde9f8a96ea7f219babe6e5911b4e2e7d5b1fdcc8647d501c62a223d",
+  "evidence_layer": "ACTUAL_FROZEN_PREFLIGHT_NEGATIVE_NOT_CORE_E2E",
+  "results": [
+    {
+      "case": "unaltered_copy",
+      "exit_code": 0,
+      "public_status": "MACOS_ARM64_SELF_CONTAINED_CORE_WSP_BUNDLE_PASS"
+    },
+    {
+      "case": "extra_source_python_module",
+      "exit_code": 2,
+      "public_status": "WAM_REGTEST_BUNDLE_LAUNCH_DENIED:WSP_FROZEN_SOURCE_CLOSURE_DENIED"
+    },
+    {
+      "case": "restored_copy",
+      "exit_code": 0,
+      "public_status": "MACOS_ARM64_SELF_CONTAINED_CORE_WSP_BUNDLE_PASS"
+    }
+  ],
+  "mutations_on_separate_copy_only": true,
+  "original_application_changed": false,
+  "core_or_keychain_started": false,
+  "mainnet_allowed": false
+}

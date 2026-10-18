@@ -1,3 +1,52 @@
+# Resume checkpoint — independent K07 source-integrity findings, release HOLD
+
+18 October2026UTC scheduled13:00 slot, actual T0 13:02:15Z. Existing Draft67
+branch only, initially clean791b58ddbec80e9d595fffd6d94f8b372213659b.
+Own engineering lease freshly acquired/held (PTY48359); future sessions must
+acquire again, never infer ownership from this text. Separate current log:
+outputs/pr67-resume-20261018T130215/RESUME_LOG.md.
+
+Live Issue45 OPEN, body SHA256
+e175f0de8a68e70283abb1955d5a1318a6f997767895bf632c5d87275c0b59d8.
+New independent K01–K07 PR82–88 own their implementations. Preserve them; no
+checkout/edit/rebase/merge/force-push/duplicate PR. PR87 advanced to b32b8db;
+PR88/08f46867aefe2572c4809a23e92de01cbf6ac439 owns the source-closure fix.
+[Exact-head review, reproduction and concrete isolated proposal](PR88_SOURCE_GUARD_REVIEW_20261018.md).
+Actual PR88 guard admits five adversarial cases: modified scanner hidden with
+either Git index flag, ignored native extension, source hardlink, symlinked
+source parent. Ordinary added Python/native files are correctly denied.
+Actual native Mac/Git guard tests only; no WSP payload import, Core, keys or
+anchors used, no unauthorized signing/funds-loss claim. Review-only patch
+passes11 behavioral cases plus12 existing exact88 contracts; actual patch
+application/check/bytes verified. Not integrated or native3OS/Core/frozen
+qualified; bytecode/import-hook/host/race limitations remain explicit.
+Mac88 CI39130521611 FAILS before E2E: old two-result dirty-source mock exhausts
+because new ls-tree runs before rejection (358tests,1error,34skips). Proposal
+preserves the early refusal. No test or security gate weakened. Existing88
+maintainer is next actor; do not implement duplicate K07 here. Earlier modal
+review also remains pending coordinated integration into the independent stack.
+
+791b58d's OWN10/10SUCCESS, four downloaded verified packages and full local
+actual Mac Cocoa/Core/WSP wallet/security/fresh-chain/reorg1/12/100 PASS were
+completed in previous08:00 session. Source/native/frozen/physical identities
+remain separate; do not redo or relabel unchanged historical evidence. Current
+session additionally ran actual copied791Mac bundle preflight: clean exit0,
+extra source.py denied exit2, restored exit0. No Core/Keychain launch; not88
+frozen qualification or complete parity. This checkpoint/public-data commit
+has its own CI identity, pending until actual checks complete.
+
+REGTEST/disposable only, official pinnedv011 (Linux separately reviewed
+developer build), pinned nativeWSP; v012candidate-only. No main/RC1/upstream/
+owner wallet/anchors/miners modified. No merge, uncertain reservation release,
+anchor repair or automatic signing/broadcast retry. Core Update Manager and
+BDB conversion P1 deferred. Full integratedT/K/Q/V1 HOLD, physical acceptance
+PENDING_OPERATOR; no physical Linux host currently authorized. No actual quota
+failure observed or reset/purchase assumption. Single5h automation ACTIVE,
+next nominal19Oct01:00Vietnam (18Oct18:00UTC), current dispatcher01:03:16VN.
+Verify live; do not create duplicate schedules or recurring retries.
+
+# Historical checkpoints — exact evidence preserved, not current lease orders
+
 # Resume checkpoint — exact86bc912 qualified; independent stack modal regression
 
 18 October2026UTC: correct official checkout on existing Draft67 branch
