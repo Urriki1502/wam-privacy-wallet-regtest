@@ -225,8 +225,13 @@ class RegtestWalletWindow(QMainWindow):
         self.snapshot_failed.emit(reason)
 
     def apply_snapshot(self, snap: WalletReadSnapshot):
+        # Original encrypted WSP accounts are allowed ONLY for the explicit
+        # native-managed-spending session. The public-demo and readonly paths
+        # retain their original, strict demo_account_only boundary.
+        from .managed_spend_session import ManagedWalletSession
+        real_managed=type(self.session) is ManagedWalletSession
         if (type(snap) is not WalletReadSnapshot or snap.chain != "regtest"
-                or not snap.demo_account_only or snap.synthetic_rpc
+                or snap.demo_account_only is real_managed or snap.synthetic_rpc
                 or snap.signer_allowed is not (self.session is not None)
                 or snap.broadcast_allowed is not (self.session is not None)
                 or snap.mainnet_allowed):
