@@ -106,6 +106,26 @@ jobs:
           assert proof["synthetic_rpc"] is False
           assert proof["unattended_broadcast_retry"] is False
           PY
+      - name: K-04 genuine Core-native SQLite .dat backup/restore in disposable quarantine
+        run: |
+          python scripts/issue45_k04_sqlite_e2e.py --core-dir core --confirm-disposable-regtest --output k04-real-core-sqlite-evidence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("k04-real-core-sqlite-evidence.json").read_text())
+          assert p["status"]=="K04_REAL_CORE_SQLITE_RESTORE_QUARANTINE_PASS"
+          for name in ("sqlite_header_and_bounded_copy_verified",
+                       "source_immutable","real_core_restorewallet_rpc",
+                       "source_and_restored_descriptors_identical",
+                       "duplicate_descriptor_identity_denied",
+                       "wallet_loaded_only_inside_disposable_quarantine",
+                       "original_managed_core_wallet_unmodified"):
+              assert p[name] is True,name
+          assert p["network"]=="regtest"
+          assert p["synthetic_rpc"] is False
+          assert p["wallet_spend_authorized"] is False if "wallet_spend_authorized" in p else p["fusion_signer_authorized"] is False
+          assert p["mainnet_allowed"] is False
+          PY
       - name: Independently evaluate wallet security contracts
         run: python scripts/audit_wallet_security.py --root . --core core --output independent-wallet-security.json
       - name: Inspect signed node dynamic library requirements (real ARM64 bytes)
