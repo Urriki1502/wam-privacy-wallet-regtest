@@ -49,7 +49,12 @@ def prove(core_dir,wsp_source):
             else:
                 raise AssertionError("MANAGED_SPEND_SUPERVISOR_NOT_READY")
             result=control(root,"start",authorized=True,timeout=15)
-            assert result["state"]=="ready" and result["height"]==0
+            # A brand-new REGTEST chain at height 0 may report SYNCING
+            # until the disposable 101 blocks exist. Core must nevertheless
+            # be the exact owned process, never a foreign/attached daemon.
+            assert (result["state"] in ("ready","syncing")
+                    and result["core_process_owned"] is True
+                    and result["height"]==0)
             _,cli,receipt=verified_core_paths(core_dir)
             directory=root/"chain"
             mine=public_regtest_mining_address(wsp_source)
