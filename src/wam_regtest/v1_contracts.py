@@ -75,7 +75,16 @@ def derivation_profile_receipt(profile, account=0):
 def require_derivation_profile_receipt(value, *, account=0):
     """Never silently fall back to another coin type, role or account index."""
     expected=derivation_profile_receipt(BIP39_PROFILE,account)
-    if type(value) is not dict or value!=expected:
+    if (type(value) is not dict or set(value)!=set(expected)
+            or any(type(value[key]) is not type(expected[key])
+                   for key in expected)
+            or type(value.get('paths')) is not dict
+            or set(value['paths'])!=set(expected['paths'])
+            or any(type(value['paths'][role]) is not str
+                   for role in expected['paths'])
+            or value!=expected):
+        # Python considers True == 1 and False == 0. A derived wallet
+        # identity MUST NOT accept boolean-as-integer/account/coin aliases.
         raise WalletContractError('V1_DERIVATION_RECEIPT_DENIED')
     return expected
 
