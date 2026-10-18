@@ -122,16 +122,7 @@ class ReadRpcContracts(unittest.TestCase):
                 {**correct,'blocks':True},
                 {**correct,'chain':'main'}):
             with self.subTest(invalid=invalid):
-                with self.assertRaisesRegex(RpcError,'^RPC_RESULT_OR_NETWORK_DENIED
-        import threading
-        client=object.__new__(ManagedReadRpc)
-        client._lock=threading.RLock();client._closed=False;client._auth=None;client._connection=None
-        client._request=lambda method,params: {'chain':'regtest','blocks':0} if method=='getblockchaininfo' else '0'*64
-        with self.assertRaisesRegex(RpcError,'^RPC_GENESIS_DENIED$'):client.attest()
-        self.assertTrue(client._closed)
-        del client._request
-        with self.assertRaisesRegex(RpcError,'^RPC_SESSION_CLOSED$'):client.call('getblockcount')
-):
+                with self.assertRaisesRegex(RpcError,'^RPC_RESULT_OR_NETWORK_DENIED$'):
                     _reply(frame(invalid),1,'getblockchaininfo')
 
     def test_attestation_refuses_tip_drift_before_releasing_chain_info(self):
@@ -171,22 +162,11 @@ class ReadRpcContracts(unittest.TestCase):
             with self.subTest(method=method):
                 stale={**responses,(method,params):'b'*64}
                 rpc=client_for(stale)
-                with self.assertRaisesRegex(RpcError,'^RPC_TIP_IDENTITY_DENIED
-        import threading
-        client=object.__new__(ManagedReadRpc)
-        client._lock=threading.RLock();client._closed=False;client._auth=None;client._connection=None
-        client._request=lambda method,params: {'chain':'regtest','blocks':0} if method=='getblockchaininfo' else '0'*64
-        with self.assertRaisesRegex(RpcError,'^RPC_GENESIS_DENIED$'):client.attest()
-        self.assertTrue(client._closed)
-        del client._request
-        with self.assertRaisesRegex(RpcError,'^RPC_SESSION_CLOSED$'):client.call('getblockcount')
-):
+                with self.assertRaisesRegex(RpcError,'^RPC_TIP_IDENTITY_DENIED$'):
                     rpc.attest()
                 self.assertTrue(rpc._closed)
                 self.assertIsNone(rpc._auth)
                 rpc._connection.close.assert_called()
-                # Never return a verified chain receipt from an inconsistent
-                # native REGTEST Core observation.
 
     def test_wrong_genesis_and_closed_session_are_quarantined(self):
         import threading
