@@ -70,6 +70,10 @@ class K09LedgerForensicContracts(unittest.TestCase):
         vault._storage=Mock()
         vault._storage.read.side_effect=lambda directory,name: encrypted_by_generation[
             int(name.split("-")[1].split(".")[0])]
+        # Mock ONLY the platform's native custody reader in source-unit tests.
+        # OS ACL/handle correctness is a separate native CI acceptance gate.
+        vault._storage.read_crash_residue.side_effect=(
+            lambda directory,name: (directory/name).read_bytes())
         for number,ciphertext in encrypted_by_generation.items():
             (self.directory/f"snapshot-{number:09d}.enc").write_bytes(ciphertext)
         return vault
@@ -145,6 +149,67 @@ class K09LedgerForensicContracts(unittest.TestCase):
         payload["checkpoint"]="not base64!"
         with self.assertRaises(LedgerEvidenceError):
             project_owner_ledger(payload,self.password)
+
+
+    def test_full_stage_signed_only_in_unanchored_checkpoint_is_unsafe(self):
+        original=self.outer(3)
+        txid="c"*64
+        self.store.db.execute(
+            "INSERT INTO reservations VALUES(?,?,?,?,?)",
+            (txid,1,"public-stage-token","uncertain",2))
+        stage_bytes=self.outer(4)
+        vault=self.make_vault({3:original})
+        stage=self.directory/(".stage-"+"a"*32)
+        stage.write_bytes(stage_bytes)
+        receipt=self.preview(vault)
+        self.assertEqual(receipt["stage_content_authenticated_count"],1)
+        self.assertEqual(receipt["stage_irreversible_delta_count"],1)
+        self.assertEqual(receipt["stage_content_unverifiable_count"],0)
+        self.assertFalse(receipt["safe_to_discard_proven"])
+        self.assertFalse(receipt["operator_discard_available"])
+        self.assertNotIn(txid,str(receipt))
+        self.assertEqual(stage.read_bytes(),stage_bytes)
+
+    def test_truncated_stage_refused_without_cleanup(self):
+        vault=self.make_vault({3:self.outer(3)})
+        stage=self.directory/(".stage-"+"b"*32)
+        stage.write_bytes(b"PUBLIC_TORN_STAGE")
+        receipt=self.preview(vault)
+        self.assertEqual(receipt["stage_content_authenticated_count"],0)
+        self.assertEqual(receipt["stage_content_unverifiable_count"],1)
+        self.assertFalse(receipt["safe_to_discard_proven"])
+        self.assertEqual(stage.read_bytes(),b"PUBLIC_TORN_STAGE")
+
+    def test_posix_stage_hardlink_to_future_is_not_discard_permission(self):
+        vault=self.make_vault({3:self.outer(3),4:self.outer(4)})
+        stage=self.directory/(".stage-"+"c"*32)
+        try:
+            stage.hardlink_to(self.directory/"snapshot-000000004.enc")
+        except (OSError,NotImplementedError):
+            self.skipTest("test filesystem cannot create hardlinks")
+        receipt=self.preview(vault)
+        self.assertEqual(receipt["stage_content_authenticated_count"],1)
+        self.assertEqual(receipt["future_snapshot_ledger_authenticated_count"],1)
+        self.assertEqual(receipt["stage_future_snapshot_link_pairs"],1)
+        self.assertFalse(receipt["operator_discard_available"])
+        self.assertTrue(stage.exists())
+
+    def test_status_only_reservation_delta_is_not_hidden(self):
+        txid="d"*64
+        self.store.db.execute(
+            "INSERT INTO reservations VALUES(?,?,?,?,?)",
+            (txid,0,"public-token","draft",1))
+        original=self.outer(3)
+        self.store.db.execute(
+            "UPDATE reservations SET state='signed' WHERE txid=?",
+            (txid,))
+        vault=self.make_vault({3:original,4:self.outer(4)})
+        receipt=self.preview(vault)
+        self.assertEqual(receipt["future_snapshot_reservation_set_changed_count"],1)
+        self.assertEqual(receipt["future_snapshot_irreversible_delta_count"],1)
+        self.assertFalse(receipt["operator_discard_available"])
+        self.assertNotIn(txid,str(receipt))
+
 
 
 if __name__=="__main__":
