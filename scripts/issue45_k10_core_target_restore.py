@@ -10,8 +10,6 @@ anchors, Core wallet key export, Fusion signer or broadcast permission.
 from __future__ import annotations
 
 import argparse
-from contextlib import ExitStack
-from hashlib import sha256
 from pathlib import Path
 import re
 import tempfile
@@ -40,8 +38,8 @@ def _deny(code):
 def _scope(core_dir, backup, backup_sha256, descriptor_sha256, authorized):
     if authorized is not True:
         _deny("K10_CORE_TRANSFER_EXPLICIT_TEST_CONSENT_REQUIRED")
-    if (type(core_dir) is not type(Path) or not core_dir.is_absolute()
-            or type(backup) is not type(Path) or not backup.is_absolute()
+    if (type(core_dir) is not type(Path()) or not core_dir.is_absolute()
+            or type(backup) is not type(Path()) or not backup.is_absolute()
             or core_dir.is_symlink() or backup.is_symlink()
             or type(backup_sha256) is not str or not HASH.fullmatch(backup_sha256)
             or type(descriptor_sha256) is not str
