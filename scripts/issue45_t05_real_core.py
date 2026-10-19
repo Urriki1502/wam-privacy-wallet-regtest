@@ -228,8 +228,13 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
           frozen_executable=None):
     # Native acceptance source identity only, never a runtime wallet authority.
     from wam_regtest.build_provenance import capture, verify, public_receipt
+    from hashlib import sha256
     source_root = Path(__file__).resolve().parents[1]
-    source = capture(source_root)
+    def report_dirty_source(relative_path):
+        # Public CI diagnostics reveal neither source bytes nor host paths.
+        path_id=sha256(relative_path.encode('utf-8','surrogateescape')).hexdigest()
+        print('T05_SOURCE_MISMATCH_PATH_SHA256='+path_id,flush=True)
+    source = capture(source_root,on_dirty=report_dirty_source)
     if sys.platform=="linux":
         if type(linux_manifest) is not str or linux_witness is None:
             raise ManagedCoreError("T05_LINUX_NATIVE_WITNESS_REQUIRED")

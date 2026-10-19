@@ -38,6 +38,13 @@ class BuildSourceContracts(unittest.TestCase):
         self.file.write_text('VALUE=2\n')
         with self.assertRaisesRegex(BuildSourceError,'^BUILD_SOURCE_DIRTY$'):capture(self.root)
         self.assertEqual(self.file.read_text(),'VALUE=2\n')
+    def test_dirty_diagnostic_reports_only_tracked_relative_path_and_keeps_refusal(self):
+        self.file.write_text('VALUE=2\n')
+        observed=[]
+        with self.assertRaisesRegex(BuildSourceError,'^BUILD_SOURCE_DIRTY$'):
+            capture(self.root,on_dirty=observed.append)
+        self.assertEqual(observed,['src/module.py'])
+        self.assertEqual(self.file.read_text(),'VALUE=2\n')
     def test_staged_changes_and_changed_checkout_refuse(self):
         stamp=capture(self.root);self.file.write_text('VALUE=2\n');self.git('add','.')
         with self.assertRaises(BuildSourceError):capture(self.root)

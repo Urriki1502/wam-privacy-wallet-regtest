@@ -943,3 +943,42 @@ anchors, miners, upstream Core, main/RC1 or security gates were touched. No
 usage-limit failure observed; no reset or purchase. Automation config remains
 ACTIVE with next nominal slot `2026-10-19T09:00:00Z` / 16:00 ICT. Separate
 resume log: `outputs/pr67-resume-20261019T040136/RESUME_LOG.md`.
+
+# 19 Oct 2026 16:41 ICT — PR67 Windows Q05 source-drift diagnostic
+
+Refreshed through the GitHub connector after shell DNS failure. Issue #45 remains
+OPEN. PR67 remains Draft/open, exact head `6b238ddbf5fc249808e1d79f6e2ae25b9f51eedb`,
+base PR66 `71a1e7b4336054bf0dabf3ca0ee6de174b462154`; its branch is not advanced
+by this local session yet. Open independent stacked work includes PRs #68–#90;
+#90 K-09 stacks on #89 K-08, which stacks on #88 K-07. No independent branch
+was edited.
+
+Exact-head PR67 check snapshot at `6b238dd`: 9/10 SUCCESS and only
+`win64-native-credential-cas` FAIL; developer-core subsequently completed
+SUCCESS. Both macOS real-Core/App-DMG E2E, Linux real-Core + frozen desktop and
+headless, Qt/headless wallet, native contracts and canonical vectors passed.
+Run 39175292212 / job 117816583536 shows Windows credential/private storage
+suite 35/35 passed; genuine signed Core v0.1.11 WSP BIP352, vault recovery and
+reorg depths 1/12/100 passed. Its native operational Qt Send/Sign/Broadcast,
+backup/recovery step also passed through stale-writer-before-sign/broadcast;
+then `scripts/issue45_t05_real_core.py:232` refused with `BUILD_SOURCE_DIRTY`
+before T05 continuity. Later Windows steps were skipped. This is a real source
+integrity failure, not a wallet acceptance PASS.
+
+Added an optional callback to `build_provenance.capture()` that preserves the
+same fail-closed `BUILD_SOURCE_DIRTY` result, and T05 logs only SHA-256 of the
+tracked relative filename on that failure. No source contents, host paths or
+wallet data are logged. Added regression coverage that verifies the callback
+receives the tracked relative name while rejection and file preservation remain.
+Native macOS source contracts: 9 PASS, 1 expected Windows-only SKIP; py_compile
+and `git diff --check` PASS. This diagnostic does not itself fix the underlying
+tracked-file drift; exact failing filename remains unknown until new Windows CI.
+No frozen artifact/Core E2E was run for this change.
+
+Checkpoint commit `ea289152b42fc5d631623298e0c9bc01c42ba12f` records the previous
+network blocker. This new code/test change is pending its own commit/push; no
+merge, security-gate relaxation, Core/anchor/key operation, or artifact claim.
+REGTEST only, official v0.1.11 boundary, WSP source pin unchanged. Physical Win/
+Linux remain PENDING_OPERATOR. Automation remains ACTIVE, nominal next slot
+`2026-10-19T14:00:00Z` / 21:00 ICT. Separate log:
+`outputs/pr67-resume-20261019T094136/RESUME_LOG.md`.
