@@ -69,6 +69,30 @@ class _LockedWalletWorker(QThread):
 
 
 
+class _CrashPreviewWorker(QThread):
+    """Original-owner, non-spending REGTEST crash residue inspection."""
+    ready=Signal(object)
+    denied=Signal(str)
+
+    def __init__(self,root,core_dir,wsp_source,password,observe_core):
+        super().__init__()
+        self.root,self.core_dir,self.wsp_source=root,core_dir,wsp_source
+        self.password=password
+        self.observe_core=observe_core
+
+    def run(self):
+        try:
+            from .managed_wallet_crash_preview import inspect_managed_crash_preview
+            value=inspect_managed_crash_preview(
+                self.root,self.core_dir,self.wsp_source,self.password,
+                authorized=True,observe_recent_core=self.observe_core)
+            self.ready.emit(value)
+        except Exception:
+            self.denied.emit("K09_GUI_CRASH_PREVIEW_UNVERIFIED")
+        finally:
+            self.password=None
+
+
 class _ManagedWalletSnapshotWorker(QThread):
     """Explicit original WSP wallet scan, without signer or broadcast."""
     ready = Signal(object)
@@ -224,6 +248,10 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.verify_wallet_button=action("Verify locked wallet", "security")
         toolbar.addWidget(self.verify_wallet_button)
         self.verify_wallet_button.clicked.connect(self._verify_wallet)
+        self.crash_preview_button=action(
+            "Inspect crash recovery · READ ONLY", "security")
+        toolbar.addWidget(self.crash_preview_button)
+        self.crash_preview_button.clicked.connect(self._inspect_crash_preview)
         self.view_wallet_button=action("View verified wallet · read only", "sync")
         toolbar.addWidget(self.view_wallet_button)
         self.view_wallet_button.clicked.connect(
@@ -282,6 +310,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
                   and self._wallet_core_dir is not None
                   and self._wallet_wsp_source is not None)
         self.verify_wallet_button.setEnabled(can_read)
+        self.crash_preview_button.setEnabled(
+            can_read and (self._managed_root/"chain"/"wallet-vault").is_dir())
         self.view_wallet_button.setEnabled(can_read)
         self.sync_wallet_button.setEnabled(can_read)
         self.create_wallet_button.setEnabled(
@@ -314,6 +344,109 @@ class ManagedCoreWindow(RegtestWalletWindow):
         worker.finished.connect(worker.deleteLater)
         self._update_controls()
         worker.start()
+
+    def _inspect_crash_preview(self):
+        # This action only creates a fixed, redacted report of ORIGINAL
+        # sealed REGTEST wallet data. It cannot quarantine, sign or unlock.
+        if (self._worker is not None or not self._managed_authenticated
+                or self._managed_state!="ready"
+                or self._wallet_core_dir is None or self._wallet_wsp_source is None
+                or not (self._managed_root/"chain"/"wallet-vault").is_dir()):
+            return
+        password,ok=QInputDialog.getText(
+            self,"K-09 · authenticated crash recovery inspection",
+            "Original wallet passphrase · inspection ONLY (no file deletion)",
+            QLineEdit.EchoMode.Password)
+        if not ok:
+            return
+        secret=password.encode("utf-8")
+        password=None
+        if not 12<=len(secret)<=1024:
+            self._crash_preview_denied("K09_GUI_PASSWORD_DENIED")
+            return
+        answer=QMessageBox.question(
+            self,"K-09 · optional live REGTEST evidence",
+            "Also inspect the latest 8 REGTEST blocks for on-chain spends? "
+            "This cannot prove mempool safety or authorize quarantine.",
+            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No|
+            QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.No)
+        if answer==QMessageBox.StandardButton.Cancel:
+            return
+        observe=answer==QMessageBox.StandardButton.Yes
+        self._wallet_checkpoint_verified=False
+        self._wallet_read_authorized=False
+        self._clear_balance()
+        worker=_CrashPreviewWorker(
+            self._managed_root,self._wallet_core_dir,self._wallet_wsp_source,
+            secret,observe)
+        secret=None
+        self._worker=worker
+        worker.ready.connect(self._apply_crash_preview)
+        worker.denied.connect(self._crash_preview_denied)
+        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(worker.deleteLater)
+        self.status.setText("K-09 · inspecting locked original wallet; NO cleanup…")
+        self._update_controls()
+        worker.start()
+
+    def _apply_crash_preview(self, evidence):
+        required={
+            "status":"K09_OWNER_VERIFIED_READ_ONLY_RESIDUE_PREVIEW",
+            "network":"regtest",
+            "original_anchor_verified":True,
+            "original_owner_envelope_authenticated":True,
+            "safe_to_discard_proven":False,
+            "operator_discard_available":False,
+            "wallet_unlocked":False,
+            "signer_allowed":False,
+            "broadcast_allowed":False,
+            "automatic_cleanup_allowed":False,
+        }
+        fields=("candidate_count","stage_count","future_snapshot_count",
+                "stage_content_authenticated_count",
+                "stage_content_unverifiable_count",
+                "future_snapshot_irreversible_delta_count",
+                "stage_irreversible_delta_count")
+        if (type(evidence) is not dict
+                or any(evidence.get(k)!=v for k,v in required.items())
+                or any(type(evidence.get(k)) is not int
+                       or not 0<=evidence[k]<=32 for k in fields)):
+            self._crash_preview_denied("K09_GUI_UNTRUSTED_EVIDENCE")
+            return
+        self._wallet_checkpoint_verified=False
+        self._wallet_read_authorized=False
+        self._clear_balance()
+        counts=(
+            f"Candidates: {evidence['candidate_count']}\n"
+            f"Stage files: {evidence['stage_count']}\n"
+            f"Future snapshots: {evidence['future_snapshot_count']}\n"
+            f"Authenticated stage: {evidence['stage_content_authenticated_count']}\n"
+            f"Unverifiable stage: {evidence['stage_content_unverifiable_count']}\n"
+            f"Future irreversible deltas: {evidence['future_snapshot_irreversible_delta_count']}\n"
+            f"Stage irreversible deltas: {evidence['stage_irreversible_delta_count']}"
+        )
+        observed=evidence.get("onchain_spent_outpoints_observed")
+        if observed is not None:
+            if type(observed) is not int or not 0<=observed<=2048:
+                self._crash_preview_denied("K09_GUI_UNTRUSTED_CHAIN_EVIDENCE")
+                return
+            counts+=f"\nRecent on-chain spent outpoints: {observed}"
+        QMessageBox.information(
+            self,"K-09 · READ-ONLY recovery evidence",
+            counts+"\n\nLOCKED · no cleanup, no signer, no broadcast. "
+                   "Full reservation and mempool safety are NOT proven.")
+        self.status.setText(
+            "K-09 · redacted evidence inspected · wallet LOCKED / recovery PENDING")
+        self._update_controls()
+
+    def _crash_preview_denied(self,_reason):
+        self._wallet_checkpoint_verified=False
+        self._wallet_read_authorized=False
+        self._clear_balance()
+        self.status.setText(
+            "K-09 · recovery evidence UNVERIFIED · wallet remains LOCKED")
+        self._update_controls()
 
     def _verify_wallet(self):
         if (self._worker is not None or not self._managed_authenticated
