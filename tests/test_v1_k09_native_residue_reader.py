@@ -11,7 +11,6 @@ import tempfile
 import unittest
 
 from wam_sp.keystore import seal
-from wam_regtest import custody
 
 
 class K09NativeResidueReader(unittest.TestCase):
@@ -22,7 +21,18 @@ class K09NativeResidueReader(unittest.TestCase):
         self.vault=self.root/"vault"
         if sys.platform in ("darwin","linux"):
             self.vault.mkdir(mode=0o700)
-        self.storage=custody.storage()
+        # Test the platform storage primitive directly. The full wallet
+        # custody.storage() additionally requires a genuine Linux Core/root
+        # witness policy, which belongs to the separate native Core E2E gate.
+        if sys.platform=="linux":
+            from wam_regtest import linux_private_storage as backend
+        elif sys.platform=="darwin":
+            from wam_regtest import encrypted_storage as backend
+        elif sys.platform=="win32":
+            from wam_regtest import windows_private_storage as backend
+        else:
+            self.skipTest("unsupported native wallet platform")
+        self.storage=backend
         self.payload=seal(
             b"PUBLIC_DISPOSABLE_REGTEST_FORENSIC_STAGE",
             b"PUBLIC_16_BYTE_PASSWORD",b"recovery"
