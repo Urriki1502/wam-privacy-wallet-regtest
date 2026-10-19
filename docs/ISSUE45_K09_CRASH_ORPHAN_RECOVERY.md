@@ -61,6 +61,37 @@ Same reservation ledger does not prove absent external broadcasts or
 reorg safety. Full real-Core reconciliation, OS-native quarantine
 authorization, Windows NTFS positive stage fixture, physical power loss,
 frozen GUI recovery and independent Codex/DEV acceptance remain PENDING.
+## Stage 1e — owner-consented bounded REGTEST chain-spend risk observation
+
+New `crash_chain_evidence.py` uses **only** the concrete authenticated
+`ManagedScanRpc` and its existing read-only `getblockcount`, `getbestblockhash`,
+`getblockhash` and `getblock` (verbosity 3) methods. The operator must request
+the sealed WSP ledger audit AND independently authorize Core observation.
+No new RPC method, wallet RPC, signer, mempool RPC, broadcast, seed or network
+discovery channel is permitted.
+
+The inspection gathers reservation outpoints from the independently
+authenticated anchored and future/stage WSP checkpoints, caps observations
+at 2048 outpoints and eight recent REGTEST blocks, verifies each block hash
+and height, checks the original tip again, and returns redacted count of
+outpoints visibly consumed by on-chain inputs. Any malformed input or tip
+change fails closed. The original vault lease and file lock stay held.
+
+**Critical distinction:** An on-chain spend is affirmative risk evidence;
+the absence of a spend in the recent eight-block window is NOT evidence that
+a transaction was never signed, broadcast, spent earlier, orphaned/reorged,
+or observed by an external peer. The existing IPC scope does not expose
+mempool status, raw tx archival proof, or global propagation. Consequently
+`mempool_evidence_available`, `full_chain_reconciled`,
+`signed_or_uncertain_reservations_reconciled`, `safe_to_discard_proven`,
+`operator_discard_available`, `signer_allowed` and `broadcast_allowed`
+remain **false** with or without observed spends. Never use this diagnostic
+to authorize quarantine, discard or wallet restore.
+
+Parser regression fixtures are synthetic RPC replies only; the actual
+Mac/Windows/Linux WAM Core IPC process evidence, historical + mempool
+completeness, rollback/reorg, physical crash and operator recovery decisions
+remain for the consolidated Codex + DEV/physical acceptance.
 ## Required stage 2 before any operator cleanup (P0 PENDING)
 
 1. Prove exact native file identity and owner ACL/UID protections for candidate source and quarantine destination with **native OS handles** on all three platforms. Include POSIX race/hardlink semantics and Windows NTFS DACL/reparse/rename identity. A read-only inventory never establishes later write authority.
