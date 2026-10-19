@@ -33,6 +33,9 @@ class K09NativeResidueReader(unittest.TestCase):
         else:
             self.skipTest("unsupported native wallet platform")
         self.storage=backend
+        if sys.platform=="win32":
+            # Native guarded NTFS owner-DACL directory, not a chmod shim.
+            self.storage.create_private_directory(self.vault)
         self.payload=seal(
             b"PUBLIC_DISPOSABLE_REGTEST_FORENSIC_STAGE",
             b"PUBLIC_16_BYTE_PASSWORD",b"recovery"
@@ -106,6 +109,39 @@ class K09NativeResidueReader(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.storage.read_crash_residue(self.vault,mode.name)
         self.assertEqual(source.read_bytes(),self.payload)
+
+    @unittest.skipUnless(sys.platform=="win32",
+                         "Windows only: native NTFS DACL and file handle")
+    def test_windows_native_owned_stage_read_without_restoring(self):
+        import ctypes as c
+        from ctypes import wintypes as w
+        from wam_regtest import windows_private_storage as native
+        stage=self.vault/(".stage-"+"e"*32)
+        handle=None
+        try:
+            with native.security_attributes() as attrs:
+                handle=native.create(
+                    str(stage),0x80000000|0x40000000|0x10000|0x20000,
+                    1,attrs,1,0x80200080,None)
+            if handle in (None,native.INVALID):
+                handle=None
+                self.fail("native owner-only stage creation refused")
+            native._metadata(handle)
+            native.verify_security(handle)
+            buffer=c.create_string_buffer(self.payload)
+            count=w.DWORD()
+            self.assertTrue(native.write(
+                handle,buffer,len(self.payload),c.byref(count),None))
+            self.assertEqual(count.value,len(self.payload))
+            self.assertTrue(native.flush(handle))
+        finally:
+            if handle is not None:
+                native.close(handle)
+        self.assertEqual(native.read_crash_residue(self.vault,stage.name),
+                         self.payload)
+        with self.assertRaises(ValueError):
+            native.read(self.vault,stage.name)
+        self.assertTrue(stage.exists())
 
 
 if __name__=="__main__":
