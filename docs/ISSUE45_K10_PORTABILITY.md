@@ -22,7 +22,7 @@ of BIP39 entropy); never put real funds into its addresses. All three
 public identity SHA-256 values should match. Receipt OS labels alone
 are NOT proof of three actual native executions or physical devices.
 
-Codex acceptance requires pinned exact HEAD, genuine signed Core/WSP
+Independent acceptance requires pinned exact HEAD, genuine signed Core/WSP
 binary provenance, same account and receive identities, genuine signed
 REGTEST payment on all three OSes and source/frozen parity. No simulated
 positive may be upgraded to physical qualification.
@@ -34,7 +34,7 @@ file-handle inspections. `compare_core_sqlite_bytes` compares source and
 target-copy SHA-256 and exact byte count; equal bytes prove only equal
 bytes, NOT descriptor identity, chain ownership, restoration or safety.
 
-For complete Codex acceptance: use Core `backupwallet` to create a
+For complete Independent acceptance: use Core `backupwallet` to create a
 disposable native SQLite backup separately on each OS; transfer only
 the offline backup (not WAL, credentials, anchors or live miner data).
 Restore using actual pinned disposable WAM Core on the other two
@@ -61,7 +61,7 @@ clear reservations, assume mempool non-observation proves safety, or
 automatically unlock/sign/broadcast on GUI import. If K-09 crash recovery
 is unresolved, leave the actual portable restore and signer LOCKED.
 
-Codex must independently validate clean-OS source/frozen Qt recovery
+Independent qualification must validate clean-OS source/frozen Qt recovery
 against genuine WAM Core on all three platforms, including restore
 history, reorg, signed/uncertain states, native credential continuity
 and cross-machine failure/refusal scenarios. Physical tests that cannot
@@ -75,7 +75,7 @@ negative tests, and public-only native CLI probe.
 
 **PENDING:** full cross-OS native signed-transaction behavior, physical
 clean-OS transfer and Core SQLite restore matrix, genuine frozen GUI
-recovery, K-09 reservation reconciliation, independent Codex/DEV review.
+recovery, K-09 reservation reconciliation, independent technical and upstream review.
 
 No owner wallet.dat, personal keys, mainnet value or mining secrets
 may be used in any test. Keep this PR DRAFT until independent P0 QA.
