@@ -16,9 +16,9 @@ def inspect_managed_crash_preview(root,core_dir,wsp_source,password,*,
                                   keychain=None):
     if authorized is not True or type(observe_recent_core) is not bool:
         raise CrashPreviewError("K09_MANAGED_PREVIEW_CONSENT_DENIED")
-    if (type(root) is not type(Path) or not root.is_absolute()
-            or type(core_dir) is not type(Path) or not core_dir.is_absolute()
-            or type(wsp_source) is not type(Path) or not wsp_source.is_absolute()
+    if (type(root) is not type(Path()) or not root.is_absolute()
+            or type(core_dir) is not type(Path()) or not core_dir.is_absolute()
+            or type(wsp_source) is not type(Path()) or not wsp_source.is_absolute()
             or type(password) is not bytes or not 12<=len(password)<=1024):
         raise CrashPreviewError("K09_MANAGED_PREVIEW_INPUT_DENIED")
     rpc=None
