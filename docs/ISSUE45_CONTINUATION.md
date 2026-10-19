@@ -1047,3 +1047,38 @@ than PR67 was modified. No merge or acceptance claim.
   Core Update Manager remains deferred P1. No usage-limit failure occurred.
 - Separate session log:
   `outputs/pr67-resume-20261019T140007/RESUME_LOG.md`.
+
+## 20 Oct 2026 02:00 ICT — PR67 CI refresh and PR91 K-10 macOS failure fix
+
+- Startup: exclusive engineering lease acquired. Issue #45 remains OPEN; PR67
+  remains OPEN/DRAFT at `0ac1da6fb5d33626c95b091c1e80dae719fbd3a3`, based on
+  PR66 `71a1e7b4336054bf0dabf3ca0ee6de174b462154`. Local branch and origin
+  matched and working tree was clean. No main/RC1/Core/owner data touched.
+- PR67 exact-head CI for `0ac1da6...` is 10/10 SUCCESS across Windows,
+  macOS ARM64, Linux developer/native/frozen, and pinned WSP vectors. Genuine
+  signed Core v0.1.11 and pinned WSP Windows packaged E2E succeeded; macOS
+  signed `.app/.dmg` real-Core E2E succeeded. Linux remains experimental
+  developer-Core provenance. These remain runner tests, not physical checks;
+  full Q05 and Issue #45 acceptance remain OPEN/PENDING_OPERATOR.
+- Windows artifact on `0ac1da6...`: `12194420145`,
+  `WAM-Fusion-REGTEST-RC1-windows-x64-0ac1da6fb5d33626c95b091c1e80dae719fbd3a3`,
+  SHA-256 `917904ae8def60f2a1deca7efb1c04d1eb7ae48434e8b9c7ff32642330e5ec89`,
+  expires 2026-11-02. This is a hosted CI package, not owner physical acceptance.
+- Live PR91 K-10 advanced to head `2c4f0190edea3a177e94a8259823e9adc169f302`;
+  Windows/Linux/vector workflows passed, but macOS run `39279289556` failed at
+  its new genuine same-host Core SQLite smoke. The exact invocation supplied
+  relative `--core-dir core` while the smoke deliberately rejects non-absolute
+  directories (`K10_LOCAL_DISPOSABLE_SCOPE_DENIED`). Earlier real signed Core,
+  managed WSP PSBTv2/BIP39 send, and K-04 SQLite E2E steps had passed; frozen
+  macOS was skipped as a dependency of the failing job. This is a workflow
+  path-contract defect, not a relaxation request.
+- Fixed the existing PR91 workflow in-place, with expected-head protection and
+  no force/rebase/merge: pass `--core-dir "$GITHUB_WORKSPACE/core"` to satisfy
+  the smoke's absolute-path requirement while retaining the fail-closed guard.
+  Remote PR91 fix commit: `f16d2bd5794672d2be852e1559fb2c9f63ecc569`. Exact
+  reruns are pending at time of checkpoint; no K-10 or full acceptance PASS is
+  claimed. PR91 remains Draft; its locked/non-authorizing recovery gates stay.
+- No other active branch changed. Next: read exact PR91 reruns and current PR67
+  head checks; fix any exact-head failure before another P0. Do not merge.
+  Core Update Manager remains deferred P1. No usage-limit failure observed.
+- Separate session log: `outputs/pr67-resume-20261019T190008/RESUME_LOG.md`.
