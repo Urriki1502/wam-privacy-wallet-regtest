@@ -138,6 +138,67 @@ class K09CrashWindowContracts(unittest.TestCase):
         vault.anchor.lease.assert_not_called()
         vault._storage.read.assert_not_called()
 
+    def test_authenticated_owner_preview_stays_read_only_and_never_unblocks(self):
+        # Synthetic encrypted envelope contract ONLY: this is NOT native
+        # OS witness or real-Core E2E. The actual resolver must separately
+        # qualify native anchors and signed/uncertain WSP reservation state.
+        import json
+        from wam_sp.keystore import seal
+        from wam_sp.watcher import GENESIS
+        password=b"PUBLIC_K09_UNIT_PASSWORD"
+        wallet_id="a"*32
+        anchored_generation=3
+        record_data={
+            "version":1,
+            "disposable_regtest":True,"network":GENESIS,
+            "wallet_id":wallet_id,"generation":anchored_generation,
+            "keys":"A"*100,"checkpoint":"B"*100,
+        }
+        raw=json.dumps(record_data,sort_keys=True).encode()
+        ciphertext=seal(raw,password,b"recovery")
+        record=(anchored_generation,sha256(ciphertext).hexdigest())
+        original=self.save(self.snap(3),ciphertext)
+        orphan=self.save(self.snap(4),b"PUBLIC_ORPHAN_NEVER_TO_REMOVE")
+        stage=self.save(self.stage,b"INTERRUPTED_STAGE")
+        vault=CheckpointVault.__new__(CheckpointVault)
+        vault.directory=self.folder
+        vault.anchor=Mock(wallet_id=wallet_id)
+        vault.anchor.lease.return_value=nullcontext()
+        vault.anchor.read.return_value=record
+        vault._storage=Mock()
+        vault._storage.read.return_value=ciphertext
+        vault._expected=record
+        with (patch("wam_regtest.custody.envelope_profile",
+                    return_value={"version":1}),
+              patch("wam_sp.file_lock.exclusive_file_lock",
+                    return_value=nullcontext())):
+            receipt=inspect_owner_crash_residue(
+                vault,password,authorized=True)
+            self.assertEqual(receipt["status"],
+                "K09_OWNER_VERIFIED_READ_ONLY_RESIDUE_PREVIEW")
+            self.assertTrue(receipt["original_anchor_verified"])
+            self.assertTrue(receipt["original_owner_envelope_authenticated"])
+            self.assertEqual(receipt["anchored_generation"],3)
+            self.assertEqual(receipt["stage_count"],1)
+            self.assertEqual(receipt["future_snapshot_count"],1)
+            for key in ("safe_to_discard_proven","operator_discard_available",
+                        "signed_or_uncertain_reservations_reconciled",
+                        "signer_allowed","broadcast_allowed",
+                        "automatic_cleanup_allowed"):
+                self.assertIs(receipt[key],False,key)
+            self.assertNotIn(wallet_id,str(receipt))
+            self.assertNotIn(str(self.folder),str(receipt))
+            self.assertEqual(self.snap(3).read_bytes(),ciphertext)
+            self.assertEqual(orphan.read_bytes(),
+                b"PUBLIC_ORPHAN_NEVER_TO_REMOVE")
+            self.assertEqual(stage.read_bytes(),b"INTERRUPTED_STAGE")
+            with self.assertRaisesRegex(
+                    CrashRecoveryRefusal,"K09_OWNER_CRASH_PREVIEW_DENIED"):
+                inspect_owner_crash_residue(
+                    vault,b"WRONG_PUBLIC_K09_PASSWORD",authorized=True)
+        vault._storage.publish.assert_not_called()
+        vault.anchor.advance.assert_not_called()
+
     def test_bad_or_missing_owner_secret_denied_before_native_io(self):
         vault=CheckpointVault.__new__(CheckpointVault)
         vault.directory=self.folder
