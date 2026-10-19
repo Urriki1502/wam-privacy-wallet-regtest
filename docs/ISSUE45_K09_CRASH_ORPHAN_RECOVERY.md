@@ -34,6 +34,33 @@ An explicit `inspect_owner_crash_residue(vault, password, authorized=True, audit
 
 The default inventory API remains unchanged unless the operator explicitly requests the additional forensic pass. The new pass is **not a chain rescan, file mutation, OS-reinstall workaround, physical fault/power-loss test or native Core E2E**. Source-only tests exercise legitimate nested pinned WSP backups and a signed-only-in-future reservation; independent Codex/DEV acceptance and physical OS qualifications remain PENDING.
 
+## Stage 1d — native stage-file forensic read (not recovery)
+
+New platform-specific `read_crash_residue(directory, name)` methods live in
+the existing macOS, Linux and Windows ciphertext storage modules. These do
+**not** change normal `read()`, `publish()`, vault restore, custody anchors
+or sender/signer permissions.
+
+- macOS/Linux: Native private-directory descriptor with no-follow, owner,
+  mode 0600, no ACL, metadata stability, and forensic-only one/two hardlink
+  support after POSIX link-before-unlink crashes. Normal restore still
+  refuses hardlinked ciphertext.
+- Windows: Original guarded NTFS directory, reparse and DACL protections,
+  held handle, and strict one-link rule (rename rather than POSIX linking).
+- Explicit `audit_reservations=True` authenticates complete stage and future
+  snapshot envelopes and compares WSP reservation *records*, including
+  status/token/created timestamps, detecting signed-only-in-stage evidence.
+  Torn ciphertext, altered identity, and unchecked native files remain
+  unverifiable, never presumed redundant.
+- Bounded diagnostics only: up to eight stages, eight future snapshots,
+  64 MiB combined ciphertext metadata budget, redacted counters without
+  exposing paths, txids, reservation tokens, keys or seeds.
+
+**No quarantine, discard, anchor promotion, unlock, sign or broadcast.**
+Same reservation ledger does not prove absent external broadcasts or
+reorg safety. Full real-Core reconciliation, OS-native quarantine
+authorization, Windows NTFS positive stage fixture, physical power loss,
+frozen GUI recovery and independent Codex/DEV acceptance remain PENDING.
 ## Required stage 2 before any operator cleanup (P0 PENDING)
 
 1. Prove exact native file identity and owner ACL/UID protections for candidate source and quarantine destination with **native OS handles** on all three platforms. Include POSIX race/hardlink semantics and Windows NTFS DACL/reparse/rename identity. A read-only inventory never establishes later write authority.
