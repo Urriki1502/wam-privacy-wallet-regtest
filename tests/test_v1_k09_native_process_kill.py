@@ -144,6 +144,19 @@ class K09NativeProcessKillBoundaries(unittest.TestCase):
         self.assertFalse(view["safe_to_discard_proven"])
         self.assert_restore_locked("VAULT_INTERRUPTED_PUBLICATION_DENIED")
 
+    def test_stage_refusal_is_independent_of_directory_iteration_order(self):
+        # Filesystems may enumerate the future hardlink before its stage.
+        # The interrupted stage must still receive the deterministic refusal.
+        from types import SimpleNamespace
+        vault=CheckpointVault.__new__(CheckpointVault)
+        stage_name=".stage-"+"4".zfill(32)
+        snapshot_name="snapshot-000000004.enc"
+        vault.directory=SimpleNamespace(iterdir=lambda: [
+            SimpleNamespace(name=snapshot_name), SimpleNamespace(name=stage_name)])
+        with self.assertRaisesRegex(
+                VaultError,"VAULT_INTERRUPTED_PUBLICATION_DENIED"):
+            vault._reject_unanchored_publication((3,"a"*64))
+
     def test_kill_after_publication_before_anchor(self):
         self.kill_at("after_publication_before_anchor",4)
         self.assertTrue(self.snap(4).is_file())
