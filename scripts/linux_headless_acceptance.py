@@ -156,6 +156,27 @@ try:
             'real_core_restorewallet':True,'original_wallet_unmodified':True,
             'synthetic_rpc':False,'mainnet_allowed':False}
         print('LINUX_K04_NATIVE_CORE_SQLITE_QUARANTINE_PASS')
+        # K-10: two separate real REGTEST Core processes and private backup
+        # within the existing independently provisioned native root witness.
+        # Never restore this source fixture into the managed WSP wallet.
+        sys.path.insert(0,str(root))
+        from scripts.issue45_k10_core_same_host_smoke import prove_same_host_disposable_transfer
+        k10=prove_same_host_disposable_transfer(
+            args.core_dir.absolute(),authorized=True)
+        assert k10['status']=='K10_REAL_CORE_SQLITE_SAME_OS_QUARANTINE_PASS'
+        assert k10['actual_core_source_and_target_rpc_verified'] is True
+        assert k10['source_and_target_descriptor_public_identity_equal'] is True
+        assert k10['cross_os_physical_transfer_qualified'] is False
+        assert k10['signer_allowed'] is False and k10['broadcast_allowed'] is False
+        record['k10_core_sqlite_same_os']={
+            'status':k10['status'],
+            'actual_core_source_and_target_rpc_verified':True,
+            'cross_os_physical_transfer_qualified':False,
+            'fusion_wallet_restored':False,
+            'signer_allowed':False,'broadcast_allowed':False,
+        }
+        print('LINUX_K10_NATIVE_CORE_SQLITE_SAME_OS_QUARANTINE_PASS')
+
     report.write_text(json.dumps(record,indent=2)+'\n')
     print('LINUX_REAL_CORE_ROOT_WITNESS_'+('NATIVE_QT' if args.qt else 'NO_QT_HEADLESS')+'_WALLET_PASS')
 finally:
