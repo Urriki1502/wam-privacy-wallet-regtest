@@ -72,7 +72,19 @@ class K10OriginalWalletManualUnlockContracts(unittest.TestCase):
 
     def test_original_ready_allows_only_separate_manual_unlock_attempt(self):
         control,profile,verify,client,reader=self.mock_native()
-        outcome=self.preflight()
+        try:
+            outcome=self.preflight()
+        except K10TestAccessError:
+            # Fixed non-secret native mock call counts only; diagnostic
+            # assertions identify the first failing interface contract.
+            self.assertEqual(control.call_count,2,"K10_MOCK_STAGE_CONTROL")
+            self.assertEqual(profile.call_count,2,"K10_MOCK_STAGE_PROFILE")
+            self.assertEqual(verify.call_count,1,"K10_MOCK_STAGE_OWNER")
+            self.assertEqual(reader.attest.call_count,1,
+                             "K10_MOCK_STAGE_ATTEST")
+            self.assertEqual(reader.call.call_count,3,
+                             "K10_MOCK_STAGE_READ")
+            raise
         self.assertEqual(
             outcome["status"],"K10_ORIGINAL_REGTEST_MANUAL_OPEN_PREFLIGHT_ONLY")
         self.assertTrue(
