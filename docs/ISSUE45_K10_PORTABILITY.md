@@ -108,6 +108,39 @@ The only successful status is `K10_LOCKED_CLEAN_HOST_HANDOFF_INSPECTED`.
 All actual clean-machine installation, full historical replay, exact
 reservation preservation, restore and frozen GUI activation remain
 explicitly PENDING; K-09 P0 recovery must be resolved first.
+### Original REGTEST wallet manual test readiness
+
+A previously created **original native-anchored** REGTEST WSP wallet has
+an already implemented, explicitly approved operational path in the
+managed Fusion desktop GUI: **Open REGTEST Send / Sign**. This path
+is independent of *portable clean-host restore*. It asks for the original
+wallet passphrase, authenticates native anchor + encrypted checkpoint,
+observes owned Core and WSP scanner state, and opens a session only if
+the real scoped REGTEST invariants pass. Prepare, Sign and Broadcast
+still have their own exact-intent approvals; no auto broadcast.
+
+`inspect_original_regtest_test_readiness` is a **read-only** preflight
+that checks the existing original wallet, supervisor, pinned Core identity,
+checkpoint, owner native anchor and stable isolated REGTEST chain tip.
+It NEVER opens a signing session or extends portable recovery authority.
+Use the interactive console check *only on a disposable original REGTEST
+wallet owned by the tester* (not a miner wallet or mainnet):
+
+```console
+python scripts/issue45_k10_original_regtest_readiness.py --root <owned-managed-root> --core-dir <signed-core-directory> --wsp-source <pinned-wsp-directory> --confirm-original-regtest-test-only
+```
+
+The passphrase is requested interactively and not accepted as a CLI flag.
+Successful output is `K10_ORIGINAL_REGTEST_MANUAL_OPEN_PREFLIGHT_ONLY`.
+This means **attempting** GUI manual open is appropriate, NOT that a
+signer is active, a payment passed, portable recovery is complete, or
+the wallet is safe to use with real funds. A missing/ambiguous OS anchor,
+staged checkpoint, mismatched Core, wrong chain, or unstable supervisor
+refuses the attempt without any automatic recovery or cleanup.
+
+Do not use this tool or the original-wallet operational GUI to bypass
+the portable locked status after clean-OS transfer. Moving the BIP39
+seed without proven old reservation/history continuity remains LOCKED.
 ## 4. Current status
 
 **IMPLEMENTED:** K10 public BIP39/WSP portability, strict OS receipt
