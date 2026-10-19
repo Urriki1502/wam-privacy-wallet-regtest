@@ -64,7 +64,7 @@ class K10OriginalWalletManualUnlockContracts(unittest.TestCase):
                 return REGTEST_GENESIS
             if method=="getblockhash" and params==[101]:
                 return "a"*64
-            if method=="getbestblockhash" and params==[]:
+            if method=="getbestblockhash" and params in (None,[]):
                 return "a"*64
             raise AssertionError("unsupported method")
         reader.call.side_effect=get
@@ -72,15 +72,7 @@ class K10OriginalWalletManualUnlockContracts(unittest.TestCase):
 
     def test_original_ready_allows_only_separate_manual_unlock_attempt(self):
         control,profile,verify,client,reader=self.mock_native()
-        try:
-            outcome=self.preflight()
-        except K10TestAccessError:
-            self.fail(
-                "K10_MOCK_STAGE_COUNTS "
-                f"status={control.call_count} profile={profile.call_count} "
-                f"owner={verify.call_count} attest={reader.attest.call_count} "
-                f"rpc={reader.call.call_count}"
-            )
+        outcome=self.preflight()
         self.assertEqual(
             outcome["status"],"K10_ORIGINAL_REGTEST_MANUAL_OPEN_PREFLIGHT_ONLY")
         self.assertTrue(
