@@ -144,6 +144,44 @@ class K09LedgerForensicContracts(unittest.TestCase):
                                         audit_reservations="yes")
         vault._storage.read.assert_not_called()
 
+    def test_core_observation_requires_separate_consent_before_storage_io(self):
+        vault=self.make_vault({3:self.outer(3)})
+        with self.assertRaisesRegex(CrashRecoveryRefusal,
+                                    "K09_CORE_SEPARATE_CONSENT_REQUIRED"):
+            inspect_owner_crash_residue(
+                vault,self.password,authorized=True,audit_reservations=True,
+                core_read_rpc=Mock(),authorized_core_observation=False)
+        vault._storage.read.assert_not_called()
+
+    def test_core_forensics_wires_candidate_and_anchor_outpoints_read_only(self):
+        original=self.outer(3)
+        txid="e"*64
+        self.store.db.execute(
+            "INSERT INTO reservations VALUES(?,?,?,?,?)",
+            (txid,7,"public-fixture","uncertain",1))
+        vault=self.make_vault({3:original,4:self.outer(4)})
+        core=Mock()
+        evidence={"observation":"K09_RECENT_CHAIN_SPEND_RISK_ONLY",
+                  "onchain_spent_outpoints_observed":1,
+                  "safe_to_discard_proven":False,
+                  "operator_discard_available":False}
+        with patch("wam_regtest.crash_chain_evidence.observe_recent_core_spends",
+                   return_value=evidence) as observer:
+            with (patch("wam_regtest.custody.envelope_profile",
+                        return_value={"version":1}),
+                  patch("wam_sp.file_lock.exclusive_file_lock",
+                        return_value=nullcontext())):
+                result=inspect_owner_crash_residue(
+                    vault,self.password,authorized=True,audit_reservations=True,
+                    core_read_rpc=core,authorized_core_observation=True)
+        self.assertEqual(result["observation"],evidence["observation"])
+        self.assertIs(result["safe_to_discard_proven"],False)
+        _,actual=observer.call_args.args
+        self.assertIn((txid,7),actual)
+        self.assertEqual(observer.call_args.kwargs,{"authorized":True})
+        vault.anchor.advance.assert_not_called()
+        vault._storage.publish.assert_not_called()
+
     def test_projection_rejects_malformed_backup_without_leaking_keys(self):
         payload=self.payload(3)
         payload["checkpoint"]="not base64!"
