@@ -1091,3 +1091,11 @@ than PR67 was modified. No merge or acceptance claim.
 - Fixed the existing K-09 PR90 branch in place (no new PR/rebase/force-push): `7910c0f3813f7cb9cd1cf2e19ca66abcc5b05b27` accumulates stage/future flags across the complete scan, then always prioritizes ambiguous names, interrupted stage, and finally future unanchored generation. Existing process-kill regression asserts stage+hardlink behavior; no cleanup/adoption/anchor/signing behavior changed.
 - PR90 exact-head native Mac/Windows/Linux/WSP workflows for `7910c0f` are pending. PR91 same-head rerun `39307627912` has native-contracts PASS, while its headless/Core/Qt jobs, Windows and Mac jobs were still running at this checkpoint. This is not a complete PR91 PASS or K-09 acceptance.
 - No physical power-loss, native owner-wallet, cross-OS restore, frozen full-wallet or owner acceptance is inferred. Keep PR90/91 Draft and unmerged.
+
+
+### K-09 deterministic readdir-order regression — 20 Oct 2026
+
+- Latest PR90 source/test head is `f7e7d21f836bfc538a43b3b4aefbe0c34a97cd29`; it adds an explicit reverse-order fixture (future snapshot enumerated before stage) to prevent return of the K-09 refusal-order defect. No runtime authorization or cleanup change.
+- Exact-head checks: Linux `39308510035`, Windows `39308510179`, macOS Core `39308510143` were IN_PROGRESS; WSP vector run `39308510036` PASS. These are hosted CI runs, not physical operator acceptance.
+- PR67's prior documentation head `ea8d95aaba5cef690d21e289c436e264fad3f308` had its WSP vectors PASS (`39308047860`) while macOS, Windows and Linux checks remained IN_PROGRESS. This checkpoint-only follow-up must itself receive exact-head checks; it does not alter the runtime source.
+- K-09 and K-10 remain Draft and unmerged. The order-sensitive original PR91 Linux failure `39307518334` is retained as failed historical evidence; the fixed K-09 source is still awaiting the complete PR90 `f7e7d21` matrix.
