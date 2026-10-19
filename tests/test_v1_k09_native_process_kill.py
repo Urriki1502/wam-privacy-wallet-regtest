@@ -11,6 +11,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 from wam_regtest.crash_recovery import _candidate_inventory, CrashRecoveryRefusal
 from wam_regtest.vault import CheckpointVault, VaultError
@@ -143,6 +144,32 @@ class K09NativeProcessKillBoundaries(unittest.TestCase):
         self.assertEqual(view["candidate_count"],2)
         self.assertFalse(view["safe_to_discard_proven"])
         self.assert_restore_locked("VAULT_INTERRUPTED_PUBLICATION_DENIED")
+
+    @unittest.skipIf(os.name=="nt","POSIX hardlink publication only")
+    def test_stage_and_orphan_refusal_independent_of_iteration_order(self):
+        # A killed POSIX publisher may retain the same inode under both
+        # names. Native readdir order is undefined. Neither order is safe
+        # to reopen; the stage refusal takes deterministic precedence.
+        self.stage(4).write_bytes(b"PUBLIC_DISPOSABLE_K09_TEST")
+        os.link(self.stage(4),self.snap(4))
+        original_iterdir=Path.iterdir
+        for stage_first in (False,True):
+            with self.subTest(stage_first=stage_first):
+                def ordered(directory):
+                    entries=list(original_iterdir(directory))
+                    entries.sort(key=lambda p: (
+                        0 if p.name.startswith(".stage-") else 1
+                    ) if stage_first else (
+                        0 if p.name.startswith("snapshot-") else 1
+                    ))
+                    return iter(entries)
+                with patch.object(Path,"iterdir",new=ordered):
+                    self.assert_restore_locked(
+                        "VAULT_INTERRUPTED_PUBLICATION_DENIED")
+        self.assertEqual(self.stage(4).stat().st_ino,
+                         self.snap(4).stat().st_ino)
+        self.assertEqual(self.stage(4).read_bytes(),
+                         b"PUBLIC_DISPOSABLE_K09_TEST")
 
     def test_kill_after_publication_before_anchor(self):
         self.kill_at("after_publication_before_anchor",4)
