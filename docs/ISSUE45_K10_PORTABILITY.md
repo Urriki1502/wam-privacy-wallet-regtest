@@ -27,6 +27,25 @@ binary provenance, same account and receive identities, genuine signed
 REGTEST payment on all three OSes and source/frozen parity. No simulated
 positive may be upgraded to physical qualification.
 
+### Encrypted K-03 keyring handoff contract
+
+`inspect_portable_k03_backup` now authenticates an encrypted K-03
+BIP39/WSP v4 backup **in memory only**, restores its exact native WSP
+public account, and requires an independently trusted earlier public
+owner identity. It compares the complete REGTEST derivation contract,
+account, scan/spend public identity and receive code while returning
+only the public metadata digest and a non-authorizing locked status.
+
+Source/native regression fixtures cover 12- and 24-word **disposable**
+public BIP39 input, more than one account, wrong password, truncated/
+modified ciphertext, forged profile/chain, and refusal of legacy
+WSP 32-byte backup reinterpretation. Backups are never written or
+imported into an actual persistent wallet during these tests.
+
+**A valid encrypted key backup is not a restored Fusion wallet.**
+It cannot recover an OS-native anti-rollback anchor, previous Core
+SQLite wallet, scanner history, signed/uncertain reservations or
+mempool state. All restore, signer and broadcast authority stays false.
 ## 2. Cross-host Core-native SQLite descriptor wallet
 
 `inspect_original_core_sqlite` reuses K-04 native read-only owner/mode/
