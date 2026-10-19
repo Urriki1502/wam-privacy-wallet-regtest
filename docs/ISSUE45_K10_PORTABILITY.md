@@ -62,6 +62,43 @@ platforms (6 source→target permutations), attest REGTEST genesis,
 and unchanged backup digest. No BDB conversion or private descriptor
 disclosure. Full operation is not certified by these Python contracts.
 
+### Executable isolated Core-native SQLite transfer
+
+The disposable-source command now produces an actual Core-created REGTEST
+SQLite descriptor backup plus a public-hash manifest in a NEW native-private
+directory. It does not attach to or copy an existing miner/owner wallet.
+The backup contains **PRIVATE REGTEST fixture keys**: never publish it in a
+repository, CI artifact, issue, chat, public storage or test log.
+
+From the repository root in a qualified three-OS test environment:
+
+```console
+python -m scripts.issue45_k10_core_source_fixture --core-dir <SIGNED_WAM_CORE_DIRECTORY> --new-private-output-dir <NEW_PRIVATE_TEST_DIRECTORY> --confirm-disposable-regtest
+```
+
+Keep `core-wallet-backup.dat` privately offline; the `public-manifest.json`
+provides `backup_sha256` and `public_descriptor_sha256` for comparison.
+On another qualified machine, privately transfer ONLY this disposable
+fixture backup and run the isolated target operation:
+
+```console
+python -m scripts.issue45_k10_core_target_restore --core-dir <TARGET_SIGNED_WAM_CORE_DIRECTORY> --backup <PRIVATE_TRANSFERRED_FIXTURE.dat> --expected-backup-sha256 <SOURCE_BACKUP_SHA256> --expected-public-descriptor-sha256 <SOURCE_PUBLIC_DESCRIPTOR_SHA256> --confirm-disposable-regtest
+```
+
+The target creates a FRESH disposable REGTEST Core process, stages the
+offline backup with K-04 owner-native file controls, uses Core's actual
+`restorewallet` and `listdescriptors(false)` interfaces, compares exact
+public descriptor identity, re-hashes source/staged files and never
+loads the wallet into the original Fusion application. Successful source
+and target code execution on *one OS* cannot be counted as a cross-OS
+PASS. Each origin/target permutation must be observed independently.
+
+The manifest is unsigned/untrusted unless original fixture creation,
+binary identity, native platform and runner provenance are separately
+established. The original wallet's WSP seed, reservations, history,
+native anti-rollback anchor and previous broadcasts are not restored.
+Even an actual Core SQLite restore does NOT enable WSP signing, restore
+Fusion custody or clear crash residues. No BDB migration in K-10.
 ## 3. Clean-OS bootstrap and frozen GUI
 
 K-10 `review_clean_host_target` performs an additional consent-bound,
