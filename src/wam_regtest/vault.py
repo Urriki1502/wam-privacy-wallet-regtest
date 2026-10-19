@@ -156,9 +156,16 @@ class CheckpointVault:
                 raise VaultError("VAULT_ANCHOR_GENERATION_DENIED")
             for entry in self.directory.iterdir():
                 name=entry.name
-                if re.fullmatch(r"\.stage-[0-9a-f]{32}",name):
-                    raise VaultError("VAULT_INTERRUPTED_PUBLICATION_DENIED")
+                stage=re.fullmatch(r"\.stage-[0-9a-f]{32}",name)
                 match=re.fullmatch(r"snapshot-([0-9]{9})\.enc",name)
+                # A malformed reserved name cannot be interpreted as
+                # evidence that publication finished safely.
+                if ((name.startswith(".stage-") and not stage)
+                        or (name.startswith("snapshot-")
+                            and (not match or int(match.group(1))==0))):
+                    raise VaultError("VAULT_AMBIGUOUS_PUBLICATION_DENIED")
+                if stage:
+                    raise VaultError("VAULT_INTERRUPTED_PUBLICATION_DENIED")
                 if match and int(match.group(1))>anchored:
                     raise VaultError("VAULT_UNANCHORED_GENERATION_DENIED")
         except VaultError:
