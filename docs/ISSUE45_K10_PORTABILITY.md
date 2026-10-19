@@ -62,6 +62,23 @@ platforms (6 source→target permutations), attest REGTEST genesis,
 and unchanged backup digest. No BDB conversion or private descriptor
 disclosure. Full operation is not certified by these Python contracts.
 
+### Genuine same-OS Core transfer smoke (no persisted fixture)
+
+The source and destination scripts are also composed by a single
+disposable same-machine probe. It runs TWO separate genuine signed
+REGTEST Core processes sequentially, validates the SQLite backup and
+public descriptor identity, and removes the PRIVATE test fixture
+when the temporary scope exits:
+
+```console
+python -m scripts.issue45_k10_core_same_host_smoke --core-dir <SIGNED_WAM_CORE_DIRECTORY> --confirm-disposable-regtest
+```
+
+Expected source-level outcome after actual Core runtime execution:
+`K10_REAL_CORE_SQLITE_SAME_OS_QUARANTINE_PASS`. This is useful on each
+native OS but is **NOT** a cross-OS transfer, physical acceptance, WSP
+reservation recovery or frozen GUI unlock proof. Never use a real
+wallet backup, attached Core, mining wallet or external node.
 ### Executable isolated Core-native SQLite transfer
 
 The disposable-source command now produces an actual Core-created REGTEST
