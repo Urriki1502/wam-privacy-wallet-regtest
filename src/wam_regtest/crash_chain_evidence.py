@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 
 
-_HASH = re.compile(r"[0-9a-f]{64}\\Z")
+_HASH = re.compile(r"[0-9a-f]{64}\Z")
 MAX_OUTPOINTS = 2048
 MAX_BLOCKS = 8
 MAX_TRANSACTIONS_PER_BLOCK = 4096
