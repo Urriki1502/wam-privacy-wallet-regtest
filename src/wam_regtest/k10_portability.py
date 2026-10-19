@@ -6,7 +6,7 @@ imports Core wallet databases, unlocks a signer, clears reservations or
 claims clean-OS/frozen-app acceptance.
 
 Owner-origin attestations and physical-host evidence must be supplied and
-independently qualified by a separate end-to-end run (Codex/DEV).
+independently qualified by a separate end-to-end run with separately verified execution evidence.
 """
 from __future__ import annotations
 
