@@ -139,7 +139,8 @@ def _candidate_inventory(directory, anchored_generation):
 
 
 
-def _forensic_candidate_ledger(vault, password, record, original, plan):
+def _forensic_candidate_ledger(vault, password, record, original, plan, *,
+                               core_read_rpc=None):
     """Read sealed stage/snapshot reservation evidence, never grant cleanup.
 
     The original native owner lease and vault lock are held by the caller.
@@ -161,6 +162,7 @@ def _forensic_candidate_ledger(vault, password, record, original, plan):
         _deny("K09_NATIVE_FORENSIC_READER_REQUIRED")
     try:
         anchored=project_owner_ledger(original,password)
+        observed_outpoints=set(anchored.reservations)
     except LedgerEvidenceError:
         _deny("K09_ANCHORED_LEDGER_UNVERIFIABLE")
 
@@ -247,6 +249,7 @@ def _forensic_candidate_ledger(vault, password, record, original, plan):
                     or (not is_stage and generation!=int(SNAPSHOT.fullmatch(name)[1]))):
                 raise ValueError
             projection=project_owner_ledger(candidate,password)
+            observed_outpoints.update(projection.reservations)
             relation=compare_candidate_ledger(anchored,projection)
             counts[("stage_content_authenticated_count" if is_stage else
                     "future_snapshot_ledger_authenticated_count")]+=1
@@ -269,8 +272,14 @@ def _forensic_candidate_ledger(vault, password, record, original, plan):
     if (_candidate_inventory(vault.directory,record[0])!=plan
             or identify()!=original_index):
         _deny("K09_FORENSIC_DIRECTORY_CHANGED")
+    core_evidence={}
+    if core_read_rpc is not None:
+        from .crash_chain_evidence import observe_recent_core_spends
+        core_evidence=observe_recent_core_spends(
+            core_read_rpc,frozenset(observed_outpoints),authorized=True)
     return {
         "forensic_status":"K09_SEALED_WSP_LEDGER_PREVIEW_ONLY",
+        **core_evidence,
         **counts,
         "core_reservation_or_reorg_reconciled":False,
         "safe_to_discard_proven":False,
@@ -282,7 +291,9 @@ def _forensic_candidate_ledger(vault, password, record, original, plan):
 
 
 
-def inspect_owner_crash_residue(vault, password, *, authorized=False, audit_reservations=False):
+def inspect_owner_crash_residue(vault, password, *, authorized=False,
+                               audit_reservations=False, core_read_rpc=None,
+                               authorized_core_observation=False):
     """Authenticated *read-only* preview under the real native wallet lease.
 
     Locked original owner must supply the existing password. We check the
@@ -299,6 +310,14 @@ def inspect_owner_crash_residue(vault, password, *, authorized=False, audit_rese
         _deny("K09_OPERATOR_CONSENT_REQUIRED")
     if type(audit_reservations) is not bool:
         _deny("K09_FORENSIC_SCOPE_DENIED")
+    # Chain observation is a separate explicit operator choice and cannot
+    # silently accompany an ordinary wallet password/preview action.
+    if type(authorized_core_observation) is not bool:
+        _deny("K09_CORE_OBSERVATION_SCOPE_DENIED")
+    if (core_read_rpc is None and authorized_core_observation
+            or core_read_rpc is not None
+            and (not audit_reservations or not authorized_core_observation)):
+        _deny("K09_CORE_SEPARATE_CONSENT_REQUIRED")
     if (type(vault) is not CheckpointVault
             or type(password) is not bytes
             or not 12<=len(password)<=1024):
@@ -343,7 +362,8 @@ def inspect_owner_crash_residue(vault, password, *, authorized=False, audit_rese
                 _deny("K09_ANCHORED_OWNER_IDENTITY_DENIED")
             plan=_candidate_inventory(vault.directory,record[0])
             forensic=(_forensic_candidate_ledger(
-                vault,password,record,data,plan)
+                vault,password,record,data,plan,
+                core_read_rpc=core_read_rpc)
                 if audit_reservations else {})
             if vault.anchor.read()!=record or vault._expected!=record:
                 _deny("K09_NATIVE_ANCHOR_CHANGED")
