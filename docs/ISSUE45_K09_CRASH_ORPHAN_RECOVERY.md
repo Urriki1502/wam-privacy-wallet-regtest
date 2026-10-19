@@ -32,7 +32,7 @@ An explicit `inspect_owner_crash_residue(vault, password, authorized=True, audit
 3. Verifies each candidate's authenticated outer owner wallet ID, native-platform profile, REGTEST network and exact generation; independently opens nested WSP account/checkpoint envelopes. Returns **only counts and booleans** for unverifiable ciphertext, account mismatch, reservation-set changes and irreversible signed/uncertain/broadcast/manual reservation deltas. Never exports names, transaction IDs, tokens, seed bytes, addresses, private paths or keys.
 4. Preserves `safe_to_discard_proven=False`, `operator_discard_available=False`, `signer_allowed=False`, `broadcast_allowed=False` unconditionally. Even two matching sealed ledgers cannot prove that external peers have not observed a transaction, that source handles will survive a later rename, or that a crash-stage file contains no irreversible data.
 
-The default inventory API remains unchanged unless the operator explicitly requests the additional forensic pass. The new pass is **not a chain rescan, file mutation, OS-reinstall workaround, physical fault/power-loss test or native Core E2E**. Source-only tests exercise legitimate nested pinned WSP backups and a signed-only-in-future reservation; independent Codex/DEV acceptance and physical OS qualifications remain PENDING.
+The default inventory API remains unchanged unless the operator explicitly requests the additional forensic pass. The new pass is **not a chain rescan, file mutation, OS-reinstall workaround, physical fault/power-loss test or native Core E2E**. Source-only tests exercise legitimate nested pinned WSP backups and a signed-only-in-future reservation; independent technical and upstream acceptance and physical OS qualifications remain PENDING.
 
 ## Stage 1d — native stage-file forensic read (not recovery)
 
@@ -60,7 +60,7 @@ or sender/signer permissions.
 Same reservation ledger does not prove absent external broadcasts or
 reorg safety. Full real-Core reconciliation, OS-native quarantine
 authorization, Windows NTFS positive stage fixture, physical power loss,
-frozen GUI recovery and independent Codex/DEV acceptance remain PENDING.
+frozen GUI recovery and independent technical and upstream acceptance remain PENDING.
 ## Stage 1e — owner-consented bounded REGTEST chain-spend risk observation
 
 New `crash_chain_evidence.py` uses **only** the concrete authenticated
@@ -91,7 +91,7 @@ to authorize quarantine, discard or wallet restore.
 Parser regression fixtures are synthetic RPC replies only; the actual
 Mac/Windows/Linux WAM Core IPC process evidence, historical + mempool
 completeness, rollback/reorg, physical crash and operator recovery decisions
-remain for the consolidated Codex + DEV/physical acceptance.
+remain for the consolidated independent technical, upstream and physical acceptance.
 ## Stage 1f — original-owner GUI recovery preview (read-only)
 
 The managed Fusion Qt toolbar now contains **Inspect crash recovery · READ
@@ -115,7 +115,7 @@ scoping, optional real IPC selection, status change refusal and forged
 unlocked receipts. They are **not** physical/frozen GUI acceptance. K-09
 cannot be considered recovered or P0 PASS until signed/uncertain mempool/
 broadcast/reorg continuity and safe native file quarantine are proven and
-Codex/DEV/physical acceptance is completed.
+independent technical, upstream and physical acceptance is completed.
 ## Required stage 2 before any operator cleanup (P0 PENDING)
 
 1. Prove exact native file identity and owner ACL/UID protections for candidate source and quarantine destination with **native OS handles** on all three platforms. Include POSIX race/hardlink semantics and Windows NTFS DACL/reparse/rename identity. A read-only inventory never establishes later write authority.
