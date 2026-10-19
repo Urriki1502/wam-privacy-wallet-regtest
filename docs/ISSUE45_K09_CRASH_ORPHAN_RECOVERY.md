@@ -23,6 +23,17 @@ These conditions **currently block vault restore** via `_reject_unanchored_publi
 - The subprocess tests use actual OS file operations and ungraceful process termination, but only a **sentinel** instead of a native Keychain/Credential/root witness anchor. They do **not** establish physical power-loss durability, genuine-Core signed/uncertain reservation reconciliation, OS-level ACL/handle race safety, frozen GUI recovery, or permission to quarantine, discard, sign, or broadcast.
 - Before claiming Stage 2 completion, obtain precise native file-handle/ACL proof, full WSP signed/uncertain ledger and rescan/reorg reconciliation on disposable **real Core REGTEST**, consent-bound owner decisions, and independent three-OS frozen/physical evidence. Tests passing are **engineering coverage**, not P0 acceptance.
 
+## Stage 1c — sealed WSP ledger inspection (diagnostics only)
+
+An explicit `inspect_owner_crash_residue(vault, password, authorized=True, audit_reservations=True)` now performs a *separate*, bounded, read-only inspection under the **original** native wallet lease and vault file lock:
+
+1. Re-authenticates the OS-anchored REGTEST snapshot, then uses the pinned native WSP Keyring + authenticated scanner checkpoint to derive the exact WSP account identity and reservation projection **in memory**. No new SQLite scanner is created.
+2. Reads at most eight future published snapshot files, with a combined 64 MiB ciphertext read budget, through the platform's original native custody reader (POSIX no-follow/UID/ACL checks or Windows handle/DACL checks). POSIX stage hardlinks that cannot satisfy the original reader remain **unverifiable**; arbitrary partial `.stage` ciphertext is never treated as a completed checkpoint.
+3. Verifies each candidate's authenticated outer owner wallet ID, native-platform profile, REGTEST network and exact generation; independently opens nested WSP account/checkpoint envelopes. Returns **only counts and booleans** for unverifiable ciphertext, account mismatch, reservation-set changes and irreversible signed/uncertain/broadcast/manual reservation deltas. Never exports names, transaction IDs, tokens, seed bytes, addresses, private paths or keys.
+4. Preserves `safe_to_discard_proven=False`, `operator_discard_available=False`, `signer_allowed=False`, `broadcast_allowed=False` unconditionally. Even two matching sealed ledgers cannot prove that external peers have not observed a transaction, that source handles will survive a later rename, or that a crash-stage file contains no irreversible data.
+
+The default inventory API remains unchanged unless the operator explicitly requests the additional forensic pass. The new pass is **not a chain rescan, file mutation, OS-reinstall workaround, physical fault/power-loss test or native Core E2E**. Source-only tests exercise legitimate nested pinned WSP backups and a signed-only-in-future reservation; independent Codex/DEV acceptance and physical OS qualifications remain PENDING.
+
 ## Required stage 2 before any operator cleanup (P0 PENDING)
 
 1. Prove exact native file identity and owner ACL/UID protections for candidate source and quarantine destination with **native OS handles** on all three platforms. Include POSIX race/hardlink semantics and Windows NTFS DACL/reparse/rename identity. A read-only inventory never establishes later write authority.
