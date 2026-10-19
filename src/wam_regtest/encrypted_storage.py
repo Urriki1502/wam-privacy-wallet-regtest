@@ -96,3 +96,60 @@ def read(directory: Path, name: str) -> bytes:
 def validate_directory(directory):
     fd = open_macos_private_directory(directory)
     os.close(fd)
+
+
+def read_crash_residue(directory: Path, name: str) -> bytes:
+    """K-09 read-only descriptor evidence, not a general encrypted file reader.
+
+    A POSIX interrupted link/unlink can leave exactly two hard links; ordinary
+    vault restore still requires one. No stage file is moved or removed here.
+    """
+    from .private_directory import _require_absent_acl
+    if (type(name) is not str or not (
+            re.fullmatch(r"\.stage-[0-9a-f]{32}", name)
+            or re.fullmatch(r"snapshot-[0-9]{9}\.enc", name))):
+        raise EncryptedStorageError("K09_MAC_RESIDUE_NAME_DENIED")
+    dfd = open_macos_private_directory(directory)
+    fd = None
+    try:
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC
+                     | os.O_NONBLOCK, dir_fd=dfd)
+        before = os.fstat(fd)
+        fields = ("st_dev", "st_ino", "st_mode", "st_uid", "st_gid",
+                  "st_nlink", "st_size", "st_mtime_ns", "st_ctime_ns")
+        if (not stat.S_ISREG(before.st_mode)
+                or stat.S_IMODE(before.st_mode) != 0o600
+                or before.st_uid != os.geteuid()
+                or before.st_nlink not in (1, 2)
+                or os.get_inheritable(fd)
+                or not 52 <= before.st_size <= MAX_ENVELOPE):
+            raise EncryptedStorageError("K09_MAC_RESIDUE_METADATA_DENIED")
+        _require_absent_acl(fd)
+        parts, remaining = [], before.st_size
+        while remaining:
+            chunk = os.read(fd, min(remaining, 65536))
+            if not chunk:
+                raise EncryptedStorageError("K09_MAC_RESIDUE_SHORT_READ")
+            parts.append(chunk)
+            remaining -= len(chunk)
+        _require_absent_acl(fd)
+        after = os.fstat(fd)
+        if any(getattr(before, field) != getattr(after, field)
+               for field in fields):
+            raise EncryptedStorageError("K09_MAC_RESIDUE_CHANGED")
+        # A held descriptor protects bytes, not the stability of the name.
+        # Reopen only metadata with no-follow relative to the held directory.
+        named = os.stat(name, dir_fd=dfd, follow_symlinks=False)
+        if any(getattr(before, field) != getattr(named, field)
+               for field in fields):
+            raise EncryptedStorageError("K09_MAC_RESIDUE_CHANGED")
+        raw = b"".join(parts)
+        if not raw.startswith(b"WAMSP02\x00"):
+            raise EncryptedStorageError("K09_MAC_RESIDUE_FORMAT_DENIED")
+        return raw
+    except (OSError, ValueError):
+        raise EncryptedStorageError("K09_MAC_RESIDUE_READ_DENIED") from None
+    finally:
+        if fd is not None:
+            os.close(fd)
+        os.close(dfd)
