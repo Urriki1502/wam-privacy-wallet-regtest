@@ -45,6 +45,13 @@ disclosure. Full operation is not certified by these Python contracts.
 
 ## 3. Clean-OS bootstrap and frozen GUI
 
+K-10 `review_clean_host_target` performs an additional consent-bound,
+**read-only** local namespace inspection to deny an existing wallet vault,
+runtime SQLite/WAL/journal, symlinked or otherwise ambiguous chain path.
+It returns only a locked preflight receipt and CANNOT create an anchor,
+import a wallet, certify a fully clean OS or authorize a signer. These
+tests use temporary local directories, not physical fresh installations.
+
 K-08 already implements mnemonic-owner preflight and clean target
 prerequisite guards. A correct seed is not an OS anchor, Core `.dat`,
 Fusion `.enc`, reservation ledger or fully verified transaction history.
