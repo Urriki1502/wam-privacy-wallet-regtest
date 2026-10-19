@@ -7,11 +7,16 @@ requires a separate native E2E run, never claimed by a mocked response.
 from contextlib import contextmanager, ExitStack
 from hashlib import sha256
 from pathlib import Path
+import sys
 import shutil
 import sqlite3
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+
+# Resolve the repository-local executable fixtures identically on all runners.
+# Native CI may launch unittest from tests/ without checkout root on sys.path.
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
 from scripts.issue45_k10_core_target_restore import (
     qualify_isolated_core_restore, K10CoreTransferRefusal,
