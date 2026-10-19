@@ -1082,3 +1082,12 @@ than PR67 was modified. No merge or acceptance claim.
   head checks; fix any exact-head failure before another P0. Do not merge.
   Core Update Manager remains deferred P1. No usage-limit failure observed.
 - Separate session log: `outputs/pr67-resume-20261019T190008/RESUME_LOG.md`.
+
+
+### K-09 Linux exact-head failure diagnosis and deterministic fix — 20 Oct 2026
+
+- PR91 exact-head Linux run `39307518334` initially failed `test_kill_after_hardlink_before_unlink`: the vault contained both the interrupted `.stage-*` and its hardlinked future snapshot, but `_reject_unanchored_publication` raised `VAULT_UNANCHORED_GENERATION_DENIED` instead of the more specific interrupted-publication refusal.
+- Root cause confirmed in the exact source: the checker raised during `Path.iterdir()` and therefore filesystem directory order selected the refusal when the future snapshot was visited before the stage. The safety outcome remained fail-closed; the defect was nondeterministic refusal classification and an order-sensitive regression.
+- Fixed the existing K-09 PR90 branch in place (no new PR/rebase/force-push): `7910c0f3813f7cb9cd1cf2e19ca66abcc5b05b27` accumulates stage/future flags across the complete scan, then always prioritizes ambiguous names, interrupted stage, and finally future unanchored generation. Existing process-kill regression asserts stage+hardlink behavior; no cleanup/adoption/anchor/signing behavior changed.
+- PR90 exact-head native Mac/Windows/Linux/WSP workflows for `7910c0f` are pending. PR91 same-head rerun `39307627912` has native-contracts PASS, while its headless/Core/Qt jobs, Windows and Mac jobs were still running at this checkpoint. This is not a complete PR91 PASS or K-09 acceptance.
+- No physical power-loss, native owner-wallet, cross-OS restore, frozen full-wallet or owner acceptance is inferred. Keep PR90/91 Draft and unmerged.
