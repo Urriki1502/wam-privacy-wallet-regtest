@@ -33,7 +33,7 @@ class K09LedgerForensicContracts(unittest.TestCase):
         self.directory.mkdir(mode=0o700)
         self.password=b"PUBLIC_REGTEST_K09_LEDGER_TEST_PASSWORD"
         self.wallet_id="a"*32
-        self.ring=Keyring(seed=b"\\x12"*32)
+        self.ring=Keyring(seed=bytes([0x12])*32)
         self.addCleanup(self.ring.close)
         accounts=[a.identity() for a in self.ring.accounts()]
         self.store=Store(self.root/"scanner.db",accounts)
@@ -123,7 +123,7 @@ class K09LedgerForensicContracts(unittest.TestCase):
         self.assertFalse(receipt["safe_to_discard_proven"])
 
     def test_account_rotation_or_substitution_is_redacted_risk(self):
-        other=Keyring(seed=b"\\x33"*32)
+        other=Keyring(seed=bytes([0x33])*32)
         self.addCleanup(other.close)
         vault=self.make_vault({3:self.outer(3),4:self.outer(4,ring=other)})
         result=self.preview(vault)
