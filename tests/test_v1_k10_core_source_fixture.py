@@ -6,12 +6,17 @@ before private REGTEST backup keys may be written by its genuine run.
 """
 from contextlib import contextmanager, ExitStack
 from pathlib import Path
+import sys
 import json
 import shutil
 import sqlite3
 import tempfile
 import unittest
 from unittest.mock import Mock,patch
+
+# Resolve the repository-local executable fixtures identically on all runners.
+# Native CI may launch unittest from tests/ without checkout root on sys.path.
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
 from scripts.issue45_k10_core_source_fixture import (
     generate_disposable_core_fixture,K10SourceFixtureError,
