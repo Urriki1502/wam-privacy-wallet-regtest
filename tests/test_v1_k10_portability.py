@@ -56,6 +56,25 @@ class K10PublicPortability(unittest.TestCase):
         self.assertNotIn(PASSPHRASE,str(evidence))
         self.assertNotIn(self.trusted["receive_code"],str(evidence))
 
+    def test_disposable_native_cli_probe_is_redacted_and_deterministic(self):
+        import json
+        import subprocess
+        import sys
+        root=Path(__file__).resolve().parents[1]
+        process=subprocess.run(
+            [sys.executable,str(root/"scripts"/
+                "issue45_k10_public_portability_probe.py"),
+             "--disposable-public-fixture"],
+            cwd=root,capture_output=True,text=True,timeout=45,check=True)
+        self.assertFalse(process.stderr.strip())
+        self.assertNotIn(PHRASE,process.stdout)
+        self.assertNotIn(PASSPHRASE,process.stdout)
+        self.assertNotIn(self.trusted["receive_code"],process.stdout)
+        result=json.loads(process.stdout)
+        expected=self.probe()
+        self.assertEqual(result,expected)
+        self.assertFalse(result["physical_os_qualified"])
+
     def test_wrong_secret_profile_chain_and_account_never_match(self):
         forged=[
             {"passphrase":"WRONG"},
