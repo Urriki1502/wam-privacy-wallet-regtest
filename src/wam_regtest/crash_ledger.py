@@ -15,7 +15,7 @@ from wam_sp.state import decode_checkpoint
 from wam_sp.watcher import GENESIS
 
 
-_HASH = re.compile(r"[0-9a-f]{64}\\Z")
+_HASH = re.compile(r"[0-9a-f]{64}\Z")
 _STATES = frozenset(("draft", "signed", "uncertain", "broadcast", "manual"))
 _IRREVERSIBLE = frozenset(("signed", "uncertain", "broadcast", "manual"))
 
