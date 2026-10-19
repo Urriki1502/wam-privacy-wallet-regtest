@@ -92,6 +92,30 @@ Parser regression fixtures are synthetic RPC replies only; the actual
 Mac/Windows/Linux WAM Core IPC process evidence, historical + mempool
 completeness, rollback/reorg, physical crash and operator recovery decisions
 remain for the consolidated Codex + DEV/physical acceptance.
+## Stage 1f — original-owner GUI recovery preview (read-only)
+
+The managed Fusion Qt toolbar now contains **Inspect crash recovery · READ
+ONLY**. It requests the original wallet passphrase and a separate Yes/No
+choice for the optional **last eight blocks** read through the existing
+authenticated ManagedScanRpc; Cancel never opens the wallet. A short-lived
+worker invokes `managed_wallet_crash_preview.py`, which validates the
+original supervisor's ready/owned REGTEST state, immutable signed Core
+binary identity, pinned WSP source, original sealed wallet locator, native
+private vault and exact existing OS anchor before running sealed evidence.
+Fresh supervisor status/profile checks surround the operation.
+
+The UI displays only bounded numeric stage/future reservation risk counts,
+possibly the count of on-chain spent reserved outpoints, and an unambiguous
+**LOCKED / cleanup unavailable** warning. Invalid or malicious receipts
+fail closed without reporting private identifiers. No file rename, delete,
+restore, new wallet, anchor update, send, sign or broadcast control exists.
+
+The Python/source GUI service tests verify explicit consent, original-wallet
+scoping, optional real IPC selection, status change refusal and forged
+unlocked receipts. They are **not** physical/frozen GUI acceptance. K-09
+cannot be considered recovered or P0 PASS until signed/uncertain mempool/
+broadcast/reorg continuity and safe native file quarantine are proven and
+Codex/DEV/physical acceptance is completed.
 ## Required stage 2 before any operator cleanup (P0 PENDING)
 
 1. Prove exact native file identity and owner ACL/UID protections for candidate source and quarantine destination with **native OS handles** on all three platforms. Include POSIX race/hardlink semantics and Windows NTFS DACL/reparse/rename identity. A read-only inventory never establishes later write authority.
