@@ -241,3 +241,42 @@ def read(directory,name):
             verify_security(handle);return b''.join(parts)
         finally:
             if handle is not None: close(handle)
+
+
+def read_crash_residue(directory,name):
+    """Native NTFS read-only K-09 stage/future snapshot evidence.
+
+    Windows uses rename publication rather than POSIX hardlinks. Never
+    relax normal native storage/custody readers or allow link count >1.
+    """
+    if (type(name) is not str or not (
+            re.fullmatch(r'\.stage-[0-9a-f]{32}',name)
+            or re.fullmatch(r'snapshot-[0-9]{9}\.enc',name))):
+        _deny('K09_WIN_RESIDUE_NAME_DENIED')
+    require_native();handle=None
+    with directory_guard(directory):
+        try:
+            handle=create(str(directory/name),0x80000000|0x20000,1,None,3,
+                          0x200080,None)
+            if handle in (None,INVALID):
+                handle=None;_deny('K09_WIN_RESIDUE_OPEN_DENIED')
+            before=_metadata(handle);verify_security(handle)
+            if not 52<=before[3]<=MAX_ENVELOPE:
+                _deny('K09_WIN_RESIDUE_SIZE_DENIED')
+            parts=[];remaining=before[3]
+            while remaining:
+                size=min(remaining,65536)
+                buffer=c.create_string_buffer(size)
+                count=w.DWORD()
+                if not readfile(handle,buffer,size,c.byref(count),None) or not count.value:
+                    _deny('K09_WIN_RESIDUE_SHORT_READ')
+                parts.append(buffer.raw[:count.value]);remaining-=count.value
+            if before!=_metadata(handle):
+                _deny('K09_WIN_RESIDUE_CHANGED')
+            verify_security(handle)
+            raw=b''.join(parts)
+            if not raw.startswith(b'WAMSP02\x00'):
+                _deny('K09_WIN_RESIDUE_FORMAT_DENIED')
+            return raw
+        finally:
+            if handle is not None:close(handle)
