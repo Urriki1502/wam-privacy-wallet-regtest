@@ -86,6 +86,28 @@ history, reorg, signed/uncertain states, native credential continuity
 and cross-machine failure/refusal scenarios. Physical tests that cannot
 run must remain PENDING, never PASS.
 
+### Locked clean-host handoff composition
+
+`inspect_locked_clean_host_handoff` combines the *original* previously
+trusted BIP39/WSP public owner identity, a genuinely encrypted v4 WSP
+keyring backup, a clean-host namespace check and optionally the K-04
+read-only source/transported Core SQLite byte comparison. The two
+independently restored WSP public identity digests must match exactly.
+
+Optional read-only Core observation requires a separately consented
+concrete `ManagedScanRpc` from the existing locally owned REGTEST Core;
+it attests isolated genesis, stable best block hash and a bounded current
+height. No new RPC methods or wallet RPC are added. This is a *chain tip*
+observation only; it is NOT a mempool/history/reorg or spending proof.
+
+The target namespace is inspected before and after the checks, and both
+SQLite files are re-hashed if supplied. No recovery creates new OS
+credentials, modifies any source file, restores Core wallet state,
+imports old scanner reservations, resets anchor or authorizes spending.
+The only successful status is `K10_LOCKED_CLEAN_HOST_HANDOFF_INSPECTED`.
+All actual clean-machine installation, full historical replay, exact
+reservation preservation, restore and frozen GUI activation remain
+explicitly PENDING; K-09 P0 recovery must be resolved first.
 ## 4. Current status
 
 **IMPLEMENTED:** K10 public BIP39/WSP portability, strict OS receipt
