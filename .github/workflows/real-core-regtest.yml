@@ -129,6 +129,11 @@ jobs:
           assert p["wallet_spend_authorized"] is False if "wallet_spend_authorized" in p else p["fusion_signer_authorized"] is False
           assert p["mainnet_allowed"] is False
           PY
+      - name: K-10 actual Core SQLite source-to-target restore in separate REGTEST daemons
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m scripts.issue45_k10_core_same_host_smoke --core-dir core --confirm-disposable-regtest
       - name: Independently evaluate wallet security contracts
         run: python scripts/audit_wallet_security.py --root . --core core --output independent-wallet-security.json
       - name: Inspect signed node dynamic library requirements (real ARM64 bytes)
