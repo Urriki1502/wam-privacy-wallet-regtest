@@ -206,3 +206,44 @@ def require_trusted_anchor_for_spending():
     # Passphrase encryption, a colocated journal or a lease cannot establish
     # independent monotonic freshness. Never silently use them as an anchor.
     raise LinuxStorageError('LINUX_TRUSTED_ANTI_ROLLBACK_ANCHOR_UNQUALIFIED')
+
+
+def read_crash_residue(directory,name):
+    """Native read-only K-09 evidence; two POSIX hardlinks allowed only here."""
+    if (type(name) is not str or not (
+            re.fullmatch(r"\.stage-[0-9a-f]{32}",name)
+            or re.fullmatch(r"snapshot-[0-9]{9}\.enc",name))):
+        raise LinuxStorageError('K09_LINUX_RESIDUE_NAME_DENIED')
+    dfd=_walk(directory);fd=None
+    try:
+        fd=os.open(name,os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC|os.O_NONBLOCK,
+                   dir_fd=dfd)
+        before=os.fstat(fd)
+        if (not stat.S_ISREG(before.st_mode)
+                or stat.S_IMODE(before.st_mode)!=0o600
+                or before.st_uid!=os.geteuid()
+                or before.st_nlink not in (1,2)
+                or os.get_inheritable(fd)
+                or not 52<=before.st_size<=MAX_ENVELOPE):
+            raise LinuxStorageError('K09_LINUX_RESIDUE_METADATA_DENIED')
+        _no_acl(fd)
+        remaining=before.st_size;parts=[]
+        while remaining:
+            part=os.read(fd,min(remaining,65536))
+            if not part:raise LinuxStorageError('K09_LINUX_RESIDUE_SHORT_READ')
+            parts.append(part);remaining-=len(part)
+        _no_acl(fd)
+        if _identity(before)!=_identity(os.fstat(fd)):
+            raise LinuxStorageError('K09_LINUX_RESIDUE_CHANGED')
+        named=os.stat(name,dir_fd=dfd,follow_symlinks=False)
+        if _identity(before)!=_identity(named):
+            raise LinuxStorageError('K09_LINUX_RESIDUE_CHANGED')
+        raw=b''.join(parts)
+        if not raw.startswith(b'WAMSP02\x00'):
+            raise LinuxStorageError('K09_LINUX_RESIDUE_FORMAT_DENIED')
+        return raw
+    except (OSError,ValueError):
+        raise LinuxStorageError('K09_LINUX_RESIDUE_READ_DENIED') from None
+    finally:
+        if fd is not None:os.close(fd)
+        os.close(dfd)
