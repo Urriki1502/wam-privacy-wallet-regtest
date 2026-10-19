@@ -25,11 +25,12 @@ class LedgerEvidenceError(ValueError):
 
 
 class _LedgerProjection:
-    __slots__ = ("account_identity", "reservations", "irreversible")
+    __slots__ = ("account_identity", "reservations", "reservation_records", "irreversible")
 
-    def __init__(self, account_identity, reservations, irreversible):
+    def __init__(self, account_identity, reservations, reservation_records, irreversible):
         self.account_identity = account_identity
         self.reservations = reservations
+        self.reservation_records = reservation_records
         self.irreversible = irreversible
 
     def __repr__(self):
@@ -76,6 +77,7 @@ def project_owner_ledger(payload, password):
         decoded = decode_checkpoint(checkpoint, identity)
         rows = decoded["tables"]["reservations"]
         reservations = set()
+        reservation_records = set()
         irreversible = set()
         for row in rows:
             if (type(row[0]) is not str or not _HASH.fullmatch(row[0])
@@ -88,10 +90,14 @@ def project_owner_ledger(payload, password):
             if key in reservations:
                 raise ValueError
             reservations.add(key)
+            # Same outpoint with changed state/token/time is NOT the same
+            # reservation. A disappearance of 'signed' may imply lost intent.
+            reservation_records.add(tuple(row))
             if row[3] in _IRREVERSIBLE:
                 irreversible.add((row[0], row[1], row[3]))
         return _LedgerProjection(
-            identity, frozenset(reservations), frozenset(irreversible)
+            identity, frozenset(reservations), frozenset(reservation_records),
+            frozenset(irreversible)
         )
     except LedgerEvidenceError:
         raise
@@ -108,7 +114,7 @@ def compare_candidate_ledger(anchored, candidate):
         raise LedgerEvidenceError("K09_LEDGER_COMPARISON_DENIED")
     return {
         "same_account_identity": candidate.account_identity == anchored.account_identity,
-        "reservation_set_differs": candidate.reservations != anchored.reservations,
+        "reservation_set_differs": candidate.reservation_records != anchored.reservation_records,
         "candidate_irreversible_not_in_anchor": bool(
             candidate.irreversible - anchored.irreversible
         ),
