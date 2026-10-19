@@ -165,7 +165,7 @@ class K09NativeProcessKillBoundaries(unittest.TestCase):
         self.assert_restore_locked("VAULT_UNANCHORED_GENERATION_DENIED")
 
     def test_malformed_reserved_names_are_never_treated_as_clean(self):
-        for name in (".stage-short","snapshot-000000004.enc",
+        for name in (".stage-short","snapshot-00000004.enc",
                      "snapshot-000000000.enc","snapshot-000000004.enc.tmp",
                      ".stage-"+"A"*32):
             with self.subTest(name=name):
