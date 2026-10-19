@@ -184,7 +184,7 @@ class K10IsolatedCoreTransferContracts(unittest.TestCase):
         rpc.side_effect=corrupt_after_restore
         with self.assertRaisesRegex(
                 K10CoreTransferRefusal,
-                "K10_CORE_TRANSFER_RESTORE_FAILED"):
+                "K10_CORE_TRANSFER_SOURCE_CHANGED"):
             self.qualify()
 
     def test_invalid_backup_path_or_hash_denied_before_process(self):
