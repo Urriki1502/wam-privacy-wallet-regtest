@@ -12,11 +12,9 @@ or portable Fusion reservation/signer recovery.
 from __future__ import annotations
 
 import argparse
-from hashlib import sha256
 import json
 import os
 from pathlib import Path
-import re
 
 from wam_regtest.core import verified_core_paths
 from wam_regtest.core_sqlite_import import inspect_sqlite_backup
@@ -95,6 +93,10 @@ def generate_disposable_core_fixture(core_dir, new_private_directory, *,
                 "broadcast_allowed":False,
                 "mainnet_allowed":False,
             }
+            # Commit no transfer manifest until the source backup has
+            # passed an independent final immutable read.
+            if inspect_sqlite_backup(source)!=backup:
+                raise ValueError
             name=new_private_directory/"public-manifest.json"
             fd=None
             try:
@@ -115,8 +117,6 @@ def generate_disposable_core_fixture(core_dir, new_private_directory, *,
                 os.fsync(fd)
             finally:
                 if fd is not None:os.close(fd)
-            if inspect_sqlite_backup(source)!=backup:
-                raise ValueError
             return manifest
     except K10SourceFixtureError:
         raise
