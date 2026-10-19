@@ -1009,3 +1009,41 @@ The new `.patch` allowlist correction and checkpoint update are now committed
 and pushed separately on the existing PR67 branch; exact new SHA and CI are
 recorded in the separate resume log after remote verification. No branch other
 than PR67 was modified. No merge or acceptance claim.
+
+## 19 Oct 2026 21:00 ICT — exact-head refresh after PR67 source-guard fix
+
+- Live Issue #45 remains OPEN. PR67 remains Draft/open and unmerged at
+  `13e88646cca71715c0f1bf5e55d59d704deb7b7e`, based on PR66 at
+  `71a1e7b4336054bf0dabf3ca0ee6de174b462154`. Local PR67 branch and origin
+  match; working tree was clean at session start. No other PR branch changed.
+- The previous PR67 Windows failure was fixed without relaxing the source
+  guard: permit CRLF normalization for ordinary tracked `.patch` evidence,
+  retain byte-exact verification for pinned source-contract patches. Local
+  provenance tests 10 PASS + 1 expected Windows-only SKIP; syntax, diff and
+  disposable tracked-tree CRLF/content-mutation probes PASS.
+- Exact PR67 head checks: **10/10 SUCCESS**. Windows native credential/vault,
+  genuine signed WAM Core v0.1.11 + pinned WSP BIP352, recovery/reorg,
+  operational Qt transaction and genuine packaged `.exe` E2E all succeeded;
+  macOS signed-Core `.app/.dmg` E2E succeeded; Linux developer-Core/native/
+  frozen jobs and 28 canonical BIP352 vectors succeeded. Linux Core is
+  experimental developer provenance, not an official signed release.
+- Windows package is artifact `12178553208`, bound to this exact source SHA,
+  SHA-256 `3f0238cd3042afcd56a10761fb00afa1937861005800e99f9a4b800c27812633`;
+  [workflow artifact](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39233837179/artifacts/12178553208).
+  CI artifacts do not equal physical operator acceptance. Q05/full Issue #45
+  and physical Mac/Windows/Linux checks remain PENDING; CI itself marks this
+  component `NOT_FULL_Q05`. Do not label wallet final or merge PR67.
+- Live stack refresh: PR88 K-07, PR89 K-08, and PR90 K-09 remain separate
+  Drafts and each has four current native workflows SUCCESS on its exact head.
+  PR91 K-10 is a separate Draft stacked after K-09; at this refresh its exact
+  head `dc8e5b12397138996cc6f7ae1641c8a10d5900e2` has vectors SUCCESS and its
+  Windows/macOS/Linux workflows IN_PROGRESS. Its code/docs explicitly keep
+  restore, new anchors, history/reservation reconciliation, signer, broadcast,
+  and physical acceptance false; do not infer K-10 acceptance from source
+  tests or its pending jobs.
+- PR67 remains the only authorized engineering branch in this workspace for
+  this continuation; the #88–#91 branches were inspected read-only. Keep
+  uncertain reservations, custody, provenance and rollback gates unchanged.
+  Core Update Manager remains deferred P1. No usage-limit failure occurred.
+- Separate session log:
+  `outputs/pr67-resume-20261019T140007/RESUME_LOG.md`.
