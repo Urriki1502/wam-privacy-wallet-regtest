@@ -73,6 +73,21 @@ class BuildSourceContracts(unittest.TestCase):
             capture(self.root)
             pinned.write_bytes(b'// PUBLIC_PINNED_SOURCE\r\n')
             with self.assertRaisesRegex(BuildSourceError,'^BUILD_SOURCE_DIRTY$'):capture(self.root)
+    def test_windows_text_checkout_normalizes_evidence_patch_but_not_pinned_patch(self):
+        from unittest.mock import patch
+        evidence=self.root/'docs/evidence/review.patch';evidence.parent.mkdir(parents=True)
+        evidence.write_bytes(b'--- a/public.txt\n+++ b/public.txt\n')
+        self.git('add','.');self.commit()
+        evidence.write_bytes(b'--- a/public.txt\r\n+++ b/public.txt\r\n')
+        with patch('wam_regtest.build_provenance.sys.platform','win32'):
+            capture(self.root)
+        pinned=self.root/'tests/source_contract/v0.1.11/example.patch';pinned.parent.mkdir(parents=True)
+        pinned.write_bytes(b'--- a/pinned.txt\n+++ b/pinned.txt\n')
+        self.git('add','.');self.commit()
+        pinned.write_bytes(b'--- a/pinned.txt\r\n+++ b/pinned.txt\r\n')
+        with patch('wam_regtest.build_provenance.sys.platform','win32'):
+            with self.assertRaisesRegex(BuildSourceError,'^BUILD_SOURCE_DIRTY$'):
+                capture(self.root)
     @unittest.skipUnless(os.name=='nt','Windows native handle sharing contract')
     def test_windows_source_handle_denies_writer_during_read(self):
         from unittest.mock import patch

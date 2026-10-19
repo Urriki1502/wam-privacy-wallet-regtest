@@ -982,3 +982,30 @@ REGTEST only, official v0.1.11 boundary, WSP source pin unchanged. Physical Win/
 Linux remain PENDING_OPERATOR. Automation remains ACTIVE, nominal next slot
 `2026-10-19T14:00:00Z` / 21:00 ICT. Separate log:
 `outputs/pr67-resume-20261019T094136/RESUME_LOG.md`.
+
+## 19 Oct 2026 16:56 ICT — PR67 source-drift root cause and bounded fix
+
+On exact PR67 head `ef9e61c6169942f3c7893162a974a32d60bfd735`, Windows run
+39232543564 again passed 35 native tests and genuine signed v0.1.11 Core/WSP
+wallet/recovery/reorg E2E, then failed at the T05 source gate. The safe path
+fingerprint was `9bc4ff66ca800f90a6670988a963094bbc04bbb423d5aede0b20eba144dac1e9`;
+locally mapped against the exact tracked Git tree to
+`docs/evidence/issue45/PR88_EB503_SOURCE_GUARD_CANDIDATE.patch`. The captured
+failure is consistent with Windows text checkout CRLF normalization: this
+ASCII unified-diff evidence file has `.patch` suffix, previously absent from
+`TEXT_SUFFIXES`, while T05 source capture intentionally requires exact tracked
+Git blobs apart from explicitly permitted Windows text EOL conversion.
+
+Added `.patch` to Windows text-normalization suffixes. Added a contract that
+accepts CRLF checkout normalization for ordinary evidence patches, while a
+`.patch` under `tests/source_contract/v0.1.11/` remains byte-exact and is
+rejected when altered. Generic dirty refusal and hashed-only T05 diagnostics
+remain. Native source suite now 10 PASS + 1 expected Windows-native-only SKIP;
+py_compile and diff checks pass. This is source evidence only; Windows CI must
+verify the diagnosis/fix and frozen package gates. No Core binaries/artifacts
+built locally.
+
+The new `.patch` allowlist correction and checkpoint update are now committed
+and pushed separately on the existing PR67 branch; exact new SHA and CI are
+recorded in the separate resume log after remote verification. No branch other
+than PR67 was modified. No merge or acceptance claim.

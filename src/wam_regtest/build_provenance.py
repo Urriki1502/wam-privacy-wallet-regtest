@@ -14,7 +14,7 @@ import subprocess
 import sys
 
 SCHEMA='wam-build-source/v1'
-TEXT_SUFFIXES={'.py','.sh','.md','.txt','.toml','.yml','.yaml','.json','.h','.cpp'}
+TEXT_SUFFIXES={'.py','.sh','.md','.txt','.toml','.yml','.yaml','.json','.h','.cpp','.patch'}
 TEXT_NAMES={'LICENSE','.gitattributes','.gitignore'}
 
 
