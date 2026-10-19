@@ -5,8 +5,7 @@ known 256-bit PUBLIC test entropy constant: NOT a wallet/mnemonic for funds.
 No caller seed, files, Core RPC, OS native credential, encrypted wallet,
 user wallet.dat, miner data, signing or broadcast are accepted.
 
-The receipt is NOT signed CI provenance or physical acceptance. A Codex
-reviewer must separately record the immutable HEAD and native runner proof.
+The receipt is NOT signed CI provenance or physical acceptance. A designated reviewer must separately record the immutable HEAD and native runner proof.
 """
 from __future__ import annotations
 
