@@ -15,6 +15,14 @@ These conditions **currently block vault restore** via `_reject_unanchored_publi
 - The returned status is `K09_OWNER_VERIFIED_READ_ONLY_RESIDUE_PREVIEW`. `safe_to_discard_proven`, `candidates_authenticated`, `signed_or_uncertain_reservations_reconciled`, `operator_discard_available`, `signer_allowed` and `automatic_cleanup_allowed` are ALWAYS **false**. No positive file-cleanup action exists.
 - Unit tests model stage-only write crash, link/unlink window with both hardlinked names, two future orphan generations, mixed multi-stage + multi-orphan set, anchored older snapshots, symlink, extraneous hardlink, bounded file count, wrong anchor and missing owner password. These use disposable fake ciphertext and are **NOT** real Core or power-loss qualification.
 
+
+## Stage 1b — native process-termination injection and ambiguous-name refusal
+
+- `tests/test_v1_k09_native_process_kill.py` starts **a separate native OS process** using disposable fixture bytes. The parent kills it at (a) partial stage write, (b) staged ciphertext fsync, (c) POSIX hardlink-before-stage-unlink, (d) completed snapshot publication-before-native anchor advance, and (e) two consecutive failed generations. Windows follows its **rename** publication semantics and skips only the POSIX-specific link/unlink case. Files remain present and `CheckpointVault._reject_unanchored_publication` must keep restore locked after interruption.
+- Reserved publication prefixes with malformed names or generation zero are now **hard refusals** in both the authenticated preview and normal vault restore blocker. No ambiguous/partially named residue may be treated as evidence of a clean directory.
+- The subprocess tests use actual OS file operations and ungraceful process termination, but only a **sentinel** instead of a native Keychain/Credential/root witness anchor. They do **not** establish physical power-loss durability, genuine-Core signed/uncertain reservation reconciliation, OS-level ACL/handle race safety, frozen GUI recovery, or permission to quarantine, discard, sign, or broadcast.
+- Before claiming Stage 2 completion, obtain precise native file-handle/ACL proof, full WSP signed/uncertain ledger and rescan/reorg reconciliation on disposable **real Core REGTEST**, consent-bound owner decisions, and independent three-OS frozen/physical evidence. Tests passing are **engineering coverage**, not P0 acceptance.
+
 ## Required stage 2 before any operator cleanup (P0 PENDING)
 
 1. Prove exact native file identity and owner ACL/UID protections for candidate source and quarantine destination with **native OS handles** on all three platforms. Include POSIX race/hardlink semantics and Windows NTFS DACL/reparse/rename identity. A read-only inventory never establishes later write authority.
