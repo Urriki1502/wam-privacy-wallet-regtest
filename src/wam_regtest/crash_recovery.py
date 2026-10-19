@@ -64,6 +64,13 @@ def _candidate_inventory(directory, anchored_generation):
             name=entry.name
             snap=SNAPSHOT.fullmatch(name)
             stage=STAGE.fullmatch(name)
+            # Reserved publication prefixes must not be silently hidden from
+            # recovery by truncated, unusual or attacker-supplied filenames.
+            # Unknown state is a refusal, not an empty/clean inventory.
+            if ((name.startswith(".stage-") and not stage)
+                    or (name.startswith("snapshot-")
+                        and (not snap or int(snap[1])==0))):
+                _deny("K09_AMBIGUOUS_PUBLICATION_NAME_DENIED")
             if not stage and not (snap and int(snap[1])>anchored_generation):
                 continue
             if len(first)>=MAX_CANDIDATES:
@@ -82,10 +89,15 @@ def _candidate_inventory(directory, anchored_generation):
         seen={}
         for entry in directory.iterdir():
             if entry.name not in first:
-                if (STAGE.fullmatch(entry.name)
-                        or (SNAPSHOT.fullmatch(entry.name)
-                            and int(SNAPSHOT.fullmatch(entry.name)[1])
-                            >anchored_generation)):
+                # Catch both new valid candidates and new malformed names
+                # introduced between the two read-only directory passes.
+                snap=SNAPSHOT.fullmatch(entry.name)
+                stage=STAGE.fullmatch(entry.name)
+                if ((entry.name.startswith(".stage-") and not stage)
+                        or (entry.name.startswith("snapshot-")
+                            and (not snap or int(snap[1])==0))):
+                    _deny("K09_AMBIGUOUS_PUBLICATION_NAME_DENIED")
+                if stage or (snap and int(snap[1])>anchored_generation):
                     _deny("K09_RESIDUE_CHANGED")
                 continue
             info=entry.lstat()
