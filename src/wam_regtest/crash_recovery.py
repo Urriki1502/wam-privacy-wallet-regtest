@@ -140,112 +140,138 @@ def _candidate_inventory(directory, anchored_generation):
 
 
 def _forensic_candidate_ledger(vault, password, record, original, plan):
-    """Owner-authorized, bounded OS-native *read-only* ledger comparison.
+    """Read sealed stage/snapshot reservation evidence, never grant cleanup.
 
-    Every future snapshot is opened by the existing protected storage reader,
-    which checks native metadata, ACL/UID and no-follow handle identity.
-    Stage files are NEVER interpreted as complete encrypted checkpoints.
-    Reading candidate bytes and comparing encrypted ledgers never permits
-    publication, quarantine, discard, unlock, signer or broadcast.
+    The original native owner lease and vault lock are held by the caller.
+    All residue bytes must pass their platform's strict no-follow/handle
+    reader, including intact POSIX link-before-unlink pairs (nlink == 2).
+    A torn stage or suspicious snapshot is UNKNOWN, never safe to discard.
     """
     from . import custody
     from .crash_ledger import (
         project_owner_ledger, compare_candidate_ledger, LedgerEvidenceError,
     )
+    from .wsp_live import REGTEST_GENESIS
     from wam_sp.keystore import unseal
 
-    if plan["candidate_count"] > 32 or plan["future_snapshot_count"] > 8:
+    if (plan["candidate_count"]>32 or plan["stage_count"]>8
+            or plan["future_snapshot_count"]>8):
         _deny("K09_FORENSIC_SET_LIMIT_DENIED")
+    if not callable(getattr(vault._storage,"read_crash_residue",None)):
+        _deny("K09_NATIVE_FORENSIC_READER_REQUIRED")
     try:
-        anchored = project_owner_ledger(original, password)
+        anchored=project_owner_ledger(original,password)
     except LedgerEvidenceError:
         _deny("K09_ANCHORED_LEDGER_UNVERIFIABLE")
 
-    candidates=[]
-    try:
-        for member in vault.directory.iterdir():
-            match=SNAPSHOT.fullmatch(member.name)
-            if match and int(match[1]) > record[0]:
-                candidates.append((member.name,int(match[1])))
-        candidates.sort(key=lambda p:p[0])
-    except OSError:
-        _deny("K09_FORENSIC_DIRECTORY_DENIED")
-    if len(candidates)!=plan["future_snapshot_count"]:
-        _deny("K09_FORENSIC_DIRECTORY_CHANGED")
-
-    verified=unverified=changed_accounts=changed_reservations=irreversible=0
-    total_bytes=0
-    for name,generation in candidates:
-        entry=vault.directory/name
+    def identify():
+        """Entire bounded candidate set and metadata; no pathname escapes."""
+        members={}
         try:
-            before=entry.lstat()
-            if (not stat.S_ISREG(before.st_mode)
-                    or not 1<=before.st_nlink<=2):
-                _deny("K09_FORENSIC_NATIVE_METADATA_DENIED")
-            marker=(before.st_dev,before.st_ino,before.st_mode,
-                    before.st_size,before.st_mtime_ns,before.st_ctime_ns,
-                    before.st_nlink)
-            try:
-                encrypted=vault._storage.read(vault.directory,name)
-                total_bytes+=len(encrypted)
-                if total_bytes>64*1024*1024:
-                    _deny("K09_FORENSIC_BYTES_LIMIT_DENIED")
-                plaintext=unseal(encrypted,password,b"recovery")
-                if not 2<=len(plaintext)<=32*1024*1024:
-                    raise ValueError
-                candidate=json.loads(plaintext,object_pairs_hook=_unique_json_pairs)
-                profile=custody.envelope_profile()
-                from .wsp_live import REGTEST_GENESIS
-                if (type(candidate) is not dict
-                        or set(candidate)!=set(profile)|{
-                            "disposable_regtest","network","wallet_id",
-                            "generation","keys","checkpoint"}
-                        or any(type(candidate.get(k)) is not type(v)
-                               or candidate[k]!=v for k,v in profile.items())
-                        or candidate.get("disposable_regtest") is not True
-                        or candidate.get("network")!=REGTEST_GENESIS
-                        or candidate.get("wallet_id")!=vault.anchor.wallet_id
-                        or type(candidate.get("generation")) is not int
-                        or candidate["generation"]!=generation):
-                    raise ValueError
-                projection=project_owner_ledger(candidate,password)
-                relation=compare_candidate_ledger(anchored,projection)
-                verified+=1
-                if not relation["same_account_identity"]:
-                    changed_accounts+=1
-                if relation["reservation_set_differs"]:
-                    changed_reservations+=1
-                if relation["candidate_irreversible_not_in_anchor"]:
-                    irreversible+=1
-            except CrashRecoveryRefusal:
-                raise
-            except Exception:
-                # A torn, hardlinked or corrupt candidate is UNKNOWN, NEVER
-                # harmless, even if its name looks like a redundant stage.
-                unverified+=1
-            after=entry.lstat()
-            if marker!=(after.st_dev,after.st_ino,after.st_mode,
-                        after.st_size,after.st_mtime_ns,after.st_ctime_ns,
-                        after.st_nlink):
-                _deny("K09_FORENSIC_CANDIDATE_CHANGED")
+            for entry in vault.directory.iterdir():
+                stage=STAGE.fullmatch(entry.name)
+                future=SNAPSHOT.fullmatch(entry.name)
+                if not stage and not (future and int(future[1])>record[0]):
+                    continue
+                if len(members)>=32:
+                    _deny("K09_FORENSIC_SET_LIMIT_DENIED")
+                st=entry.lstat()
+                if not stat.S_ISREG(st.st_mode) or st.st_nlink not in (1,2):
+                    _deny("K09_FORENSIC_NATIVE_METADATA_DENIED")
+                members[entry.name]=(
+                    st.st_dev,st.st_ino,st.st_mode,st.st_uid,st.st_gid,
+                    st.st_nlink,st.st_size,st.st_mtime_ns,st.st_ctime_ns,
+                )
+            return members
         except CrashRecoveryRefusal:
             raise
         except OSError:
+            _deny("K09_FORENSIC_DIRECTORY_DENIED")
+
+    original_index=identify()
+    if (len(original_index)!=plan["candidate_count"]
+            or sum(bool(STAGE.fullmatch(n)) for n in original_index)
+               !=plan["stage_count"]
+            or sum(bool(SNAPSHOT.fullmatch(n)) for n in original_index)
+               !=plan["future_snapshot_count"]):
+        _deny("K09_FORENSIC_DIRECTORY_CHANGED")
+
+    names=sorted(original_index)
+    counts={
+        "future_snapshot_ledger_authenticated_count":0,
+        "future_snapshot_ledger_unverifiable_count":0,
+        "future_snapshot_account_changed_count":0,
+        "future_snapshot_reservation_set_changed_count":0,
+        "future_snapshot_irreversible_delta_count":0,
+        "stage_content_authenticated_count":0,
+        "stage_content_unverifiable_count":0,
+        "stage_account_changed_count":0,
+        "stage_reservation_set_changed_count":0,
+        "stage_irreversible_delta_count":0,
+    }
+    total_bytes=0
+    for name in names:
+        is_stage=bool(STAGE.fullmatch(name))
+        prefix="stage" if is_stage else "future_snapshot"
+        entry=vault.directory/name
+        before=original_index[name]
+        # Reject changes BEFORE attempting native read, including a newly
+        # substituted symlink, a re-linked inode or an ACL-modified source.
+        current=identify()
+        if current.get(name)!=before or set(current)!=set(original_index):
+            _deny("K09_FORENSIC_CANDIDATE_CHANGED")
+        total_bytes+=before[6]
+        if total_bytes>64*1024*1024:
+            _deny("K09_FORENSIC_BYTES_LIMIT_DENIED")
+        try:
+            encrypted=vault._storage.read_crash_residue(vault.directory,name)
+            if type(encrypted) is not bytes or len(encrypted)!=before[6]:
+                raise ValueError
+            raw=unseal(encrypted,password,b"recovery")
+            if not 2<=len(raw)<=32*1024*1024:
+                raise ValueError
+            candidate=json.loads(raw,object_pairs_hook=_unique_json_pairs)
+            profile=custody.envelope_profile()
+            generation=candidate.get("generation")
+            if (type(candidate) is not dict
+                    or set(candidate)!=set(profile)|{
+                        "disposable_regtest","network","wallet_id",
+                        "generation","keys","checkpoint"}
+                    or any(type(candidate.get(k)) is not type(v)
+                           or candidate[k]!=v for k,v in profile.items())
+                    or candidate.get("disposable_regtest") is not True
+                    or candidate.get("network")!=REGTEST_GENESIS
+                    or candidate.get("wallet_id")!=vault.anchor.wallet_id
+                    or type(generation) is not int
+                    or not record[0]<generation<10**9
+                    or (not is_stage and generation!=int(SNAPSHOT.fullmatch(name)[1]))):
+                raise ValueError
+            projection=project_owner_ledger(candidate,password)
+            relation=compare_candidate_ledger(anchored,projection)
+            counts[("stage_content_authenticated_count" if is_stage else
+                    "future_snapshot_ledger_authenticated_count")]+=1
+            if not relation["same_account_identity"]:
+                counts[prefix+"_account_changed_count"]+=1
+            if relation["reservation_set_differs"]:
+                counts[prefix+"_reservation_set_changed_count"]+=1
+            if relation["candidate_irreversible_not_in_anchor"]:
+                counts[prefix+"_irreversible_delta_count"]+=1
+        except CrashRecoveryRefusal:
+            raise
+        except Exception:
+            # Torn, wrong-password, wrong account, changed profile, failed
+            # native ACL/handle read are unverified, never cleanup evidence.
+            counts[("stage_content_unverifiable_count" if is_stage else
+                    "future_snapshot_ledger_unverifiable_count")]+=1
+        if identify()!=original_index:
             _deny("K09_FORENSIC_CANDIDATE_CHANGED")
 
-    # Repeat the *whole* directory inventory to detect ordinary concurrent
-    # changes. This is read-only diagnosis, not a handle-bound cleanup proof.
-    after_plan=_candidate_inventory(vault.directory,record[0])
-    if after_plan!=plan:
+    if (_candidate_inventory(vault.directory,record[0])!=plan
+            or identify()!=original_index):
         _deny("K09_FORENSIC_DIRECTORY_CHANGED")
     return {
         "forensic_status":"K09_SEALED_WSP_LEDGER_PREVIEW_ONLY",
-        "future_snapshot_ledger_authenticated_count":verified,
-        "future_snapshot_ledger_unverifiable_count":unverified,
-        "future_snapshot_account_changed_count":changed_accounts,
-        "future_snapshot_reservation_set_changed_count":changed_reservations,
-        "future_snapshot_irreversible_delta_count":irreversible,
-        "stage_content_authenticated_count":0,
+        **counts,
         "core_reservation_or_reorg_reconciled":False,
         "safe_to_discard_proven":False,
         "operator_discard_available":False,
@@ -253,6 +279,7 @@ def _forensic_candidate_ledger(vault, password, record, original, plan):
         "signer_allowed":False,
         "broadcast_allowed":False,
     }
+
 
 
 def inspect_owner_crash_residue(vault, password, *, authorized=False, audit_reservations=False):
