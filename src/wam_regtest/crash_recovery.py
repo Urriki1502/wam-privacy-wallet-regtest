@@ -16,7 +16,6 @@ NO DELETE, QUARANTINE, RESTORE, ANCHOR REWRITE, SIGN, OR BROADCAST API HERE.
 from __future__ import annotations
 
 from hashlib import sha256
-import base64
 import json
 import os
 from pathlib import Path
@@ -32,6 +31,15 @@ MAX_CANDIDATES=32
 
 class CrashRecoveryRefusal(ValueError):
     pass
+
+
+def _unique_json_pairs(pairs):
+    obj={}
+    for k,v in pairs:
+        if k in obj:
+            _deny("K09_ANCHORED_DUPLICATE_FIELD_DENIED")
+        obj[k]=v
+    return obj
 
 
 def _deny(reason):
@@ -156,7 +164,7 @@ def inspect_owner_crash_residue(vault, password, *, authorized=False):
             raw=unseal(ciphertext,password,b"recovery")
             if not 2<=len(raw)<=32*1024*1024:
                 _deny("K09_ANCHORED_PAYLOAD_DENIED")
-            data=json.loads(raw)
+            data=json.loads(raw,object_pairs_hook=_unique_json_pairs)
             profile=custody.envelope_profile()
             from wam_sp.watcher import GENESIS
             if (type(data) is not dict
