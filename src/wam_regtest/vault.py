@@ -154,6 +154,8 @@ class CheckpointVault:
             anchored=0 if record is None else record[0]
             if type(anchored) is not int or anchored<0:
                 raise VaultError("VAULT_ANCHOR_GENERATION_DENIED")
+            has_stage=False
+            has_unanchored=False
             for entry in self.directory.iterdir():
                 name=entry.name
                 stage=re.fullmatch(r"\.stage-[0-9a-f]{32}",name)
@@ -164,10 +166,17 @@ class CheckpointVault:
                         or (name.startswith("snapshot-")
                             and (not match or int(match.group(1))==0))):
                     raise VaultError("VAULT_AMBIGUOUS_PUBLICATION_DENIED")
-                if stage:
-                    raise VaultError("VAULT_INTERRUPTED_PUBLICATION_DENIED")
-                if match and int(match.group(1))>anchored:
-                    raise VaultError("VAULT_UNANCHORED_GENERATION_DENIED")
+                # Collect all residue categories before returning a refusal.
+                # POSIX readdir order is unspecified: a hardlink crash
+                # leaves both a .stage and a future snapshot. The stage
+                # refusal must not depend on which entry appears first.
+                has_stage = has_stage or bool(stage)
+                has_unanchored = has_unanchored or (
+                    bool(match) and int(match.group(1))>anchored)
+            if has_stage:
+                raise VaultError("VAULT_INTERRUPTED_PUBLICATION_DENIED")
+            if has_unanchored:
+                raise VaultError("VAULT_UNANCHORED_GENERATION_DENIED")
         except VaultError:
             raise
         except OSError:
