@@ -154,6 +154,8 @@ class CheckpointVault:
             anchored=0 if record is None else record[0]
             if type(anchored) is not int or anchored<0:
                 raise VaultError("VAULT_ANCHOR_GENERATION_DENIED")
+            interrupted=False
+            unanchored=False
             for entry in self.directory.iterdir():
                 name=entry.name
                 stage=re.fullmatch(r"\.stage-[0-9a-f]{32}",name)
@@ -164,10 +166,16 @@ class CheckpointVault:
                         or (name.startswith("snapshot-")
                             and (not match or int(match.group(1))==0))):
                     raise VaultError("VAULT_AMBIGUOUS_PUBLICATION_DENIED")
-                if stage:
-                    raise VaultError("VAULT_INTERRUPTED_PUBLICATION_DENIED")
-                if match and int(match.group(1))>anchored:
-                    raise VaultError("VAULT_UNANCHORED_GENERATION_DENIED")
+                # Do not let filesystem directory iteration order determine
+                # which residue is reported. A stage is the earlier
+                # interrupted-publication boundary even when its hardlinked
+                # unanchored snapshot appears first in the directory stream.
+                interrupted = interrupted or bool(stage)
+                unanchored = unanchored or bool(match and int(match.group(1))>anchored)
+            if interrupted:
+                raise VaultError("VAULT_INTERRUPTED_PUBLICATION_DENIED")
+            if unanchored:
+                raise VaultError("VAULT_UNANCHORED_GENERATION_DENIED")
         except VaultError:
             raise
         except OSError:
