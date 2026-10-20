@@ -6,12 +6,20 @@ KINDS=('SOURCE','CORE_E2E','FROZEN','PHYSICAL','DEV_REVIEWED')
 IDENTITY=('code_sha','os','architecture','core_version','wamd_sha256','wam_cli_sha256','wsp_commit')
 
 
-def effective_status(record,candidate):
+def effective_status(record,candidate,*,receipt_verified=False):
     """Missing/SKIP cannot pass; a changed tested dependency invalidates PASS.
 
     The caller still independently verifies the referenced test/artifact. This
     function never promotes SOURCE into another layer or authenticates JSON.
     """
+    # Strict R-03 records cannot be promoted by the legacy B-03 bookkeeping
+    # routine. They require all dependency identities and independent receipt
+    # verification; historic B-03 receipts retain their original semantics.
+    if type(record) is dict and 'schema' in record:
+        if record.get('schema')!='wam-fusion-r03-evidence-lifecycle/v1':
+            return 'PENDING'
+        from .r03_evidence_lifecycle import r03_effective_status
+        return r03_effective_status(record,candidate,receipt_verified=receipt_verified)
     if type(record) is not dict or type(candidate) is not dict:return 'PENDING'
     state=record.get('status')
     if state in ('FAIL','STALE'):return state
