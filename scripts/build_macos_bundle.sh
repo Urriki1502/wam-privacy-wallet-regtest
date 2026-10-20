@@ -193,5 +193,7 @@ from wam_regtest.release_candidate import write_candidate_manifest
 write_candidate_manifest(Path('package-output'),'macos-arm64',{
     'wamd':sha256(Path('core/wamd').read_bytes()).hexdigest(),
     'wam-cli':sha256(Path('core/wam-cli').read_bytes()).hexdigest()})
+from wam_regtest.r04_package_audit import audit_candidate_output
+audit_candidate_output(Path('package-output'),expected_platform='macos-arm64')
 print("MACOS_ARM64_REAL_CORE_BIP352_PACKAGED_APP_DMG_E2E_PASS")
 PY
