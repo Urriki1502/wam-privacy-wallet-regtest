@@ -1135,3 +1135,24 @@ The macOS evidence field `interactive_demo_closed_cleanly=false` is not evidence
 **K-10 remains incomplete despite the green component CI and same-OS packaged smoke.** Still pending: six genuine cross-OS Core SQLite restore permutations, clean-OS native custody/anchor commissioning, complete prior signed/uncertain reservation reconciliation, frozen GUI LOCK→RECOVERED continuity, and independent/physical acceptance. K-09 safe crash residue resolution remains pending; do not infer it from deterministic refusal tests. Preserve #86/#88/#89/#90/#91/#97/#98 ownership and keep all drafts unmerged. REGTEST/disposable only; v0.1.12 candidate-only; Core Update Manager deferred P1.
 
 Artifact ZIPs are retained by GitHub until 2026-11-03 (per API metadata). This entry records API digests plus local ZIP/package SHA checks; it does not claim physical Mac/Windows/Linux acceptance or an authorized local end-user launch.
+
+
+## Follow-up — Linux procfs owner-proof failure repaired and requalified (2026-10-20)
+
+The exact-head Linux frozen desktop E2E on documentation commit `76bb738a151ffdcebb9272cdc20b3be1384a23ea` failed with a `PermissionError` enumerating `/proc/<pid>/fd` in `OwnedCoreBinding._linux_socket` (run 39419623347). This correctly denied the RPC path, but leaked a generic infrastructure exception instead of completing the bounded fail-closed owner-proof denial. No signing or broadcast was authorized by the failure.
+
+On the existing PR #67 branch, commit `5c1954ad9eee029f89e0dba49f4583d4e8f1065f` catches procfs `OSError` at fd enumeration/TCP table read and returns “no ownership proof”; the existing bounded retry then denies. There is no trust fallback. Two tests cover permission denial on both procfs reads; focused `test_v1_core_process.py`: 4/4 PASS, exit 0.
+
+Exact `5c1954a` workflows are 4/4 PASS: macOS 39420707013; Windows 39420707015; Linux 39420706934; WSP 39420707148. Linux frozen desktop/headless passed with the fix. Linux remains reviewed developer-Core provenance, not an official signed Linux Core.
+
+### Exact 5c1954a artifact checks
+
+Downloaded final packages' outer ZIP hashes matched the GitHub artifact API digests. Inner manifests and packaged official Core binary hashes were independently checked; local package files were not launched.
+
+| Platform | Artifact / outer SHA-256 | Payload SHA-256 | Core provenance and SHA-256 |
+| --- | --- | --- | --- |
+| macOS ARM64 | [12263554744](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39420707013/artifacts/12263554744) `0d26b942b1de10afd00ad9edf58f4e458c47bf4d657f879658e33a459bc653ec` | app ZIP `b222f9256afffe38b46d73c4709af641d8143742dbe79bf30b50c46145c3fe85`; DMG `217bf4ea873e43d277decc2d49640a79375a03323ccc353d2c2e79f068f7d0b1` | Official signed v0.1.11; `wam-cli` `81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82`; `wamd` `7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068` |
+| Windows x64 | [12264096911](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39420707015/artifacts/12264096911) `c2b043025637c4c4ad3b28971dc42472284afde1195b19cbb1b70c236e9ccda9` | operational ZIP `94889c9fb4c86e9beb621630891d0ce9565e69df8f61ffe366e0a9e5f449619b` | Official signed v0.1.11; `wam-cli.exe` `538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21`; `wamd.exe` `31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1` |
+| Linux x86_64 desktop | [12263826139](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39420706934/artifacts/12263826139) `a38c9f38091a0186c6f55bfd4749b50659bc8330bfbad93c850370c512fccf81` | tar.gz `b79deb06557e97cf36660127cf89af6fb7e5513966999a2abdcb0acb2fb9df91` | Reviewed developer build, not an official signed Linux release; `wam-cli` `ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652`; `wamd` `ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6` |
+
+All package manifests bind source head `5c1954a` to the temporary CI merge checkout `bedcc74f069785f904e739113d1b3a236adf8412`. Artifacts remain unnotarized engineering candidates. Full K-09/K-10 physical, clean-OS, cross-OS restore, historical reservation and independent acceptance gates remain OPEN/PENDING; no release or merge claim.
