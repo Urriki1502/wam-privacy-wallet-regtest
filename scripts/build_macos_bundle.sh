@@ -195,5 +195,8 @@ write_candidate_manifest(Path('package-output'),'macos-arm64',{
     'wam-cli':sha256(Path('core/wam-cli').read_bytes()).hexdigest()})
 from wam_regtest.r04_package_audit import audit_candidate_output
 audit_candidate_output(Path('package-output'),expected_platform='macos-arm64')
+from wam_regtest.r05_public_privacy import audit_public_output
+r05=audit_public_output(Path('package-output'))
+assert r05['status']=='R05_PUBLIC_TEXT_AND_PATH_AUDIT_PASS'
 print("MACOS_ARM64_REAL_CORE_BIP352_PACKAGED_APP_DMG_E2E_PASS")
 PY
