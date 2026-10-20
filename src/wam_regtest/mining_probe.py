@@ -144,19 +144,46 @@ def _probe_core_mining(core,source,*,gui=False):
             if rpc('getblockcount')!=depth:raise ValueError('MINER_DEPTH_DENIED')
             utxo=rpc('gettxout',txid,str(own_out));b=balance()
             if utxo['confirmations']!=depth or utxo['coinbase'] is not True:raise ValueError('MINER_COINBASE_UTXO_DENIED')
+            # F-02: independently bind *this* owned coinbase UTXO, native
+            # Core chain height, and Core wallet's immature/available model.
+            # A coincidentally rejected RPC is not maturity evidence.
+            from .f02_maturity import DisposableCoinbaseMaturity
+            f02=DisposableCoinbaseMaturity.from_core(
+                chain='regtest',genesis=REGTEST_GENESIS,
+                height=rpc('getblockcount'),origin_height=1,
+                utxo=utxo,wallet_balance=b,
+                owned_script=owned['scriptPubKey'],
+                miner_atoms=first_audit.owned_miner_atoms)
+            if f02.depth!=depth or f02.wallet_send_allowed_by_maturity!=(depth==101):
+                raise ValueError('F02_MATURITY_PROOF_MISMATCH')
             if depth<101:
                 if (b.available_atoms,b.trusted_atoms,b.immature_atoms)!=(0,0,4750000000):raise ValueError('MINER_EARLY_AVAILABLE_DENIED')
                 before=rpc('getrawmempool')
                 try:wallet('sendtoaddress',external,'0.00100000')
                 except CoreSmokeError:pass
                 else:raise ValueError('MINER_EARLY_WALLET_SPEND_ACCEPTED')
-                if rpc('getrawmempool')!=before or balance()!=b:raise ValueError('MINER_REFUSED_SPEND_MUTATED')
+                # The node must still serve the same wallet/chain after the
+                # negative send; network/transport failures cannot stand in
+                # for a genuine immature-coinbase refusal.
+                current_wallet=wallet('getwalletinfo')
+                if (current_wallet.get('walletname')!='test'
+                        or current_wallet.get('format')!='sqlite'
+                        or current_wallet.get('descriptors') is not True
+                        or current_wallet.get('private_keys_enabled') is not True
+                        or rpc('getblockcount')!=depth
+                        or rpc('getrawmempool')!=before
+                        or balance()!=b):
+                    raise ValueError('F02_IMMATURE_CORE_STATE_CHANGED')
                 accepted=False
             else:
                 if (b.available_atoms,b.trusted_atoms,b.immature_atoms)!=(4750000000,4750000000,0):raise ValueError('MINER_MATURE_AVAILABLE_DENIED')
                 payment=wallet('sendtoaddress',external,'0.00100000');accepted=True
                 if payment not in rpc('getrawmempool'):raise ValueError('MINER_MATURE_PAYMENT_NOT_ACCEPTED')
-            maturity.append({'depth':depth,'balance_before_send':asdict(b),'wallet_send_accepted':accepted})
+            if accepted!=f02.wallet_send_allowed_by_maturity:
+                raise ValueError('F02_DISPOSABLE_CORE_SEND_DISAGREE')
+            maturity.append({'depth':depth,'balance_before_send':asdict(b),
+                             'wallet_send_accepted':accepted,
+                             'f02_core_maturity_witness':asdict(f02)})
             if view is not None:
                 view.render_snapshot(read.mining_snapshot(authorized_readonly=True));app.processEvents()
                 directory=Path('fusion-ui-review');directory.mkdir(exist_ok=True)
@@ -201,6 +228,9 @@ def _probe_core_mining(core,source,*,gui=False):
             'f01_all_miner_fees_core_owned_and_treasury_separate':True,
             'locked_available_atoms':locked.available_atoms,'treasury_owned_by_fixture':False,
             'source_main_schedule_200000_is_not_regtest_interval':True,'sunset_height_runtime_qualified':False,
+            'f02_real_core_immature_99_100_and_mature_101_verified':True,
+            'f02_no_early_send_or_mempool_mutation':True,
+            'f02_no_general_wallet_signer_authority':True,
             'no_fusion_reservation_released':True,'elapsed_seconds':round(time.monotonic()-start,3),
             'synthetic_rpc':False,'owner_data_accessed':False,'mainnet_allowed':False,
             'core_wallet_probe_not_bip39_signer_qualification':True}
