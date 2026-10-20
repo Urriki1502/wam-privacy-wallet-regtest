@@ -30,7 +30,7 @@ PLATFORMS = {
 KNOWN_RELEASES = frozenset(("v0.1.11", "v0.1.12"))
 MAX_BYTES = {"SIGNING-KEY.asc": 32768, "SHA256SUMS": 131072,
              "SHA256SUMS.asc": 16384, "archive": 320 * 1024 * 1024}
-SHA_RE = re.compile(r"[0-9a-f]{64}\\Z")
+SHA_RE = re.compile("[0-9a-f]{64}")
 
 
 def _copy_untrusted_file(source: Path, dest: Path, maximum: int) -> None:
