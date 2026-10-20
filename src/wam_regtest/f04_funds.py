@@ -44,8 +44,8 @@ class CoreFundsBuckets:
     def from_core(cls, *, chain, genesis, balance, locked_outpoints,
                   locked_txouts, unlocked_outpoints, owned_script,
                   treasury_script):
-        require_regtest(chain, genesis)
         try:
+            require_regtest(chain, genesis)
             if (type(balance) is not MiningWalletBalance or
                     type(locked_outpoints) is not list or
                     type(locked_txouts) is not dict or
