@@ -53,6 +53,32 @@ jobs:
         run: python scripts/check_wam_subsidy_source.py --output source-subsidy-contract.json
       - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
         run: python -m wam_regtest.release --platform macos-arm64 --destination core
+      - name: B-06 two genuine Core nodes, loopback P2P, reorg1/12/100 and WSP SQLite rollback
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m scripts.issue45_b06_multinode_regtest \
+            --core-dir "$GITHUB_WORKSPACE/core" \
+            --wsp-source "$GITHUB_WORKSPACE/wsp-upstream" \
+            --confirm-disposable-regtest \
+            --output b06-multinode-evidence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("b06-multinode-evidence.json").read_text())
+          assert p["status"]=="B06_MACOS_REAL_TWO_NODE_WSP_REORG_E2E_PASS"
+          assert p["network"]=="regtest" and p["synthetic_rpc"] is False
+          assert p["two_distinct_live_wamd_processes"] is True
+          assert p["loopback_p2p_only"] is True
+          assert p["genuine_wsp_sqlite_rescan"] is True
+          assert p["node_restart_and_reconnect"] is True
+          assert [r["depth"] for r in p["reorgs"]]==[1,12,100]
+          assert all(r["wsp_sqlite_rollback_blocks"]==r["depth"] for r in p["reorgs"])
+          assert p["mainnet_allowed"] is False
+          assert p["physical_or_owner_accepted"] is False
+          assert p["full_b06_p0_qualified"] is False
+          PY
       - name: T05 real persistent Core + actual Fusion GUI close/reopen (wallet continuity pending)
         env:
           QT_QPA_PLATFORM: offscreen
