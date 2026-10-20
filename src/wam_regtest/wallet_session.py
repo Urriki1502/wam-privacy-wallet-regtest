@@ -340,6 +340,13 @@ class WalletSession:
                 or type(fee) is not int or not 1<=fee<=MAX_PAYMENT_FEE_ATOMS
                 or atoms+fee>22_000_000*100_000_000):
             raise WalletSessionError("WALLET_PAYMENT_POLICY_DENIED")
+        # F-07 public-only, no RPC/key/store access: explain why checksum-
+        # valid mainnet legacy input is NOT an eligible REGTEST WSP recipient.
+        # Never delete imported credentials or reinterpret the string as WSP.
+        from .f07_address_parity import classify_collision_send_refusal
+        recipient_refusal=classify_collision_send_refusal(code)
+        if recipient_refusal is not None:
+            raise WalletSessionError(recipient_refusal)
         with self._lock:
             if self._prepared is not None:
                 raise WalletSessionError("WALLET_PAYMENT_ALREADY_PENDING")
