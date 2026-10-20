@@ -92,9 +92,44 @@ def make_private_lab_config(datadir: Path, rpc: int, p2p: int) -> None:
 
 def _rpc(cli: Path, data: Path, method: str, args=(), *, timeout: int = 30):
     # NEVER expose rpcuser/rpcpassword via process argv or CI logs.
+    # Exact typed parameter gates also prevent accidental Core wallet methods
+    # and arbitrary caller strings reaching the temporary node.
     if (method not in RPC_LAB_ONLY or type(args) not in (tuple, list)
-            or any(type(v) not in (str, int) for v in args)
-            or not 1 <= timeout <= 120):
+            or not 1 <= timeout <= 120
+            or type(cli) is not type(Path()) or type(data) is not type(Path())
+            or not cli.is_absolute() or not data.is_absolute()):
+        raise B06LabError("B06_RPC_METHOD_SCOPE_DENIED")
+    args=list(args)
+    zero=("getblockchaininfo","getnetworkinfo","getpeerinfo",
+          "getconnectioncount","getblockcount","getbestblockhash","stop")
+    valid=False
+    if method in zero:
+        valid=not args
+    elif method=="getblockhash":
+        valid=(len(args)==1 and type(args[0]) is int
+               and 0<=args[0]<=10_000)
+    elif method=="getblock":
+        valid=(len(args)==2 and type(args[0]) is str
+               and SHA64.fullmatch(args[0]) is not None
+               and args[1] in (2,3,"2","3"))
+    elif method=="generatetoaddress":
+        valid=(len(args)==2 and type(args[0]) in (int,str)
+               and str(args[0]).isdigit() and 1<=int(args[0])<=101
+               and type(args[1]) is str
+               and args[1].startswith("wamrt1q")
+               and 20<=len(args[1])<=128
+               and re.fullmatch("[a-z0-9]+",args[1]) is not None)
+    elif method=="sendrawtransaction":
+        valid=(len(args)==1 and type(args[0]) is str
+               and 2<=len(args[0])<=2_000_000
+               and len(args[0])%2==0
+               and re.fullmatch("[0-9a-f]+",args[0]) is not None)
+    elif method in ("addnode","disconnectnode"):
+        valid=(len(args)==(2 if method=="addnode" else 1)
+               and type(args[0]) is str
+               and re.fullmatch(r"127\\.0\\.0\\.1:[1-9][0-9]{3,4}",args[0]) is not None
+               and (method!="addnode" or args[1]=="onetry"))
+    if not valid:
         raise B06LabError("B06_RPC_METHOD_SCOPE_DENIED")
     cmd = [str(cli), "-datadir=" + str(data), "-rpcconnect=127.0.0.1",
            method, *[str(v) for v in args]]
