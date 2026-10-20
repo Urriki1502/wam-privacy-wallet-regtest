@@ -252,6 +252,8 @@ jobs:
           assert wallet['native_gui_navigation_pages'] == 7 and wallet['observed_height'] == 105
           assert proof['mining_account_component']['native_gui_depths'] == [99,100,101]
           assert proof['mining_account_component']['owned_http_matches_independent_cli'] is True
+          assert proof['mining_account_component']['f01_real_core_unowned_miner_script_negative_denied'] is True
+          assert proof['mining_account_component']['f01_all_miner_fees_core_owned_and_treasury_separate'] is True
           print('REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_PASS')
           print('REAL_CORE_KEYCHAIN_ENCRYPTED_RECOVERY_REORG_PASS')
           print('REAL_WAM_CORE_REGTEST_101_BLOCKS_PASS')

@@ -116,6 +116,27 @@ def _probe_core_mining(core,source,*,gui=False):
         first=rpc('generatetoaddress','1',address)[0];block,first_audit=audit(first)
         if first_audit.owned_miner_atoms!=4750000000 or first_audit.treasury_paid_atoms!=250000000:
             raise ValueError('MINER_FIRST_REWARD_DENIED')
+        # F-01 adversarial verification anchored in a GENUINE Core coinbase.
+        # Mutate only an in-memory copy of the public RPC response: changing
+        # the miner's output script must never create a false wallet balance.
+        from copy import deepcopy
+        wrong_script='0014'+'ee'*20
+        if wrong_script in (owned['scriptPubKey'],treasury['script']):
+            raise ValueError('F01_PUBLIC_FIXTURE_COLLISION_DENIED')
+        forged=deepcopy(block)
+        original_miner=next(
+            item for item in forged['tx'][0]['vout']
+            if item['scriptPubKey']['hex']==owned['scriptPubKey'])
+        original_miner['scriptPubKey']['hex']=wrong_script
+        try:
+            CoinbaseAudit.from_core(
+                chain='regtest',genesis=REGTEST_GENESIS,block=forged,
+                treasury_info=treasury,owned_address_infos=[owned],fees=0)
+        except ValueError as error:
+            if str(error)!='MINER_COINBASE_AUDIT_DENIED':
+                raise
+        else:
+            raise ValueError('F01_REAL_CORE_UNOWNED_REWARD_ACCEPTED')
         coinbase=block['tx'][0];txid=coinbase['txid']
         own_out=next(o['n'] for o in coinbase['vout'] if o['scriptPubKey']['hex']==owned['scriptPubKey'])
         rpc('generatetoaddress','98',external);maturity=[]
@@ -176,6 +197,8 @@ def _probe_core_mining(core,source,*,gui=False):
             'gui_screenshots':screenshots,'physical_appearance_acceptance':'PENDING_OPERATOR',
             'regtest_halving_interval':150,'treasury_last_height':400000,'maturity':maturity,
             'coinbase_audits':boundaries,'fee_atoms':fee,'after_payment_balance':asdict(after),
+            'f01_real_core_unowned_miner_script_negative_denied':True,
+            'f01_all_miner_fees_core_owned_and_treasury_separate':True,
             'locked_available_atoms':locked.available_atoms,'treasury_owned_by_fixture':False,
             'source_main_schedule_200000_is_not_regtest_interval':True,'sunset_height_runtime_qualified':False,
             'no_fusion_reservation_released':True,'elapsed_seconds':round(time.monotonic()-start,3),

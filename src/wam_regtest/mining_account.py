@@ -56,6 +56,13 @@ class CoinbaseAudit:
 
     @classmethod
     def from_core(cls,*,chain,genesis,block,treasury_info,owned_address_infos,fees=0):
+        """Audit a fully owned miner coinbase, not an arbitrary block finder.
+
+        The caller supplies Core-confirmed owned scripts for every expected
+        miner output. A partially owned coinbase must be refused rather than
+        showing its unowned remainder as spendable in the miner account.
+        Treasury is never a miner-owned script, including when fees exist.
+        """
         require_regtest(chain,genesis)
         try:
             height=block['height'];split=RewardSplit.regtest(height,fees)
@@ -79,7 +86,12 @@ class CoinbaseAudit:
                 seen.add(index);script=_script(output['scriptPubKey']['hex']);amount=rpc_atoms(output['value']);total+=amount
                 if script==treasury:paid+=amount
                 elif script in owned:mine+=amount
-            if paid!=split.treasury_atoms or total!=split.subsidy_atoms+fees or mine>split.miner_atoms:raise ValueError
+                elif amount!=0:raise ValueError('MINER_UNOWNED_REWARD_OUTPUT_DENIED')
+            # Only a complete wallet-ownership proof may authorize accounting:
+            # treasury receives subsidy only; all miner subsidy plus ALL fees
+            # must be assigned to Core-authenticated scripts in this wallet.
+            if (paid!=split.treasury_atoms or total!=split.subsidy_atoms+fees
+                    or mine!=split.miner_atoms):raise ValueError
             return cls(height,split.subsidy_atoms,paid,total-paid,mine,fees)
         except (ValueError,KeyError,TypeError,IndexError,OverflowError,AttributeError):
             raise ValueError('MINER_COINBASE_AUDIT_DENIED') from None
