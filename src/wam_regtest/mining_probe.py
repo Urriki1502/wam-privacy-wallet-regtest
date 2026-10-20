@@ -178,6 +178,15 @@ def _probe_core_mining(core,source,*,gui=False):
                 accepted=False
             else:
                 if (b.available_atoms,b.trusted_atoms,b.immature_atoms)!=(4750000000,4750000000,0):raise ValueError('MINER_MATURE_AVAILABLE_DENIED')
+                # F-03: the real Core wallet must reject an obviously
+                # sub-dust 1-atom output before the legitimate test payment.
+                # Check no mempool or trusted/available balance mutation.
+                before_dust=rpc('getrawmempool')
+                try:wallet('sendtoaddress',external,'0.00000001')
+                except CoreSmokeError:pass
+                else:raise ValueError('F03_REAL_CORE_SUBDUST_ACCEPTED')
+                if rpc('getrawmempool')!=before_dust or balance()!=b:
+                    raise ValueError('F03_SUBDUST_REFUSAL_STATE_CHANGED')
                 payment=wallet('sendtoaddress',external,'0.00100000');accepted=True
                 if payment not in rpc('getrawmempool'):raise ValueError('MINER_MATURE_PAYMENT_NOT_ACCEPTED')
             if accepted!=f02.wallet_send_allowed_by_maturity:
@@ -257,6 +266,7 @@ def _probe_core_mining(core,source,*,gui=False):
             'f03_target_seconds_from_pinned_consensus_source':120,
             'f03_confirmation_time_guaranteed':False,
             'f03_policy_not_applied_to_actual_user_wallet':True,
+            'f03_native_core_one_atom_dust_send_refused_without_mutation':True,
             'f01_real_core_unowned_miner_script_negative_denied':True,
             'f01_all_miner_fees_core_owned_and_treasury_separate':True,
             'locked_available_atoms':locked.available_atoms,'treasury_owned_by_fixture':False,
