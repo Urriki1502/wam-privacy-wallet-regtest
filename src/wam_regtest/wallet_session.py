@@ -375,6 +375,32 @@ class WalletSession:
                     or actual.get("scriptPubKey",{}).get("hex") != "5120"+c["public_key"]):
                 raise WalletSessionError("WALLET_REVIEW_UTXO_CHANGED")
 
+    def _f06_require_send(self, expected_state, *, signed_psbt=None):
+        """Independent proof before native sign or signed broadcast.
+
+        WSP SQLite reservations are not Core lockunspent. No implicit
+        mutation or compensation may occur when the proof is inconsistent.
+        """
+        from .f06_send_invariants import (
+            require_exact_send_reservation, SendInvariantRefusal,
+        )
+        try:
+            if self._prepared is None or self._review is None:
+                raise SendInvariantRefusal('F06_EXACT_SEND_RESERVATION_DENIED')
+            db=self.scanner.store.db
+            rows=tuple(tuple(row) for row in db.execute(
+                "SELECT txid,vout,token,state FROM reservations WHERE token=?",
+                (self._prepared.proposal.token,)))
+            mempool_spends=tuple(tuple(row) for row in db.execute(
+                "SELECT txid,vout FROM mempool_spends"))
+            require_exact_send_reservation(
+                prepared=self._prepared,review=self._review,
+                rows=rows,mempool_spends=mempool_spends,
+                expected_state=expected_state,signed_psbt=signed_psbt)
+        except (SendInvariantRefusal,ValueError,TypeError,AttributeError):
+            self.faulted=True
+            raise WalletSessionError('WALLET_F06_SEND_INTEGRITY_DENIED') from None
+
     def sign(self, commitment):
         from wam_sp.wallet import Signer, Wallet
         from wam_sp.psbt import PSBT
@@ -384,6 +410,7 @@ class WalletSession:
                     raise WalletSessionError("WALLET_EXACT_INTENT_APPROVAL_REQUIRED")
                 rpc=self._rpc()
                 self._unchanged_inputs(rpc)
+                self._f06_require_send('draft')
                 proposal=self._prepared.proposal
                 # Approving Sign makes this reservation irreversible BEFORE
                 # entering native crypto. A crash/failure cannot restore a draft
@@ -410,6 +437,7 @@ class WalletSession:
                     raise WalletSessionError("WALLET_BROADCAST_APPROVAL_REQUIRED")
                 rpc=self._rpc()
                 self._unchanged_inputs(rpc)
+                self._f06_require_send('signed',signed_psbt=self._signed)
                 token=self._prepared.proposal.token
                 # Retain irreversible uncertainty in encrypted storage BEFORE RPC.
                 self.scanner.store.db.execute("UPDATE reservations SET state='uncertain' WHERE token=?",(token,))
