@@ -292,6 +292,10 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.welcome_page=ManagedWelcomePage()
         self.navigation.addItem("Get Started")
         self.stack.addWidget(self.welcome_page)
+        # Existing shell names row 3 'Send' in the operational six-screen
+        # view; in managed onboarding it is explicitly Get Started instead.
+        self.navigation.currentRowChanged.connect(
+            lambda i:self.workspace_title.setText("Get Started") if i==3 else None)
         pairs=(
             (self.welcome_page.refresh,self.refresh_button),
             (self.welcome_page.start,self.start_core),
