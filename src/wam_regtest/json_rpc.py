@@ -19,13 +19,14 @@ import random
 from .core_process import OwnedCoreBinding, CoreBindingError
 from .network_policy import parse_local_config
 from .wsp_live import REGTEST_GENESIS
+from .r02_compatibility import COMPATIBLE_RPC_V011, matches_v011_native_rpc
 
 MAX_REPLY=1024*1024
 MAX_BLOCK_REPLY=32*1024*1024
 MAX_IDLE_REUSE_SECONDS=5
 # Measured on genuine independently pinned v0.1.11, not inferred from Bitcoin.
 # Signed newer binaries require a separate compatibility qualification.
-SUPPORTED_RPC=(111, '/WAM:0.1.11/', 70016)
+SUPPORTED_RPC=COMPATIBLE_RPC_V011
 
 
 class RpcError(ValueError):
@@ -86,9 +87,7 @@ def _result(method,value):
                and type(value.get('height')) is int and 0<=value['height']<=1_000_000
                and type(value.get('tx')) is list and 1<=len(value['tx'])<=100_000)
     elif method=='getnetworkinfo':
-        valid=(type(value) is dict and type(value.get('version')) is int
-               and type(value.get('protocolversion')) is int and type(value.get('subversion')) is str
-               and (value['version'],value['subversion'],value['protocolversion'])==SUPPORTED_RPC)
+        valid=matches_v011_native_rpc(value)
         if not valid:raise RpcError('RPC_VERSION_CAPABILITY_DENIED')
     else:
         # T-03: an unauthenticated-looking chain label and height alone are
