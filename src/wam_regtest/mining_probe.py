@@ -51,6 +51,7 @@ def _owned_chain(core):
             scope=args[1:] if args and args[0]=='-rpcwallet=test' else args
             allowed={'getblockchaininfo','getconnectioncount','getblockcount','getblock',
                 'getrawmempool','gettxout','getdevfeeinfo','getemissionschedule',
+                'getnetworkinfo','getmempoolinfo','getmempoolentry','estimatesmartfee',
                 'createwallet','getnewaddress','getaddressinfo','getwalletinfo','getbalances',
                 'listunspent','sendtoaddress','gettransaction','lockunspent','generatetoaddress','stop'}
             if not scope or scope[0] not in allowed or any(a.startswith('-') for a in scope):
@@ -192,6 +193,31 @@ def _probe_core_mining(core,source,*,gui=False):
                 gui_depths.append(depth);screenshots.append(name)
             if depth<101:rpc('generatetoaddress','1',external)
         fee=rpc_atoms(abs(wallet('gettransaction',payment)['fee']))
+        # F-03: genuine accepted Core transaction's fee/vsize and the
+        # locally authenticated Core relay/mempool minimum fee policies.
+        # Do not infer a fee from a block finder or a Bitcoin default.
+        from .f03_fee_policy import CoreFeeWitness,optional_core_estimate
+        f03=CoreFeeWitness.from_core(
+            network_info=rpc('getnetworkinfo'),
+            mempool_info=rpc('getmempoolinfo'),
+            entry=rpc('getmempoolentry',payment),
+            actual_fee_atoms=fee)
+        if not f03.mempool_entry_relay_eligible:
+            raise ValueError('F03_CORE_RELAY_POLICY_DENIED')
+        try:
+            estimate=rpc('estimatesmartfee','2')
+        except CoreSmokeError:
+            # No fabricated fee estimate after an unsupported/insufficient
+            # estimator response from a short isolated REGTEST chain.
+            estimate=None
+            estimate_rpc_unavailable=True
+        else:
+            estimate_rpc_unavailable=False
+        if estimate is None:
+            estimate_available=False
+            estimate_rate=None
+        else:
+            estimate_available,estimate_rate=optional_core_estimate(estimate)
         paid_block=rpc('generatetoaddress','1',address)[0];_,fee_audit=audit(paid_block,fee)
         if fee<=0 or fee_audit.owned_miner_atoms!=4750000000+fee or fee_audit.treasury_paid_atoms!=250000000:
             raise ValueError('MINER_FEE_ALLOCATION_DENIED')
@@ -224,6 +250,13 @@ def _probe_core_mining(core,source,*,gui=False):
             'gui_screenshots':screenshots,'physical_appearance_acceptance':'PENDING_OPERATOR',
             'regtest_halving_interval':150,'treasury_last_height':400000,'maturity':maturity,
             'coinbase_audits':boundaries,'fee_atoms':fee,'after_payment_balance':asdict(after),
+            'f03_real_core_mempool_fee_and_vsize':asdict(f03),
+            'f03_estimate_available':estimate_available,
+            'f03_estimate_atoms_per_kvb':estimate_rate,
+            'f03_estimate_rpc_unavailable':estimate_rpc_unavailable,
+            'f03_target_seconds_from_pinned_consensus_source':120,
+            'f03_confirmation_time_guaranteed':False,
+            'f03_policy_not_applied_to_actual_user_wallet':True,
             'f01_real_core_unowned_miner_script_negative_denied':True,
             'f01_all_miner_fees_core_owned_and_treasury_separate':True,
             'locked_available_atoms':locked.available_atoms,'treasury_owned_by_fixture':False,
