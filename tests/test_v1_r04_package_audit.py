@@ -129,7 +129,12 @@ class R04PackageAuditContracts(unittest.TestCase):
         self.assert_refused()
 
     def test_symlinked_member_denied(self):
-        (self.root/"fake-link").symlink_to(self.payload)
+        try:
+            (self.root/"fake-link").symlink_to(self.payload)
+        except OSError:
+            # Windows non-elevated runners may prohibit symlink creation;
+            # absence of the privilege is not a verifier PASS.
+            self.skipTest("HOST_SYMLINK_CREATION_UNAVAILABLE")
         self.assert_refused()
 
     def test_case_colliding_public_member_refused(self):
