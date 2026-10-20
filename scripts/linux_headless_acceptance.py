@@ -39,6 +39,14 @@ try:
     assert record['mining_account_component']['owned_http_matches_independent_cli'] is True
     assert record['mining_account_component']['f01_real_core_unowned_miner_script_negative_denied'] is True
     assert record['mining_account_component']['f07_genuine_regtest_p2pkh_p2sh_validateaddress_parity'] is True
+    assert record['mining_account_component']['f09_genuine_core_bounded_read_soak']['status']=='F09_GENUINE_CORE_BOUNDED_READ_SOAK_PASS'
+    assert record['mining_account_component']['f09_genuine_core_bounded_read_soak']['budget_version']=='F09_V1_64_CYCLES_180S'
+    assert record['mining_account_component']['f09_genuine_core_bounded_read_soak']['cycles_completed']==64
+    assert record['mining_account_component']['f09_genuine_core_bounded_read_soak']['read_only_rpc_calls']==192
+    assert record['mining_account_component']['f09_genuine_core_bounded_read_soak']['stable_tip'] is True
+    assert record['mining_account_component']['f09_genuine_core_bounded_read_soak']['no_core_mutations'] is True
+    assert record['mining_account_component']['f09_long_hours_days_runtime_qualified'] is False
+    assert record['mining_account_component']['f09_multi_node_peer_sync_qualified'] is False
     assert record['mining_account_component']['f07_mainnet_collision_public_fixture_network_refusal_regtest'] is True
     assert record['mining_account_component']['f07_native_mainnet_parser_runtime_qualified'] is False
     assert record['mining_account_component']['f01_all_miner_fees_core_owned_and_treasury_separate'] is True
