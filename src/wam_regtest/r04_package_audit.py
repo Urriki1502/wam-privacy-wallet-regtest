@@ -167,7 +167,9 @@ def audit_candidate_output(output: Path, *, expected_platform: str | None = None
             or SHA40.fullmatch(record["wsp_source_commit"]) is None):
         raise PackageAuditError("R04_MANIFEST_PROFILE_DENIED")
     core = record.get("core_sha256")
-    if (type(core) is not dict or set(core) != {"wamd", "wam-cli"}
+    core_names = ({"wamd.exe", "wam-cli.exe"} if record["platform"] == "windows-x64"
+                  else {"wamd", "wam-cli"})
+    if (type(core) is not dict or set(core) != core_names
             or any(type(v) is not str or SHA64.fullmatch(v) is None
                    for v in core.values())):
         raise PackageAuditError("R04_CORE_PROFILE_DENIED")
