@@ -111,6 +111,9 @@ def main():
     write_candidate_manifest(output,'linux-x86_64-'+('desktop' if args.desktop else 'headless'),CORE)
     from wam_regtest.r04_package_audit import audit_candidate_output
     audit_candidate_output(output,expected_platform='linux-x86_64-'+('desktop' if args.desktop else 'headless'))
+    from wam_regtest.r05_public_privacy import audit_public_output
+    r05=audit_public_output(output)
+    assert r05['status']=='R05_PUBLIC_TEXT_AND_PATH_AUDIT_PASS'
     print('LINUX_FINAL_FROZEN_'+('DESKTOP' if args.desktop else 'NO_QT_HEADLESS')+'_REAL_WALLET_PASS')
 
 

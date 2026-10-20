@@ -112,6 +112,9 @@ def main():
     write_candidate_manifest(output,'windows-x64',BINARY_SHA256)
     from wam_regtest.r04_package_audit import audit_candidate_output
     audit_candidate_output(output,expected_platform='windows-x64')
+    from wam_regtest.r05_public_privacy import audit_public_output
+    r05=audit_public_output(output)
+    assert r05['status']=='R05_PUBLIC_TEXT_AND_PATH_AUDIT_PASS'
     print('WIN64_FROZEN_OPERATIONAL_REAL_CORE_WALLET_PACKAGE_PASS')
 
 
