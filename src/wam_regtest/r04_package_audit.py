@@ -50,7 +50,11 @@ def _digest(path: Path) -> str:
     h = sha256()
     with path.open("rb") as inp:
         opened = os.fstat(inp.fileno())
-        if not _same(before, opened):
+        # Windows CRT fstat/lstat can present different cached timestamps
+        # for the same file handle. Compare each native view to itself across
+        # hashing, and the common size across views; do not bypass change checks.
+        if (before.st_size != opened.st_size
+                or os.name != "nt" and not _same(before, opened)):
             raise PackageAuditError("R04_MEMBER_CHANGED")
         while True:
             part = inp.read(1024 * 1024)
