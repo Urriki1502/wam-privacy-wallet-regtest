@@ -52,6 +52,7 @@ def _owned_chain(core):
             allowed={'getblockchaininfo','getconnectioncount','getblockcount','getblock',
                 'getrawmempool','gettxout','getdevfeeinfo','getemissionschedule',
                 'getnetworkinfo','getmempoolinfo','getmempoolentry','estimatesmartfee',
+                'waitfornewblock',
                 'createwallet','getnewaddress','getaddressinfo','getwalletinfo','getbalances','validateaddress',
                 'listunspent','listlockunspent','sendtoaddress','gettransaction','lockunspent','generatetoaddress','stop'}
             if not scope or scope[0] not in allowed or any(a.startswith('-') for a in scope):
@@ -331,6 +332,18 @@ def _probe_core_mining(core,source,*,gui=False):
             raise ValueError('F09_GENUINE_CORE_SOAK_DENIED')
         if rpc('getblockcount')!=observed_height or rpc('getconnectioncount')!=0:
             raise ValueError('F09_SOAK_CHANGED_CHAIN_OR_PEERS')
+        # F-10 isolated REGTEST: a genuinely running Core mines public
+        # test blocks while another RPC worker awaits the new block and the
+        # wallet's separately authenticated read transport validates each
+        # chain tip. NEVER test this on an attached/external miner node.
+        from .f10_miner_coexistence import prove_owned_core_miner_coexistence
+        f10=prove_owned_core_miner_coexistence(
+            rpc=rpc,read=read,wallet=wallet,
+            datadir=read._config_directory,miner_address=external)
+        if (f10.generated_blocks!=4 or f10.longpoll_witnesses!=4
+                or f10.wallet_reads_verified!=12
+                or f10.external_solo_miner_binary_qualified):
+            raise ValueError('F10_OWNED_CORE_MINER_COEXISTENCE_DENIED')
         return {'status':'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS','platform':receipt['platform'],
             'core_version':'v0.1.11','wamd_sha256':receipt['wamd_sha256'],'wam_cli_sha256':receipt['wam_cli_sha256'],
             'owned_http_matches_independent_cli':True,'http_without_cli_or_full_rehash':True,
@@ -366,6 +379,10 @@ def _probe_core_mining(core,source,*,gui=False):
             'f09_long_hours_days_runtime_qualified':False,
             'f09_multi_node_peer_sync_qualified':False,
             'f09_low_disk_resource_pressure_qualified':False,
+            'f10_core_wallet_miner_coexistence':asdict(f10),
+            'f10_native_external_solo_miner_qualified':False,
+            'f10_operator_rpcworkqueue_64_qualified':False,
+            'f10_sunset_400001_miner_binary_qualified':False,
             'no_fusion_reservation_released':True,'elapsed_seconds':round(time.monotonic()-start,3),
             'synthetic_rpc':False,'owner_data_accessed':False,'mainnet_allowed':False,
             'core_wallet_probe_not_bip39_signer_qualification':True}

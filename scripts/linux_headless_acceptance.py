@@ -44,6 +44,16 @@ try:
     assert record['mining_account_component']['f09_genuine_core_bounded_read_soak']['cycles_completed']==64
     assert record['mining_account_component']['f09_genuine_core_bounded_read_soak']['read_only_rpc_calls']==192
     assert record['mining_account_component']['f09_genuine_core_bounded_read_soak']['stable_tip'] is True
+    assert record['mining_account_component']['f10_core_wallet_miner_coexistence']['status']=='F10_OWNED_CORE_MINING_AND_WALLET_READ_PASS'
+    assert record['mining_account_component']['f10_core_wallet_miner_coexistence']['generated_blocks']==4
+    assert record['mining_account_component']['f10_core_wallet_miner_coexistence']['longpoll_witnesses']==4
+    assert record['mining_account_component']['f10_core_wallet_miner_coexistence']['wallet_reads_verified']==12
+    assert record['mining_account_component']['f10_core_wallet_miner_coexistence']['original_core_config_unchanged'] is True
+    assert record['mining_account_component']['f10_core_wallet_miner_coexistence']['no_node_restart_or_stop'] is True
+    assert record['mining_account_component']['f10_core_wallet_miner_coexistence']['wallet_identity_continued'] is True
+    assert record['mining_account_component']['f10_native_external_solo_miner_qualified'] is False
+    assert record['mining_account_component']['f10_operator_rpcworkqueue_64_qualified'] is False
+    assert record['mining_account_component']['f10_sunset_400001_miner_binary_qualified'] is False
     assert record['mining_account_component']['f09_genuine_core_bounded_read_soak']['no_core_mutations'] is True
     assert record['mining_account_component']['f09_long_hours_days_runtime_qualified'] is False
     assert record['mining_account_component']['f09_multi_node_peer_sync_qualified'] is False
