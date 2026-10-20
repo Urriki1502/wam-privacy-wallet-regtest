@@ -18,7 +18,12 @@ from wam_regtest.json_rpc import _result, RpcError, SUPPORTED_RPC
 
 class R02CompatibilityContracts(unittest.TestCase):
     def known(self, platform="macos-arm64", **change):
-        profile = V011_OFFICIAL_MEMBER_PINS[platform]
+        # Adversarial inputs must reach the actual classifier. Use known-good
+        # PUBLIC macOS digests when constructing an invalid platform fixture;
+        # the candidate platform itself is passed through unchanged.
+        profile = V011_OFFICIAL_MEMBER_PINS.get(platform) if type(platform) is str else None
+        if profile is None:
+            profile = V011_OFFICIAL_MEMBER_PINS["macos-arm64"]
         kw = dict(platform=platform, version="v0.1.11", network="regtest",
                   wamd_sha256=profile["wamd"], wam_cli_sha256=profile["wam_cli"],
                   signer_fingerprint=SIGNER_FINGERPRINT,
