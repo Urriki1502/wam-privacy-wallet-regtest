@@ -88,6 +88,28 @@ class F07PublicParserParityTests(unittest.TestCase):
                 with self.assertRaises(AddressParityRefusal):
                     verify_core_regtest_legacy(REG_P2PKH,core_reply=reply)
 
+    def test_session_public_collision_denied_before_any_core_wallet_operation(self):
+        # WalletSession is intentionally uninitialized: code must be refused
+        # before a lock, live Core, signer, DB, seed, or wallet instance exists.
+        from wam_regtest.wallet_session import WalletSession,WalletSessionError
+        from wam_regtest.gui_errors import operation_error,error_text,public_code,INPUT_ERRORS
+        session=object.__new__(WalletSession)
+        for address,expected in (
+            (MAIN_P2PKH,'WALLET_F07_CORE_BASE58_HRP_COLLISION_SEND_DENIED'),
+            (MAIN_P2SH,'WALLET_F07_CORE_BASE58_HRP_COLLISION_SEND_DENIED'),
+            (NORMAL_MAIN,'WALLET_F07_MAINNET_LEGACY_ON_REGTEST_DENIED'),
+        ):
+            with self.subTest(address=address):
+                with self.assertRaises(WalletSessionError) as rejected:
+                    session.prepare(address,100000,1000)
+                self.assertEqual(rejected.exception.args,(expected,))
+                self.assertEqual(operation_error('prepare',rejected.exception),expected)
+                self.assertIn(expected,INPUT_ERRORS)
+                self.assertEqual(public_code(expected),expected)
+                message=error_text(expected)
+                self.assertNotIn(address,message)
+                self.assertTrue('blocked' in message.lower() or 'sending is blocked' in message.lower())
+
     def test_malformed_and_wsp_code_are_not_legacy_send_authority(self):
         for text in ("","wamrtsp1abcdefghijklmnop","wam1q1234",
                      "abc","Wam",None,123):
