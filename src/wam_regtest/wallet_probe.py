@@ -227,6 +227,33 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         review=_operation(app,window,'prepare',window.prepare_button.click)
         assert review.code==code and review.atoms==100000 and review.fee==10000
         assert str(review.atoms) in window.review_text.text() and code in window.review_text.text()
+        # F-06 actual WSP SQLite: the first prepared input set cannot be
+        # reserved by a second, independent token or coin-controlled send.
+        # These are *negative* operations on the disposable REGTEST wallet.
+        import sqlite3
+        from wam_sp.wallet import Wallet, Intent
+        reserved_wallet=Wallet(session.scanner)
+        original_f06_rows=tuple(tuple(x) for x in session.scanner.store.db.execute(
+            "SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout"))
+        f06_outpoints=[(c['txid'],c['vout'])
+                       for c in session._prepared.proposal.coins]
+        assert f06_outpoints and all(row[3]=='draft' for row in original_f06_rows)
+        try:
+            reserved_wallet.lock(f06_outpoints)
+        except (sqlite3.IntegrityError,ValueError):
+            pass
+        else:
+            raise WalletProbeError('F06_DOUBLE_UTXO_LOCK_ACCEPTED')
+        try:
+            reserved_wallet.propose(
+                (Intent(code,review.atoms),),review.fee,
+                coin_control=f06_outpoints,allow_cluster_merge=True)
+        except (ValueError,sqlite3.IntegrityError):
+            pass
+        else:
+            raise WalletProbeError('F06_DOUBLE_SPEND_PROPOSAL_ACCEPTED')
+        assert tuple(tuple(x) for x in session.scanner.store.db.execute(
+            "SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout"))==original_f06_rows
         assert window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
         # A rejected native approval must not enter signer or alter reservations.
         _approve_dialog(app,window,window.sign_button,approve=False)
@@ -299,6 +326,16 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
             _operation(app,window,'sign',lambda:_approve_dialog(app,window,window.sign_button))
         assert observed.get('before_crypto') is True
         assert window.broadcast_button.isEnabled() and not window.cancel_button.isEnabled()
+        signed_f06_rows=tuple(tuple(x) for x in session.scanner.store.db.execute(
+            "SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout"))
+        assert signed_f06_rows and all(row[3]=='signed' for row in signed_f06_rows)
+        f06_signed_bytes=session._signed
+        try:session.sign(review.commitment)
+        except WalletSessionError:pass
+        else:raise WalletProbeError('F06_DUPLICATE_SIGN_ACCEPTED')
+        assert session._signed==f06_signed_bytes
+        assert tuple(tuple(x) for x in session.scanner.store.db.execute(
+            "SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout"))==signed_f06_rows
         stage="BROADCAST"
         print("WALLET_E2E_STAGE=BROADCAST",flush=True)
         txid=_operation(app,window,'broadcast',lambda:_approve_dialog(app,window,window.broadcast_button))
@@ -306,6 +343,15 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         # Real Core's mempool/consensus must accept the exact native signature.
         rpc=session._rpc()
         assert txid in rpc._call('getrawmempool',[])
+        after_f06_submit=tuple(rpc._call('getrawmempool',[]))
+        f06_submitted_rows=tuple(tuple(x) for x in session.scanner.store.db.execute(
+            "SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout"))
+        try:session.broadcast(review.commitment)
+        except WalletSessionError:pass
+        else:raise WalletProbeError('F06_DUPLICATE_BROADCAST_ACCEPTED')
+        assert tuple(rpc._call('getrawmempool',[]))==after_f06_submit
+        assert tuple(tuple(x) for x in session.scanner.store.db.execute(
+            "SELECT txid,vout,token,state FROM reservations ORDER BY txid,vout"))==f06_submitted_rows
         from .f05_history_state import classify_known_transaction
         from .wsp_live import REGTEST_GENESIS
         def observed_tx(known_txid, snap, reservation, *,
@@ -402,6 +448,11 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
             history=[],reservation_state='uncertain',broadcast_submitted=True)
         assert f05_uncertain.classification=='uncertain_mempool_observed'
         assert f05_uncertain.irreversible_reservation and not f05_uncertain.automatic_rebroadcast_allowed
+        before_uncertain_retry=tuple(rpc._call('getrawmempool',[]))
+        try:session.broadcast(session._review.commitment)
+        except WalletSessionError:pass
+        else:raise WalletProbeError('F06_UNCERTAIN_REBROADCAST_ACCEPTED')
+        assert tuple(rpc._call('getrawmempool',[]))==before_uncertain_retry
         _operation(app,window,'lock',window.lock_button.click)
         _operation(app,window,'unlock',lambda:window.start_operation('unlock',password))
         assert not session.faulted and not session.locked
@@ -484,6 +535,11 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
             'native_psbtv2_payjoin_bip352_fail_closed':True,'payjoin_signing_authorized':False,'payjoin_transport_implemented':False,
             'operational_snapshot_http':http_proof,
             'exact_intent_approval_required':True,'real_core_mempool_accepted':True,
+            'f06_exact_sqlite_lock_no_second_token_or_coin_control_spend':True,
+            'f06_original_psbt_review_and_coins_strictly_bound':True,
+            'f06_second_sign_refused_without_mutation':True,
+            'f06_second_broadcast_refused_without_mutation':True,
+            'f06_uncertain_broadcast_never_automatically_retried':True,
             'real_core_confirmed_recipient_atoms':100000,'native_sender_change_confirmed':True,
             'encrypted_reservations_before_network':True,'actual_send_reorg_depth':1,
             'irreversible_anchor_before_native_crypto':True,'sign_broadcast_os_lease_held':True,
