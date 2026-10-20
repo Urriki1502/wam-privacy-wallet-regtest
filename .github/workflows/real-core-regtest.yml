@@ -231,6 +231,11 @@ jobs:
           assert wallet['irreversible_anchor_before_native_crypto'] is True
           assert wallet['sign_broadcast_os_lease_held'] is True
           assert wallet['real_core_lost_broadcast_reply_lock_retained'] is True
+          assert wallet['f06_exact_sqlite_lock_no_second_token_or_coin_control_spend'] is True
+          assert wallet['f06_original_psbt_review_and_coins_strictly_bound'] is True
+          assert wallet['f06_second_sign_refused_without_mutation'] is True
+          assert wallet['f06_second_broadcast_refused_without_mutation'] is True
+          assert wallet['f06_uncertain_broadcast_never_automatically_retried'] is True
           assert wallet['uncertain_reservation_survives_unlock'] is True
           assert wallet['irreversible_reservations_survive_reorg'] is True
           assert wallet['f05_native_core_wsp_mempool_observation'] == 'mempool_observed'
