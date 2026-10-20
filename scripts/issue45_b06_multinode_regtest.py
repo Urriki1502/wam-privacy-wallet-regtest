@@ -311,13 +311,19 @@ def genuine_two_node_lab(core_dir: Path, wsp_source: Path, *, authorized: bool):
         raise B06LabError("B06_DISPOSABLE_NATIVE_SCOPE_DENIED")
     node, cli, receipt = verified_core_paths(core_dir)
     _pinned_source(wsp_source)
-    from wam_sp.core import pub
+    from wam_sp.core import pub, hash160
+    from wam_sp.codec import encode
     from wam_sp.keystore import ScanAccount
     from wam_sp.scanner import Scanner
 
     if receipt.get("platform") != "macos-arm64":
         raise B06LabError("B06_PINNED_CORE_PLATFORM_DENIED")
     address=public_regtest_mining_address(wsp_source)
+    # Distinct globally known REGTEST-only coinbase recipients force a true
+    # competing block on B, never an accidental identical deterministic fork.
+    alternate_address=encode("wamrt",hash160(pub(32)),version=0,bech32m=False)
+    if alternate_address==address:
+        raise B06LabError("B06_NON_DISTINCT_PUBLIC_FIXTURE_DENIED")
     rpc_a,p2p_a,rpc_b,p2p_b=_fresh_ports()
     with tempfile.TemporaryDirectory(prefix="wam-b06-private-regtest-") as location:
         base=Path(location).resolve(strict=True)
@@ -365,11 +371,16 @@ def genuine_two_node_lab(core_dir: Path, wsp_source: Path, *, authorized: bool):
                 orphan_hash=a.tip()
                 advanced=scanner.sync(reader)
                 old_coins=scanner.coins()
+                # The depth=1 orphaned genuine transaction may validly
+                # return to A's mempool after the first reorg, and can then
+                # be mined in a later orphan branch. Require its presence
+                # in the 1-block case; subsequent branches may or may not
+                # reinclude it. In every case it MUST disappear on the B fork.
                 if (scanner.store.tip()!=(fork+depth,orphan_hash)
                         or advanced.blocks!=depth
-                        or (bool(old_coins) != fixture_on_old_branch)):
+                        or (fixture_on_old_branch and not old_coins)):
                     raise B06LabError("B06_ORPHAN_BRANCH_SCAN_DENIED")
-                b.mine(depth+1,address)
+                b.mine(depth+1,alternate_address)
                 if a.tip()==b.tip() or b.height()!=fork+depth+1:
                     raise B06LabError("B06_INDEPENDENT_FORK_DENIED")
                 _peer(a,b);_converge(a,b)
@@ -387,7 +398,7 @@ def genuine_two_node_lab(core_dir: Path, wsp_source: Path, *, authorized: bool):
                 rounds.append({"depth":depth,"independent_live_forks":True,
                                "orphaned_branch_replaced":True,
                                "wsp_sqlite_rollback_blocks":new.rollback,
-                               "old_branch_bip352_payment_removed":bool(fixture_on_old_branch),
+                               "old_branch_bip352_payment_removed":bool(old_coins),
                                "reopened_original_wsp_scanner":True})
             # Stop/restart ONLY the owned node-B process, preserving its
             # disposable datadir, then prove chain and peer reconnection.
