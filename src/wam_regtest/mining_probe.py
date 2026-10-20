@@ -52,7 +52,7 @@ def _owned_chain(core):
             allowed={'getblockchaininfo','getconnectioncount','getblockcount','getblock',
                 'getrawmempool','gettxout','getdevfeeinfo','getemissionschedule',
                 'getnetworkinfo','getmempoolinfo','getmempoolentry','estimatesmartfee',
-                'createwallet','getnewaddress','getaddressinfo','getwalletinfo','getbalances',
+                'createwallet','getnewaddress','getaddressinfo','getwalletinfo','getbalances','validateaddress',
                 'listunspent','listlockunspent','sendtoaddress','gettransaction','lockunspent','generatetoaddress','stop'}
             if not scope or scope[0] not in allowed or any(a.startswith('-') for a in scope):
                 raise ValueError('MINING_FIXTURE_RPC_SCOPE_DENIED')
@@ -77,6 +77,36 @@ def _probe_core_mining(core,source,*,gui=False):
     gui_depths=[];screenshots=[]
     with _presentation(gui) as (app,view), _owned_chain(core) as (rpc,receipt,read):
         rpc('createwallet','test')
+        # F-07: use public-only Base58Check fixtures with zero private
+        # keys or source-controlled real user wallet. These are REGTEST
+        # address types and a negative mainnet version mismatch, not a
+        # claim to have started or queried a mainnet Core.
+        from .f07_address_parity import (
+            inspect_legacy_public,verify_core_regtest_legacy,
+        )
+        regtest_legacy_cases=(
+            'TBDeDSETJdmttTFUwFVL8Qpw4SV87XAYEj',
+            'tjtGH5pUR8i7GweABGcPgFzic8Fv8mYLvq',
+        )
+        for public_address in regtest_legacy_cases:
+            public_facts=inspect_legacy_public(public_address,network='regtest')
+            checked=verify_core_regtest_legacy(
+                public_address,core_reply=rpc('validateaddress',public_address))
+            if (not checked.address_accepted_by_core
+                    or not checked.expected_script_matches_core
+                    or public_facts.core_bech32_prefix_collision):
+                raise ValueError('F07_REAL_CORE_REGTEST_ADDRESS_PARITY_DENIED')
+        collision_fixtures=(
+            'WamAskWnsuS1LBhLhgGQSo9HACyE4aHLER',
+            'waMSB1joxWLA9nFTHpNT9HHKpavsLW7WXG',
+        )
+        for public_address in collision_fixtures:
+            offline=inspect_legacy_public(public_address,network='main')
+            invalid_on_regtest=rpc('validateaddress',public_address)
+            if (not offline.core_bech32_prefix_collision
+                    or type(invalid_on_regtest) is not dict
+                    or invalid_on_regtest.get('isvalid') is not False):
+                raise ValueError('F07_MAINNET_ADDRESS_ON_REGTEST_NOT_REFUSED')
         def wallet(*args):return rpc('-rpcwallet=test',*args)
         address=wallet('getnewaddress');owned=wallet('getaddressinfo',address)
         if owned['ismine'] is not True:raise ValueError('MINER_OWNERSHIP_REQUIRED')
@@ -312,6 +342,10 @@ def _probe_core_mining(core,source,*,gui=False):
             'f02_real_core_immature_99_100_and_mature_101_verified':True,
             'f02_no_early_send_or_mempool_mutation':True,
             'f02_no_general_wallet_signer_authority':True,
+            'f07_genuine_regtest_p2pkh_p2sh_validateaddress_parity':True,
+            'f07_mainnet_collision_public_fixture_network_refusal_regtest':True,
+            'f07_native_mainnet_parser_runtime_qualified':False,
+            'f07_public_only_no_import_private_key_or_node_network':True,
             'no_fusion_reservation_released':True,'elapsed_seconds':round(time.monotonic()-start,3),
             'synthetic_rpc':False,'owner_data_accessed':False,'mainnet_allowed':False,
             'core_wallet_probe_not_bip39_signer_qualification':True}
