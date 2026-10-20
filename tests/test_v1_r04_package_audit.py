@@ -36,7 +36,7 @@ class R04PackageAuditContracts(unittest.TestCase):
             "source_head_sha": "a"*40,
             "checkout_sha": "a"*40,
             "wsp_source_commit": "b"*40,
-            "core_sha256": {"wamd": "c"*64, "wam-cli": "d"*64},
+            "core_sha256": {"wamd.exe": "c"*64, "wam-cli.exe": "d"*64},
             "files_sha256": {
                 "candidate-public-only.zip": sha256(self.payload.read_bytes()).hexdigest(),
                 "ui-scale/public.json": sha256(self.nested.read_bytes()).hexdigest(),
@@ -120,7 +120,7 @@ class R04PackageAuditContracts(unittest.TestCase):
         self.assert_refused()
 
     def test_corrupt_archive_manifest_digest_or_member_hash_denied(self):
-        self.record["core_sha256"]["wamd"]="X"*64
+        self.record["core_sha256"]["wamd.exe"]="X"*64
         self.write_manifest()
         self.assert_refused()
         self.record["core_sha256"]["wamd"]="c"*64
