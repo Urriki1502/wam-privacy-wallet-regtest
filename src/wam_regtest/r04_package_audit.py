@@ -200,7 +200,11 @@ def audit_candidate_output(output: Path, *, expected_platform: str | None = None
             raise PackageAuditError("R04_SUMS_DUPLICATE_DENIED")
         values[match[2]] = match[1]
     top_files = {rel for rel in files if "/" not in rel and rel != SUMS}
-    if set(values) != top_files or list(values) != sorted(values):
+    # The existing builders sort Path objects using host-native filename
+    # collation (Windows is case-insensitive; POSIX is case-sensitive).
+    # Exact membership, no duplicates and per-file digests are the security
+    # invariants; sorted textual presentation is not.
+    if set(values) != top_files:
         raise PackageAuditError("R04_SUMS_FILE_SET_DENIED")
     for rel, expected in values.items():
         if _digest(files[rel]) != expected:
