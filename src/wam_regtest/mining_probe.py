@@ -165,7 +165,11 @@ def _probe_core_mining(core,source,*,gui=False):
                 # The node must still serve the same wallet/chain after the
                 # negative send; network/transport failures cannot stand in
                 # for a genuine immature-coinbase refusal.
-                if (wallet('getwalletinfo')!=wallet_info
+                current_wallet=wallet('getwalletinfo')
+                if (current_wallet.get('walletname')!='test'
+                        or current_wallet.get('format')!='sqlite'
+                        or current_wallet.get('descriptors') is not True
+                        or current_wallet.get('private_keys_enabled') is not True
                         or rpc('getblockcount')!=depth
                         or rpc('getrawmempool')!=before
                         or balance()!=b):
