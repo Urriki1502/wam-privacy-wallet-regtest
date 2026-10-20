@@ -101,7 +101,12 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
                 public_status(state='ready',owned=True,chain_height=101))
             p=self.win.welcome_page
             self.assertTrue(p.create.isEnabled())
-            self.assertFalse(p.verify.isEnabled())
+            # Existing guarded verification may request an explicit
+            # passphrase before determining whether a vault exists.
+            # Guided UI must mirror that original control, not invent
+            # a new trust/authorization rule.
+            self.assertEqual(
+                p.verify.isEnabled(),self.win.verify_wallet_button.isEnabled())
             self.assertFalse(p.send.isEnabled())
             (root/'chain'/'wallet-vault').mkdir(parents=True)
             self.win._update_controls()
