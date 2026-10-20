@@ -110,6 +110,8 @@ def main():
         for p in sorted(output.iterdir()) if p.is_file() and p.name!='SHA256SUMS.txt'))
     from wam_regtest.release_candidate import write_candidate_manifest
     write_candidate_manifest(output,'windows-x64',BINARY_SHA256)
+    from wam_regtest.r04_package_audit import audit_candidate_output
+    audit_candidate_output(output,expected_platform='windows-x64')
     print('WIN64_FROZEN_OPERATIONAL_REAL_CORE_WALLET_PACKAGE_PASS')
 
 
