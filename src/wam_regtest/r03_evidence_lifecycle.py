@@ -41,8 +41,18 @@ HASH64_FIELDS = (
 )
 
 
-def _identity_valid(identity: object) -> bool:
-    if type(identity) is not dict or set(identity) != set(IDENTITY_KEYS):
+def _identity_valid(identity: object, *, allow_artifact: bool = False) -> bool:
+    if type(identity) is not dict:
+        return False
+    keys = set(identity)
+    base = set(IDENTITY_KEYS)
+    # An exact candidate may additionally identify its frozen binary. This
+    # extension is NEVER part of the historical source identity.
+    if keys != base and not (allow_artifact and keys == base | {"artifact_sha256"}):
+        return False
+    if "artifact_sha256" in identity and (
+            type(identity["artifact_sha256"]) is not str
+            or HEX64.fullmatch(identity["artifact_sha256"]) is None):
         return False
     if any(type(identity[k]) is not str or HEX40.fullmatch(identity[k]) is None
            for k in HASH40_FIELDS):
@@ -91,7 +101,7 @@ def r03_effective_status(record: object, candidate: object,
     if record.get("kind") not in KINDS:
         return "PENDING"
     old = record.get("identity")
-    if not _identity_valid(old) or not _identity_valid(candidate):
+    if not _identity_valid(old) or not _identity_valid(candidate, allow_artifact=True):
         return "PENDING"
     if any(old[k] != candidate[k] for k in IDENTITY_KEYS):
         return "STALE"
@@ -131,6 +141,6 @@ def r03_effective_status(record: object, candidate: object,
 
 def r03_invalidation_reasons(old: object, candidate: object) -> tuple[str, ...]:
     """Public key names only: never emit private receipt values or file paths."""
-    if not _identity_valid(old) or not _identity_valid(candidate):
+    if not _identity_valid(old) or not _identity_valid(candidate, allow_artifact=True):
         return ("R03_IDENTITY_INCOMPLETE",)
     return tuple(k for k in IDENTITY_KEYS if old[k] != candidate[k])
