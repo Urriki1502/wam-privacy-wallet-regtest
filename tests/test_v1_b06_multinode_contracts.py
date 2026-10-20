@@ -1,13 +1,24 @@
 """B-06: fail-closed lab controls; genuine native Core E2E runs in macOS CI."""
+import importlib.util
 import tempfile
 from pathlib import Path
 import unittest
 from unittest.mock import patch
 
-from scripts.issue45_b06_multinode_regtest import (
-    B06LabError, DURATIONS, LabReader, _rpc, _fresh_ports,
-    genuine_two_node_lab, make_private_lab_config,
-)
+# The native unittest launcher executes from scripts/, so the repo root is not
+# importable as a namespace package named scripts. Load only this vetted local
+# test harness by its exact repository path; never change global sys.path.
+file = Path(__file__).resolve().parents[1] / "scripts" / "issue45_b06_multinode_regtest.py"
+spec = importlib.util.spec_from_file_location("b06_disposable_lab", file)
+lab = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(lab)
+B06LabError = lab.B06LabError
+DURATIONS = lab.DURATIONS
+LabReader = lab.LabReader
+_rpc = lab._rpc
+_fresh_ports = lab._fresh_ports
+genuine_two_node_lab = lab.genuine_two_node_lab
+make_private_lab_config = lab.make_private_lab_config
 
 
 class B06PrivateLabContracts(unittest.TestCase):
@@ -55,7 +66,7 @@ class B06PrivateLabContracts(unittest.TestCase):
             reader.call("getblock",["0"*64,2])
 
     def test_public_cli_entry_rejects_unknown_methods_without_spawn(self):
-        with patch("scripts.issue45_b06_multinode_regtest.subprocess.run",
+        with patch.object(lab.subprocess,"run",
                    side_effect=AssertionError("unexpected CLI spawn")):
             for method in ("dumpprivkey","importprivkey","setban",
                            "getwalletinfo","getpeerinfo "):
@@ -78,7 +89,7 @@ class B06PrivateLabContracts(unittest.TestCase):
 
     def test_scanner_adapter_attests_against_actual_core_not_unit_fixture(self):
         reader=LabReader(Path("/public-cli"),Path("/public-disposable"))
-        with patch("scripts.issue45_b06_multinode_regtest._rpc",return_value=101) as mock_rpc:
+        with patch.object(lab,"_rpc",return_value=101) as mock_rpc:
             self.assertEqual(reader.call("getblockcount"),101)
             mock_rpc.assert_called_once_with(reader.cli,reader.data,
                                              "getblockcount",[])
