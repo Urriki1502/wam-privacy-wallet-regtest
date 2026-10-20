@@ -38,6 +38,9 @@ try:
     assert record['mining_account_component']['status']=='REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS'
     assert record['mining_account_component']['owned_http_matches_independent_cli'] is True
     assert record['mining_account_component']['f01_real_core_unowned_miner_script_negative_denied'] is True
+    assert record['mining_account_component']['f07_genuine_regtest_p2pkh_p2sh_validateaddress_parity'] is True
+    assert record['mining_account_component']['f07_mainnet_collision_public_fixture_network_refusal_regtest'] is True
+    assert record['mining_account_component']['f07_native_mainnet_parser_runtime_qualified'] is False
     assert record['mining_account_component']['f01_all_miner_fees_core_owned_and_treasury_separate'] is True
     assert record['mining_account_component']['f02_real_core_immature_99_100_and_mature_101_verified'] is True
     assert record['mining_account_component']['f02_no_early_send_or_mempool_mutation'] is True

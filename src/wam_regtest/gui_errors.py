@@ -1,6 +1,8 @@
 """Fixed public UX categories. Never format exception text or authorize recovery."""
 INPUT_ERRORS=frozenset(('WALLET_INPUT_AMOUNT_INVALID','WALLET_INPUT_FEE_INVALID',
-                        'WALLET_INPUT_RECIPIENT_INVALID','WALLET_INPUT_FUNDS_UNAVAILABLE'))
+                        'WALLET_INPUT_RECIPIENT_INVALID','WALLET_INPUT_FUNDS_UNAVAILABLE',
+                        'WALLET_F07_CORE_BASE58_HRP_COLLISION_SEND_DENIED',
+                        'WALLET_F07_MAINNET_LEGACY_ON_REGTEST_DENIED'))
 _MESSAGES={
  'RPC_CORE_WARMUP':'The verified local Core node is still initializing. Balances are hidden; wait for startup and verify Sync. No transaction is retried.',
  'RPC_MINING_RECONCILIATION_DENIED':'Core mining-account ownership or UTXO balances could not be reconciled. Balances are hidden. No keys or reservations are changed.',
@@ -10,6 +12,8 @@ _MESSAGES={
  'WALLET_INPUT_AMOUNT_INVALID':'Amount not accepted. Enter 0.00000330 to 22000000 WAM, using a decimal point and at most 8 decimal places.',
  'WALLET_INPUT_FEE_INVALID':'Fee not accepted. Enter 0.00000001 to 0.01000000 WAM, using a decimal point and at most 8 decimal places.',
  'WALLET_INPUT_RECIPIENT_INVALID':'Recipient not accepted. Use the complete REGTEST silent-payment code (wamrtsp1…). Ordinary Core addresses, other networks and invalid checksums are not supported.',
+ 'WALLET_F07_CORE_BASE58_HRP_COLLISION_SEND_DENIED':'This checksum-valid WAM mainnet legacy address starts like the Bech32 prefix. Core may reject it due to address-parser ambiguity. Sending is blocked; use a Core-verified compatible recipient. Imported keys or descriptors are not changed.',
+ 'WALLET_F07_MAINNET_LEGACY_ON_REGTEST_DENIED':'This is a WAM mainnet legacy address, not a REGTEST silent-payment recipient. Sending is blocked. Choose a verified wamrtsp1 recipient; no wallet key or descriptor is changed.',
  'WALLET_INPUT_FUNDS_UNAVAILABLE':'Not enough available confirmed funds in one privacy cluster for the amount and fee. Reserved or pending inputs stay unavailable; locks are not released.',
  'WALLET_STALE_SESSION_DENIED':'Wallet session is stale. Sensitive operations are stopped and reservations retained. Use the latest anchored backup; do not reset or replace the anchor.',
  'WALLET_REVIEW_CHAIN_CHANGED':'The chain changed after review. Recheck the live chain. Only an unsigned draft may be canceled; signed reservations stay locked.',
@@ -57,7 +61,7 @@ def operation_error(action,error):
         if code=='INSUFFICIENT_SINGLE_CLUSTER_FUNDS':return 'WALLET_INPUT_FUNDS_UNAVAILABLE'
     if type(error) is RpcError and code in _MESSAGES:
         return code
-    if type(error) is WalletSessionError and code in _MESSAGES and code not in INPUT_ERRORS:
+    if type(error) is WalletSessionError and code in _MESSAGES:
         return code
     if action in ('unlock','recover') and type(error) in (VaultError,WalletSessionError):
         return 'WALLET_UNLOCK_REFUSED' if action=='unlock' else 'WALLET_RECOVERY_REFUSED'
