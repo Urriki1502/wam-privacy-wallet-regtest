@@ -306,7 +306,22 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         # Real Core's mempool/consensus must accept the exact native signature.
         rpc=session._rpc()
         assert txid in rpc._call('getrawmempool',[])
-        window.apply_snapshot(session.snapshot())
+        from .f05_history_state import classify_known_transaction
+        from .wsp_live import REGTEST_GENESIS
+        def observed_tx(known_txid, snap, reservation, *,
+                        prior_confirmed=False, broadcast_submitted=True):
+            if rpc.call('getblockcount')!=snap.height or rpc.call('getbestblockhash')!=snap.tip:
+                raise WalletProbeError('F05_CORE_WSP_TIP_MISMATCH')
+            return classify_known_transaction(
+                chain='regtest',genesis=REGTEST_GENESIS,height=snap.height,
+                txid=known_txid,mempool_txids=rpc._call('getrawmempool',[]),
+                history=list(snap.history),reservation_state=reservation,
+                prior_confirmed=prior_confirmed,
+                broadcast_submitted=broadcast_submitted)
+        submitted=session.snapshot()
+        f05_submitted=observed_tx(txid,submitted,'broadcast')
+        assert f05_submitted.classification=='mempool_observed'
+        window.apply_snapshot(submitted)
         assert window._submitted_txid==txid and 'SUBMITTED' in window.status.text()
         stage="CONFIRM"
         print("WALLET_E2E_STAGE=CONFIRM",flush=True)
@@ -316,6 +331,9 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         assert window._submitted_txid is None and 'CONFIRMED' in window.review_text.text()
         assert window.balance_text.text()==f'{expected/100_000_000:,.8f} WAM'
         assert window.history_table.rowCount()==2
+        f05_confirmed=observed_tx(txid,confirmed,'broadcast')
+        assert (f05_confirmed.classification=='confirmed' and
+                f05_confirmed.confirmation_depth==1)
         recipient_scan=Scanner(datadir/'recipient.sqlite',recipient.accounts())
         recipient_scan.sync(rpc)
         coins=recipient_scan.coins()
@@ -330,9 +348,15 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         recipient_scan.sync(rpc)
         assert rolled.confirmed_atoms==initial.confirmed_atoms and not recipient_scan.coins()
         assert session.scanner.store.db.execute("SELECT state FROM reservations").fetchone()[0]=='broadcast'
+        f05_reorg=observed_tx(txid,rolled,'broadcast',prior_confirmed=True)
+        assert f05_reorg.classification in (
+            'reorged_mempool_observed','reorged_not_observed')
+        assert f05_reorg.confirmation_depth==0 and not f05_reorg.reservation_release_allowed
         rpc._call('reconsiderblock',[tip])
         restored=session.snapshot()
         assert restored.confirmed_atoms==expected and restored.height==105
+        f05_restored=observed_tx(txid,restored,'broadcast',prior_confirmed=True)
+        assert f05_restored.classification=='confirmed' and f05_restored.confirmation_depth==1
         window.apply_snapshot(restored)
         stage="LOST_BROADCAST_REPLY"
         print("WALLET_E2E_STAGE=LOST_BROADCAST_REPLY",flush=True)
@@ -372,6 +396,12 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
         assert entered.get('anchored_before_rpc') is True and session.faulted
         assert not window.prepare_button.isEnabled() and not window.broadcast_button.isEnabled()
         assert uncertain_txid in rpc._call('getrawmempool',[])
+        f05_uncertain=classify_known_transaction(
+            chain='regtest',genesis=REGTEST_GENESIS,height=rpc.call('getblockcount'),
+            txid=uncertain_txid,mempool_txids=rpc._call('getrawmempool',[]),
+            history=[],reservation_state='uncertain',broadcast_submitted=True)
+        assert f05_uncertain.classification=='uncertain_mempool_observed'
+        assert f05_uncertain.irreversible_reservation and not f05_uncertain.automatic_rebroadcast_allowed
         _operation(app,window,'lock',window.lock_button.click)
         _operation(app,window,'unlock',lambda:window.start_operation('unlock',password))
         assert not session.faulted and not session.locked
@@ -458,6 +488,14 @@ def probe_wallet(core_dir,datadir,source,mining_address,*,read_rpc):
             'encrypted_reservations_before_network':True,'actual_send_reorg_depth':1,
             'irreversible_anchor_before_native_crypto':True,'sign_broadcast_os_lease_held':True,
             'real_core_lost_broadcast_reply_lock_retained':True,
+            'f05_native_core_wsp_mempool_observation':f05_submitted.classification,
+            'f05_native_core_wsp_confirmed_depth':f05_confirmed.confirmation_depth,
+            'f05_native_core_wsp_reorg_observation':f05_reorg.classification,
+            'f05_native_core_wsp_restored_depth':f05_restored.confirmation_depth,
+            'f05_native_core_uncertain_mempool_observation':f05_uncertain.classification,
+            'f05_no_automatic_retry_or_reservation_release':True,
+            'f05_12_100_depth_reorg_qualified':False,
+            'f05_unconfirmed_silent_incoming_detection_qualified':False,
             'uncertain_reservation_survives_unlock':True,
             'irreversible_reservations_survive_reorg':True,'native_qt_backup_lock_recovery':True,
             'wrong_unlock_password_denied':True,'background_sync_active':True,
