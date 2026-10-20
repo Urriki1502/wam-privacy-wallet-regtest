@@ -285,6 +285,41 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.spend_wallet_button.clicked.connect(self._open_spending_wallet)
         self.start_core.clicked.connect(lambda: self._execute("start"))
         self.stop_core.clicked.connect(self._confirm_stop)
+        # F-08: guided welcome is a NAVIGATION view, never a wallet state.
+        # Keep prior guarded controls and worker entrypoints unchanged; page
+        # buttons delegate to their exact original handlers.
+        from .f08_welcome import ManagedWelcomePage
+        self.welcome_page=ManagedWelcomePage()
+        self.navigation.addItem("Get Started")
+        self.stack.addWidget(self.welcome_page)
+        # Existing shell names row 3 'Send' in the operational six-screen
+        # view; in managed onboarding it is explicitly Get Started instead.
+        self.navigation.currentRowChanged.connect(
+            lambda i:self.workspace_title.setText("Get Started") if i==3 else None)
+        pairs=(
+            (self.welcome_page.refresh,self.refresh_button),
+            (self.welcome_page.start,self.start_core),
+            (self.welcome_page.create,self.create_bip39_wallet_button),
+            (self.welcome_page.verify,self.verify_wallet_button),
+            (self.welcome_page.inspect,self.sqlite_inspect_button),
+            (self.welcome_page.view,self.view_wallet_button),
+            (self.welcome_page.sync,self.sync_wallet_button),
+            (self.welcome_page.send,self.spend_wallet_button),
+        )
+        self._f08_welcome_sources=pairs
+        for page_button,original in pairs:
+            page_button.clicked.connect(original.click)
+        # F-08: the topbar previously forced >10 buttons onto one row,
+        # overflowing small/high-DPI displays. Relocate secondary actions to
+        # the scrollable Welcome view without changing their actual policy.
+        for button in (
+            self.verify_wallet_button,self.crash_preview_button,
+            self.view_wallet_button,self.sync_wallet_button,
+            self.create_wallet_button,self.create_bip39_wallet_button,
+            self.bip39_button,self.sqlite_inspect_button,self.spend_wallet_button,
+        ):
+            button.hide()
+        self.navigation.setCurrentRow(3)
         # A short timer makes transitions visible without polling from Qt's
         # UI thread or creating an unbounded Core RPC request queue.
         self._sync_timer.setInterval(5_000)
@@ -320,6 +355,25 @@ class ManagedCoreWindow(RegtestWalletWindow):
             can_read and not (self._managed_root/"chain"/"wallet-vault").exists())
         self.spend_wallet_button.setEnabled(
             can_read and (self._managed_root/"chain"/"wallet-vault").is_dir())
+        if hasattr(self, "welcome_page"):
+            # NEVER trust a page-owned boolean for Core or spending policy:
+            # each entry point inherits its existing protected handler.
+            vault=(self._managed_root/"chain"/"wallet-vault")
+            self.welcome_page.render_status(
+                state=self._managed_state,
+                authenticated=self._managed_authenticated,
+                height=self._managed_height,
+                wallet_exists=vault.exists())
+            for page_button,existing in self._f08_welcome_sources:
+                page_button.setEnabled(existing.isEnabled())
+
+    def apply_theme(self, *_):
+        super().apply_theme(*_)
+        if hasattr(self, "welcome_page"):
+            from .fusion_ui import vector_icon,fusion_palette
+            self.navigation.item(3).setIcon(
+                vector_icon('core',fusion_palette(self._active_theme)['accent'],
+                            self.devicePixelRatioF()))
 
     def _execute(self, operation: str):
         if self._worker is not None:
