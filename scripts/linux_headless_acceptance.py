@@ -46,6 +46,10 @@ try:
     assert record['mining_account_component']['f03_target_seconds_from_pinned_consensus_source'] == 120
     assert record['mining_account_component']['f03_confirmation_time_guaranteed'] is False
     assert record['mining_account_component']['f03_native_core_one_atom_dust_send_refused_without_mutation'] is True
+    assert record['mining_account_component']['f04_core_lock_proof_from_listlockunspent_and_gettxout'] is True
+    assert record['mining_account_component']['f04_core_unlock_restored_only_eligibility_not_new_money'] is True
+    assert record['mining_account_component']['f04_genuine_core_after_lock']['locked_core_atoms'] == record['mining_account_component']['f04_genuine_core_before_lock']['available_atoms']
+    assert record['mining_account_component']['f04_genuine_core_after_lock']['available_atoms'] == 0
     assert [x['f02_core_maturity_witness']['depth'] for x in record['mining_account_component']['maturity']] == [99,100,101]
     assert [x['f02_core_maturity_witness']['wallet_send_allowed_by_maturity'] for x in record['mining_account_component']['maturity']] == [False,False,True]
     assert record['mining_account_component']['native_gui_depths']==([99,100,101] if args.qt else [])
