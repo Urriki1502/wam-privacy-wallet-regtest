@@ -333,6 +333,13 @@ class WalletSession:
 
     def prepare(self, code, atoms, fee):
         from wam_sp.wallet import Wallet, Intent, Signer
+        from .f03_fee_policy import exact_spend_budget, FeePolicyRefusal, MAX_PAYMENT_FEE_ATOMS
+        # Independent coordinator bound: never depend solely on GUI fee
+        # parsing or the WSP backend for consensus-safe amount types.
+        if (type(atoms) is not int or not 330<=atoms<=22_000_000*100_000_000
+                or type(fee) is not int or not 1<=fee<=MAX_PAYMENT_FEE_ATOMS
+                or atoms+fee>22_000_000*100_000_000):
+            raise WalletSessionError("WALLET_PAYMENT_POLICY_DENIED")
         with self._lock:
             if self._prepared is not None:
                 raise WalletSessionError("WALLET_PAYMENT_ALREADY_PENDING")
@@ -342,6 +349,11 @@ class WalletSession:
             wallet = Wallet(self.scanner)
             proposal = wallet.propose((intent,),fee)
             try:
+                change = exact_spend_budget(
+                    atoms, fee, [c["atoms"] for c in proposal.coins])
+            except (FeePolicyRefusal,KeyError,TypeError):
+                raise WalletSessionError("WALLET_PAYMENT_POLICY_DENIED") from None
+            try:
                 prepared = Signer(self.ring).prepare(proposal)
                 self._save()  # Reservation is durable before exposing review.
             except Exception:
@@ -349,7 +361,6 @@ class WalletSession:
                 # conservatively retained on encrypted persistence failure.
                 raise WalletSessionError("WALLET_PREPARE_DENIED") from None
             commitment = sha256(prepared.psbt).hexdigest()
-            change = sum(c["atoms"] for c in proposal.coins)-atoms-fee
             review = PaymentReview(code,atoms,fee,change,len(proposal.coins),commitment)
             self._prepared,self._review,self._tip = prepared,review,self.scanner.store.tip()
             return review
