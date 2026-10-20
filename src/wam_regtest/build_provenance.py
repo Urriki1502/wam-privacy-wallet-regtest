@@ -14,7 +14,7 @@ import subprocess
 import sys
 
 SCHEMA='wam-build-source/v1'
-TEXT_SUFFIXES={'.py','.sh','.md','.txt','.toml','.yml','.yaml','.json','.h','.cpp'}
+TEXT_SUFFIXES={'.py','.sh','.md','.txt','.toml','.yml','.yaml','.json','.h','.cpp','.patch'}
 TEXT_NAMES={'LICENSE','.gitattributes','.gitignore'}
 
 
@@ -76,7 +76,7 @@ def _file(path):
 def _blob(raw):return sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
 
 
-def capture(root):
+def capture(root,*,on_dirty=None):
     """Compare every regular HEAD file to Git's blob independently of index flags.
 
     Windows text CRLF checkout is permitted only if normalizing those line ends
@@ -115,7 +115,14 @@ def capture(root):
                     and (parts.suffix in TEXT_SUFFIXES or parts.name in TEXT_NAMES)
                     and not name.startswith('tests/source_contract/v0.1.11/')):
                 matched=_blob(raw.replace(b'\r\n',b'\n'))==oid
-            if not matched:raise BuildSourceError('BUILD_SOURCE_DIRTY')
+            if not matched:
+                # Optional diagnostic callback receives only a repository-relative
+                # tracked path. The caller can hash it for logs without exposing
+                # host paths or source bytes. The refusal itself remains unchanged.
+                if on_dirty is not None:
+                    try:on_dirty(name)
+                    except Exception:pass
+                raise BuildSourceError('BUILD_SOURCE_DIRTY')
             files[name]={'blob':oid,'sha256':sha256(raw).hexdigest(),'metadata':metadata}
         # PyInstaller discovers importable modules, including ignored .py files.
         # Deny extra code even if git status/assume-unchanged would hide it.

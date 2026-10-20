@@ -1,0 +1,15 @@
+{
+  "source_head_sha": "86bc912f9411990cbc22b0316c470e9407a669b6",
+  "ci_checkout_sha": "d570211b48b2bfecfbf6b54da3960c2349d77208",
+  "ci_merge_tree_matches_source_head_tree": true,
+  "ci_merge_parents": [
+    "71a1e7b4336054bf0dabf3ca0ee6de174b462154",
+    "86bc912f9411990cbc22b0316c470e9407a669b6"
+  ],
+  "tracked_files": 338,
+  "mac_linux_native_source_inventory_sha256": "06f8a23fb772c4bc794a2626254957ae949c99894fdc4ccabcb34c5850baebdd",
+  "windows_native_source_inventory_sha256": "293fb27786c1164c51dda504e5a845661a2f990c2cb2441d6326795862502a84",
+  "windows_inventory_reproduced_from_exact_git_blobs_and_autocrlf_filters": true,
+  "all_four_artifact_native_source_inventories_match_expected_checkout_bytes": true,
+  "same_user_host_tamper_proof": false
+}

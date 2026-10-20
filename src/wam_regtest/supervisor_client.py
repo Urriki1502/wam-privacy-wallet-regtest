@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import secrets
 import socket
+import time
 
 from .supervisor_protocol import PROTOCOL,request_proof,response_proof,public_status,SupervisorProtocolError
 from .supervisor_store import read_exact,SupervisorStorageError
@@ -23,17 +24,23 @@ def control(root,op="status",*,authorized=False,timeout=3):
             or type(timeout) not in (int,float) or not .1<=timeout<=15):
         raise ManagedClientError("MANAGED_CLIENT_OPERATION_NOT_APPROVED")
     try:
+        deadline=time.monotonic()+timeout
+        def remaining():
+            left=deadline-time.monotonic()
+            if left<=0:raise TimeoutError
+            return left
         profile=_profile_read(root)
         token=read_exact(root,"supervisor.token",length=32)
         nonce=secrets.token_hex(16)
         envelope={"protocol":PROTOCOL,"op":op,"nonce":nonce,
                   "proof":request_proof(token,op,nonce)}
         raw=(json.dumps(envelope,sort_keys=True,separators=(",",":"))+"\n").encode("ascii")
-        with socket.create_connection(("127.0.0.1",profile["control_port"]),timeout=timeout) as conn:
-            conn.settimeout(timeout)
+        with socket.create_connection(("127.0.0.1",profile["control_port"]),timeout=remaining()) as conn:
+            conn.settimeout(remaining())
             conn.sendall(raw)
             result=bytearray()
             while len(result)<=1024:
+                conn.settimeout(remaining())
                 part=conn.recv(1)
                 if not part:break
                 result.extend(part)
@@ -55,6 +62,7 @@ def control(root,op="status",*,authorized=False,timeout=3):
         if (verified!=public or not secrets.compare_digest(response["proof"],
               response_proof(token,nonce,verified))):
             raise ManagedClientError("MANAGED_CLIENT_REPLY_NOT_AUTHENTICATED")
+        remaining()  # Parsing/authentication cannot renew the original budget.
         return verified
     except ManagedClientError:raise
     except (OSError,ValueError,UnicodeError,SupervisorStorageError,ManagedCoreError,

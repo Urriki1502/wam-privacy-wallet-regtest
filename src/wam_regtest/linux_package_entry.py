@@ -21,6 +21,9 @@ def main():
         if shared_point((1).to_bytes(32,'big'),pub(2))!=pub(2) or len(hash160(pub(31)))!=20:
             raise ValueError('LINUX_BUNDLE_NATIVE_CRYPTO_DENIED')
         args=sys.argv[1:]
+        from wam_regtest.frozen_managed_probe import FLAG, run as managed_probe
+        if args[:1]==[FLAG]:
+            return managed_probe(args[1:],core,source)
         if not args:
             # Desktop launch still requires independent manifest approval and
             # an already provisioned witness. Never auto-install root code.

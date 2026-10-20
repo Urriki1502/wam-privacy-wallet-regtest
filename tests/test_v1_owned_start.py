@@ -7,6 +7,17 @@ from wam_regtest.core import CoreSmokeError
 
 
 class OwnedStartupContracts(unittest.TestCase):
+    def test_process_exit_during_native_image_lookup_remains_an_ownership_denial(self):
+        from unittest.mock import Mock, patch
+        from wam_regtest.core_process import OwnedCoreBinding, CoreBindingError
+        binding=object.__new__(OwnedCoreBinding)
+        binding.process=Mock(args=['public-fixture'],pid=123)
+        binding.process.poll.return_value=None
+        binding._argv=['public-fixture'];binding.directory=Path('/not-opened')
+        with patch('wam_regtest.core_process._image',side_effect=FileNotFoundError('PRIVATE_CANARY')):
+            with self.assertRaisesRegex(CoreBindingError,'^RPC_PROCESS_IMAGE_DENIED$'):
+                binding._assert_image()
+
     def test_tcp_timeout_before_any_auth_may_wait_but_permissions_never_authenticate(self):
         from types import SimpleNamespace
         from unittest.mock import Mock,MagicMock,patch

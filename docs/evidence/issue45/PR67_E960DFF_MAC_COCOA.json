@@ -1,0 +1,40 @@
+{
+  "status": "ACTUAL_FINAL_MACOS_COCOA_OPERATIONAL_WALLET_EXIT_ZERO",
+  "source_head_sha": "e960dff5c1abcd16f6a3ad2272e589d1a4b86e90",
+  "frozen_executable_sha256": "2e11bd40377802a168bf2912799bebfa7c6e7bf355f36099e7e5e3de827b4c0e",
+  "source_provenance_verified": true,
+  "qt_platform": "cocoa",
+  "actual_reorg_depths": [
+    1,
+    12,
+    100
+  ],
+  "native_stale_payment_proof": {
+    "cross_mac_anchor_migration_allowed": false,
+    "fresh_chain_rescanned_before_balance": true,
+    "mainnet_allowed": false,
+    "native_qt_recovered_receive_balance": true,
+    "new_testing_epoch_funded": true,
+    "observed_height": 103,
+    "old_reservations_retained": true,
+    "operational_snapshot_http": {
+      "cli_and_rehash_forbidden": true,
+      "repeated_reads": 3,
+      "synthetic_rpc": false,
+      "transport": "owned-http"
+    },
+    "real_core_rpc": true,
+    "same_test_keys_recovered": true,
+    "stale_before_native_signature_denied": true,
+    "stale_before_real_broadcast_denied": true,
+    "stale_writer_same_wallet_other_vault_directory": true,
+    "stale_writer_signed_reservation_retained": true,
+    "status": "REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS",
+    "synthetic_rpc": false
+  },
+  "qt_color_scheme_override_signal_tests": true,
+  "physical_os_setting_change_verified": false,
+  "full_managed_wallet_q05_qualified": false,
+  "mainnet_allowed": false,
+  "physical_acceptance": "PENDING_OPERATOR"
+}

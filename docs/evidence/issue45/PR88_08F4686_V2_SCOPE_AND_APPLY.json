@@ -1,0 +1,14 @@
+{
+  "base_sha": "08f46867aefe2572c4809a23e92de01cbf6ac439",
+  "base_guard_sha256": "d6c011d3875d305cec7304a923760491e8a6838d792f4348c8c04cedf9bb818b",
+  "superseded_v1_guard_sha256": "50ecd3c1e080c4bbe4256200d809aece38a46ee59fc6f9d1604f7663c4d06ff5",
+  "v2_guard_sha256": "1f2066ef5343ed74927fbe9904eef7ea647aaf71df3b708303768f929a2ce387",
+  "patch_sha256": "cda498729a9fb8d5a201424f333ae431bcf54366bd5ae826aa45f8dbd3c009aa",
+  "git_apply_check_exit_code": 0,
+  "git_apply_exit_code": 0,
+  "applied_bytes_equal_test_candidate": true,
+  "independent_branch_changed": false,
+  "proposal_integrated": false,
+  "host_bytecode_import_race_qualified": false,
+  "real_core_native3OS_or_frozen_qualified": false
+}

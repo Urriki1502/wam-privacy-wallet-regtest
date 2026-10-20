@@ -1,0 +1,143 @@
+{
+  "reviewed_pr": 88,
+  "reviewed_head": "08f46867aefe2572c4809a23e92de01cbf6ac439",
+  "native_platform": "darwin-arm64",
+  "source_guard_cases": 11,
+  "original_adversarial_cases_incorrectly_accepted": 5,
+  "proposal_expected_results_passed": 11,
+  "existing_exact88_contract_tests": {
+    "run": 12,
+    "passed": 12,
+    "exit_code": 0,
+    "test_fixture_sha256": "d49a9833454f1b73c4ff08531dd3fc51f2f608d946a842c5a649810fcfd00cd2"
+  },
+  "macos_ci_failure": {
+    "run_id": 39130521611,
+    "job_id": 117684561407,
+    "tests_run": 358,
+    "errors": 1,
+    "skipped": 34,
+    "root_cause": "existing dirty-scanner test provides two subprocess mock results; new tree call occurs before dirty early rejection and exhausts side_effect; StopIteration",
+    "proposal_preserves_early_rejection": true
+  },
+  "ci_snapshot": [
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-18T13:16:40Z",
+      "conclusion": "FAILURE",
+      "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39130521611/job/117684561407",
+      "name": "Real signed Core \u2192 WSP BIP352 \u2192 native Qt Receive Balance History",
+      "startedAt": "2026-10-18T13:15:51Z",
+      "status": "COMPLETED",
+      "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39130521554/job/117684561439",
+      "name": "win64-native-credential-cas",
+      "startedAt": "2026-10-18T13:12:26Z",
+      "status": "IN_PROGRESS",
+      "workflowName": "Windows x64 native credential checkpoint anchor contract"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-18T13:12:52Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39130521520/job/117684561127",
+      "name": "native-contracts",
+      "startedAt": "2026-10-18T13:12:25Z",
+      "status": "COMPLETED",
+      "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-18T13:15:57Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39130521519/job/117684561476",
+      "name": "canonical-vectors",
+      "startedAt": "2026-10-18T13:15:40Z",
+      "status": "COMPLETED",
+      "workflowName": "WSP-1 canonical 28 BIP352 vectors (macOS ARM64)"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-18T13:16:41Z",
+      "conclusion": "SKIPPED",
+      "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39130521611/job/117685480060",
+      "name": "Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E",
+      "startedAt": "2026-10-18T13:16:41Z",
+      "status": "COMPLETED",
+      "workflowName": "REAL WAM Core v0.1.11 REGTEST (macOS ARM64)"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-18T13:15:27Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39130521520/job/117684661683",
+      "name": "headless-wallet",
+      "startedAt": "2026-10-18T13:12:54Z",
+      "status": "COMPLETED",
+      "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-18T13:16:25Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39130521520/job/117684661765",
+      "name": "native-qt-wallet",
+      "startedAt": "2026-10-18T13:12:54Z",
+      "status": "COMPLETED",
+      "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-18T13:12:52Z",
+      "conclusion": "SKIPPED",
+      "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39130521520/job/117684662993",
+      "name": "developer-core",
+      "startedAt": "2026-10-18T13:12:52Z",
+      "status": "COMPLETED",
+      "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-18T13:19:47Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39130521520/job/117685423556",
+      "name": "frozen-wallet (headless)",
+      "startedAt": "2026-10-18T13:16:27Z",
+      "status": "COMPLETED",
+      "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-18T13:20:45Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/39130521520/job/117685423574",
+      "name": "frozen-wallet (desktop)",
+      "startedAt": "2026-10-18T13:16:27Z",
+      "status": "COMPLETED",
+      "workflowName": "Linux x86_64 experimental developer Core REGTEST"
+    }
+  ],
+  "candidate_only": true,
+  "proposal_real_core_e2e": false,
+  "proposal_windows_linux_native_or_frozen": false,
+  "physical_acceptance": "PENDING_OPERATOR",
+  "release_disposition": "HOLD",
+  "mainnet_allowed": false,
+  "files_sha256": {
+    "PR88_08F4686_SOURCE_GUARD_PROBE.json": "85758a2c613552d6552a807a515d08137449a17d980fd6cf51ea8952452f6ae1",
+    "PR88_08F4686_EXTRA_SOURCE_PROBE.json": "c6fbe884515af88b65e58722c53b0711a5d47d96e9a80c7e5a88066d2abf0a25",
+    "PR88_08F4686_PROPOSAL_SOURCE_PROBE.json": "899b638480d34f544399387604152431b03bec658a026e026398118fa3b1d273",
+    "PR88_08F4686_PROPOSAL_EXTRA_PROBE.json": "bb7e89b2db732bd837f2a335a6c7307c324e4c126d0b5e12272a5d47f7113010",
+    "PR88_08F4686_PROPOSAL_SCOPE.json": "f8b7912450dc684a1f98085c32804d2f7e563c86bfdc83b6fb4bff2f8645e3a9",
+    "PR88_08F4686_PATCH_APPLY_CHECK.json": "ac0aa81655deb9b94d5143cddb5b48bfdd54a852d61dae46a8f8a4a75a8cd81f",
+    "PR88_08F4686_SOURCE_GUARD_PROPOSAL.patch.txt": "e3506bbfff9639582f1a6e42f20293c86d4daefeb023251e78be53e6f8930c7f",
+    "PR88_08F4686_SOURCE_REPRO.py": "862e98b87fd414ccdff43a956c126a601638b6f6021ba33504f9f7d2c19aa422",
+    "PR88_08F4686_EXTRA_REPRO.py": "d3f370d4cc7c53ced0fc06ee972b836e4a83d1ec3e3f5c0adaf1abeabcd9269b",
+    "PR67_791B58D_FROZEN_CLOSURE_PROBE.json": "61baf31847c6c1d6f6d2dd87a2d29a7b0df29570424d6ad75d1d2a931134a6b7"
+  }
+}

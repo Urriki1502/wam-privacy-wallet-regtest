@@ -140,6 +140,7 @@ jobs:
           print(result)
           assert 'not found' not in result,'NATIVE_QT_XCB_DEPENDENCY_UNAVAILABLE'
           PYQT
+          QT_QPA_PLATFORM=xcb xvfb-run -a python -X faulthandler scripts/run_native_unittest.py --pattern 'test_fusion_managed_gui.py'
           QT_QPA_PLATFORM=xcb xvfb-run -a python scripts/linux_headless_acceptance.py --core-dir qualified-linux-core/linux-core --qt
       - uses: actions/upload-artifact@v4
         with:

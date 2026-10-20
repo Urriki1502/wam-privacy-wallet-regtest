@@ -1,0 +1,36 @@
+{
+  "source_under_test": "REVIEW_ONLY_PATCH_OF_08f46867aefe2572c4809a23e92de01cbf6ac439",
+  "actual_guard_sha256": "50ecd3c1e080c4bbe4256200d809aece38a46ee59fc6f9d1604f7663c4d06ff5",
+  "wsp_pin": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "native_platform": "darwin",
+  "rows": [
+    {
+      "case": "clean_with_normal_python_caches",
+      "accepted": true,
+      "safe_error": null,
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "tracked_source_hardlink_outside_package",
+      "accepted": false,
+      "safe_error": "WSP_SOURCE_CLOSURE_DENIED",
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "symlink_source_parent_hidden_by_index_flags",
+      "accepted": false,
+      "safe_error": "WSP_SOURCE_CLOSURE_DENIED",
+      "wam_sp_import_executed": false
+    },
+    {
+      "case": "restored_clean_with_normal_caches",
+      "accepted": true,
+      "safe_error": null,
+      "wam_sp_import_executed": false
+    }
+  ],
+  "core_e2e": false,
+  "frozen_e2e": false,
+  "disposable_clone_only": true,
+  "trusted_dependency_changed": false
+}

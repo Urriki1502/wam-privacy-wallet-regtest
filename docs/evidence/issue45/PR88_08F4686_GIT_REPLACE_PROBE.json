@@ -1,0 +1,27 @@
+{
+  "source_label": "08f46867aefe2572c4809a23e92de01cbf6ac439",
+  "actual_guard_sha256": "d6c011d3875d305cec7304a923760491e8a6838d792f4348c8c04cedf9bb818b",
+  "rows": [
+    {
+      "case": "clean_before",
+      "accepted": true,
+      "safe_error": null
+    },
+    {
+      "case": "modified_tracked_source_hidden_by_git_replace",
+      "accepted": true,
+      "safe_error": null
+    },
+    {
+      "case": "restored_clean",
+      "accepted": true,
+      "safe_error": null
+    }
+  ],
+  "native_platform": "darwin",
+  "disposable_clone_only": true,
+  "wam_sp_import_executed": false,
+  "core_or_keys_or_anchors_used": false,
+  "real_core_e2e": false,
+  "mainnet_allowed": false
+}

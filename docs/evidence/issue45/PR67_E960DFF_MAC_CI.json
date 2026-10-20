@@ -1,0 +1,50 @@
+{
+  "frozen_managed_process_roles_verified": true,
+  "frozen_qt_platform": "offscreen",
+  "status": "DOWNLOADED_MACOS_FROZEN_BYTES_AND_RECEIPT_VERIFIED",
+  "source_head_sha": "e960dff5c1abcd16f6a3ad2272e589d1a4b86e90",
+  "checkout_sha": "36d56d9f424dcc9476fcff715d337b3d34d34d8b",
+  "artifact_id": 12116611460,
+  "artifact_outer_sha256": "55bff67dbea224923c44fa3cda5dba5238ecd22a65de4ab116429698cef40902",
+  "files": {
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip": {
+      "sha256": "13e13eb8462185ba09ab996efd2d5453b7b9323b403a11b8ece84567d581e94a",
+      "size_bytes": 56517056
+    },
+    "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg": {
+      "sha256": "3a2cc77d6f761f2ba8872e61770bb48c2cc1b0eb1d9cf00b7d87e44eea51c183",
+      "size_bytes": 64587977
+    }
+  },
+  "original_core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "arm64_macho_verified": true,
+  "native_source_inventory_matches_local_exact_head": true,
+  "frozen_stale_payment_proof": {
+    "cross_mac_anchor_migration_allowed": false,
+    "fresh_chain_rescanned_before_balance": true,
+    "mainnet_allowed": false,
+    "native_qt_recovered_receive_balance": true,
+    "new_testing_epoch_funded": true,
+    "observed_height": 103,
+    "old_reservations_retained": true,
+    "operational_snapshot_http": {
+      "cli_and_rehash_forbidden": true,
+      "repeated_reads": 3,
+      "synthetic_rpc": false,
+      "transport": "owned-http"
+    },
+    "real_core_rpc": true,
+    "same_test_keys_recovered": true,
+    "stale_before_native_signature_denied": true,
+    "stale_before_real_broadcast_denied": true,
+    "stale_writer_same_wallet_other_vault_directory": true,
+    "stale_writer_signed_reservation_retained": true,
+    "status": "REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS",
+    "synthetic_rpc": false
+  },
+  "full_managed_wallet_q05_qualified": false,
+  "physical_acceptance": "PENDING_OPERATOR"
+}

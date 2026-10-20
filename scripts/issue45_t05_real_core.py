@@ -5,6 +5,7 @@ deletes its datadir, including clean close and simulated daemon crash.
 """
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -14,15 +15,238 @@ from wam_regtest.core_supervisor import CoreSupervisor,ManagedCoreError
 from wam_regtest.core import _read_cli
 
 
+class _FrozenChildren:
+    """Host test operator, actual FINAL bootloader for every named child role."""
+    def __init__(self, executable, root, linux_manifest, linux_witness):
+        from hashlib import sha256
+        if (type(executable) is not type(Path()) or not executable.is_absolute()
+                or executable.is_symlink() or not executable.is_file()):
+            raise ValueError('T05_FROZEN_EXECUTABLE_DENIED')
+        self.executable=executable
+        self.digest=sha256(executable.read_bytes()).hexdigest()
+        self.root=root
+        self.policy=[]
+        if sys.platform=='linux':
+            self.policy=['--linux-developer-manifest',linux_manifest,
+                         '--linux-root-witness',str(linux_witness)]
+
+    def command(self, role, *arguments):
+        return [str(self.executable),'--ci-managed-process',role,
+            '--root',str(self.root),'--confirm-disposable-regtest-probe',
+            *self.policy,*arguments]
+
+    def refusals(self):
+        # Actual bootloader negatives, before creating any supervisor state.
+        # In particular missing consent raises an exception on Windows: a
+        # modal error dialog would hang instead of producing the required2.
+        assert list(self.root.iterdir())==[]
+        # Syntactically valid DISTINCT report path, never created/used by a
+        # refusal. This keeps each negative attributable to its own bad input.
+        report=self.root.parent/'wam-fusion-core-fedcba9876543210'
+        normal=self.command('supervisor','--report-root',str(report),
+                            '--confirm-owned-core-crash')
+        cases=[
+            [arg for arg in normal if arg!='--confirm-disposable-regtest-probe'],
+            [arg for arg in normal if arg!='--confirm-owned-core-crash'],
+            normal+['--core-dir',str(self.root/'external-core')],
+            normal+['--wsp-source-root',str(self.root/'external-wsp')],
+            normal+['--wait-for-crash'],
+            self.command('gui','--report-root',str(self.root),'--expected-height','101'),
+        ]
+        for command in cases:
+            reply=subprocess.run(command,stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=25)
+            assert reply.returncode==2, 'T05_FROZEN_SCOPE_REFUSAL_DENIED'
+            assert list(self.root.iterdir())==[], 'T05_FROZEN_REFUSAL_TOUCHED_STATE'
+        return len(cases)
+
+    def report_command(self, role, *arguments):
+        import secrets
+        from wam_regtest.custody import create_directory
+        # A NEW separate directory per process, no stale readiness reuse and
+        # no new names/permissions in the real supervisor control namespace.
+        report=self.root.parent/('wam-fusion-core-'+secrets.token_hex(8))
+        create_directory(report)
+        return self.command(role,'--report-root',str(report),*arguments),report
+
+    @staticmethod
+    def read(report):
+        from wam_regtest.supervisor_store import read_exact
+        return json.loads(read_exact(report,'supervisor.profile'))
+
+    def run(self, role, *arguments):
+        command,report=self.report_command(role,*arguments)
+        reply=subprocess.run(command,stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=100)
+        if reply.returncode!=0:
+            raise AssertionError('T05_FROZEN_'+role.upper()+'_EXIT_DENIED')
+        return self.read(report)
+
+    def gui_crash(self, height, expected):
+        command,report=self.report_command('gui','--expected-height',str(height),
+                                           '--wait-for-crash')
+        child=subprocess.Popen(command,stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        try:
+            deadline=time.monotonic()+35
+            while time.monotonic()<deadline:
+                if child.poll() is not None:
+                    raise AssertionError('T05_FROZEN_GUI_EARLY_EXIT')
+                # Publication is create-only/fsynced, but a reader can race
+                # the initial write. Never accept or kill on a partial record.
+                try:ready=self.read(report)
+                except (ValueError,OSError):
+                    time.sleep(.05);continue
+                assert ready==expected
+                break
+            else:raise AssertionError('T05_FROZEN_GUI_READY_TIMEOUT')
+            assert child.poll() is None
+            child.kill()
+            assert child.wait(timeout=15)!=0
+        finally:
+            if child.poll() is None:
+                child.kill();child.wait(timeout=15)
+
+    def verify(self):
+        from hashlib import sha256
+        assert not self.executable.is_symlink()
+        assert sha256(self.executable.read_bytes()).hexdigest()==self.digest
+
+
 def _closed(owner):
     owner.close_listener()
     owner.stack.close()
 
 
-def prove(core):
+def _qt_reopen_probe(root, expected_height, core, wsp_source):
+    """Drive actual Fusion widgets with genuine supervisor IPC; no wallet mock."""
+    from wam_regtest.desktop import qt_application
+    from wam_regtest.managed_gui import ManagedCoreWindow
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QInputDialog
+    app=qt_application()
+    for reopen in range(2):
+        window=ManagedCoreWindow(root,core_dir=core,wsp_source=wsp_source)
+        window.show()
+        try:
+            window.request_sync()
+            deadline=time.monotonic()+25
+            while time.monotonic()<deadline:
+                app.processEvents()
+                if window._worker is None:
+                    if window._managed_authenticated and window._managed_state=="ready":
+                        break
+                    raise AssertionError("T05_FUSION_GUI_CORE_UNVERIFIED")
+                time.sleep(.01)
+            else:raise AssertionError("T05_FUSION_GUI_SYNC_TIMEOUT")
+            assert "READY" in window.verification_badge.text()
+            assert " · height "+str(expected_height)+" · " in window.status.text()
+            assert window._snapshot is None and window.session is None
+            assert window.dashboard.go_send.isEnabled() is False
+            # Drive the actual native password dialog, including its nested
+            # event loop. Cancel supplies no password or wallet authority.
+            modal=[]
+            def cancel_dialog():
+                dialog=app.activeModalWidget()
+                try:
+                    window.request_sync()
+                    modal.extend((isinstance(dialog,QInputDialog),
+                        window._managed_dialog_open,window._worker is None,
+                        not window.close()))
+                finally:
+                    if isinstance(dialog,QInputDialog):
+                        dialog.reject()
+            assert window.verify_wallet_button.isEnabled()
+            QTimer.singleShot(100,cancel_dialog)
+            window._verify_wallet()
+            assert modal==[True,True,True,True]
+            assert window._managed_dialog_open is False
+            assert window._worker is None
+            assert window._snapshot is None and window.session is None
+            assert window.dashboard.go_send.isEnabled() is False
+        finally:
+            if not window.close():
+                raise AssertionError("T05_FUSION_GUI_CLOSE_DENIED")
+            # Deterministically release QWidget before Python's Qt teardown.
+            from shiboken6 import delete
+            delete(window)
+            app.processEvents()
+
+
+def _qt_process_probe(root, expected_height, frozen=None):
+    """Three real GUI interpreters: clean close, abrupt crash, verified reopen."""
+    import queue
+    import threading
+    command = [sys.executable, "-m", "wam_regtest.managed_gui_probe",
+        "--root", str(root), "--expected-height", str(expected_height),
+        "--confirm-disposable-regtest-probe"]
+    expected = {"height": expected_height, "wallet_adopted": False,
+                "authenticated_gui_ready": True}
+    if frozen is not None:
+        from wam_regtest.desktop import qt_application
+        expected.update(frozen_entrypoint=True,qt_platform=qt_application().platformName())
+    def clean():
+        if frozen is not None:
+            assert frozen.run('gui','--expected-height',str(expected_height)) == {
+                **expected, 'native_shutdown_completed':True}
+            return
+        result = subprocess.run(command, stdin=subprocess.DEVNULL,
+            capture_output=True, timeout=40)
+        if result.returncode != 0:
+            raise AssertionError("T05_GUI_CLEAN_PROCESS_EXIT_DENIED")
+        assert json.loads(result.stdout) == {**expected, "native_shutdown_completed": True}
+    clean()
+    if frozen is not None:
+        frozen.gui_crash(expected_height,expected)
+        clean()
+        return
+    child = subprocess.Popen(command + ["--wait-for-crash"],
+        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    line = queue.Queue(maxsize=1)
+    # Portable bounded pipe readiness; Windows does not support select on pipes.
+    reader = threading.Thread(target=lambda: line.put(child.stdout.readline(1025)), daemon=True)
+    reader.start()
+    try:
+        ready = line.get(timeout=35)
+        assert len(ready) <= 1024 and json.loads(ready) == expected
+        assert child.poll() is None
+        # Kill only the actual GUI Popen created above, after real Qt and IPC
+        # verification. No synthetic os._exit stand-in for this acceptance case.
+        child.kill()
+        assert child.wait(timeout=10) != 0
+    finally:
+        if child.poll() is None:
+            child.kill()
+            child.wait(timeout=10)
+        reader.join(timeout=3)
+        child.stdout.close()
+        assert not reader.is_alive()
+    clean()
+
+
+def prove(core, *, qt=False, linux_manifest=None, linux_witness=None,
+          frozen_executable=None):
+    # Native acceptance source identity only, never a runtime wallet authority.
+    from wam_regtest.build_provenance import capture, verify, public_receipt
+    from hashlib import sha256
+    source_root = Path(__file__).resolve().parents[1]
+    def report_dirty_source(relative_path):
+        # Public CI diagnostics reveal neither source bytes nor host paths.
+        path_id=sha256(relative_path.encode('utf-8','surrogateescape')).hexdigest()
+        print('T05_SOURCE_MISMATCH_PATH_SHA256='+path_id,flush=True)
+    source = capture(source_root,on_dirty=report_dirty_source)
+    if sys.platform=="linux":
+        if type(linux_manifest) is not str or linux_witness is None:
+            raise ManagedCoreError("T05_LINUX_NATIVE_WITNESS_REQUIRED")
+        # Same verified developer-Core policy as existing Linux wallet; no
+        # foreign signer, backup or weaker root anchor.
+        from wam_regtest.linux_runtime import configure
+        configure(core,linux_manifest,linux_witness,authorized=True)
     evidence={"schema":"wam-t05-real-owned-core/v1","chain":"regtest",
               "synthetic_rpc":False,"mainnet_allowed":False,
-              "full_gui_q05_qualified":False}
+              "full_gui_q05_qualified":False,
+              "test_source_provenance":public_receipt(source,
+                  source_head=os.environ.get("WAM_SOURCE_HEAD"))}
     # The testing harness deletes its private disposable fixture after
     # the test, NOT the actual managed Core lifecycle.
     with tempfile.TemporaryDirectory(prefix="wam-t05-public-fixture-") as temporary:
@@ -34,7 +258,16 @@ def prove(core):
             create_directory(root)
         else:
             root.mkdir(mode=0o700)
+        frozen=(_FrozenChildren(frozen_executable,root,linux_manifest,linux_witness)
+                if frozen_executable is not None else None)
+        if frozen is not None and not qt:
+            raise ValueError('T05_FROZEN_DESKTOP_PROBE_REQUIRED')
+        if frozen is not None:
+            evidence['frozen_scope_refusals_before_supervisor']=frozen.refusals()
+            evidence['frozen_scope_refusals_prompt_free']=True
         owner=CoreSupervisor(root,core,authorized=True)
+        evidence["wamd_sha256"] = owner.receipt["wamd_sha256"]
+        evidence["wam_cli_sha256"] = owner.receipt["wam_cli_sha256"]
         try:
             # Distinct supervisor must not acquire an existing owner lock.
             try:CoreSupervisor(root,core,authorized=True)
@@ -78,10 +311,15 @@ def prove(core):
         # Independently launched owner stays alive across disposable GUI/client exits.
         # No Core adoption: the new supervisor owns a newly started Popen itself.
         from wam_regtest.supervisor_client import control
-        server=subprocess.Popen([
-            sys.executable,"-m","wam_regtest.supervisor_cli","serve",
+        command=[sys.executable,"-m","wam_regtest.supervisor_cli","serve",
             "--root",str(root),"--core-dir",str(core),
-            "--confirm-regtest-managed-core"],
+            "--confirm-regtest-managed-core"]
+        if sys.platform=="linux":
+            command.extend(["--linux-developer-manifest",linux_manifest,
+                            "--linux-root-witness",str(linux_witness)])
+        if frozen is not None:
+            command,server_report=frozen.report_command('supervisor','--confirm-owned-core-crash')
+        server=subprocess.Popen(command,
             stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         stopped=False
         try:
@@ -97,6 +335,97 @@ def prove(core):
             state=control(root,"start",authorized=True,timeout=15)
             assert state["core_process_owned"] is True
             assert state["height"]==height
+            if frozen is not None:
+                # Start's reply precedes the actual frozen owner's fault.
+                # Wait for its bounded private report BEFORE sending scan/GUI
+                # requests; no polling RPC against a restarting Core.
+                deadline=time.monotonic()+75
+                while time.monotonic()<deadline:
+                    if server.poll() is not None:
+                        raise AssertionError('T05_FROZEN_CORE_RESTART_OWNER_DIED')
+                    try:crash_proof=frozen.read(server_report)
+                    except (ValueError,OSError):
+                        time.sleep(.05);continue
+                    break
+                else:raise AssertionError('T05_FROZEN_CORE_RESTART_REPORT_TIMEOUT')
+                booleans=('frozen_entrypoint','explicit_owned_core_crash_authorized',
+                    'owned_core_image_verified_before_kill',
+                    'actual_owned_core_kill_observed','same_tip_after_core_restart',
+                    'persistent_chain_after_core_crash','core_restart_owned')
+                assert set(crash_proof)==set(booleans)|{'crash_state',
+                    'same_height_after_core_restart','wamd_sha256','wam_cli_sha256',
+                    'mainnet_allowed','synthetic_rpc','owned_core_crash_exit_code'}
+                assert all(crash_proof.get(k) is True for k in booleans)
+                assert type(crash_proof['owned_core_crash_exit_code']) is int
+                assert crash_proof['owned_core_crash_exit_code']==(1 if sys.platform=='win32' else -9)
+                assert crash_proof['crash_state']=='recovery-needed'
+                assert type(crash_proof['same_height_after_core_restart']) is int
+                assert crash_proof['same_height_after_core_restart']==height
+                assert crash_proof['wamd_sha256']==evidence['wamd_sha256']
+                assert crash_proof['wam_cli_sha256']==evidence['wam_cli_sha256']
+                assert crash_proof['mainnet_allowed'] is False
+                assert crash_proof['synthetic_rpc'] is False
+                assert control(root,'status',timeout=15)['core_process_owned'] is True
+                assert _read_cli([str(restarted.cli),f"-datadir={root/'chain'}",
+                                  'getblockhash',str(height)])==tip
+                evidence['frozen_owned_core_crash_restart_same_tip']=True
+                evidence['frozen_owned_core_crash_proof']=crash_proof
+            if qt:
+                # Two independent REAL WSP-1 scanner interpreters. They share
+                # only the OS-protected SQLite fixture, not an RPC object,
+                # memory account, Core PID handle or process lifetime.
+                # This still proves a public scanner fixture, NOT owner-wallet
+                # restore, signer activation or complete Q05.
+                wsp_source=source_root/"wsp-upstream"
+                command=[sys.executable,"-m","wam_regtest.managed_scan_probe",
+                    "--root",str(root),"--wsp-source",str(wsp_source),
+                    "--confirm-public-regtest-scan"]
+                if sys.platform=="linux":
+                    command.extend(["--core-dir",str(core),
+                        "--linux-developer-manifest",linux_manifest,
+                        "--linux-root-witness",str(linux_witness)])
+                def scan_child(before,count):
+                    args=command+["--expected-before",str(before),
+                                  "--max-blocks",str(count)]
+                    if frozen is not None:
+                        evidence=frozen.run('scan','--expected-before',str(before),
+                                            '--max-blocks',str(count))
+                        assert evidence['frozen_entrypoint'] is True
+                    else:
+                        reply=subprocess.run(args,stdin=subprocess.DEVNULL,
+                            capture_output=True,timeout=100,check=False)
+                        if reply.returncode!=0:
+                            raise AssertionError("Q05_REAL_WSP_INDEPENDENT_PROCESS_DENIED")
+                        evidence=json.loads(reply.stdout)
+                    assert evidence["status"]=="Q05_INDEPENDENT_REAL_WSP_SCAN_PASS"
+                    assert evidence["before"]==before
+                    assert evidence["processed"]==count
+                    assert evidence["height"]==before+count
+                    assert evidence["core_height"]==height
+                    assert evidence["read_only"] is True
+                    assert evidence["wallet_adopted"] is False
+                    assert evidence["signer_allowed"] is False
+                    assert evidence["broadcast_allowed"] is False
+                    assert evidence["mainnet_allowed"] is False
+                    assert evidence["synthetic_rpc"] is False
+                    return evidence
+                scan1=scan_child(0,3)
+                assert scan1["scanner_ready"] is False
+                assert scan1["tip"]==_read_cli([str(restarted.cli),
+                    f"-datadir={root/'chain'}","getblockhash","3"])
+                assert server.poll() is None
+                scan2=scan_child(3,5)
+                assert scan2["scanner_ready"] is False
+                assert scan2["tip"]==_read_cli([str(restarted.cli),
+                    f"-datadir={root/'chain'}","getblockhash","8"])
+                assert scan1["tip"]!=scan2["tip"]
+                assert server.poll() is None
+                assert control(root,"status",timeout=15)["height"]==height
+                evidence["authenticated_wsp_scan_first_three_real_blocks"]=True
+                evidence["authenticated_wsp_sqlite_resume_same_tip"]=True
+                evidence["authenticated_wsp_reopened_client_same_supervisor"]=True
+                evidence["two_independent_wsp_scanner_processes_same_sqlite"]=True
+                evidence["scanner_read_only_partial_sync_only"]=True
             # This second, independent interpreter represents a GUI re-open.
             client=subprocess.run([
                 sys.executable,"-m","wam_regtest.supervisor_cli",
@@ -120,9 +449,35 @@ def prove(core):
             assert server.poll() is None
             assert control(root,"status",timeout=15)["height"]==height
             evidence["disconnected_gui_client_core_survived"]=True
+            if qt:
+                _qt_reopen_probe(root,height,core,source_root/"wsp-upstream")
+                assert server.poll() is None
+                assert control(root,"status",timeout=15)["height"]==height
+                evidence["real_qt_gui_close_reopen_same_core"]=True
+                evidence["real_qt_modal_cancel_no_concurrent_worker"]=True
+                _qt_process_probe(root,height,frozen)
+                assert server.poll() is None
+                assert control(root,"status",timeout=15)["height"]==height
+                assert _read_cli([str(restarted.cli),f"-datadir={root/'chain'}",
+                                  "getblockhash",str(height)])==tip
+                evidence["independent_qt_process_reopen_same_chain"]=True
+                evidence["actual_qt_process_killed_after_authenticated_ready"]=True
+                evidence["actual_qt_crash_reconnect_same_tip"]=True
             state=control(root,"shutdown",authorized=True,timeout=15)
             stopped=(state["state"]=="stopped" and state["core_process_owned"] is False)
             assert stopped
+            if frozen is not None:
+                assert server.wait(timeout=20)==0
+                frozen.verify()
+                evidence['frozen_supervisor_scan_gui_processes']=True
+                evidence['frozen_gui_clean_kill_reopen_same_tip']=True
+                evidence['frozen_supervisor_verified_shutdown_exit_zero']=True
+                evidence['frozen_executable_sha256']=frozen.digest
+                evidence['frozen_public_scan_processes']=2
+                evidence['frozen_gui_processes']=3
+                from wam_regtest.desktop import qt_application
+                evidence['frozen_qt_platform']=qt_application().platformName()
+                evidence['acceptance_orchestrator']='native-source-test-harness'
         finally:
             # Never terminate an unverified live Core owner to hide a test fail.
             if not stopped and server.poll() is None:
@@ -141,6 +496,7 @@ def prove(core):
         evidence["unrelated_core_stopped"]=False
         evidence["verified_core_version"]="v0.1.11"
         evidence["real_process_lifecycle_pass"]=True
+    verify(source_root, source)
     return evidence
 
 
@@ -148,8 +504,15 @@ def main():
     p=argparse.ArgumentParser()
     p.add_argument("--core-dir",required=True,type=Path)
     p.add_argument("--output",required=True,type=Path)
+    p.add_argument("--qt-e2e",action="store_true")
+    p.add_argument("--linux-developer-manifest")
+    p.add_argument("--linux-root-witness",type=Path)
+    p.add_argument("--frozen-executable",type=Path)
     args=p.parse_args()
-    result=prove(args.core_dir.resolve(strict=True))
+    result=prove(args.core_dir.resolve(strict=True),qt=args.qt_e2e,
+                 linux_manifest=args.linux_developer_manifest,
+                 linux_witness=args.linux_root_witness,
+                 frozen_executable=args.frozen_executable)
     with args.output.open("x") as f:json.dump(result,f,sort_keys=True,indent=2);f.write("\n")
     print("T05_REAL_CORE_PERSISTENT_DATADIR_CLEAN_AND_CRASH_RESTART_PASS")
 

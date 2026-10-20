@@ -1,0 +1,265 @@
+--- a/src/wam_regtest/managed_gui.py
++++ b/src/wam_regtest/managed_gui.py
+@@ -8,6 +8,7 @@
+ from __future__ import annotations
+
+ from pathlib import Path
++from contextlib import contextmanager
+ import re
+
+ from PySide6.QtCore import QThread, Signal, QTimer
+@@ -157,6 +158,7 @@
+         ):
+             raise ValueError("MANAGED_GUI_WALLET_PATHS_DENIED")
+         self._managed_root = root
++        self._managed_dialog_open = False
+         self._wallet_core_dir,self._wallet_wsp_source=core_dir,wsp_source
+         self._wallet_checkpoint_verified=False
+         self._wallet_read_authorized=False
+@@ -206,7 +208,8 @@
+     def _update_controls(self):
+         if not hasattr(self, "start_core"):
+             return
+-        idle = self._worker is None and self._spend_window is None
++        idle = (self._worker is None and self._spend_window is None
++                and not self._managed_dialog_open)
+         self.start_core.setEnabled(
+             idle and self._managed_authenticated and
+             self._managed_state in ("stopped", "recovery-needed")
+@@ -229,7 +232,8 @@
+             can_read and (self._managed_root/"chain"/"wallet-vault").is_dir())
+
+     def _execute(self, operation: str):
+-        if self._worker is not None:
++        if (self._worker is not None or self._managed_dialog_open
++                or self._spend_window is not None):
+             return
+         if operation not in ("status", "start", "shutdown"):
+             raise ValueError("MANAGED_GUI_OPERATION_DENIED")
+@@ -253,15 +257,23 @@
+         worker.start()
+
+     def _verify_wallet(self):
+-        if (self._worker is not None or not self._managed_authenticated
++        if (self._worker is not None or self._managed_dialog_open
++                or self._spend_window is not None or not self._managed_authenticated
+                 or self._managed_state!="ready"
+                 or self._wallet_core_dir is None or self._wallet_wsp_source is None):
+             return
+-        password,ok=QInputDialog.getText(
+-            self,"Verify existing REGTEST wallet",
+-            "Wallet passphrase (checkpoint verification only; no unlock/signing)",
+-            QLineEdit.EchoMode.Password)
+-        if not ok:
++        with self._managed_confirmation():
++            password,ok=QInputDialog.getText(
++                self,"Verify existing REGTEST wallet",
++                "Wallet passphrase (checkpoint verification only; no unlock/signing)",
++                QLineEdit.EchoMode.Password)
++            if not ok:
++                return
++        if (self._worker is not None or self._managed_dialog_open
++                or self._spend_window is not None or not self._managed_authenticated
++                or self._managed_state!="ready"
++                or self._wallet_core_dir is None or self._wallet_wsp_source is None):
++            password=None
+             return
+         secret=password.encode("utf-8")
+         password=None
+@@ -285,25 +297,35 @@
+
+
+     def _open_spending_wallet(self):
+-        if (self._worker is not None or self._spend_window is not None
++        if (self._worker is not None or self._managed_dialog_open
++                or self._spend_window is not None
+                 or not self._managed_authenticated or self._managed_state!="ready"
+                 or self._managed_height is None or self._wallet_core_dir is None
+                 or self._wallet_wsp_source is None
+                 or not (self._managed_root/"chain"/"wallet-vault").is_dir()):
+             return
+-        consent=QMessageBox.question(
+-            self,"Open original WSP wallet for REGTEST spending",
+-            "Unlock original WSP keys for disposable REGTEST signing? "
+-            "Prepare, Sign and Broadcast each require separate exact-intent "
+-            "approval. No mainnet, external node or automatic retries.",
+-            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+-            QMessageBox.StandardButton.No)
+-        if consent!=QMessageBox.StandardButton.Yes:return
+-        password,ok=QInputDialog.getText(
+-            self,"REGTEST original WSP wallet",
+-            "Original wallet passphrase · native anchor + Core must verify",
+-            QLineEdit.EchoMode.Password)
+-        if not ok:return
++        with self._managed_confirmation():
++            consent=QMessageBox.question(
++                self,"Open original WSP wallet for REGTEST spending",
++                "Unlock original WSP keys for disposable REGTEST signing? "
++                "Prepare, Sign and Broadcast each require separate exact-intent "
++                "approval. No mainnet, external node or automatic retries.",
++                QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
++                QMessageBox.StandardButton.No)
++            if consent!=QMessageBox.StandardButton.Yes:return
++            password,ok=QInputDialog.getText(
++                self,"REGTEST original WSP wallet",
++                "Original wallet passphrase · native anchor + Core must verify",
++                QLineEdit.EchoMode.Password)
++            if not ok:return
++        if (self._worker is not None or self._managed_dialog_open
++                or self._spend_window is not None
++                or not self._managed_authenticated or self._managed_state!="ready"
++                or self._managed_height is None or self._wallet_core_dir is None
++                or self._wallet_wsp_source is None
++                or not (self._managed_root/"chain"/"wallet-vault").is_dir()):
++            password=None
++            return
+         secret=password.encode("utf-8")
+         password=None
+         if not 12<=len(secret)<=1024:
+@@ -360,30 +382,39 @@
+         self._update_controls()
+
+     def _create_wallet(self):
+-        if (self._worker is not None or not self._managed_authenticated
++        if (self._worker is not None or self._managed_dialog_open
++                or self._spend_window is not None or not self._managed_authenticated
+                 or self._managed_state!="ready" or self._managed_height is None
+                 or self._wallet_core_dir is None or self._wallet_wsp_source is None
+                 or (self._managed_root/"chain"/"wallet-vault").exists()):
+             return
+-        answer=QMessageBox.question(
+-            self,"Create original REGTEST WSP wallet",
+-            "Create one new encrypted WSP wallet attached to this Fusion-owned "
+-            "REGTEST Core? Existing wallets will never be replaced. "
+-            "This action does not enable signing or mainnet.",
+-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+-            QMessageBox.StandardButton.No)
+-        if answer!=QMessageBox.StandardButton.Yes:
+-            return
+-        first,ok=QInputDialog.getText(
+-            self,"New REGTEST WSP wallet",
+-            "New encryption passphrase (12–1024 UTF-8 bytes)",
+-            QLineEdit.EchoMode.Password)
+-        if not ok:return
+-        second,ok=QInputDialog.getText(
+-            self,"Confirm new REGTEST wallet",
+-            "Re-enter the exact encryption passphrase",
+-            QLineEdit.EchoMode.Password)
+-        if not ok:return
++        with self._managed_confirmation():
++            answer=QMessageBox.question(
++                self,"Create original REGTEST WSP wallet",
++                "Create one new encrypted WSP wallet attached to this Fusion-owned "
++                "REGTEST Core? Existing wallets will never be replaced. "
++                "This action does not enable signing or mainnet.",
++                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
++                QMessageBox.StandardButton.No)
++            if answer!=QMessageBox.StandardButton.Yes:
++                return
++            first,ok=QInputDialog.getText(
++                self,"New REGTEST WSP wallet",
++                "New encryption passphrase (12–1024 UTF-8 bytes)",
++                QLineEdit.EchoMode.Password)
++            if not ok:return
++            second,ok=QInputDialog.getText(
++                self,"Confirm new REGTEST wallet",
++                "Re-enter the exact encryption passphrase",
++                QLineEdit.EchoMode.Password)
++            if not ok:return
++        if (self._worker is not None or self._managed_dialog_open
++                or self._spend_window is not None or not self._managed_authenticated
++                or self._managed_state!="ready" or self._managed_height is None
++                or self._wallet_core_dir is None or self._wallet_wsp_source is None
++                or (self._managed_root/"chain"/"wallet-vault").exists()):
++            first=second=None
++            return
+         secret=first.encode("utf-8")
+         matching=(first==second)
+         first=second=None
+@@ -423,18 +454,27 @@
+         self._update_controls()
+
+     def _view_wallet(self, *, persist_checkpoint=False):
+-        if (self._worker is not None or not self._managed_authenticated
++        if (self._worker is not None or self._managed_dialog_open
++                or self._spend_window is not None or not self._managed_authenticated
+                 or self._managed_state!="ready" or self._managed_height is None
+                 or self._wallet_core_dir is None or self._wallet_wsp_source is None
+                 or type(persist_checkpoint) is not bool):
+             return
+-        password,approved=QInputDialog.getText(
+-            self,"Sync original REGTEST wallet",
+-            ("Passphrase · live WSP scan and SAVE encrypted checkpoint"
+-             if persist_checkpoint else
+-             "Passphrase · view live REGTEST wallet without checkpoint write"),
+-            QLineEdit.EchoMode.Password)
+-        if not approved:
++        with self._managed_confirmation():
++            password,approved=QInputDialog.getText(
++                self,"Sync original REGTEST wallet",
++                ("Passphrase · live WSP scan and SAVE encrypted checkpoint"
++                 if persist_checkpoint else
++                 "Passphrase · view live REGTEST wallet without checkpoint write"),
++                QLineEdit.EchoMode.Password)
++            if not approved:
++                return
++        if (self._worker is not None or self._managed_dialog_open
++                or self._spend_window is not None or not self._managed_authenticated
++                or self._managed_state!="ready" or self._managed_height is None
++                or self._wallet_core_dir is None or self._wallet_wsp_source is None
++                or type(persist_checkpoint) is not bool):
++            password=None
+             return
+         secret=password.encode("utf-8")
+         password=None
+@@ -553,16 +593,31 @@
+     def request_sync(self):
+         self._execute("status")
+
++    @contextmanager
++    def _managed_confirmation(self):
++        # A native modal dialog runs a nested Qt event loop. Keep timers from
++        # creating another worker or lifecycle operation during that loop.
++        self._managed_dialog_open=True
++        self._update_controls()
++        try:
++            yield
++        finally:
++            self._managed_dialog_open=False
++            self._update_controls()
++
+     def _confirm_stop(self):
+-        if self._managed_state not in ("ready", "syncing", "busy"):
+-            return
+-        answer = QMessageBox.question(
+-            self, "Stop managed REGTEST Core",
+-            "Stop only the verified Fusion-owned REGTEST Core?\n"
+-            "Blockchain datadir will be preserved; unrelated Core/miners will not be stopped.",
+-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+-            QMessageBox.StandardButton.No,
+-        )
++        if (self._worker is not None or self._managed_dialog_open
++                or self._spend_window is not None
++                or self._managed_state not in ("ready", "syncing", "busy")):
++            return
++        with self._managed_confirmation():
++            answer = QMessageBox.question(
++                self, "Stop managed REGTEST Core",
++                "Stop only the verified Fusion-owned REGTEST Core?\n"
++                "Blockchain datadir will be preserved; unrelated Core/miners will not be stopped.",
++                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
++                QMessageBox.StandardButton.No,
++            )
+         if answer == QMessageBox.StandardButton.Yes:
+             self._execute("shutdown")
+
+@@ -625,6 +680,9 @@
+         self._update_controls()
+
+     def closeEvent(self, event):
++        if self._managed_dialog_open:
++            event.ignore()
++            return
+         # A GUI close cannot leave an unlocked separate spending window
+         # unowned. Require explicit closing/locking of that window first.
+         if self._spend_window is not None:
