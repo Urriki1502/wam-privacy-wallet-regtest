@@ -108,11 +108,19 @@ def r03_effective_status(record: object, candidate: object,
     kind = record["kind"]
     if kind in ("CORE_E2E", "FROZEN") and record.get("genuine_core") is not True:
         return "PENDING"
-    if kind == "FROZEN":
-        if (record.get("final_entrypoint") is not True
-                or type(record.get("artifact_sha256")) is not str
-                or HEX64.fullmatch(record["artifact_sha256"]) is None):
+    if kind == "FROZEN" and record.get("final_entrypoint") is not True:
+        return "PENDING"
+    # Source equivalence is insufficient when the frozen/native release
+    # executable changed. The caller must bind the exact artifact bytes.
+    if kind in ("FROZEN", "PHYSICAL", "DEV_REVIEWED"):
+        artifact = record.get("artifact_sha256")
+        actual_artifact = candidate.get("artifact_sha256")
+        if (type(artifact) is not str or HEX64.fullmatch(artifact) is None
+                or type(actual_artifact) is not str
+                or HEX64.fullmatch(actual_artifact) is None):
             return "PENDING"
+        if artifact != actual_artifact:
+            return "STALE"
     if kind in ("PHYSICAL", "DEV_REVIEWED"):
         if (record.get("authorized_operator_receipt_verified") is not True
                 or type(record.get("authorized_operator_ref")) is not str
