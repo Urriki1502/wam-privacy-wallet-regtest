@@ -127,7 +127,7 @@ def _rpc(cli: Path, data: Path, method: str, args=(), *, timeout: int = 30):
     elif method in ("addnode","disconnectnode"):
         valid=(len(args)==(2 if method=="addnode" else 1)
                and type(args[0]) is str
-               and re.fullmatch(r"127\\.0\\.0\\.1:[1-9][0-9]{3,4}",args[0]) is not None
+               and re.fullmatch(r"127\.0\.0\.1:[1-9][0-9]{3,4}",args[0]) is not None
                and (method!="addnode" or args[1]=="onetry"))
     if not valid:
         raise B06LabError("B06_RPC_METHOD_SCOPE_DENIED")
