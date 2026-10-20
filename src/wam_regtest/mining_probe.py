@@ -315,6 +315,22 @@ def _probe_core_mining(core,source,*,gui=False):
         schedule=rpc('getemissionschedule')
         if [(x['first_height'],x['last_height']) for x in schedule[:3]]!=[(1,150),(151,300),(301,450)]:raise ValueError('MINER_REGTEST_INTERVAL_DENIED')
         if rpc('getconnectioncount')!=0:raise ValueError('MINER_EXTERNAL_PEERS_DENIED')
+        # F-09: 64 bounded sequential reads through the real authenticated
+        # persistent HTTP transport, on this disposable owned Core only.
+        # No additional CLI subprocess, daemon restart, network peer or
+        # wallet mutation; a short CI soak does not prove days of uptime.
+        from .f09_operational_soak import verify_owned_core_read_soak
+        observed_height=read.call('getblockcount')
+        observed_tip=read.call('getbestblockhash')
+        observed_genesis=read.call('getblockhash',[0])
+        f09=verify_owned_core_read_soak(
+            call=read.call,expected_genesis=observed_genesis,
+            height=observed_height,tip=observed_tip)
+        if (f09.cycles_completed!=64 or f09.read_only_rpc_calls!=192
+                or not f09.stable_tip or f09.long_hours_days_qualified):
+            raise ValueError('F09_GENUINE_CORE_SOAK_DENIED')
+        if rpc('getblockcount')!=observed_height or rpc('getconnectioncount')!=0:
+            raise ValueError('F09_SOAK_CHANGED_CHAIN_OR_PEERS')
         return {'status':'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS','platform':receipt['platform'],
             'core_version':'v0.1.11','wamd_sha256':receipt['wamd_sha256'],'wam_cli_sha256':receipt['wam_cli_sha256'],
             'owned_http_matches_independent_cli':True,'http_without_cli_or_full_rehash':True,
@@ -346,6 +362,10 @@ def _probe_core_mining(core,source,*,gui=False):
             'f07_mainnet_collision_public_fixture_network_refusal_regtest':True,
             'f07_native_mainnet_parser_runtime_qualified':False,
             'f07_public_only_no_import_private_key_or_node_network':True,
+            'f09_genuine_core_bounded_read_soak':asdict(f09),
+            'f09_long_hours_days_runtime_qualified':False,
+            'f09_multi_node_peer_sync_qualified':False,
+            'f09_low_disk_resource_pressure_qualified':False,
             'no_fusion_reservation_released':True,'elapsed_seconds':round(time.monotonic()-start,3),
             'synthetic_rpc':False,'owner_data_accessed':False,'mainnet_allowed':False,
             'core_wallet_probe_not_bip39_signer_qualification':True}
