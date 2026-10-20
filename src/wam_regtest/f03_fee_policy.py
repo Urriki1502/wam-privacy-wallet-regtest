@@ -90,3 +90,21 @@ def optional_core_estimate(result):
         return True,_rate(result['feerate'])
     except (ValueError,TypeError):
         raise FeePolicyRefusal('F03_ESTIMATE_REPLY_DENIED') from None
+
+
+def exact_spend_budget(amount_atoms, fee_atoms, input_amounts):
+    """Exact transaction intent accounting; never infer dust from Bitcoin.
+
+    Native WSP prepares coins from the independently attested REGTEST scanner.
+    The caller must independently review any positive change output against
+    real Core policy; this budget grants no signing or broadcast privilege.
+    """
+    if (type(amount_atoms) is not int or not 330<=amount_atoms<=22_000_000*100_000_000
+            or type(fee_atoms) is not int or not 1<=fee_atoms<=MAX_PAYMENT_FEE_ATOMS
+            or type(input_amounts) is not list or not 1<=len(input_amounts)<=10000
+            or any(type(v) is not int or not 0<v<=22_000_000*100_000_000 for v in input_amounts)):
+        raise FeePolicyRefusal('F03_SPEND_BUDGET_DENIED')
+    total=sum(input_amounts)
+    if total>22_000_000*100_000_000 or amount_atoms+fee_atoms>total:
+        raise FeePolicyRefusal('F03_SPEND_BUDGET_DENIED')
+    return total-amount_atoms-fee_atoms
