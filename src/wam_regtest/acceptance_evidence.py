@@ -15,7 +15,9 @@ def effective_status(record,candidate,*,receipt_verified=False):
     # Strict R-03 records cannot be promoted by the legacy B-03 bookkeeping
     # routine. They require all dependency identities and independent receipt
     # verification; historic B-03 receipts retain their original semantics.
-    if type(record) is dict and record.get('schema')=='wam-fusion-r03-evidence-lifecycle/v1':
+    if type(record) is dict and 'schema' in record:
+        if record.get('schema')!='wam-fusion-r03-evidence-lifecycle/v1':
+            return 'PENDING'
         from .r03_evidence_lifecycle import r03_effective_status
         return r03_effective_status(record,candidate,receipt_verified=receipt_verified)
     if type(record) is not dict or type(candidate) is not dict:return 'PENDING'
