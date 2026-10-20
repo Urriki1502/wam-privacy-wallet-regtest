@@ -53,7 +53,7 @@ def prove_owned_core_miner_coexistence(*, rpc, read, wallet, datadir,
     """
     try:
         if (not callable(rpc) or read is None or not callable(read.call)
-                or not callable(wallet) or type(datadir) is not Path
+                or not callable(wallet) or type(datadir) is not type(Path())
                 or not datadir.is_absolute() or not datadir.is_dir()
                 or type(miner_address) is not str
                 or not 15<=len(miner_address)<=120):
