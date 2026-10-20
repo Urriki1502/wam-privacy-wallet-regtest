@@ -54,7 +54,7 @@ mining remains hidden/disabled.
 
 ## Validation and honest acceptance boundaries
 
-- Native Qt UNIT: `tests/test_v1_f08_navigation.py` checks the
+- Native Qt UNIT: seven `test_f08_*` cases in `tests/test_fusion_managed_gui.py` check the
   welcome page and protected existing navigation, startup/worker/
   pending-state disablement, vault-create vs verification, original
   guarded action mirroring and hostile status rejection without
