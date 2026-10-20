@@ -53,7 +53,7 @@ def _owned_chain(core):
                 'getrawmempool','gettxout','getdevfeeinfo','getemissionschedule',
                 'getnetworkinfo','getmempoolinfo','getmempoolentry','estimatesmartfee',
                 'createwallet','getnewaddress','getaddressinfo','getwalletinfo','getbalances',
-                'listunspent','sendtoaddress','gettransaction','lockunspent','generatetoaddress','stop'}
+                'listunspent','listlockunspent','sendtoaddress','gettransaction','lockunspent','generatetoaddress','stop'}
             if not scope or scope[0] not in allowed or any(a.startswith('-') for a in scope):
                 raise ValueError('MINING_FIXTURE_RPC_SCOPE_DENIED')
             _,checked_cli,_=verify(core)
@@ -236,12 +236,45 @@ def _probe_core_mining(core,source,*,gui=False):
         # Exercise actual Core UTXO lock eligibility; never Fusion signed/
         # uncertain reservation release. Only this generated Core fixture.
         coins=wallet('listunspent','0');change=next(u for u in coins if u['txid']==payment)
+        from .f04_funds import CoreFundsBuckets
+        change_owner=wallet('getaddressinfo',change['address'])
+        if (change_owner.get('ismine') is not True
+                or change_owner.get('scriptPubKey')!=change['scriptPubKey']):
+            raise ValueError('F04_CORE_CHANGE_OWNER_DENIED')
+        if wallet('listlockunspent')!=[]:
+            raise ValueError('F04_PREEXISTING_CORE_LOCK_DENIED')
+        unlocked_funds=CoreFundsBuckets.from_core(
+            chain='regtest',genesis=REGTEST_GENESIS,balance=after,
+            locked_outpoints=[],locked_txouts={},
+            unlocked_outpoints=coins,owned_script=change['scriptPubKey'],
+            treasury_script=treasury['script'])
+        if (unlocked_funds.locked_core_atoms!=0 or
+                unlocked_funds.available_atoms!=after.available_atoms):
+            raise ValueError('F04_CORE_UNLOCKED_BUCKETS_DENIED')
         import json
         lock=json.dumps([{'txid':change['txid'],'vout':change['vout']}],separators=(',',':'))
         if wallet('lockunspent','false',lock) is not True:raise ValueError('MINER_LOCK_DENIED')
         locked=balance()
         if locked.available_atoms!=0 or locked.trusted_atoms!=after.trusted_atoms:raise ValueError('MINER_LOCKED_BALANCE_DENIED')
+        locked_points=wallet('listlockunspent')
+        if locked_points!=[{'txid':change['txid'],'vout':change['vout']}]:
+            raise ValueError('F04_CORE_LOCK_OUTPOINT_MISMATCH')
+        locked_txout=rpc('gettxout',change['txid'],str(change['vout']))
+        core_locked=CoreFundsBuckets.from_core(
+            chain='regtest',genesis=REGTEST_GENESIS,balance=locked,
+            locked_outpoints=locked_points,
+            locked_txouts={(change['txid'],change['vout']):locked_txout},
+            unlocked_outpoints=wallet('listunspent','0'),
+            owned_script=change['scriptPubKey'],
+            treasury_script=treasury['script'])
+        if (core_locked.locked_core_atoms!=after.available_atoms or
+                core_locked.immature_atoms!=after.immature_atoms or
+                core_locked.available_atoms!=0 or
+                core_locked.unattributed_trusted_atoms!=0):
+            raise ValueError('F04_CORE_LOCKED_BUCKETS_DENIED')
         if wallet('lockunspent','true',lock) is not True or balance()!=after:raise ValueError('MINER_FIXTURE_UNLOCK_DENIED')
+        if wallet('listlockunspent')!=[]:
+            raise ValueError('F04_CORE_UNLOCK_RECORD_RETAINED')
         boundaries=[asdict(first_audit),asdict(fee_audit)]
         for height in (150,151,300,301,450,451):
             count=height-rpc('getblockcount')
@@ -270,6 +303,11 @@ def _probe_core_mining(core,source,*,gui=False):
             'f01_real_core_unowned_miner_script_negative_denied':True,
             'f01_all_miner_fees_core_owned_and_treasury_separate':True,
             'locked_available_atoms':locked.available_atoms,'treasury_owned_by_fixture':False,
+            'f04_genuine_core_before_lock':asdict(unlocked_funds),
+            'f04_genuine_core_after_lock':asdict(core_locked),
+            'f04_core_lock_proof_from_listlockunspent_and_gettxout':True,
+            'f04_core_unlock_restored_only_eligibility_not_new_money':True,
+            'f04_wsp_reservations_not_conflated_with_core_coinlocks':True,
             'source_main_schedule_200000_is_not_regtest_interval':True,'sunset_height_runtime_qualified':False,
             'f02_real_core_immature_99_100_and_mature_101_verified':True,
             'f02_no_early_send_or_mempool_mutation':True,
