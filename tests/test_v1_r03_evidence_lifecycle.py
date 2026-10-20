@@ -1,6 +1,8 @@
 """R-03 versioned public receipts: verify lifecycle, not synthetic Core."""
 import unittest
 
+from wam_regtest.acceptance_evidence import effective_status
+
 from wam_regtest.r03_evidence_lifecycle import (
     SCHEMA, IDENTITY_KEYS, r03_effective_status, r03_invalidation_reasons,
 )
@@ -34,6 +36,13 @@ class R03EvidenceLifecycleContracts(unittest.TestCase):
             "test_ref": "public-signed-runner-evidence",
             "receipt_sha256": "f"*64,
         }
+
+    def test_existing_registry_api_delegates_strict_schema_only(self):
+        self.assertEqual(effective_status(self.record,self.identity),"PENDING")
+        self.assertEqual(effective_status(self.record,self.identity,
+                                          receipt_verified=True),"PASS")
+        changed={**self.identity,"signer_source_sha256":"0"*64}
+        self.assertEqual(effective_status(self.record,changed),"STALE")
 
     def test_complete_identity_is_explicit_no_unlisted_dependencies(self):
         self.assertEqual(set(self.identity), set(IDENTITY_KEYS))
