@@ -6,6 +6,7 @@ import unittest
 from wam_regtest.f03_fee_policy import (
     CoreFeeWitness, FeePolicyRefusal, MAX_PAYMENT_FEE_ATOMS,
     WAM_TARGET_BLOCK_SECONDS, optional_core_estimate, target_confirmation_seconds,
+    exact_spend_budget,
 )
 
 
@@ -78,6 +79,28 @@ class F03FeePolicyTests(unittest.TestCase):
         p=actual();p['network_info'].pop('relayfee')
         with self.assertRaises(FeePolicyRefusal):
             CoreFeeWitness.from_core(**p)
+
+    def test_spend_budget_exact_inputs_fee_and_change(self):
+        self.assertEqual(exact_spend_budget(100000,10000,[80000,50000]),20000)
+        self.assertEqual(exact_spend_budget(100000,10000,[110000]),0)
+        self.assertEqual(exact_spend_budget(330,1,[332]),1)
+        for args in (
+            (True,10000,[110000]),
+            (100000,True,[110000]),
+            (0,10000,[110000]),
+            (329,10000,[110000]),
+            (100000,0,[110000]),
+            (100000,1000001,[1100000]),
+            (100000,10000,[109999]),
+            (100000,10000,[]),
+            (100000,10000,[True,120000]),
+            (100000,10000,[0,120000]),
+            (100000,10000,[float(120000)]),
+            (22_000_000*100_000_000,10000,[22_000_000*100_000_000]),
+        ):
+            with self.subTest(args=args):
+                with self.assertRaises(FeePolicyRefusal):
+                    exact_spend_budget(*args)
 
     def test_short_regtest_estimator_is_not_a_fee_guarantee(self):
         self.assertEqual(optional_core_estimate({'errors':['Insufficient data']}),(False,None))
