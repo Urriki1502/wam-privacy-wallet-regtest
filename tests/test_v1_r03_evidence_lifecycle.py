@@ -133,18 +133,25 @@ class R03EvidenceLifecycleContracts(unittest.TestCase):
             self.identity,receipt_verified=True),"PASS")
         frozen={**self.record,"kind":"FROZEN","genuine_core":True,
                 "final_entrypoint":True,"artifact_sha256":"9"*64}
-        self.assertEqual(r03_effective_status(frozen,self.identity,
+        artifact_candidate={**self.identity,"artifact_sha256":"9"*64}
+        self.assertEqual(r03_effective_status(frozen,artifact_candidate,
                                               receipt_verified=True),"PASS")
+        self.assertEqual(r03_effective_status(frozen,self.identity,
+                                              receipt_verified=True),"PENDING")
         self.assertEqual(r03_effective_status(
-            {**self.record,"kind":"PHYSICAL",
-             "authorized_operator_receipt_verified":True,
-             "authorized_operator_ref":"independent-operator-receipt"},
-            self.identity,receipt_verified=True),"PASS")
-        self.assertEqual(r03_effective_status(
-            {**self.record,"kind":"DEV_REVIEWED",
-             "authorized_operator_receipt_verified":True,
-             "authorized_operator_ref":"independent-dev-review"},
-            self.identity,receipt_verified=True),"PASS")
+            frozen,{**self.identity,"artifact_sha256":"8"*64},
+            receipt_verified=True),"STALE")
+        for kind,operator_ref in (("PHYSICAL","independent-operator-receipt"),
+                                  ("DEV_REVIEWED","independent-dev-review")):
+            with self.subTest(kind=kind):
+                reviewed={**self.record,"kind":kind,"artifact_sha256":"9"*64,
+                          "authorized_operator_receipt_verified":True,
+                          "authorized_operator_ref":operator_ref}
+                self.assertEqual(r03_effective_status(
+                    reviewed,artifact_candidate,receipt_verified=True),"PASS")
+                self.assertEqual(r03_effective_status(
+                    reviewed,{**self.identity,"artifact_sha256":"8"*64},
+                    receipt_verified=True),"STALE")
 
     def test_public_invalidation_names_do_not_expose_secrets(self):
         changed={**self.identity,"custody_source_sha256":"0"*64,
