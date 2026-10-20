@@ -32,7 +32,8 @@ def write_candidate_manifest(output,platform,core_hashes):
             or any(not re.fullmatch('[0-9a-f]{64}',v) for v in core_hashes.values())):
         raise ValueError('RC_CORE_IDENTITY_DENIED')
     # Public instructions only; never copy a wallet, keychain, config or runtime.
-    for name in ('OWNER_REGTEST_ACCEPTANCE.md','DEV_WAM_REVIEW_HANDOFF.md'):
+    for name in ('OWNER_REGTEST_ACCEPTANCE.md','DEV_WAM_REVIEW_HANDOFF.md',
+                 'ISSUE45_R06_RELEASE_ROLLBACK.md'):
         shutil.copyfile(Path('docs')/name,output/name)
     dependencies={}
     for name in ('PyInstaller','pyinstaller-hooks-contrib','setuptools','packaging','altgraph','PySide6','PySide6_Essentials','PySide6_Addons','shiboken6','qrcode','Pillow','coincurve','cryptography','cffi','pycryptodome'):
