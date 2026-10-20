@@ -48,6 +48,124 @@ class ManagedFusionWidgetContracts(unittest.TestCase):
             gc.collect()
             self.app.processEvents()
 
+    def test_f08_welcome_scroll_navigation_and_zero_wallet_adoption(self):
+        from PySide6.QtWidgets import QScrollArea
+        self.assertEqual(self.win.navigation.count(),4)
+        self.assertEqual(
+            [self.win.navigation.item(i).text() for i in range(4)],
+            ['Overview','Receive','History','Get Started'])
+        self.assertEqual(self.win.stack.count(),4)
+        self.assertEqual(self.win.navigation.currentRow(),3)
+        self.assertIs(self.win.stack.currentWidget(),self.win.welcome_page)
+        self.assertEqual(self.win.workspace_title.text(),'Get Started')
+        self.assertIsInstance(self.win.welcome_page.scroll,QScrollArea)
+        self.assertTrue(self.win.welcome_page.scroll.widgetResizable())
+        self.assertEqual(self.win.welcome_page.core_state.text(),'Core: Unverified')
+        self.assertIsNone(self.win._snapshot)
+        self.assertIsNone(self.win.session)
+
+    def test_f08_unverified_gui_cannot_start_wallet_or_sign(self):
+        page=self.win.welcome_page
+        for guide,original in self.win._f08_welcome_sources:
+            self.assertEqual(guide.isEnabled(),original.isEnabled())
+        for attr in ('start','create','verify','view','sync','send'):
+            self.assertFalse(getattr(page,attr).isEnabled())
+        page.start.click();page.create.click();page.send.click()
+        self.assertIsNone(self.win._worker)
+        self.assertIsNone(self.win.session)
+        self.assertIsNone(self.win._snapshot)
+        self.assertFalse(self.win.dashboard.go_send.isEnabled())
+
+    def test_f08_verified_core_is_not_wallet_custody_authority(self):
+        self.win._apply_managed_status(
+            public_status(state='ready',owned=True,chain_height=101))
+        p=self.win.welcome_page
+        self.assertIn('Ready',p.core_state.text())
+        self.assertIn('101',p.height_state.text())
+        self.assertTrue(p.refresh.isEnabled())
+        self.assertFalse(p.start.isEnabled())
+        self.assertFalse(p.create.isEnabled())
+        self.assertFalse(p.verify.isEnabled())
+        self.assertFalse(p.send.isEnabled())
+        self.assertFalse(self.win.dashboard.go_send.isEnabled())
+        self.assertIsNone(self.win._snapshot)
+
+    def test_f08_original_guarded_controls_only_allow_create_or_verify(self):
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix='f08-public-test-') as directory:
+            root=Path(directory).resolve()
+            self.win._managed_root=root
+            self.win._wallet_core_dir=root/'qualified-core'
+            self.win._wallet_wsp_source=root/'wsp-source'
+            self.win._apply_managed_status(
+                public_status(state='ready',owned=True,chain_height=101))
+            p=self.win.welcome_page
+            self.assertTrue(p.create.isEnabled())
+            self.assertFalse(p.verify.isEnabled())
+            self.assertFalse(p.send.isEnabled())
+            (root/'chain'/'wallet-vault').mkdir(parents=True)
+            self.win._update_controls()
+            self.assertFalse(p.create.isEnabled())
+            self.assertTrue(p.verify.isEnabled())
+            self.assertTrue(p.send.isEnabled())
+            self.assertIsNone(self.win.session)
+            self.assertFalse(self.win.dashboard.go_send.isEnabled())
+            self.win._apply_managed_status(
+                public_status(state='busy',owned=True))
+            self.assertFalse(p.create.isEnabled())
+            self.assertFalse(p.verify.isEnabled())
+            self.assertFalse(p.send.isEnabled())
+            self.assertIn('unavailable',p.height_state.text().lower())
+
+    def test_f08_busy_worker_cannot_bypass_guarded_creation(self):
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix='f08-public-test-') as directory:
+            root=Path(directory).resolve()
+            self.win._managed_root=root
+            self.win._wallet_core_dir=root/'qualified-core'
+            self.win._wallet_wsp_source=root/'wsp-source'
+            self.win._apply_managed_status(
+                public_status(state='ready',owned=True,chain_height=101))
+            self.assertTrue(self.win.welcome_page.create.isEnabled())
+            self.win._worker=object()
+            try:
+                self.win._update_controls()
+                self.assertFalse(self.win.welcome_page.create.isEnabled())
+                self.assertFalse(self.win.welcome_page.refresh.isEnabled())
+                self.assertFalse(self.win.welcome_page.inspect.isEnabled())
+            finally:
+                self.win._worker=None
+            self.win._update_controls()
+            self.assertTrue(self.win.welcome_page.create.isEnabled())
+
+    def test_f08_status_rejects_hostile_or_fabricated_fields(self):
+        p=self.win.welcome_page
+        for bad in (
+            dict(state='mainnet',authenticated=True,height=1,wallet_exists=False),
+            dict(state='ready',authenticated=1,height=1,wallet_exists=False),
+            dict(state='ready',authenticated=True,height=True,wallet_exists=False),
+            dict(state='ready',authenticated=True,height=-1,wallet_exists=False),
+            dict(state='ready',authenticated=True,height=1,wallet_exists='yes'),
+        ):
+            with self.subTest(bad=bad),self.assertRaises(ValueError):
+                p.render_status(**bad)
+        p.render_status(
+            state='ready',authenticated=False,height=101,wallet_exists=True)
+        self.assertEqual(p.core_state.text(),'Core: Unverified')
+        self.assertIn('unavailable',p.height_state.text().lower())
+        self.assertIn('verification required',p.wallet_state.text())
+
+    def test_f08_original_readonly_navigation_remains_unmodified(self):
+        for i in range(3):
+            self.win.navigation.setCurrentRow(i)
+            self.assertIs(self.win.stack.currentWidget(),
+                          (self.win.dashboard,self.win.receive_page,
+                           self.win.history_page)[i])
+            self.assertIsNone(self.win._snapshot)
+        self.win.navigation.setCurrentRow(3)
+        self.assertIs(self.win.stack.currentWidget(),self.win.welcome_page)
+        self.assertEqual(self.win.workspace_title.text(),'Get Started')
+
     def test_all_allowed_supervisor_states_are_rendered_without_wallet_adoption(self):
         for state in VISIBLE_STATES:
             with self.subTest(state=state):
