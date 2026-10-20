@@ -41,6 +41,11 @@ try:
     assert record['mining_account_component']['f01_all_miner_fees_core_owned_and_treasury_separate'] is True
     assert record['mining_account_component']['f02_real_core_immature_99_100_and_mature_101_verified'] is True
     assert record['mining_account_component']['f02_no_early_send_or_mempool_mutation'] is True
+    assert record['mining_account_component']['f03_real_core_mempool_fee_and_vsize']['mempool_entry_relay_eligible'] is True
+    assert record['mining_account_component']['f03_real_core_mempool_fee_and_vsize']['observed_fee_atoms'] == record['mining_account_component']['fee_atoms']
+    assert record['mining_account_component']['f03_target_seconds_from_pinned_consensus_source'] == 120
+    assert record['mining_account_component']['f03_confirmation_time_guaranteed'] is False
+    assert record['mining_account_component']['f03_native_core_one_atom_dust_send_refused_without_mutation'] is True
     assert [x['f02_core_maturity_witness']['depth'] for x in record['mining_account_component']['maturity']] == [99,100,101]
     assert [x['f02_core_maturity_witness']['wallet_send_allowed_by_maturity'] for x in record['mining_account_component']['maturity']] == [False,False,True]
     assert record['mining_account_component']['native_gui_depths']==([99,100,101] if args.qt else [])
