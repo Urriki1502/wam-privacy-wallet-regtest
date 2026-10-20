@@ -233,6 +233,13 @@ jobs:
           assert wallet['real_core_lost_broadcast_reply_lock_retained'] is True
           assert wallet['uncertain_reservation_survives_unlock'] is True
           assert wallet['irreversible_reservations_survive_reorg'] is True
+          assert wallet['f05_native_core_wsp_mempool_observation'] == 'mempool_observed'
+          assert wallet['f05_native_core_wsp_confirmed_depth'] == 1
+          assert wallet['f05_native_core_wsp_reorg_observation'] in ('reorged_mempool_observed','reorged_not_observed')
+          assert wallet['f05_native_core_wsp_restored_depth'] == 1
+          assert wallet['f05_native_core_uncertain_mempool_observation'] == 'uncertain_mempool_observed'
+          assert wallet['f05_no_automatic_retry_or_reservation_release'] is True
+          assert wallet['f05_unconfirmed_silent_incoming_detection_qualified'] is False
           assert wallet['native_qt_backup_lock_recovery'] is True
           assert wallet['authenticated_selected_local_disclosure'] is True
           assert wallet['native_psbtv2_payjoin_bip352_fail_closed'] is True
