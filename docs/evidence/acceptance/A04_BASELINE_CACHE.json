@@ -1,0 +1,17 @@
+{
+  "source_sha": "b8d215fe591a09e6011459ba8908058c7175e652",
+  "wsp_pin": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "clean_control": {
+    "guard_allowed": true,
+    "harmless_public_cache_sentinel": false
+  },
+  "poisoned_cache": {
+    "guard_allowed": true,
+    "harmless_public_cache_sentinel": true
+  },
+  "source_file_sha256_unchanged": "ecbd215c5d1585764207429a3bb09c98d6f199c56c8d46299b35c876494be871",
+  "git_worktree_clean": true,
+  "core_executed": false,
+  "keys_or_anchors_accessed": false,
+  "classification": "PROVEN_DOCUMENTED_BYTECODE_BOUNDARY_LIMITATION; no full hostile-host attestation inferred"
+}
