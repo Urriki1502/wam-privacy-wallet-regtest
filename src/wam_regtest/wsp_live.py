@@ -94,12 +94,9 @@ def _pinned_source(root: Path) -> None:
         raise RealWspScanError("WSP_SOURCE_PIN_DENIED") from None
     if sha != PINNED_WSP_COMMIT or not (root / "src/wam_sp/scanner.py").is_file():
         raise RealWspScanError("WSP_SOURCE_PIN_DENIED")
-    # K-07: matched pinned HEAD alone is NOT enough. Previously the source
-    # guard ignored untracked code, unlike the frozen guard's exact manifest.
-    # Both source and frozen must refuse any unexpected .py, including ignored
-    # files, before importing native WSP. Non-Python build caches are not
-    # executable source and may remain, but a symlink can NEVER substitute a
-    # pinned .py file.
+    # Git status and filenames cannot authenticate imported bytes: index flags
+    # can hide tracked changes and replacement refs can substitute Git trees.
+    # Keep status as an early refusal, then check the literal pin independently.
     try:
         dirty = subprocess.run(
             ["git", "-C", str(root), "status", "--porcelain",
@@ -111,8 +108,8 @@ def _pinned_source(root: Path) -> None:
         if dirty.strip():
             raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED")
         tree = subprocess.run(
-            ["git", "-C", str(root), "ls-tree", "-r", "--name-only",
-             "-z", "HEAD", "--", "src/wam_sp"],
+            ["git", "--no-replace-objects", "-C", str(root), "ls-tree", "-r",
+             "-z", PINNED_WSP_COMMIT, "--", "src/wam_sp"],
             capture_output=True, timeout=6, check=True,
         ).stdout
     except RealWspScanError:
@@ -120,20 +117,64 @@ def _pinned_source(root: Path) -> None:
     except (OSError, subprocess.SubprocessError):
         raise RealWspScanError("WSP_SOURCE_WORKTREE_DENIED") from None
     try:
+        from .build_provenance import _file, _blob
         base = root / "src" / "wam_sp"
-        if base.is_symlink() or not base.is_dir():
-            raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
-        declared = {
-            Path(raw.decode("utf-8")).as_posix()
-            for raw in tree.split(b"\0") if raw.endswith(b".py")
-        }
-        actual = set()
-        for file in base.rglob("*.py"):
-            if file.is_symlink() or not file.is_file():
+        for directory in (root, root / "src", base):
+            info = directory.lstat()
+            if (not stat.S_ISDIR(info.st_mode)
+                    or getattr(info, "st_file_attributes", 0) & 0x400):
                 raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
-            actual.add(file.relative_to(root).as_posix())
-        if not 2 <= len(declared) <= 200 or declared != actual:
+        if len(tree) > 65536:
             raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+        declared = {}
+        for row in tree.split(b"\0"):
+            if not row:
+                continue
+            header, name = row.split(b"\t", 1)
+            mode, kind, oid = header.decode("ascii").split()
+            relative = name.decode("utf-8")
+            parts = Path(relative)
+            if (mode not in ("100644", "100755") or kind != "blob"
+                    or not re.fullmatch(r"[0-9a-f]{40}", oid)
+                    or not relative.startswith("src/wam_sp/")
+                    or parts.is_absolute() or ".." in parts.parts
+                    or "\\" in relative or parts.suffix != ".py"
+                    or relative in declared):
+                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+            declared[relative] = oid
+        actual = set()
+        total = 0
+        for count, member in enumerate(base.rglob("*"), 1):
+            if count > 2000:
+                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+            info = member.lstat()
+            if (stat.S_ISLNK(info.st_mode)
+                    or getattr(info, "st_file_attributes", 0) & 0x400):
+                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+            if stat.S_ISDIR(info.st_mode):
+                continue
+            if not stat.S_ISREG(info.st_mode):
+                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+            relative = member.relative_to(root).as_posix()
+            suffix = member.suffix.lower()
+            if suffix == ".py":
+                total += info.st_size
+                if (relative not in declared or info.st_size > 4 * 1024 * 1024
+                        or total > 16 * 1024 * 1024):
+                    raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+                raw, _ = _file(member)  # Stable native handle; no hardlink/reparse.
+                if (_blob(raw) != declared[relative]
+                        and _blob(raw.replace(b"\r\n", b"\n")) != declared[relative]):
+                    raise RealWspScanError("WSP_SOURCE_HASH_DENIED")
+                actual.add(relative)
+            elif suffix in (".pyw", ".so", ".pyd", ".dll", ".dylib", ".pyo"):
+                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+            elif suffix == ".pyc" and member.parent.name != "__pycache__":
+                raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+        if not 2 <= len(declared) <= 200 or set(declared) != actual:
+            raise RealWspScanError("WSP_SOURCE_CLOSURE_DENIED")
+        # Ordinary interpreter caches remain allowed. This is not bytecode,
+        # import-hook, hostile-host or validation-to-import race attestation.
     except RealWspScanError:
         raise
     except (OSError,ValueError,UnicodeError):

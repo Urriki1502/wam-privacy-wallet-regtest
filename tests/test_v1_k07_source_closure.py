@@ -6,6 +6,7 @@ import tempfile
 import unittest
 
 from wam_regtest.wsp_live import _pinned_source,PINNED_WSP_COMMIT,RealWspScanError
+from wam_regtest.build_provenance import _blob
 
 
 class WspPinnedSourceClosureContracts(unittest.TestCase):
@@ -17,13 +18,18 @@ class WspPinnedSourceClosureContracts(unittest.TestCase):
         self.package.mkdir(parents=True)
         (self.package/"__init__.py").write_text("# publicly disposable source\n")
         (self.package/"scanner.py").write_text("# pinned-checkout fixture\n")
-        self.tree=(
-            b"src/wam_sp/__init__.py\x00"
-            b"src/wam_sp/scanner.py\x00")
+        self.tree=b"".join(
+            b"100644 blob "+_blob(p.read_bytes()).encode()+b"\t"+
+            p.relative_to(self.root).as_posix().encode()+b"\x00"
+            for p in sorted(self.package.glob("*.py")))
         self.dirty=b""
 
     def _git(self,cmd,*,capture_output,text=False,timeout,check):
         self.assertTrue(capture_output and check and timeout<=6)
+        if cmd[:4] == ["git","--no-replace-objects","-C",str(self.root)]:
+            self.assertEqual(cmd[4:],["ls-tree","-r","-z",PINNED_WSP_COMMIT,
+                                      "--","src/wam_sp"])
+            return SimpleNamespace(stdout=self.tree)
         self.assertEqual(cmd[:3],["git","-C",str(self.root)])
         if cmd[3:] == ["rev-parse","HEAD"]:
             return SimpleNamespace(stdout=PINNED_WSP_COMMIT)
@@ -31,9 +37,6 @@ class WspPinnedSourceClosureContracts(unittest.TestCase):
             self.assertEqual(cmd[5], "--untracked-files=all")
             self.assertEqual(cmd[6:],["--","src/wam_sp"])
             return SimpleNamespace(stdout=self.dirty)
-        if cmd[3:7] == ["ls-tree","-r","--name-only","-z"]:
-            self.assertEqual(cmd[7:],["HEAD","--","src/wam_sp"])
-            return SimpleNamespace(stdout=self.tree)
         raise AssertionError("K07_UNEXPECTED_GIT_COMMAND")
 
     def verify(self):
@@ -101,6 +104,27 @@ class WspPinnedSourceClosureContracts(unittest.TestCase):
         cache=self.package/"__pycache__"
         cache.mkdir()
         (cache/"scanner.cpython-312.pyc").write_bytes(b"public-bytecode-fixture")
+        self.verify()
+
+    def test_clean_status_cannot_hide_changed_source_bytes(self):
+        (self.package/"scanner.py").write_text("# altered behind clean status\n")
+        with self.assertRaisesRegex(RealWspScanError,"WSP_SOURCE_HASH_DENIED"):
+            self.verify()
+
+    def test_ignored_native_modules_and_legacy_bytecode_refused(self):
+        for suffix in (".so", ".pyd", ".dll", ".dylib", ".pyw", ".pyo", ".pyc"):
+            with self.subTest(suffix=suffix):
+                member=self.package/("ignored"+suffix)
+                member.write_bytes(b"inert public fixture")
+                try:
+                    with self.assertRaisesRegex(RealWspScanError,"WSP_SOURCE_CLOSURE_DENIED"):
+                        self.verify()
+                finally:
+                    member.unlink()
+
+    def test_crlf_only_checkout_still_matches_exact_pinned_blob(self):
+        scanner=self.package/"scanner.py"
+        scanner.write_bytes(scanner.read_bytes().replace(b"\n",b"\r\n"))
         self.verify()
 
 
