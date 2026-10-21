@@ -408,6 +408,12 @@ class CoreSupervisor:
         message=decode_frame(raw)
         op=self._guard.verify(raw)
         if op=="start":
+            # A dead owned child can still have an assigned Popen until a
+            # status request reaps it. The first authorized Start must observe
+            # that exit BEFORE deciding whether there is already a live Core.
+            # Never discard/replace a child whose exit is not established.
+            if self.process is not None and self.process.poll() is not None:
+                self.status()
             if self.process is None:self.start()
         elif op=="shutdown":
             self.shutdown()

@@ -1,0 +1,30 @@
+{
+  "source_sha": "2cd3889bfac17102a4e1a7da6420d83d0855e8c0",
+  "started_at_utc": "2026-10-21T12:45:24.852595+00:00",
+  "synthetic_rpc": false,
+  "network": "regtest",
+  "wallet_keys_used": false,
+  "mainnet_allowed": false,
+  "frozen": false,
+  "physical": false,
+  "cleanup_verified": true,
+  "core_version": "v0.1.11",
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "first_authorized_start_response": {
+    "protocol": "wam-fusion-managed-supervisor/v1",
+    "state": "recovery-needed",
+    "height": null,
+    "core_process_owned": false,
+    "chain": "regtest",
+    "mainnet_allowed": false
+  },
+  "new_owned_core_started": false,
+  "prior_core_exit_confirmed": true,
+  "chain_tip_preserved": null,
+  "status": "VERIFIED_FIRST_START_NOOP_DEFECT",
+  "completed_at_utc": "2026-10-21T12:45:32.563018+00:00",
+  "scope_note": "First Start did not launch a new Core; chain continuity was not observed, not evidence of lost blocks."
+}
