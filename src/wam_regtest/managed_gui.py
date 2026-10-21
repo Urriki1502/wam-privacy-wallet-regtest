@@ -8,6 +8,7 @@ mainnet or automatic wallet replacement is exposed by this GUI.
 from __future__ import annotations
 
 from pathlib import Path
+from functools import wraps
 import re
 
 from PySide6.QtCore import QThread, Signal, QTimer
@@ -209,6 +210,34 @@ class _CoreSqliteInspectionWorker(QThread):
             self.source=None
 
 
+def _exclusive_confirmation(method):
+    """Reserve the GUI across Qt's nested modal event loops, not custody.
+
+    Native wallet/Core gates still execute in the worker. A prompt cannot
+    coexist with a timer-started worker or another wallet/dialog action.
+    """
+    @wraps(method)
+    def guarded(self, *args, **kwargs):
+        if (self._managed_dialog_open or self._worker is not None
+                or self._spend_window is not None):
+            return
+        self._managed_dialog_open=True
+        self._managed_dialog_context=self._confirmation_context()
+        self._update_controls()
+        try:
+            handoff=method(self, *args, **kwargs)
+        finally:
+            self._managed_dialog_context=None
+            self._managed_dialog_open=False
+            self._update_controls()
+        # Inspection/shutdown hand off synchronously after exclusion ends;
+        # never queue a modal approval for a later authority generation.
+        if callable(handoff):
+            return handoff()
+        return handoff
+    return guarded
+
+
 class ManagedCoreWindow(RegtestWalletWindow):
     """Fusion GUI lifecycle observer; closing this window NEVER stops Core."""
 
@@ -223,6 +252,9 @@ class ManagedCoreWindow(RegtestWalletWindow):
         ):
             raise ValueError("MANAGED_GUI_WALLET_PATHS_DENIED")
         self._managed_root = root
+        self._managed_dialog_open=False
+        self._managed_dialog_context=None
+        self._managed_authority_epoch=0
         self._wallet_core_dir,self._wallet_wsp_source=core_dir,wsp_source
         self._wallet_checkpoint_verified=False
         self._wallet_read_authorized=False
@@ -328,7 +360,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
     def _update_controls(self):
         if not hasattr(self, "start_core"):
             return
-        idle = self._worker is None and self._spend_window is None
+        idle = (self._worker is None and self._spend_window is None
+                and not self._managed_dialog_open)
         self.start_core.setEnabled(
             idle and self._managed_authenticated and
             self._managed_state in ("stopped", "recovery-needed")
@@ -376,7 +409,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
                             self.devicePixelRatioF()))
 
     def _execute(self, operation: str):
-        if self._worker is not None:
+        if (self._worker is not None or self._managed_dialog_open
+                or self._spend_window is not None):
             return
         if operation not in ("status", "start", "shutdown"):
             raise ValueError("MANAGED_GUI_OPERATION_DENIED")
@@ -399,6 +433,24 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._update_controls()
         worker.start()
 
+    def _confirmation_context(self):
+        return (self._managed_authority_epoch,self._managed_root,
+                self._wallet_core_dir,self._wallet_wsp_source)
+
+    def _confirmation_current(self, *, require_ready=True):
+        # A denial followed by READY must NOT revive an earlier approval.
+        current=(self._managed_dialog_open and self._worker is None
+                 and self._spend_window is None
+                 and self._managed_dialog_context==self._confirmation_context())
+        if require_ready:
+            current=(current and self._managed_authenticated
+                     and self._managed_state=="ready"
+                     and self._managed_height is not None
+                     and self._wallet_core_dir is not None
+                     and self._wallet_wsp_source is not None)
+        return bool(current)
+
+    @_exclusive_confirmation
     def _inspect_crash_preview(self):
         # This action only creates a fixed, redacted report of ORIGINAL
         # sealed REGTEST wallet data. It cannot quarantine, sign or unlock.
@@ -411,7 +463,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
             self,"K-09 · authenticated crash recovery inspection",
             "Original wallet passphrase · inspection ONLY (no file deletion)",
             QLineEdit.EchoMode.Password)
-        if not ok:
+        if not ok or not self._confirmation_current():
             return
         secret=password.encode("utf-8")
         password=None
@@ -425,7 +477,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
             QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No|
             QMessageBox.StandardButton.Cancel,
             QMessageBox.StandardButton.No)
-        if answer==QMessageBox.StandardButton.Cancel:
+        if (answer==QMessageBox.StandardButton.Cancel
+                or not self._confirmation_current()):
             return
         observe=answer==QMessageBox.StandardButton.Yes
         self._wallet_checkpoint_verified=False
@@ -502,6 +555,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
             "K-09 · recovery evidence UNVERIFIED · wallet remains LOCKED")
         self._update_controls()
 
+    @_exclusive_confirmation
     def _verify_wallet(self):
         if (self._worker is not None or not self._managed_authenticated
                 or self._managed_state!="ready"
@@ -511,7 +565,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
             self,"Verify existing REGTEST wallet",
             "Wallet passphrase (checkpoint verification only; no unlock/signing)",
             QLineEdit.EchoMode.Password)
-        if not ok:
+        if not ok or not self._confirmation_current():
             return
         secret=password.encode("utf-8")
         password=None
@@ -534,6 +588,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
 
 
 
+    @_exclusive_confirmation
     def _open_spending_wallet(self):
         if (self._worker is not None or self._spend_window is not None
                 or not self._managed_authenticated or self._managed_state!="ready"
@@ -548,12 +603,13 @@ class ManagedCoreWindow(RegtestWalletWindow):
             "approval. No mainnet, external node or automatic retries.",
             QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)
-        if consent!=QMessageBox.StandardButton.Yes:return
+        if (consent!=QMessageBox.StandardButton.Yes
+                or not self._confirmation_current()):return
         password,ok=QInputDialog.getText(
             self,"REGTEST original WSP wallet",
             "Original wallet passphrase · native anchor + Core must verify",
             QLineEdit.EchoMode.Password)
-        if not ok:return
+        if not ok or not self._confirmation_current():return
         secret=password.encode("utf-8")
         password=None
         if not 12<=len(secret)<=1024:
@@ -610,7 +666,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._update_controls()
 
     def _inspect_core_sqlite(self,filename):
-        if self._worker is not None or self._spend_window is not None:
+        if (self._worker is not None or self._spend_window is not None
+                or self._managed_dialog_open):
             return
         from pathlib import Path
         try:
@@ -634,6 +691,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._update_controls()
         worker.start()
 
+    @_exclusive_confirmation
     def _choose_core_sqlite(self):
         if self._worker is not None or self._spend_window is not None:
             return
@@ -641,14 +699,18 @@ class ManagedCoreWindow(RegtestWalletWindow):
             self,"Inspect Core-native SQLite backup · REGTEST quarantine ONLY",
             "","Core wallet (*.dat);;Fusion encrypted backup (*.enc);;"
             "Mnemonic text (NOT importable) (*.txt)")
-        if name:self._inspect_core_sqlite(name)
+        if not name or not self._confirmation_current(require_ready=False):return
+        # Hand off after the modal guard is released; the inspection entry
+        # rechecks worker exclusion and never imports/restores the wallet.
+        return lambda: self._inspect_core_sqlite(name)
 
     def dragEnterEvent(self,event):
         # Do not import any external data silently. One local .dat at a time.
         urls=event.mimeData().urls() if event.mimeData().hasUrls() else []
         if (len(urls)==1 and urls[0].isLocalFile()
                 and urls[0].toLocalFile().lower().endswith((".dat",".enc",".txt"))
-                and self._worker is None and self._spend_window is None):
+                and self._worker is None and self._spend_window is None
+                and not self._managed_dialog_open):
             event.acceptProposedAction()
         else:event.ignore()
 
@@ -708,6 +770,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
             "Core wallet import DENIED · source unverified · "
             "no changes made to active WSP/Core wallet."))
 
+    @_exclusive_confirmation
     def _create_bip39_phrase(self):
         # Local CSPRNG wizard with explicit full-phrase confirmation; no
         # Core, RPC, wallet signer, checkpoint, anchor or file write.
@@ -718,7 +781,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
         try:
             accepted=dialog.exec()
             if (accepted==Bip39CreationDialog.DialogCode.Accepted
-                    and dialog.confirmed):
+                    and dialog.confirmed
+                    and self._confirmation_current(require_ready=False)):
                 self.status.setText(
                     "BIP39 phrase confirmed locally; NOT linked to the "
                     "existing Fusion WSP wallet. K-02/K-03 pending.")
@@ -727,6 +791,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
             dialog.deleteLater()
             self._update_controls()
 
+    @_exclusive_confirmation
     def _create_bip39_wallet(self):
         # This is *not* K-01's offline-only backup phrase action. New BIP39
         # wallet must be created through exactly the existing managed Core
@@ -747,17 +812,18 @@ class ManagedCoreWindow(RegtestWalletWindow):
             "Signing requires a separate exact-intent approval.",
             QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)
-        if approved!=QMessageBox.StandardButton.Yes:return
+        if (approved!=QMessageBox.StandardButton.Yes
+                or not self._confirmation_current()):return
         first,ok=QInputDialog.getText(
             self,"Encrypt new BIP39 WSP wallet",
             "New NATIVE vault encryption password (different from BIP39 passphrase)",
             QLineEdit.EchoMode.Password)
-        if not ok:return
+        if not ok or not self._confirmation_current():return
         second,ok=QInputDialog.getText(
             self,"Confirm native wallet encryption password",
             "Re-enter the EXACT native encryption password",
             QLineEdit.EchoMode.Password)
-        if not ok:return
+        if not ok or not self._confirmation_current():return
         secret=first.encode("utf8")
         matching=(first==second)
         first=second=None
@@ -770,7 +836,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
         try:
             confirmed=dialog.exec()
             if (confirmed!=Bip39CreationDialog.DialogCode.Accepted
-                    or not dialog.confirmed):
+                    or not dialog.confirmed
+                    or not self._confirmation_current()):
                 return
             mnemonic,passphrase=dialog.take_wallet_material()
         finally:
@@ -793,6 +860,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._update_controls()
         worker.start()
 
+    @_exclusive_confirmation
     def _create_wallet(self):
         if (self._worker is not None or not self._managed_authenticated
                 or self._managed_state!="ready" or self._managed_height is None
@@ -808,18 +876,19 @@ class ManagedCoreWindow(RegtestWalletWindow):
             "This action does not enable signing or mainnet.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)
-        if answer!=QMessageBox.StandardButton.Yes:
+        if (answer!=QMessageBox.StandardButton.Yes
+                or not self._confirmation_current()):
             return
         first,ok=QInputDialog.getText(
             self,"New REGTEST WSP wallet",
             "New encryption passphrase (12–1024 UTF-8 bytes)",
             QLineEdit.EchoMode.Password)
-        if not ok:return
+        if not ok or not self._confirmation_current():return
         second,ok=QInputDialog.getText(
             self,"Confirm new REGTEST wallet",
             "Re-enter the exact encryption passphrase",
             QLineEdit.EchoMode.Password)
-        if not ok:return
+        if not ok or not self._confirmation_current():return
         secret=first.encode("utf-8")
         matching=(first==second)
         first=second=None
@@ -858,6 +927,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
             "use Sync and save to display your verified receive address · no signing")
         self._update_controls()
 
+    @_exclusive_confirmation
     def _view_wallet(self, *, persist_checkpoint=False):
         if (self._worker is not None or not self._managed_authenticated
                 or self._managed_state!="ready" or self._managed_height is None
@@ -870,7 +940,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
              if persist_checkpoint else
              "Passphrase · view live REGTEST wallet without checkpoint write"),
             QLineEdit.EchoMode.Password)
-        if not approved:
+        if not approved or not self._confirmation_current():
             return
         secret=password.encode("utf-8")
         password=None
@@ -989,6 +1059,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
     def request_sync(self):
         self._execute("status")
 
+    @_exclusive_confirmation
     def _confirm_stop(self):
         if self._managed_state not in ("ready", "syncing", "busy"):
             return
@@ -999,8 +1070,9 @@ class ManagedCoreWindow(RegtestWalletWindow):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
-        if answer == QMessageBox.StandardButton.Yes:
-            self._execute("shutdown")
+        if (answer == QMessageBox.StandardButton.Yes
+                and self._confirmation_current(require_ready=False)):
+            return lambda: self._execute("shutdown")
 
     def _apply_managed_status(self, status):
         # Double-check caller-supplied state without accepting inferred,
@@ -1021,6 +1093,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
             self._managed_denied("MANAGED_GUI_INVALID_STATUS")
             return
         self._managed_state = state
+        self._managed_authority_epoch+=1
         self._managed_authenticated = True
         self._managed_height=expected["height"] if state=="ready" else None
         self._wallet_read_authorized=False
@@ -1042,6 +1115,7 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._update_controls()
 
     def _managed_denied(self, _reason):
+        self._managed_authority_epoch+=1
         self._managed_state = "error"
         self._managed_authenticated = False
         self._managed_height=None
@@ -1061,6 +1135,9 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self._update_controls()
 
     def closeEvent(self, event):
+        if self._managed_dialog_open:
+            event.ignore()
+            return
         # A GUI close cannot leave an unlocked separate spending window
         # unowned. Require explicit closing/locking of that window first.
         if self._spend_window is not None:
