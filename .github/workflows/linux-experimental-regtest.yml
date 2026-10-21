@@ -142,6 +142,14 @@ jobs:
           PYQT
           QT_QPA_PLATFORM=xcb xvfb-run -a python -X faulthandler scripts/run_native_unittest.py --pattern 'test_fusion_managed*.py'
           QT_QPA_PLATFORM=xcb xvfb-run -a python scripts/linux_headless_acceptance.py --core-dir qualified-linux-core/linux-core --qt
+      - name: Preserve sanitized A06 receipt even when continuity fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-a06-core-crash-${{ github.event.pull_request.head.sha || github.sha }}
+          path: linux-a06-core-crash-evidence.json
+          if-no-files-found: error
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: linux-qt-wallet-evidence-${{ github.event.pull_request.head.sha || github.sha }}

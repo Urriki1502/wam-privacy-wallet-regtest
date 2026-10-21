@@ -53,6 +53,16 @@ jobs:
         run: python scripts/check_wam_subsidy_source.py --output source-subsidy-contract.json
       - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
         run: python -m wam_regtest.release --platform macos-arm64 --destination core
+      - name: A06 fresh-write real Core crash continuity (FAIL blocks qualification)
+        run: python scripts/issue45_a06_fresh_crash.py --core-dir core --wsp-source wsp-upstream --confirm-disposable-regtest --output macos-a06-core-crash-evidence.json
+      - name: Preserve sanitized A06 receipt even when continuity fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-a06-core-crash-${{ github.event.pull_request.head.sha || github.sha }}
+          path: macos-a06-core-crash-evidence.json
+          if-no-files-found: error
+          retention-days: 14
       - name: B-06 two genuine Core nodes, loopback P2P, reorg1/12/100 and WSP SQLite rollback
         timeout-minutes: 12
         shell: bash

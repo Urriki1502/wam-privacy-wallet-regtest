@@ -21,6 +21,17 @@ from test_linux_anchor_witness import NativeRootWitness
 
 NativeRootWitness.setUpClass()
 try:
+    if args.qt and args.executable is None:
+        # Separate interpreter: reuse this exact native CI witness, leaving
+        # the existing immutable parent process Linux policy binding intact.
+        a06=subprocess.run([sys.executable,str(root/'scripts'/'issue45_a06_fresh_crash.py'),
+            '--core-dir',str(args.core_dir.resolve()),
+            '--wsp-source',str((root/'wsp-upstream').resolve()),
+            '--linux-developer-manifest','e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
+            '--linux-root-witness',str(NativeRootWitness.root/'anchor.sock'),
+            '--confirm-disposable-regtest','--output','linux-a06-core-crash-evidence.json'],
+            stdin=subprocess.DEVNULL)
+        assert a06.returncode==0,'A06_FRESH_CORE_CONTINUITY_GATE_FAILED'
     command=([str(args.executable.absolute())] if args.executable else
         [sys.executable,'-m','wam_regtest.cli','linux-wallet','--core-dir',str(args.core_dir.absolute()),
          '--wsp-source-root',str((root/'wsp-upstream').absolute())])
