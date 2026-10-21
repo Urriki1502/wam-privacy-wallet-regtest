@@ -413,6 +413,7 @@ jobs:
             package-output/SHA256SUMS.txt
             package-output/OWNER_REGTEST_ACCEPTANCE.md
             package-output/DEV_WAM_REVIEW_HANDOFF.md
+            package-output/ISSUE45_R06_RELEASE_ROLLBACK.md
             fusion-ui-review/
             real-regtest-gui-preview.png
             real-regtest-wallet-preview.png
