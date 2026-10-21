@@ -635,12 +635,22 @@ def prove(core, *, qt=False, linux_manifest=None, linux_witness=None):
             # A real crash of the owned Core does not erase the chain.
             restarted.process.kill()
             restarted.process.wait(timeout=15)
-            assert restarted.status()["state"]=="recovery-needed"
+            # No preceding status refresh: the actual authenticated Start
+            # handler must reap its stale exited Popen and launch once.
+            from wam_regtest.supervisor_protocol import PROTOCOL,request_proof
+            from wam_regtest.supervisor_store import read_exact
+            import secrets
+            nonce=secrets.token_hex(16)
+            token=read_exact(root,"supervisor.token",length=32)
+            frame=(json.dumps({"protocol":PROTOCOL,"op":"start","nonce":nonce,
+                "proof":request_proof(token,"start",nonce)})+"\n").encode("ascii")
             assert restarted.directory.is_dir()
-            restarted.start()
+            reply=restarted.handle(frame)
+            assert reply["state"]=="ready" and reply["core_process_owned"] is True
             assert restarted.read.call("getblockcount",[])==height
             assert restarted.read.call("getblockhash",[height])==tip
             evidence["daemon_crash_recovery_same_tip"]=True
+            evidence["first_authenticated_start_after_crash_same_tip"]=True
             restarted.shutdown()
         finally:_closed(restarted)
         # Independently launched owner stays alive across disposable GUI/client exits.
