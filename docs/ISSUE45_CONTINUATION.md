@@ -1,3 +1,26 @@
+# Current A06-A/B/C continuation — owner-authorized recovery policy
+
+Baseline Draft120 `5130e432eaa440cc4723dd02b2e67aeb2579a462`; new focused branch
+`feature/issue45-a06-recovery-aware-gate-20261022`. Preserve original114rawFAIL,
+parent120, main/RC1 and independent branch work. Acquire engineering lease first.
+No automatic merge. REGTEST only, qualified pinnedv0.1.11;v0.1.12candidate-only.
+
+Owner explicitly replaces the obsolete release requirement that101fresh blocks
+must survive SIGKILL without recovery. New mandatory native+frozen gates are
+A06-A graceful/no-reindex, A06-B explicitly authorized exact-chain/wallet reindex,
+and A06-C genuine owned recovery-child interruption/fail-closed/explicit continuation.
+See [exact policy, scope and limitations](ISSUE45_A06_RECOVERY_ACCEPTANCE.md).
+Historical diagnostic rawFAIL remains immutable; it cannot count as recovery PASS.
+All ordinary gates and exact-head artifact assertions remain mandatory. Platform
+CI PASS never implies fullQ05/V1, physical/clean-device or independent review.
+
+Resume from the current live Draft description and
+`outputs/codex_acceptance_resume.json`; inspect actual CI before further work.
+Do not rerun unchanged predecessor tests or create a second branch/PR for this
+same task. Fix current genuine failures sequentially on this focused branch.
+
+# Historical records — superseded policy and checkpoints follow
+
 # Current acceptance continuation — 22 October 2026
 
 Latest reviewed parent is Draft119 `3adb5a2fc7f2181dec8f3eb1de6cbe65be66a7e5`.
