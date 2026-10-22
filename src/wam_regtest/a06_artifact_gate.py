@@ -63,6 +63,17 @@ def _payloads(folder,manifest):
                     base=PurePosixPath(m.filename).name
                     if base not in wanted and base not in apps:continue
                     kind=stat.S_IFMT(m.external_attr>>16)
+                    if kind==stat.S_IFLNK:
+                        # PyInstaller's signed macOS layout has Resources aliases
+                        # to the same regular Frameworks bytes. Validate the exact
+                        # internal alias; never follow a general archive symlink.
+                        app='WAM Privacy Wallet REGTEST.app/Contents/'
+                        _require(manifest['platform']=='macos-arm64' and base in wanted
+                            and m.filename==app+'Resources/core/'+base and m.file_size<=512)
+                        _require(archive.read(m)==('../../Frameworks/core/'+base).encode())
+                        target=archive.getinfo(app+'Frameworks/core/'+base)
+                        _require(stat.S_ISREG(target.external_attr>>16))
+                        continue  # The regular member below must still match its pin.
                     _require(not m.is_dir() and kind in (0,stat.S_IFREG) and m.file_size<=128*1024*1024)
                     h=hashlib.sha256(archive.read(m)).hexdigest()
                     if base in wanted:

@@ -1,15 +1,18 @@
 """Policy/mutation contracts ONLY; actual three-OS native/frozen CI is separate."""
 import copy
 import importlib.util
+import hashlib
 import json
 import os
 from pathlib import Path
 import subprocess
+import stat
 import sys
 import tempfile
 import unittest
+import zipfile
 from wam_regtest.a06_acceptance import require_components
-from wam_regtest.a06_artifact_gate import assess_artifacts
+from wam_regtest.a06_artifact_gate import assess_artifacts, _payloads
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -93,6 +96,36 @@ class HistoricalObservationContracts(unittest.TestCase):
         for status in ('ERROR','FAIL','PASS'):
             with self.assertRaises((ValueError,KeyError)):
                 m.record({'status':status},0,source='a'*40,checkout='b'*40)
+
+
+class ArchiveAliasContracts(unittest.TestCase):
+    """Supplemental archive-parser contracts, never synthetic Core acceptance."""
+    def check_archive(self, target='../../Frameworks/core/wamd', *, omit=False, corrupt=False):
+        app='WAM Privacy Wallet REGTEST.app/Contents/'
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);name='candidate.app.zip';body=b'parser-fixture-only'
+            with zipfile.ZipFile(root/name,'w') as archive:
+                alias=zipfile.ZipInfo(app+'Resources/core/wamd');alias.external_attr=(stat.S_IFLNK|0o700)<<16
+                archive.writestr(alias,target)
+                if not omit:
+                    core=zipfile.ZipInfo(app+'Frameworks/core/wamd');core.external_attr=(stat.S_IFREG|0o700)<<16
+                    archive.writestr(core,b'changed' if corrupt else body)
+                exe=zipfile.ZipInfo(app+'MacOS/WAM Privacy Wallet REGTEST');exe.external_attr=(stat.S_IFREG|0o700)<<16
+                archive.writestr(exe,b'parser-executable-fixture')
+            manifest={'platform':'macos-arm64','files_sha256':{name:'unused-parser-fixture'},
+                      'core_sha256':{'wamd':hashlib.sha256(body).hexdigest()}}
+            return _payloads(root,manifest)
+
+    def test_exact_pyinstaller_alias_requires_regular_independently_hashed_target(self):
+        self.assertTrue(self.check_archive())
+        for kwargs in ({'omit':True},{'corrupt':True}):
+            with self.assertRaises((ValueError,KeyError)):self.check_archive(**kwargs)
+
+    def test_arbitrary_symlink_and_escape_are_rejected(self):
+        for target in ('/tmp/wamd','../../../../wamd','../../Frameworks/core/wam-cli',
+                       '../../Frameworks/core/../core/wamd'):
+            with self.subTest(target=target),self.assertRaises(ValueError):
+                self.check_archive(target)
 
 
 if __name__=='__main__':unittest.main()
