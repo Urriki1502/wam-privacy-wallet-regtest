@@ -137,6 +137,8 @@ def run(args):
         result.update({'official_signed_release':False,'developer_manifest_sha256':args.manifest_sha256,
             'frozen_runtime':bool(getattr(sys,'frozen',False)),
             'linux_headless':not (args.gui or args.confirm_qt_e2e),'qt_imported':any(n.startswith('PySide6') for n in sys.modules)})
+        if result['graceful_shutdown_component']['status'] != 'REAL_CORE_GRACEFUL_SHUTDOWN_CONTINUITY_PASS':
+            raise WalletSessionError('LINUX_GRACEFUL_SHUTDOWN_ACCEPTANCE_REQUIRED')
         if args.report:
             with args.report.open('x') as output:json.dump(result,output,indent=2);output.write('\n')
         print('LINUX_NATIVE_REAL_REGTEST_COMPLETED')
