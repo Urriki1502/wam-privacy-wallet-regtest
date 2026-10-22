@@ -233,10 +233,13 @@ class SupervisorTransportResilience(unittest.TestCase):
             owner.binding=None
             owner.read=None
             owner.directory=Path.cwd()/"t08-public-fixture-chain"
+            owner.root=Path.cwd()/"t08-public-fixture-root"
+            owner.profile={}
             owner.node=Path.cwd()/"t08-fake-wamd"
             owner.core=Path.cwd()/"t08-public-core"
             owner._child_environment=Mock(return_value={"PATH":"/usr/bin"})
-            with (patch("wam_regtest.core_supervisor.local_rpc_port",
+            with (patch('wam_regtest.owned_recovery.pending_recoveries',return_value=[]),
+                  patch("wam_regtest.core_supervisor.local_rpc_port",
                         return_value=occupied) as trusted_port,
                   patch("wam_regtest.core_supervisor.subprocess.Popen") as spawn,
                   self.assertRaisesRegex(
@@ -279,12 +282,15 @@ class SupervisorTransportResilience(unittest.TestCase):
         owner.read=None
         owner._state="stopped"
         owner.directory=Path.cwd()/"fixture-chain"
+        owner.root=Path.cwd()/"fixture-root"
+        owner.profile={}
         owner.core=Path.cwd()/"fixture-core"
         owner.node=owner.core/"wamd"
         owner._child_environment=lambda:{"PATH":"/usr/bin"}
         proc=Mock()
         proc.poll.return_value=None
-        with (patch("wam_regtest.core_supervisor.local_rpc_port",return_value=27319) as port,
+        with (patch('wam_regtest.owned_recovery.pending_recoveries',return_value=[]),
+              patch("wam_regtest.core_supervisor.local_rpc_port",return_value=27319) as port,
               patch("wam_regtest.core_supervisor.subprocess.Popen",return_value=proc) as spawn,
               patch("wam_regtest.core_supervisor.OwnedCoreBinding") as binding,
               patch.object(owner,"_ready",return_value="verified-owned-read") as ready):
