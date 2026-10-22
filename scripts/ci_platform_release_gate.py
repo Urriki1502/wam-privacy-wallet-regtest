@@ -4,6 +4,11 @@ import json
 import os
 from pathlib import Path
 import re
+import sys
+import zipfile
+import tarfile
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
+from wam_regtest.a06_artifact_gate import assess_artifacts
 
 
 def assess(needs, required, *, conditional_core_build=False):
@@ -40,9 +45,10 @@ def main():
                         choices=('macos-arm64', 'windows-x64', 'linux-x86_64'))
     parser.add_argument('--required-jobs', required=True)
     parser.add_argument('--conditional-core-build', action='store_true')
+    parser.add_argument('--evidence-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    receipt = {'schema': 'wam-platform-ci-release-gate/v1', 'platform': args.platform,
+    receipt = {'schema': 'wam-platform-ci-release-gate/v2', 'platform': args.platform,
         'scope': 'platform CI only; overall REGTEST acceptance requires every platform plus independent gates',
         'automatic_release_authorized': False, 'mainnet_allowed': False,
         'physical_accepted': False, 'dev_reviewed': False}
@@ -53,9 +59,23 @@ def main():
         head = os.environ['WAM_SOURCE_HEAD']
         if not re.fullmatch('[0-9a-f]{40}', head):
             raise ValueError('CI_GATE_SOURCE_IDENTITY_DENIED')
-        receipt.update(source_head_sha=head, **assess(json.loads(raw),
-            json.loads(args.required_jobs), conditional_core_build=args.conditional_core_build))
-    except (ValueError, KeyError, TypeError, AttributeError):
+        checkout=os.environ['WAM_CHECKOUT_SHA']
+        if not re.fullmatch('[0-9a-f]{40}',checkout):
+            raise ValueError('CI_GATE_CHECKOUT_IDENTITY_DENIED')
+        required=json.loads(args.required_jobs)
+        expected={
+            'macos-arm64':{'real-wamd','native-app-dmg','a06-core-crash'},
+            'windows-x64':{'win64-native-credential-cas','a06-core-crash'},
+            'linux-x86_64':{'native-contracts','headless-wallet','native-qt-wallet','frozen-wallet','a06-core-crash'},
+        }[args.platform]
+        if (type(required) is not list or set(required)!=expected
+                or args.conditional_core_build != (args.platform=='linux-x86_64')):
+            raise ValueError('CI_PLATFORM_REQUIRED_ROLES_DENIED')
+        receipt.update(source_head_sha=head,checkout_sha=checkout, **assess(json.loads(raw),
+            required, conditional_core_build=args.conditional_core_build))
+        receipt['a06_recovery_acceptance']=assess_artifacts(args.evidence_root,args.platform,head,checkout)
+        receipt['historical_no_reindex_sigkill_is_release_requirement']=False
+    except (ValueError, KeyError, TypeError, AttributeError, OSError, zipfile.BadZipFile, tarfile.TarError):
         receipt.update(status='FAIL', error_code='CI_GATE_INPUT_OR_SOURCE_UNVERIFIED')
     # Never rewrite an earlier result or infer PASS from a missing/skipped job.
     with args.output.open('x', encoding='utf-8') as stream:

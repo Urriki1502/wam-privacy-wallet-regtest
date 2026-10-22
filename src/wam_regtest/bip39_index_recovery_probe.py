@@ -178,9 +178,21 @@ def _case(core, source, words):
         close_owner()
         assert exchanges and not server_errors
         # Immediate reuse follows real authenticated IPC, not an idle listener.
+        from .interrupted_recovery_probe import interrupt_before_verification
+        interrupted = interrupt_before_verification(root, core, 104, tip)
+        intent = next(root.glob('supervisor.recovery.*.intent'))
+        original_intent = read_exact(root, intent.name)
+        assert _blocks(directory) == disk and read_exact(root, 'supervisor.profile') == profile
+        assert anchor.read() == anchored and _vault_files(directory) == sealed
         recovered = recover_index(root, core, expected_height=104,
             expected_tip=tip, authorized_reindex=True)
         assert recovered['status'] == 'OWNED_REGTEST_EXPLICIT_REINDEX_VERIFIED_STOPPED'
+        assert read_exact(root, intent.name) == original_intent
+        assert len(list(root.glob('supervisor.recovery.*.intent'))) == 2
+        assert len(list(root.glob('supervisor.recovery.*.complete'))) == 2
+        from .owned_recovery import pending_recoveries
+        from .core_supervisor import _profile_read
+        assert pending_recoveries(root, _profile_read(root)) == []
         assert _blocks(directory) == disk
         assert read_exact(root, 'supervisor.profile') == profile
         assert anchor.read() == anchored and _vault_files(directory) == sealed
@@ -208,10 +220,14 @@ def _case(core, source, words):
         close_owner()
         assert not server_errors and all(child.poll() is not None for child in children)
         assert verified_core_paths(core)[2] == receipt
+        interrupted.update(status='PASS', explicit_same_target_continuation=True,
+            pending_journal_resolved_after_exact_verification=True,
+            original_chain_wallet_and_reservations_preserved=True)
         success = True
         return {'words': words, 'passphrase_used': words == 24, 'status': 'PASS',
             'original_height': 104, 'original_tip': tip,
             'index_loss_observed_height': observed, 'explicit_reindex': recovered,
+            'interrupted_recovery': interrupted,
             'exact_original_64_byte_seed_and_identity': True,
             'real_authenticated_ipc_before_supervisor_restart': True,
             'signed_and_uncertain_reservations_preserved': True,

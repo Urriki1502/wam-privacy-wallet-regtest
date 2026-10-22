@@ -15,14 +15,14 @@ class ReleaseGateContracts(unittest.TestCase):
     def needs(self):
         return {name: {'result': 'success'} for name in self.required}
 
-    def test_a06_failure_blocks_release_even_if_other_acceptance_passes(self):
+    def test_unverified_historical_diagnostic_job_still_blocks_release(self):
         needs = self.needs()
         needs['a06-core-crash']['result'] = 'failure'
         proof = module.assess(needs, self.required)
         self.assertEqual(proof['status'], 'FAIL')
         self.assertEqual(proof['nonpassing_required_jobs'], ['a06-core-crash'])
 
-    def test_all_required_ci_components_pass_without_release_authority(self):
+    def test_job_result_layer_accepts_success_but_artifact_proof_is_still_required(self):
         self.assertEqual(module.assess(self.needs(), self.required)['status'], 'PASS')
 
     def test_missing_cancelled_skipped_or_unknown_required_never_passes(self):

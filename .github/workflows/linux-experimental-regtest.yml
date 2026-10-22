@@ -18,6 +18,7 @@ on:
       - 'pyproject.toml'
   workflow_dispatch:
 env:
+  WAM_CHECKOUT_SHA: ${{ github.sha }}
   WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
 permissions:
   contents: read
@@ -266,7 +267,7 @@ jobs:
           if-no-files-found: error
 
   a06-core-crash:
-    name: Independent A06 fresh-write Core continuity
+    name: Historical A06 SIGKILL diagnostic (not A/B/C acceptance)
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     env:
@@ -298,17 +299,21 @@ jobs:
           python -m pip install -e . -e ./wsp-upstream
           python -m pip check
           chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
-          python scripts/issue45_a06_linux_ci.py --core-dir qualified-linux-core/linux-core --output linux-x86_64-a06-core-crash-evidence.json
+          code=0
+          python scripts/issue45_a06_linux_ci.py --core-dir qualified-linux-core/linux-core --output linux-x86_64-a06-core-crash-evidence.json || code=$?
+          python scripts/ci_a06_observation.py --receipt linux-x86_64-a06-core-crash-evidence.json --probe-exit "$code" --output a06-historical-observation.json
       - name: Preserve unchanged A06 failure receipt
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: linux-x86_64-a06-core-crash-${{ github.event.pull_request.head.sha || github.sha }}
-          path: linux-x86_64-a06-core-crash-evidence.json
+          path: |
+            linux-x86_64-a06-core-crash-evidence.json
+            a06-historical-observation.json
           if-no-files-found: error
           retention-days: 14
   platform-release-gate:
-    name: Release acceptance gate (linux-x86_64; A06 mandatory)
+    name: Recovery-aware release gate (linux-x86_64; A06-A/B/C mandatory)
     if: always()
     needs: [native-contracts, headless-wallet, native-qt-wallet, frozen-wallet, a06-core-crash, developer-core]
     runs-on: ubuntu-24.04
@@ -319,11 +324,28 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Require every applicable native, frozen and A06 gate
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-headless-wallet-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: a06-evidence/native-headless
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-qt-wallet-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: a06-evidence/native-qt
+      - uses: actions/download-artifact@v4
+        with:
+          name: WAM-Fusion-REGTEST-RC1-linux-x86_64-headless-${{ github.event.pull_request.head.sha || github.sha }}
+          path: a06-evidence/frozen-headless
+      - uses: actions/download-artifact@v4
+        with:
+          name: WAM-Fusion-REGTEST-RC1-linux-x86_64-desktop-${{ github.event.pull_request.head.sha || github.sha }}
+          path: a06-evidence/frozen-desktop
+      - name: Require actual native and frozen A06-A/B/C evidence
+        if: always()
         env:
           JOB_RESULTS: ${{ toJSON(needs) }}
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python scripts/ci_platform_release_gate.py --platform linux-x86_64 --required-jobs '["native-contracts", "headless-wallet", "native-qt-wallet", "frozen-wallet", "a06-core-crash"]' --conditional-core-build --output platform-release-gate.json
+        run: python scripts/ci_platform_release_gate.py --platform linux-x86_64 --required-jobs '["native-contracts", "headless-wallet", "native-qt-wallet", "frozen-wallet", "a06-core-crash"]' --conditional-core-build --evidence-root a06-evidence --output platform-release-gate.json
       - name: Publish FAIL as well as PASS without promoting a release
         if: always()
         uses: actions/upload-artifact@v4
