@@ -7,6 +7,62 @@ from wam_regtest.core import CoreSmokeError
 
 
 class OwnedStartupContracts(unittest.TestCase):
+    def test_linux_native_socket_inspection_errors_are_denials_not_ownership(self):
+        from unittest.mock import patch
+        from wam_regtest.core_process import _linux_socket, CoreBindingError
+        for error in (PermissionError('PRIVATE_CANARY'), FileNotFoundError('PRIVATE_CANARY')):
+            with patch('wam_regtest.core_process.Path.iterdir', side_effect=error):
+                with self.assertRaisesRegex(CoreBindingError, '^RPC_NATIVE_SOCKET_PROOF_DENIED$'):
+                    _linux_socket(123, 12345, 12346)
+        with patch('wam_regtest.core_process.Path.iterdir', return_value=iter(())), \
+             patch('wam_regtest.core_process.Path.read_text', side_effect=PermissionError('PRIVATE_CANARY')):
+            with self.assertRaisesRegex(CoreBindingError, '^RPC_NATIVE_SOCKET_PROOF_DENIED$'):
+                _linux_socket(123, 12345, 12346)
+
+    def test_live_child_native_socket_denial_never_creates_authenticated_client(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock, MagicMock, patch
+        from wam_regtest.core_process import CoreBindingError
+        from wam_regtest.owned_start import _ready
+        import subprocess
+        binding=SimpleNamespace(process=Mock(), directory=Path('/not-opened'),
+            core=Path('/not-opened'), assert_socket=Mock(
+                side_effect=CoreBindingError('RPC_NATIVE_SOCKET_PROOF_DENIED')))
+        binding.process.poll.return_value=None
+        binding.process.wait.side_effect=subprocess.TimeoutExpired('public-test-child', 1)
+        with patch('wam_regtest.owned_start.socket.create_connection', return_value=MagicMock()), \
+             patch('wam_regtest.owned_start.time.monotonic', return_value=1), \
+             patch('wam_regtest.owned_start.ManagedReadRpc') as client:
+            with self.assertRaisesRegex(CoreSmokeError, '^CORE_START_ENDPOINT_OWNERSHIP_DENIED$'):
+                _ready(binding, 12345, 100)
+            client.assert_not_called()
+            binding.assert_socket.assert_called_once()
+
+    @unittest.skipUnless(__import__('sys').platform == 'linux', 'native Linux kernel permission case')
+    def test_actual_nondumpable_child_fd_denial_remains_closed(self):
+        # Real kernel access denial, not Core or blockchain acceptance.
+        import select
+        import subprocess
+        import sys
+        from wam_regtest.core_process import _linux_socket, CoreBindingError
+        code=('import ctypes,sys;lib=ctypes.CDLL(None);'
+              'assert lib.prctl(4,0,0,0,0)==0;'
+              'print("NONDUMPABLE_TEST_CHILD",flush=True);sys.stdin.buffer.read(1)')
+        child=subprocess.Popen([sys.executable, '-c', code], stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        try:
+            self.assertTrue(select.select([child.stdout], [], [], 10)[0])
+            self.assertEqual(child.stdout.readline(128), b'NONDUMPABLE_TEST_CHILD\n')
+            with self.assertRaisesRegex(CoreBindingError, '^RPC_NATIVE_SOCKET_PROOF_DENIED$'):
+                _linux_socket(child.pid, 12345, 12346)
+        finally:
+            child.stdin.close()
+            if child.poll() is None:
+                try:child.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    child.kill();child.wait(timeout=5)
+            child.stdout.close()
+
     def test_process_exit_during_native_image_lookup_remains_an_ownership_denial(self):
         from unittest.mock import Mock, patch
         from wam_regtest.core_process import OwnedCoreBinding, CoreBindingError
