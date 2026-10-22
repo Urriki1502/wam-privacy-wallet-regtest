@@ -71,3 +71,20 @@ this pinned acceptance; unsupported selected profile rejection is the narrower
 negative test. Safe authorized crash-residue resolution, broader interruption windows and
 physical/independent DEV/security review remain explicitly unqualified. The
 prior1001-block RPC TimeoutError evidence is preserved. Full Q05/V1 remain HOLD.
+
+## Sequential Windows frozen repair
+
+Final37 Windows source genuine GUI passed, but frozen collection failed before
+artifact publication. Every frozen Windows process stages its own original Core
+copy. AttachedCoreBinding correctly rejects an identical **different file** as
+the observed daemon image. The opted-in attached GUI fixture must refer to the
+actual parent-staged executable, reverify its independent pinned receipt/pair,
+and retain native same-file/PID/socket attestation. No attached/managed authority
+or byte/file-identity gate is relaxed. A genuine copied-Core source experiment
+reproduces rejection of the copy and successful read-only binding to the actual
+image. The new fixture locator is private, acceptance-only and never public JSON.
+
+Windowed CI child errors also entered the operator modal error dialog. CI children
+now return nonzero with reviewed basename/line diagnostics only; builder/gate still
+fail. No raw exception arguments, private paths, RPC logs or fixture data are
+published. Windows frozen/DPI and other exact-head regressions must be rerun.

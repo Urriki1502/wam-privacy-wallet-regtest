@@ -89,7 +89,17 @@ def child(core, source, argv):
     app = qt_application()
     if args.mode == 'attached':
         from .attached_core_gui import ExistingCoreReadOnlyWindow
-        window = ExistingCoreReadOnlyWindow(core, root/'chain', fixture['core_pid'])
+        # Windows freezes stage the original signed pair privately PER process.
+        # An identical fresh child copy is not the daemon's native file image.
+        # Select the actual parent fixture image, then keep BOTH immutable-byte
+        # pinning and AttachedCoreBinding's native same-file/PID checks intact.
+        owner_core = Path(fixture['owner_core_dir'])
+        if not owner_core.is_absolute() or '..' in owner_core.parts:
+            raise ValueError('Q05_OWNER_CORE_PATH_DENIED')
+        _, _, owner_receipt = verified_core_paths(owner_core)
+        if owner_receipt != receipt:
+            raise ValueError('Q05_OWNER_CORE_PAIR_CHANGED')
+        window = ExistingCoreReadOnlyWindow(owner_core, root/'chain', fixture['core_pid'])
         window.show(); window.request_refresh()
         deadline = time.monotonic()+30
         while window._worker is not None and time.monotonic()<deadline:
@@ -98,7 +108,7 @@ def child(core, source, argv):
         assert (window._proof['height'], window._proof['tip']) == (fixture['height'], fixture['tip'])
         assert not hasattr(window, 'start_core') and not hasattr(window, 'stop_core')
         assert not hasattr(window, '_managed_root') and not hasattr(window, 'recover_index')
-        proof = {'status': 'PASS', 'attached_gui_has_no_managed_lifecycle': True,
+        proof = {'status': 'PASS', 'attached_gui_has_no_managed_lifecycle': True, 'actual_parent_image_verified': True,
             'native_gui': True, 'frozen': bool(getattr(sys, 'frozen', False)),
             'binary_sha256': hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest(),
             'synthetic_rpc': False, 'mainnet_allowed': False, 'qt_platform': app.platformName()}
@@ -390,7 +400,7 @@ def prove_managed_gui_lifecycle(core, source):
         fixture = {'schema': 'wam-q05-disposable-gui/v1', 'network': 'regtest',
             'genesis': REGTEST_GENESIS, 'mainnet_allowed': False,
             'core_sha256': receipt['wamd_sha256'], 'cli_sha256': receipt['wam_cli_sha256'],
-            'wallet_id': anchor.wallet_id, 'height': snap.height, 'tip': snap.tip, 'core_pid': owner.process.pid,
+            'wallet_id': anchor.wallet_id, 'height': snap.height, 'tip': snap.tip, 'core_pid': owner.process.pid, 'owner_core_dir': str(core),
             'receive_digest': digest(code), 'reservations_digest': digest(rows),
             'history_digest': digest([row.__dict__ for row in snap.history]),
             'confirmed_atoms': snap.confirmed_atoms}

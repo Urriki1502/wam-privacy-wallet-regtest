@@ -122,12 +122,24 @@ def main():
             elif proof.get('interactive_demo_closed_cleanly') is not True:
                 raise ValueError('WIN_BUNDLE_SHUTDOWN_DENIED')
         return 0
-    except Exception:
-        # No arbitrary exception text, traceback, secret or node log escapes.
+    except Exception as error:
+        # Windowed children have no console. No modal dialog may conceal a
+        # failing opted-in CI child; fixed sites only, never exception text.
+        if ci or child_probe:
+            import secrets
+            from wam_regtest.acceptance_failure import failure_site
+            kinds={'AssertionError','ValueError','CoreSmokeError','WalletSessionError',
+                   'ManagedClientError','AttachedCoreError','RuntimeError'}
+            record={'schema':'wam-redacted-acceptance-failure/v1',
+                'platform':'windows-x64','site':failure_site(error),
+                'kind':type(error).__name__ if type(error).__name__ in kinds else 'ERROR',
+                'mainnet_allowed':False}
+            with Path('q05-failure-'+secrets.token_hex(16)+'.json').open('x',encoding='utf8') as stream:
+                json.dump(record,stream,sort_keys=True);stream.write('\n')
         if ci:
             with Path('windows-packaged-wallet-denied.json').open('x',encoding='utf8') as out:
                 json.dump({'status':'WIN_BUNDLE_DENIED','mainnet_allowed':False},out)
-        else:
+        elif not child_probe:
             from PySide6.QtWidgets import QApplication,QMessageBox
             app=QApplication.instance() or QApplication([])
             QMessageBox.critical(None,'WAM Privacy Wallet REGTEST',

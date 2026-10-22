@@ -16,6 +16,34 @@ import tempfile
 import zipfile
 
 
+def safe_failure_site(value):
+    from wam_regtest.acceptance_failure import REVIEWED
+    if value=='UNCLASSIFIED_REVIEWED_SITE':return True
+    if type(value) is not str or not 1<=len(value)<=256:return False
+    fields=value.split('>')
+    return 1<=len(fields)<=4 and all(part.rpartition(':')[0] in REVIEWED
+        and part.rpartition(':')[2].isdigit() and 1<=int(part.rpartition(':')[2])<=10000
+        for part in fields)
+
+
+def require_frozen_success(result,folder,code):
+    if result.returncode==0:return
+    # Never print raw exception text, paths, private fixture data or captured
+    # Core/GUI logs. A FAIL remains FAIL even without a diagnostic receipt.
+    for path in sorted(folder.glob('q05-failure-*.json')):
+        if not path.is_symlink() and path.stat().st_size<=4096:
+            record=json.loads(path.read_text())
+            if (set(record)=={'schema','platform','site','kind','mainnet_allowed'}
+                    and record['schema']=='wam-redacted-acceptance-failure/v1'
+                    and record['platform']=='windows-x64'
+                    and record['mainnet_allowed'] is False
+                    and record['kind'] in {'AssertionError','ValueError','CoreSmokeError','WalletSessionError',
+                        'ManagedClientError','AttachedCoreError','RuntimeError','ERROR'}
+                    and safe_failure_site(record['site'])):
+                print(json.dumps(record,sort_keys=True),flush=True)
+    raise AssertionError(code)
+
+
 def main():
     assert sys.platform=='win32' and platform.machine().lower() in ('amd64','x86_64')
     from wam_regtest.windows_release_preflight import ASSET,BINARY_SHA256,verify_signed_windows_archive,_validate_amd64_pe
@@ -64,7 +92,7 @@ def main():
     environment={**os.environ,'QT_QPA_PLATFORM':'windows'}
     result=subprocess.run([str(executable),'--ci-real-core-wallet'],env=environment,stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
-    assert result.returncode==0,'WIN_FROZEN_REAL_WALLET_DENIED'
+    require_frozen_success(result,Path.cwd(),'WIN_FROZEN_REAL_WALLET_DENIED')
     evidence=json.loads(Path('windows-packaged-wallet-evidence.json').read_text())
     assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
     t09=evidence['t09_direct_rpc_evidence']
@@ -81,7 +109,7 @@ def main():
         scaled={**environment,'QT_SCALE_FACTOR':factor}
         result=subprocess.run([str(executable),'--ci-real-core-wallet'],cwd=review,env=scaled,
             stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
-        assert result.returncode==0,'WIN_SCALED_FROZEN_REAL_WALLET_DENIED'
+        require_frozen_success(result,review,'WIN_SCALED_FROZEN_REAL_WALLET_DENIED')
         record=json.loads((review/'fusion-ui-review/windows-x64-visual-receipt.json').read_text())
         assert record['qt_platform']=='windows' and abs(record['device_pixel_ratio']-float(factor))<.01
         assert record['real_core_snapshot'] and not record['synthetic_rpc']
