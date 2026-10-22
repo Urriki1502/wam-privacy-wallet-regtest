@@ -60,6 +60,7 @@ def _payloads(folder,manifest):
                 members=archive.infolist();_require(len(members)<=8192)
                 _require(len({m.filename for m in members})==len(members))
                 for m in members:
+                    if m.is_dir():continue
                     base=PurePosixPath(m.filename).name
                     if base not in wanted and base not in apps:continue
                     kind=stat.S_IFMT(m.external_attr>>16)
@@ -84,6 +85,7 @@ def _payloads(folder,manifest):
                 members=archive.getmembers();_require(len(members)<=8192)
                 _require(len({m.name for m in members})==len(members))
                 for m in members:
+                    if m.isdir():continue
                     base=PurePosixPath(m.name).name
                     if base not in wanted and base not in apps:continue
                     _require(m.isfile() and not m.issym() and not m.islnk() and m.size<=128*1024*1024)

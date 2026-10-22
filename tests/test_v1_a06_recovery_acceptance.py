@@ -2,11 +2,13 @@
 import copy
 import importlib.util
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import subprocess
 import stat
+import tarfile
 import sys
 import tempfile
 import unittest
@@ -126,6 +128,22 @@ class ArchiveAliasContracts(unittest.TestCase):
                        '../../Frameworks/core/../core/wamd'):
             with self.subTest(target=target),self.assertRaises(ValueError):
                 self.check_archive(target)
+
+    def test_linux_bundle_directory_is_not_an_executable_and_missing_binary_still_fails(self):
+        for include_executable in (True,False):
+            with tempfile.TemporaryDirectory() as folder:
+                root=Path(folder);name='candidate.tar.gz';bundle='wam-regtest-headless'
+                with tarfile.open(root/name,'w:gz') as archive:
+                    directory=tarfile.TarInfo(bundle);directory.type=tarfile.DIRTYPE;archive.addfile(directory)
+                    files={bundle+'/_internal/core/wamd':b'parser-core-fixture'}
+                    if include_executable:files[bundle+'/'+bundle]=b'parser-app-fixture'
+                    for path,raw in files.items():
+                        member=tarfile.TarInfo(path);member.size=len(raw);archive.addfile(member,io.BytesIO(raw))
+                manifest={'platform':'linux-x86_64-headless','files_sha256':{name:'unused-parser-fixture'},
+                    'core_sha256':{'wamd':hashlib.sha256(b'parser-core-fixture').hexdigest()}}
+                if include_executable:self.assertTrue(_payloads(root,manifest))
+                else:
+                    with self.assertRaises(ValueError):_payloads(root,manifest)
 
 
 if __name__=='__main__':unittest.main()
