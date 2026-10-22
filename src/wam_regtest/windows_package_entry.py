@@ -76,6 +76,8 @@ def main():
                     raise ValueError('BUNDLE_SCANNER_HTTP_REQUIRED')
                 if proof['owned_startup_component']['status'] != 'REAL_CORE_OWNED_STARTUP_COLLISION_AND_PREAUTH_PASS':
                     raise ValueError('BUNDLE_OWNED_STARTUP_ACCEPTANCE_REQUIRED')
+                if proof['graceful_shutdown_component']['status'] != 'REAL_CORE_GRACEFUL_SHUTDOWN_CONTINUITY_PASS':
+                    raise ValueError('BUNDLE_GRACEFUL_SHUTDOWN_ACCEPTANCE_REQUIRED')
                 if (proof['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS'
                         or proof['mining_account_component']['native_gui_depths'] != [99,100,101]
                         or proof['mining_account_component']['owned_http_matches_independent_cli'] is not True):
