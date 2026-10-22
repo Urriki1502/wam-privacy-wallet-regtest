@@ -141,6 +141,8 @@ def run(args):
             raise WalletSessionError('LINUX_GRACEFUL_SHUTDOWN_ACCEPTANCE_REQUIRED')
         if result['index_recovery_component']['status'] != 'REAL_CORE_EXPLICIT_INDEX_RECOVERY_WALLET_CONTINUITY_PASS':
             raise WalletSessionError('LINUX_INDEX_RECOVERY_ACCEPTANCE_REQUIRED')
+        if getattr(sys,'frozen',False) and result['frozen_operator_recovery_component']['status'] != 'ACTUAL_FROZEN_OPERATOR_REINDEX_ENTRY_PASS':
+            raise WalletSessionError('LINUX_OPERATOR_ENTRY_ACCEPTANCE_REQUIRED')
         if args.report:
             with args.report.open('x') as output:json.dump(result,output,indent=2);output.write('\n')
         print('LINUX_NATIVE_REAL_REGTEST_COMPLETED')

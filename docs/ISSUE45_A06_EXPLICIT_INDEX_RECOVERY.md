@@ -98,3 +98,11 @@ All three standalone entries now import the operator dispatcher absolutely;
 standalone-context source contracts and NEW exact-head frozen artifacts are
 required. The original2753bed operator FAIL receipts are preserved, not waived
 by its successful internal Core/Cocoa E2E. This repair remains in the same task.
+
+Frozen acceptance additionally launches its OWN final executable through the
+operator flag (no system Python), checks missing approval is nonmutating, then
+requires approved exit0 and independently restarts/reads the exact101 chain and
+original funded Core wallet. The child mode returns before the CI probe, so it
+cannot recurse. This runs inside existing Mac/Windows/Linux desktop/headless
+frozen jobs, including the Windows DPI runs; receipt is required before package
+publication. Native source probes cannot satisfy this distinct entry gate.

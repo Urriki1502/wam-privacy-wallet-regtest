@@ -223,6 +223,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
     startup_receipt=None
     graceful_receipt=None
     index_recovery_receipt=None
+    frozen_operator_receipt=None
     if (wallet_e2e or rpc_contention_e2e) and not interactive_demo:
         from .startup_probe import prove_startup
         startup_receipt=prove_startup(core_dir)
@@ -232,6 +233,9 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
         graceful_receipt=prove_graceful_shutdown(core_dir)
         from .index_recovery_probe import prove_index_recovery
         index_recovery_receipt=prove_index_recovery(core_dir,wsp_source)
+        if getattr(sys,'frozen',False):
+            from .frozen_operator_probe import prove_frozen_operator
+            frozen_operator_receipt=prove_frozen_operator(core_dir)
         from .mining_probe import probe_core_mining
         mining_receipt=probe_core_mining(core_dir,wsp_source,gui=(wallet_e2e or mining_gui_e2e))
     from .owned_start import disposable_core
@@ -373,6 +377,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 "owned_startup_component": startup_receipt,
                 "graceful_shutdown_component": graceful_receipt,
                 "index_recovery_component": index_recovery_receipt,
+                "frozen_operator_recovery_component": frozen_operator_receipt,
                 "owned_startup_attempts": owned.attempts,
                 "startup_auth_after_native_endpoint_proof": True,
                 "owned_http_read_component": owned_rpc_receipt,
