@@ -226,6 +226,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
     startup_receipt=None
     graceful_receipt=None
     index_recovery_receipt=None
+    managed_gui_receipt=None
     bip39_index_recovery_receipt=None
     frozen_operator_receipt=None
     if (wallet_e2e or rpc_contention_e2e) and not interactive_demo:
@@ -249,6 +250,9 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
         a06_receipt=require_components(graceful_receipt,index_recovery_receipt,
             bip39_index_recovery_receipt,frozen_operator_receipt,
             platform=bip39_index_recovery_receipt['platform'],frozen=bool(getattr(sys,'frozen',False)))
+        if wallet_e2e or mining_gui_e2e:
+            from .managed_lifecycle_probe import prove_managed_gui_lifecycle
+            managed_gui_receipt=prove_managed_gui_lifecycle(core_dir,wsp_source)
         from .mining_probe import probe_core_mining
         mining_receipt=probe_core_mining(core_dir,wsp_source,gui=(wallet_e2e or mining_gui_e2e))
     from .owned_start import disposable_core
@@ -390,6 +394,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 verify(Path(__file__).resolve().parents[2],source_snapshot)
                 a06_source=public_receipt(source_snapshot,source_head=os.environ.get('WAM_SOURCE_HEAD'))
             return {
+                "managed_gui_lifecycle_component": managed_gui_receipt,
                 "a06_recovery_acceptance": a06_receipt,
                 "a06_native_source_provenance": a06_source,
                 "mining_account_component": mining_receipt,

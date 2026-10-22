@@ -64,6 +64,9 @@ def main() -> int:
         if sys.argv[1:2]==['--recover-owned-regtest-index']:
             from wam_regtest.supervisor_cli import recover_from_bundle
             return recover_from_bundle(core_dir,sys.argv[2:])
+        if sys.argv[1:2]==['--ci-managed-gui-child']:
+            from wam_regtest.managed_lifecycle_probe import child
+            return child(core_dir,source,sys.argv[2:])
         from wam_regtest.core import smoke_real_core
         # Hidden CI mode: actual signed Core + genuine BIP352 + Qt screen.
         cocoa_mode = sys.argv[1:] == ["--ci-real-core-wallet-cocoa"]

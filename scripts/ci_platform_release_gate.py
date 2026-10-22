@@ -9,6 +9,7 @@ import zipfile
 import tarfile
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
 from wam_regtest.a06_artifact_gate import assess_artifacts
+from wam_regtest.q05_artifact_gate import assess_gui_artifacts
 
 
 def assess(needs, required, *, conditional_core_build=False):
@@ -75,6 +76,9 @@ def main():
             required, conditional_core_build=args.conditional_core_build))
         receipt['a06_recovery_acceptance']=assess_artifacts(args.evidence_root,args.platform,head,checkout)
         receipt['historical_no_reindex_sigkill_is_release_requirement']=False
+        receipt['managed_gui_lifecycle_acceptance']=assess_gui_artifacts(args.evidence_root,args.platform,head,checkout)
+        if receipt['managed_gui_lifecycle_acceptance']['status'] != 'PASS':
+            receipt['status']='FAIL'
     except (ValueError, KeyError, TypeError, AttributeError, OSError, zipfile.BadZipFile, tarfile.TarError):
         receipt.update(status='FAIL', error_code='CI_GATE_INPUT_OR_SOURCE_UNVERIFIED')
     # Never rewrite an earlier result or infer PASS from a missing/skipped job.
