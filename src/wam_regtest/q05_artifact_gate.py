@@ -8,6 +8,7 @@ REQUIRED_CASES = {
     'unlocked-gui-kill-authenticated-reopen', 'supervisor-lock-contention',
     'external-attach-has-no-lifecycle-authority', 'wrong-version-gui',
     'core-kill-while-spend-unlocked', 'concurrent-wallet-gui-denied',
+    'unavailable-core-fresh-gui-locked', 'index-loss-gui-wallet-locked-before-reindex',
 }
 
 

@@ -46,7 +46,7 @@ def child(core, source, argv):
     ap = argparse.ArgumentParser()
     ap.add_argument('--root', type=Path, required=True)
     ap.add_argument('--mode', choices=('read', 'spend', 'wrong-password',
-        'decline', 'wait-locked', 'wait-unlocked', 'wait-spend-core', 'blocked-spend', 'attached', 'wrong-version'), required=True)
+        'decline', 'wait-locked', 'wait-unlocked', 'wait-spend-core', 'blocked-spend', 'attached', 'wrong-version', 'not-ready'), required=True)
     ap.add_argument('--report', required=True)
     ap.add_argument('--confirm-disposable-regtest-gui-probe', action='store_true')
     args = ap.parse_args(argv)
@@ -136,12 +136,17 @@ def child(core, source, argv):
     try:
         window.request_sync()
         settle()
-        if mode == 'wrong-version':
-            assert not window._managed_authenticated and window._managed_state == 'error'
+        if mode in ('wrong-version', 'not-ready'):
+            if mode == 'wrong-version':
+                assert not window._managed_authenticated and window._managed_state == 'error'
+                assert not window.start_core.isEnabled() and not window.stop_core.isEnabled()
+            else:
+                assert window._managed_authenticated and window._managed_state in ('syncing','recovery-needed','stopped')
             assert window._snapshot is None and window._spend_window is None
-            assert not window.start_core.isEnabled() and not window.stop_core.isEnabled()
-            assert not window.spend_wallet_button.isEnabled()
-            proof = {'status': 'PASS', 'unsupported_selected_profile_version_denied_before_rpc': True,
+            assert not window.view_wallet_button.isEnabled() and not window.spend_wallet_button.isEnabled()
+            assert not window.create_wallet_button.isEnabled() and not window.create_bip39_wallet_button.isEnabled()
+            proof = {'status': 'PASS', 'unsupported_selected_profile_version_denied_before_rpc': mode == 'wrong-version',
+                'visible_core_state': window._managed_state, 'no_wallet_adopted': True,
                 'native_gui': True, 'frozen': bool(getattr(sys, 'frozen', False)),
                 'binary_sha256': hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest(),
                 'synthetic_rpc': False, 'mainnet_allowed': False, 'qt_platform': app.platformName()}
@@ -458,9 +463,13 @@ def prove_managed_gui_lifecycle(core, source):
             time.sleep(.1)
         assert fixture_read(root, report.replace('.enc', '-unavailable.enc')) == b'FAIL_CLOSED\n'
         gui.kill(); assert gui.wait(timeout=15) != 0
-        owner.status(); owner.start(); children.append(owner.process)
+        owner.status()
+        cases['unavailable-core-fresh-gui-locked'] = run_child(root,core,source,'not-ready')
+        owner.start(); children.append(owner.process)
         observed = owner.read.attest()['blocks']
         assert observed < fixture['height'], 'Q05_CORE_INDEX_LOSS_NOT_OBSERVED'
+        cases['index-loss-gui-wallet-locked-before-reindex'] = run_child(root,core,source,'not-ready')
+        assert anchor.read() == anchored and _vault_files(directory) == sealed
         close_owner()
         try:
             recover_index(root, core, expected_height=fixture['height'], expected_tip=fixture['tip'])

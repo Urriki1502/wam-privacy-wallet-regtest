@@ -26,7 +26,9 @@ Linux its already provisioned independent root witness. No owner anchor is read.
 Scenarios: wrong password, declined unlock, original read and spending view,
 clean close/reopen, actual locked GUI kill/reopen, owned Core kill while a locked
 GUI is running, its existing30s background authenticated fail-closed status
-cycle, missing recovery consent, explicit exact-target reindex, original GUI
+cycle, fresh GUI attachment with Core unavailable and with observed lost-index/IBD
+Core (all wallet/create controls stay disabled), missing recovery consent,
+explicit exact-target reindex, original GUI
 wallet reopen, genuine supervisor supervisor and concurrent-wallet GUI lock contention, actual attached GUI with
 no lifecycle controls and read-only stop refusal. An unsupported-version COPY
 of public profile metadata is denied in the real GUI before RPC; the original
