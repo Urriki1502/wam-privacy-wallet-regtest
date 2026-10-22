@@ -22,7 +22,7 @@ def main():
             raise ValueError('LINUX_BUNDLE_NATIVE_CRYPTO_DENIED')
         args=sys.argv[1:]
         if args[:1]==['--recover-owned-regtest-index']:
-            from .supervisor_cli import recover_from_bundle
+            from wam_regtest.supervisor_cli import recover_from_bundle
             return recover_from_bundle(core,args[1:])
         if not args:
             # Desktop launch still requires independent manifest approval and

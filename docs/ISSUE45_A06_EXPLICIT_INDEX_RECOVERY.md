@@ -90,3 +90,11 @@ connections fail immediately; no wallet read/write/sign/broadcast retry is added
 The original checkpoint must pass the complete unchanged attestation before any
 completion. Targets above the existing1million-block read limit are refused
 before mutation. This is an observation correction, not an accepted stale tip.
+
+Independent actual downloaded Mac CLI QA at2753bed additionally found that the
+new flag branch used a package-relative import in the standalone PyInstaller
+script. Self-check and internal CI Core probes did not cover that entry branch.
+All three standalone entries now import the operator dispatcher absolutely;
+standalone-context source contracts and NEW exact-head frozen artifacts are
+required. The original2753bed operator FAIL receipts are preserved, not waived
+by its successful internal Core/Cocoa E2E. This repair remains in the same task.

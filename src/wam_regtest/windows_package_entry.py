@@ -69,7 +69,7 @@ def main():
         with tempfile.TemporaryDirectory(prefix='wam-win-frozen-') as t:
             stage=Path(t).absolute()/'core';_stage_original_core(core,stage)
             if recovery:
-                from .supervisor_cli import recover_from_bundle
+                from wam_regtest.supervisor_cli import recover_from_bundle
                 return recover_from_bundle(stage,sys.argv[2:])
             proof=smoke_real_core(stage,explicit_consent=True,wsp_source=source,
                 wsp_payment_e2e=True,security_e2e=ci,wallet_e2e=ci,

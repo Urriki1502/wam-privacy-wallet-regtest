@@ -12,6 +12,35 @@ from wam_regtest.supervisor_store import create_once
 
 
 class RecoveryScope(unittest.TestCase):
+    def test_pyinstaller_standalone_entries_have_no_package_relative_imports(self):
+        # These FILES are PyInstaller script inputs (__main__, no __package__),
+        # unlike imported core modules. Native/frozen Core tests are separate.
+        import ast
+        root=Path(__file__).resolve().parents[1]/'src/wam_regtest'
+        for name in ('package_entry.py','windows_package_entry.py','linux_package_entry.py'):
+            imports=[node for node in ast.walk(ast.parse((root/name).read_text()))
+                if isinstance(node,ast.ImportFrom) and node.level]
+            self.assertEqual(imports,[],name)
+
+    def test_actual_mac_entry_main_context_dispatches_both_operator_flags(self):
+        import ast
+        import io
+        from unittest.mock import Mock
+        path=Path(__file__).resolve().parents[1]/'src/wam_regtest/package_entry.py'
+        tree=ast.parse(path.read_text())
+        # Load definitions with exactly the standalone import context, but do
+        # not invoke bundle/Core/crypto in this supplemental dispatch contract.
+        tree.body=[node for node in tree.body if not isinstance(node,ast.If)]
+        ns={'__name__':'__main__','__package__':None,'__file__':str(path)}
+        exec(compile(tree,str(path),'exec'),ns)
+        core=Path('/bundled-core');source=Path('/bundled-source')
+        ns['_check_bundle']=lambda:(core,source)
+        flags=['--root','/not-opened','--expected-height','101','--expected-tip','a'*64,
+               '--confirm-regtest-managed-core','--confirm-reindex-existing-regtest']
+        with patch.object(sys,'argv',['wallet','--recover-owned-regtest-index',*flags]), \
+             patch('wam_regtest.supervisor_cli.recover_from_bundle',return_value=23) as dispatch:
+            self.assertEqual(ns['main'](),23)
+            dispatch.assert_called_once_with(core,flags)
     def test_reindex_only_moving_tip_reopens_a_fresh_fully_attested_read(self):
         from types import SimpleNamespace
         from unittest.mock import Mock,MagicMock

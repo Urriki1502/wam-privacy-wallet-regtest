@@ -62,7 +62,7 @@ def main() -> int:
     try:
         core_dir, source = _check_bundle()
         if sys.argv[1:2]==['--recover-owned-regtest-index']:
-            from .supervisor_cli import recover_from_bundle
+            from wam_regtest.supervisor_cli import recover_from_bundle
             return recover_from_bundle(core_dir,sys.argv[2:])
         from wam_regtest.core import smoke_real_core
         # Hidden CI mode: actual signed Core + genuine BIP352 + Qt screen.
