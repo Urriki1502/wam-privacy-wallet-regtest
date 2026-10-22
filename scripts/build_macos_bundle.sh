@@ -113,8 +113,14 @@ except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
 print("MACOS_APP_STAGE=FROZEN_BUNDLE_SELF_CHECK_PASS", flush=True)
 print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_START", flush=True)
 try:
-    subprocess.run([binary, "--ci-real-core-gui"], timeout=240, check=True)
-except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
+    # Graceful shutdown, two crash/reindex cases and the real self-executable
+    # operator route now precede the existing wallet/security/reorg suite.
+    # Keep a finite whole-suite budget, matching Linux frozen qualification;
+    # individual recovery deadlines and every required assertion stay intact.
+    subprocess.run([binary, "--ci-real-core-gui"], timeout=900, check=True)
+except subprocess.TimeoutExpired:
+    sys.exit("MACOS_FROZEN_REAL_CORE_GUI_TIMEOUT")
+except (subprocess.CalledProcessError, OSError):
     sys.exit("MACOS_FROZEN_REAL_CORE_GUI_DENIED")
 import json
 from pathlib import Path
