@@ -1,3 +1,29 @@
+# Current acceptance continuation — 22 October 2026
+
+Latest reviewed parent is Draft119 `3adb5a2fc7f2181dec8f3eb1de6cbe65be66a7e5`.
+The historical PR67 and earlier handoffs below do not override the current live
+Issue45/PR graph or `outputs/codex_acceptance_resume.json` audit checkpoint.
+Acquire a NEW engineering lease before work; refuse concurrent engineering.
+No automatic merge or schedule recreation. Main/RC1 and independent branches
+remain unchanged. REGTEST only, qualified pinned v0.1.11; v0.1.12 candidate-only.
+
+Current unit: `audit/issue45-bip39-index-recovery-20261022`, one Q05 acceptance
+coverage task on119. Existing native/frozen recovery gates covered legacy WSP32,
+while managed BIP39 12/24 crash/reindex had only independent Mac evidence. Add
+real64-byte wallet/native-anchor/IPC/signed+uncertain/history checks to the same
+native and final frozen test invocations. Exact source/frozen Windows/Linux
+qualification is pending until new CI/artifacts are independently inspected.
+See [scoped test and limitations](ISSUE45_BIP39_INDEX_RECOVERY.md).
+
+Preserve Draft114 and all original A06 FAIL evidence; original no-reindex gate
+and all three release aggregates remain mandatory and nonpassing. New explicit
+recovery components never waive those gates or claim full Q05/V1 acceptance.
+A fresh parent1191001-block observer reproduces fail-closed HTTP response-read
+TimeoutError. No global timeout/retry relaxation, automatic reindex, data erasure,
+post-crash mining, transaction replay, anchor reset or upstream Core change.
+
+# Historical records — superseded checkpoints follow
+
 # Latest PR67 regression fix — native image exit race
 
 41c14bd all10CI SUCCESS is verified predecessor evidence. Successor6f973d1

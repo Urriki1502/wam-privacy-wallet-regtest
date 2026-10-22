@@ -125,6 +125,8 @@ def main() -> int:
                 raise ValueError('BUNDLE_GRACEFUL_SHUTDOWN_ACCEPTANCE_REQUIRED')
             if result['index_recovery_component']['status'] != 'REAL_CORE_EXPLICIT_INDEX_RECOVERY_WALLET_CONTINUITY_PASS':
                 raise ValueError('BUNDLE_INDEX_RECOVERY_ACCEPTANCE_REQUIRED')
+            if result['bip39_index_recovery_component']['status'] != 'REAL_BIP39_MANAGED_INDEX_RECOVERY_PASS':
+                raise ValueError('FROZEN_BIP39_INDEX_RECOVERY_DENIED')
             if result['frozen_operator_recovery_component']['status'] != 'ACTUAL_FROZEN_OPERATOR_REINDEX_ENTRY_PASS':
                 raise ValueError('BUNDLE_OPERATOR_ENTRY_ACCEPTANCE_REQUIRED')
             if (result['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS'
