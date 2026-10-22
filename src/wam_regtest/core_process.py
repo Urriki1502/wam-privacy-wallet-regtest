@@ -55,13 +55,19 @@ def _image(pid,directory):
 
 def _linux_socket(pid,server_port,client_port):
     root=Path(f'/proc/{pid}');inodes=set()
-    for fd in (root/'fd').iterdir():
+    try:descriptors=tuple((root/'fd').iterdir())
+    except OSError:
+        raise CoreBindingError('RPC_NATIVE_SOCKET_PROOF_DENIED') from None
+    for fd in descriptors:
         try:target=os.readlink(fd)
         except OSError:continue
         m=re.fullmatch(r'socket:\[([0-9]+)\]',target)
         if m:inodes.add(m[1])
     local=f'0100007F:{server_port:04X}';remote=f'0100007F:{client_port:04X}'
-    for line in (root/'net/tcp').read_text().splitlines()[1:]:
+    try:table=(root/'net/tcp').read_text()
+    except OSError:
+        raise CoreBindingError('RPC_NATIVE_SOCKET_PROOF_DENIED') from None
+    for line in table.splitlines()[1:]:
         fields=line.split()
         if len(fields)>=10 and fields[1]==local and fields[2]==remote and fields[3]=='01' and fields[9] in inodes:return True
     return False
