@@ -19,7 +19,8 @@ class SupervisorStorageError(ValueError):pass
 
 
 def _name(name):
-    if type(name) is not str or name not in CONTROL_NAMES:
+    if type(name) is not str or (name not in CONTROL_NAMES and not re.fullmatch(
+            r'supervisor\.recovery\.[0-9a-f]{32}\.(intent|complete)', name)):
         raise SupervisorStorageError("SUPERVISOR_STORAGE_NAME_DENIED")
 
 

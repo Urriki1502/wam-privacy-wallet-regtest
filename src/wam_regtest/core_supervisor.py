@@ -156,10 +156,13 @@ def _fresh_directory(root):
 
 class CoreSupervisor:
     """One owner's Core process with stable, protected chain across GUI exits."""
-    def __init__(self,root,core,*,authorized=False):
+    def __init__(self,root,core,*,authorized=False,existing_only=False):
         if authorized is not True:
             raise ManagedCoreError("MANAGED_EXPLICIT_CONSENT_REQUIRED")
         self.root=root;self.core=core
+        if type(existing_only) is not bool:
+            raise ManagedCoreError('MANAGED_EXISTING_PROFILE_SCOPE_DENIED')
+        self._existing_only=existing_only
         self.node,self.cli,self.receipt=verified_core_paths(core)
         from .wsp_live import REGTEST_GENESIS
         self.genesis=REGTEST_GENESIS
@@ -188,9 +191,11 @@ class CoreSupervisor:
                     raise ManagedCoreError("MANAGED_CORE_VERSION_OR_CHAIN_MISMATCH")
                 # Authenticate the complete original chain/profile first.
                 # Separate IPC tokens do not touch wallet keys or Core files.
-                scan_token,spend_token=_scoped_ipc_tokens(self.root,allow_upgrade=True)
+                scan_token,spend_token=_scoped_ipc_tokens(self.root,allow_upgrade=not self._existing_only)
                 self.listener=_listener(profile["control_port"])
             except ManagedCoreError as error:
+                if self._existing_only:
+                    raise
                 # A corrupt or partially written profile is NEVER treated as a
                 # fresh install. Provision only when both named files are absent.
                 if error.args!=("MANAGED_PROFILE_READ_DENIED",):raise
@@ -231,6 +236,9 @@ class CoreSupervisor:
             self._scan_seen=set()
             self._spend_secret=spend_token
             self._spend_seen=set()
+            from .owned_recovery import pending_recoveries
+            if pending_recoveries(self.root,self.profile):
+                self._state='recovery-needed'
             # No token, password, datadir path or RPC port in public evidence.
         except BaseException:
             self.close_listener();self.stack.close();raise
@@ -286,6 +294,9 @@ class CoreSupervisor:
 
     def start(self,*,timeout=90):
         with self._lock:
+            from .owned_recovery import pending_recoveries
+            if pending_recoveries(self.root,self.profile):
+                raise ManagedCoreError('MANAGED_INDEX_RECOVERY_PENDING')
             if (type(timeout) is not int or not 10<=timeout<=240
                     or self.process is not None
                     or self._consecutive_failures>=3):

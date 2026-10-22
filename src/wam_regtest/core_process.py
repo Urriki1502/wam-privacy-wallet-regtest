@@ -123,7 +123,9 @@ def _windows_socket(pid,server_port,client_port,directory):
 
 
 class OwnedCoreBinding:
-    def __init__(self,process,core,directory):
+    def __init__(self,process,core,directory,*,reindex=False):
+        if type(reindex) is not bool:
+            raise CoreBindingError('RPC_OWNED_REINDEX_SCOPE_DENIED')
         if type(process) is not subprocess.Popen or type(core) is not type(Path()) or type(directory) is not type(Path()):
             raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
         self.process,self.core,self.directory=process,core,directory
@@ -132,12 +134,14 @@ class OwnedCoreBinding:
         # immediately after it. This closes the obvious replace-during-hash
         # window without ever rehashing Core/CLI for ordinary RPC requests.
         # This is NOT fd-to-loader attestation against compromised same-UID/OS.
-        if (type(process.args) is not list or len(process.args)!=3
+        if (type(process.args) is not list or len(process.args)!=(4 if reindex else 3)
                 or type(process.args[0]) is not str):
             raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
         requested=Path(process.args[0])
+        expected=[str(requested),f'-datadir={directory}','-daemon=0']
+        if reindex:expected.append('-reindex=1')
         if (requested.parent!=core or requested.name not in ('wamd','wamd.exe')
-                or process.args!=[str(requested),f'-datadir={directory}','-daemon=0']
+                or process.args!=expected
                 or process.poll() is not None):
             raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
         expected_cli=core/('wam-cli.exe' if requested.name=='wamd.exe' else 'wam-cli')
@@ -150,7 +154,7 @@ class OwnedCoreBinding:
             raise CoreBindingError('RPC_EXECUTABLE_CHANGED_DURING_VERIFY')
         self._files=after
         self._image_path=str(self.node.resolve(strict=True))
-        self._argv=[str(self.node),f'-datadir={directory}','-daemon=0']
+        self._argv=expected
         self._assert_image()
 
     def __repr__(self):return '<OwnedCoreBinding public-process-scope>'

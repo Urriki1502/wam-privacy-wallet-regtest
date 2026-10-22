@@ -61,6 +61,9 @@ def _check_bundle() -> tuple[Path, Path]:
 def main() -> int:
     try:
         core_dir, source = _check_bundle()
+        if sys.argv[1:2]==['--recover-owned-regtest-index']:
+            from wam_regtest.supervisor_cli import recover_from_bundle
+            return recover_from_bundle(core_dir,sys.argv[2:])
         from wam_regtest.core import smoke_real_core
         # Hidden CI mode: actual signed Core + genuine BIP352 + Qt screen.
         cocoa_mode = sys.argv[1:] == ["--ci-real-core-wallet-cocoa"]
@@ -120,6 +123,10 @@ def main() -> int:
                 raise ValueError('BUNDLE_OWNED_STARTUP_ACCEPTANCE_REQUIRED')
             if result['graceful_shutdown_component']['status'] != 'REAL_CORE_GRACEFUL_SHUTDOWN_CONTINUITY_PASS':
                 raise ValueError('BUNDLE_GRACEFUL_SHUTDOWN_ACCEPTANCE_REQUIRED')
+            if result['index_recovery_component']['status'] != 'REAL_CORE_EXPLICIT_INDEX_RECOVERY_WALLET_CONTINUITY_PASS':
+                raise ValueError('BUNDLE_INDEX_RECOVERY_ACCEPTANCE_REQUIRED')
+            if result['frozen_operator_recovery_component']['status'] != 'ACTUAL_FROZEN_OPERATOR_REINDEX_ENTRY_PASS':
+                raise ValueError('BUNDLE_OPERATOR_ENTRY_ACCEPTANCE_REQUIRED')
             if (result['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS'
                     or result['mining_account_component']['native_gui_depths'] != [99,100,101]
                     or result['mining_account_component']['owned_http_matches_independent_cli'] is not True):

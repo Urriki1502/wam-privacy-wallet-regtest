@@ -61,12 +61,16 @@ def main():
     if sys.stdout is None:sys.stdout=io.StringIO()
     if sys.stderr is None:sys.stderr=io.StringIO()
     ci=sys.argv[1:]==['--ci-real-core-wallet']
+    recovery=sys.argv[1:2]==['--recover-owned-regtest-index']
     try:
-        if sys.argv[1:] and not ci:raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
+        if sys.argv[1:] and not (ci or recovery):raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
         core,source=_resources()
         from wam_regtest.core import smoke_real_core
         with tempfile.TemporaryDirectory(prefix='wam-win-frozen-') as t:
             stage=Path(t).absolute()/'core';_stage_original_core(core,stage)
+            if recovery:
+                from wam_regtest.supervisor_cli import recover_from_bundle
+                return recover_from_bundle(stage,sys.argv[2:])
             proof=smoke_real_core(stage,explicit_consent=True,wsp_source=source,
                 wsp_payment_e2e=True,security_e2e=ci,wallet_e2e=ci,
                 operational_demo=not ci,interactive_demo=not ci)
@@ -78,6 +82,10 @@ def main():
                     raise ValueError('BUNDLE_OWNED_STARTUP_ACCEPTANCE_REQUIRED')
                 if proof['graceful_shutdown_component']['status'] != 'REAL_CORE_GRACEFUL_SHUTDOWN_CONTINUITY_PASS':
                     raise ValueError('BUNDLE_GRACEFUL_SHUTDOWN_ACCEPTANCE_REQUIRED')
+                if proof['index_recovery_component']['status'] != 'REAL_CORE_EXPLICIT_INDEX_RECOVERY_WALLET_CONTINUITY_PASS':
+                    raise ValueError('BUNDLE_INDEX_RECOVERY_ACCEPTANCE_REQUIRED')
+                if proof['frozen_operator_recovery_component']['status'] != 'ACTUAL_FROZEN_OPERATOR_REINDEX_ENTRY_PASS':
+                    raise ValueError('BUNDLE_OPERATOR_ENTRY_ACCEPTANCE_REQUIRED')
                 if (proof['mining_account_component']['status'] != 'REAL_CORE_REGTEST_MINING_ACCOUNT_MATURITY_PASS'
                         or proof['mining_account_component']['native_gui_depths'] != [99,100,101]
                         or proof['mining_account_component']['owned_http_matches_independent_cli'] is not True):
