@@ -98,6 +98,12 @@ def _listener(port):
     try:
         if sys.platform=="win32":
             sock.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
+        else:
+            # A completed authenticated IPC exchange can leave our accepted
+            # socket in TIME_WAIT after the supervisor exits. Permit that
+            # port to restart; never permit a second live listener. Do not
+            # enable SO_REUSEPORT. Windows retains exclusive native binding.
+            sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
         sock.bind(("127.0.0.1",port))
         sock.listen(8)
         sock.settimeout(1.0)
