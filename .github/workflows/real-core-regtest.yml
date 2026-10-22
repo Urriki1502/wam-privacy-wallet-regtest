@@ -420,3 +420,69 @@ jobs:
             real-regtest-security-preview.png
           if-no-files-found: error
           retention-days: 14
+
+  a06-core-crash:
+    name: Independent A06 fresh-write Core continuity
+    runs-on: macos-15
+    timeout-minutes: 12
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: arm64
+      - name: Require native ARM64 and existing GnuPG intake
+        run: |
+          test "$(uname -m)" = arm64
+          if ! command -v gpg >/dev/null; then brew install gnupg; fi
+      - name: Install exact source closure and authenticate original Core pair
+        run: |
+          python -m pip install -e . -e ./wsp-upstream
+          python -m pip check
+          python -m wam_regtest.release --platform macos-arm64 --destination core
+      - name: Unchanged A06 test (FAIL remains release blocking)
+        run: python scripts/issue45_a06_fresh_crash.py --core-dir core --wsp-source wsp-upstream --confirm-disposable-regtest --output macos-arm64-a06-core-crash-evidence.json
+      - name: Preserve unchanged A06 failure receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-a06-core-crash-${{ github.event.pull_request.head.sha || github.sha }}
+          path: macos-arm64-a06-core-crash-evidence.json
+          if-no-files-found: error
+          retention-days: 14
+  platform-release-gate:
+    name: Release acceptance gate (macos-arm64; A06 mandatory)
+    if: always()
+    needs: [real-wamd, native-app-dmg, a06-core-crash]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require every applicable native, frozen and A06 gate
+        env:
+          JOB_RESULTS: ${{ toJSON(needs) }}
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python scripts/ci_platform_release_gate.py --platform macos-arm64 --required-jobs '["real-wamd", "native-app-dmg", "a06-core-crash"]' --output platform-release-gate.json
+      - name: Publish FAIL as well as PASS without promoting a release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-ci-release-gate-${{ github.event.pull_request.head.sha || github.sha }}
+          path: platform-release-gate.json
+          if-no-files-found: error
+          retention-days: 14
