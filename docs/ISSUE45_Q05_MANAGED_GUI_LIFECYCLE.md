@@ -27,8 +27,12 @@ Scenarios: wrong password, declined unlock, original read and spending view,
 clean close/reopen, actual locked GUI kill/reopen, owned Core kill while a locked
 GUI is running, its existing30s background authenticated fail-closed status
 cycle, missing recovery consent, explicit exact-target reindex, original GUI
-wallet reopen, genuine supervisor lock contention and attached read-only stop
-refusal. Datadir identity, genesis/profile, native anchor/ciphertext, receive,
+wallet reopen, genuine supervisor supervisor and concurrent-wallet GUI lock contention, actual attached GUI with
+no lifecycle controls and read-only stop refusal. An unsupported-version COPY
+of public profile metadata is denied in the real GUI before RPC; the original
+Core/profile remain untouched. Core loss during an unlocked spending GUI also
+disables spending via background sync; that still-live owner can close normally,
+then explicitly restart the owned Core and authenticate the original wallet. Datadir identity, genesis/profile, native anchor/ciphertext, receive,
 balance/history and irreversible signed/uncertain reservations are compared.
 No re-mining or rebroadcast restores the chain or mempool.
 
@@ -60,7 +64,8 @@ Source policy tests are supplemental only. Exact-head CI/artifacts and the Draft
 body are authoritative for current results; local precommit runs are not final
 frozen or cross-platform qualification.
 
-Wrong-version GUI end-to-end, Core death while the spending GUI is unlocked,
-safe authorized crash-residue resolution, broader interruption windows and
+A genuine differently versioned running binary is never launched/approved by
+this pinned acceptance; unsupported selected profile rejection is the narrower
+negative test. Safe authorized crash-residue resolution, broader interruption windows and
 physical/independent DEV/security review remain explicitly unqualified. The
 prior1001-block RPC TimeoutError evidence is preserved. Full Q05/V1 remain HOLD.

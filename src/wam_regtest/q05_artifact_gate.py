@@ -7,7 +7,7 @@ REQUIRED_CASES = {
     'locked-gui-kill-reopen', 'core-kill-explicit-recovery-original-gui',
     'unlocked-gui-kill-authenticated-reopen', 'supervisor-lock-contention',
     'external-attach-has-no-lifecycle-authority', 'wrong-version-gui',
-    'core-kill-while-spend-unlocked',
+    'core-kill-while-spend-unlocked', 'concurrent-wallet-gui-denied',
 }
 
 
@@ -23,7 +23,9 @@ def check_component(proof, platform, frozen, binaries=()):
             or proof.get('automatic_rebroadcast') is not False
             or proof.get('owner_data_accessed') is not False
             or proof.get('full_v1_qualified') is not False
-            or not REQUIRED_CASES <= set(proof.get('cases', {}))):
+            or type(proof.get('cases')) is not dict
+            or not REQUIRED_CASES <= set(proof['cases'])
+            or any(type(row) is not dict for row in proof['cases'].values())):
         raise ValueError('Q05_GUI_EVIDENCE_REQUIRED')
     pair = core_pair(platform)
     if (proof.get('wamd_sha256') != pair[0] or proof.get('wam_cli_sha256') != pair[1]

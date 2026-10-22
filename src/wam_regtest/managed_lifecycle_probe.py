@@ -46,7 +46,7 @@ def child(core, source, argv):
     ap = argparse.ArgumentParser()
     ap.add_argument('--root', type=Path, required=True)
     ap.add_argument('--mode', choices=('read', 'spend', 'wrong-password',
-        'decline', 'wait-locked', 'wait-unlocked', 'blocked-spend'), required=True)
+        'decline', 'wait-locked', 'wait-unlocked', 'wait-spend-core', 'blocked-spend', 'attached', 'wrong-version'), required=True)
     ap.add_argument('--report', required=True)
     ap.add_argument('--confirm-disposable-regtest-gui-probe', action='store_true')
     args = ap.parse_args(argv)
@@ -58,6 +58,8 @@ def child(core, source, argv):
             or not root.parent.name.startswith('wam-q05-gui-')):
         raise ValueError('Q05_DISPOSABLE_FIXTURE_REQUIRED')
     _root(root)
+    from .wsp_live import _pinned_source
+    _pinned_source(source)
     fixture = json.loads(read_exact(root, MARKER))
     if (fixture.get('schema') != 'wam-q05-disposable-gui/v1'
             or fixture.get('network') != 'regtest'
@@ -85,6 +87,26 @@ def child(core, source, argv):
     from PySide6.QtWidgets import QApplication, QInputDialog, QMessageBox
     from shiboken6 import delete, isValid
     app = qt_application()
+    if args.mode == 'attached':
+        from .attached_core_gui import ExistingCoreReadOnlyWindow
+        window = ExistingCoreReadOnlyWindow(core, root/'chain', fixture['core_pid'])
+        window.show(); window.request_refresh()
+        deadline = time.monotonic()+30
+        while window._worker is not None and time.monotonic()<deadline:
+            app.processEvents(); time.sleep(.01)
+        assert window._worker is None and window._proof is not None
+        assert (window._proof['height'], window._proof['tip']) == (fixture['height'], fixture['tip'])
+        assert not hasattr(window, 'start_core') and not hasattr(window, 'stop_core')
+        assert not hasattr(window, '_managed_root') and not hasattr(window, 'recover_index')
+        proof = {'status': 'PASS', 'attached_gui_has_no_managed_lifecycle': True,
+            'native_gui': True, 'frozen': bool(getattr(sys, 'frozen', False)),
+            'binary_sha256': hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest(),
+            'synthetic_rpc': False, 'mainnet_allowed': False, 'qt_platform': app.platformName()}
+        assert window.grab().save(str(root/(args.report+'.png')))
+        create_once(root, args.report, (json.dumps(proof,sort_keys=True)+'\n').encode('ascii'))
+        assert window.close(); delete(window); app.processEvents(); shutdown_qt()
+        custody.anchor = native_anchor
+        return 0
     window = ManagedCoreWindow(root, core_dir=core, wsp_source=source)
     window.show()
     mode = args.mode
@@ -114,6 +136,19 @@ def child(core, source, argv):
     try:
         window.request_sync()
         settle()
+        if mode == 'wrong-version':
+            assert not window._managed_authenticated and window._managed_state == 'error'
+            assert window._snapshot is None and window._spend_window is None
+            assert not window.start_core.isEnabled() and not window.stop_core.isEnabled()
+            assert not window.spend_wallet_button.isEnabled()
+            proof = {'status': 'PASS', 'unsupported_selected_profile_version_denied_before_rpc': True,
+                'native_gui': True, 'frozen': bool(getattr(sys, 'frozen', False)),
+                'binary_sha256': hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest(),
+                'synthetic_rpc': False, 'mainnet_allowed': False, 'qt_platform': app.platformName()}
+            assert window.grab().save(str(root/(args.report+'.png')))
+            create_once(root,args.report,(json.dumps(proof,sort_keys=True)+'\n').encode('ascii'))
+            assert window.close(); delete(window); app.processEvents(); shutdown_qt()
+            return 0
         assert window._managed_authenticated and window._managed_state == 'ready'
         assert window.session is None and window._snapshot is None
         assert not window.dashboard.go_send.isEnabled()
@@ -170,8 +205,17 @@ def child(core, source, argv):
                     assert not window.spend_wallet_button.isEnabled()
                     create_once(root, args.report.replace('.enc', '-unavailable.enc'), b'FAIL_CLOSED\n')
                     observed = True
+                if mode == 'wait-spend-core' and spend.session.faulted and spend._worker is None and not observed:
+                    assert spend._snapshot is None
+                    assert not spend.sign_button.isEnabled() and not spend.broadcast_button.isEnabled()
+                    create_once(root, args.report.replace('.enc', '-unavailable.enc'), b'FAIL_CLOSED\n')
+                    observed = True
+                if mode == 'wait-spend-core' and observed and (root/args.report.replace('.enc', '-close.enc')).exists():
+                    assert fixture_read(root,args.report.replace('.enc', '-close.enc')) == b'EXPLICIT_NORMAL_GUI_CLOSE\n'
+                    break
                 time.sleep(.01)
-            raise ValueError('Q05_EXPECTED_GUI_TERMINATION_NOT_INJECTED')
+            else:
+                raise ValueError('Q05_EXPECTED_GUI_TERMINATION_NOT_INJECTED')
         if spend is not None:
             assert spend.close()
             settle()
@@ -341,7 +385,7 @@ def prove_managed_gui_lifecycle(core, source):
         fixture = {'schema': 'wam-q05-disposable-gui/v1', 'network': 'regtest',
             'genesis': REGTEST_GENESIS, 'mainnet_allowed': False,
             'core_sha256': receipt['wamd_sha256'], 'cli_sha256': receipt['wam_cli_sha256'],
-            'wallet_id': anchor.wallet_id, 'height': snap.height, 'tip': snap.tip,
+            'wallet_id': anchor.wallet_id, 'height': snap.height, 'tip': snap.tip, 'core_pid': owner.process.pid,
             'receive_digest': digest(code), 'reservations_digest': digest(rows),
             'history_digest': digest([row.__dict__ for row in snap.history]),
             'confirmed_atoms': snap.confirmed_atoms}
@@ -360,8 +404,8 @@ def prove_managed_gui_lifecycle(core, source):
         # Core lease; never stop or adopt the active process to resolve it.
         try:
             contender = CoreSupervisor(root, core, authorized=True, existing_only=True)
-        except ValueError:
-            pass
+        except ValueError as error:
+            assert error.args == ('SUPERVISOR_STORAGE_LEASE_BUSY',)
         else:
             contender.close_listener(); contender.stack.close()
             raise AssertionError('Q05_SECOND_SUPERVISOR_ADMITTED')
@@ -375,12 +419,28 @@ def prove_managed_gui_lifecycle(core, source):
             else: raise AssertionError('Q05_EXTERNAL_ATTACH_STOP_ALLOWED')
         assert owner.process.poll() is None
         cases['external-attach-has-no-lifecycle-authority'] = {'status': 'PASS', 'attached_stop_refused': True}
+        attached_proof = run_child(root, core, source, 'attached')
+        assert attached_proof['status'] == 'PASS'
+        cases['external-attach-has-no-lifecycle-authority']['gui_receipt'] = attached_proof
+        # A private COPY of public supervisor metadata selects an unsupported
+        # version. Never mutate the original profile, live Core or wallet.
+        invalid_parent = temporary/'wam-q05-gui-version'
+        custody.create_directory(invalid_parent)
+        invalid_root = invalid_parent/root.name
+        custody.create_directory(invalid_root)
+        bad_profile = json.loads(profile); bad_profile['version'] = 'v0.1.12'
+        from .supervisor_store import create_once as publish_profile
+        publish_profile(invalid_root,'supervisor.profile',json.dumps(bad_profile).encode('ascii'))
+        fixture_write(invalid_root,MARKER,json.dumps(fixture).encode('ascii'))
+        cases['wrong-version-gui'] = run_child(invalid_root,core,source,'wrong-version')
+        assert owner.process.poll() is None and read_exact(root,'supervisor.profile') == profile
         for mode in ('wrong-password', 'decline', 'read', 'spend', 'read'):
             proof = run_child(root, core, source, mode)
             assert proof['status'] == ('DENIED' if mode in ('wrong-password', 'decline') else 'PASS')
             cases['normal-'+mode] = proof
             assert anchor.read() == anchored and _vault_files(directory) == sealed
             assert not (directory/'wallet-runtime.sqlite').exists()
+            assert set(_read_cli(prefix+['getrawmempool'])) == mempool
         gui, report, proof = run_child(root, core, source, 'wait-locked', wait=True)
         children.append(gui)
         gui.kill(); assert gui.wait(timeout=15) != 0
@@ -434,8 +494,34 @@ def prove_managed_gui_lifecycle(core, source):
         # Reindex may drop mempool. It must NEVER rebroadcast to repair it.
         after_mempool = set(_read_cli(prefix+['getrawmempool']))
         assert after_mempool <= mempool
+        # The live spending GUI must also fail closed on Core loss; normal
+        # close of THIS still-live session owns its runtime cleanup authority.
+        gui, report, proof = run_child(root, core, source, 'wait-spend-core', wait=True)
+        children.append(gui)
+        owner.binding._assert_image(); owner.process.kill()
+        assert owner.process.wait(timeout=15) != 0
+        deadline = time.monotonic()+40
+        while not (root/report.replace('.enc','-unavailable.enc')).exists() and time.monotonic()<deadline:
+            assert gui.poll() is None; time.sleep(.1)
+        assert fixture_read(root,report.replace('.enc','-unavailable.enc')) == b'FAIL_CLOSED\n'
+        fixture_write(root,report.replace('.enc','-close.enc'),b'EXPLICIT_NORMAL_GUI_CLOSE\n')
+        assert gui.wait(timeout=15) == 0
+        assert not (directory/'wallet-runtime.sqlite').exists()
+        assert anchor.read() == anchored and _vault_files(directory) == sealed
+        owner.status(); owner.start(); children.append(owner.process)
+        # Previous explicit reindex finished with a verified graceful stop;
+        # no new blocks were mined. Require exact original persisted chain.
+        assert (owner.read.attest()['blocks'], owner.read.attest()['bestblockhash']) == (fixture['height'],fixture['tip'])
+        assert run_child(root,core,source,'spend')['status'] == 'PASS'
+        cases['core-kill-while-spend-unlocked'] = {'status':'PASS',
+            'background_sync_failed_closed':True,'normal_close_by_live_session':True,
+            'original_wallet_reopened_after_explicit_owned_start':True,'ready_receipt':proof}
+        after_mempool = set(_read_cli(prefix+['getrawmempool']))
         gui, report, proof = run_child(root, core, source, 'wait-unlocked', wait=True)
         children.append(gui)
+        contended = run_child(root,core,source,'blocked-spend')
+        assert contended['status'] == 'DENIED' and gui.poll() is None
+        cases['concurrent-wallet-gui-denied'] = {'status':'PASS','second_writer_refused':True}
         gui.kill(); assert gui.wait(timeout=15) != 0
         runtime = directory/'wallet-runtime.sqlite'
         assert runtime.is_file()
@@ -450,8 +536,6 @@ def prove_managed_gui_lifecycle(core, source):
             'safe_refusal': True, 'original_residue_anchor_vault_preserved': True, 'ready_receipt': proof,
             'signed_uncertain_reservations_digest': fixture['reservations_digest'],
             'operator_recovery_not_implemented': True}
-        cases['wrong-version-gui'] = {'status': 'PENDING', 'reason': 'NO_GENUINE_WRONG_VERSION_FIXTURE'}
-        cases['core-kill-while-spend-unlocked'] = {'status': 'PENDING', 'reason': 'CRASH_RESIDUE_RECOVERY_UNRESOLVED'}
         return {'schema': 'wam-q05-managed-gui-lifecycle/v1', 'status': 'FAIL',
             'platform': receipt['platform'], 'execution': 'FROZEN' if getattr(sys, 'frozen', False) else 'SOURCE_NATIVE',
             'core_version': 'v0.1.11', 'wamd_sha256': receipt['wamd_sha256'],
@@ -466,7 +550,7 @@ def prove_managed_gui_lifecycle(core, source):
             'synthetic_rpc': False, 'mainnet_allowed': False,
             'full_q05_qualified': False, 'full_v1_qualified': False,
             'physical_accepted': False, 'dev_reviewed': False,
-            'pending_scenarios': ['wrong-version GUI end-to-end', 'Core crash while GUI spend session is unlocked', 'authorized crash-residue resolution']}
+            'pending_scenarios': ['genuine unqualified running Core version GUI scenario (unsupported selected profile refused without contacting it)', 'authorized crash-residue resolution']}
     finally:
         if session is not None: session.close()
         for process in children:
