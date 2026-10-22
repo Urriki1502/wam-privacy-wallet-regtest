@@ -80,3 +80,13 @@ Original isolated no-reindex A06 and release gates are retained; this does not
 silently turn old FAIL into PASS or qualify full Q05/V1/physical acceptance.
 Host power-loss and actual termination halfway through reindex are not proven
 by native journal negative tests. Independent security review remains pending.
+
+Linux's initial run at2101882 rejected a tip that moved between read RPCs while
+the index was being rebuilt. Global RPC attestation remains unchanged. Only
+explicit recovery may discard positively classified warmup/busy/moving-tip
+observations and open a NEW natively attested read connection within its fixed
+deadline. Authentication, genesis, version, config, unknown refusal and uncertain
+connections fail immediately; no wallet read/write/sign/broadcast retry is added.
+The original checkpoint must pass the complete unchanged attestation before any
+completion. Targets above the existing1million-block read limit are refused
+before mutation. This is an observation correction, not an accepted stale tip.

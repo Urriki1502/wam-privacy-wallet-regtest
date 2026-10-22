@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import socket
 import stat
 import subprocess
 import sys
@@ -26,7 +27,7 @@ class IndexRecoveryError(ValueError):
 
 
 def _target(height,tip):
-    if (type(height) is not int or not 1<=height<=100000000
+    if (type(height) is not int or not 1<=height<=1000000
             or type(tip) is not str or re.fullmatch('[0-9a-f]{64}',tip) is None):
         raise IndexRecoveryError('RECOVERY_EXACT_ORIGINAL_CHAIN_REQUIRED')
 
@@ -103,6 +104,47 @@ def pending_recoveries(root,profile):
     return pending
 
 
+def _wait_reindexed(owner,port,height,tip,deadline):
+    """Bounded fresh observations during reindex, never stale wallet reads.
+
+    Global RPC attestation is unchanged. Only positively classified warmup,
+    busy or a moving tip can discard this recovery-only read connection.
+    Every replacement proves native image/endpoint/network again before auth.
+    No writes or ordinary wallet session are retried here.
+    """
+    from .json_rpc import ManagedReadRpc,RpcError
+    rejected=0
+    while time.monotonic()<deadline:
+        if owner.process.poll() is not None:
+            raise IndexRecoveryError('RECOVERY_OWNED_CORE_EXITED')
+        owner.binding._assert_image()
+        try:
+            if owner.read is None:
+                try:
+                    probe=socket.create_connection(('127.0.0.1',port),timeout=.25)
+                except (ConnectionRefusedError,socket.timeout):
+                    time.sleep(.05);continue
+                with probe:owner.binding.assert_socket(probe)
+                owner.read=ManagedReadRpc(owner.core,owner.directory,
+                    authorized_readonly=True,binding=owner.binding)
+                if owner.read._connection.port!=port:
+                    raise IndexRecoveryError('RECOVERY_CONFIG_PORT_CHANGED')
+            info=owner.read.attest()
+            if ((info['blocks'],info['bestblockhash'])==(height,tip)
+                    and owner.read.call('getblockhash',[height])==tip):
+                if time.monotonic()>=deadline:
+                    break
+                return rejected
+        except RpcError as error:
+            if owner.read is not None:owner.read.close();owner.read=None
+            if error.args not in (('RPC_TIP_IDENTITY_DENIED',),
+                    ('RPC_CORE_WARMUP',),('RPC_NODE_BUSY',)):
+                raise
+            rejected+=1
+        time.sleep(.1)
+    raise IndexRecoveryError('RECOVERY_ORIGINAL_HEIGHT_TIP_NOT_RESTORED')
+
+
 def recover_index(root,core,*,expected_height,expected_tip,authorized_reindex=False,timeout=180):
     # Consent and exact original checkpoint are mandatory before even opening
     # a profile. No implicit acceptance of a low/empty newly indexed chain.
@@ -154,16 +196,7 @@ def recover_index(root,core,*,expected_height,expected_tip,authorized_reindex=Fa
         owner.process=child
         owner.binding=OwnedCoreBinding(child,core,owner.directory,reindex=True)
         deadline=time.monotonic()+timeout
-        owner.read=owner._ready(deadline,port)
-        while time.monotonic()<deadline:
-            info=owner.read.attest()
-            if (info['blocks'],info['bestblockhash'])==(expected_height,expected_tip):
-                break
-            time.sleep(.1)
-        else:
-            raise IndexRecoveryError('RECOVERY_ORIGINAL_HEIGHT_TIP_NOT_RESTORED')
-        if owner.read.call('getblockhash',[expected_height])!=expected_tip:
-            raise IndexRecoveryError('RECOVERY_ORIGINAL_CHAIN_NOT_VERIFIED')
+        rejected=_wait_reindexed(owner,port,expected_height,expected_tip,deadline)
         if identity!=(owner.directory.stat().st_dev,owner.directory.stat().st_ino):
             raise IndexRecoveryError('RECOVERY_DATADIR_IDENTITY_CHANGED')
         owner.shutdown()
@@ -185,6 +218,7 @@ def recover_index(root,core,*,expected_height,expected_tip,authorized_reindex=Fa
             'wamd_sha256':owner.receipt['wamd_sha256'],'wam_cli_sha256':owner.receipt['wam_cli_sha256'],
             'operator_reindex_approved':True,'same_datadir_identity':True,
             'protected_profile_config_unchanged':True,
+            'rejected_transient_read_observations':rejected,
             'automatic_broadcast':False,'post_crash_mining':False,'mainnet_allowed':False}
     finally:
         try:

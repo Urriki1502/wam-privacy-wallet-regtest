@@ -12,6 +12,51 @@ from wam_regtest.supervisor_store import create_once
 
 
 class RecoveryScope(unittest.TestCase):
+    def test_reindex_only_moving_tip_reopens_a_fresh_fully_attested_read(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock,MagicMock
+        from wam_regtest.owned_recovery import _wait_reindexed
+        from wam_regtest.json_rpc import RpcError
+        binding=Mock();binding._assert_image=Mock();binding.assert_socket=Mock()
+        owner=SimpleNamespace(process=Mock(),binding=binding,read=None,
+            core=Path('/not-opened-core'),directory=Path('/not-opened-chain'))
+        owner.process.poll.return_value=None
+        reader=Mock();reader._connection.port=12345
+        reader.attest.return_value={'blocks':101,'bestblockhash':'a'*64}
+        reader.call.return_value='a'*64
+        with patch('wam_regtest.json_rpc.ManagedReadRpc',side_effect=[RpcError('RPC_TIP_IDENTITY_DENIED'),reader]) as create, \
+             patch('wam_regtest.owned_recovery.socket.create_connection',return_value=MagicMock()), \
+             patch('wam_regtest.owned_recovery.time.monotonic',return_value=0), \
+             patch('wam_regtest.owned_recovery.time.sleep'):
+            self.assertEqual(_wait_reindexed(owner,12345,101,'a'*64,10),1)
+            self.assertEqual(create.call_count,2)
+            self.assertEqual(binding.assert_socket.call_count,2)
+            reader.call.assert_called_once_with('getblockhash',[101])
+
+    def test_reindex_never_retries_auth_genesis_version_or_uncertain_connections(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock,MagicMock
+        from wam_regtest.owned_recovery import _wait_reindexed
+        from wam_regtest.json_rpc import RpcError
+        for code in ('RPC_AUTHENTICATION_DENIED','RPC_GENESIS_DENIED','RPC_CONFIG_CHANGED',
+                     'RPC_VERSION_CAPABILITY_DENIED','RPC_CORE_READ_REFUSED','RPC_CONNECTION_UNCERTAIN_READ_FAILED'):
+            binding=Mock();binding._assert_image=Mock();binding.assert_socket=Mock()
+            owner=SimpleNamespace(process=Mock(),binding=binding,read=None,
+                core=Path('/not-opened-core'),directory=Path('/not-opened-chain'))
+            owner.process.poll.return_value=None
+            with patch('wam_regtest.json_rpc.ManagedReadRpc',side_effect=RpcError(code)) as create, \
+                 patch('wam_regtest.owned_recovery.socket.create_connection',return_value=MagicMock()), \
+                 patch('wam_regtest.owned_recovery.time.monotonic',return_value=0):
+                with self.assertRaises(RpcError):_wait_reindexed(owner,12345,101,'a'*64,10)
+                create.assert_called_once()
+
+    def test_expired_reindex_budget_cannot_publish_a_checkpoint(self):
+        from wam_regtest.owned_recovery import _wait_reindexed
+        with patch('wam_regtest.owned_recovery.time.monotonic',return_value=10), \
+             patch('wam_regtest.json_rpc.ManagedReadRpc') as create:
+            with self.assertRaisesRegex(IndexRecoveryError,'^RECOVERY_ORIGINAL_HEIGHT_TIP_NOT_RESTORED$'):
+                _wait_reindexed(None,12345,101,'a'*64,10)
+            create.assert_not_called()
     def test_reindex_argv_is_not_accepted_by_an_ordinary_binding(self):
         import subprocess
         from wam_regtest.core_process import OwnedCoreBinding,CoreBindingError
@@ -30,7 +75,7 @@ class RecoveryScope(unittest.TestCase):
             for approval in (False,None,1,'yes'):
                 with self.assertRaisesRegex(IndexRecoveryError,'^RECOVERY_EXPLICIT_EXISTING_REGTEST_REINDEX_APPROVAL_REQUIRED$'):
                     recover_index(None,None,expected_height=101,expected_tip='a'*64,authorized_reindex=approval)
-            for height,tip in ((True,'a'*64),(0,'a'*64),(101,None),(101,'a'*63),(101,'A'*64)):
+            for height,tip in ((True,'a'*64),(0,'a'*64),(1000001,'a'*64),(101,None),(101,'a'*63),(101,'A'*64)):
                 with self.assertRaisesRegex(IndexRecoveryError,'^RECOVERY_EXACT_ORIGINAL_CHAIN_REQUIRED$'):
                     recover_index(None,None,expected_height=height,expected_tip=tip,authorized_reindex=True)
             for timeout in (True,0,241,float('inf')):
@@ -114,7 +159,7 @@ class NativeRecoveryJournal(unittest.TestCase):
         with self.assertRaisesRegex(IndexRecoveryError,'^RECOVERY_JOURNAL_ORPHAN_DENIED$'):
             pending_recoveries(self.root,self.profile)
 
-    def test_chain_hardlinks_and_posix_symlinks_are_denied_before_core_mutation(self):
+    def test_chain_hardlinks_are_denied_before_core_mutation(self):
         import os
         from wam_regtest.owned_recovery import _chain_tree
         first=self.root/'original.dat';first.write_bytes(b'disposable-public-block-fixture')
