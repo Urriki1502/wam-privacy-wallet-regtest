@@ -171,9 +171,9 @@ def adopt_managed_next_published(root, core_dir, wsp_source, password, *,
     """
     if authorized is not True or confirm_anchor_advance is not True:
         _deny("K09_ADOPTION_OPERATOR_CONSENT_DENIED")
-    if (type(root) is not Path or not root.is_absolute()
-            or type(core_dir) is not Path or not core_dir.is_absolute()
-            or type(wsp_source) is not Path or not wsp_source.is_absolute()
+    if (type(root) is not type(Path()) or not root.is_absolute()
+            or type(core_dir) is not type(Path()) or not core_dir.is_absolute()
+            or type(wsp_source) is not type(Path()) or not wsp_source.is_absolute()
             or type(password) is not bytes or not 12 <= len(password) <= 1024):
         _deny("K09_ADOPTION_INPUT_DENIED")
     try:
