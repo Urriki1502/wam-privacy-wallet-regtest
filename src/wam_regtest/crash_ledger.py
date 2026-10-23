@@ -121,3 +121,36 @@ def compare_candidate_ledger(anchored, candidate):
         "ledger_reconciled_with_core": False,
         "safe_to_discard_proven": False,
     }
+
+
+def require_irreversible_continuity(anchored, candidate):
+    """K-09 adoption gate: a later checkpoint cannot forget irreversible locks.
+
+    This is deliberately stricter than normal scanner history reconciliation.
+    An existing signed/uncertain/broadcast/manual reservation retains its
+    outpoint, token and creation time. Only forward transitions are allowed.
+    This does NOT grant anchor, unlock, signing or broadcast authority.
+    """
+    if (type(anchored) is not _LedgerProjection
+            or type(candidate) is not _LedgerProjection
+            or candidate.account_identity != anchored.account_identity):
+        raise LedgerEvidenceError("K09_ADOPTION_ACCOUNT_IDENTITY_DENIED")
+
+    future = {(row[0], row[1]): row
+              for row in candidate.reservation_records}
+    transitions = {
+        "signed": frozenset(("signed", "uncertain", "broadcast")),
+        "uncertain": frozenset(("uncertain", "broadcast")),
+        "broadcast": frozenset(("broadcast",)),
+        "manual": frozenset(("manual",)),
+    }
+    for previous in anchored.reservation_records:
+        if previous[3] not in _IRREVERSIBLE:
+            continue
+        current = future.get((previous[0], previous[1]))
+        if (current is None
+                or current[2] != previous[2]
+                or current[4] != previous[4]
+                or current[3] not in transitions[previous[3]]):
+            raise LedgerEvidenceError("K09_ADOPTION_IRREVERSIBLE_LOCK_DENIED")
+    return True
