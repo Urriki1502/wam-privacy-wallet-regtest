@@ -83,8 +83,8 @@ class RuntimeLease:
             import fcntl
             from .supervisor_store import _posix_dir, _posix_file
             with _posix_dir(root) as dfd:
-                try: fd = _posix_file(dfd, name, create=True)
-                except FileExistsError: fd = _posix_file(dfd, name)
+                try: fd = _posix_file(dfd, name, create=True,nonblocking=True)
+                except FileExistsError: fd = _posix_file(dfd, name,nonblocking=True)
                 try:
                     if os.fstat(fd).st_size != 0: raise ValueError
                     fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -163,7 +163,7 @@ def _image(directory):
     else:
         from .supervisor_store import _posix_dir, _posix_file
         with _posix_dir(directory) as dfd:
-            fd=_posix_file(dfd,path.name)
+            fd=_posix_file(dfd,path.name,nonblocking=True)
             try:
                 before=os.fstat(fd)
                 if not 512<=before.st_size<=LIMIT: raise ValueError

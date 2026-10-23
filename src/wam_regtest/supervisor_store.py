@@ -46,9 +46,10 @@ def _posix_dir(root):
     finally:os.close(fd)
 
 
-def _posix_file(fd,name,*,create=False):
+def _posix_file(fd,name,*,create=False,nonblocking=False):
     flags=os.O_RDWR if create else os.O_RDONLY
     flags|=os.O_NOFOLLOW|os.O_CLOEXEC
+    if nonblocking: flags|=os.O_NONBLOCK
     if create:flags|=os.O_CREAT|os.O_EXCL
     descriptor=os.open(name,flags,0o600,dir_fd=fd)
     try:

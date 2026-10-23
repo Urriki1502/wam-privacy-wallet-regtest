@@ -110,5 +110,15 @@ class ExactRuntimeContracts(unittest.TestCase):
         with patch.dict(os.environ,{'TMPDIR':str(self.root),'TEMP':str(self.root)}):
             self.assertEqual(_lease_root(),original)
 
+    @unittest.skipUnless(sys.platform=='darwin','native POSIX nonregular recovery refusal')
+    def test_fifo_residue_is_refused_without_blocking_worker(self):
+        with tempfile.TemporaryDirectory(prefix='wam-runtime-nonregular-') as tmp:
+            root=Path(tmp).resolve(); root.chmod(0o700)
+            os.mkfifo(root/'wallet-runtime.sqlite',0o600)
+            script='from pathlib import Path; from wam_regtest.runtime_recovery import _image; _image(Path('+repr(str(root))+')).__enter__()'
+            result=subprocess.run([sys.executable,'-c',script],capture_output=True,timeout=5)
+            self.assertNotEqual(result.returncode,0)
+            self.assertTrue((root/'wallet-runtime.sqlite').exists())
+
 
 if __name__=='__main__': unittest.main()
