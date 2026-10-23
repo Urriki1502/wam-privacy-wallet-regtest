@@ -61,13 +61,17 @@ def main():
     if sys.stdout is None:sys.stdout=io.StringIO()
     if sys.stderr is None:sys.stderr=io.StringIO()
     ci=sys.argv[1:]==['--ci-real-core-wallet']
+    child_probe=sys.argv[1:2]==['--ci-managed-gui-child']
     recovery=sys.argv[1:2]==['--recover-owned-regtest-index']
     try:
-        if sys.argv[1:] and not (ci or recovery):raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
+        if sys.argv[1:] and not (ci or recovery or child_probe):raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
         core,source=_resources()
         from wam_regtest.core import smoke_real_core
         with tempfile.TemporaryDirectory(prefix='wam-win-frozen-') as t:
             stage=Path(t).absolute()/'core';_stage_original_core(core,stage)
+            if child_probe:
+                from wam_regtest.managed_lifecycle_probe import child
+                return child(stage,source,sys.argv[2:])
             if recovery:
                 from wam_regtest.supervisor_cli import recover_from_bundle
                 return recover_from_bundle(stage,sys.argv[2:])
@@ -118,12 +122,24 @@ def main():
             elif proof.get('interactive_demo_closed_cleanly') is not True:
                 raise ValueError('WIN_BUNDLE_SHUTDOWN_DENIED')
         return 0
-    except Exception:
-        # No arbitrary exception text, traceback, secret or node log escapes.
+    except Exception as error:
+        # Windowed children have no console. No modal dialog may conceal a
+        # failing opted-in CI child; fixed sites only, never exception text.
+        if ci or child_probe:
+            import secrets
+            from wam_regtest.acceptance_failure import failure_site
+            kinds={'AssertionError','ValueError','CoreSmokeError','WalletSessionError',
+                   'ManagedClientError','AttachedCoreError','RuntimeError'}
+            record={'schema':'wam-redacted-acceptance-failure/v1',
+                'platform':'windows-x64','site':failure_site(error),
+                'kind':type(error).__name__ if type(error).__name__ in kinds else 'ERROR',
+                'mainnet_allowed':False}
+            with Path('q05-failure-'+secrets.token_hex(16)+'.json').open('x',encoding='utf8') as stream:
+                json.dump(record,stream,sort_keys=True);stream.write('\n')
         if ci:
             with Path('windows-packaged-wallet-denied.json').open('x',encoding='utf8') as out:
                 json.dump({'status':'WIN_BUNDLE_DENIED','mainnet_allowed':False},out)
-        else:
+        elif not child_probe and not recovery:
             from PySide6.QtWidgets import QApplication,QMessageBox
             app=QApplication.instance() or QApplication([])
             QMessageBox.critical(None,'WAM Privacy Wallet REGTEST',

@@ -533,7 +533,8 @@ class WalletSession:
         with self._lock:
             if not self.locked:
                 raise WalletSessionError("WALLET_ALREADY_UNLOCKED")
-            ring,scanner=self.vault.restore(self.runtime,password)
+            ring,scanner=self.vault.restore(self.runtime,password,
+                native_private_runtime=getattr(self,'_native_private_runtime',False))
             self.ring,self.scanner,self._password=ring,scanner,password
             self.faulted=False
             try:

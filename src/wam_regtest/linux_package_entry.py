@@ -21,6 +21,9 @@ def main():
         if shared_point((1).to_bytes(32,'big'),pub(2))!=pub(2) or len(hash160(pub(31)))!=20:
             raise ValueError('LINUX_BUNDLE_NATIVE_CRYPTO_DENIED')
         args=sys.argv[1:]
+        if args[:1]==['--ci-managed-gui-child']:
+            from wam_regtest.managed_lifecycle_probe import child
+            return child(core,source,args[1:])
         if args[:1]==['--recover-owned-regtest-index']:
             from wam_regtest.supervisor_cli import recover_from_bundle
             return recover_from_bundle(core,args[1:])
