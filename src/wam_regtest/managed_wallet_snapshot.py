@@ -42,6 +42,7 @@ def read_managed_wallet_snapshot(root,core_dir,wsp_source,password,*,
             or type(password) is not bytes or not 12<=len(password)<=1024):
         raise ManagedWalletSnapshotError("MANAGED_WALLET_READ_INPUT_DENIED")
     ring=scanner=rpc=None
+    runtime_lease=None
     # The one established native wallet-runtime path is create-only on restore.
     # Do not use arbitrary supplied paths, temporary fallbacks or user data.
     runtime=root/"chain"/"wallet-runtime.sqlite"
@@ -79,6 +80,8 @@ def read_managed_wallet_snapshot(root,core_dir,wsp_source,password,*,
             raise ManagedWalletSnapshotError("MANAGED_WALLET_PROFILE_MISMATCH")
         anchor=custody.anchor(profile["wallet_id"],keychain)
         vault=CheckpointVault(folder,anchor,wsp_source)
+        from .runtime_recovery import RuntimeLease, enroll
+        runtime_lease=RuntimeLease(profile['wallet_id'])
         with anchor.lease():
             record=anchor.read()
             if record is None or record!=vault._expected:
@@ -87,7 +90,8 @@ def read_managed_wallet_snapshot(root,core_dir,wsp_source,password,*,
             info=rpc.attest()
             if info["chain"]!="regtest" or info["blocks"]!=before["height"]:
                 raise ManagedWalletSnapshotError("MANAGED_WALLET_LIVE_CORE_CHANGED")
-            ring,scanner=vault.restore(runtime,password)
+            enroll(data_dir,profile['wallet_id'],password)
+            ring,scanner=vault.restore(runtime,password,native_private_runtime=True)
             restored=True
             if ring.accounts()!=scanner.accounts or not ring.accounts():
                 raise ManagedWalletSnapshotError("MANAGED_WALLET_ACCOUNTS_CHANGED")
@@ -149,3 +153,4 @@ def read_managed_wallet_snapshot(root,core_dir,wsp_source,password,*,
         # restored. An unexplained pre-existing file is NEVER touched.
         if restored:
             runtime.unlink(missing_ok=True)
+        if runtime_lease is not None: runtime_lease.close()

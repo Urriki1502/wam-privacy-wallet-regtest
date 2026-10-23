@@ -17,6 +17,7 @@ class ManagedWalletSpendError(ValueError):pass
 
 
 class ManagedWalletSession(WalletSession):
+    _native_private_runtime=True
     @classmethod
     def reopen_spending(cls,root,core_dir,source,password,*,authorized=False):
         if (authorized is not True or type(root) is not type(Path())
@@ -27,6 +28,7 @@ class ManagedWalletSession(WalletSession):
             raise ManagedWalletSpendError("MANAGED_SPENDING_CONSENT_REQUIRED")
         ring=scanner=reader=None
         session=None
+        runtime_lease=None
         runtime=root/"chain"/"wallet-runtime.sqlite"
         try:
             from .managed_wallet_binding import verify_locked_wallet
@@ -63,13 +65,16 @@ class ManagedWalletSession(WalletSession):
                 raise ManagedWalletSpendError("MANAGED_SPEND_CORE_IDENTITY_DENIED")
             anchor=custody.anchor(identity["wallet_id"])
             vault=CheckpointVault(folder,anchor,source)
+            from .runtime_recovery import RuntimeLease, enroll
+            runtime_lease=RuntimeLease(identity['wallet_id'])
             with anchor.lease():
                 record=anchor.read()
                 if record is None or vault._expected!=record:
                     raise ManagedWalletSpendError("MANAGED_SPEND_ANCHOR_STALE")
                 reader=ManagedScanRpc(root,authorized_readonly=True)
                 reader.attest()
-                ring,scanner=vault.restore(runtime,password)
+                enroll(directory,identity['wallet_id'],password)
+                ring,scanner=vault.restore(runtime,password,native_private_runtime=True)
                 if ring.accounts()!=scanner.accounts or not ring.accounts():
                     raise ManagedWalletSpendError("MANAGED_SPEND_ACCOUNT_MISMATCH")
                 # K-06: no Core .dat private keys, duplicated WSP accounts,
@@ -84,6 +89,8 @@ class ManagedWalletSession(WalletSession):
                 session=cls(core_dir,directory,source,ring,scanner,vault,
                             password,"",reader)
                 session._managed_root=root
+                session._runtime_lease=runtime_lease
+                runtime_lease=None
                 session._verified_core_receipt=dict(receipt)
                 session._core_member_paths=(node,cli)
                 session._core_member_metadata=pair_metadata
@@ -94,7 +101,7 @@ class ManagedWalletSession(WalletSession):
                         or control(root,"status",timeout=3)!=before):
                     raise ManagedWalletSpendError("MANAGED_SPEND_LIVE_CHAIN_UNVERIFIED")
                 return session
-        except Exception:
+        except Exception as error:
             # Preserve ambiguous signed/uncertain reservations, original
             # encrypted checkpoint and any unexplained crash remnants.
             if session is not None:
@@ -110,7 +117,17 @@ class ManagedWalletSession(WalletSession):
                 if scanner is not None:
                     runtime.unlink(missing_ok=True)
             if reader is not None:reader.close()
-            raise ManagedWalletSpendError("MANAGED_SPEND_SESSION_OPEN_DENIED") from None
+            from .vault import VaultError
+            from .runtime_recovery import RuntimeRecoveryError
+            code='MANAGED_SPEND_SESSION_OPEN_DENIED'
+            if type(error) is VaultError and error.args==('VAULT_FRESH_RUNTIME_REQUIRED',):
+                code='MANAGED_RUNTIME_RECOVERY_REQUIRED'
+            elif type(error) is RuntimeRecoveryError:
+                if error.args==('RUNTIME_SESSION_BUSY',): code='MANAGED_WALLET_SESSION_BUSY'
+                elif error.args==('RUNTIME_UNKNOWN_OWNER_REVIEW_REQUIRED',): code='MANAGED_RUNTIME_OWNER_REVIEW_REQUIRED'
+            raise ManagedWalletSpendError(code) from None
+        finally:
+            if runtime_lease is not None: runtime_lease.close()
 
     def _read(self):
         from .managed_scan_client import ManagedScanRpc
@@ -202,6 +219,24 @@ class ManagedWalletSession(WalletSession):
         # but leaves the isolated read IPC handle available for explicit
         # passphrase-based unlock. No spend-capable session is kept.
         super().lock()
+        lease=getattr(self,'_runtime_lease',None)
+        if lease is not None:
+            lease.close()
+            self._runtime_lease=None
+
+    def unlock(self,password):
+        from .runtime_recovery import RuntimeLease, enroll
+        with self._lock:
+            if not self.locked:
+                raise ManagedWalletSpendError('WALLET_ALREADY_UNLOCKED')
+            lease=RuntimeLease(self.vault.anchor.wallet_id)
+            self._runtime_lease=lease
+            try:
+                enroll(self.datadir,self.vault.anchor.wallet_id,password)
+                return super().unlock(password)
+            except Exception:
+                lease.close(); self._runtime_lease=None
+                raise
 
     def close(self):
         self.lock()

@@ -33,6 +33,15 @@ def check_component(proof, platform, frozen, binaries=()):
             or frozen and proof.get('frozen_binary_sha256') not in binaries):
         raise ValueError('Q05_GUI_PROVENANCE_DENIED')
     failures = []
+    recovery=proof['cases']['unlocked-gui-kill-authenticated-reopen']
+    if recovery.get('status')=='PASS':
+        if (any(recovery.get(k) is not True for k in ('explicit_recovery_and_separate_unlock',
+                'original_residue_retained_encrypted',
+                'missing_consent_wrong_password_declined_recovery_denied','original_anchor_vault_unchanged'))
+                or recovery.get('recovery_gui_receipt',{}).get('remains_locked') is not True
+                or recovery.get('recovery_gui_receipt',{}).get('status')!='PASS'
+                or recovery.get('reopened_gui_receipt',{}).get('status')!='PASS'):
+            raise ValueError('Q05_GUI_AUTHORIZED_RECOVERY_EVIDENCE_REQUIRED')
     for case in sorted(REQUIRED_CASES):
         expected = 'DENIED' if case in ('normal-wrong-password', 'normal-decline') else 'PASS'
         if proof['cases'][case].get('status') != expected:

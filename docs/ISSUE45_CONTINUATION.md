@@ -6,9 +6,14 @@ Acquire a NEW engineering lease before engineering. Current audit files live in
 outputs/acceptance-20261023-managed-gui and outputs/codex_acceptance_resume.json.
 
 Read ISSUE45_Q05_MANAGED_GUI_LIFECYCLE.md and the live Draft/CI first. Integrated
-GUI crash-residue recovery is NOT implemented by the existing read-only K09
-inspection. A safe refusal after an unlocked GUI kill remains functional FAIL,
-not Q05 PASS. Never erase/move runtime or reset an anchor to make reopening pass.
+GUI crash-residue recovery is being qualified inside existing Draft122. The
+read-only K09 preview is still not recovery authority. Only explicit authenticated
+exact-checkpoint recovery with a native lifetime lease, full SQLite/WSP
+validation and retained encrypted original image may remove proven plaintext.
+Unknown, divergent, sidecar or active-owner residue remains fail-closed. No
+anchor reset, migration, replacement wallet or automatic unlock/rebroadcast.
+Historical0133 crash-reopen FAIL remains preserved; source contracts alone do
+not supersede it. Windows460 cancelled at55minute job timeout, frozen unproven.
 Existing A06-A/B/C policy and historical114 evidence remain unchanged. Keep all
 independent native/frozen evidence collection; release aggregate must fail for
 unresolved Q05. Physical/DEV/security and fullV1 remain unqualified.

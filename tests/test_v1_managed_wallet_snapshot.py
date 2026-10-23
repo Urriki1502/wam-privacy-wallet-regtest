@@ -65,6 +65,7 @@ class ManagedOriginalWalletSnapshotContracts(unittest.TestCase):
             "txid":"e"*64,"height":99,"confirmations":3,
             "credit":27000,"debit":0,
         }]
+        self.runtime_lease=Mock()
 
     def fixture(self,*,statuses=None,verified=None):
         stack=ExitStack()
@@ -91,6 +92,11 @@ class ManagedOriginalWalletSnapshotContracts(unittest.TestCase):
         store=Mock()
         stack.enter_context(patch("wam_regtest.custody.storage",return_value=store))
         stack.enter_context(patch("wam_regtest.custody.anchor",return_value=self.anchor))
+        # This source-only fixture has no real keyring/anchor/owner envelope.
+        # Native process contention is separately tested without these mocks
+        # and by the genuine Q05 multi-process Core/GUI/frozen probe.
+        stack.enter_context(patch('wam_regtest.runtime_recovery.RuntimeLease',return_value=self.runtime_lease))
+        stack.enter_context(patch('wam_regtest.runtime_recovery.enroll'))
         stack.enter_context(patch("wam_regtest.managed_wallet_snapshot.read_locator",
                                   return_value=self.profile))
         vaultclass=stack.enter_context(patch("wam_regtest.vault.CheckpointVault",
@@ -122,7 +128,8 @@ class ManagedOriginalWalletSnapshotContracts(unittest.TestCase):
             self.assertFalse(result.broadcast_allowed)
             self.assertFalse(result.mainnet_allowed)
             self.vault.restore.assert_called_once_with(
-                self.root/"chain"/"wallet-runtime.sqlite",self.password)
+                self.root/"chain"/"wallet-runtime.sqlite",self.password,native_private_runtime=True)
+            self.runtime_lease.close.assert_called_once()
             self.vault.save.assert_not_called()
             self.rpc.close.assert_called_once()
             self.ring.close.assert_called_once()

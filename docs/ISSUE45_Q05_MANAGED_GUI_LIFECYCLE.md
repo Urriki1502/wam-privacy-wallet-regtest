@@ -2,7 +2,8 @@
 
 Baseline Draft121 `f77548de8fb14d2ad4ae007aa5fc46929681c27a`. Preserve
 Draft114 and its original raw failure. No change to A06-A/B/C qualification or
-recovery policy, Core/WSP pins, supervisor, custody, vault or wallet semantics.
+recovery policy, Core/WSP pins or supervisor authority. The owner-authorized
+continuation adds exact-checkpoint managed runtime recovery inside Draft122.
 No automatic merge. REGTEST disposable funds only.
 
 ## Exact gap and executable evidence
@@ -39,13 +40,29 @@ balance/history and irreversible signed/uncertain reservations are compared.
 No re-mining or rebroadcast restores the chain or mempool.
 
 Finally kill the actual GUI while the original spending session is unlocked.
-Reopen through actual consent/password widgets. Existing plaintext runtime
-causes the original vault restore to refuse. This is a **functional FAIL** to
-complete the lifecycle, alongside a **correct safety refusal**. Never treat the
-refusal as a recovered wallet. Preserve the original runtime, ciphertext,
-anchors, scanner/reservations and private failed fixture; no alternate runtime,
-auto-delete, replacement wallet, anchor reset or recovery-policy relaxation.
-A separately reviewed explicit residue-resolution operation is still required.
+An ordinary reopen still refuses plaintext residue. A separate GUI operation
+requires explicit recovery consent and the original wallet passphrase. Only a
+runtime from the lifetime-lease protocol is eligible. Unknown/legacy residue,
+active competing owners, sidecars, corruption, schema changes, wrong keys,
+anchor drift and ANY logical checkpoint divergence stay blocked for review.
+
+The native single-link, owner-private byte image is held without opening disk
+SQLite. An in-memory image must pass SQLite integrity/schema checks, the pinned
+WSP validator and exact typed comparison of EVERY WSP table against the current
+authenticated native-anchored checkpoint. This includes complete signed and
+uncertain reservation records, history, coins, intents and outbox. No migration,
+WSP source change or speculative reconciliation is allowed. Before removing
+only this verified plaintext image, create and reauthenticate an encrypted
+archive of EVERY original byte under native create-only/fsync custody. A
+previous identical archive permits an interrupted attempt to continue; a
+changed archive blocks it. No anchor/snapshot update occurs. The GUI remains
+locked; opening the original wallet requires a separate authenticated action.
+
+The acceptance case requires actual GUI recovery, separate original-wallet
+reopen, original identity/balance/history/reservations, unchanged anchor/vault
+and no new mempool transaction. Declined consent and wrong recovery password
+must preserve the original residue byte-for-byte. Safe refusal alone still
+cannot satisfy successful recovery. Historical0133 FAIL evidence is immutable.
 
 ## Evidence and strict gate
 
@@ -68,8 +85,8 @@ frozen or cross-platform qualification.
 
 A genuine differently versioned running binary is never launched/approved by
 this pinned acceptance; unsupported selected profile rejection is the narrower
-negative test. Safe authorized crash-residue resolution, broader interruption windows and
-physical/independent DEV/security review remain explicitly unqualified. The
+negative test. Sidecar/divergent/legacy runtime resolution, broader interruption
+windows and physical/independent DEV/security review remain unqualified. The
 prior1001-block RPC TimeoutError evidence is preserved. Full Q05/V1 remain HOLD.
 
 ## Sequential Windows frozen repair
@@ -88,3 +105,11 @@ Windowed CI child errors also entered the operator modal error dialog. CI childr
 now return nonzero with reviewed basename/line diagnostics only; builder/gate still
 fail. No raw exception arguments, private paths, RPC logs or fixture data are
 published. Windows frozen/DPI and other exact-head regressions must be rerun.
+
+Run Windows460/39836467730 at0133 was CANCELLED: check annotations explicitly
+report the55-minute job limit; native evidence succeeded, final frozen artifact
+was never published. The logs alone do not qualify the staged-image correction.
+The three complete frozen DPI suites retain their20-minute individual limits;
+the containing job now budgets95minutes for native+build+all3 suites. A denied
+frozen operator-recovery command no longer opens a windowed error dialog.
+Fixed progress labels identify default/125%/150% execution without secrets.

@@ -46,7 +46,8 @@ def child(core, source, argv):
     ap = argparse.ArgumentParser()
     ap.add_argument('--root', type=Path, required=True)
     ap.add_argument('--mode', choices=('read', 'spend', 'wrong-password',
-        'decline', 'wait-locked', 'wait-unlocked', 'wait-spend-core', 'blocked-spend', 'attached', 'wrong-version', 'not-ready'), required=True)
+        'decline', 'wait-locked', 'wait-unlocked', 'wait-spend-core', 'blocked-spend', 'attached', 'wrong-version', 'not-ready',
+        'recover', 'recover-wrong-password', 'recover-decline'), required=True)
     ap.add_argument('--report', required=True)
     ap.add_argument('--confirm-disposable-regtest-gui-probe', action='store_true')
     args = ap.parse_args(argv)
@@ -133,11 +134,11 @@ def child(core, source, argv):
     def answer():
         dialog = QApplication.activeModalWidget()
         if isinstance(dialog, QMessageBox):
-            button = (QMessageBox.StandardButton.No if mode == 'decline'
+            button = (QMessageBox.StandardButton.No if mode in ('decline','recover-decline')
                       else QMessageBox.StandardButton.Yes)
             dialog.button(button).click()
         elif isinstance(dialog, QInputDialog):
-            secret = b'public-intentionally-wrong-q05' if mode == 'wrong-password' else PASSWORD
+            secret = b'public-intentionally-wrong-q05' if mode in ('wrong-password','recover-wrong-password') else PASSWORD
             dialog.setTextValue(secret.decode('ascii'))
             dialog.accept()
     responder = QTimer()
@@ -168,6 +169,22 @@ def child(core, source, argv):
         assert window.session is None and window._snapshot is None
         assert not window.dashboard.go_send.isEnabled()
         responder.start()
+        if mode.startswith('recover'):
+            window.recover_runtime_button.click()
+            settle(); responder.stop()
+            recovered=window._runtime_recovery_receipt
+            assert (recovered is not None) is (mode=='recover')
+            assert window._spend_window is None and window._snapshot is None
+            assert window.session is None and not window.dashboard.go_send.isEnabled()
+            proof={'status':'PASS' if recovered else 'DENIED',
+                'recovery_receipt':recovered,'remains_locked':True,
+                'native_gui':True,'frozen':bool(getattr(sys,'frozen',False)),
+                'binary_sha256':hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest(),
+                'synthetic_rpc':False,'mainnet_allowed':False,'qt_platform':app.platformName()}
+            assert window.grab().save(str(root/(args.report+'.png')))
+            create_once(root,args.report,(json.dumps(proof,sort_keys=True)+'\n').encode('ascii'))
+            assert window.close(); delete(window); app.processEvents(); shutdown_qt()
+            return 0
         if mode in ('read', 'wait-locked'):
             window.view_wallet_button.click()
         else:
@@ -540,7 +557,16 @@ def prove_managed_gui_lifecycle(core, source):
         children.append(gui)
         contended = run_child(root,core,source,'blocked-spend')
         assert contended['status'] == 'DENIED' and gui.poll() is None
-        cases['concurrent-wallet-gui-denied'] = {'status':'PASS','second_writer_refused':True}
+        from .runtime_recovery import recover_managed_runtime, RuntimeRecoveryError, RuntimeLease
+        try: recover_managed_runtime(root,core,source,PASSWORD,authorized=True)
+        except RuntimeRecoveryError as error: assert str(error)=='RUNTIME_SESSION_BUSY'
+        else: raise AssertionError('Q05_LIVE_WRITER_RECOVERY_ALLOWED')
+        # Identity-scoped descriptor also excludes a separate-directory copy.
+        try: RuntimeLease(fixture['wallet_id'])
+        except RuntimeRecoveryError: pass
+        else: raise AssertionError('Q05_SECOND_WALLET_ID_LEASE_ALLOWED')
+        cases['concurrent-wallet-gui-denied'] = {'status':'PASS','second_writer_refused':True,
+            'recovery_while_original_gui_alive_denied':True,'wallet_identity_lease_contends':True}
         gui.kill(); assert gui.wait(timeout=15) != 0
         runtime = directory/'wallet-runtime.sqlite'
         assert runtime.is_file()
@@ -550,12 +576,31 @@ def prove_managed_gui_lifecycle(core, source):
         assert hashlib.sha256(runtime.read_bytes()).hexdigest() == residue_hash
         assert anchor.read() == anchored and _vault_files(directory) == sealed
         assert set(_read_cli(prefix+['getrawmempool'])) == after_mempool
-        cases['unlocked-gui-kill-authenticated-reopen'] = {'status': 'FAIL',
-            'reason': 'EXISTING_PLAINTEXT_RUNTIME_RESTORE_DENIED',
-            'safe_refusal': True, 'original_residue_anchor_vault_preserved': True, 'ready_receipt': proof,
-            'signed_uncertain_reservations_digest': fixture['reservations_digest'],
-            'operator_recovery_not_implemented': True}
-        return {'schema': 'wam-q05-managed-gui-lifecycle/v1', 'status': 'FAIL',
+        try: recover_managed_runtime(root,core,source,PASSWORD)
+        except RuntimeRecoveryError as error: assert str(error)=='RUNTIME_RECOVERY_EXPLICIT_CONSENT_REQUIRED'
+        else: raise AssertionError('Q05_RUNTIME_IMPLICIT_RECOVERY_ALLOWED')
+        for mode in ('recover-decline','recover-wrong-password'):
+            assert run_child(root,core,source,mode)['status']=='DENIED'
+            assert hashlib.sha256(runtime.read_bytes()).hexdigest()==residue_hash
+            assert anchor.read()==anchored and _vault_files(directory)==sealed
+        recovered=run_child(root,core,source,'recover')
+        assert recovered['status']=='PASS' and recovered['remains_locked']
+        assert not runtime.exists()
+        from wam_sp.keystore import unseal
+        archive=directory/('runtime-residue-'+residue_hash[:32]+'.enc')
+        assert hashlib.sha256(unseal(custody.storage().read(directory,archive.name),PASSWORD,b'checkpoint')).hexdigest()==residue_hash
+        assert anchor.read()==anchored and _vault_files(directory)==sealed
+        reopened=run_child(root,core,source,'spend')
+        assert reopened['status']=='PASS'
+        assert anchor.read()==anchored and _vault_files(directory)==sealed
+        assert set(_read_cli(prefix+['getrawmempool']))==after_mempool
+        cases['unlocked-gui-kill-authenticated-reopen'] = {'status':'PASS',
+            'explicit_recovery_and_separate_unlock':True,'original_residue_retained_encrypted':True,
+            'missing_consent_wrong_password_declined_recovery_denied':True,
+            'original_anchor_vault_unchanged':True,'ready_receipt':proof,
+            'recovery_gui_receipt':recovered,'reopened_gui_receipt':reopened,
+            'signed_uncertain_reservations_digest':fixture['reservations_digest']}
+        return {'schema': 'wam-q05-managed-gui-lifecycle/v1', 'status': 'PASS',
             'platform': receipt['platform'], 'execution': 'FROZEN' if getattr(sys, 'frozen', False) else 'SOURCE_NATIVE',
             'core_version': 'v0.1.11', 'wamd_sha256': receipt['wamd_sha256'],
             'wam_cli_sha256': receipt['wam_cli_sha256'], 'genesis': REGTEST_GENESIS,
@@ -569,7 +614,8 @@ def prove_managed_gui_lifecycle(core, source):
             'synthetic_rpc': False, 'mainnet_allowed': False,
             'full_q05_qualified': False, 'full_v1_qualified': False,
             'physical_accepted': False, 'dev_reviewed': False,
-            'pending_scenarios': ['genuine unqualified running Core version GUI scenario (unsupported selected profile refused without contacting it)', 'authorized crash-residue resolution']}
+            'pending_scenarios': ['genuine unqualified running Core version GUI scenario (unsupported selected profile refused without contacting it)',
+                'divergent or sidecar runtime requires independent review; exact anchored checkpoint recovery only']}
     finally:
         if session is not None: session.close()
         for process in children:

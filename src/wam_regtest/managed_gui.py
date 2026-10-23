@@ -168,10 +168,32 @@ class _ManagedSpendSessionWorker(QThread):
                 self.root,self.core_dir,self.wsp_source,self.password,
                 authorized=True)
             self.ready.emit(session)
-        except Exception:
-            self.denied.emit("MANAGED_SPEND_SESSION_OPEN_DENIED")
+        except Exception as error:
+            from .managed_spend_session import ManagedWalletSpendError
+            allowed={'MANAGED_RUNTIME_RECOVERY_REQUIRED','MANAGED_WALLET_SESSION_BUSY',
+                     'MANAGED_RUNTIME_OWNER_REVIEW_REQUIRED'}
+            code=error.args[0] if type(error) is ManagedWalletSpendError and error.args and error.args[0] in allowed else 'MANAGED_SPEND_SESSION_OPEN_DENIED'
+            self.denied.emit(code)
         finally:
             self.password=None
+
+
+class _RuntimeRecoveryWorker(QThread):
+    ready=Signal(object)
+    denied=Signal(str)
+
+    def __init__(self,root,core,source,password):
+        super().__init__()
+        self.root,self.core,self.source,self.password=root,core,source,password
+
+    def run(self):
+        try:
+            from .runtime_recovery import recover_managed_runtime
+            self.ready.emit(recover_managed_runtime(self.root,self.core,self.source,
+                self.password,authorized=True))
+        except Exception:
+            self.denied.emit('RUNTIME_RECOVERY_UNPROVEN_REVIEW_REQUIRED')
+        finally: self.password=None
 
 
 class _CoreSqliteInspectionWorker(QThread):
@@ -315,6 +337,10 @@ class ManagedCoreWindow(RegtestWalletWindow):
         self.spend_wallet_button=action("Open REGTEST Send / Sign", "send")
         toolbar.addWidget(self.spend_wallet_button)
         self.spend_wallet_button.clicked.connect(self._open_spending_wallet)
+        self.recover_runtime_button=action('Recover interrupted wallet session', 'security')
+        toolbar.addWidget(self.recover_runtime_button)
+        self.recover_runtime_button.clicked.connect(self._recover_runtime)
+        self._runtime_recovery_receipt=None
         self.start_core.clicked.connect(lambda: self._execute("start"))
         self.stop_core.clicked.connect(self._confirm_stop)
         # F-08: guided welcome is a NAVIGATION view, never a wallet state.
@@ -388,6 +414,8 @@ class ManagedCoreWindow(RegtestWalletWindow):
             can_read and not (self._managed_root/"chain"/"wallet-vault").exists())
         self.spend_wallet_button.setEnabled(
             can_read and (self._managed_root/"chain"/"wallet-vault").is_dir())
+        self.recover_runtime_button.setEnabled(can_read and
+            (self._managed_root/'chain'/'wallet-runtime.sqlite').exists())
         if hasattr(self, "welcome_page"):
             # NEVER trust a page-owned boolean for Core or spending policy:
             # each entry point inherits its existing protected handler.
@@ -589,6 +617,46 @@ class ManagedCoreWindow(RegtestWalletWindow):
 
 
     @_exclusive_confirmation
+    def _recover_runtime(self):
+        if (not self._managed_authenticated or self._managed_state!='ready'
+                or self._wallet_core_dir is None or self._wallet_wsp_source is None): return
+        consent=QMessageBox.question(self,'Recover interrupted REGTEST wallet session',
+            'Authenticate the original wallet and verify the entire runtime against its native-anchored checkpoint? '
+            'Only an exact match can be archived encrypted and removed from the plaintext runtime path. '
+            'Unknown, changed or busy state remains blocked for independent review. '
+            'The wallet stays locked. Nothing is signed or broadcast.',
+            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,QMessageBox.StandardButton.No)
+        if consent!=QMessageBox.StandardButton.Yes or not self._confirmation_current(): return
+        password,ok=QInputDialog.getText(self,'Authenticate original wallet recovery',
+            'Original wallet passphrase',QLineEdit.EchoMode.Password)
+        if not ok or not self._confirmation_current(): return
+        secret=password.encode('utf-8'); password=None
+        if not 12<=len(secret)<=1024:
+            self._wallet_snapshot_denied('RUNTIME_RECOVERY_UNPROVEN_REVIEW_REQUIRED'); return
+        self._runtime_recovery_receipt=None
+        worker=_RuntimeRecoveryWorker(self._managed_root,self._wallet_core_dir,self._wallet_wsp_source,secret)
+        secret=None; self._worker=worker
+        worker.ready.connect(self._runtime_recovered)
+        worker.denied.connect(self._runtime_recovery_denied)
+        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(worker.deleteLater)
+        self.status.setText('Checking exclusive runtime ownership and the complete anchored checkpoint…')
+        worker.start()
+
+    def _runtime_recovered(self,receipt):
+        if receipt.get('status')!='MANAGED_RUNTIME_EXACT_CHECKPOINT_RECOVERED_LOCKED':
+            self._runtime_recovery_denied('RUNTIME_RECOVERY_UNPROVEN_REVIEW_REQUIRED'); return
+        self._runtime_recovery_receipt=receipt
+        self._clear_balance()
+        self.status.setText('Interrupted runtime retained encrypted. Wallet remains locked; open the original wallet explicitly.')
+
+    def _runtime_recovery_denied(self,code):
+        self._runtime_recovery_receipt=None
+        self._clear_balance()
+        self.status.setText('Recovery could not be proven safe. Original state retained. Close other wallet sessions, '
+            'check the original passphrase and request independent review if this persists. No reset or replacement was performed.')
+
+    @_exclusive_confirmation
     def _open_spending_wallet(self):
         if (self._worker is not None or self._spend_window is not None
                 or not self._managed_authenticated or self._managed_state!="ready"
@@ -623,12 +691,21 @@ class ManagedCoreWindow(RegtestWalletWindow):
         secret=None
         self._worker=worker
         worker.ready.connect(self._apply_spending_session)
-        worker.denied.connect(self._wallet_snapshot_denied)
+        worker.denied.connect(self._spend_session_denied)
         worker.finished.connect(self._worker_finished)
         worker.finished.connect(worker.deleteLater)
         self.status.setText("Verifying native original-wallet custody and WSP Core…")
         self._update_controls()
         worker.start()
+
+    def _spend_session_denied(self,reason):
+        self._wallet_snapshot_denied(reason)
+        messages={
+            'MANAGED_RUNTIME_RECOVERY_REQUIRED':'Interrupted wallet runtime retained. Use Recover interrupted wallet session; authenticate and review its separate approval.',
+            'MANAGED_WALLET_SESSION_BUSY':'Another session owns this wallet. Close it normally before reopening or recovering.',
+            'MANAGED_RUNTIME_OWNER_REVIEW_REQUIRED':'Unrecognized runtime ownership. Original files retained; independent review is required. No automatic cleanup is available.',
+        }
+        if reason in messages: self.status.setText(messages[reason])
 
     def _apply_spending_session(self,session):
         from .managed_spend_session import ManagedWalletSession

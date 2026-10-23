@@ -8,13 +8,24 @@ from wam_regtest.q05_artifact_gate import check_component, REQUIRED_CASES
 class Q05GateContracts(unittest.TestCase):
     def proof(self, *, frozen=False):
         pair = core_pair('macos-arm64')
-        return {'schema': 'wam-q05-managed-gui-lifecycle/v1', 'status': 'PASS',
+        result={'schema': 'wam-q05-managed-gui-lifecycle/v1', 'status': 'PASS',
             'platform': 'macos-arm64', 'execution': 'FROZEN' if frozen else 'SOURCE_NATIVE',
             'core_version': 'v0.1.11', 'wamd_sha256': pair[0], 'wam_cli_sha256': pair[1],
             'frozen_binary_sha256': 'a'*64, 'owner_data_accessed': False,
             'synthetic_rpc': False, 'mainnet_allowed': False, 'automatic_rebroadcast': False,
             'full_v1_qualified': False, 'cases': {name: {'status': 'DENIED' if name in
                 ('normal-wrong-password', 'normal-decline') else 'PASS'} for name in REQUIRED_CASES}}
+        result['cases']['unlocked-gui-kill-authenticated-reopen'].update(
+            explicit_recovery_and_separate_unlock=True,original_residue_retained_encrypted=True,
+            missing_consent_wrong_password_declined_recovery_denied=True,original_anchor_vault_unchanged=True,
+            recovery_gui_receipt={'status':'PASS','remains_locked':True},reopened_gui_receipt={'status':'PASS'})
+        return result
+
+    def test_recovery_status_alone_does_not_qualify_recovery(self):
+        proof=self.proof()
+        proof['cases']['unlocked-gui-kill-authenticated-reopen']={'status':'PASS'}
+        with self.assertRaisesRegex(ValueError,'AUTHORIZED_RECOVERY_EVIDENCE_REQUIRED'):
+            check_component(proof,'macos-arm64',False)
 
     def test_every_required_scenario_mandatory(self):
         for case in REQUIRED_CASES:

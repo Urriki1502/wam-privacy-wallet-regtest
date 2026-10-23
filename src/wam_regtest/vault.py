@@ -236,7 +236,7 @@ class CheckpointVault:
         except (ValueError, TypeError, KeyError):
             raise VaultError("VAULT_AUTHENTICATION_DENIED") from None
 
-    def restore(self, runtime_path, password):
+    def restore(self, runtime_path, password, *, native_private_runtime=False):
         """Return NOT-current scanner. Caller must sync to real attested Core.
 
         No balance or signing may rely solely on restored checkpoint state.
@@ -271,6 +271,18 @@ class CheckpointVault:
                 ring = restore_keyring(
                     base64.b64decode(payload["keys"], validate=True),password)
                 runtime_created = True
+                if native_private_runtime and sys.platform == 'win32':
+                    # Fresh file ONLY: protected owner DACL before WSP opens
+                    # SQLite. Never repair permissions of existing residue.
+                    from . import windows_private_storage as native
+                    with native.directory_guard(runtime_path.parent), native.security_attributes() as sa:
+                        handle=native.create(str(runtime_path),0xc0020000,0,sa,1,0x200080,None)
+                        if handle in (None,native.INVALID):
+                            runtime_created=False
+                            raise VaultError('VAULT_NATIVE_RUNTIME_CREATE_DENIED')
+                        try:
+                            native._metadata(handle); native.verify_security(handle)
+                        finally: native.close(handle)
                 scanner = Scanner(runtime_path, ring.accounts())
                 scanner.restore(base64.b64decode(payload["checkpoint"], validate=True), password)
                 if scanner.ready or self.anchor.read() != record:
