@@ -338,7 +338,6 @@ class ManagedCoreWindow(RegtestWalletWindow):
         toolbar.addWidget(self.spend_wallet_button)
         self.spend_wallet_button.clicked.connect(self._open_spending_wallet)
         self.recover_runtime_button=action('Recover interrupted wallet session', 'security')
-        toolbar.addWidget(self.recover_runtime_button)
         self.recover_runtime_button.clicked.connect(self._recover_runtime)
         self._runtime_recovery_receipt=None
         self.start_core.clicked.connect(lambda: self._execute("start"))
@@ -348,6 +347,9 @@ class ManagedCoreWindow(RegtestWalletWindow):
         # buttons delegate to their exact original handlers.
         from .f08_welcome import ManagedWelcomePage
         self.welcome_page=ManagedWelcomePage()
+        # Keep the recovery operation reachable in the existing scrollable
+        # custody card; another wide topbar action clips the page title.
+        self.welcome_page.verify.parentWidget().layout().addWidget(self.recover_runtime_button)
         self.navigation.addItem("Get Started")
         self.stack.addWidget(self.welcome_page)
         # Existing shell names row 3 'Send' in the operational six-screen

@@ -170,6 +170,9 @@ def child(core, source, argv):
         assert not window.dashboard.go_send.isEnabled()
         responder.start()
         if mode.startswith('recover'):
+            window.welcome_page.scroll.ensureWidgetVisible(window.recover_runtime_button)
+            app.processEvents()
+            assert window.recover_runtime_button.isVisible() and window.recover_runtime_button.isEnabled()
             window.recover_runtime_button.click()
             settle(); responder.stop()
             recovered=window._runtime_recovery_receipt
@@ -186,9 +189,13 @@ def child(core, source, argv):
             assert window.close(); delete(window); app.processEvents(); shutdown_qt()
             return 0
         if mode in ('read', 'wait-locked'):
-            window.view_wallet_button.click()
+            target=window.welcome_page.view
         else:
-            window.spend_wallet_button.click()
+            target=window.welcome_page.send
+        window.welcome_page.scroll.ensureWidgetVisible(target)
+        app.processEvents()
+        assert target.isVisible() and target.isEnabled()
+        target.click()
         settle()
         responder.stop()
         spend = window._spend_window
