@@ -41,6 +41,24 @@ def fixture_read(root, name):
     return unseal(_fixture_store().read(root, name), PASSWORD, b'recovery')
 
 
+def close_gui(window, app, *, timeout=20):
+    """Request normal close; a live worker is allowed to refuse it safely.
+
+    Native event dispatch can start a timer worker after an idle observation.
+    Never stop timers, clear worker pointers, force-delete a window or treat a
+    refusal as success. Retry the normal guarded close while draining events.
+    A permanently refusing/busy GUI still fails the bounded acceptance.
+    """
+    deadline=time.monotonic()+timeout
+    while True:
+        if window.close():
+            return
+        if time.monotonic()>=deadline:
+            raise ValueError('Q05_NORMAL_GUI_CLOSE_NOT_COMPLETED')
+        app.processEvents()
+        time.sleep(.01)
+
+
 def child(core, source, argv):
     import argparse
     ap = argparse.ArgumentParser()
@@ -115,7 +133,7 @@ def child(core, source, argv):
             'synthetic_rpc': False, 'mainnet_allowed': False, 'qt_platform': app.platformName()}
         assert window.grab().save(str(root/(args.report+'.png')))
         create_once(root, args.report, (json.dumps(proof,sort_keys=True)+'\n').encode('ascii'))
-        assert window.close(); delete(window); app.processEvents(); shutdown_qt()
+        close_gui(window,app); delete(window); app.processEvents(); shutdown_qt()
         custody.anchor = native_anchor
         return 0
     window = ManagedCoreWindow(root, core_dir=core, wsp_source=source)
@@ -163,7 +181,7 @@ def child(core, source, argv):
                 'synthetic_rpc': False, 'mainnet_allowed': False, 'qt_platform': app.platformName()}
             assert window.grab().save(str(root/(args.report+'.png')))
             create_once(root,args.report,(json.dumps(proof,sort_keys=True)+'\n').encode('ascii'))
-            assert window.close(); delete(window); app.processEvents(); shutdown_qt()
+            close_gui(window,app); delete(window); app.processEvents(); shutdown_qt()
             return 0
         assert window._managed_authenticated and window._managed_state == 'ready'
         assert window.session is None and window._snapshot is None
@@ -186,7 +204,7 @@ def child(core, source, argv):
                 'synthetic_rpc':False,'mainnet_allowed':False,'qt_platform':app.platformName()}
             assert window.grab().save(str(root/(args.report+'.png')))
             create_once(root,args.report,(json.dumps(proof,sort_keys=True)+'\n').encode('ascii'))
-            assert window.close(); delete(window); app.processEvents(); shutdown_qt()
+            close_gui(window,app); delete(window); app.processEvents(); shutdown_qt()
             return 0
         if mode in ('read', 'wait-locked'):
             target=window.welcome_page.view
@@ -256,10 +274,10 @@ def child(core, source, argv):
             else:
                 raise ValueError('Q05_EXPECTED_GUI_TERMINATION_NOT_INJECTED')
         if spend is not None:
-            assert spend.close()
+            close_gui(spend,app)
             settle()
             delete(spend)
-        assert window.close()
+        close_gui(window,app)
         delete(window)
         app.processEvents()
         shutdown_qt()
@@ -309,7 +327,7 @@ def run_child(root, core, source, mode, *, wait=False):
                 if wait:
                     assert child_process.poll() is None
                     return child_process, report, proof
-                assert child_process.wait(timeout=15) == 0, 'Q05_GUI_CHILD_BAD_EXIT'
+                assert child_process.wait(timeout=30) == 0, 'Q05_GUI_CHILD_BAD_EXIT'
                 return proof
             if child_process.poll() is not None:
                 raise ValueError('Q05_GUI_CHILD_NO_VERIFIED_REPORT')
@@ -548,7 +566,7 @@ def prove_managed_gui_lifecycle(core, source):
             assert gui.poll() is None; time.sleep(.1)
         assert fixture_read(root,report.replace('.enc','-unavailable.enc')) == b'FAIL_CLOSED\n'
         fixture_write(root,report.replace('.enc','-close.enc'),b'EXPLICIT_NORMAL_GUI_CLOSE\n')
-        assert gui.wait(timeout=15) == 0
+        assert gui.wait(timeout=30) == 0
         assert not (directory/'wallet-runtime.sqlite').exists()
         assert anchor.read() == anchored and _vault_files(directory) == sealed
         owner.status(); owner.start(); children.append(owner.process)

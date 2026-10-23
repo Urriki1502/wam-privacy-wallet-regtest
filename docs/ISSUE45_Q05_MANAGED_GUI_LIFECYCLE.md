@@ -113,3 +113,23 @@ The three complete frozen DPI suites retain their20-minute individual limits;
 the containing job now budgets95minutes for native+build+all3 suites. A denied
 frozen operator-recovery command no longer opens a windowed error dialog.
 Fixed progress labels identify default/125%/150% execution without secrets.
+
+
+## Windows463 guarded close race
+
+At source9cd783d, macOS541 and Linux447 native/frozen release gates succeeded.
+Windows463 genuine native operational acceptance succeeded, but the default
+frozen invocation returned nonzero at the parent GUI close after reopening the
+original wallet following owned Core loss. Redacted sites are
+`managed_lifecycle_probe.py:262` and the parent exit assertion at312/558. This is
+not a timeout or evidence that full Windows frozen/DPI qualified.
+
+The Qt product deliberately refuses closing while a worker/dialog/spending
+window is active. Event dispatch can start a background status worker after a
+harness idle observation. Acceptance now requests the same normal guarded close
+and drains events/retries within20seconds; it never stops timers, clears worker
+pointers, force-deletes a window or considers refusal successful. The parent
+allows30seconds for verified child termination. A permanent refusal or bad exit
+still fails. Source contracts exercise the actual wallet window with a real
+QThread and prove permanent refusal remains nonpassing. All three exact-head
+native/frozen platforms must be requalified after this acceptance-driver change.
