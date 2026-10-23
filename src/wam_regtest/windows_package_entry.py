@@ -139,7 +139,7 @@ def main():
         if ci:
             with Path('windows-packaged-wallet-denied.json').open('x',encoding='utf8') as out:
                 json.dump({'status':'WIN_BUNDLE_DENIED','mainnet_allowed':False},out)
-        elif not child_probe:
+        elif not child_probe and not recovery:
             from PySide6.QtWidgets import QApplication,QMessageBox
             app=QApplication.instance() or QApplication([])
             QMessageBox.critical(None,'WAM Privacy Wallet REGTEST',

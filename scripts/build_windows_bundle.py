@@ -90,9 +90,11 @@ def main():
         assert len(matches)==1 and not matches[0].is_symlink() and sha256(matches[0].read_bytes()).hexdigest()==digest
     verify_source(Path.cwd(),build_source)
     environment={**os.environ,'QT_QPA_PLATFORM':'windows'}
+    print('WIN_FROZEN_REAL_WALLET_START_DEFAULT',flush=True)
     result=subprocess.run([str(executable),'--ci-real-core-wallet'],env=environment,stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
     require_frozen_success(result,Path.cwd(),'WIN_FROZEN_REAL_WALLET_DENIED')
+    print('WIN_FROZEN_REAL_WALLET_COMPLETE_DEFAULT',flush=True)
     evidence=json.loads(Path('windows-packaged-wallet-evidence.json').read_text())
     assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
     t09=evidence['t09_direct_rpc_evidence']
@@ -105,11 +107,13 @@ def main():
     # Distinct cwd keeps create-only evidence and screenshots independent.
     scales={}
     for factor in ('1.25','1.5'):
+        print('WIN_FROZEN_REAL_WALLET_START_SCALE_'+factor,flush=True)
         review=Path('windows-ui-scale-'+factor).absolute();review.mkdir()
         scaled={**environment,'QT_SCALE_FACTOR':factor}
         result=subprocess.run([str(executable),'--ci-real-core-wallet'],cwd=review,env=scaled,
             stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
         require_frozen_success(result,review,'WIN_SCALED_FROZEN_REAL_WALLET_DENIED')
+        print('WIN_FROZEN_REAL_WALLET_COMPLETE_SCALE_'+factor,flush=True)
         record=json.loads((review/'fusion-ui-review/windows-x64-visual-receipt.json').read_text())
         assert record['qt_platform']=='windows' and abs(record['device_pixel_ratio']-float(factor))<.01
         assert record['real_core_snapshot'] and not record['synthetic_rpc']
