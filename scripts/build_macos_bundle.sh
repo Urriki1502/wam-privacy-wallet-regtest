@@ -107,6 +107,15 @@ try:
 except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
     sys.exit("MACOS_FROZEN_REAL_CORE_GUI_DENIED")
 print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_PASS", flush=True)
+# Q01 also needs the actual native window-system runtime, independently of
+# offscreen rendering. This existing CI mode retains full custody/Core gates.
+from pathlib import Path
+review = Path('package-output/cocoa-evidence')
+review.mkdir()
+cocoa = {**os.environ, 'QT_QPA_PLATFORM': 'cocoa'}
+subprocess.run([str(Path(binary).resolve()), '--ci-real-core-wallet-cocoa'],
+               cwd=review, env=cocoa, timeout=600, check=True)
+print("MACOS_APP_STAGE=FROZEN_NATIVE_COCOA_REAL_CORE_PASS", flush=True)
 PY
 test -s real-regtest-gui-preview.png
 test -s real-regtest-wallet-preview.png

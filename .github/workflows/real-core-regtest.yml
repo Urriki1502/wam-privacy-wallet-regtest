@@ -169,6 +169,22 @@ jobs:
           print('REAL_WAM_CORE_NATIVE_BIP352_CONFIRMED_RECEIVE_SQLITE_PASS')
           print('REAL_WAM_CORE_NATIVE_QT_GUI_RECEIVE_BALANCE_HISTORY_PASS')
           PY
+      - name: Q01 native Cocoa against genuine Core (separate from offscreen)
+        shell: python
+        env:
+          QT_QPA_PLATFORM: cocoa
+        run: |
+          import json
+          from pathlib import Path
+          from wam_regtest.core import smoke_real_core
+          result=smoke_real_core(Path('core').resolve(),explicit_consent=True,
+              wsp_source=Path('wsp-upstream').resolve(),wsp_payment_e2e=True,
+              gui_e2e=False,security_e2e=True,wallet_e2e=True)
+          assert result['wallet_live_core']['qt_auto_system_events_verified'] is True
+          assert result['wallet_live_core']['synthetic_rpc'] is False
+          assert result['security_live_core']['actual_core_reorg_depths']==[1,12,100]
+          with Path('q01-native-cocoa.json').open('x') as output:
+              json.dump(result,output,sort_keys=True,indent=2)
       - name: Upload only sanitized live-Core evidence
         if: success()
         uses: actions/upload-artifact@v4
@@ -176,6 +192,7 @@ jobs:
           name: real-core-regtest-${{ github.sha }}
           path: |
             real-core-evidence.json
+            q01-native-cocoa.json
             independent-wallet-security.json
             fusion-ui-review/
             real-regtest-gui-preview.png
@@ -258,6 +275,7 @@ jobs:
             package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg
             package-output/SHA256SUMS.json
             package-output/BUILD_SOURCE_RECEIPT.json
+            package-output/cocoa-evidence/
             package-output/INDEPENDENT-WALLET-SECURITY.json
             package-output/RELEASE_CANDIDATE_MANIFEST.json
             package-output/SHA256SUMS.txt
