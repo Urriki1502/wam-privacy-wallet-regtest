@@ -25,18 +25,21 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--core-dir',type=Path,required=True)
     parser.add_argument('--desktop',action='store_true');args=parser.parse_args()
     assert sys.platform=='linux' and platform.machine()=='x86_64'
+    from wam_regtest.build_provenance import capture,verify as verify_source,public_receipt
+    source_root=Path.cwd();source_stamp=capture(source_root)
+    wsp_root=source_root/'wsp-upstream';wsp_stamp=capture(wsp_root)
     if not args.desktop:
         assert importlib.util.find_spec('PySide6') is None,'HEADLESS_BUILD_MUST_HAVE_NO_QT'
     from wam_regtest.package_manifest import stage_pinned_wsp
-    from wam_regtest.linux_developer_core import verify,inspect_elf
+    from wam_regtest.linux_developer_core import verify as verify_core,inspect_elf
     from wam_regtest.branding import brand_image
-    core=args.core_dir.absolute();verify(core,APPROVED,authorized=True)
+    core=args.core_dir.absolute();verify_core(core,APPROVED,authorized=True)
     name='wam-regtest-desktop' if args.desktop else 'wam-regtest-headless'
     output=Path('linux-package-output');output.mkdir()
     with tempfile.TemporaryDirectory(prefix='wam-linux-package-') as temporary:
         stage=Path(temporary);wsp=stage/'wsp-source'
         stage_pinned_wsp(Path('wsp-upstream').absolute(),wsp)
-        command=[sys.executable,'-m','PyInstaller','--noconfirm','--clean','--onedir','--noupx',
+        command=[sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--onedir','--noupx',
             '--name',name,'--paths','src','--collect-submodules','wam_regtest',
             '--collect-submodules','wam_sp','--collect-all','coincurve','--hidden-import','_cffi_backend',
             '--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
@@ -76,6 +79,9 @@ def main():
             links[relative]=target
         elif p.is_file():members[relative]=sha256(p.read_bytes()).hexdigest()
     head=os.environ['WAM_SOURCE_HEAD'];checkout=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+    verify_source(source_root,source_stamp);verify_source(wsp_root,wsp_stamp)
+    (output/'BUILD_SOURCE_RECEIPT.json').write_text(json.dumps(public_receipt(source_stamp,
+        source_head=head,dispatch=os.environ.get('GITHUB_EVENT_NAME')=='workflow_dispatch'),sort_keys=True,indent=2)+'\n')
     archive=output/(name+'-linux-x86_64-'+head+'.tar.gz')
     with tarfile.open(archive,'x:gz',dereference=False) as tar:tar.add(bundle,arcname=name)
     manifest={'schema':'wam-regtest-linux-package/v1','source_head_sha':head,'checkout_sha':checkout,

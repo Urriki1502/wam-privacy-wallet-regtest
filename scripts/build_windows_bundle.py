@@ -18,12 +18,15 @@ import zipfile
 
 def main():
     assert sys.platform=='win32' and platform.machine().lower() in ('amd64','x86_64')
+    from wam_regtest.build_provenance import capture,verify,public_receipt
+    source_root=Path.cwd();source_stamp=capture(source_root)
     from wam_regtest.windows_release_preflight import ASSET,BINARY_SHA256,verify_signed_windows_archive,_validate_amd64_pe
     from wam_regtest.release import _download_exact
     from wam_regtest.package_manifest import stage_pinned_wsp
     from wam_regtest.branding import brand_image
     source=Path('wsp-upstream').absolute()
     assert subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip()=='ac55f13423620252bdbf848c7e8a280c3b84721e'
+    wsp_stamp=capture(source)
     output=Path('windows-package-output');output.mkdir()
     with tempfile.TemporaryDirectory(prefix='wam-win-build-') as t:
         stage=Path(t);core=stage/'core';core.mkdir()
@@ -45,55 +48,53 @@ def main():
         icon=stage/'wam-wallet.ico'
         with Image.open(brand_image()) as image:
             image.save(icon,format='ICO',sizes=[(n,n) for n in (16,24,32,48,64,128,256)])
-        subprocess.run([sys.executable,'-m','PyInstaller','--noconfirm','--clean','--onedir','--windowed',
+        # Qt's hook otherwise searches ambient PATH for optional OpenSSL DLLs.
+        # Two genuine clean-run artifacts contained different executable code
+        # (OpenSSL3.5.9 vs3.5.5). Do not import developer/Git/Chocolatey providers.
+        # CPython's declared SSL DLLs and native Windows Schannel stay intact.
+        system_root=Path(os.environ['SystemRoot'])
+        build_environment={k:v for k,v in os.environ.items() if k not in
+            ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV','OPENSSL_CONF','OPENSSL_MODULES')
+            and not k.startswith(('QT_','QML_'))}
+        build_environment['PATH']=os.pathsep.join(map(str,(Path(sys.executable).parent,
+            Path(sys.base_prefix),Path(sys.base_prefix)/'DLLs',system_root/'System32',system_root)))
+        subprocess.run([sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--noupx','--onedir','--windowed',
             '--name','WAM-Privacy-Wallet-REGTEST','--icon',str(icon),'--paths','src',
             '--collect-submodules','wam_regtest','--collect-submodules','wam_sp',
             '--collect-all','coincurve','--hidden-import','_cffi_backend',
             '--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
-            '--add-data',str(brand_image())+':branding','src/wam_regtest/windows_package_entry.py'],check=True)
+            '--add-data',str(brand_image())+':branding','src/wam_regtest/windows_package_entry.py'],env=build_environment,check=True)
     bundle=Path('dist/WAM-Privacy-Wallet-REGTEST').absolute()
     executable=bundle/'WAM-Privacy-Wallet-REGTEST.exe'
     _validate_amd64_pe(executable.read_bytes())
+    # Refuse, never delete, an undeclared optional TLS provider. This does not
+    # disable TLS verification or replace WSP/cryptography/Core implementations.
+    assert not any(p.name.lower() in ('libcrypto-3-x64.dll','libssl-3-x64.dll') for p in bundle.rglob('*')),'WIN_UNDECLARED_QT_OPENSSL_PROVIDER_DENIED'
+    python_ssl={}
+    for name in ('libcrypto-3.dll','libssl-3.dll'):
+        source_dll=Path(sys.base_prefix)/'DLLs'/name
+        members=[p for p in bundle.rglob(name) if p.is_file()]
+        assert source_dll.is_file() and len(members)==1
+        digest=sha256(source_dll.read_bytes()).hexdigest()
+        assert sha256(members[0].read_bytes()).hexdigest()==digest,'WIN_CPYTHON_SSL_BYTES_CHANGED'
+        python_ssl[name]=digest
     for name,digest in BINARY_SHA256.items():
         matches=[p for p in bundle.rglob(name) if p.is_file()]
         assert len(matches)==1 and not matches[0].is_symlink() and sha256(matches[0].read_bytes()).hexdigest()==digest
-    environment={**os.environ,'QT_QPA_PLATFORM':'windows'}
-    result=subprocess.run([str(executable),'--ci-real-core-wallet'],env=environment,stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
-    if result.returncode!=0:
-        # The windowed PyInstaller process has no console output. Report only
-        # the strict public token emitted by the disposable frozen test entry.
-        # Never print OS/RPC logs, paths, exception text or credentials.
-        import re
-        refusal=Path('windows-packaged-wallet-denied.json')
-        code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
-        if refusal.is_file():
-            try:
-                payload=json.loads(refusal.read_text(encoding='utf8'))
-                candidate=payload.get('reason_code')
-                if (payload.get('status')=='WIN_BUNDLE_DENIED'
-                        and type(candidate) is str and len(candidate)<=110
-                        and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',candidate)):
-                    code=candidate
-            except (OSError,ValueError,TypeError):
-                pass
-        print('WIN_FROZEN_DEFAULT_PUBLIC_DENIAL='+code,flush=True)
-        raise AssertionError('WIN_FROZEN_REAL_WALLET_DENIED')
-    evidence=json.loads(Path('windows-packaged-wallet-evidence.json').read_text())
-    assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
-    # Actual native qwindows + genuine Core again at Windows125%/150%.
-    # Distinct cwd keeps create-only evidence and screenshots independent.
-    scales={}
-    for factor in ('1.25','1.5'):
-        review=Path('windows-ui-scale-'+factor).absolute();review.mkdir()
-        scaled={**environment,'QT_SCALE_FACTOR':factor}
-        result=subprocess.run([str(executable),'--ci-real-core-wallet'],cwd=review,env=scaled,
-            stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
+    environment={k:v for k,v in os.environ.items() if k not in
+        ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV') and not k.startswith(('QT_','QML_'))}
+    system_root=Path(os.environ['SystemRoot'])
+    environment.update({'QT_QPA_PLATFORM':'windows','PATH':str(system_root/'System32')+os.pathsep+str(system_root)})
+    with tempfile.TemporaryDirectory(prefix='wam-q01-win-frozen-cwd-') as clean:
+        isolated=Path(clean).resolve()
+        result=subprocess.run([str(executable),'--ci-real-core-wallet'],env=environment,cwd=isolated,stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
         if result.returncode!=0:
-            # The windowed frozen process has no stdout/stderr. Read ONLY a
-            # fixed public status token, never Core/Qt logs or user paths.
+            # The windowed PyInstaller process has no console output. Report only
+            # the strict public token emitted by the disposable frozen test entry.
+            # Never print OS/RPC logs, paths, exception text or credentials.
             import re
-            refusal=review/'windows-packaged-wallet-denied.json'
+            refusal=isolated/'windows-packaged-wallet-denied.json'
             code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
             if refusal.is_file():
                 try:
@@ -105,17 +106,54 @@ def main():
                         code=candidate
                 except (OSError,ValueError,TypeError):
                     pass
-            print('WIN_SCALED_FROZEN_PUBLIC_DENIAL_'+factor.replace('.','_')+'='+code,flush=True)
-            raise AssertionError('WIN_SCALED_FROZEN_REAL_WALLET_DENIED')
-        record=json.loads((review/'fusion-ui-review/windows-x64-visual-receipt.json').read_text())
-        assert record['qt_platform']=='windows' and abs(record['device_pixel_ratio']-float(factor))<.01
-        assert record['real_core_snapshot'] and not record['synthetic_rpc']
-        target=output/('ui-scale-'+factor);target.mkdir()
-        shutil.copytree(review/'fusion-ui-review',target/'fusion-ui-review')
-        shutil.copyfile(review/'windows-packaged-wallet-evidence.json',target/'windows-packaged-wallet-evidence.json')
-        scales[factor]={'native_qwindows_real_frozen_e2e':True,'device_pixel_ratio':record['device_pixel_ratio']}
+            print('WIN_FROZEN_DEFAULT_PUBLIC_DENIAL='+code,flush=True)
+            with (output/'Q01_DEFAULT_FAILURE.json').open('x') as failure:
+                json.dump({'status':'FAIL','stage':'frozen-100','reason_code':code},failure)
+            raise AssertionError('WIN_FROZEN_REAL_WALLET_DENIED')
+        evidence=json.loads((isolated/'windows-packaged-wallet-evidence.json').read_text())
+        assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
+        shutil.copyfile(isolated/'windows-packaged-wallet-evidence.json',output/'windows-packaged-wallet-evidence.json')
+        shutil.copytree(isolated/'fusion-ui-review',output/'fusion-ui-review')
+        # Actual native qwindows + genuine Core again at Windows125%/150%.
+        # Distinct cwd keeps create-only evidence and screenshots independent.
+        scales={}
+        for factor in ('1.25','1.5'):
+            review=isolated/('windows-ui-scale-'+factor);review.mkdir()
+            scaled={**environment,'QT_SCALE_FACTOR':factor}
+            result=subprocess.run([str(executable),'--ci-real-core-wallet'],cwd=review,env=scaled,
+                stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
+            if result.returncode!=0:
+                # The windowed frozen process has no stdout/stderr. Read ONLY a
+                # fixed public status token, never Core/Qt logs or user paths.
+                import re
+                refusal=review/'windows-packaged-wallet-denied.json'
+                code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
+                if refusal.is_file():
+                    try:
+                        payload=json.loads(refusal.read_text(encoding='utf8'))
+                        candidate=payload.get('reason_code')
+                        if (payload.get('status')=='WIN_BUNDLE_DENIED'
+                                and type(candidate) is str and len(candidate)<=110
+                                and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',candidate)):
+                            code=candidate
+                    except (OSError,ValueError,TypeError):
+                        pass
+                print('WIN_SCALED_FROZEN_PUBLIC_DENIAL_'+factor.replace('.','_')+'='+code,flush=True)
+                with (output/('Q01_SCALE_'+factor+'_FAILURE.json')).open('x') as failure:
+                    json.dump({'status':'FAIL','stage':'frozen-'+factor,'reason_code':code},failure)
+                raise AssertionError('WIN_SCALED_FROZEN_REAL_WALLET_DENIED')
+            record=json.loads((review/'fusion-ui-review/windows-x64-visual-receipt.json').read_text())
+            assert record['qt_platform']=='windows' and abs(record['device_pixel_ratio']-float(factor))<.01
+            assert record['real_core_snapshot'] and not record['synthetic_rpc']
+            target=output/('ui-scale-'+factor);target.mkdir()
+            shutil.copytree(review/'fusion-ui-review',target/'fusion-ui-review')
+            shutil.copyfile(review/'windows-packaged-wallet-evidence.json',target/'windows-packaged-wallet-evidence.json')
+            scales[factor]={'native_qwindows_real_frozen_e2e':True,'device_pixel_ratio':record['device_pixel_ratio']}
     members={p.relative_to(bundle).as_posix():sha256(p.read_bytes()).hexdigest() for p in bundle.rglob('*') if p.is_file()}
     assert not any(p.is_symlink() for p in bundle.rglob('*'))
+    verify(source_root,source_stamp);verify(source,wsp_stamp)
+    (output/'BUILD_SOURCE_RECEIPT.json').write_text(json.dumps(public_receipt(source_stamp,
+        source_head=os.environ.get('WAM_SOURCE_HEAD'),dispatch=os.environ.get('GITHUB_EVENT_NAME')=='workflow_dispatch'),sort_keys=True,indent=2)+'\n')
     head=os.environ['WAM_SOURCE_HEAD'];archive=output/('WAM-Privacy-Wallet-REGTEST-windows-x64-'+head+'.zip')
     with zipfile.ZipFile(archive,'x',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
         for relative in sorted(members):z.write(bundle/relative,'WAM-Privacy-Wallet-REGTEST/'+relative)
@@ -124,11 +162,13 @@ def main():
         'platform':'windows-x64','wsp_source_commit':'ac55f13423620252bdbf848c7e8a280c3b84721e',
         'official_core_sha256':BINARY_SHA256,'bundle_files_sha256':members,
         'archive_sha256':sha256(archive.read_bytes()).hexdigest(),'archive_name':archive.name,
+        'q01_external_working_directory':True,'q01_developer_python_path_removed':True,
+        'q01_cpython_ssl_sha256':python_ssl,'q01_qt_tls_backend':'schannel',
+        'q01_ambient_openssl_provider_allowed':False,
         'packaged_real_core_wallet_e2e_pass':True,'native_ui_scaling_acceptance':scales,'operator_windows10_11_acceptance':False,
         'authenticode_signed_application':False,'production_qualified':False,'mainnet_allowed':False,
         'dependencies':{n:importlib.metadata.version(n) for n in ('PySide6','PyInstaller','coincurve','cryptography','Pillow','qrcode')}}
     (output/'WINDOWS_PACKAGE_MANIFEST.json').write_text(json.dumps(manifest,sort_keys=True,indent=2)+'\n')
-    shutil.copyfile('windows-packaged-wallet-evidence.json',output/'windows-packaged-wallet-evidence.json')
     (output/'SHA256SUMS.txt').write_text(''.join(sha256(p.read_bytes()).hexdigest()+'  '+p.name+'\n'
         for p in sorted(output.iterdir()) if p.is_file() and p.name!='SHA256SUMS.txt'))
     from wam_regtest.release_candidate import write_candidate_manifest

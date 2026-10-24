@@ -13,12 +13,14 @@ test -f core/receipt.json
 mkdir -p bundle-input package-output
 SOURCE_STAGE=$(mktemp -d "$(pwd)/bundle-input/build-XXXXXX")
 trap 'rm -rf "$SOURCE_STAGE"' EXIT
-python -m wam_regtest.package_manifest \
+python -I -m wam_regtest.build_provenance capture --stamp "$SOURCE_STAGE/wallet-source.json"
+(cd wsp-upstream && env -u WAM_SOURCE_HEAD python -I -m wam_regtest.build_provenance capture --stamp "$SOURCE_STAGE/wsp-source.json")
+python -I -m wam_regtest.package_manifest \
   --source-root "$(pwd)/wsp-upstream" \
   --output "$SOURCE_STAGE/wsp-source"
 
 echo "MACOS_APP_STAGE=PYINSTALLER_START"
-python -m PyInstaller --noconfirm --clean --onedir --windowed \
+python -I -m PyInstaller --noconfirm --clean --onedir --windowed \
   --name "WAM Privacy Wallet REGTEST" \
   --osx-bundle-identifier "org.wamcoin.privacywallet.regtest" \
   --icon "$(pwd)/assets/wam-wallet.icns" \
@@ -39,7 +41,7 @@ APP="dist/WAM Privacy Wallet REGTEST.app"
 # changing publisher-signed SHA-256. These binaries MUST be unmodified DATA,
 # then made executable in-place; validate both hashes against ORIGINALS.
 export WAM_BUNDLE_APP="$APP"
-python - <<'PY'
+python -I - <<'PY'
 from hashlib import sha256
 import os
 from pathlib import Path
@@ -67,7 +69,7 @@ PY
 # Update outer ad-hoc app resources signature only. The original WAM Core
 # Mach-O SHA-256 MUST remain byte-for-byte identical to upstream after signing.
 codesign --force --sign - --timestamp=none "$APP"
-python - <<'PY'
+python -I - <<'PY'
 from hashlib import sha256
 from pathlib import Path
 for name in ("wamd", "wam-cli"):
@@ -79,7 +81,7 @@ for name in ("wamd", "wam-cli"):
         raise SystemExit("MACOS_BUNDLE_CODESIGN_MODIFIED_CORE_DENIED")
 print("MACOS_APP_STAGE=OUTER_APP_SIGNED_CORE_HASH_STILL_PASS", flush=True)
 PY
-python scripts/audit_wallet_security.py --root "$(pwd)" --core "$(pwd)/core" \
+python -I scripts/audit_wallet_security.py --root "$(pwd)" --core "$(pwd)/core" \
   --app "$(pwd)/$APP" --output package-output/INDEPENDENT-WALLET-SECURITY.json
 BIN="$APP/Contents/MacOS/WAM Privacy Wallet REGTEST"
 test -d "$APP"
@@ -88,7 +90,7 @@ test -x "$BIN"
 # Validation MUST invoke the final frozen application, not an editable checkout.
 export QT_QPA_PLATFORM=offscreen
 export WAM_FROZEN_BIN="$BIN"
-python - <<'PY'
+python -I - <<'PY'
 import os
 import subprocess
 import sys
@@ -105,12 +107,33 @@ try:
 except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
     sys.exit("MACOS_FROZEN_REAL_CORE_GUI_DENIED")
 print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_PASS", flush=True)
+# Q01 also needs the actual native window-system runtime, independently of
+# offscreen rendering. This existing CI mode retains full custody/Core gates.
+from pathlib import Path
+import shutil, tempfile
+cocoa = {k:v for k,v in os.environ.items() if k not in
+         ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV','DYLD_LIBRARY_PATH','DYLD_INSERT_LIBRARIES')
+         and not k.startswith(('QT_', 'QML_'))}
+cocoa.update({'QT_QPA_PLATFORM': 'cocoa', 'PATH': '/usr/bin:/bin:/usr/sbin:/sbin'})
+with tempfile.TemporaryDirectory(prefix='wam-q01-mac-frozen-cwd-') as clean:
+    subprocess.run([str(Path(binary).resolve()), '--ci-real-core-wallet-cocoa'],
+                   cwd=clean, env=cocoa, timeout=600, check=True)
+    # Copy public fixture evidence only, never any runtime/vault/datadir.
+    review = Path(clean)
+    public = Path('package-output/cocoa-evidence'); public.mkdir()
+    shutil.copytree(review/'fusion-ui-review', public/'fusion-ui-review')
+    for name in ('real-regtest-wallet-preview.png', 'real-regtest-security-preview.png'):
+        shutil.copyfile(review/name, public/name)
+print("MACOS_APP_STAGE=FROZEN_NATIVE_COCOA_REAL_CORE_PASS", flush=True)
 PY
 test -s real-regtest-gui-preview.png
 test -s real-regtest-wallet-preview.png
 test -s real-regtest-security-preview.png
 
 echo "MACOS_APP_STAGE=PACKAGED_REAL_CORE_GUI_PASS"
+python -I -m wam_regtest.build_provenance verify --stamp "$SOURCE_STAGE/wallet-source.json" \
+  --receipt package-output/BUILD_SOURCE_RECEIPT.json
+(cd wsp-upstream && env -u WAM_SOURCE_HEAD python -I -m wam_regtest.build_provenance verify --stamp "$SOURCE_STAGE/wsp-source.json")
 # Preserve macOS bundle metadata/resource forks in the downloadable ZIP.
 ditto -c -k --sequesterRsrc --keepParent "$APP" \
   "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip"
@@ -120,12 +143,12 @@ echo "MACOS_APP_STAGE=DMG_CREATE_START"
 # Retry ONLY transient macOS diskimages "Resource busy", max three
 # attempts. Each attempt uses private staging. Verify with hdiutil before
 # atomic final publication; never detach unrelated volumes or bypass E2E.
-python scripts/create_verified_dmg.py \
+python -I scripts/create_verified_dmg.py \
   --app "$APP" \
   --output "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
 echo "MACOS_APP_STAGE=DMG_VERIFIED"
 
-python - <<'PY'
+python -I - <<'PY'
 from hashlib import sha256
 from pathlib import Path
 import json
@@ -150,6 +173,8 @@ Path("package-output/SHA256SUMS.json").write_text(
         "wamd_sha256": sha256(Path("core/wamd").read_bytes()).hexdigest(),
         "wam_cli_sha256": sha256(Path("core/wam-cli").read_bytes()).hexdigest(),
         "real_core_packaged_e2e": True,
+        "q01_external_working_directory": True,
+        "q01_developer_python_path_removed": True,
         "mainnet_allowed": False,
         "files": out,
     }, indent=2, sort_keys=True) + "\n",

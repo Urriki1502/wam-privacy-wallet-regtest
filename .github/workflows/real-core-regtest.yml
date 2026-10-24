@@ -29,8 +29,14 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.10'
           architecture: 'arm64'
+      - name: Q01 clean hash-locked GUI environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
+      - name: Q01 native missing-dependency refusal (no Core execution)
+        run: python scripts/q01_dependency_negatives.py
       - name: Require actual Apple Silicon hardware
         run: test "$(uname -m)" = arm64
       - name: Setup official GnuPG verifier
@@ -44,12 +50,13 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
-          python -m pip install --disable-pip-version-check -e '.[gui]' -e ./wsp-upstream
           python -m pip check
       - name: Run fail-closed unit contracts (not E2E)
         run: python -m unittest discover -s tests -v
       - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
-        run: python -m wam_regtest.release --platform macos-arm64 --destination core
+        run: |
+          python -m wam_regtest.release --platform macos-arm64 --destination core
+          python scripts/q01_core_negatives.py --core-dir core --output q01-core-negatives.json
       - name: Independently evaluate wallet security contracts
         run: python scripts/audit_wallet_security.py --root . --core core --output independent-wallet-security.json
       - name: Inspect signed node dynamic library requirements (real ARM64 bytes)
@@ -162,6 +169,22 @@ jobs:
           print('REAL_WAM_CORE_NATIVE_BIP352_CONFIRMED_RECEIVE_SQLITE_PASS')
           print('REAL_WAM_CORE_NATIVE_QT_GUI_RECEIVE_BALANCE_HISTORY_PASS')
           PY
+      - name: Q01 native Cocoa against genuine Core (separate from offscreen)
+        shell: python
+        env:
+          QT_QPA_PLATFORM: cocoa
+        run: |
+          import json
+          from pathlib import Path
+          from wam_regtest.core import smoke_real_core
+          result=smoke_real_core(Path('core').resolve(),explicit_consent=True,
+              wsp_source=Path('wsp-upstream').resolve(),wsp_payment_e2e=True,
+              gui_e2e=False,security_e2e=True,wallet_e2e=True)
+          assert result['wallet_live_core']['qt_auto_system_events_verified'] is True
+          assert result['wallet_live_core']['synthetic_rpc'] is False
+          assert result['security_live_core']['actual_core_reorg_depths']==[1,12,100]
+          with Path('q01-native-cocoa.json').open('x') as output:
+              json.dump(result,output,sort_keys=True,indent=2)
       - name: Upload only sanitized live-Core evidence
         if: success()
         uses: actions/upload-artifact@v4
@@ -169,6 +192,7 @@ jobs:
           name: real-core-regtest-${{ github.sha }}
           path: |
             real-core-evidence.json
+            q01-native-cocoa.json
             independent-wallet-security.json
             fusion-ui-review/
             real-regtest-gui-preview.png
@@ -178,6 +202,17 @@ jobs:
           retention-days: 14
 
 
+      - name: Preserve Q01 source-install receipt (not Q acceptance)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q01-install-real-core-regtest-real-wamd-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            q01-install.json
+            q01-dependency-negatives.json
+            q01-core-negatives.json
+          if-no-files-found: warn
+          retention-days: 14
   native-app-dmg:
     name: Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E
     needs: real-wamd
@@ -199,8 +234,14 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.10'
           architecture: 'arm64'
+      - name: Q01 clean hash-locked GUI environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
+      - name: Q01 native missing-dependency refusal (no Core execution)
+        run: python scripts/q01_dependency_negatives.py
       - name: Require native Apple Silicon and official GPG verifier
         shell: bash
         run: |
@@ -213,12 +254,13 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
-          python -m pip install --disable-pip-version-check -e '.[gui]' -e ./wsp-upstream 'pyinstaller==6.22.3'
           python -m pip check
       - name: Security and bundling contracts
         run: python -m unittest discover -s tests -v
       - name: Fetch and authenticate exact official v0.1.11 ARM64 Core
-        run: python -m wam_regtest.release --platform macos-arm64 --destination core
+        run: |
+          python -m wam_regtest.release --platform macos-arm64 --destination core
+          python scripts/q01_core_negatives.py --core-dir core --output q01-core-negatives.json
       - name: Build actual native .app/.dmg and repeat REAL Core + WSP + Qt E2E inside app
         shell: bash
         env:
@@ -232,6 +274,8 @@ jobs:
             package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip
             package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg
             package-output/SHA256SUMS.json
+            package-output/BUILD_SOURCE_RECEIPT.json
+            package-output/cocoa-evidence/
             package-output/INDEPENDENT-WALLET-SECURITY.json
             package-output/RELEASE_CANDIDATE_MANIFEST.json
             package-output/SHA256SUMS.txt
@@ -242,4 +286,15 @@ jobs:
             real-regtest-wallet-preview.png
             real-regtest-security-preview.png
           if-no-files-found: error
+          retention-days: 14
+      - name: Preserve Q01 source-install receipt (not Q acceptance)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q01-install-real-core-regtest-native-app-dmg-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            q01-install.json
+            q01-dependency-negatives.json
+            q01-core-negatives.json
+          if-no-files-found: warn
           retention-days: 14

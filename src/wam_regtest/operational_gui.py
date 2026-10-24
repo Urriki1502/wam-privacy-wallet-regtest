@@ -50,6 +50,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.review=None
         self.signed=False
         self._submitted_txid=None
+        self._approval_open=False
         super().__init__(session.core_dir,session.datadir,session.source,session=session)
         self.setWindowTitle("WAM Privacy Wallet · Disposable REGTEST")
         self.warning.setText("REGTEST ONLY · DISPOSABLE TEST KEYS · NO REAL FUNDS")
@@ -119,17 +120,24 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self._update_controls();self.apply_theme()
 
     def approve_payment(self,kind):
-        if self.review is None or self._worker is not None or self.session.locked or self.session.faulted:return
+        if self._approval_open or self.review is None or self._worker is not None or self.session.locked or self.session.faulted:return
         if kind=='sign' and self.signed or kind=='broadcast' and not self.signed:return
-        dialog=PaymentApproval(self.review,kind,self)
-        approved=dialog.exec()==QDialog.DialogCode.Accepted
-        dialog.deleteLater()
-        if approved:self.start_operation(kind,self.review.commitment)
+        review=self.review
+        dialog=PaymentApproval(review,kind,self)
+        self._approval_open=True
+        self._update_controls()
+        try:
+            approved=dialog.exec()==QDialog.DialogCode.Accepted
+        finally:
+            self._approval_open=False
+            dialog.deleteLater()
+            self._update_controls()
+        if approved and self.review is review:self.start_operation(kind,review.commitment)
 
     def _update_controls(self):
         if not hasattr(self,"_actions"):
             return
-        busy=self._worker is not None
+        busy=self._worker is not None or self._approval_open
         unlocked=not self.session.locked and not self.session.faulted
         self.dashboard.go_send.setEnabled(not busy and unlocked)
         # A locked user must still be able to reach recovery/security.
@@ -292,6 +300,9 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self._update_controls()
 
     def request_sync(self):
+        # Timer/manual refresh must not occupy the worker inside the modal
+        # approval loop. The signer still reattests the live chain and intent.
+        if self._approval_open:return
         if self.session.locked or self.session.faulted:
             return
         super().request_sync()
