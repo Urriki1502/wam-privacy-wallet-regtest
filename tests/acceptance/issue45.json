@@ -38,7 +38,7 @@
   "v1_disposition": "HOLD",
   "core_version": "v0.1.11",
   "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-  "evidence_policy": "Evidence must bind actual tested source/checkout, OS, trust/pins, run/job, timestamps and artifact bytes. Historical results do not qualify changed code. JSON consistency is not human approval or host attestation.",
+  "evidence_policy": "Evidence must bind actual tested source/checkout, OS, trust/pins, run/job, timestamps and artifact bytes. Historical results do not qualify changed code. JSON consistency is not human approval or host attestation. Owner v2 allows an explicit, signed-off ENGINEERING focus handoff with full Q acceptance still BLOCKED. Missing postmerge/physical/independent results remain open.",
   "questions": [
     {
       "id": "Q01",
@@ -50,7 +50,7 @@
       "coverage_total": 56,
       "base_main_sha": "84d93b47f52563075b908b5a66df49239d8af924",
       "candidate_pr": 127,
-      "candidate_head_sha": "99264c7ed74cf4338e214385e30229f49104fba4",
+      "candidate_head_sha": "4477ddb46ff13659641d5ff565fb2c00dfcc6961",
       "cases": [
         {
           "id": "Q01-BASELINE",
@@ -2794,13 +2794,20 @@
             "G7"
           ],
           "mandatory": true,
-          "status": "BLOCKED",
-          "acceptance_evidence": [],
-          "blocker": {
-            "actor": "REPOSITORY_OWNER",
-            "missing_evidence": "Explicit merge authorization after all mandatory candidate/human gates qualify",
-            "next_action": "Owner reviews qualified exact-head Q01 and authorizes merge; do not request premature approval"
-          }
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "4477ddb46ff13659641d5ff565fb2c00dfcc6961",
+              "checkout_sha": "4477ddb46ff13659641d5ff565fb2c00dfcc6961",
+              "timestamp_utc": "2026-10-24T07:15:08Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/127",
+              "owner_decision_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/127#issuecomment-6381326838",
+              "merged_main_sha": "8db301634e4ade7bb154da1a162dd53ed146ef21",
+              "scope": "Owner explicitly approved merging Q01 technical code. NO waiver of clean-host physical, independent reviewer or unexecuted main-native/frozen checks."
+            }
+          ],
+          "blocker": null
         },
         {
           "id": "Q01-MAIN-RECHECK-macos-arm64",
@@ -2908,7 +2915,7 @@
           "not_applicable_reason": null
         }
       },
-      "owner_merge_authorization": null,
+      "owner_merge_authorization": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/127#issuecomment-6381326838",
       "post_merge_main_sha": null,
       "historical_evidence": [
         {
@@ -3043,7 +3050,7 @@
         }
       ],
       "qualified_runtime_source_sha": "99264c7ed74cf4338e214385e30229f49104fba4",
-      "evidence_updated_at_utc": "2026-10-24T06:25:59.908394+00:00",
+      "evidence_updated_at_utc": "2026-10-24T07:15:08Z",
       "technical_evidence_summary": {
         "qualified_runtime_source_sha": "99264c7ed74cf4338e214385e30229f49104fba4",
         "first_actual_archives_verified": 17,
@@ -3231,6 +3238,33 @@
           },
           "scope": "Different suite groups are not added together or labelled all-platform PASS. Foreign guards/native classes are exercised on their appropriate OS; no skipped mandatory native Q01 case is promoted."
         }
+      },
+      "engineering_status": "INTEGRATED_PENDING_EXTERNAL",
+      "full_acceptance_status": "BLOCKED",
+      "engineering_handoff": {
+        "engineering_status": "INTEGRATED_PENDING_EXTERNAL",
+        "owner_authorized_handoff": true,
+        "owner_decision_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993",
+        "merged_pr": 127,
+        "merged_main_sha": "8db301634e4ade7bb154da1a162dd53ed146ef21",
+        "qualified_runtime_source_sha": "99264c7ed74cf4338e214385e30229f49104fba4",
+        "next_q": "Q02",
+        "postmerge_status": "PARTIAL_PASS",
+        "postmerge_pass_runs": [
+          40073399748,
+          40073399683
+        ],
+        "postmerge_missing": "Windows x64 and Linux x86_64 exact-merged-main fresh native/frozen Q01 qualification remain unproven; no reuse of PR checks.",
+        "unresolved_case_ids": [
+          "Q01-INDEPENDENT-REVIEW",
+          "Q01-MAIN-RECHECK-linux-x86_64",
+          "Q01-MAIN-RECHECK-macos-arm64",
+          "Q01-MAIN-RECHECK-windows-x64",
+          "Q01-PHYSICAL-linux-x86_64",
+          "Q01-PHYSICAL-macos-arm64",
+          "Q01-PHYSICAL-windows-x64"
+        ],
+        "scope": "ENGINEERING FOCUS ONLY. Q01 accepted=false; mandatory physical, independent and postmerge release evidence pending; stop next Q for a real late failure."
       }
     },
     {
@@ -3472,7 +3506,7 @@
     },
     {
       "id": "Q06",
-      "requirement": "New 12-word BIP39 Create\u2192Receive\u2192Sign\u2192Broadcast\u2192Reopen\u2192Restore same identity",
+      "requirement": "New 12-word BIP39 Create→Receive→Sign→Broadcast→Reopen→Restore same identity",
       "processing": "QUEUED",
       "status": "PENDING",
       "accepted": false,
@@ -3825,7 +3859,7 @@
     },
     {
       "id": "Q12",
-      "requirement": "Pending\u2192confirmed\u2192conflicted/dropped/reorg; restart with uncertain broadcast/UTXO reservations",
+      "requirement": "Pending→confirmed→conflicted/dropped/reorg; restart with uncertain broadcast/UTXO reservations",
       "processing": "QUEUED",
       "status": "PENDING",
       "accepted": false,
