@@ -154,5 +154,9 @@ Path("package-output/SHA256SUMS.json").write_text(
         "files": out,
     }, indent=2, sort_keys=True) + "\n",
 )
+from wam_regtest.release_candidate import write_candidate_manifest
+write_candidate_manifest(Path('package-output'),'macos-arm64',{
+    'wamd':sha256(Path('core/wamd').read_bytes()).hexdigest(),
+    'wam-cli':sha256(Path('core/wam-cli').read_bytes()).hexdigest()})
 print("MACOS_ARM64_REAL_CORE_BIP352_PACKAGED_APP_DMG_E2E_PASS")
 PY

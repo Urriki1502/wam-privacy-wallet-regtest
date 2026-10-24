@@ -2,8 +2,12 @@
 from pathlib import Path
 import subprocess
 import secrets
+import sys
+from . import custody
 from PySide6.QtCore import QEventLoop,QTimer,QCoreApplication,QEvent,Qt
 from PySide6.QtWidgets import QApplication
+from .fusion_pages import PaymentApproval
+from .fusion_ui import fusion_palette
 from .wallet_session import WalletSession, WalletSessionError, WalletCoreCli
 from .operational_gui import OperationalWalletWindow
 
@@ -49,17 +53,17 @@ def probe_wallet(core_dir,datadir,source,mining_address):
     from wam_sp.keystore import Keyring
     from wam_sp.scanner import Scanner
     session=recipient=recipient_scan=window=None
-    keychain=datadir/'wallet-acceptance.keychain-db'
+    keychain=datadir/'wallet-acceptance.keychain-db' if sys.platform=='darwin' else None
     created=False
     stage="KEYCHAIN"
     print("WALLET_E2E_STAGE=KEYCHAIN",flush=True)
     password=b"public-disposable-wallet-acceptance"
     try:
-        status=subprocess.run(['/usr/bin/security','create-keychain','-p','public-test-only',str(keychain)],
-                               capture_output=True,timeout=15,check=False).returncode
-        if status:
-            raise WalletProbeError("WALLET_TEST_KEYCHAIN_DENIED")
-        created=True
+        if sys.platform=='darwin':
+            status=subprocess.run(['/usr/bin/security','create-keychain','-p','public-test-only',str(keychain)],
+                                   capture_output=True,timeout=15,check=False).returncode
+            if status:raise WalletProbeError("WALLET_TEST_KEYCHAIN_DENIED")
+            created=True
         stage="CREATE"
         print("WALLET_E2E_STAGE=CREATE",flush=True)
         session=WalletSession.create(core_dir,datadir,source,password,mining_address,authorized=True,keychain=keychain)
@@ -73,6 +77,12 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window.show()
         window.apply_snapshot(initial)
         assert window.navigation.count()==6 and window._sync_timer.isActive()
+        assert window.navigation.item(0).text()=="Overview"
+        assert window.stack.widget(0) is window.dashboard
+        assert window.dashboard.balance_value.text()==window.balance_text.text()
+        assert window.dashboard.activity_table.rowCount()==min(6,len(initial.history))
+        assert "REGTEST VERIFIED" in window.dashboard.live_badge.text()
+        assert window.dashboard.go_send.isEnabled() and window.dashboard.open_security.isEnabled()
         assert window._sync_timer.interval()==30_000
         # Exercise an actual Qt timer-triggered background worker with live
         # Core. Accelerate only the test interval, then restore the real 30s.
@@ -102,7 +112,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         window._sync_timer.start()
         assert sync_result.get('snap')==initial and window._worker is None
         assert not window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
-        for index,color in ((2,'#10100F'),(1,'#F5F3EE')):
+        for index,color in ((2,fusion_palette('dark')['bg']),(1,fusion_palette('light')['bg'])):
             window.appearance.setCurrentIndex(index)
             app.processEvents()
             assert color in window.styleSheet()
@@ -111,7 +121,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         prior=hints.colorScheme()
         auto_verified=False
         if prior in (Qt.ColorScheme.Light,Qt.ColorScheme.Dark):
-            for scheme,color in ((Qt.ColorScheme.Dark,'#10100F'),(Qt.ColorScheme.Light,'#F5F3EE')):
+            for scheme,color in ((Qt.ColorScheme.Dark,fusion_palette('dark')['bg']),(Qt.ColorScheme.Light,fusion_palette('light')['bg'])):
                 hints.setColorScheme(scheme)
                 app.processEvents()
                 assert hints.colorScheme()==scheme and color in window.styleSheet()
@@ -154,6 +164,9 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         assert review.code==code and review.atoms==100000 and review.fee==10000
         assert str(review.atoms) in window.review_text.text() and code in window.review_text.text()
         assert window.sign_button.isEnabled() and not window.broadcast_button.isEnabled()
+        # A rejected native approval must not enter signer or alter reservations.
+        _approve_dialog(app,window,window.sign_button,approve=False)
+        assert session._signed is None and window.sign_button.isEnabled()
         # Real Core integration: inspect the exact WSP-1 native PSBTv2
         # prepared from LIVE verified coins. BIP352 input-set changes require
         # fresh receiver output/proof derivation, not yet qualified; the
@@ -201,12 +214,12 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         original_sign=Signer.sign
         observed={}
         def checked_sign(signer,*args):
-            other=KeychainAnchor(session.vault.anchor.wallet_id,keychain)
+            other=custody.anchor(session.vault.anchor.wallet_id,keychain)
             try:
                 with other.lease():
                     raise WalletProbeError("WALLET_SIGN_LEASE_NOT_HELD")
-            except VaultError as error:
-                assert str(error)=="VAULT_SESSION_BUSY"
+            except ValueError as error:
+                assert str(error)==("WIN_ANCHOR_SESSION_BUSY" if sys.platform=="win32" else "VAULT_SESSION_BUSY")
             path=datadir/'before-native-sign.sqlite'
             recovered_ring,recovered_scan=session.vault.restore(path,password)
             try:
@@ -219,12 +232,12 @@ def probe_wallet(core_dir,datadir,source,mining_address):
                 path.unlink()
             return original_sign(signer,*args)
         with patch.object(Signer,'sign',checked_sign):
-            _operation(app,window,'sign',window.sign_button.click)
+            _operation(app,window,'sign',lambda:_approve_dialog(app,window,window.sign_button))
         assert observed.get('before_crypto') is True
         assert window.broadcast_button.isEnabled() and not window.cancel_button.isEnabled()
         stage="BROADCAST"
         print("WALLET_E2E_STAGE=BROADCAST",flush=True)
-        txid=_operation(app,window,'broadcast',window.broadcast_button.click)
+        txid=_operation(app,window,'broadcast',lambda:_approve_dialog(app,window,window.broadcast_button))
         assert txid in window.review_text.text()
         # Real Core's mempool/consensus must accept the exact native signature.
         rpc=session._rpc()
@@ -259,19 +272,20 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         # A second real payment spends confirmed change. Drop only the local
         # response AFTER genuine Core has accepted it; no synthetic RPC.
         _operation(app,window,'prepare',window.prepare_button.click)
-        _operation(app,window,'sign',window.sign_button.click)
+        _capture_fusion_views(app,window)
+        _operation(app,window,'sign',lambda:_approve_dialog(app,window,window.sign_button))
         from wam_sp.psbt import PSBT
         uncertain_txid=PSBT.decode(session._signed).txid()
         original_call=WalletCoreCli.call
         entered={}
         def lost_reply(client,method,params=None):
             if method=='sendrawtransaction':
-                other=KeychainAnchor(session.vault.anchor.wallet_id,keychain)
+                other=custody.anchor(session.vault.anchor.wallet_id,keychain)
                 try:
                     with other.lease():
                         raise WalletProbeError("WALLET_BROADCAST_LEASE_NOT_HELD")
-                except VaultError as error:
-                    assert str(error)=="VAULT_SESSION_BUSY"
+                except ValueError as error:
+                    assert str(error)==("WIN_ANCHOR_SESSION_BUSY" if sys.platform=="win32" else "VAULT_SESSION_BUSY")
                 path=datadir/'before-network.sqlite'
                 recovered_ring,recovered_scan=session.vault.restore(path,password)
                 try:
@@ -287,7 +301,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
                 raise WalletSessionError("WALLET_TEST_LOST_REPLY_AFTER_REAL_CORE")
             return original_call(client,method,params)
         with patch.object(WalletCoreCli,'call',lost_reply):
-            _operation(app,window,'broadcast',window.broadcast_button.click,denied=True)
+            _operation(app,window,'broadcast',lambda:_approve_dialog(app,window,window.broadcast_button),denied=True)
         assert entered.get('anchored_before_rpc') is True and session.faulted
         assert not window.prepare_button.isEnabled() and not window.broadcast_button.isEnabled()
         assert uncertain_txid in rpc._call('getrawmempool',[])
@@ -304,12 +318,19 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         stage="BACKUP"
         print("WALLET_E2E_STAGE=BACKUP",flush=True)
         backup=datadir/'wallet-backup'
-        backup.mkdir(mode=0o700)
+        custody.create_directory(backup)
         _operation(app,window,'backup',lambda:window.start_operation('backup',backup,'wallet-backup.enc'))
         stage="LOCK"
         print("WALLET_E2E_STAGE=LOCK",flush=True)
         _operation(app,window,'lock',window.lock_button.click)
         assert session.locked and not session.runtime.exists() and window.balance_text.text()=='—'
+        assert window.dashboard.balance_value.text()=='—'
+        assert window.dashboard.activity_table.rowCount()==0
+        assert window.receive_page.qr.matrix is None and window.receive_page.code is None
+        assert window.history_page.rows==() and not window.history_page.copy_button.isEnabled()
+        assert window.dashboard.evidence_text.toolTip()==''
+        assert initial.receive_code not in window.recipient.text() and code not in window.review_text.text()
+        assert not window.dashboard.go_send.isEnabled()
         assert not window.prepare_button.isEnabled()
         assert 'block_height' not in window.disclosure_text.text() and session._disclosure_gate is None
         stage="PASSWORD"
@@ -334,11 +355,11 @@ def probe_wallet(core_dir,datadir,source,mining_address):
                                  wsp_payment_e2e=True,
                                  recovery_case=(backup,'wallet-backup.enc',password,keychain,initial.receive_code))
         proof=reopened['recovery_live_core']
-        assert proof['status']=='REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS'
+        assert proof['status']==('REAL_CORE_CROSS_SESSION_CREDENTIAL_BACKUP_REOPEN_PASS' if sys.platform=='win32' else 'REAL_CORE_CROSS_SESSION_KEYCHAIN_BACKUP_REOPEN_PASS')
         assert reopened['block_height']==103 and reopened['live_wamd_process_observed'] is True
         assert reopened['mainnet_allowed'] is False and reopened['node_sha256']==initial.core_sha256
         return {
-            'status':'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS',
+            'status':('WIN64_REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS' if sys.platform=='win32' else 'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS'),
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
             'authenticated_selected_local_disclosure':True,'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
             'native_psbtv2_payjoin_bip352_fail_closed':True,'payjoin_signing_authorized':False,'payjoin_transport_implemented':False,
@@ -372,8 +393,70 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         for item in (session,recipient_scan,recipient):
             if item is not None:
                 item.close()
+        if sys.platform=="win32" and session is not None:
+            from .windows_vault_probe import _delete_fixture
+            _delete_fixture(session.vault.anchor)
         if created:
             status=subprocess.run(['/usr/bin/security','delete-keychain',str(keychain)],
                                    capture_output=True,timeout=15,check=False).returncode
             if status:
                 raise WalletProbeError('WALLET_TEST_KEYCHAIN_CLEANUP_DENIED')
+
+
+def _approve_dialog(app,window,button,*,approve=True):
+    # Drive the actual modal dialog as an explicit disposable-fixture operator.
+    # No application test flag or authorization bypass is introduced.
+    seen=[]
+    def respond():
+        dialog=QApplication.activeModalWidget()
+        if isinstance(dialog,PaymentApproval):
+            assert dialog.cancel.isDefault() and not dialog.approve.isDefault()
+            seen.append(True)
+            directory=Path('fusion-ui-review');directory.mkdir(exist_ok=True)
+            import sys
+            platform={'win32':'windows-x64','darwin':'macos-arm64','linux':'linux-x86_64'}[sys.platform]
+            assert dialog.grab().save(str(directory/(platform+'-approval-'+('broadcast' if button is window.broadcast_button else 'sign')+'.png')))
+            (dialog.approve if approve else dialog.cancel).click()
+    QTimer.singleShot(80,respond)
+    button.click()
+    assert seen, 'NATIVE_PAYMENT_APPROVAL_DIALOG_REQUIRED'
+
+
+def _capture_fusion_views(app,window):
+    import json,sys
+    directory=Path('fusion-ui-review');directory.mkdir(exist_ok=True)
+    platform={'win32':'windows-x64','darwin':'macos-arm64','linux':'linux-x86_64'}[sys.platform]
+    old_size=window.size();old_page=window.navigation.currentRow();old_mode=window.appearance.currentIndex()
+    records=[];geometry=[]
+    def capture(filename,requested):
+        assert window.grab().save(str(directory/filename));records.append(filename)
+        geometry.append({'file':filename,'requested_logical_size':list(requested),
+            'actual_logical_size':[window.width(),window.height()],
+            'device_pixel_ratio':window.devicePixelRatioF()})
+    def settle():
+        loop=QEventLoop();QTimer.singleShot(80,loop.quit);loop.exec()
+        app.processEvents()
+    try:
+        window.resize(1280,800);window.appearance.setCurrentIndex(2)
+        for index,name in enumerate(('overview','receive','history','send','security','settings')):
+            window.navigation.setCurrentRow(index)
+            if index==2 and window.history_table.rowCount():window.history_table.selectRow(0)
+            settle()
+            filename=f'{platform}-dark-{name}-1280x800.png'
+            capture(filename,(1280,800))
+        window.navigation.setCurrentRow(0)
+        for mode,index in (('light',1),('auto',0)):
+            window.appearance.setCurrentIndex(index);settle()
+            filename=f'{platform}-{mode}-overview-1280x800.png'
+            capture(filename,(1280,800))
+        window.appearance.setCurrentIndex(2)
+        for width,height in ((1440,900),(1920,1080),(900,650)):
+            window.resize(width,height);settle()
+            filename=f'{platform}-dark-overview-{width}x{height}.png'
+            capture(filename,(width,height))
+        receipt={'platform':platform,'qt_platform':app.platformName(),'device_pixel_ratio':window.devicePixelRatioF(),
+            'real_core_snapshot':True,'synthetic_rpc':False,'verified_height':window._snapshot.height,
+            'screenshots':records,'capture_geometry':geometry,'visual_approval':'PENDING_HUMAN_REVIEW'}
+        (directory/(platform+'-visual-receipt.json')).write_text(json.dumps(receipt,indent=2)+'\n')
+    finally:
+        window.resize(old_size);window.appearance.setCurrentIndex(old_mode);window.navigation.setCurrentRow(old_page);app.processEvents()

@@ -1,0 +1,86 @@
+name: Windows x64 native Qt REAL Core WSP read-only E2E
+
+on:
+  pull_request:
+    paths:
+      - "src/wam_regtest/windows_wallet_read.py"
+      - "src/wam_regtest/windows_read_gui.py"
+      - "src/wam_regtest/windows_core_regtest_smoke.py"
+      - "tests/test_windows_qt_read.py"
+      - ".github/workflows/windows-x64-qt-live-read.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-real-qt-readonly:
+    name: Signed real Core + real WSP SQLite -> native Qt GUI
+    runs-on: windows-2022
+    timeout-minutes: 40
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Exact native platform + WSP source + real GPG required
+        shell: pwsh
+        run: |
+          python -c "import os,platform,struct; assert os.name=='nt' and platform.machine().lower() in ('amd64','x86_64') and struct.calcsize('P')==8"
+          if ((git -C wsp-upstream rev-parse HEAD).Trim() -ne "ac55f13423620252bdbf848c7e8a280c3b84721e") { throw "WIN_WSP_SOURCE_PIN_DENIED" }
+          if (!(Get-Command gpg -ErrorAction SilentlyContinue)) { throw "WIN_SIGNED_CORE_GPG_REQUIRED" }
+      - name: Install real native WSP, Windows application and PySide6
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -e ".[gui]" -e ./wsp-upstream
+          python -m pip check
+          python -m unittest discover -s tests -p "test_windows_qt_read.py" -v
+          if ($LASTEXITCODE -ne 0) { throw "WIN_REAL_GUI_VIEW_BOUNDARY_DENIED" }
+      - name: Run real signed Core, confirm native BIP352 and show real Qt screen
+        shell: pwsh
+        run: |
+          @'
+          import tempfile
+          from pathlib import Path
+          from wam_regtest.release import _download_exact
+          from wam_regtest.windows_core_regtest_smoke import smoke_signed_windows_regtest
+          from wam_regtest.windows_release_preflight import ASSET
+          source = Path("wsp-upstream").absolute()
+          with tempfile.TemporaryDirectory(prefix="wam-win-qt-e2e-") as temp:
+              root = Path(temp)
+              for remote,name,limit in (
+                  ("/SIGNING-KEY.asc","SIGNING-KEY.asc",32768),
+                  ("/downloads/v0.1.11/SHA256SUMS","SHA256SUMS",131072),
+                  ("/downloads/v0.1.11/SHA256SUMS.asc","SHA256SUMS.asc",16384),
+                  ("/downloads/v0.1.11/"+ASSET,ASSET,320*1024*1024),
+              ):
+                  _download_exact(remote,limit,root/name)
+              result = smoke_signed_windows_regtest(
+                  root/ASSET,root/"SIGNING-KEY.asc",root/"SHA256SUMS",
+                  root/"SHA256SUMS.asc",
+                  consent=True,wsp_source=source,
+                  confirm_public_fixture_payment=True,qt_readonly_e2e=True,
+                  timeout=150)
+              assert result["status"] == "WIN64_SIGNED_CORE_WSP_QT_READ_ONLY_E2E_PASS"
+              assert result["wsp_receipt"]["real_onchain_payment"] is True
+              assert result["qt_wallet_e2e"] is True
+              assert result["qt_receipt"]["real_signed_core_rpc"] is True
+              assert result["qt_receipt"]["native_wsp_sqlite_scan"] is True
+              assert result["qt_receipt"]["synthetic_rpc"] is False
+              for forbidden in ("sign_broadcast_authorized","production_authorized","mainnet_allowed"):
+                  assert result[forbidden] is False
+              print("WIN_NATIVE_QT_RECEIVE_BALANCE_HISTORY_E2E_PASS")
+              print("NO_SIGNER_NO_MAINNET_NO_PRODUCTION")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw "WIN_NATIVE_REAL_CORE_QT_E2E_DENIED" }

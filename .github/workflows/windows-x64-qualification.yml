@@ -1,0 +1,175 @@
+# Windows x64 native qualification: actual WSP tests + OFFLINE signed WAM Core.
+# This does not authorize Core execution or wallet signing/broadcast.
+name: Windows x64 Core + WSP qualification (NO CORE EXEC)
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/windows-x64-qualification.yml"
+      - "src/wam_regtest/windows_release_preflight.py"
+      - "tests/test_windows_release_preflight.py"
+      - "docs/WINDOWS_X64_PHASE0.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-wsp-and-crypto:
+    name: Native Windows x64 WSP scanner and BIP352
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Require native Win64 and exact WSP source
+        shell: pwsh
+        run: |
+          if ($env:RUNNER_OS -ne "Windows") { throw "WIN_NATIVE_HOST_REQUIRED" }
+          python -c "import os,platform,struct; assert os.name=='nt' and platform.machine().lower() in ('amd64','x86_64') and struct.calcsize('P')==8, 'WIN64_ARCH_DENIED'"
+          $pin = git -C wsp-upstream rev-parse HEAD
+          if ($pin.Trim() -ne "ac55f13423620252bdbf848c7e8a280c3b84721e") { throw "WSP_SOURCE_PIN_DENIED" }
+      - name: Install pinned WSP and wallet code
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -e ./wsp-upstream -e .
+          python -m pip check
+      - name: Require all 28 official BIP352 vector suites
+        shell: python
+        run: |
+          import json, unittest
+          from pathlib import Path
+          rows=json.loads(Path("wsp-upstream/tests/vectors/bip352.json").read_text())
+          suite=unittest.defaultTestLoader.discover("wsp-upstream/tests",pattern="test_vectors.py")
+          assert len(rows)==28 and suite.countTestCases()==28, "WIN_BIP352_VECTOR_SET_DENIED"
+          result=unittest.TextTestRunner(verbosity=2).run(suite)
+          assert result.wasSuccessful() and not result.skipped and result.testsRun==28, "WIN_BIP352_28_VECTOR_DENIED"
+          print("WIN_X64_BIP352_28_OF_28_PASS")
+      - name: Run REAL native Win32 LockFileEx contention and process death tests
+        shell: pwsh
+        run: |
+          python -m unittest discover -s wsp-upstream/tests -p "test_file_lock.py" -v
+          if ($LASTEXITCODE -ne 0) { throw "WIN_SCANNER_LOCK_DENIED" }
+      - name: Reuse native WSP scanner and SQLite integration regression
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = (Resolve-Path "wsp-upstream").Path
+          python -m unittest discover -s wsp-upstream/tests -p "test_scanner_wallet.py" -v
+          if ($LASTEXITCODE -ne 0) { throw "WIN_SCANNER_SQLITE_DENIED" }
+      - name: Windows signed-release parser hostile-fixture unit contracts
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p "test_windows_release_preflight.py" -v
+          if ($LASTEXITCODE -ne 0) { throw "WIN_RELEASE_FIXTURE_DENIED" }
+
+  official-signed-windows-core-offline:
+    name: Signed official Windows Core ZIP / PE64 identity (no launch)
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Require authentic native Win64 and official GPG verifier
+        shell: pwsh
+        run: |
+          python -c "import os,platform,struct; assert os.name=='nt' and platform.machine().lower() in ('amd64','x86_64') and struct.calcsize('P')==8"
+          $gpg = Get-Command gpg -ErrorAction SilentlyContinue
+          if (!$gpg) { throw "WIN_GPG_NOT_INSTALLED_FAIL_CLOSED" }
+          & $gpg.Source --version | Select-Object -First 1
+      - name: Install exact local release verification module
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+          python -c "import wam_regtest.windows_release_preflight; print('WIN_RELEASE_VERIFIER_IMPORT_PASS')"
+      - name: Diagnose native GPG official public signer parsing (no approval)
+        shell: pwsh
+        run: |
+          @'
+          import os, subprocess, tempfile
+          from pathlib import Path
+          from wam_regtest.release import _download_exact, _gpg, FINGERPRINT
+          with tempfile.TemporaryDirectory(prefix="wam-win-gpg-probe-") as t:
+              home=Path(t)/"gpg"; home.mkdir()
+              key=Path(t)/"SIGNING-KEY.asc"
+              _download_exact("/SIGNING-KEY.asc",32768,key)
+              rc,out=_gpg("gpg",home,"--with-colons","--import-options","show-only","--import",str(key))
+              fingerprints=[x.split(":")[9] for x in out.splitlines() if x.startswith("fpr:") and len(x.split(":"))>9]
+              print("WIN_GPG_IMPORT_RC",rc)
+              print("WIN_GPG_PUBLIC_FINGERPRINT_MATCH",FINGERPRINT in fingerprints)
+              print("WIN_GPG_RECORD_TYPES",[x.split(":")[0] for x in out.splitlines()][:15])
+              # Diagnostic with authenticated public signing key only. Keep
+              # official strict verifier unchanged until root cause is known.
+              command = ["gpg", "--homedir", str(home), "--batch", "--no-tty",
+                         "--no-autostart", "--no-auto-key-retrieve", "--with-colons",
+                         "--import-options", "show-only", "--import", str(key)]
+              variants = (
+                  ("clean_windows_runtime",
+                   {**{"PATH":os.environ.get("PATH",""),"GNUPGHOME":str(home),
+                       "HOME":str(home),"LC_ALL":"C"},
+                    **{k:os.environ[k] for k in ("SystemRoot","APPDATA","USERPROFILE",
+                                                "TEMP","TMP") if k in os.environ}}),
+                  ("full_windows_runtime",
+                   {**os.environ, "GNUPGHOME":str(home), "HOME":str(home),
+                    "LC_ALL":"C"}),
+              )
+              for label, environment in variants:
+                  process=subprocess.run(command,env=environment,capture_output=True,
+                                         text=True,timeout=15,check=False)
+                  fingerprint=FINGERPRINT in process.stdout
+                  err=process.stderr.replace(str(home),"<gpg-home>").replace(str(key),"<public-key>")
+                  print("WIN_GPG_VARIANT",label,"EXIT",process.returncode,
+                        "PUBLIC_FINGERPRINT_MATCH",fingerprint,
+                        "PUBLIC_KEY_DIAGNOSTIC",repr(err[:250]))
+              # Non-authorizing diagnostic; the strict production verifier still decides.
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw "WIN_GPG_DIAGNOSTIC_UNAVAILABLE" }
+      - name: Obtain official signed release and verify archive + both PE64 executables WITHOUT running
+        shell: pwsh
+        run: |
+          @'
+          import tempfile
+          from pathlib import Path
+          from wam_regtest.release import _download_exact
+          from wam_regtest.windows_release_preflight import ASSET, verify_signed_windows_archive
+          with tempfile.TemporaryDirectory(prefix="wam-win-signed-") as directory:
+              root = Path(directory)
+              files = (
+                  ("/SIGNING-KEY.asc", "SIGNING-KEY.asc", 32768),
+                  ("/downloads/v0.1.11/SHA256SUMS", "SHA256SUMS", 131072),
+                  ("/downloads/v0.1.11/SHA256SUMS.asc", "SHA256SUMS.asc", 16384),
+                  ("/downloads/v0.1.11/" + ASSET, ASSET, 320 * 1024 * 1024),
+              )
+              for path, name, size in files:
+                  _download_exact(path, size, root / name)
+              receipt = verify_signed_windows_archive(
+                  root / ASSET, root / "SIGNING-KEY.asc",
+                  root / "SHA256SUMS", root / "SHA256SUMS.asc")
+              assert receipt["signed_archive_verified"] is True
+              assert receipt["platform"] == "windows-x64"
+              assert set(receipt["member_sha256"]) == {"wamd.exe", "wam-cli.exe"}
+              for name in ("native_windows_tests_passed", "loader_process_binding_qualified",
+                           "real_core_e2e_qualified", "wsp_scanner_qualified",
+                           "wallet_signing_authorized", "mainnet_allowed"):
+                  assert receipt[name] is False, "UNSUPPORTED_AUTHORITY_DENIED"
+              print("WIN_X64_OFFICIAL_SIGNED_CORE_PE64_OFFLINE_REVIEW_PASS_NO_EXEC")
+              print("RELEASE_SHA256", receipt["archive_sha256"])
+              print("WAMD_SHA256", receipt["member_sha256"]["wamd.exe"])
+              print("WAM_CLI_SHA256", receipt["member_sha256"]["wam-cli.exe"])
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw "WIN_OFFICIAL_CORE_OFFLINE_INTAKE_DENIED" }

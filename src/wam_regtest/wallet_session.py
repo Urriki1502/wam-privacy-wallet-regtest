@@ -12,6 +12,8 @@ from pathlib import Path
 import re
 import secrets
 import threading
+from .linux_anchor_witness import LinuxWitnessError
+from wam_regtest import custody
 from wam_regtest.core import verified_core_paths
 from wam_regtest.wsp_live import LiveCoreReadOnlyCli, _pinned_source, _public_fixture_payment
 from wam_regtest.vault import CheckpointVault, KeychainAnchor
@@ -87,7 +89,7 @@ class WalletSession:
         from wam_sp.keystore import Keyring
         from wam_sp.scanner import Scanner
         _, cli, receipt = verified_core_paths(core_dir)
-        if receipt["platform"] != "macos-arm64":
+        if receipt["platform"] != custody.platform_name():
             raise WalletSessionError("WALLET_MACOS_CORE_DENIED")
         rpc = WalletCoreCli(cli, datadir)
         rpc.attest()
@@ -95,7 +97,7 @@ class WalletSession:
         if height not in (102, 103):
             raise WalletSessionError("WALLET_FRESH_TEST_CHAIN_REQUIRED")
         folder = datadir / "wallet-vault"
-        folder.mkdir(mode=0o700)
+        custody.create_directory(folder)
         ring = Keyring()
         scanner = None
         try:
@@ -105,7 +107,7 @@ class WalletSession:
                                     funding_height=height-100, expected_before_height=height)
             scanner = Scanner(datadir / "wallet-runtime.sqlite", ring.accounts())
             scanner.sync(rpc)
-            anchor = KeychainAnchor(secrets.token_hex(16), keychain)
+            anchor = custody.anchor(secrets.token_hex(16), keychain)
             vault = CheckpointVault(folder, anchor, source)
             session = cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address)
             vault.save(ring,scanner,password)
@@ -127,7 +129,8 @@ class WalletSession:
         if authorized is not True:
             raise WalletSessionError("WALLET_DISPOSABLE_CONSENT_DENIED")
         _pinned_source(source)
-        from wam_regtest.encrypted_storage import read, publish
+        storage=custody.storage()
+        read,publish=storage.read,storage.publish
         from wam_sp.keystore import unseal
         from wam_sp.watcher import GENESIS
         ring=scanner=None
@@ -135,20 +138,20 @@ class WalletSession:
             ciphertext=read(directory,name)
             payload=json.loads(unseal(ciphertext,password,b"recovery"))
             if (type(payload) is not dict or payload.get("disposable_regtest") is not True
-                    or payload.get("version")!=1 or payload.get("network")!=GENESIS
+                    or any(type(payload.get(k)) is not type(v) or payload.get(k)!=v for k,v in custody.envelope_profile().items()) or payload.get("network")!=GENESIS
                     or type(payload.get("generation")) is not int):
                 raise WalletSessionError("WALLET_BACKUP_PROFILE_DENIED")
-            anchor=KeychainAnchor(payload["wallet_id"],keychain)
+            anchor=custody.anchor(payload["wallet_id"],keychain)
             record=payload["generation"],sha256(ciphertext).hexdigest()
             if anchor.read()!=record:
                 raise WalletSessionError("WALLET_BACKUP_STALE_OR_TAMPERED")
             folder=datadir/"wallet-vault"
-            folder.mkdir(mode=0o700)
+            custody.create_directory(folder)
             publish(folder,CheckpointVault._filename(record[0]),ciphertext)
             vault=CheckpointVault(folder,anchor,source)
             ring,scanner=vault.restore(datadir/"wallet-runtime.sqlite",password)
             _,cli,receipt=verified_core_paths(core_dir)
-            if receipt["platform"]!="macos-arm64":
+            if receipt["platform"]!=custody.platform_name():
                 raise WalletSessionError("WALLET_MACOS_CORE_DENIED")
             rpc=WalletCoreCli(cli,datadir)
             rpc.attest()
@@ -252,46 +255,54 @@ class WalletSession:
     def sign(self, commitment):
         from wam_sp.wallet import Signer, Wallet
         from wam_sp.psbt import PSBT
-        with self._lock, self.vault.anchor.lease():
-            if self._review is None or commitment != self._review.commitment or self._signed is not None:
-                raise WalletSessionError("WALLET_EXACT_INTENT_APPROVAL_REQUIRED")
-            rpc=self._rpc()
-            self._unchanged_inputs(rpc)
-            proposal=self._prepared.proposal
-            # Approving Sign makes this reservation irreversible BEFORE
-            # entering native crypto. A crash/failure cannot restore a draft
-            # that is cancelable, even if no signature was returned.
-            Wallet(self.scanner).mark_signed(proposal.token)
-            self._save()
-            try:
-                signed=Signer(self.ring).sign(self._prepared,proposal.intents,self._review.fee)
-                PSBT.decode(signed).finalize()  # Verify signatures and sender proof.
-            except Exception:
-                self.faulted=True
-                raise WalletSessionError("WALLET_SIGN_UNCERTAIN_LOCK_RETAINED") from None
-            self._signed=signed
-            return self._review
+        try:
+            with self._lock, self.vault.anchor.lease():
+                if self._review is None or commitment != self._review.commitment or self._signed is not None:
+                    raise WalletSessionError("WALLET_EXACT_INTENT_APPROVAL_REQUIRED")
+                rpc=self._rpc()
+                self._unchanged_inputs(rpc)
+                proposal=self._prepared.proposal
+                # Approving Sign makes this reservation irreversible BEFORE
+                # entering native crypto. A crash/failure cannot restore a draft
+                # that is cancelable, even if no signature was returned.
+                Wallet(self.scanner).mark_signed(proposal.token)
+                self._save()
+                try:
+                    signed=Signer(self.ring).sign(self._prepared,proposal.intents,self._review.fee)
+                    PSBT.decode(signed).finalize()  # Verify signatures and sender proof.
+                except Exception:
+                    self.faulted=True
+                    raise WalletSessionError("WALLET_SIGN_UNCERTAIN_LOCK_RETAINED") from None
+                self._signed=signed
+                return self._review
+        except LinuxWitnessError:
+            self.faulted=True;self._signed=None
+            raise WalletSessionError("WALLET_ROOT_LEASE_UNCERTAIN_LOCK_RETAINED") from None
 
     def broadcast(self, commitment):
         from wam_sp.wallet import Wallet
-        with self._lock, self.vault.anchor.lease():
-            if self._review is None or self._signed is None or commitment != self._review.commitment:
-                raise WalletSessionError("WALLET_BROADCAST_APPROVAL_REQUIRED")
-            rpc=self._rpc()
-            self._unchanged_inputs(rpc)
-            token=self._prepared.proposal.token
-            # Retain irreversible uncertainty in encrypted storage BEFORE RPC.
-            self.scanner.store.db.execute("UPDATE reservations SET state='uncertain' WHERE token=?",(token,))
-            self._save()
-            try:
-                txid=Wallet(self.scanner).broadcast(self._signed,token,rpc)
+        try:
+            with self._lock, self.vault.anchor.lease():
+                if self._review is None or self._signed is None or commitment != self._review.commitment:
+                    raise WalletSessionError("WALLET_BROADCAST_APPROVAL_REQUIRED")
+                rpc=self._rpc()
+                self._unchanged_inputs(rpc)
+                token=self._prepared.proposal.token
+                # Retain irreversible uncertainty in encrypted storage BEFORE RPC.
+                self.scanner.store.db.execute("UPDATE reservations SET state='uncertain' WHERE token=?",(token,))
                 self._save()
-            except Exception:
-                self.faulted=True
-                self._signed=None
-                raise WalletSessionError("WALLET_BROADCAST_UNCERTAIN_LOCK_RETAINED") from None
-            self._prepared=self._signed=self._review=self._tip=None
-            return txid
+                try:
+                    txid=Wallet(self.scanner).broadcast(self._signed,token,rpc)
+                    self._save()
+                except Exception:
+                    self.faulted=True
+                    self._signed=None
+                    raise WalletSessionError("WALLET_BROADCAST_UNCERTAIN_LOCK_RETAINED") from None
+                self._prepared=self._signed=self._review=self._tip=None
+                return txid
+        except LinuxWitnessError:
+            self.faulted=True;self._signed=None
+            raise WalletSessionError("WALLET_ROOT_LEASE_UNCERTAIN_LOCK_RETAINED") from None
 
     def cancel(self):
         from wam_sp.wallet import Wallet
@@ -374,7 +385,8 @@ class WalletSession:
                 raise WalletSessionError("WALLET_RECOVERY_LIVE_SYNC_DENIED") from None
 
     def recover_backup(self, directory, name, password):
-        from wam_regtest.encrypted_storage import read, publish
+        storage=custody.storage()
+        read,publish=storage.read,storage.publish
         with self._lock:
             if not self.locked:
                 raise WalletSessionError("WALLET_LOCK_BEFORE_RECOVERY")
@@ -383,7 +395,7 @@ class WalletSession:
             if record is None or sha256(ciphertext).hexdigest()!=record[1]:
                 raise WalletSessionError("WALLET_BACKUP_STALE_OR_TAMPERED")
             folder=self.datadir/("recovered-vault-"+secrets.token_hex(8))
-            folder.mkdir(mode=0o700)
+            custody.create_directory(folder)
             publish(folder,self.vault._filename(record[0]),ciphertext)
             self.vault=CheckpointVault(folder,self.vault.anchor,self.source)
             return self.unlock(password)

@@ -1,0 +1,156 @@
+{
+  "platform": "macos-arm64",
+  "qt_platform": "cocoa",
+  "device_pixel_ratio": 2.0,
+  "real_core_snapshot": true,
+  "synthetic_rpc": false,
+  "verified_height": 105,
+  "screenshots": [
+    "macos-arm64-dark-overview-1280x800.png",
+    "macos-arm64-dark-receive-1280x800.png",
+    "macos-arm64-dark-history-1280x800.png",
+    "macos-arm64-dark-send-1280x800.png",
+    "macos-arm64-dark-security-1280x800.png",
+    "macos-arm64-dark-settings-1280x800.png",
+    "macos-arm64-light-overview-1280x800.png",
+    "macos-arm64-auto-overview-1280x800.png",
+    "macos-arm64-dark-overview-1440x900.png",
+    "macos-arm64-dark-overview-1920x1080.png",
+    "macos-arm64-dark-overview-900x650.png"
+  ],
+  "capture_geometry": [
+    {
+      "file": "macos-arm64-dark-overview-1280x800.png",
+      "requested_logical_size": [
+        1280,
+        800
+      ],
+      "actual_logical_size": [
+        1280,
+        800
+      ],
+      "device_pixel_ratio": 2.0
+    },
+    {
+      "file": "macos-arm64-dark-receive-1280x800.png",
+      "requested_logical_size": [
+        1280,
+        800
+      ],
+      "actual_logical_size": [
+        1280,
+        800
+      ],
+      "device_pixel_ratio": 2.0
+    },
+    {
+      "file": "macos-arm64-dark-history-1280x800.png",
+      "requested_logical_size": [
+        1280,
+        800
+      ],
+      "actual_logical_size": [
+        1280,
+        800
+      ],
+      "device_pixel_ratio": 2.0
+    },
+    {
+      "file": "macos-arm64-dark-send-1280x800.png",
+      "requested_logical_size": [
+        1280,
+        800
+      ],
+      "actual_logical_size": [
+        1280,
+        800
+      ],
+      "device_pixel_ratio": 2.0
+    },
+    {
+      "file": "macos-arm64-dark-security-1280x800.png",
+      "requested_logical_size": [
+        1280,
+        800
+      ],
+      "actual_logical_size": [
+        1280,
+        800
+      ],
+      "device_pixel_ratio": 2.0
+    },
+    {
+      "file": "macos-arm64-dark-settings-1280x800.png",
+      "requested_logical_size": [
+        1280,
+        800
+      ],
+      "actual_logical_size": [
+        1280,
+        800
+      ],
+      "device_pixel_ratio": 2.0
+    },
+    {
+      "file": "macos-arm64-light-overview-1280x800.png",
+      "requested_logical_size": [
+        1280,
+        800
+      ],
+      "actual_logical_size": [
+        1280,
+        800
+      ],
+      "device_pixel_ratio": 2.0
+    },
+    {
+      "file": "macos-arm64-auto-overview-1280x800.png",
+      "requested_logical_size": [
+        1280,
+        800
+      ],
+      "actual_logical_size": [
+        1280,
+        800
+      ],
+      "device_pixel_ratio": 2.0
+    },
+    {
+      "file": "macos-arm64-dark-overview-1440x900.png",
+      "requested_logical_size": [
+        1440,
+        900
+      ],
+      "actual_logical_size": [
+        1440,
+        848
+      ],
+      "device_pixel_ratio": 2.0
+    },
+    {
+      "file": "macos-arm64-dark-overview-1920x1080.png",
+      "requested_logical_size": [
+        1920,
+        1080
+      ],
+      "actual_logical_size": [
+        1920,
+        848
+      ],
+      "device_pixel_ratio": 2.0
+    },
+    {
+      "file": "macos-arm64-dark-overview-900x650.png",
+      "requested_logical_size": [
+        900,
+        650
+      ],
+      "actual_logical_size": [
+        900,
+        650
+      ],
+      "device_pixel_ratio": 2.0
+    }
+  ],
+  "visual_approval": "PENDING_HUMAN_REVIEW"
+}
