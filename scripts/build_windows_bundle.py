@@ -60,7 +60,25 @@ def main():
     environment={**os.environ,'QT_QPA_PLATFORM':'windows'}
     result=subprocess.run([str(executable),'--ci-real-core-wallet'],env=environment,stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
-    assert result.returncode==0,'WIN_FROZEN_REAL_WALLET_DENIED'
+    if result.returncode!=0:
+        # The windowed PyInstaller process has no console output. Report only
+        # the strict public token emitted by the disposable frozen test entry.
+        # Never print OS/RPC logs, paths, exception text or credentials.
+        import re
+        refusal=Path('windows-packaged-wallet-denied.json')
+        code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
+        if refusal.is_file():
+            try:
+                payload=json.loads(refusal.read_text(encoding='utf8'))
+                candidate=payload.get('reason_code')
+                if (payload.get('status')=='WIN_BUNDLE_DENIED'
+                        and type(candidate) is str and len(candidate)<=110
+                        and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',candidate)):
+                    code=candidate
+            except (OSError,ValueError,TypeError):
+                pass
+        print('WIN_FROZEN_DEFAULT_PUBLIC_DENIAL='+code,flush=True)
+        raise AssertionError('WIN_FROZEN_REAL_WALLET_DENIED')
     evidence=json.loads(Path('windows-packaged-wallet-evidence.json').read_text())
     assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
     # Actual native qwindows + genuine Core again at Windows125%/150%.
