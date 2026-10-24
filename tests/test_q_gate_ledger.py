@@ -87,3 +87,13 @@ class SequentialQGateContracts(unittest.TestCase):
         data['active_q']='Q03';data['questions'][1]['processing']='ENGINEERING_DONE'
         data['questions'][2]['processing']='ACTIVE'
         with self.assertRaises(ValueError):validate(data)
+
+    def test_negative_injection_cannot_bypass_native_provenance_requirements(self):
+        data=copy.deepcopy(self.ledger)
+        case=next(c for c in data['questions'][1]['cases'] if c['layer']=='NEGATIVE_INJECTION')
+        case['status']='PASS'
+        case['acceptance_evidence']=[{'source_sha':'a'*40,'checkout_sha':'b'*40,
+            'timestamp_utc':'2026-10-24T14:00:00Z','platform':case['platform'],
+            'reference':'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/129'}]
+        # Source metadata alone must not qualify an OS/Core-backed fault case.
+        with self.assertRaises(ValueError):validate(data)

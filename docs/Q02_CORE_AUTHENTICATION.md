@@ -92,7 +92,7 @@ and packaging approaches/dependency locks are reused.
 
 The 33 Core scenarios use fresh owned genuine v0.1.11 REGTEST processes. Negative
 reply cases alter output **only after the actual signed CLI response was
-observed and validated**. Receipts identify these as injected faults. No synthetic
+observed and validated**. Receipts identify these as injected faults. Their ledger layer is NEGATIVE_INJECTION, with the same mandatory Core/WSP/OS/run provenance checks, rather than relabelling them genuine wrong-network Core E2E. No synthetic
 RPC server, actual public-network node or fabricated positive chain is used.
 The signed CLI handles HTTP envelopes; Q02 tests its exposed result boundary,
 not a new Python HTTP implementation. Source contracts separately test overflow

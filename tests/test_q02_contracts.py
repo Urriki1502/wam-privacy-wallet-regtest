@@ -70,7 +70,7 @@ class Q02Contracts(unittest.TestCase):
             self.assertNotIn('private-canary',str(caught.exception))
 
     def test_rejected_fresh_attestation_invalidates_cached_genesis(self):
-        rpc=LiveCoreReadOnlyCli(Path('/signed-cli'),Path('/private-chain'))
+        rpc=LiveCoreReadOnlyCli(Path('source-contract-signed-cli').absolute(),Path('source-contract-private-chain').absolute())
         rpc._genesis=REGTEST_GENESIS
         with patch('wam_regtest.core._read_cli',return_value={'chain':'main','blocks':0}):
             with self.assertRaisesRegex(RealWspScanError,'WSP_LIVE_CHAIN_DENIED'):rpc.attest()
@@ -79,7 +79,7 @@ class Q02Contracts(unittest.TestCase):
 
     def test_authenticated_failure_latches_wallet_and_safe_error(self):
         faulted=[]
-        rpc=WalletCoreCli(Path('/signed-cli'),Path('/private-chain'),on_trust_failure=lambda:faulted.append(True))
+        rpc=WalletCoreCli(Path('source-contract-signed-cli').absolute(),Path('source-contract-private-chain').absolute(),on_trust_failure=lambda:faulted.append(True))
         with patch('wam_regtest.core._read_cli',side_effect=CoreSmokeError('CORE_RPC_AUTHENTICATION_DENIED')):
             with self.assertRaises(WalletSessionError) as caught:rpc.attest()
         self.assertEqual(faulted,[True])
@@ -88,7 +88,7 @@ class Q02Contracts(unittest.TestCase):
 
     def test_unknown_external_error_does_not_become_trusted_diagnostic(self):
         faulted=[]
-        rpc=WalletCoreCli(Path('/signed-cli'),Path('/private-chain'),on_trust_failure=lambda:faulted.append(True))
+        rpc=WalletCoreCli(Path('source-contract-signed-cli').absolute(),Path('source-contract-private-chain').absolute(),on_trust_failure=lambda:faulted.append(True))
         with patch('wam_regtest.core._read_cli',side_effect=CoreSmokeError('rpcpassword=private-canary')):
             with self.assertRaisesRegex(WalletSessionError,'^WALLET_CORE_UNVERIFIED$'):rpc.attest()
         self.assertEqual(faulted,[True])

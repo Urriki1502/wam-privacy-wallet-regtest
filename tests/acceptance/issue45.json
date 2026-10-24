@@ -3276,8 +3276,8 @@
       "coverage_identified": true,
       "coverage_total": 134,
       "base_main_sha": "a6148dde377e00bdb63458fc50826e83ecd5c8a9",
-      "candidate_pr": null,
-      "candidate_head_sha": null,
+      "candidate_pr": 129,
+      "candidate_head_sha": "6c0c5030127807314021ef984ce7114191610319",
       "cases": [
         {
           "id": "Q02-COVERAGE",
@@ -3545,7 +3545,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "macos-arm64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -3555,7 +3555,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-RPC-VERSION-windows-x64",
@@ -3567,7 +3568,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "windows-x64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -3577,7 +3578,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-RPC-VERSION-linux-x86_64",
@@ -3589,7 +3591,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "linux-x86_64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -3599,7 +3601,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-BAD-USER-macos-arm64",
@@ -4073,7 +4076,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "macos-arm64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4083,7 +4086,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-WRONG-CHAIN-windows-x64",
@@ -4095,7 +4099,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "windows-x64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4105,7 +4109,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-WRONG-CHAIN-linux-x86_64",
@@ -4117,7 +4122,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "linux-x86_64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4127,7 +4132,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-WRONG-GENESIS-macos-arm64",
@@ -4139,7 +4145,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "macos-arm64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4149,7 +4155,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-WRONG-GENESIS-windows-x64",
@@ -4161,7 +4168,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "windows-x64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4171,7 +4178,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-WRONG-GENESIS-linux-x86_64",
@@ -4183,7 +4191,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "linux-x86_64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4193,7 +4201,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-WRONG-PROCESS-macos-arm64",
@@ -4403,7 +4412,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "macos-arm64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4413,7 +4422,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-MALFORMED-JSON-windows-x64",
@@ -4425,7 +4435,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "windows-x64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4435,7 +4445,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-MALFORMED-JSON-linux-x86_64",
@@ -4447,7 +4458,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "linux-x86_64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4457,7 +4468,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-ENVELOPE-macos-arm64",
@@ -4469,7 +4481,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "macos-arm64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4479,7 +4491,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-ENVELOPE-windows-x64",
@@ -4491,7 +4504,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "windows-x64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4501,7 +4514,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-ENVELOPE-linux-x86_64",
@@ -4513,7 +4527,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "linux-x86_64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4523,7 +4537,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-RESULT-SHAPE-macos-arm64",
@@ -4535,7 +4550,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "macos-arm64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4545,7 +4560,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-RESULT-SHAPE-windows-x64",
@@ -4557,7 +4573,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "windows-x64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4567,7 +4583,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-RESULT-SHAPE-linux-x86_64",
@@ -4579,7 +4596,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "linux-x86_64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4589,7 +4606,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-REPLY-BOUNDS-macos-arm64",
@@ -4601,7 +4619,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "macos-arm64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4611,7 +4629,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-REPLY-BOUNDS-windows-x64",
@@ -4623,7 +4642,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "windows-x64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4633,7 +4652,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-REPLY-BOUNDS-linux-x86_64",
@@ -4645,7 +4665,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "linux-x86_64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4655,7 +4675,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-TIMEOUT-macos-arm64",
@@ -4931,7 +4952,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "macos-arm64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4941,7 +4962,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-UNCERTAIN-NO-RETRY-windows-x64",
@@ -4953,7 +4975,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "windows-x64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4963,7 +4985,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-UNCERTAIN-NO-RETRY-linux-x86_64",
@@ -4975,7 +4998,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "linux-x86_64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -4985,7 +5008,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-PRIVACY-macos-arm64",
@@ -6139,7 +6163,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "macos-arm64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -6149,7 +6173,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-PEERS-windows-x64",
@@ -6161,7 +6186,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "windows-x64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -6171,7 +6196,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
         {
           "id": "Q02-PEERS-linux-x86_64",
@@ -6183,7 +6209,7 @@
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
           ],
           "platform": "linux-x86_64",
-          "layer": "CORE_E2E",
+          "layer": "NEGATIVE_INJECTION",
           "gates": [
             "G1",
             "G2",
@@ -6193,7 +6219,8 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         }
       ],
       "gates": {
@@ -6249,6 +6276,15 @@
         "The owner latest instruction retains the signed CLI architecture; persistent shared JSON-RPC is deferred Q03.",
         "32 initial Core scenarios plus independently requested unexpected-peer refusal; negative reply injection is labelled after validated genuine CLI output, never fabricated real Core wrong-network evidence.",
         "Initial 128 cases committed before runtime work; GUI fault-latch and peer cases were added as the independent review extended coverage. Technical and full acceptance remain pending until required OS/frozen evidence is inspected."
+      ],
+      "historical_failures": [
+        {
+          "case_id": "Q02-INPUT-CONTRACTS-windows-x64",
+          "source_sha": "6c0c5030127807314021ef984ce7114191610319",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40100908270",
+          "observation": "Three SOURCE fixtures used drive-less POSIX paths, correctly rejected by native Windows absolute-path custody guard before the mocked RPC test. Use native absolute fixture paths; do not weaken runtime guards or skip tests. Exact-head replay required."
+        }
       ]
     },
     {
