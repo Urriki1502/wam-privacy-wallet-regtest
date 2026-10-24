@@ -138,3 +138,6 @@ Pillow==12.0.0 \
     --hash=sha256:f4f1231b7dec408e8670264ce63e9c71409d9583dd21d32c163e25213ee2a344 \
     --hash=sha256:fa3ed2a29a9e9d2d488b4da81dcb54720ac3104a20bf0bd273f1e4648aff5af9 \
     --hash=sha256:fb3096c30df99fd01c7bf8e544f392103d0795b9f98ba71a8054bcbf56b255f1
+
+colorama==0.4.6 ; sys_platform == "win32" \
+    --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
