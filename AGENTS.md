@@ -1,48 +1,23 @@
-# Mandatory Issue45 Q-gate governance
+# Mandatory Issue #45 governance — TWO TRACKS, sequential Q engineering
 
-Read this file, live [Issue45](https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45),
-the [owner's sequential protocol](https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993),
-and **tests/acceptance/issue45.json** before touching code in every session.
-That versioned JSON is the single authoritative Q01–Q20 ledger. Other historical
-reports/PRs are evidence, not competing trackers or permission to advance.
+Before ANY work, read:
+- [Issue #45 canonical P0/Q01–Q20 spec](https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45)
+- [Owner Q-GATE v2 protocol, updated 24 October 2026](https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993)
+- `tests/acceptance/issue45.json` (the ONLY versioned, case-level acceptance ledger)
+- Live `main`, relevant PR ancestry, CI/receipts, and outstanding blockers.
 
-1. **Only Q01 is ACTIVE.** Work Q01 → Q02 → … → Q20. Never activate Q+1 until
-   the current Q is ACCEPTED, or the owner explicitly records an exception.
-   Old phase-progress instructions and green component CI do not unlock a Q.
-2. Inspect live main, PR ancestry, dirty work, exact-head checks and evidence.
-   Hold `python3 scripts/engineering_lease.py --hold` throughout engineering;
-   refuse overlap. Preserve other work, historical FAILs and frozen RC1.
-3. Use one focused integration Draft PR based on verified current main for the
-   ACTIVE Q. Inspect/selectively port only dependencies needed by that Q;
-   never merge a historical multi-feature stack. Fix retries in the same PR.
-4. Enumerate every mandatory positive/negative/platform/operator case in the
-   ledger. Each case has exactly one PASS/FAIL/PENDING/BLOCKED/STALE, with exact
-   source, Core trust/version/digests, WSP pin, OS, CI run/job, artifact hashes
-   and timestamp when evidence exists. Missing tests and SKIP are PENDING.
-5. Require G0 requirements, G1 source/security, G2 native, G3 final frozen,
-   G4 functional/adversarial, G5 evidence integrity, G6 human/independent and
-   G7 main integration as applicable. Justify any non-applicability using the
-   canonical spec; never silently omit a gate. Source tests cannot replace
-   genuine Core, final binaries, physical/operator or independent review.
-6. Material source/test/dependency/Core/WSP/artifact changes make affected
-   prior evidence STALE. Keep the original FAIL trail. Never weaken tests,
-   fake Core/RPC acceptance, release reservations or reset anchors for green CI.
-7. All candidate gates must qualify before requesting owner merge approval.
-   **No automatic merge.** After explicit approval and merge, verify the exact
-   merged main and delivered bytes. Only then mark ACCEPTED and unlock Q+1.
-   A successful workflow is never Q acceptance. V1 remains HOLD otherwise.
-8. External prerequisites require BLOCKED plus actor, exact missing evidence
-   and next action. Continue only independent work within the SAME Q; do not
-   switch to another Q. Do not assume quota reset, buy credits or create retries.
+The Q-GATE v2 owner instruction supersedes earlier "Q+1 must wait for ALL human/physical/independent/full-acceptance gates." The original mandatory tests are unchanged. **Distinguish engineering handoff from FULL Q ACCEPTANCE.**
 
-REGTEST/disposable funds only. Never use owner wallets, keys, anchors, miners,
-mainnet, real funds or production deployment. Preserve native custody, rollback,
-ownership, signing and uncertain-reservation gates. Do not modify upstream Core
-or silently change qualified v0.1.11/WSP pins. Reviewed developer Linux Core is
-not a signed official release. No force-push or direct main/RC1 modification.
+1. **ONE engineering-active Q**. Work Q01 → Q02 → … → Q20, not interleaved. Existing T/K/F/R work is a source of selectively reviewed dependencies, NOT a license for unrelated Q tasks. Root `AGENTS.md` persists these rules between sessions.
+2. For the engineering-active Q, enumerate ALL mandatory positive/negative, native, final frozen, version/provenance and failure cases from §G + relevant T/K/F/R. Complete every **agent-controllable** required case on its required actual OS/Core/Qt host. Green CI on unrelated scope does not count. Zero unresolved reproducible technical FAIL or agent-controllable PENDING/STALE before engineering handoff.
+3. **Engineering handoff**: once scoped source/security, real Core native/frozen on all required OS, negative tests and exact case/sha/artifact evidence PASS and code has owner-approved integration into `main`, record `engineering_handoff` (merged SHA, owner decision link, original qualified source, external blockers, separate postmerge state). The next Q may become engineering-active while prior Q remains `accepted=false` / `BLOCKED` on human/independent/release work. This is allowed by the owner's v2 directive, NOT a release waiver.
+4. All practical postmerge verification is required. If a mandatory Win/Linux/etc postmerge job is currently unavailable, record the missing gate and actor, keep it unresolved, and use only the explicitly authorized owner exception for an engineering-focus handoff. If that later CI run FAILS or a high-severity vulnerability is discovered, STOP the current Q, correct the previous regression, replay impacted native/frozen tests, then resume sequence. Never relabel stale PR CI as exact-main proof.
+5. **Full Q ACCEPTED requires ALL mandatory cases PASS**, including applicable physical clean-device/operator evidence, genuinely independent DEV/security sign-off, full exact-main checks, and owner merge authorization. G0–G7 remain mandatory as originally scoped. A user saying "wallet feels OK" is not a clean-install receipt. Human/independent external BLOCKED does not magically PASS because Codex cannot perform it.
+6. **One focused main-based Draft PR per engineering Q**, reuse existing features only after inspecting a narrow diff/ancestry, preserve prior failures and RC1. Fix retries in that PR; security-critical regression hotfixes can preempt sequence. No auto merge of feature PRs; ask owner explicitly. No stacked hundreds-of-commits branch merge.
+7. Each case is `PASS/FAIL/PENDING/BLOCKED/STALE` with source/checkout SHA, pinned Core/WSP digests, OS+trust, final-binary SHA, job/test/receipt, timestamp, blockers' exact actor/action, and retained FAIL history. Skipped/missing != PASS. Changed source/Core/WSP/deps/frozen bytes invalidate affected proof.
+8. Enforce `q_gate.validate` for both transitions: full acceptance or a traceable, owner-authorized and technical-case-complete `engineering_handoff`. Never change `accepted` to `true` to unlock Q+1. Update acceptance ledger/validator in the active focused PR rather than maintaining multiple dashboards.
+9. Hold `python3 scripts/engineering_lease.py --hold` throughout engineering. Refuse overlapping work, dirty unrelated checkouts, any work on owner's mainnet wallet/miner/keys, mainnet transaction, real funds, consensus fork, unsupported Core upgrade or production release. Native custody, rollback, lease, irreversible reservation, identity and privacy gates may not be weakened; Linux developer-built Core is not signed official Linux. Never force-push or modify `main` directly.
 
-Session reports MUST use the owner's fields: ACTIVE Q; Requirement coverage N/N;
-Case results PASS/FAIL/PENDING/BLOCKED/STALE counts; G0–G7 actual statuses;
-PR/HEAD SHA; macOS native/frozen; Windows native/frozen; Linux native/frozen;
-Human/independent sign-off; Unresolved blockers; Exact next action; Q ACCEPTED
-YES/NO. Report only the active Q and material blockers, no vague percentages.
+**Immediate owner decision (24 Oct 2026):** Q01 code PR #127 merged into `main` at `8db301634e4ade7bb154da1a162dd53ed146ef21`. Its 48 scoped technical cases PASS; 8 previously reported external cases remain subject to exact-case reconciliation after authorized merge. Physical three-OS, independent review and incomplete exact-main Win/Linux postmerge evidence remain unaccepted. Owner authorizes engineering *focus* to Q02 after this governance/ledger update, with Q01 FULL ACCEPTANCE still BLOCKED. Enumerate Q02's exact requirements before programming Q02; restore Q01 focus if a real postmerge regression arrives. No Q17 DPI waiver. V1 HOLD / MAINNET DENIED.
+
+**Report concisely:** ACTIVE ENGINEERING Q | case counts (tech PASS/FAIL/PENDING + external BLOCKED) | G0–G7 | PR/source/merged-main SHA | native and frozen OS results | outstanding postmerge/human/DEV gates | ENGINEERING HANDOFF YES/NO | FULL Q ACCEPTED YES/NO | next action. No vague percentages or blanket 95%-qualified claim.
