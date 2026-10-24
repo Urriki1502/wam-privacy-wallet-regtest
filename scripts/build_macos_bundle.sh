@@ -110,11 +110,20 @@ print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_PASS", flush=True)
 # Q01 also needs the actual native window-system runtime, independently of
 # offscreen rendering. This existing CI mode retains full custody/Core gates.
 from pathlib import Path
-review = Path('package-output/cocoa-evidence')
-review.mkdir()
-cocoa = {**os.environ, 'QT_QPA_PLATFORM': 'cocoa'}
-subprocess.run([str(Path(binary).resolve()), '--ci-real-core-wallet-cocoa'],
-               cwd=review, env=cocoa, timeout=600, check=True)
+import shutil, tempfile
+cocoa = {k:v for k,v in os.environ.items() if k not in
+         ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV','DYLD_LIBRARY_PATH','DYLD_INSERT_LIBRARIES')
+         and not k.startswith(('QT_', 'QML_'))}
+cocoa.update({'QT_QPA_PLATFORM': 'cocoa', 'PATH': '/usr/bin:/bin:/usr/sbin:/sbin'})
+with tempfile.TemporaryDirectory(prefix='wam-q01-mac-frozen-cwd-') as clean:
+    subprocess.run([str(Path(binary).resolve()), '--ci-real-core-wallet-cocoa'],
+                   cwd=clean, env=cocoa, timeout=600, check=True)
+    # Copy public fixture evidence only, never any runtime/vault/datadir.
+    review = Path(clean)
+    public = Path('package-output/cocoa-evidence'); public.mkdir()
+    shutil.copytree(review/'fusion-ui-review', public/'fusion-ui-review')
+    for name in ('real-regtest-wallet-preview.png', 'real-regtest-security-preview.png'):
+        shutil.copyfile(review/name, public/name)
 print("MACOS_APP_STAGE=FROZEN_NATIVE_COCOA_REAL_CORE_PASS", flush=True)
 PY
 test -s real-regtest-gui-preview.png
@@ -164,6 +173,8 @@ Path("package-output/SHA256SUMS.json").write_text(
         "wamd_sha256": sha256(Path("core/wamd").read_bytes()).hexdigest(),
         "wam_cli_sha256": sha256(Path("core/wam-cli").read_bytes()).hexdigest(),
         "real_core_packaged_e2e": True,
+        "q01_external_working_directory": True,
+        "q01_developer_python_path_removed": True,
         "mainnet_allowed": False,
         "files": out,
     }, indent=2, sort_keys=True) + "\n",
