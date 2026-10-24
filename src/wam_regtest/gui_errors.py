@@ -2,6 +2,13 @@
 INPUT_ERRORS=frozenset(('WALLET_INPUT_AMOUNT_INVALID','WALLET_INPUT_FEE_INVALID',
                         'WALLET_INPUT_RECIPIENT_INVALID','WALLET_INPUT_FUNDS_UNAVAILABLE'))
 _MESSAGES={
+ 'WALLET_CORE_REAUTHENTICATION_REQUIRED':'Explicit approval to reauthenticate the original REGTEST Core is required after wallet passphrase and custody verification. No automatic retry or external node adoption is allowed.',
+
+ 'WALLET_CORE_AUTHENTICATION_DENIED':'Local Core authentication failed. Balances are hidden and sensitive operations are stopped. Verify the authorized local credentials, then explicitly reauthenticate. Wallet state and reservations are retained.',
+ 'WALLET_CORE_IDENTITY_DENIED':'Local Core identity or private configuration changed. Balances are hidden and sensitive operations are stopped. Verify the original REGTEST node before authenticated reopening; do not reset custody.',
+ 'WALLET_CORE_UNAVAILABLE':'The verified local Core is unavailable. Balances are hidden and sensitive operations are stopped. Check the authorized local node; no request is retried automatically.',
+ 'WALLET_CORE_UNVERIFIED':'Core verification failed. Balances are hidden and sensitive operations are stopped. Explicitly verify the original REGTEST environment before authenticated reopening. Reservations remain protected.',
+
  'WALLET_INPUT_AMOUNT_INVALID':'Amount not accepted. Enter 0.00000330 to 22000000 WAM, using a decimal point and at most 8 decimal places.',
  'WALLET_INPUT_FEE_INVALID':'Fee not accepted. Enter 0.00000001 to 0.01000000 WAM, using a decimal point and at most 8 decimal places.',
  'WALLET_INPUT_RECIPIENT_INVALID':'Recipient not accepted. Use the complete REGTEST silent-payment code (wamrtsp1…). Ordinary Core addresses, other networks and invalid checksums are not supported.',

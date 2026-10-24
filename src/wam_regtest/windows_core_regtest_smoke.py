@@ -131,26 +131,9 @@ def _config(datadir: Path, rpc_port: int, peer_port: int) -> None:
 
 
 def _rpc(cli: Path, datadir: Path, port: int, env: dict, *args: str, timeout=15):
-    argv = [str(cli), f"-datadir={datadir}", "-rpcconnect=127.0.0.1",
-            f"-rpcport={port}", *args]
-    try:
-        process = subprocess.run(
-            argv, cwd=datadir, env=env, stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-            timeout=timeout, check=False,
-            creationflags=subprocess.CREATE_NO_WINDOW,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        _deny("WIN_CORE_CLI_PROCESS_DENIED")
-    if process.returncode or len(process.stdout) > 128 * 1024:
-        _deny("WIN_CORE_RPC_DENIED")
-    data = process.stdout.decode("utf-8", errors="strict").strip()
-    if not data:
-        return None
-    try:
-        return json.loads(data)
-    except json.JSONDecodeError:
-        return data
+    from .core import _read_cli,CoreSmokeError
+    try:return _read_cli([str(cli),'-datadir='+str(datadir),*args],timeout=timeout)
+    except CoreSmokeError as error:raise WindowsCoreSmokeError(error.args[0]) from None
 
 
 def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: Path,
@@ -219,6 +202,8 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                     stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
+            from .rpc_scope import register
+            register(daemon,node.parent,datadir,authorized_disposable_mutation=True)
             deadline = time.monotonic() + timeout
             ready = False
             while time.monotonic() < deadline:
@@ -309,4 +294,6 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                     except subprocess.TimeoutExpired:
                         daemon.kill()
                         daemon.wait(timeout=10)
+            from .rpc_scope import unregister
+            unregister(datadir)
             # TemporaryDirectory removes the entire experimental chain.

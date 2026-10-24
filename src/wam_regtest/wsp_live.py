@@ -265,7 +265,7 @@ def _public_fixture_payment(rpc, account, mining_address: str, *,
 class LiveCoreReadOnlyCli:
     """Strict method surface; actual signed wam-cli -> actual localhost wamd."""
 
-    __slots__ = ("_binary", "_datadir", "_genesis")
+    __slots__ = ("_binary", "_datadir", "_genesis", "_scope")
 
     def __init__(self, binary: Path, datadir: Path) -> None:
         if (type(binary) is not type(Path()) or type(datadir) is not type(Path())
@@ -274,19 +274,37 @@ class LiveCoreReadOnlyCli:
         self._binary = binary
         self._datadir = datadir
         self._genesis = None
+        self._scope = None
 
     def _call(self, method: str, args: list[str]) -> object:
         # Use only the exact signed official CLI verified by parent Core smoke.
         from .core import _read_cli, CoreSmokeError
+        from .rpc_scope import identity
+        if self._scope is not None and identity(self._datadir) is not self._scope:
+            self._genesis=None
+            raise RealWspScanError('WSP_LIVE_RPC_IDENTITY_DENIED')
         try:
             return _read_cli(
                 [str(self._binary), f"-datadir={self._datadir}", method, *args],
                 timeout=10,
             )
-        except CoreSmokeError:
-            raise RealWspScanError("WSP_LIVE_RPC_DENIED") from None
+        except CoreSmokeError as error:
+            self._genesis=None
+            safe={
+                'CORE_RPC_AUTHENTICATION_DENIED':'WSP_LIVE_RPC_AUTHENTICATION_DENIED',
+                'CORE_RPC_UNAVAILABLE':'WSP_LIVE_RPC_UNAVAILABLE',
+                'CORE_RPC_PROCESS_IDENTITY_DENIED':'WSP_LIVE_RPC_IDENTITY_DENIED',
+                'CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE':'WSP_LIVE_RPC_IDENTITY_DENIED',
+                'CORE_LOCAL_NETWORK_POLICY_DENIED':'WSP_LIVE_RPC_IDENTITY_DENIED',
+            }
+            code=safe.get(error.args[0] if len(error.args)==1 and type(error.args[0]) is str else None,
+                          'WSP_LIVE_RPC_DENIED')
+            raise RealWspScanError(code) from None
 
     def attest(self) -> None:
+        # A failed fresh attestation never leaves an earlier cached grant.
+        self._genesis=None
+        self._scope=None
         info = self._call("getblockchaininfo", [])
         if (type(info) is not dict or info.get("chain") != "regtest"
                 or type(info.get("blocks")) is not int
@@ -298,7 +316,13 @@ class LiveCoreReadOnlyCli:
         peers = self._call("getconnectioncount", [])
         if type(peers) is not int or peers != 0:
             raise RealWspScanError("WSP_LIVE_PEERS_DENIED")
+        version=self._call('getnetworkinfo',[])
+        if (type(version) is not dict or type(version.get('version')) is not int or version.get('version')!=111
+                or version.get('subversion')!='/WAM:0.1.11/' or type(version.get('protocolversion')) is not int or version.get('protocolversion')!=70016):
+            raise RealWspScanError('WSP_LIVE_VERSION_DENIED')
         self._genesis = genesis
+        from .rpc_scope import identity
+        self._scope = identity(self._datadir)
 
     def call(self, method: str, params: list | None = None) -> object:
         if (self._genesis != REGTEST_GENESIS or type(method) is not str

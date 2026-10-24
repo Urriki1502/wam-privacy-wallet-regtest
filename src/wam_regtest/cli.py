@@ -24,6 +24,7 @@ def main() -> int:
 
     smoke.add_argument("--confirm-wallet-e2e", action="store_true", help="Verify disposable native Qt Send/Sign/Broadcast and encrypted recovery on real Core")
 
+    smoke.add_argument('--confirm-q02-auth-e2e',action='store_true',help='Run disposable genuine-Core Q02 auth/identity negative acceptance; no persistent RPC')
     gui = sub.add_parser("gui", help="Open native Mac read-only public-demo wallet on an ALREADY RUNNING isolated Core REGTEST daemon")
     gui.add_argument("--core-dir", required=True, type=Path)
     gui.add_argument("--datadir", required=True, type=Path)
@@ -65,7 +66,7 @@ def main() -> int:
                                       wsp_payment_e2e=args.confirm_public_fixture_payment,
                                       gui_e2e=args.confirm_real_gui_e2e,
                                       security_e2e=args.confirm_security_e2e,
-                                      wallet_e2e=args.confirm_wallet_e2e)
+                                      wallet_e2e=args.confirm_wallet_e2e,q02_e2e=args.confirm_q02_auth_e2e)
             if args.report:
                 if args.report.exists() or not args.report.parent.is_dir():
                     raise CoreSmokeError("CORE_REPORT_PATH_DENIED")

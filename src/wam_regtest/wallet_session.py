@@ -15,7 +15,7 @@ import threading
 from .linux_anchor_witness import LinuxWitnessError
 from wam_regtest import custody
 from wam_regtest.core import verified_core_paths
-from wam_regtest.wsp_live import LiveCoreReadOnlyCli, _pinned_source, _public_fixture_payment
+from wam_regtest.wsp_live import LiveCoreReadOnlyCli, RealWspScanError, _pinned_source, _public_fixture_payment
 from wam_regtest.vault import CheckpointVault, KeychainAnchor
 from wam_regtest.wallet_read import HistoryRow, WalletReadSnapshot
 
@@ -36,6 +36,30 @@ class PaymentReview:
 
 class WalletCoreCli(LiveCoreReadOnlyCli):
     """Write capabilities granted only to this disposable session coordinator."""
+    def __init__(self,binary,datadir,*,on_trust_failure=None):
+        super().__init__(binary,datadir)
+        self._on_trust_failure=on_trust_failure
+
+    def _failed(self,error):
+        if self._on_trust_failure is None:raise error
+        code=error.args[0] if len(error.args)==1 and type(error.args[0]) is str else None
+        category='WALLET_CORE_UNVERIFIED'
+        if code=='WSP_LIVE_RPC_AUTHENTICATION_DENIED':category='WALLET_CORE_AUTHENTICATION_DENIED'
+        elif code=='WSP_LIVE_RPC_UNAVAILABLE':category='WALLET_CORE_UNAVAILABLE'
+        elif code in ('WSP_LIVE_CHAIN_DENIED','WSP_LIVE_GENESIS_DENIED','WSP_LIVE_PEERS_DENIED',
+                      'WSP_LIVE_VERSION_DENIED','WSP_LIVE_RPC_IDENTITY_DENIED'):
+            category='WALLET_CORE_IDENTITY_DENIED'
+        self._on_trust_failure()
+        raise WalletSessionError(category) from None
+
+    def _call(self,method,args):
+        try:return super()._call(method,args)
+        except RealWspScanError as error:self._failed(error)
+
+    def attest(self):
+        try:return super().attest()
+        except RealWspScanError as error:self._failed(error)
+
     def call(self, method, params=None):
         if method not in ("gettxout", "testmempoolaccept", "sendrawtransaction"):
             return super().call(method, params)
@@ -78,6 +102,7 @@ class WalletSession:
         self._lock = threading.RLock()
         self._prepared = self._signed = self._review = self._tip = None
         self.faulted = False
+        self._core_reauthentication_required=False
         self._disclosure_gate = None
         self.runtime = scanner.store.path
 
@@ -184,11 +209,22 @@ class WalletSession:
         if self.vault.anchor.read()!=self.vault._expected:
             self.faulted=True
             raise WalletSessionError("WALLET_STALE_SESSION_DENIED")
-        _pinned_source(self.source)
-        _, cli, _ = verified_core_paths(self.core_dir)
-        rpc = WalletCoreCli(cli, self.datadir)
-        rpc.attest()
-        return rpc
+        try:
+            _pinned_source(self.source)
+            _, cli, _ = verified_core_paths(self.core_dir)
+            rpc = WalletCoreCli(cli,self.datadir,on_trust_failure=self._fault_core)
+            rpc.attest()
+            return rpc
+        except WalletSessionError:raise
+        except (ValueError,RuntimeError,OSError):
+            self._fault_core()
+            raise WalletSessionError('WALLET_CORE_UNVERIFIED') from None
+
+    def _fault_core(self):
+        # Latch only. Never release reservations, reset custody or replay an
+        # uncertain operation. Lock/unlock remains explicit and authenticated.
+        self.faulted=True
+        self._core_reauthentication_required=True
 
     def _save(self):
         try:
@@ -370,21 +406,27 @@ class WalletSession:
             # This path was created only by this disposable session. No user DB.
             self.runtime.unlink(missing_ok=True)
 
-    def unlock(self, password):
+    def unlock(self, password, reauthenticate_core=False):
         with self._lock:
             if not self.locked:
                 raise WalletSessionError("WALLET_ALREADY_UNLOCKED")
+            if self._core_reauthentication_required and reauthenticate_core is not True:
+                raise WalletSessionError('WALLET_CORE_REAUTHENTICATION_REQUIRED')
             ring,scanner=self.vault.restore(self.runtime,password)
             self.ring,self.scanner,self._password=ring,scanner,password
-            self.faulted=False
             try:
+                if self._core_reauthentication_required:
+                    from .rpc_scope import reauthenticate_owned
+                    reauthenticate_owned(self.datadir,authorized=True)
+                self.faulted=False
+                self._core_reauthentication_required=False
                 return self.snapshot()
             except Exception:
                 self.faulted=True
                 self.lock()
                 raise WalletSessionError("WALLET_RECOVERY_LIVE_SYNC_DENIED") from None
 
-    def recover_backup(self, directory, name, password):
+    def recover_backup(self, directory, name, password, reauthenticate_core=False):
         storage=custody.storage()
         read,publish=storage.read,storage.publish
         with self._lock:
@@ -398,7 +440,7 @@ class WalletSession:
             custody.create_directory(folder)
             publish(folder,self.vault._filename(record[0]),ciphertext)
             self.vault=CheckpointVault(folder,self.vault.anchor,self.source)
-            return self.unlock(password)
+            return self.unlock(password,reauthenticate_core)
 
     def close(self):
         self.lock()

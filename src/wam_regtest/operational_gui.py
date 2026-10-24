@@ -315,7 +315,18 @@ class OperationalWalletWindow(RegtestWalletWindow):
     def unlock_wallet(self):
         password=self._passphrase("Wallet passphrase (12+ characters)")
         if password is not None:
-            self.start_operation("unlock",password)
+            approved=self._core_reauthentication_consent()
+            if approved is None:return
+            self.start_operation("unlock",password,approved)
+
+    def _core_reauthentication_consent(self):
+        if not self.session._core_reauthentication_required:return False
+        answer=QMessageBox.question(self,'Verify original REGTEST Core',
+            'Core authentication or identity previously failed. After the wallet passphrase and custody are verified, '
+            'explicitly reauthenticate the SAME owned REGTEST process using its current private credentials?\n'
+            'No external node adoption, transaction retry, wallet replacement or custody reset.',
+            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,QMessageBox.StandardButton.No)
+        return True if answer==QMessageBox.StandardButton.Yes else None
 
     def backup_wallet(self):
         parent=QFileDialog.getExistingDirectory(self,"Select parent for a new private encrypted backup folder")
@@ -332,8 +343,10 @@ class OperationalWalletWindow(RegtestWalletWindow):
         if name:
             password=self._passphrase("Backup passphrase")
             if password is not None:
+                approved=self._core_reauthentication_consent()
+                if approved is None:return
                 path=Path(name).absolute()
-                self.start_operation("recover",path.parent,path.name,password)
+                self.start_operation("recover",path.parent,path.name,password,approved)
 
     def closeEvent(self,event):
         if self._worker is not None:
