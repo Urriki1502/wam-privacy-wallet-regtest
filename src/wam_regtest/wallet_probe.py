@@ -49,8 +49,22 @@ def _operation(app,window,action,trigger,*,denied=False):
     window.operation_failed.connect(failure)
     timer.start(90_000)
     # Parsing failures may emit synchronously; connect and enter the loop first.
-    QTimer.singleShot(0,trigger)
+    dispatch={'active':True,'fired':False,'waited':False}
+    def when_idle():
+        if not dispatch['active'] or dispatch['fired']:return
+        # Check at dispatch, not only before queuing a zero-delay callback:
+        # a real 30s Sync timer may win that event-loop boundary. Never disable
+        # the timer, force-enable controls or issue a second action.
+        if window._worker is not None:
+            if not dispatch['waited']:
+                dispatch['waited']=True
+                window._acceptance_dispatch_waits=getattr(window,'_acceptance_dispatch_waits',0)+1
+                print('WALLET_GUI_DISPATCH_WAIT='+action.upper(),flush=True)
+            QTimer.singleShot(10,when_idle);return
+        dispatch['fired']=True;trigger()
+    QTimer.singleShot(0,when_idle)
     loop.exec()
+    dispatch['active']=False
     timer.stop()
     window.operation_completed.disconnect(success)
     window.operation_failed.disconnect(failure)
@@ -62,6 +76,14 @@ def _operation(app,window,action,trigger,*,denied=False):
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
     if (denied and not result.get('denied')) or (not denied and not result.get('success')):
         if result.get('public_code'):print('WALLET_GUI_REFUSAL='+result['public_code'],flush=True)
+        else:
+            import json
+            print('WALLET_GUI_DISPATCH_STATE='+json.dumps({
+                'dispatched':dispatch['fired'],'waited_for_worker':dispatch['waited'],
+                'worker_busy':window._worker is not None,'faulted':window.session.faulted,
+                'locked':window.session.locked,'approval_open':window._approval_open,
+                'review_present':window.review is not None,
+                'prepare_enabled':window.prepare_button.isEnabled()},sort_keys=True),flush=True)
         raise WalletProbeError("WALLET_GUI_OPERATION_"+action.upper()+"_DENIED")
     return result.get('value')
 
@@ -301,7 +323,13 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         print("WALLET_E2E_STAGE=LOST_BROADCAST_REPLY",flush=True)
         # A second real payment spends confirmed change. Drop only the local
         # response AFTER genuine Core has accepted it; no synthetic RPC.
+        # Force the evidenced Cocoa dispatch race with the actual Core read
+        # worker queued ahead of the button callback. The helper must wait,
+        # then execute exactly once through the normally enabled control.
+        waited=getattr(window,'_acceptance_dispatch_waits',0)
+        QTimer.singleShot(0,window.request_sync)
         _operation(app,window,'prepare',window.prepare_button.click)
+        assert window._acceptance_dispatch_waits>waited
         _capture_fusion_views(app,window)
         # Deterministically reproduce the observed Windows capture/sync overlap
         # using the REAL read worker and Core RPC. Do not disable the timer or
@@ -398,7 +426,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         return {
             'status':('WIN64_REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS' if sys.platform=='win32' else 'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS'),
             'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,'q02_gui_auth':gui_auth,
-            'authenticated_selected_local_disclosure':True,'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
+            'authenticated_selected_local_disclosure':True,'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,'prepare_dispatch_waited_for_genuine_sync':True,
             'native_psbtv2_payjoin_bip352_fail_closed':True,'payjoin_signing_authorized':False,'payjoin_transport_implemented':False,
             'exact_intent_approval_required':True,'real_core_mempool_accepted':True,
             'real_core_confirmed_recipient_atoms':100000,'native_sender_change_confirmed':True,

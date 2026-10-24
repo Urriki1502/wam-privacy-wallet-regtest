@@ -120,5 +120,13 @@ class Q02Contracts(unittest.TestCase):
         with self.assertRaises(WindowsVaultProbeError):rpc._call('dumpprivkey',[])
         with self.assertRaises(RealWspScanError):rpc.call('getnetworkinfo',[])
 
+    def test_cli_identity_never_uses_relative_path_or_working_directory_search(self):
+        from wam_regtest.core import _read_cli
+        with patch('wam_regtest.network_policy.local_rpc_port') as profile,patch('wam_regtest.rpc_scope.route') as route:
+            for binary,directory in (('wam-cli',str(Path.cwd())),(str(Path.cwd()/'wam-cli'),'relative-chain')):
+                with self.assertRaisesRegex(CoreSmokeError,'CORE_LOCAL_RPC_COMMAND_DENIED'):
+                    _read_cli([binary,'-datadir='+directory,'getblockcount'])
+            profile.assert_not_called();route.assert_not_called()
+
 
 if __name__=='__main__':unittest.main()

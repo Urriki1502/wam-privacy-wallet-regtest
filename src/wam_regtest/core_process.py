@@ -129,7 +129,8 @@ def _windows_socket(pid,server_port,client_port,directory):
 
 class OwnedCoreBinding:
     def __init__(self,process,core,directory):
-        if type(process) is not subprocess.Popen or type(core) is not type(Path()) or type(directory) is not type(Path()):
+        if (type(process) is not subprocess.Popen or type(core) is not type(Path()) or type(directory) is not type(Path())
+                or not core.is_absolute() or not directory.is_absolute()):
             raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
         self.process,self.core,self.directory=process,core,directory
         self.node,self.cli,self.receipt=verified_core_paths(core)

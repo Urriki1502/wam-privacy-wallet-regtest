@@ -84,7 +84,7 @@ def route(binary,directory,args,*,timeout=15):
             context.binding._assert_image()
             if context.credentials is None:context.credentials=CredentialSource(directory)
             source=context.credentials;source.attest();context.assert_endpoint(source.port)
-            argv=[str(binary),'-datadir='+str(directory),'-rpcconnect=127.0.0.1',
+            argv=[str(context.binding.cli),'-datadir='+str(directory),'-rpcconnect=127.0.0.1',
                   '-rpcport='+str(source.port),*args]
             if sys.platform=='win32':
                 from .windows_core_regtest_smoke import _host_env

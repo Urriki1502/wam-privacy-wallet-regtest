@@ -6291,6 +6291,13 @@
           "status": "FAIL",
           "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40101122404",
           "observation": "Genuine Windows vault/reorg regression reached newly mandatory getnetworkinfo version attestation, but its private legacy fixture whitelist lacked that read. Add only this identity read; preserve scanner read surface, write restrictions and all native Credential Manager/custody gates. Replay required."
+        },
+        {
+          "case_id": "Q02-NATIVE-REGRESSION-macos-arm64",
+          "source_sha": "6c0c5030127807314021ef984ce7114191610319",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40100908165",
+          "observation": "Native Cocoa reached genuine send, confirmation and reorg, then second Prepare timed out at the lost-broadcast regression. Queued automation can race real Sync between idle check and button dispatch. Wait at dispatch and force the actual Core-worker overlap to qualify the repair; never disable timers or force-enable protected controls. Replay required."
         }
       ]
     },
