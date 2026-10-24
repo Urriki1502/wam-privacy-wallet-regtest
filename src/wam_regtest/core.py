@@ -66,40 +66,21 @@ def _port() -> int:
 
 
 def _read_cli(cmd: list[str], timeout: int = 15) -> object:
-    import sys
-    if sys.platform == "win32":
-        from .windows_core_transport import read_cli
-        try:
-            return read_cli(cmd,timeout)
-        except (ValueError,OSError):
-            raise CoreSmokeError("CORE_WINDOWS_LOCAL_RPC_DENIED") from None
-    from .network_policy import local_rpc_port, NetworkPolicyError
+    """Existing one-shot signed CLI, narrowed equally on all three platforms."""
+    from .network_policy import local_rpc_port,NetworkPolicyError
+    from .cli_rpc import CliRpcError
+    from .rpc_scope import route
     try:
-        if (type(cmd) is not list or len(cmd)<3 or type(cmd[1]) is not str
-                or not cmd[1].startswith("-datadir=")):
-            raise CoreSmokeError("CORE_LOCAL_RPC_COMMAND_DENIED")
-        if sys.platform=='linux':
-            from .linux_runtime import validate_cli
-            try:validate_cli(Path(cmd[0]))
-            except (ValueError,OSError):raise CoreSmokeError('CORE_LINUX_APPROVED_CLI_DENIED') from None
+        if (type(cmd) is not list or len(cmd)<3 or any(type(v) is not str for v in cmd)
+                or not cmd[1].startswith('-datadir=')):
+            raise CoreSmokeError('CORE_LOCAL_RPC_COMMAND_DENIED')
         directory=Path(cmd[1][9:])
-        port=local_rpc_port(directory)
-        isolated=[cmd[0],cmd[1],"-rpcconnect=127.0.0.1",f"-rpcport={port}",*cmd[2:]]
-        p = subprocess.run(isolated, capture_output=True, text=True, timeout=timeout, check=False,
-            env={"PATH":"/usr/bin:/bin:/usr/sbin:/sbin","HOME":str(directory),"LC_ALL":"C"})
-    except NetworkPolicyError:
-        raise CoreSmokeError("CORE_LOCAL_NETWORK_POLICY_DENIED") from None
-    except (OSError, subprocess.TimeoutExpired):
-        raise CoreSmokeError("CORE_RPC_PROCESS_DENIED") from None
-    if p.returncode != 0:
-        raise CoreSmokeError("CORE_RPC_DENIED")
-    value = p.stdout.strip()
-    if not value:
-        return None
-    try:
-        return json.loads(value)
-    except json.JSONDecodeError:
-        return value
+        local_rpc_port(directory) # Deny unsafe/remote profiles before process or RPC.
+        return route(Path(cmd[0]),directory,cmd[2:],timeout=timeout)
+    except NetworkPolicyError:raise CoreSmokeError('CORE_LOCAL_NETWORK_POLICY_DENIED') from None
+    except CliRpcError as error:raise CoreSmokeError(error.args[0]) from None
+    except CoreSmokeError:raise
+    except (OSError,ValueError):raise CoreSmokeError('CORE_LOCAL_RPC_COMMAND_DENIED') from None
 
 
 def _write_private_config(datadir: Path, rpcport: int, p2pport: int) -> None:
@@ -184,7 +165,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     gui_e2e: bool = False,
                     interactive_demo: bool = False,
                     security_e2e: bool = False,
-                    wallet_e2e: bool = False, operational_demo: bool = False,
+                    wallet_e2e: bool = False, operational_demo: bool = False, q02_e2e: bool = False,
                     recovery_case: tuple | None = None, headless_callback=None) -> dict:
     if explicit_consent is not True or not 30 <= timeout <= 240:
         raise CoreSmokeError("CORE_REAL_REGTEST_CONSENT_DENIED")
@@ -213,7 +194,14 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
         if (sys.platform!='linux' or not callable(headless_callback) or not wsp_payment_e2e
                 or gui_e2e or interactive_demo or security_e2e or wallet_e2e or recovery_case is not None):
             raise CoreSmokeError('CORE_HEADLESS_SCOPE_DENIED')
+    if type(q02_e2e) is not bool or (q02_e2e and (interactive_demo or operational_demo)):
+        raise CoreSmokeError('CORE_Q02_ACCEPTANCE_SCOPE_DENIED')
     node, cli, receipt = verified_core_paths(core_dir)
+    q02_receipt=None
+    if q02_e2e:
+        from .q02_probe import probe,Q02ProbeError
+        try:q02_receipt=probe(core_dir)
+        except Q02ProbeError as error:raise CoreSmokeError(error.args[0]) from None
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
     with tempfile.TemporaryDirectory(prefix="wam-real-regtest-") as temp:
@@ -247,6 +235,8 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     env=child_env,
                     creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0) if sys.platform=="win32" else 0,
                 )
+            from .rpc_scope import register
+            register(proc,core_dir,datadir,authorized_disposable_mutation=True)
             end = time.monotonic() + timeout
             info = None
             while time.monotonic() < end:
@@ -268,6 +258,13 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 time.sleep(0.5)
             if info is None or info.get("chain") != "regtest":
                 raise CoreSmokeError("CORE_WRONG_CHAIN_DENIED")
+            from .wsp_live import REGTEST_GENESIS
+            genesis=_read_cli(prefix + ['getblockhash','0'])
+            if genesis!=REGTEST_GENESIS:raise CoreSmokeError('CORE_WRONG_GENESIS_DENIED')
+            version=_read_cli(prefix + ['getnetworkinfo'])
+            if (type(version) is not dict or type(version.get('version')) is not int or version.get('version')!=111
+                    or version.get('subversion')!='/WAM:0.1.11/' or type(version.get('protocolversion')) is not int or version.get('protocolversion')!=70016):
+                raise CoreSmokeError('CORE_RPC_VERSION_DENIED')
             if _read_cli(prefix + ["getconnectioncount"]) != 0:
                 raise CoreSmokeError("CORE_EXTERNAL_PEERS_DENIED")
             _read_cli(prefix + ["createwallet", "test"])
@@ -380,6 +377,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     or _read_cli(prefix+["getconnectioncount"])!=0):
                 raise CoreSmokeError("CORE_FINAL_CHAIN_ATTESTATION_DENIED")
             return {
+                "q02_authentication":q02_receipt,
                 "wallet_live_core": wallet_receipt,
                 "recovery_live_core": recovery_receipt,
                 "security_live_core": security_receipt,
@@ -400,7 +398,9 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                     if wsp_receipt is not None else False
                 ),
                 "platform": receipt["platform"], "node_sha256": receipt["wamd_sha256"],
-                "chain": "regtest",
+                "chain": final["chain"], "genesis":genesis,
+                "observed_core_version":version["version"],
+                "observed_core_subversion":version["subversion"],
                 "block_height": final_height,
                 "tip": final_tip,
                 "live_wamd_process_observed": True, "live_rpc_observed": True,
@@ -427,3 +427,6 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                         except subprocess.TimeoutExpired:
                             proc.kill()
                             proc.wait(timeout=6)
+
+            from .rpc_scope import unregister
+            unregister(datadir)

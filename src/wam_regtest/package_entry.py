@@ -108,7 +108,7 @@ def main() -> int:
             wsp_payment_e2e=True,
             gui_e2e=ci_mode and not cocoa_mode,
             security_e2e=ci_mode,
-            wallet_e2e=ci_mode,
+            wallet_e2e=ci_mode, q02_e2e=ci_mode,
             operational_demo=not ci_mode,
             interactive_demo=not ci_mode,
         )

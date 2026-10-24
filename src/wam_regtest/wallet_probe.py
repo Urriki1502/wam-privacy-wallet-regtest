@@ -39,6 +39,8 @@ def _operation(app,window,action,trigger,*,denied=False):
             loop.quit()
     def failure(_code):
         result['denied']=True
+        from .gui_errors import public_code
+        result['public_code']=public_code(_code)
         loop.quit()
     timer=QTimer()
     timer.setSingleShot(True)
@@ -59,6 +61,7 @@ def _operation(app,window,action,trigger,*,denied=False):
         app.processEvents()
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
     if (denied and not result.get('denied')) or (not denied and not result.get('success')):
+        if result.get('public_code'):print('WALLET_GUI_REFUSAL='+result['public_code'],flush=True)
         raise WalletProbeError("WALLET_GUI_OPERATION_"+action.upper()+"_DENIED")
     return result.get('value')
 
@@ -159,6 +162,11 @@ def probe_wallet(core_dir,datadir,source,mining_address):
             assert window._snapshot is None and window.balance_text.text()=='—'
         finally:
             (datadir/'wam.conf').write_bytes(original_config)
+        assert session.faulted and not window.prepare_button.isEnabled()
+        _operation(app,window,'lock',window.lock_button.click)
+        _operation(app,window,'unlock',lambda:window.start_operation('unlock',password),denied=True)
+        assert session.locked
+        _operation(app,window,'unlock',lambda:window.start_operation('unlock',password,True))
         network=_operation(app,window,'network',window.network_button.click)
         assert network['zero_peers'] is True
         window.apply_snapshot(session.snapshot())
@@ -175,6 +183,9 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         assert window.grab().save(str(Path('real-regtest-security-preview.png').resolve()))
         window.navigation.setCurrentRow(3)
         stage="PREPARE"
+        # Authenticated Lock/Unlock intentionally cleared the earlier form.
+        # Re-enter the exact disposable payment as a real operator would.
+        window.recipient.setText(code);window.amount.setText('0.00100000');window.fee.setText('0.00010000')
         print("WALLET_E2E_STAGE=PREPARE",flush=True)
         review=_operation(app,window,'prepare',window.prepare_button.click)
         assert review.code==code and review.atoms==100000 and review.fee==10000
@@ -368,6 +379,8 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         assert window.prepare_button.isEnabled()
         window.navigation.setCurrentRow(3)
         assert window.grab().save(str(Path('real-regtest-wallet-preview.png').resolve()))
+        from .q02_probe import probe_gui_auth_loss
+        gui_auth=probe_gui_auth_loss(app,window)
         window.close()
         window.deleteLater()
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
@@ -384,7 +397,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         assert reopened['mainnet_allowed'] is False and reopened['node_sha256']==initial.core_sha256
         return {
             'status':('WIN64_REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS' if sys.platform=='win32' else 'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS'),
-            'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
+            'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,'q02_gui_auth':gui_auth,
             'authenticated_selected_local_disclosure':True,'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,
             'native_psbtv2_payjoin_bip352_fail_closed':True,'payjoin_signing_authorized':False,'payjoin_transport_implemented':False,
             'exact_intent_approval_required':True,'real_core_mempool_accepted':True,
@@ -406,7 +419,12 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         }
     except WalletProbeError:
         raise
-    except Exception:
+    except Exception as error:
+        # Source line only: never exception text, filesystem path or locals.
+        import traceback
+        frames=traceback.extract_tb(error.__traceback__)
+        lines=[f.lineno for f in frames if Path(f.filename).name=='wallet_probe.py']
+        if lines:print('WALLET_PROBE_ASSERTION_LINE='+str(lines[-1]),flush=True)
         raise WalletProbeError('WALLET_REAL_CORE_'+stage+'_DENIED') from None
     finally:
         if window is not None:

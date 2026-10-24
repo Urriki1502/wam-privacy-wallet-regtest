@@ -45,7 +45,11 @@ try:
     record['q01_external_working_directory']=bool(args.executable)
     record['q01_developer_python_path_removed']=bool(args.executable)
     report.write_text(json.dumps(record,sort_keys=True,indent=2)+'\n')
+    auth=record['q02_authentication']
+    assert auth['status']=='REAL_Q02_SIGNED_CLI_AUTH_FAIL_CLOSED_PASS' and len(auth['cases'])==33
+    assert auth['synthetic_rpc_server'] is False
     wallet=record['wallet_live_core']
+    if args.qt:assert wallet['q02_gui_auth']['real_core_cli_auth_failure_gui_fail_closed'] is True
     assert wallet['status']==('REAL_LINUX_CORE_ROOT_WITNESS_NATIVE_QT_WALLET_E2E_PASS' if args.qt else 'REAL_LINUX_CORE_ROOT_WITNESS_HEADLESS_WALLET_E2E_PASS')
     assert record['qt_imported'] is args.qt and record['official_signed_release'] is False
     assert wallet['synthetic_rpc'] is False and wallet['mainnet_allowed'] is False

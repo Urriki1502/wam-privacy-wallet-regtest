@@ -22,4 +22,4 @@ The Q-GATE v2 owner instruction supersedes earlier "Q+1 must wait for ALL human/
 
 **Report concisely:** ACTIVE ENGINEERING Q | case counts (tech PASS/FAIL/PENDING + external BLOCKED) | G0–G7 | PR/source/merged-main SHA | native and frozen OS results | outstanding postmerge/human/DEV gates | ENGINEERING HANDOFF YES/NO | FULL Q ACCEPTED YES/NO | next action. No vague percentages or blanket 95%-qualified claim.
 
-**Active engineering task:** Q02, owner-requested after merged #127/#128. The ledger now enumerates128 Q02 cases before runtime changes. Preserve Q01 full-acceptance blockers/handoff and historical failures; Q03–Q20 remain QUEUED. One new main-based Q02 Draft only; no automatic merge.
+**Active engineering task:** Q02, owner-requested after merged #127/#128. The initial 128 Q02 cases were recorded before runtime changes; the ledger now contains 134 after additional GUI fault-latch and peer-refusal cases from review. Preserve Q01 full-acceptance blockers/handoff and historical failures; Q03–Q20 remain QUEUED. One new main-based Q02 Draft only; no automatic merge.

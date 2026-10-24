@@ -76,7 +76,7 @@ def main():
         with tempfile.TemporaryDirectory(prefix='wam-win-frozen-') as t:
             stage=Path(t).absolute()/'core';_stage_original_core(core,stage)
             proof=smoke_real_core(stage,explicit_consent=True,wsp_source=source,
-                wsp_payment_e2e=True,security_e2e=ci,wallet_e2e=ci,
+                wsp_payment_e2e=True,security_e2e=ci,wallet_e2e=ci,q02_e2e=ci,
                 operational_demo=not ci,interactive_demo=not ci)
             if ci:
                 proof['q01_qt_tls_backend']='schannel'

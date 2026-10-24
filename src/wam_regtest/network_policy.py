@@ -25,7 +25,21 @@ def local_rpc_port(datadir):
     import sys
     if sys.platform=="win32":
         from .windows_core_transport import local_rpc_port as windows_port
-        return windows_port(datadir)
+        try:return windows_port(datadir)
+        except ValueError:
+            from .rpc_credentials import private_bytes,parse_profile,CredentialError
+            try:
+                raw,_=private_bytes(datadir,'wam.conf',4096)
+                return parse_profile(raw,'cookie')[0]
+            except (CredentialError,ValueError,OSError):raise NetworkPolicyError('LOCAL_RPC_CONFIG_DENIED') from None
+    # Cookie auth uses the same private network profile and native custody;
+    # no arbitrary cookie path or implicit remote/credential fallback.
+    from .rpc_credentials import private_bytes,parse_profile,CredentialError
+    try:
+        raw,_=private_bytes(datadir,'wam.conf',4096)
+        if b'rpcuser=' not in raw and b'rpcpassword=' not in raw:
+            return parse_profile(raw,'cookie')[0]
+    except CredentialError:raise NetworkPolicyError('LOCAL_RPC_CONFIG_DENIED') from None
     fd=dfd=None
     try:
         if sys.platform=='linux':

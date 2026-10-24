@@ -15,20 +15,27 @@ class WindowsCoreSmokeContracts(unittest.TestCase):
     def test_rpc_launch_keeps_gui_console_free_and_local_custody_contract(self):
         # Static launch boundary, NOT proof of physical Windows absence of flashes.
         import ast, inspect
-        from wam_regtest.windows_core_regtest_smoke import _rpc
-        tree=ast.parse(inspect.getsource(_rpc))
+        from wam_regtest.cli_rpc import execute
+        from wam_regtest.rpc_scope import route
+        tree=ast.parse(inspect.getsource(execute))
         calls=[n for n in ast.walk(tree) if isinstance(n,ast.Call)
                and isinstance(n.func,ast.Attribute) and isinstance(n.func.value,ast.Name)
-               and n.func.value.id=='subprocess' and n.func.attr=='run']
+               and n.func.value.id=='subprocess' and n.func.attr=='Popen']
         self.assertEqual(len(calls),1)
         fields={k.arg:ast.unparse(k.value) for k in calls[0].keywords}
-        self.assertEqual(fields['creationflags'],'subprocess.CREATE_NO_WINDOW')
+        self.assertEqual(fields['creationflags'],'creationflags')
         self.assertEqual(fields['stdin'],'subprocess.DEVNULL')
         self.assertEqual(fields['stdout'],'subprocess.PIPE')
-        self.assertEqual(fields['stderr'],'subprocess.DEVNULL')
-        self.assertEqual(fields['cwd'],'datadir');self.assertEqual(fields['env'],'env')
-        self.assertEqual(fields['timeout'],'timeout');self.assertEqual(fields['check'],'False')
+        self.assertEqual(fields['stderr'],'subprocess.PIPE') # drained/bounded/redacted, never printed
+        self.assertEqual(fields['cwd'],'directory');self.assertEqual(fields['env'],'env')
         self.assertNotIn('shell',fields)
+        # Preserve the original Windows no-console launch requirement at the
+        # actual shared CLI caller, rather than an obsolete wrapper location.
+        caller=ast.parse(inspect.getsource(route))
+        flags=[n.value for n in ast.walk(caller) if isinstance(n,ast.keyword) and n.arg=='creationflags']
+        self.assertEqual(len(flags),1)
+        self.assertEqual(ast.literal_eval(flags[0].body),0x08000000)
+        self.assertEqual(ast.unparse(flags[0].test),"sys.platform == 'win32'")
 
     def test_explicit_consent_is_required_before_any_file_or_process(self):
         missing = Path("NONEXISTENT-WAM-TEST-INPUT")
