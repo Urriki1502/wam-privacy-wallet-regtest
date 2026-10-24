@@ -1,6 +1,6 @@
 """Create-only, isolated Q01 build environment. No wallet/Core operations.
 
-Run with trusted CPython 3.12.15: python -I scripts/q01_environment.py ...
+Run with declared CPython (macOS/Windows 3.12.10, Linux 3.12.15): python -I scripts/q01_environment.py ...
 OS tools/libraries and Linux witness provisioning remain declared prerequisites;
 this is dependency/source provenance, not host or supply-chain attestation.
 """
@@ -35,8 +35,9 @@ def main():
     ap.add_argument('--receipt', type=Path, required=True)
     args = ap.parse_args()
     root = Path(__file__).resolve().parents[1]
-    if not sys.flags.isolated or sys.version_info[:3] != (3, 12, 15):
-        raise SystemExit('Q01_TRUSTED_ISOLATED_CPYTHON_3_12_15_REQUIRED')
+    expected_python = (3, 12, 15) if sys.platform == 'linux' else (3, 12, 10)
+    if not sys.flags.isolated or sys.version_info[:3] != expected_python:
+        raise SystemExit('Q01_DECLARED_ISOLATED_CPYTHON_REQUIRED')
     if any(os.environ.get(k) for k in ('PYTHONPATH', 'PYTHONHOME')):
         raise SystemExit('Q01_HIDDEN_PYTHON_ENVIRONMENT_DENIED')
     target = args.environment.absolute()

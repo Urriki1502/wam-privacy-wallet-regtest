@@ -29,7 +29,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12.15'
+          python-version: '3.12.10'
           architecture: 'arm64'
       - name: Q01 clean hash-locked GUI environment
         env:
@@ -210,7 +210,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12.15'
+          python-version: '3.12.10'
           architecture: 'arm64'
       - name: Q01 clean hash-locked GUI environment
         env:

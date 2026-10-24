@@ -103,6 +103,8 @@ class Q01EnvironmentContracts(unittest.TestCase):
                 '--environment', str(root / 'env'), '--receipt', str(root / 'receipt.json')],
                 env={**os.environ, 'PYTHONPATH': str(root)}, capture_output=True, timeout=20)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn(b'Q01_HIDDEN_PYTHON_ENVIRONMENT_DENIED', result.stderr)
+            expected = (3, 12, 15) if __import__('sys').platform == 'linux' else (3, 12, 10)
+            code = b'Q01_HIDDEN_PYTHON_ENVIRONMENT_DENIED' if __import__('sys').version_info[:3] == expected else b'Q01_DECLARED_ISOLATED_CPYTHON_REQUIRED'
+            self.assertIn(code, result.stderr)
             self.assertFalse((root / 'env').exists())
             self.assertFalse((root / 'receipt.json').exists())
