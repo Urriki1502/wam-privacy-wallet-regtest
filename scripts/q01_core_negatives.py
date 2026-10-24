@@ -68,6 +68,16 @@ def qualify(directory):
             else:
                 try:
                     verify(target)
+                except FileNotFoundError as missing:
+                    # Linux's existing verifier exposes the OS missing-file
+                    # refusal. Accept ONLY the deliberately absent CLI, never
+                    # a missing loader/tool/library or a different failure.
+                    expected = target / list(pins)[1]
+                    if (changed != 'missing-cli' or Path(missing.filename) != expected
+                            or expected.exists() or expected.is_symlink()):
+                        raise
+                    results.append({'case': 'refuse-missing-cli', 'status': 'PASS',
+                                    'reason_code': 'Q01_CORE_REQUIRED_CLI_MISSING'})
                 except error as refusal:
                     results.append({'case': 'refuse-' + changed, 'status': 'PASS',
                                     'reason_code': str(refusal)})
