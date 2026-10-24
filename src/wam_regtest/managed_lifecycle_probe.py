@@ -67,6 +67,7 @@ def child(core, source, argv):
         'decline', 'wait-locked', 'wait-unlocked', 'wait-spend-core', 'blocked-spend', 'attached', 'wrong-version', 'not-ready',
         'recover', 'recover-wrong-password', 'recover-decline'), required=True)
     ap.add_argument('--report', required=True)
+    ap.add_argument('--q17-layout', action='store_true')
     ap.add_argument('--confirm-disposable-regtest-gui-probe', action='store_true')
     args = ap.parse_args(argv)
     from .supervisor_store import _root
@@ -139,6 +140,10 @@ def child(core, source, argv):
     window = ManagedCoreWindow(root, core_dir=core, wsp_source=source)
     window.show()
     mode = args.mode
+    layouts=[]
+    def capture_layout(state,target=window):
+        from .q17_layout import capture
+        layouts.append(capture(target,app,state))
     def settle():
         deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
@@ -163,6 +168,7 @@ def child(core, source, argv):
     responder.setInterval(10)
     responder.timeout.connect(answer)
     try:
+        if args.q17_layout and mode=='read': capture_layout('initial-locked')
         window.request_sync()
         settle()
         if mode in ('wrong-version', 'not-ready'):
@@ -179,6 +185,8 @@ def child(core, source, argv):
                 'native_gui': True, 'frozen': bool(getattr(sys, 'frozen', False)),
                 'binary_sha256': hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest(),
                 'synthetic_rpc': False, 'mainnet_allowed': False, 'qt_platform': app.platformName()}
+            if args.q17_layout:
+                capture_layout('core-not-ready');proof['q17_layout']=layouts
             assert window.grab().save(str(root/(args.report+'.png')))
             create_once(root,args.report,(json.dumps(proof,sort_keys=True)+'\n').encode('ascii'))
             close_gui(window,app); delete(window); app.processEvents(); shutdown_qt()
@@ -186,6 +194,7 @@ def child(core, source, argv):
         assert window._managed_authenticated and window._managed_state == 'ready'
         assert window.session is None and window._snapshot is None
         assert not window.dashboard.go_send.isEnabled()
+        if args.q17_layout and mode=='read': capture_layout('core-verified-locked')
         responder.start()
         if mode.startswith('recover'):
             window.welcome_page.scroll.ensureWidgetVisible(window.recover_runtime_button)
@@ -243,6 +252,9 @@ def child(core, source, argv):
         proof.update(binary_sha256=hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest(),
                      qt_platform=app.platformName(), frozen=bool(getattr(sys, 'frozen', False)),
                      native_gui=True, synthetic_rpc=False, mainnet_allowed=False)
+        if args.q17_layout:
+            capture_layout('runtime-recovery-required' if denied else 'verified-spend' if spend is not None else 'verified-read',spend or window)
+            proof['q17_layout']=layouts
         assert (spend or window).grab().save(str(root/(args.report+'.png')))
         create_once(root, args.report, (json.dumps(proof, sort_keys=True)+'\n').encode('ascii'))
         if mode.startswith('wait-'):
@@ -297,12 +309,13 @@ def _environment():
     return env
 
 
-def run_child(root, core, source, mode, *, wait=False):
+def run_child(root, core, source, mode, *, wait=False, layout=False):
     import secrets
     read_exact = fixture_read
     report = 'q05-report-'+secrets.token_hex(12)+'.enc'
     args = ['--root', str(root), '--mode', mode, '--report', report,
             '--confirm-disposable-regtest-gui-probe']
+    if layout: args.append('--q17-layout')
     if getattr(sys, 'frozen', False):
         command = [sys.executable, '--ci-managed-gui-child', *args]
     else:
@@ -491,8 +504,8 @@ def prove_managed_gui_lifecycle(core, source):
         fixture_write(invalid_root,MARKER,json.dumps(fixture).encode('ascii'))
         cases['wrong-version-gui'] = run_child(invalid_root,core,source,'wrong-version')
         assert owner.process.poll() is None and read_exact(root,'supervisor.profile') == profile
-        for mode in ('wrong-password', 'decline', 'read', 'spend', 'read'):
-            proof = run_child(root, core, source, mode)
+        for index,mode in enumerate(('wrong-password', 'decline', 'read', 'spend', 'read')):
+            proof = run_child(root, core, source, mode,layout=index in (3,4))
             assert proof['status'] == ('DENIED' if mode in ('wrong-password', 'decline') else 'PASS')
             cases['normal-'+mode] = proof
             assert anchor.read() == anchored and _vault_files(directory) == sealed
@@ -516,7 +529,7 @@ def prove_managed_gui_lifecycle(core, source):
         assert fixture_read(root, report.replace('.enc', '-unavailable.enc')) == b'FAIL_CLOSED\n'
         gui.kill(); assert gui.wait(timeout=15) != 0
         owner.status()
-        cases['unavailable-core-fresh-gui-locked'] = run_child(root,core,source,'not-ready')
+        cases['unavailable-core-fresh-gui-locked'] = run_child(root,core,source,'not-ready',layout=True)
         owner.start(); children.append(owner.process)
         observed = owner.read.attest()['blocks']
         assert observed < fixture['height'], 'Q05_CORE_INDEX_LOSS_NOT_OBSERVED'
@@ -596,7 +609,7 @@ def prove_managed_gui_lifecycle(core, source):
         runtime = directory/'wallet-runtime.sqlite'
         assert runtime.is_file()
         residue_hash = hashlib.sha256(runtime.read_bytes()).hexdigest()
-        denied = run_child(root, core, source, 'blocked-spend')
+        denied = run_child(root, core, source, 'blocked-spend',layout=True)
         assert denied['status'] == 'DENIED'
         assert hashlib.sha256(runtime.read_bytes()).hexdigest() == residue_hash
         assert anchor.read() == anchored and _vault_files(directory) == sealed
@@ -625,7 +638,12 @@ def prove_managed_gui_lifecycle(core, source):
             'original_anchor_vault_unchanged':True,'ready_receipt':proof,
             'recovery_gui_receipt':recovered,'reopened_gui_receipt':reopened,
             'signed_uncertain_reservations_digest':fixture['reservations_digest']}
+        q17=[*cases['normal-read']['q17_layout'],*cases['normal-spend']['q17_layout'],
+             *cases['unavailable-core-fresh-gui-locked']['q17_layout'],*denied['q17_layout']]
+        assert len(q17)==6 and len({r['state'] for r in q17})==6
         return {'schema': 'wam-q05-managed-gui-lifecycle/v1', 'status': 'PASS',
+            'q17_layout_component':{'schema':'wam-q17-layout-component/v1','geometry_status':'PASS',
+                'visual_approval':'PENDING_REVIEW','full_q17_qualified':False,'evidence':q17},
             'platform': receipt['platform'], 'execution': 'FROZEN' if getattr(sys, 'frozen', False) else 'SOURCE_NATIVE',
             'core_version': 'v0.1.11', 'wamd_sha256': receipt['wamd_sha256'],
             'wam_cli_sha256': receipt['wam_cli_sha256'], 'genesis': REGTEST_GENESIS,

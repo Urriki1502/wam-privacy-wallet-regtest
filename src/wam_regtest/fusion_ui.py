@@ -1,9 +1,9 @@
 """Fusion 2.0 shared Qt presentation: verified snapshots, never wallet authority."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QRectF, QPointF, QSize, Signal
+from PySide6.QtCore import Qt, QRect, QRectF, QPointF, QSize, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QIcon, QPixmap, QPolygonF, QLinearGradient, QPainterPath, QFont, QFontMetrics
-from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget, QToolTip, QSizePolicy, QTableWidget, QTableWidgetItem, QPlainTextEdit
+from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLayout, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget, QToolTip, QSizePolicy, QTableWidget, QTableWidgetItem, QPlainTextEdit
 from .wallet_read import WalletReadSnapshot, format_wam
 from .branding import brand_image
 
@@ -106,6 +106,68 @@ class ReadableText(QPlainTextEdit):
         self.setFixedHeight(min(340,max(100,lines*fm.lineSpacing()+64)))
     def resizeEvent(self,event):super().resizeEvent(event);self._fit()
     def minimumSizeHint(self):return QSize(0,68)
+
+
+class ActionFlowLayout(QLayout):
+    """Keep natural control sizes; wrap rows before text must be compressed.
+
+    Qt height-for-width lets the workspace reserve the complete toolbar height.
+    Hidden delegated actions retain their handlers but occupy no layout space.
+    """
+    def __init__(self, parent):
+        super().__init__(parent)
+        self._items=[]
+        self.setSpacing(8)
+
+    def addItem(self,item):
+        self._items.append(item)
+        self.invalidate()
+
+    def count(self): return len(self._items)
+    def itemAt(self,index): return self._items[index] if 0<=index<len(self._items) else None
+    def takeAt(self,index):
+        if 0<=index<len(self._items):
+            item=self._items.pop(index);self.invalidate();return item
+        return None
+    def expandingDirections(self): return Qt.Orientation.Horizontal
+    def hasHeightForWidth(self): return True
+    def sizeHint(self): return self.minimumSize()
+
+    def minimumSize(self):
+        result=QSize(0,0)
+        for item in self._items:
+            if not item.isEmpty(): result=result.expandedTo(item.sizeHint().expandedTo(item.minimumSize()))
+        m=self.contentsMargins()
+        return result+QSize(m.left()+m.right(),m.top()+m.bottom())
+
+    def _rows(self,width):
+        rows=[];row=[];used=0
+        for item in self._items:
+            if item.isEmpty(): continue
+            size=item.sizeHint().expandedTo(item.minimumSize())
+            needed=size.width()+(self.spacing() if row else 0)
+            if row and used+needed>width:
+                rows.append(row);row=[];used=0;needed=size.width()
+            row.append((item,size));used+=needed
+        if row: rows.append(row)
+        return rows
+
+    def heightForWidth(self,width):
+        m=self.contentsMargins();rows=self._rows(max(1,width-m.left()-m.right()))
+        return m.top()+m.bottom()+sum(max(s.height() for _,s in row) for row in rows)+max(0,len(rows)-1)*self.spacing()
+
+    def setGeometry(self,rect):
+        super().setGeometry(rect)
+        m=self.contentsMargins();width=max(1,rect.width()-m.left()-m.right());y=rect.y()+m.top()
+        for row in self._rows(width):
+            height=max(s.height() for _,s in row);x=rect.x()+m.left()
+            slack=max(0,width-sum(s.width() for _,s in row)-(len(row)-1)*self.spacing())
+            for item,size in row:
+                w=size.width()
+                if item.widget().property('fusion_toolbar_title'): w+=slack
+                item.setGeometry(QRect(x,y+(height-size.height())//2,w,size.height()))
+                x+=w+self.spacing()
+            y+=height+self.spacing()
 
 
 def label(text='',role='FusionMuted',selectable=False):

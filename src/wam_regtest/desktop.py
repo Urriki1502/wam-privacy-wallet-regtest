@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 
 from .wallet_read import WalletReadSnapshot, read_real_wallet_snapshot, format_wam
 from .branding import brand_image
-from .fusion_ui import FusionOverview, fusion_palette, fusion_stylesheet, fusion_nav_icons, vector_icon, label, action
+from .fusion_ui import ActionFlowLayout, FusionOverview, fusion_palette, fusion_stylesheet, fusion_nav_icons, vector_icon, label, action
 from .fusion_pages import ReceivePage, HistoryPage
 
 
@@ -135,8 +135,8 @@ class RegtestWalletWindow(QMainWindow):
         self.warning=label('PUBLIC DEMO ACCOUNT / NO REAL FUNDS / SEND & SIGN DISABLED','Warning');side.addWidget(self.warning)
         side.addWidget(label('WAM Core v0.1.11\nBIP352 · WSP-1','FusionMuted'));shell.addWidget(sidebar)
         workspace=QWidget();workspace.setObjectName('FusionTransparent');col=QVBoxLayout(workspace);col.setContentsMargins(28,0,22,12);col.setSpacing(18)
-        topbar=QFrame();topbar.setObjectName('FusionTopbar');top=QHBoxLayout(topbar);top.setContentsMargins(0,18,0,18)
-        self.workspace_title=label('Privacy wallet','FusionCardTitle');top.addWidget(self.workspace_title);top.addStretch()
+        topbar=QFrame();topbar.setObjectName('FusionTopbar');top=ActionFlowLayout(topbar);top.setContentsMargins(0,18,0,18)
+        self.workspace_title=label('Privacy wallet','FusionCardTitle');self.workspace_title.setProperty('fusion_toolbar_title',True);top.addWidget(self.workspace_title)
         self.verification_badge=label('Not verified','FusionBadge');top.addWidget(self.verification_badge)
         self.appearance=QComboBox()
         for text,value in (('Auto · system','auto'),('Signature Light','light'),('Signature Dark','dark')):self.appearance.addItem(text,value)

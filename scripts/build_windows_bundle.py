@@ -89,11 +89,13 @@ def main():
         matches=[p for p in bundle.rglob(name) if p.is_file()]
         assert len(matches)==1 and not matches[0].is_symlink() and sha256(matches[0].read_bytes()).hexdigest()==digest
     verify_source(Path.cwd(),build_source)
-    environment={**os.environ,'QT_QPA_PLATFORM':'windows'}
+    environment={**os.environ,'QT_QPA_PLATFORM':'windows','QT_SCALE_FACTOR':'1'}
     print('WIN_FROZEN_REAL_WALLET_START_DEFAULT',flush=True)
     result=subprocess.run([str(executable),'--ci-real-core-wallet'],env=environment,stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
     require_frozen_success(result,Path.cwd(),'WIN_FROZEN_REAL_WALLET_DENIED')
+    # Preserve the actual100% screenshots too, not only125%/150% variants.
+    shutil.copytree(Path('fusion-ui-review'),output/'fusion-ui-review')
     print('WIN_FROZEN_REAL_WALLET_COMPLETE_DEFAULT',flush=True)
     evidence=json.loads(Path('windows-packaged-wallet-evidence.json').read_text())
     assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
