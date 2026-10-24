@@ -77,6 +77,22 @@ class Q01BuildSourceTests(unittest.TestCase):
         with self.assertRaises(BuildSourceError):
             capture(self.root)
 
+    def test_lockfile_native_checkout_line_endings_still_require_exact_blob(self):
+        lock = self.root / 'requirements.lock'
+        lock.write_bytes(b'public-package==1.0\n')
+        self.git('add', '--', lock.name)
+        self.git('-c', 'user.name=Public Fixture', '-c', 'user.email=public@example.invalid',
+                 '-c', 'commit.gpgsign=false', 'commit', '--quiet', '-m', 'public lock')
+        lock.write_bytes(b'public-package==1.0\r\n')
+        if __import__('sys').platform == 'win32':
+            capture(self.root)
+        else:
+            with self.assertRaises(BuildSourceError):
+                capture(self.root)
+        lock.write_bytes(b'public-package==2.0\r\n')
+        with self.assertRaises(BuildSourceError):
+            capture(self.root)
+
 
 class Q01EnvironmentContracts(unittest.TestCase):
     def setUp(self):
