@@ -155,7 +155,12 @@ CI exports its path only after the installer step. `--profile headless` has no
 Qt; Linux desktop uses the separate GUI profile. Wheel versions and hashes live
 in `requirements/q01-*.lock`, install reports record actual download hashes,
 and editable backend resolution cannot fetch additional undeclared dependencies.
-The existing source/frozen WSP import guards remain mandatory.
+The existing source/frozen WSP import guards remain mandatory. Windows freezes additionally restrict the builder's DLL search PATH to the
+declared CPython/venv and Windows system directories, disable UPX, reject
+ambient Qt OpenSSL DLLs, and preserve/hash CPython's own SSL pair. The frozen
+CI probe requires Qt's existing native Schannel backend without opening a TLS
+connection. This does not qualify new network functionality; all genuine Core,
+WSP and custody workflows remain separately mandatory.
 
 Required OS prerequisites remain explicit: Git and native CPython; GPG plus
 Apple command-line build/signing/disk-image tools on macOS; native Windows NTFS

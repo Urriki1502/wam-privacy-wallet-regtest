@@ -874,7 +874,7 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "acceptance_evidence": [],
           "blocker": null
         },
@@ -1138,7 +1138,7 @@
         },
         "G3": {
           "applicable": true,
-          "status": "STALE",
+          "status": "FAIL",
           "not_applicable_reason": null
         },
         "G4": {
@@ -1148,7 +1148,7 @@
         },
         "G5": {
           "applicable": true,
-          "status": "STALE",
+          "status": "FAIL",
           "not_applicable_reason": null
         },
         "G6": {
@@ -1255,6 +1255,14 @@
           "status": "FAIL",
           "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/127",
           "observation": "Actual disposable Git fixture: build capture accepted an untracked root startup module and package. Neither fixture executed. Broaden source closure and isolate builder/PyInstaller startup; native/frozen replay required."
+        },
+        {
+          "case_id": "Q01-REBUILD-windows-x64",
+          "source_sha": "f68fcc8e9d0b12c394da7f84a85082f8d4b734d7",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40066023269",
+          "comparison_run": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064951148",
+          "observation": "Actual independent clean builds shipped Qt libcrypto/libssl-x64 with different executable .text and OpenSSL3.5.9 vs3.5.5; not timestamp variation. Pinned PyInstaller Qt hook searches ambient PATH. Restrict build input search, reject external optional providers, retain CPython SSL bytes, require existing native Schannel in frozen probe, then replay/rebuild. Core/WSP cryptography is unchanged."
         }
       ],
       "selectively_reviewed_dependencies": [

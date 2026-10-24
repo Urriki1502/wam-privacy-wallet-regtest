@@ -48,15 +48,36 @@ def main():
         icon=stage/'wam-wallet.ico'
         with Image.open(brand_image()) as image:
             image.save(icon,format='ICO',sizes=[(n,n) for n in (16,24,32,48,64,128,256)])
-        subprocess.run([sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--onedir','--windowed',
+        # Qt's hook otherwise searches ambient PATH for optional OpenSSL DLLs.
+        # Two genuine clean-run artifacts contained different executable code
+        # (OpenSSL3.5.9 vs3.5.5). Do not import developer/Git/Chocolatey providers.
+        # CPython's declared SSL DLLs and native Windows Schannel stay intact.
+        system_root=Path(os.environ['SystemRoot'])
+        build_environment={k:v for k,v in os.environ.items() if k not in
+            ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV','OPENSSL_CONF','OPENSSL_MODULES')
+            and not k.startswith(('QT_','QML_'))}
+        build_environment['PATH']=os.pathsep.join(map(str,(Path(sys.executable).parent,
+            Path(sys.base_prefix),Path(sys.base_prefix)/'DLLs',system_root/'System32',system_root)))
+        subprocess.run([sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--noupx','--onedir','--windowed',
             '--name','WAM-Privacy-Wallet-REGTEST','--icon',str(icon),'--paths','src',
             '--collect-submodules','wam_regtest','--collect-submodules','wam_sp',
             '--collect-all','coincurve','--hidden-import','_cffi_backend',
             '--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
-            '--add-data',str(brand_image())+':branding','src/wam_regtest/windows_package_entry.py'],check=True)
+            '--add-data',str(brand_image())+':branding','src/wam_regtest/windows_package_entry.py'],env=build_environment,check=True)
     bundle=Path('dist/WAM-Privacy-Wallet-REGTEST').absolute()
     executable=bundle/'WAM-Privacy-Wallet-REGTEST.exe'
     _validate_amd64_pe(executable.read_bytes())
+    # Refuse, never delete, an undeclared optional TLS provider. This does not
+    # disable TLS verification or replace WSP/cryptography/Core implementations.
+    assert not any(p.name.lower() in ('libcrypto-3-x64.dll','libssl-3-x64.dll') for p in bundle.rglob('*')),'WIN_UNDECLARED_QT_OPENSSL_PROVIDER_DENIED'
+    python_ssl={}
+    for name in ('libcrypto-3.dll','libssl-3.dll'):
+        source_dll=Path(sys.base_prefix)/'DLLs'/name
+        members=[p for p in bundle.rglob(name) if p.is_file()]
+        assert source_dll.is_file() and len(members)==1
+        digest=sha256(source_dll.read_bytes()).hexdigest()
+        assert sha256(members[0].read_bytes()).hexdigest()==digest,'WIN_CPYTHON_SSL_BYTES_CHANGED'
+        python_ssl[name]=digest
     for name,digest in BINARY_SHA256.items():
         matches=[p for p in bundle.rglob(name) if p.is_file()]
         assert len(matches)==1 and not matches[0].is_symlink() and sha256(matches[0].read_bytes()).hexdigest()==digest
@@ -142,6 +163,8 @@ def main():
         'official_core_sha256':BINARY_SHA256,'bundle_files_sha256':members,
         'archive_sha256':sha256(archive.read_bytes()).hexdigest(),'archive_name':archive.name,
         'q01_external_working_directory':True,'q01_developer_python_path_removed':True,
+        'q01_cpython_ssl_sha256':python_ssl,'q01_qt_tls_backend':'schannel',
+        'q01_ambient_openssl_provider_allowed':False,
         'packaged_real_core_wallet_e2e_pass':True,'native_ui_scaling_acceptance':scales,'operator_windows10_11_acceptance':False,
         'authenticode_signed_application':False,'production_qualified':False,'mainnet_allowed':False,
         'dependencies':{n:importlib.metadata.version(n) for n in ('PySide6','PyInstaller','coincurve','cryptography','Pillow','qrcode')}}

@@ -64,13 +64,22 @@ def main():
     try:
         if sys.argv[1:] and not ci:raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
         core,source=_resources()
-        from wam_regtest.core import smoke_real_core
+        from wam_regtest.core import smoke_real_core,CoreSmokeError
+        if ci:
+            # Probe native Qt's OS-backed provider without making a connection.
+            # Packaging must not silently intake arbitrary PATH OpenSSL DLLs.
+            from wam_regtest.desktop import qt_application
+            from PySide6.QtNetwork import QSslSocket
+            qt_application()
+            if not QSslSocket.supportsSsl() or QSslSocket.activeBackend()!='schannel':
+                raise CoreSmokeError('WIN_BUNDLE_NATIVE_TLS_PROVIDER_DENIED')
         with tempfile.TemporaryDirectory(prefix='wam-win-frozen-') as t:
             stage=Path(t).absolute()/'core';_stage_original_core(core,stage)
             proof=smoke_real_core(stage,explicit_consent=True,wsp_source=source,
                 wsp_payment_e2e=True,security_e2e=ci,wallet_e2e=ci,
                 operational_demo=not ci,interactive_demo=not ci)
             if ci:
+                proof['q01_qt_tls_backend']='schannel'
                 wallet=proof['wallet_live_core'];security=proof['security_live_core']
                 if (proof['platform']!='windows-x64' or proof['block_height']!=105
                         or proof['mainnet_allowed'] is not False
