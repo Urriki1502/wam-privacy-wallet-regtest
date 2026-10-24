@@ -88,11 +88,20 @@ def main():
             elif proof.get('interactive_demo_closed_cleanly') is not True:
                 raise ValueError('WIN_BUNDLE_SHUTDOWN_DENIED')
         return 0
-    except Exception:
-        # No arbitrary exception text, traceback, secret or node log escapes.
+    except Exception as error:
+        # Only public, bounded, explicitly typed status tokens. NEVER include
+        # exception arguments from OS/RPC/Qt, stack traces or secret values.
         if ci:
+            import re
+            reason = str(error) if type(error).__name__ in (
+                'CoreSmokeError','WindowsCoreSmokeError','WalletProbeError',
+                'RealWspScanError','WindowsWspError') else ''
+            if (not re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',reason)
+                    or len(reason)>110):
+                reason='WIN_BUNDLE_UNCLASSIFIED'
             with Path('windows-packaged-wallet-denied.json').open('x',encoding='utf8') as out:
-                json.dump({'status':'WIN_BUNDLE_DENIED','mainnet_allowed':False},out)
+                json.dump({'status':'WIN_BUNDLE_DENIED','reason_code':reason,
+                           'mainnet_allowed':False},out,sort_keys=True)
         else:
             from PySide6.QtWidgets import QApplication,QMessageBox
             app=QApplication.instance() or QApplication([])
