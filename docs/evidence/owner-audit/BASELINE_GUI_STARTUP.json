@@ -1,0 +1,12 @@
+{
+  "startup_choice_fresh_real_keys": true,
+  "startup_masked_password": true,
+  "live_core_wsp_gui_snapshot": true,
+  "height": 103,
+  "confirmed_atoms": 4749990000,
+  "native_keychain_fixture_routing": true,
+  "synthetic_rpc": false,
+  "mainnet_allowed": false,
+  "qt_platform": "cocoa",
+  "clean_gui_close": true
+}

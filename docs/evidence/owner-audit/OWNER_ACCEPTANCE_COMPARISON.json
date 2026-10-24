@@ -1,0 +1,268 @@
+{
+  "schema": "wam-owner-acceptance-comparison/v1",
+  "baseline_code": "144d87700b87a241467172adfad3692b41e1d273",
+  "proposed_code": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+  "network": "regtest",
+  "synthetic_rpc": false,
+  "owner_data_touched": false,
+  "checks": [
+    {
+      "check": "fresh_wallet_core_wsp_sqlite",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "receive_code_native_wsp",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "rendered_qr_independent_decode",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "six_screen_navigation",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "amount_empty_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "amount_negative_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "amount_comma_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "amount_dust_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "amount_precision_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "fee_zero_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "fee_negative_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "fee_excess_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "fee_precision_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "recipient_empty_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "recipient_garbage_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "recipient_standard_core_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "recipient_bad_checksum_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "insufficient_funds_safe_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "specific_input_error_feedback",
+      "baseline": "FAIL",
+      "proposed": "PASS"
+    },
+    {
+      "check": "validation_error_not_core_failure",
+      "baseline": "FAIL",
+      "proposed": "PASS"
+    },
+    {
+      "check": "other_exact_review",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "other_sign_cancel",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "other_sign_approved",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "other_broadcast_cancel",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "other_real_pending",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "other_pending_gui_feedback",
+      "baseline": "FAIL",
+      "proposed": "PASS"
+    },
+    {
+      "check": "other_confirmed_math",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "recipient_independent_scanner",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "self_exact_review",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "self_sign_cancel",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "self_sign_approved",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "self_broadcast_cancel",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "self_real_pending",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "self_pending_gui_feedback",
+      "baseline": "FAIL",
+      "proposed": "PASS"
+    },
+    {
+      "check": "self_confirmed_math",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "native_background_sync_responsiveness",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "native_resize_theme_screenshots",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "lock_redaction",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "wrong_password_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "malformed_recovery_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "wrong_recovery_password_refusal",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "latest_backup_recovery",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "correct_unlock",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "password_dialog_cancel_no_operation",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "password_dialog_accepted_masked",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "sign_escape_no_signature_or_submission",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "sign_enter_default_cancel_no_signature_or_submission",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "broadcast_escape_no_signature_or_submission",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "broadcast_enter_default_cancel_no_signature_or_submission",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    },
+    {
+      "check": "fresh_gui_choice_password_live_snapshot_clean_close",
+      "baseline": "PASS",
+      "proposed": "PASS"
+    }
+  ],
+  "baseline_totals": {
+    "PASS": 46,
+    "FAIL": 4
+  },
+  "proposed_totals": {
+    "PASS": 50,
+    "FAIL": 0
+  }
+}

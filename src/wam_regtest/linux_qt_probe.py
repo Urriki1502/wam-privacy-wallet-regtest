@@ -12,7 +12,7 @@ from .fusion_ui import fusion_palette
 from .linux_headless import open_session
 from .linux_headless_probe import locks
 from .operational_gui import OperationalWalletWindow
-from .wallet_probe import _operation,_approve_dialog,_capture_fusion_views
+from .wallet_probe import _operation,_approve_dialog,_capture_fusion_views,_validation_feedback_probe
 from .wallet_session import WalletSession
 
 PASSWORD=b'public-disposable-linux-qt-acceptance'
@@ -47,6 +47,7 @@ def probe(core,datadir,source,mining):
         initial=session.snapshot();accounts=session.ring.accounts()
         assert initial.height==103 and initial.confirmed_utxos==1 and initial.history
         window=OperationalWalletWindow(session);window.show();window.apply_snapshot(initial)
+        validation_cases=_validation_feedback_probe(app,window,session)
         assert window.navigation.count()==6 and window._sync_timer.interval()==30000
         assert background_snapshot(app,window)==initial
         for index,mode in ((2,'dark'),(1,'light')):
@@ -81,8 +82,11 @@ def probe(core,datadir,source,mining):
         assert not session._rpc()._call('getrawmempool',[])
         txid=_operation(app,window,'broadcast',lambda:_approve_dialog(app,window,window.broadcast_button))
         assert txid in session._rpc()._call('getrawmempool',[])
+        window.apply_snapshot(session.snapshot())
+        assert window._submitted_txid==txid and 'SUBMITTED' in window.status.text()
         confirmed=_operation(app,window,'mine',window.mine_button.click)
         assert confirmed.height==104 and confirmed.confirmed_atoms==initial.confirmed_atoms-110000
+        assert window._submitted_txid is None and 'CONFIRMED' in window.review_text.text()
         assert window.history_table.rowCount()==2 and window._snapshot==confirmed
         scan=Scanner(datadir/'qt-recipient.sqlite',receiver.accounts());scan.sync(session._rpc())
         assert sum(c['atoms'] for c in scan.coins())==100000
@@ -121,6 +125,7 @@ def probe(core,datadir,source,mining):
             'backup_lock_wrong_password_recovery':True,'fresh_core_same_keys_reservations':True,
             'manual_light_dark_verified':True,'qt_auto_events_verified':auto_events,
             'desktop_os_appearance_signoff':'PENDING_OPERATOR','visual_signoff':'PENDING_OPERATOR',
+            'native_input_feedback_cases':validation_cases,'submitted_confirmation_feedback':True,
             'production_qualified':False}
     except Exception:
         print('LINUX_QT_FAILED_STAGE='+stage,flush=True)

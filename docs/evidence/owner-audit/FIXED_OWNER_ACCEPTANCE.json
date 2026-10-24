@@ -1,0 +1,361 @@
+{
+  "schema": "wam-owner-audit/v1",
+  "network": "regtest",
+  "synthetic_rpc": false,
+  "owner_data_touched": false,
+  "checks": [
+    {
+      "check": "fresh_wallet_core_wsp_sqlite",
+      "status": "PASS",
+      "evidence": {
+        "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+        "height": 103,
+        "confirmed_atoms": 4749990000,
+        "zero_peers": true
+      }
+    },
+    {
+      "check": "receive_code_native_wsp",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "rendered_qr_independent_decode",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "six_screen_navigation",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "amount_empty_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "amount_negative_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "amount_comma_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "amount_dust_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "amount_precision_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "fee_zero_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "fee_negative_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "fee_excess_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "fee_precision_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "recipient_empty_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "recipient_garbage_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "recipient_standard_core_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "recipient_bad_checksum_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "insufficient_funds_safe_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "specific_input_error_feedback",
+      "status": "PASS",
+      "evidence": {
+        "signals": {
+          "amount_empty": "WALLET_INPUT_AMOUNT_INVALID",
+          "amount_negative": "WALLET_INPUT_AMOUNT_INVALID",
+          "amount_comma": "WALLET_INPUT_AMOUNT_INVALID",
+          "amount_dust": "WALLET_INPUT_AMOUNT_INVALID",
+          "amount_precision": "WALLET_INPUT_AMOUNT_INVALID",
+          "fee_zero": "WALLET_INPUT_FEE_INVALID",
+          "fee_negative": "WALLET_INPUT_FEE_INVALID",
+          "fee_excess": "WALLET_INPUT_FEE_INVALID",
+          "fee_precision": "WALLET_INPUT_FEE_INVALID",
+          "recipient_empty": "WALLET_INPUT_RECIPIENT_INVALID",
+          "recipient_garbage": "WALLET_INPUT_RECIPIENT_INVALID",
+          "recipient_standard_core": "WALLET_INPUT_RECIPIENT_INVALID",
+          "recipient_bad_checksum": "WALLET_INPUT_RECIPIENT_INVALID",
+          "insufficient_funds": "WALLET_INPUT_FUNDS_UNAVAILABLE"
+        }
+      }
+    },
+    {
+      "check": "validation_error_not_core_failure",
+      "status": "PASS",
+      "evidence": {
+        "cases": {
+          "amount_empty": {
+            "status": "Amount not accepted. Enter 0.00000330 to 22000000 WAM, using a decimal point and at most 8 decimal places.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "amount_negative": {
+            "status": "Amount not accepted. Enter 0.00000330 to 22000000 WAM, using a decimal point and at most 8 decimal places.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "amount_comma": {
+            "status": "Amount not accepted. Enter 0.00000330 to 22000000 WAM, using a decimal point and at most 8 decimal places.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "amount_dust": {
+            "status": "Amount not accepted. Enter 0.00000330 to 22000000 WAM, using a decimal point and at most 8 decimal places.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "amount_precision": {
+            "status": "Amount not accepted. Enter 0.00000330 to 22000000 WAM, using a decimal point and at most 8 decimal places.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "fee_zero": {
+            "status": "Fee not accepted. Enter 0.00000001 to 0.01000000 WAM, using a decimal point and at most 8 decimal places.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "fee_negative": {
+            "status": "Fee not accepted. Enter 0.00000001 to 0.01000000 WAM, using a decimal point and at most 8 decimal places.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "fee_excess": {
+            "status": "Fee not accepted. Enter 0.00000001 to 0.01000000 WAM, using a decimal point and at most 8 decimal places.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "fee_precision": {
+            "status": "Fee not accepted. Enter 0.00000001 to 0.01000000 WAM, using a decimal point and at most 8 decimal places.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "recipient_empty": {
+            "status": "Recipient not accepted. Use the complete REGTEST silent-payment code (wamrtsp1\u2026). Ordinary Core addresses, other networks and invalid checksums are not supported.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "recipient_garbage": {
+            "status": "Recipient not accepted. Use the complete REGTEST silent-payment code (wamrtsp1\u2026). Ordinary Core addresses, other networks and invalid checksums are not supported.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "recipient_standard_core": {
+            "status": "Recipient not accepted. Use the complete REGTEST silent-payment code (wamrtsp1\u2026). Ordinary Core addresses, other networks and invalid checksums are not supported.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "recipient_bad_checksum": {
+            "status": "Recipient not accepted. Use the complete REGTEST silent-payment code (wamrtsp1\u2026). Ordinary Core addresses, other networks and invalid checksums are not supported.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          },
+          "insufficient_funds": {
+            "status": "Not enough available confirmed funds in one privacy cluster for the amount and fee. Reserved or pending inputs stay unavailable; locks are not released.",
+            "badge": "Last verified \u00b7 103",
+            "faulted": false,
+            "locked": false
+          }
+        }
+      }
+    },
+    {
+      "check": "other_exact_review",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "other_sign_cancel",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "other_sign_approved",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "other_broadcast_cancel",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "other_real_pending",
+      "status": "PASS",
+      "evidence": {
+        "pending_label": "VERIFIED LIVE REGTEST \u00b7 height 103 \u00b7 tip 5138430f0d81cb\u2026 \u00b7 DISPOSABLE TEST WALLET \u00b7 SUBMITTED: confirmation not yet observed; balance is confirmed only",
+        "review_text": "SUBMITTED \u00b7 confirmation not yet observed\nTransaction: 3fab38d378614c6b248ed6bf3322b9c79f03ef216cd76f99cb4b8b29c847c39a",
+        "confirmed_balance_unchanged": true
+      }
+    },
+    {
+      "check": "other_pending_gui_feedback",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "other_confirmed_math",
+      "status": "PASS",
+      "evidence": {
+        "before_atoms": 4749990000,
+        "after_atoms": 4749880000,
+        "payment_atoms": 100000,
+        "fee_atoms": 10000,
+        "history_credit": 4749880000,
+        "history_debit": 4749990000
+      }
+    },
+    {
+      "check": "recipient_independent_scanner",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_exact_review",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_sign_cancel",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_sign_approved",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_broadcast_cancel",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_real_pending",
+      "status": "PASS",
+      "evidence": {
+        "pending_label": "VERIFIED LIVE REGTEST \u00b7 height 104 \u00b7 tip a1f2ad20ad9081\u2026 \u00b7 DISPOSABLE TEST WALLET \u00b7 SUBMITTED: confirmation not yet observed; balance is confirmed only",
+        "review_text": "SUBMITTED \u00b7 confirmation not yet observed\nTransaction: a2678e1432249b1b7ab662a9cbfbb4c9afb1910625478f071af9ce95826de1d3",
+        "confirmed_balance_unchanged": true
+      }
+    },
+    {
+      "check": "self_pending_gui_feedback",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "self_confirmed_math",
+      "status": "PASS",
+      "evidence": {
+        "before_atoms": 4749880000,
+        "after_atoms": 4749870000,
+        "payment_atoms": 200000,
+        "fee_atoms": 10000,
+        "history_credit": 4749870000,
+        "history_debit": 4749880000
+      }
+    },
+    {
+      "check": "native_background_sync_responsiveness",
+      "status": "PASS",
+      "evidence": {
+        "timer_ticks": 14,
+        "production_interval_ms": 30000
+      }
+    },
+    {
+      "check": "native_resize_theme_screenshots",
+      "status": "PASS",
+      "evidence": {
+        "qt_platform": "cocoa",
+        "font_family": "Helvetica Neue",
+        "human_typography_review": "PENDING_OPERATOR"
+      }
+    },
+    {
+      "check": "lock_redaction",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "wrong_password_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "malformed_recovery_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "wrong_recovery_password_refusal",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "latest_backup_recovery",
+      "status": "PASS",
+      "evidence": {}
+    },
+    {
+      "check": "correct_unlock",
+      "status": "PASS",
+      "evidence": {}
+    }
+  ]
+}

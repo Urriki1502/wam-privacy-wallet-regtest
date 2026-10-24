@@ -1,0 +1,104 @@
+{
+  "cases": {
+    "amount_empty": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "amount_negative": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "amount_comma": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "amount_dust": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "amount_precision": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "fee_zero": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "fee_negative": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "fee_excess": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "fee_precision": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "recipient_empty": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "recipient_garbage": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "recipient_standard_core": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "recipient_bad_checksum": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    },
+    "insufficient_funds": {
+      "status": "DENIED \u00b7 wallet state/reservations retained; unlock/recover or verify chain",
+      "badge": "Not verified",
+      "faulted": false,
+      "locked": false
+    }
+  },
+  "signals": {
+    "amount_empty": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "amount_negative": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "amount_comma": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "amount_dust": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "amount_precision": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "fee_zero": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "fee_negative": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "fee_excess": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "fee_precision": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "recipient_empty": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "recipient_garbage": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "recipient_standard_core": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "recipient_bad_checksum": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+    "insufficient_funds": "WALLET_OPERATION_DENIED_STATE_RETAINED"
+  }
+}

@@ -1,0 +1,103 @@
+[
+  {
+    "platform": "macos-arm64",
+    "source_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "checkout_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "github_run": 38843580133,
+    "artifact_id": 12022821744,
+    "artifact_name": "WAM-Fusion-REGTEST-RC1-macos-arm64-427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "artifact_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843580133/artifacts/12022821744",
+    "expires_at": "2026-10-30T03:08:18Z",
+    "github_reported_outer_actions_digest": "sha256:922e93acaf9e707b22b51fde39fc5f539dffe100a522f090fc1809911d0d5c1b",
+    "local_payload_sha256_verified": true,
+    "core_provenance": "official-signed-v0.1.11",
+    "core_sha256": {
+      "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+      "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+    },
+    "payloads": [
+      {
+        "file": "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg",
+        "sha256": "ac0b4ce5a580ce6af5e99be6e20e252617e413d03d1d3312a302aa4608f8eec9",
+        "size_bytes": 63882630
+      },
+      {
+        "file": "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip",
+        "sha256": "72ae4590bb01c8674122c4b1d82db8913d0ed03ba1f916682a5f66fba7697704",
+        "size_bytes": 56267968
+      }
+    ]
+  },
+  {
+    "platform": "windows-x64",
+    "source_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "checkout_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "github_run": 38843585494,
+    "artifact_id": 12023245350,
+    "artifact_name": "WAM-Fusion-REGTEST-RC1-windows-x64-427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "artifact_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843585494/artifacts/12023245350",
+    "expires_at": "2026-10-30T03:23:38Z",
+    "github_reported_outer_actions_digest": "sha256:a55aae00d8415ff1d597c13e06dfa6f07fa8b4a60b1eea3989a4bc687afa9caa",
+    "local_payload_sha256_verified": true,
+    "core_provenance": "official-signed-v0.1.11",
+    "core_sha256": {
+      "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+      "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+    },
+    "payloads": [
+      {
+        "file": "WAM-Privacy-Wallet-REGTEST-windows-x64-427d3b0789d0b7e2da1f506c8dde860b5c6b4575.zip",
+        "sha256": "8520719ee1a2fa1b3e0df6b54a8154af10779dd40a8313239b8b844100d4eef3",
+        "size_bytes": 76464936
+      }
+    ]
+  },
+  {
+    "platform": "linux-x86_64-desktop",
+    "source_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "checkout_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "github_run": 38843589482,
+    "artifact_id": 12022432490,
+    "artifact_name": "WAM-Fusion-REGTEST-RC1-linux-x86_64-desktop-427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "artifact_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843589482/artifacts/12022432490",
+    "expires_at": "2026-10-30T03:07:37Z",
+    "github_reported_outer_actions_digest": "sha256:84bc7d2b0b80dd956b764e0451c135f707a436fd5e9daa1b214f7c1672002456",
+    "local_payload_sha256_verified": true,
+    "core_provenance": "reviewed-developer-source-build",
+    "core_sha256": {
+      "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+      "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+    },
+    "payloads": [
+      {
+        "file": "wam-regtest-desktop-linux-x86_64-427d3b0789d0b7e2da1f506c8dde860b5c6b4575.tar.gz",
+        "sha256": "dd57ddf9fd69429bf678415573641c4f2521dd046bc35d903ceab9dbb171604b",
+        "size_bytes": 101344885
+      }
+    ]
+  },
+  {
+    "platform": "linux-x86_64-headless",
+    "source_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "checkout_sha": "427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "github_run": 38843589482,
+    "artifact_id": 12022796655,
+    "artifact_name": "WAM-Fusion-REGTEST-RC1-linux-x86_64-headless-427d3b0789d0b7e2da1f506c8dde860b5c6b4575",
+    "artifact_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38843589482/artifacts/12022796655",
+    "expires_at": "2026-10-30T03:07:15Z",
+    "github_reported_outer_actions_digest": "sha256:946d8678e7eb0e3ad6968eb83357854a0fa47288dba509cb0fc2563dae96e320",
+    "local_payload_sha256_verified": true,
+    "core_provenance": "reviewed-developer-source-build",
+    "core_sha256": {
+      "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+      "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+    },
+    "payloads": [
+      {
+        "file": "wam-regtest-headless-linux-x86_64-427d3b0789d0b7e2da1f506c8dde860b5c6b4575.tar.gz",
+        "sha256": "75eafb5ae656bff36c32d3b314ab1b7125989bae76892e1a825e634fa2a722a9",
+        "size_bytes": 41772691
+      }
+    ]
+  }
+]
