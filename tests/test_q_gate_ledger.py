@@ -23,7 +23,11 @@ class SequentialQGateContracts(unittest.TestCase):
     def test_false_acceptance_or_green_ci_without_evidence_is_denied(self):
         for change in ('case-pass','accepted','auto-merge','second-active'):
             data=copy.deepcopy(self.ledger)
-            if change=='case-pass':data['questions'][0]['cases'][0]['status']='PASS'
+            if change=='case-pass':
+                # This case may already have valid evidence after a ledger
+                # update. Deliberately remove it to exercise the same refusal.
+                data['questions'][0]['cases'][0]['status']='PASS'
+                data['questions'][0]['cases'][0]['acceptance_evidence']=[]
             elif change=='accepted':data['questions'][0]['accepted']=True
             elif change=='auto-merge':data['automatic_merge_allowed']=True
             else:data['questions'][1]['processing']='ACTIVE'
