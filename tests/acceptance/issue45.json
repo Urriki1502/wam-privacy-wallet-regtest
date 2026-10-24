@@ -44,12 +44,12 @@
       "id": "Q01",
       "requirement": "Clean checkout installs dependencies and builds with no developer-local hidden state",
       "processing": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "FAIL",
       "accepted": false,
       "coverage_identified": true,
       "coverage_total": 56,
       "base_main_sha": "84d93b47f52563075b908b5a66df49239d8af924",
-      "candidate_pr": null,
+      "candidate_pr": 127,
       "candidate_head_sha": null,
       "cases": [
         {
@@ -66,8 +66,17 @@
             "G1"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "fd391215103bb34d1a57ed870bd2a24e87dade0b",
+              "checkout_sha": "fd391215103bb34d1a57ed870bd2a24e87dade0b",
+              "timestamp_utc": "2026-10-24T05:05:36.074897+00:00",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/blob/fd391215103bb34d1a57ed870bd2a24e87dade0b/tests/acceptance/issue45.json",
+              "scope": "Source requirement enumeration / persisted governance / main ancestry inspection only. No native, frozen or human approval inferred."
+            }
+          ],
           "blocker": null
         },
         {
@@ -84,8 +93,17 @@
             "G1"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "fd391215103bb34d1a57ed870bd2a24e87dade0b",
+              "checkout_sha": "fd391215103bb34d1a57ed870bd2a24e87dade0b",
+              "timestamp_utc": "2026-10-24T05:05:36.074897+00:00",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/blob/fd391215103bb34d1a57ed870bd2a24e87dade0b/AGENTS.md",
+              "scope": "Source requirement enumeration / persisted governance / main ancestry inspection only. No native, frozen or human approval inferred."
+            }
+          ],
           "blocker": null
         },
         {
@@ -101,8 +119,17 @@
             "G0"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "fd391215103bb34d1a57ed870bd2a24e87dade0b",
+              "checkout_sha": "fd391215103bb34d1a57ed870bd2a24e87dade0b",
+              "timestamp_utc": "2026-10-24T05:05:36.074897+00:00",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/blob/fd391215103bb34d1a57ed870bd2a24e87dade0b/tests/acceptance/issue45.json",
+              "scope": "Source requirement enumeration / persisted governance / main ancestry inspection only. No native, frozen or human approval inferred."
+            }
+          ],
           "blocker": null
         },
         {
@@ -413,7 +440,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "acceptance_evidence": [],
           "blocker": null
         },
@@ -485,7 +512,7 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "acceptance_evidence": [],
           "blocker": null
         },
@@ -1094,7 +1121,7 @@
       "gates": {
         "G0": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G1": {
@@ -1104,22 +1131,22 @@
         },
         "G2": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "not_applicable_reason": null
         },
         "G3": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "not_applicable_reason": null
         },
         "G4": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "not_applicable_reason": null
         },
         "G5": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "not_applicable_reason": null
         },
         "G6": {
@@ -1135,7 +1162,91 @@
       },
       "owner_merge_authorization": null,
       "post_merge_main_sha": null,
-      "historical_evidence": []
+      "historical_evidence": [
+        {
+          "source_sha": "fce2bfe877d59dfe40a66a20566cbeef820dfc64",
+          "scope": "Mac source+Cocoa+frozen workflow success and Linux source native headless/xcb success. Superseded by the selectively reviewed sync/approval runtime port; affected qualification must be replayed. Do not infer current-Q or human acceptance.",
+          "references": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064052265",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064052246"
+          ]
+        }
+      ],
+      "failure_history": [
+        {
+          "case_id": "Q01-INSTALL-macos-arm64",
+          "source_sha": "532cdf27d87f394dcbfcdd8d73a1b86dbbf3ca08",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40063030388",
+          "observation": "setup-python has no Mac ARM64 3.12.15; exact available native version corrected"
+        },
+        {
+          "case_id": "Q01-INSTALL-windows-x64",
+          "source_sha": "532cdf27d87f394dcbfcdd8d73a1b86dbbf3ca08",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40063030425",
+          "observation": "setup-python has no Windows x64 3.12.15; exact available native version corrected"
+        },
+        {
+          "case_id": "Q01-INSTALL-windows-x64",
+          "source_sha": "67f1df693f3820b482f7d358f9f21195152e507c",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40063124132",
+          "observation": "new lockfile CRLF not recognized by literal source guard; text-only normalization covered by regression"
+        },
+        {
+          "case_id": "Q01-INSTALL-windows-x64",
+          "source_sha": "cd9996e1de0d31078894cf67d44330078272ad85",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40063191327",
+          "observation": "full WSP corpus literal source check rejects Windows CRLF checkout; checkout now preserves literal upstream bytes"
+        },
+        {
+          "case_id": "Q01-INSTALL-windows-x64",
+          "source_sha": "101a78f485a529c79ab13dd5381b1e316a796cf4",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40063471470",
+          "observation": "hash-required install exposed missing Windows qrcode colorama dependency; exact wheel/hash added, no relaxation"
+        },
+        {
+          "case_id": "Q01-WRONG-HASH-linux-x86_64",
+          "source_sha": "fa289d306f0574d692f9979ffcf1b162bbaa18ad",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40063697301",
+          "observation": "existing verifier refused deliberately missing CLI via FileNotFoundError; harness now matches only that absent CLI and path"
+        },
+        {
+          "case_id": "Q01-BUILD-linux-x86_64",
+          "source_sha": "fce2bfe877d59dfe40a66a20566cbeef820dfc64",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064052246",
+          "observation": "final frozen real E2E completed, but new builder verify name collision invoked wrong final guard; separate source/Core aliases fixed, replay required"
+        },
+        {
+          "case_id": "Q01-NATIVE-GUI-windows-x64",
+          "source_sha": "fce2bfe877d59dfe40a66a20566cbeef820dfc64",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064052260",
+          "observation": "native lost-reply fixture failed NATIVE_PAYMENT_APPROVAL_DIALOG_REQUIRED; reviewed 3ea32b89 sync/approval containment selectively ported and genuine background-worker overlap forced in regression; replay required"
+        },
+        {
+          "case_id": "Q01-DIRTY-SOURCE-macos-arm64",
+          "source_sha": "84d93b47f52563075b908b5a66df49239d8af924",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/127",
+          "observation": "Actual public disposable Git fixture: original capture accepted replaced Git objects and altered source. Literal --no-replace-objects now enforced; original reproducer retained in Q01 audit package."
+        }
+      ],
+      "selectively_reviewed_dependencies": [
+        {
+          "commit": "3ea32b89ec9d95b036ff5577a3a8f69eeeb77efb",
+          "files": [
+            "src/wam_regtest/operational_gui.py",
+            "src/wam_regtest/wallet_probe.py"
+          ],
+          "reason": "Reproduced native approval failure during Q01 genuine-Core acceptance; no unrelated stack adoption, no signing/anchor/transaction-policy relaxation."
+        }
+      ]
     },
     {
       "id": "Q02",

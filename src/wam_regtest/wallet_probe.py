@@ -16,7 +16,20 @@ class WalletProbeError(ValueError):
     pass
 
 
+def _await_gui_idle(app,window):
+    # Screenshot/theme events can overlap the real 30-second sync. Wait for
+    # native completion instead of clicking a correctly disabled action.
+    loop=QEventLoop();poll=QTimer();deadline=QTimer();deadline.setSingleShot(True)
+    poll.timeout.connect(lambda:loop.quit() if window._worker is None else None)
+    deadline.timeout.connect(loop.quit)
+    poll.start(10);deadline.start(90_000)
+    if window._worker is not None:loop.exec()
+    poll.stop();deadline.stop()
+    if window._worker is not None:raise WalletProbeError('WALLET_GUI_IDLE_TIMEOUT')
+
+
 def _operation(app,window,action,trigger,*,denied=False):
+    _await_gui_idle(app,window)
     loop=QEventLoop()
     result={}
     def success(name,value):
@@ -279,6 +292,11 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         # response AFTER genuine Core has accepted it; no synthetic RPC.
         _operation(app,window,'prepare',window.prepare_button.click)
         _capture_fusion_views(app,window)
+        # Deterministically reproduce the observed Windows capture/sync overlap
+        # using the REAL read worker and Core RPC. Do not disable the timer or
+        # force-enable signing; the probe must await native completion.
+        window.request_sync()
+        assert window._worker is not None
         _operation(app,window,'sign',lambda:_approve_dialog(app,window,window.sign_button))
         from wam_sp.psbt import PSBT
         uncertain_txid=PSBT.decode(session._signed).txid()
@@ -413,11 +431,19 @@ def probe_wallet(core_dir,datadir,source,mining_address):
 def _approve_dialog(app,window,button,*,approve=True):
     # Drive the actual modal dialog as an explicit disposable-fixture operator.
     # No application test flag or authorization bypass is introduced.
+    _await_gui_idle(app,window)
+    assert button.isEnabled(), 'NATIVE_PAYMENT_ACTION_MUST_BE_READY'
     seen=[]
     def respond():
         dialog=QApplication.activeModalWidget()
         if isinstance(dialog,PaymentApproval):
             assert dialog.cancel.isDefault() and not dialog.approve.isDefault()
+            # Emit the actual refresh timer inside the modal nested loop.
+            # It must not start a worker or change the exact reviewed intent.
+            review=window.review
+            window._sync_timer.timeout.emit()
+            window.request_sync()
+            assert window._approval_open and window._worker is None and window.review is review
             seen.append(True)
             directory=Path('fusion-ui-review');directory.mkdir(exist_ok=True)
             import sys
