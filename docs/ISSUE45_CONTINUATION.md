@@ -1,4 +1,16 @@
-# Current Q05 managed GUI lifecycle acceptance
+# Current Q17 Windows frozen DPI repair
+
+Owner-authorized focused branch `fix/issue45-q17-windows-dpi-20261024`, based
+exactly on reviewed Draft122 `522b36e6e10c47f97f36e9cd3a6bab6eb8fef50e`.
+Independent K-09 Draft90 is NOT included. Read ISSUE45_Q17_WINDOWS_DPI.md and
+the live Q17 Draft/CI first. Preserve the original125% screenshot FAIL and all
+Q05/A06 history. Current audit/checkpoint: outputs/q17-windows-dpi-20261024.
+Acquire a new shared engineering lease before engineering, refuse overlap.
+One visual-repair branch/Draft only, no merge or subsequent unrelated task.
+Geometry assertions do not constitute visual/physical approval; source, genuine
+Core/native, final frozen and screenshot review must remain separate.
+
+# Historical Q05 managed GUI lifecycle acceptance
 
 Baseline Draft121 f77548de8fb14d2ad4ae007aa5fc46929681c27a; focused branch
 acceptance/issue45-managed-gui-lifecycle-20261023. One new Draft only, no merge.
