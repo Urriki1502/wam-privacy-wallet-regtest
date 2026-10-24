@@ -78,11 +78,20 @@ def validate(ledger):
                 for e in c['acceptance_evidence']:
                     require(all(e.get(k) for k in ('source_sha','checkout_sha','timestamp_utc','platform','reference')))
                     require(all(re.fullmatch('[0-9a-f]{40}',e[k]) for k in ('source_sha','checkout_sha')))
-                    if c['layer'] in ('CORE_E2E','FROZEN','MAIN'):
-                        require(e.get('synthetic_rpc') is False and e.get('core_version')=='v0.1.11'
-                            and e.get('wsp_source_commit')=='ac55f13423620252bdbf848c7e8a280c3b84721e')
-                        require(all(e.get(k) for k in ('core_sha256','core_trust','workflow_run_id','job_id')))
-                    if c['layer'] in ('FROZEN','MAIN'):require(re.fullmatch('[0-9a-f]{64}',e.get('artifact_sha256','')))
+                    if c['layer']=='MAIN' and c['id'].endswith('-MERGE-AUTH'):
+                        # Owner approval is an authoritative PR action, not a
+                        # native Core or frozen-binary test receipt.
+                        require(re.fullmatch('[0-9a-f]{40}',e.get('merged_main_sha',''))
+                            and type(e.get('owner_decision_url')) is str
+                            and e['owner_decision_url'].startswith(
+                                'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/'))
+                    else:
+                        if c['layer'] in ('CORE_E2E','FROZEN','MAIN'):
+                            require(e.get('synthetic_rpc') is False and e.get('core_version')=='v0.1.11'
+                                and e.get('wsp_source_commit')=='ac55f13423620252bdbf848c7e8a280c3b84721e')
+                            require(all(e.get(k) for k in ('core_sha256','core_trust','workflow_run_id','job_id')))
+                        if c['layer'] in ('FROZEN','MAIN'):
+                            require(re.fullmatch('[0-9a-f]{64}',e.get('artifact_sha256','')))
         if r['accepted']:
             require(cases and r['status']=='PASS' and all(c['status']=='PASS' for c in cases))
             require(all(g['status']=='PASS' for g in r['gates'].values()))
