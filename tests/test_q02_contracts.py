@@ -110,5 +110,15 @@ class Q02Contracts(unittest.TestCase):
                 session.unlock(b'wrong-source-contract-password',True)
             reauth.assert_not_called()
 
+    def test_windows_vault_fixture_allows_identity_read_but_no_scanner_capability_expansion(self):
+        from wam_regtest.windows_vault_probe import WindowsVaultFixtureRpc,WindowsVaultProbeError
+        rpc=WindowsVaultFixtureRpc(Path('source-cli').absolute(),Path('source-chain').absolute(),12345,{})
+        reply={'version':111,'subversion':'/WAM:0.1.11/','protocolversion':70016}
+        with patch('wam_regtest.windows_vault_probe._rpc',return_value=reply) as invoke:
+            self.assertEqual(rpc._call('getnetworkinfo',[]),reply)
+            invoke.assert_called_once()
+        with self.assertRaises(WindowsVaultProbeError):rpc._call('dumpprivkey',[])
+        with self.assertRaises(RealWspScanError):rpc.call('getnetworkinfo',[])
+
 
 if __name__=='__main__':unittest.main()

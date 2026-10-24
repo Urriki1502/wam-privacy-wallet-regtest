@@ -6284,6 +6284,13 @@
           "status": "FAIL",
           "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40100908270",
           "observation": "Three SOURCE fixtures used drive-less POSIX paths, correctly rejected by native Windows absolute-path custody guard before the mocked RPC test. Use native absolute fixture paths; do not weaken runtime guards or skip tests. Exact-head replay required."
+        },
+        {
+          "case_id": "Q02-NATIVE-REGRESSION-windows-x64",
+          "source_sha": "3ad25dd6133b50a882ecc6649d7987650d9706ec",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40101122404",
+          "observation": "Genuine Windows vault/reorg regression reached newly mandatory getnetworkinfo version attestation, but its private legacy fixture whitelist lacked that read. Add only this identity read; preserve scanner read surface, write restrictions and all native Credential Manager/custody gates. Replay required."
         }
       ]
     },
