@@ -1,5 +1,6 @@
 """Qt SOURCE layout contracts, never a substitute for Windows frozen evidence."""
 from pathlib import Path
+import json
 import unittest
 from shiboken6 import delete
 from wam_regtest.desktop import qt_application
@@ -9,6 +10,12 @@ from wam_regtest.supervisor_protocol import public_status
 
 
 class Q17LayoutContracts(unittest.TestCase):
+    def inspect(self):
+        try:return inspect_window(self.window,self.app)
+        except ValueError as error:
+            print('Q17_PUBLIC_SOURCE_GEOMETRY='+json.dumps(getattr(error,'q17_geometry',{}),sort_keys=True),flush=True)
+            raise
+
     def setUp(self):
         self.app=qt_application()
         self.window=ManagedCoreWindow(Path('C:/q17-layout-no-node') if __import__('sys').platform=='win32' else Path('/tmp/q17-layout-no-node'))
@@ -27,7 +34,7 @@ class Q17LayoutContracts(unittest.TestCase):
                     with self.subTest(state=state,mode=mode,width=width):
                         window.resize(width,height)
                         for _ in range(3):self.app.processEvents()
-                        proof=inspect_window(window,self.app)
+                        proof=self.inspect()
                         self.assertEqual(len(proof['controls']),8)
                         self.assertEqual(len(proof['welcome_actions']),9)
                         self.assertIsNone(window.session)
@@ -48,7 +55,7 @@ class Q17LayoutContracts(unittest.TestCase):
         item=QListWidgetItem('Mining Account');self.window.navigation.addItem(item)
         self.window.stack.addWidget(QWidget());item.setHidden(True)
         self.window.resize(820,600);self.app.processEvents()
-        proof=inspect_window(self.window,self.app)
+        proof=self.inspect()
         self.assertEqual(proof['hidden_navigation'],['Mining Account'])
         self.assertTrue(item.isHidden())
         self.assertNotIn('Mining Account',[r['text'] for r in proof['navigation']])
