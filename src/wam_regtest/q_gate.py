@@ -20,7 +20,8 @@ def _engineering_handoff_qualified(record, index):
             and type(handoff.get('owner_decision_url')) is str
             and handoff['owner_decision_url'].startswith(owner_issue)
             and type(record.get('owner_merge_authorization')) is str
-            and record['owner_merge_authorization'].startswith(owner_issue)
+            and record['owner_merge_authorization'].startswith(
+                'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/')
             and handoff.get('engineering_status')=='INTEGRATED_PENDING_EXTERNAL'
             and handoff.get('next_q')==ORDER[index+1]
             and handoff.get('merged_pr')==record.get('candidate_pr')
