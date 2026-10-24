@@ -126,6 +126,55 @@ memory clearing is best effort, old signed/uncertain reservations stay locked
 and recovery rotation is capped at 16 epochs. These are developer-preview
 limitations, not production guarantees.
 
+## Q01 clean-checkout build procedure
+
+Read root `AGENTS.md` and the single case ledger
+[`tests/acceptance/issue45.json`](tests/acceptance/issue45.json) first. Q01 is the
+only active acceptance target; a successful build does not close its operator,
+independent review or owner-authorized postmerge gates.
+
+Use a new checkout, a new **external** venv path and the immutable WSP checkout.
+Windows checkouts must preserve literal Git bytes, including upstream's binary
+fuzz corpus: use `git -c core.autocrlf=false clone ...` for both repositories.
+The native workflows configure this on their disposable checkout steps.
+
+```bash
+git clone https://github.com/Urriki1502/wam-silent-payments wsp-upstream
+git -C wsp-upstream checkout --detach ac55f13423620252bdbf848c7e8a280c3b84721e
+python -I scripts/q01_environment.py --profile gui \
+  --environment /absolute/new/external/q01-env --receipt q01-install.json
+```
+
+The declared bootstrap interpreter is CPython **3.12.10 on macOS/Windows** and
+**3.12.15 on Linux**; setup-python's current manifest supplies these native
+architectures (3.12.15 is unavailable there on macOS/Windows). Subsequent build
+and test commands must use that new venv's `bin/python` or `Scripts/python.exe`.
+CI exports its path only after the installer step. `--profile headless` has no
+Qt; Linux desktop uses the separate GUI profile. Wheel versions and hashes live
+in `requirements/q01-*.lock`, install reports record actual download hashes,
+and editable backend resolution cannot fetch additional undeclared dependencies.
+The existing source/frozen WSP import guards remain mandatory.
+
+Required OS prerequisites remain explicit: Git and native CPython; GPG plus
+Apple command-line build/signing/disk-image tools on macOS; native Windows NTFS
+and Credential Manager; and the existing workflow's Ubuntu 24.04 libraries,
+Xvfb/xcb for desktop, and independently administered root witness for Linux.
+Linux uses the pinned reviewed developer Core artifact, **not** an official
+signed Linux release. Never provision a privileged witness on an owner host as
+part of this installer. OS runner images/system libraries are separately
+recorded prerequisites; wheel locks do not make the entire host hermetic.
+
+Run existing platform native and final frozen builders only after the fresh
+installation. They retain pinned Core/WSP checks and real-Core wallet gates.
+`q01_core_negatives.py` tests modified disposable copies of **each** genuine
+Core binary and a missing CLI; `q01_dependency_negatives.py` uses real bare
+interpreters with missing WSP/crypto. These are SOURCE refusal evidence, not
+Core E2E substitutes. No test modifies the original pair or opens owner data.
+Builders additionally refuse dirty/staged/hidden executable source and verify
+tracked source remains unchanged before packaging publication. A planned second
+clean build must compare actual payloads; timestamps/signatures/container bytes
+may differ and no bit-identical reproducibility is currently claimed.
+
 ## Sources
 
 - [Official Core v0.1.11](https://github.com/wamcoin-core-dev/wam-coin/releases/tag/v0.1.11)
