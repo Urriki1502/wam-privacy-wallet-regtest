@@ -23,7 +23,7 @@ class BuildSourceError(ValueError):
 
 
 def _git(root,*args):
-    p=subprocess.run(['git','-C',str(root),*args],stdin=subprocess.DEVNULL,
+    p=subprocess.run(['git','--no-replace-objects','-C',str(root),*args],stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=30)
     if p.returncode or len(p.stdout)>4*1024*1024:raise BuildSourceError('BUILD_SOURCE_GIT_DENIED')
     return p.stdout

@@ -18,12 +18,15 @@ import zipfile
 
 def main():
     assert sys.platform=='win32' and platform.machine().lower() in ('amd64','x86_64')
+    from wam_regtest.build_provenance import capture,verify,public_receipt
+    source_root=Path.cwd();source_stamp=capture(source_root)
     from wam_regtest.windows_release_preflight import ASSET,BINARY_SHA256,verify_signed_windows_archive,_validate_amd64_pe
     from wam_regtest.release import _download_exact
     from wam_regtest.package_manifest import stage_pinned_wsp
     from wam_regtest.branding import brand_image
     source=Path('wsp-upstream').absolute()
     assert subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip()=='ac55f13423620252bdbf848c7e8a280c3b84721e'
+    wsp_stamp=capture(source)
     output=Path('windows-package-output');output.mkdir()
     with tempfile.TemporaryDirectory(prefix='wam-win-build-') as t:
         stage=Path(t);core=stage/'core';core.mkdir()
@@ -116,6 +119,9 @@ def main():
         scales[factor]={'native_qwindows_real_frozen_e2e':True,'device_pixel_ratio':record['device_pixel_ratio']}
     members={p.relative_to(bundle).as_posix():sha256(p.read_bytes()).hexdigest() for p in bundle.rglob('*') if p.is_file()}
     assert not any(p.is_symlink() for p in bundle.rglob('*'))
+    verify(source_root,source_stamp);verify(source,wsp_stamp)
+    (output/'BUILD_SOURCE_RECEIPT.json').write_text(json.dumps(public_receipt(source_stamp,
+        source_head=os.environ.get('WAM_SOURCE_HEAD'),dispatch=os.environ.get('GITHUB_EVENT_NAME')=='workflow_dispatch'),sort_keys=True,indent=2)+'\n')
     head=os.environ['WAM_SOURCE_HEAD'];archive=output/('WAM-Privacy-Wallet-REGTEST-windows-x64-'+head+'.zip')
     with zipfile.ZipFile(archive,'x',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
         for relative in sorted(members):z.write(bundle/relative,'WAM-Privacy-Wallet-REGTEST/'+relative)

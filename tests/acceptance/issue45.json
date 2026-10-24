@@ -1,0 +1,2258 @@
+{
+  "schema": "wam-issue45-sequential-q-ledger/v1",
+  "authoritative_spec": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+  "owner_protocol": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993",
+  "active_q": "Q01",
+  "execution_order": [
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05",
+    "Q06",
+    "Q07",
+    "Q08",
+    "Q09",
+    "Q10",
+    "Q11",
+    "Q12",
+    "Q13",
+    "Q14",
+    "Q15",
+    "Q16",
+    "Q17",
+    "Q18",
+    "Q19",
+    "Q20"
+  ],
+  "allowed_case_states": [
+    "PASS",
+    "FAIL",
+    "PENDING",
+    "BLOCKED",
+    "STALE"
+  ],
+  "automatic_merge_allowed": false,
+  "mainnet_allowed": false,
+  "production_qualified": false,
+  "v1_disposition": "HOLD",
+  "core_version": "v0.1.11",
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "evidence_policy": "Evidence must bind actual tested source/checkout, OS, trust/pins, run/job, timestamps and artifact bytes. Historical results do not qualify changed code. JSON consistency is not human approval or host attestation.",
+  "questions": [
+    {
+      "id": "Q01",
+      "requirement": "Clean checkout installs dependencies and builds with no developer-local hidden state",
+      "processing": "ACTIVE",
+      "status": "BLOCKED",
+      "accepted": false,
+      "coverage_identified": true,
+      "coverage_total": 56,
+      "base_main_sha": "84d93b47f52563075b908b5a66df49239d8af924",
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [
+        {
+          "id": "Q01-BASELINE",
+          "requirement": "Verified current main, minimal integration ancestry and preserved independent/protected work",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G1"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-GOVERNANCE",
+          "requirement": "Root AGENTS and one versioned ledger preserve security rules and enforce sequential Q activation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G1"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-COVERAGE",
+          "requirement": "Every Q01 positive, negative, platform, dependency and operator requirement is enumerated and reviewed",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-INSTALL-macos-arm64",
+          "requirement": "Fresh checkout + new venv, declared dependencies, no system site packages/developer PYTHONPATH or pip cache reliance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G2"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-INSTALL-windows-x64",
+          "requirement": "Fresh checkout + new venv, declared dependencies, no system site packages/developer PYTHONPATH or pip cache reliance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G2"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-INSTALL-linux-x86_64",
+          "requirement": "Fresh checkout + new venv, declared dependencies, no system site packages/developer PYTHONPATH or pip cache reliance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G2"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-WSP-PIN-macos-arm64",
+          "requirement": "Exact pinned WSP checkout/source/installed execution closure, no silent alternate import",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G2",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-WSP-PIN-windows-x64",
+          "requirement": "Exact pinned WSP checkout/source/installed execution closure, no silent alternate import",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G2",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-WSP-PIN-linux-x86_64",
+          "requirement": "Exact pinned WSP checkout/source/installed execution closure, no silent alternate import",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G2",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-CORE-TRUST-macos-arm64",
+          "requirement": "Independent Core pair hashes and approved trust; signed official Mac/Windows or reviewed developer Linux, no executable-stack fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-CORE-TRUST-windows-x64",
+          "requirement": "Independent Core pair hashes and approved trust; signed official Mac/Windows or reviewed developer Linux, no executable-stack fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-CORE-TRUST-linux-x86_64",
+          "requirement": "Independent Core pair hashes and approved trust; signed official Mac/Windows or reviewed developer Linux, no executable-stack fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-SOURCE-TESTS-macos-arm64",
+          "requirement": "Current-source required contracts/dependency checks; SKIP remains missing evidence",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G2"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-SOURCE-TESTS-windows-x64",
+          "requirement": "Current-source required contracts/dependency checks; SKIP remains missing evidence",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G2"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-SOURCE-TESTS-linux-x86_64",
+          "requirement": "Current-source required contracts/dependency checks; SKIP remains missing evidence",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G2"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-NATIVE-CORE-macos-arm64",
+          "requirement": "Genuine isolated pinned Core REGTEST -> native WSP BIP352 -> SQLite receive/restart smoke",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-NATIVE-CORE-windows-x64",
+          "requirement": "Genuine isolated pinned Core REGTEST -> native WSP BIP352 -> SQLite receive/restart smoke",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-NATIVE-CORE-linux-x86_64",
+          "requirement": "Genuine isolated pinned Core REGTEST -> native WSP BIP352 -> SQLite receive/restart smoke",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-NATIVE-GUI-macos-arm64",
+          "requirement": "Native Qt bootstrap/navigation/basic live-state smoke with genuine Core, disposable fixtures only",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-NATIVE-GUI-windows-x64",
+          "requirement": "Native Qt bootstrap/navigation/basic live-state smoke with genuine Core, disposable fixtures only",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-NATIVE-GUI-linux-x86_64",
+          "requirement": "Native Qt bootstrap/navigation/basic live-state smoke with genuine Core, disposable fixtures only",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-BUILD-macos-arm64",
+          "requirement": "Clean native final package build from declared pinned inputs; preserve original Core bytes and build environment receipts",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-BUILD-windows-x64",
+          "requirement": "Clean native final package build from declared pinned inputs; preserve original Core bytes and build environment receipts",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-BUILD-linux-x86_64",
+          "requirement": "Clean native final package build from declared pinned inputs; preserve original Core bytes and build environment receipts",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-FROZEN-CORE-macos-arm64",
+          "requirement": "Actual delivered final executable runs required existing genuine Core/WSP/Qt wallet acceptance; Linux headless separately remains mandatory",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-FROZEN-CORE-windows-x64",
+          "requirement": "Actual delivered final executable runs required existing genuine Core/WSP/Qt wallet acceptance; Linux headless separately remains mandatory",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-FROZEN-CORE-linux-x86_64",
+          "requirement": "Actual delivered final executable runs required existing genuine Core/WSP/Qt wallet acceptance; Linux headless separately remains mandatory",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-MISSING-DEP-macos-arm64",
+          "requirement": "Missing required dependency refuses safely in a fresh isolated environment; never a successful-wallet fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-MISSING-DEP-windows-x64",
+          "requirement": "Missing required dependency refuses safely in a fresh isolated environment; never a successful-wallet fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-MISSING-DEP-linux-x86_64",
+          "requirement": "Missing required dependency refuses safely in a fresh isolated environment; never a successful-wallet fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-WRONG-HASH-macos-arm64",
+          "requirement": "Disposable tampered Core copy refuses before execution; unmodified original pair retains its independent hashes",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-WRONG-HASH-windows-x64",
+          "requirement": "Disposable tampered Core copy refuses before execution; unmodified original pair retains its independent hashes",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-WRONG-HASH-linux-x86_64",
+          "requirement": "Disposable tampered Core copy refuses before execution; unmodified original pair retains its independent hashes",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-SHADOW-macos-arm64",
+          "requirement": "Unexpected dependency/source shadow or ignored importable module is refused; not silently adopted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-SHADOW-windows-x64",
+          "requirement": "Unexpected dependency/source shadow or ignored importable module is refused; not silently adopted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-SHADOW-linux-x86_64",
+          "requirement": "Unexpected dependency/source shadow or ignored importable module is refused; not silently adopted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-DIRTY-SOURCE-macos-arm64",
+          "requirement": "Changed tracked or staged build source is refused, original checkout preserved",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-DIRTY-SOURCE-windows-x64",
+          "requirement": "Changed tracked or staged build source is refused, original checkout preserved",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-DIRTY-SOURCE-linux-x86_64",
+          "requirement": "Changed tracked or staged build source is refused, original checkout preserved",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-PACKAGE-AUDIT-macos-arm64",
+          "requirement": "Downloaded actual final artifacts/receipts/executable members/hash manifests match exact tested source and pinned inputs",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-PACKAGE-AUDIT-windows-x64",
+          "requirement": "Downloaded actual final artifacts/receipts/executable members/hash manifests match exact tested source and pinned inputs",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-PACKAGE-AUDIT-linux-x86_64",
+          "requirement": "Downloaded actual final artifacts/receipts/executable members/hash manifests match exact tested source and pinned inputs",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-REBUILD-macos-arm64",
+          "requirement": "Second independent clean build of same source/input lock; compare deterministic payloads and explicitly document container/signature differences, no unproven byte reproducibility claim",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-REBUILD-windows-x64",
+          "requirement": "Second independent clean build of same source/input lock; compare deterministic payloads and explicitly document container/signature differences, no unproven byte reproducibility claim",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-REBUILD-linux-x86_64",
+          "requirement": "Second independent clean build of same source/input lock; compare deterministic payloads and explicitly document container/signature differences, no unproven byte reproducibility claim",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-RUNTIME-CLOSURE-macos-arm64",
+          "requirement": "Final app needs no developer checkout/PYTHONPATH/external Python; declared OS trust/witness prerequisites remain explicit",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-RUNTIME-CLOSURE-windows-x64",
+          "requirement": "Final app needs no developer checkout/PYTHONPATH/external Python; declared OS trust/witness prerequisites remain explicit",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-RUNTIME-CLOSURE-linux-x86_64",
+          "requirement": "Final app needs no developer checkout/PYTHONPATH/external Python; declared OS trust/witness prerequisites remain explicit",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q01-PHYSICAL-macos-arm64",
+          "requirement": "Clean isolated operator host installs and launches the exact final artifact without developer-local state; no treasury signer or owner wallet",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "PHYSICAL",
+          "gates": [
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "OWNER_MACOS_OPERATOR",
+            "missing_evidence": "Exact candidate source/package hash + clean-host setup, observed install/start results and explicit operator receipt",
+            "next_action": "Provide an isolated non-treasury clean host and authorized operator; execute the final current-artifact procedure only after technical preflight qualifies"
+          }
+        },
+        {
+          "id": "Q01-PHYSICAL-windows-x64",
+          "requirement": "Clean isolated operator host installs and launches the exact final artifact without developer-local state; no treasury signer or owner wallet",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "PHYSICAL",
+          "gates": [
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "AUTHORIZED_WINDOWS_LINUX_OPERATOR",
+            "missing_evidence": "Exact candidate source/package hash + clean-host setup, observed install/start results and explicit operator receipt",
+            "next_action": "Provide an isolated non-treasury clean host and authorized operator; execute the final current-artifact procedure only after technical preflight qualifies"
+          }
+        },
+        {
+          "id": "Q01-PHYSICAL-linux-x86_64",
+          "requirement": "Clean isolated operator host installs and launches the exact final artifact without developer-local state; no treasury signer or owner wallet",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "PHYSICAL",
+          "gates": [
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "AUTHORIZED_WINDOWS_LINUX_OPERATOR",
+            "missing_evidence": "Exact candidate source/package hash + clean-host setup, observed install/start results and explicit operator receipt",
+            "next_action": "Provide an isolated non-treasury clean host and authorized operator; execute the final current-artifact procedure only after technical preflight qualifies"
+          }
+        },
+        {
+          "id": "Q01-INDEPENDENT-REVIEW",
+          "requirement": "Independent DEV/security assessment of Q01 source/dependency/package evidence and trust boundaries",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "DEV_REVIEWED",
+          "gates": [
+            "G1",
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "INDEPENDENT_DEV_SECURITY_REVIEWER",
+            "missing_evidence": "Reviewed exact candidate source/artifact matrix and explicit independent Q01 sign-off",
+            "next_action": "Review the concrete Q01 Draft and final verified evidence; engineering-agent review is not independent approval"
+          }
+        },
+        {
+          "id": "Q01-MERGE-AUTH",
+          "requirement": "Explicit owner approval for the scoped qualified Q01 candidate; no automatic merge",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "MAIN",
+          "gates": [
+            "G7"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "REPOSITORY_OWNER",
+            "missing_evidence": "Explicit merge authorization after all mandatory candidate/human gates qualify",
+            "next_action": "Owner reviews qualified exact-head Q01 and authorizes merge; do not request premature approval"
+          }
+        },
+        {
+          "id": "Q01-MAIN-RECHECK-macos-arm64",
+          "requirement": "After authorized merge, rerun applicable native/frozen checks and audit delivered bytes against actual main commit",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "MAIN",
+          "gates": [
+            "G7"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "OWNER_MERGE_THEN_CI_OPERATOR",
+            "missing_evidence": "Authorized merge SHA and successful exact-main native/frozen/evidence verification",
+            "next_action": "Only after owner-authorized merge, dispatch/audit exact main; never inherit PR checks as post-merge proof"
+          }
+        },
+        {
+          "id": "Q01-MAIN-RECHECK-windows-x64",
+          "requirement": "After authorized merge, rerun applicable native/frozen checks and audit delivered bytes against actual main commit",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "MAIN",
+          "gates": [
+            "G7"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "OWNER_MERGE_THEN_CI_OPERATOR",
+            "missing_evidence": "Authorized merge SHA and successful exact-main native/frozen/evidence verification",
+            "next_action": "Only after owner-authorized merge, dispatch/audit exact main; never inherit PR checks as post-merge proof"
+          }
+        },
+        {
+          "id": "Q01-MAIN-RECHECK-linux-x86_64",
+          "requirement": "After authorized merge, rerun applicable native/frozen checks and audit delivered bytes against actual main commit",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "MAIN",
+          "gates": [
+            "G7"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "OWNER_MERGE_THEN_CI_OPERATOR",
+            "missing_evidence": "Authorized merge SHA and successful exact-main native/frozen/evidence verification",
+            "next_action": "Only after owner-authorized merge, dispatch/audit exact main; never inherit PR checks as post-merge proof"
+          }
+        }
+      ],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "BLOCKED",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "BLOCKED",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q02",
+      "requirement": "Real Core node authenticated, correct chain/genesis; wrong-chain/credentials fail closed",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q03",
+      "requirement": "Shared JSON-RPC repeated sync with no per-call CLI/rehash; no Windows console flicker or independent GUI crash",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q04",
+      "requirement": "REGTEST node and miner running; attach read-only; node busy / work queue rejected / reconnect without disrupting miner",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q05",
+      "requirement": "Managed Core persistent: close/reopen, crash, reattach, no new datadir or dropped history",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": [
+        {
+          "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6368327724",
+          "note": "Original Windows125% frozen clipping FAIL remains; scoped component reports do not ACCEPT any Q"
+        }
+      ]
+    },
+    {
+      "id": "Q06",
+      "requirement": "New 12-word BIP39 Create→Receive→Sign→Broadcast→Reopen→Restore same identity",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q07",
+      "requirement": "New 24-word BIP39 same complete flow and optional passphrase/no-passphrase mismatch",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q08",
+      "requirement": "Core-created descriptor/SQLite `.dat` native import from every OS into each other OS; original hash unchanged",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q09",
+      "requirement": "BDB, corrupted, wrong-chain, duplicate, overlapping descriptor, malicious-path import safely refused",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q10",
+      "requirement": "Cold-device recovery: seed vs `.dat` vs Fusion state/witness, no anti-rollback bypass, accurate funds/scans",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q11",
+      "requirement": "Mature 99/100/101, treasury subsidy sunset 400000/400001, miner owned value, WAM 120-s UX",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": [
+        {
+          "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6368327724",
+          "note": "Original Windows125% frozen clipping FAIL remains; scoped component reports do not ACCEPT any Q"
+        }
+      ]
+    },
+    {
+      "id": "Q12",
+      "requirement": "Pending→confirmed→conflicted/dropped/reorg; restart with uncertain broadcast/UTXO reservations",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q13",
+      "requirement": "Mainnet-prefix address collision safely reproduced offline with public fixture / Core parser parity, and import does not lose keys",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q14",
+      "requirement": "Multi-node REGTEST network peer loss/reconnect, block history rescan, 1/12/100 reorg",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q15",
+      "requirement": "Wrong Core binary/signed release/unqualified version/key rotation invalidation and `STALE` evidence",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q16",
+      "requirement": "Native custody: keychain/NTFS ACL/root witness, concurrent writers, anchor loss, disk/corruption failure",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q17",
+      "requirement": "Production-equivalent GUI flows at final frozen binary: onboarding, QR, send, history, settings, recovery, DPI",
+      "processing": "QUEUED",
+      "status": "FAIL",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": [
+        {
+          "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6368327724",
+          "note": "Original Windows125% frozen clipping FAIL remains; scoped component reports do not ACCEPT any Q"
+        }
+      ]
+    },
+    {
+      "id": "Q18",
+      "requirement": "Long-running wallet+miner, high-volume history, CPU/memory bounded, no persistent sensitive leaks",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q19",
+      "requirement": "Clean-update/migration and disaster recovery, backup drift and previous-version compatibility",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    },
+    {
+      "id": "Q20",
+      "requirement": "No network privacy leak, secret logged, credential printed, unsupported RPC endpoint or unexpected telemetry",
+      "processing": "QUEUED",
+      "status": "PENDING",
+      "accepted": false,
+      "coverage_identified": false,
+      "coverage_total": null,
+      "base_main_sha": null,
+      "candidate_pr": null,
+      "candidate_head_sha": null,
+      "cases": [],
+      "gates": {
+        "G0": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G1": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G2": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G3": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G4": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G5": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G6": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        },
+        "G7": {
+          "applicable": true,
+          "status": "PENDING",
+          "not_applicable_reason": null
+        }
+      },
+      "owner_merge_authorization": null,
+      "post_merge_main_sha": null,
+      "historical_evidence": []
+    }
+  ]
+}

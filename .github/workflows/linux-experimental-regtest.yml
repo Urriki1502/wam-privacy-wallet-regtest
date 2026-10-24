@@ -2,6 +2,13 @@ name: Linux x86_64 experimental developer Core REGTEST
 on:
   pull_request:
     paths:
+      - 'AGENTS.md'
+      - 'tests/acceptance/issue45.json'
+      - 'tests/test_q01*.py'
+      - 'tests/test_q_gate_ledger.py'
+      - 'src/wam_regtest/q_gate.py'
+      - 'scripts/q01_environment.py'
+      - 'requirements/q01-*.lock'
       - '.github/workflows/linux-experimental-regtest.yml'
       - 'scripts/build_linux_developer_core.sh'
       - 'scripts/build_linux_wallet.py'
@@ -33,7 +40,11 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.15'
+      - name: Q01 clean hash-locked headless environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile headless --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Native headless contracts and immutable build-input scope
         id: scope
         env:
@@ -42,9 +53,10 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y acl
-          python -m pip install -e . -e ./wsp-upstream
           python -m unittest discover -s tests -p 'test_v1_k07_real_git_source.py' -v
           python -m unittest discover -s tests -p 'test_v1_wsp_execution.py' -v
+          python -m unittest discover -s tests -p 'test_q01*.py' -v
+          python -m unittest discover -s tests -p 'test_q_gate_ledger.py' -v
           python -m unittest discover -s tests -p 'test_linux*.py' -v
           python - <<'PY'
           import os,subprocess
@@ -53,6 +65,14 @@ jobs:
           inputs={'.github/workflows/linux-experimental-regtest.yml','scripts/build_linux_developer_core.sh','src/wam_regtest/linux_developer_core.py','src/wam_regtest/linux_core_probe.py','src/wam_regtest/core.py','tests/test_linux_developer_core.py'}
           with open(os.environ['GITHUB_OUTPUT'],'a') as out:out.write('core_changed='+str(not base or bool(inputs.intersection(changed))).lower()+'\n')
           PY
+      - name: Preserve Q01 source-install receipt (not Q acceptance)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q01-install-linux-experimental-regtest-native-contracts-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q01-install.json
+          if-no-files-found: warn
+          retention-days: 14
   headless-wallet:
     needs: native-contracts
     runs-on: ubuntu-24.04
@@ -69,7 +89,11 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.15'
+      - name: Q01 clean hash-locked wallet environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile headless --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Fetch previously qualified immutable developer Core artifact
         uses: actions/download-artifact@v4
         with:
@@ -81,7 +105,6 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libevent-dev libsqlite3-dev binutils
-          python -m pip install -e . -e ./wsp-upstream
           chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
           python scripts/linux_headless_acceptance.py --core-dir qualified-linux-core/linux-core
       - uses: actions/upload-artifact@v4
@@ -89,6 +112,14 @@ jobs:
           name: linux-headless-wallet-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: linux-headless-evidence.json
           if-no-files-found: error
+          retention-days: 14
+      - name: Preserve Q01 source-install receipt (not Q acceptance)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q01-install-linux-experimental-regtest-headless-wallet-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q01-install.json
+          if-no-files-found: warn
           retention-days: 14
   native-qt-wallet:
     needs: native-contracts
@@ -106,7 +137,11 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.15'
+      - name: Q01 clean hash-locked wallet environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Fetch previously qualified immutable developer Core artifact
         uses: actions/download-artifact@v4
         with:
@@ -118,7 +153,6 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libevent-dev libsqlite3-dev binutils xvfb xauth libegl1 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxcb-xkb1 libxcb-shape0 libdbus-1-3 fonts-noto-core
-          python -m pip install -e ".[gui]" -e ./wsp-upstream
           chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
           python - <<'PYQT'
           from pathlib import Path
@@ -136,6 +170,14 @@ jobs:
             linux-qt-evidence.json
             fusion-ui-review/
           if-no-files-found: error
+          retention-days: 14
+      - name: Preserve Q01 source-install receipt (not Q acceptance)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q01-install-linux-experimental-regtest-native-qt-wallet-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q01-install.json
+          if-no-files-found: warn
           retention-days: 14
   frozen-wallet:
     needs: [headless-wallet, native-qt-wallet]
@@ -157,7 +199,11 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.15'
+      - name: Q01 clean hash-locked wallet environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile ${{ matrix.frontend == 'desktop' && 'gui' || 'headless' }} --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - uses: actions/download-artifact@v4
         with:
           name: linux-developer-core-576082d227ccd9eb139686ded431c69c07399237
@@ -168,13 +214,11 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libevent-dev libsqlite3-dev binutils
-          python -m pip install -e . -e ./wsp-upstream pyinstaller==6.22.3
           chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
       - name: Native desktop dependency closure
         if: matrix.frontend == 'desktop'
         run: |
           sudo apt-get install -y xvfb xauth libegl1 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxcb-xkb1 libxcb-shape0 libdbus-1-3 fonts-noto-core
-          python -m pip install -e ".[gui]"
       - name: Freeze and execute FINAL headless binary with real Core
         if: matrix.frontend == 'headless'
         env:
@@ -194,6 +238,14 @@ jobs:
             fusion-ui-review/
           if-no-files-found: error
           retention-days: 14
+      - name: Preserve Q01 source-install receipt (not Q acceptance)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q01-install-linux-experimental-regtest-frozen-wallet-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q01-install.json
+          if-no-files-found: warn
+          retention-days: 14
   developer-core:
     needs: native-contracts
     if: needs.native-contracts.outputs.core_changed == 'true'
@@ -205,7 +257,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.15'
       - uses: actions/checkout@v4
         with:
           repository: wamcoin-core-dev/wam-coin

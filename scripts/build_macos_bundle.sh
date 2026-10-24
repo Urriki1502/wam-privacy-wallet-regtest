@@ -13,6 +13,8 @@ test -f core/receipt.json
 mkdir -p bundle-input package-output
 SOURCE_STAGE=$(mktemp -d "$(pwd)/bundle-input/build-XXXXXX")
 trap 'rm -rf "$SOURCE_STAGE"' EXIT
+python -m wam_regtest.build_provenance capture --stamp "$SOURCE_STAGE/wallet-source.json"
+(cd wsp-upstream && env -u WAM_SOURCE_HEAD python -m wam_regtest.build_provenance capture --stamp "$SOURCE_STAGE/wsp-source.json")
 python -m wam_regtest.package_manifest \
   --source-root "$(pwd)/wsp-upstream" \
   --output "$SOURCE_STAGE/wsp-source"
@@ -111,6 +113,9 @@ test -s real-regtest-wallet-preview.png
 test -s real-regtest-security-preview.png
 
 echo "MACOS_APP_STAGE=PACKAGED_REAL_CORE_GUI_PASS"
+python -m wam_regtest.build_provenance verify --stamp "$SOURCE_STAGE/wallet-source.json" \
+  --receipt package-output/BUILD_SOURCE_RECEIPT.json
+(cd wsp-upstream && env -u WAM_SOURCE_HEAD python -m wam_regtest.build_provenance verify --stamp "$SOURCE_STAGE/wsp-source.json")
 # Preserve macOS bundle metadata/resource forks in the downloadable ZIP.
 ditto -c -k --sequesterRsrc --keepParent "$APP" \
   "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip"

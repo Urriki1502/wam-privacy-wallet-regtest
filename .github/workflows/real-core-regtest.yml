@@ -29,8 +29,12 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.15'
           architecture: 'arm64'
+      - name: Q01 clean hash-locked GUI environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Require actual Apple Silicon hardware
         run: test "$(uname -m)" = arm64
       - name: Setup official GnuPG verifier
@@ -44,7 +48,6 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
-          python -m pip install --disable-pip-version-check -e '.[gui]' -e ./wsp-upstream
           python -m pip check
       - name: Run fail-closed unit contracts (not E2E)
         run: python -m unittest discover -s tests -v
@@ -178,6 +181,14 @@ jobs:
           retention-days: 14
 
 
+      - name: Preserve Q01 source-install receipt (not Q acceptance)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q01-install-real-core-regtest-real-wamd-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q01-install.json
+          if-no-files-found: warn
+          retention-days: 14
   native-app-dmg:
     name: Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E
     needs: real-wamd
@@ -199,8 +210,12 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.15'
           architecture: 'arm64'
+      - name: Q01 clean hash-locked GUI environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Require native Apple Silicon and official GPG verifier
         shell: bash
         run: |
@@ -213,7 +228,6 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
-          python -m pip install --disable-pip-version-check -e '.[gui]' -e ./wsp-upstream 'pyinstaller==6.22.3'
           python -m pip check
       - name: Security and bundling contracts
         run: python -m unittest discover -s tests -v
@@ -232,6 +246,7 @@ jobs:
             package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip
             package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg
             package-output/SHA256SUMS.json
+            package-output/BUILD_SOURCE_RECEIPT.json
             package-output/INDEPENDENT-WALLET-SECURITY.json
             package-output/RELEASE_CANDIDATE_MANIFEST.json
             package-output/SHA256SUMS.txt
@@ -242,4 +257,12 @@ jobs:
             real-regtest-wallet-preview.png
             real-regtest-security-preview.png
           if-no-files-found: error
+          retention-days: 14
+      - name: Preserve Q01 source-install receipt (not Q acceptance)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q01-install-real-core-regtest-native-app-dmg-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q01-install.json
+          if-no-files-found: warn
           retention-days: 14
