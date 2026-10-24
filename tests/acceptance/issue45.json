@@ -2,7 +2,7 @@
   "schema": "wam-issue45-sequential-q-ledger/v1",
   "authoritative_spec": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
   "owner_protocol": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993",
-  "active_q": "Q01",
+  "active_q": "Q02",
   "execution_order": [
     "Q01",
     "Q02",
@@ -43,7 +43,7 @@
     {
       "id": "Q01",
       "requirement": "Clean checkout installs dependencies and builds with no developer-local hidden state",
-      "processing": "ACTIVE",
+      "processing": "ENGINEERING_DONE",
       "status": "BLOCKED",
       "accepted": false,
       "coverage_identified": true,
@@ -3270,15 +3270,2803 @@
     {
       "id": "Q02",
       "requirement": "Real Core node authenticated, correct chain/genesis; wrong-chain/credentials fail closed",
-      "processing": "QUEUED",
+      "processing": "ACTIVE",
       "status": "PENDING",
       "accepted": false,
-      "coverage_identified": false,
-      "coverage_total": null,
-      "base_main_sha": null,
+      "coverage_identified": true,
+      "coverage_total": 128,
+      "base_main_sha": "a6148dde377e00bdb63458fc50826e83ecd5c8a9",
       "candidate_pr": null,
       "candidate_head_sha": null,
-      "cases": [],
+      "cases": [
+        {
+          "id": "Q02-COVERAGE",
+          "requirement": "Complete all original Q02/T02/T03/T04 positive, adversarial, native/frozen/operator cases before runtime changes",
+          "acceptance_predicate": "Traceable source review only; no runtime/human acceptance inferred",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-HANDOFF",
+          "requirement": "Owner-authorized Q01 engineering handoff permits Q02 only while all Q01 release blockers remain intact",
+          "acceptance_predicate": "Traceable source review only; no runtime/human acceptance inferred",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G1"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-SOURCE-REVIEW",
+          "requirement": "Review minimal main-based implementation, trust/authorization boundaries and historical selective ports",
+          "acceptance_predicate": "Traceable source review only; no runtime/human acceptance inferred",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G1"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-CONFIG-AUTH-macos-arm64",
+          "requirement": "Authenticate protected per-session configuration to genuine independently pinned owned v0.1.11 REGTEST Core",
+          "acceptance_predicate": "Actual successful HTTP authentication, exact supported Core version, zero external peers; no credentials in argv",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-CONFIG-AUTH-windows-x64",
+          "requirement": "Authenticate protected per-session configuration to genuine independently pinned owned v0.1.11 REGTEST Core",
+          "acceptance_predicate": "Actual successful HTTP authentication, exact supported Core version, zero external peers; no credentials in argv",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-CONFIG-AUTH-linux-x86_64",
+          "requirement": "Authenticate protected per-session configuration to genuine independently pinned owned v0.1.11 REGTEST Core",
+          "acceptance_predicate": "Actual successful HTTP authentication, exact supported Core version, zero external peers; no credentials in argv",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-COOKIE-AUTH-macos-arm64",
+          "requirement": "Authenticate genuine Core-generated private REGTEST cookie under native owner/custody checks",
+          "acceptance_predicate": "Genuine cookie accepted only for explicit read scope and verified intended process; no credential/config fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-COOKIE-AUTH-windows-x64",
+          "requirement": "Authenticate genuine Core-generated private REGTEST cookie under native owner/custody checks",
+          "acceptance_predicate": "Genuine cookie accepted only for explicit read scope and verified intended process; no credential/config fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-COOKIE-AUTH-linux-x86_64",
+          "requirement": "Authenticate genuine Core-generated private REGTEST cookie under native owner/custody checks",
+          "acceptance_predicate": "Genuine cookie accepted only for explicit read scope and verified intended process; no credential/config fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-CHAIN-GENESIS-macos-arm64",
+          "requirement": "Verify exact REGTEST chain, genesis and supported RPC profile before healthy state",
+          "acceptance_predicate": "chain=regtest and independently fixed genesis/version/protocol; mandatory complete initial attestation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-CHAIN-GENESIS-windows-x64",
+          "requirement": "Verify exact REGTEST chain, genesis and supported RPC profile before healthy state",
+          "acceptance_predicate": "chain=regtest and independently fixed genesis/version/protocol; mandatory complete initial attestation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-CHAIN-GENESIS-linux-x86_64",
+          "requirement": "Verify exact REGTEST chain, genesis and supported RPC profile before healthy state",
+          "acceptance_predicate": "chain=regtest and independently fixed genesis/version/protocol; mandatory complete initial attestation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-RPC-VERSION-macos-arm64",
+          "requirement": "Reject unapproved RPC version/subversion/protocol",
+          "acceptance_predicate": "Corrupt only a captured genuine Core reply; deny and quarantine; never launch another network or activate v0.1.12",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-RPC-VERSION-windows-x64",
+          "requirement": "Reject unapproved RPC version/subversion/protocol",
+          "acceptance_predicate": "Corrupt only a captured genuine Core reply; deny and quarantine; never launch another network or activate v0.1.12",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-RPC-VERSION-linux-x86_64",
+          "requirement": "Reject unapproved RPC version/subversion/protocol",
+          "acceptance_predicate": "Corrupt only a captured genuine Core reply; deny and quarantine; never launch another network or activate v0.1.12",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BAD-USER-macos-arm64",
+          "requirement": "Reject wrong RPC username against genuine Core",
+          "acceptance_predicate": "Real401; client closed; no wallet or transaction-state mutation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BAD-USER-windows-x64",
+          "requirement": "Reject wrong RPC username against genuine Core",
+          "acceptance_predicate": "Real401; client closed; no wallet or transaction-state mutation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BAD-USER-linux-x86_64",
+          "requirement": "Reject wrong RPC username against genuine Core",
+          "acceptance_predicate": "Real401; client closed; no wallet or transaction-state mutation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BAD-PASSWORD-macos-arm64",
+          "requirement": "Reject wrong RPC password against genuine Core",
+          "acceptance_predicate": "Real401; no automatic retry/fallback; original test credentials remain private",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BAD-PASSWORD-windows-x64",
+          "requirement": "Reject wrong RPC password against genuine Core",
+          "acceptance_predicate": "Real401; no automatic retry/fallback; original test credentials remain private",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BAD-PASSWORD-linux-x86_64",
+          "requirement": "Reject wrong RPC password against genuine Core",
+          "acceptance_predicate": "Real401; no automatic retry/fallback; original test credentials remain private",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BAD-COOKIE-macos-arm64",
+          "requirement": "Reject malformed/incorrect private cookie",
+          "acceptance_predicate": "Native file checks/parser or real Core401; no healthy state or mutating authority",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BAD-COOKIE-windows-x64",
+          "requirement": "Reject malformed/incorrect private cookie",
+          "acceptance_predicate": "Native file checks/parser or real Core401; no healthy state or mutating authority",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BAD-COOKIE-linux-x86_64",
+          "requirement": "Reject malformed/incorrect private cookie",
+          "acceptance_predicate": "Native file checks/parser or real Core401; no healthy state or mutating authority",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-MISSING-COOKIE-macos-arm64",
+          "requirement": "Reject missing cookie without adopting config/password fallback",
+          "acceptance_predicate": "No HTTP authorization sent from absent source; session remains closed",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-MISSING-COOKIE-windows-x64",
+          "requirement": "Reject missing cookie without adopting config/password fallback",
+          "acceptance_predicate": "No HTTP authorization sent from absent source; session remains closed",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-MISSING-COOKIE-linux-x86_64",
+          "requirement": "Reject missing cookie without adopting config/password fallback",
+          "acceptance_predicate": "No HTTP authorization sent from absent source; session remains closed",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REPLACED-COOKIE-macos-arm64",
+          "requirement": "Reject cookie identity/content replacement during a session",
+          "acceptance_predicate": "Deny before next authorization; original session cannot resume after restoring file",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REPLACED-COOKIE-windows-x64",
+          "requirement": "Reject cookie identity/content replacement during a session",
+          "acceptance_predicate": "Deny before next authorization; original session cannot resume after restoring file",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REPLACED-COOKIE-linux-x86_64",
+          "requirement": "Reject cookie identity/content replacement during a session",
+          "acceptance_predicate": "Deny before next authorization; original session cannot resume after restoring file",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-STALE-COOKIE-macos-arm64",
+          "requirement": "Reject stale cookie after genuine owned Core restart",
+          "acceptance_predicate": "Old process/session/cookie rejected; new explicitly authorized binding must fully reauthenticate",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-STALE-COOKIE-windows-x64",
+          "requirement": "Reject stale cookie after genuine owned Core restart",
+          "acceptance_predicate": "Old process/session/cookie rejected; new explicitly authorized binding must fully reauthenticate",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-STALE-COOKIE-linux-x86_64",
+          "requirement": "Reject stale cookie after genuine owned Core restart",
+          "acceptance_predicate": "Old process/session/cookie rejected; new explicitly authorized binding must fully reauthenticate",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-AUTH-LOSS-macos-arm64",
+          "requirement": "Fail closed after protected config or authentication source loss/drift",
+          "acceptance_predicate": "Original session quarantined, no wallet creation or RPC write; restored file alone does not revive it",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-AUTH-LOSS-windows-x64",
+          "requirement": "Fail closed after protected config or authentication source loss/drift",
+          "acceptance_predicate": "Original session quarantined, no wallet creation or RPC write; restored file alone does not revive it",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-AUTH-LOSS-linux-x86_64",
+          "requirement": "Fail closed after protected config or authentication source loss/drift",
+          "acceptance_predicate": "Original session quarantined, no wallet creation or RPC write; restored file alone does not revive it",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRONG-CHAIN-macos-arm64",
+          "requirement": "Reject wrong-network identity without running a mainnet/testnet node",
+          "acceptance_predicate": "Fault-inject chain field AFTER observing authenticated real REGTEST reply; exact parser rejects and no write occurs",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRONG-CHAIN-windows-x64",
+          "requirement": "Reject wrong-network identity without running a mainnet/testnet node",
+          "acceptance_predicate": "Fault-inject chain field AFTER observing authenticated real REGTEST reply; exact parser rejects and no write occurs",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRONG-CHAIN-linux-x86_64",
+          "requirement": "Reject wrong-network identity without running a mainnet/testnet node",
+          "acceptance_predicate": "Fault-inject chain field AFTER observing authenticated real REGTEST reply; exact parser rejects and no write occurs",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRONG-GENESIS-macos-arm64",
+          "requirement": "Reject mismatched genesis from authenticated response",
+          "acceptance_predicate": "Fault-inject genesis AFTER real owned Core response; no healthy/scan/wallet state accepted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRONG-GENESIS-windows-x64",
+          "requirement": "Reject mismatched genesis from authenticated response",
+          "acceptance_predicate": "Fault-inject genesis AFTER real owned Core response; no healthy/scan/wallet state accepted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRONG-GENESIS-linux-x86_64",
+          "requirement": "Reject mismatched genesis from authenticated response",
+          "acceptance_predicate": "Fault-inject genesis AFTER real owned Core response; no healthy/scan/wallet state accepted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRONG-PROCESS-macos-arm64",
+          "requirement": "Reject an unexpected genuine Core process/endpoint before sending credentials",
+          "acceptance_predicate": "Two disposable REGTEST nodes; kernel connection owner must match intended live Popen/image; no authorization sent to wrong owner",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRONG-PROCESS-windows-x64",
+          "requirement": "Reject an unexpected genuine Core process/endpoint before sending credentials",
+          "acceptance_predicate": "Two disposable REGTEST nodes; kernel connection owner must match intended live Popen/image; no authorization sent to wrong owner",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRONG-PROCESS-linux-x86_64",
+          "requirement": "Reject an unexpected genuine Core process/endpoint before sending credentials",
+          "acceptance_predicate": "Two disposable REGTEST nodes; kernel connection owner must match intended live Popen/image; no authorization sent to wrong owner",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-ENDPOINT-macos-arm64",
+          "requirement": "Reject unapproved host/port/path/wallet-selector and no redirect",
+          "acceptance_predicate": "Strict numeric approved loopback endpoint; deny before socket/auth, no DNS or external fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-ENDPOINT-windows-x64",
+          "requirement": "Reject unapproved host/port/path/wallet-selector and no redirect",
+          "acceptance_predicate": "Strict numeric approved loopback endpoint; deny before socket/auth, no DNS or external fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-ENDPOINT-linux-x86_64",
+          "requirement": "Reject unapproved host/port/path/wallet-selector and no redirect",
+          "acceptance_predicate": "Strict numeric approved loopback endpoint; deny before socket/auth, no DNS or external fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REMOTE-PROFILE-macos-arm64",
+          "requirement": "Reject remote/proxy/include/duplicate or unexpected configuration",
+          "acceptance_predicate": "Protected source alone cannot authorize changed endpoint; no remote node started or contacted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REMOTE-PROFILE-windows-x64",
+          "requirement": "Reject remote/proxy/include/duplicate or unexpected configuration",
+          "acceptance_predicate": "Protected source alone cannot authorize changed endpoint; no remote node started or contacted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REMOTE-PROFILE-linux-x86_64",
+          "requirement": "Reject remote/proxy/include/duplicate or unexpected configuration",
+          "acceptance_predicate": "Protected source alone cannot authorize changed endpoint; no remote node started or contacted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-MALFORMED-JSON-macos-arm64",
+          "requirement": "Reject invalid JSON/encoding/nonfinite/duplicate fields",
+          "acceptance_predicate": "Corrupt captured genuine reply at decoding boundary; fixed public error, client closed, original Core state unchanged",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-MALFORMED-JSON-windows-x64",
+          "requirement": "Reject invalid JSON/encoding/nonfinite/duplicate fields",
+          "acceptance_predicate": "Corrupt captured genuine reply at decoding boundary; fixed public error, client closed, original Core state unchanged",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-MALFORMED-JSON-linux-x86_64",
+          "requirement": "Reject invalid JSON/encoding/nonfinite/duplicate fields",
+          "acceptance_predicate": "Corrupt captured genuine reply at decoding boundary; fixed public error, client closed, original Core state unchanged",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-ENVELOPE-macos-arm64",
+          "requirement": "Reject missing/unexpected fields, wrong id and ambiguous RPC error",
+          "acceptance_predicate": "Authenticated genuine response corrupted only for negative test; fail closed, never accept healthy result",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-ENVELOPE-windows-x64",
+          "requirement": "Reject missing/unexpected fields, wrong id and ambiguous RPC error",
+          "acceptance_predicate": "Authenticated genuine response corrupted only for negative test; fail closed, never accept healthy result",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-ENVELOPE-linux-x86_64",
+          "requirement": "Reject missing/unexpected fields, wrong id and ambiguous RPC error",
+          "acceptance_predicate": "Authenticated genuine response corrupted only for negative test; fail closed, never accept healthy result",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-RESULT-SHAPE-macos-arm64",
+          "requirement": "Reject wrong types/required fields/result or block identity",
+          "acceptance_predicate": "Actual Core bytes first; type/identity faults rejected including bool-as-int, no wallet side effect",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-RESULT-SHAPE-windows-x64",
+          "requirement": "Reject wrong types/required fields/result or block identity",
+          "acceptance_predicate": "Actual Core bytes first; type/identity faults rejected including bool-as-int, no wallet side effect",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-RESULT-SHAPE-linux-x86_64",
+          "requirement": "Reject wrong types/required fields/result or block identity",
+          "acceptance_predicate": "Actual Core bytes first; type/identity faults rejected including bool-as-int, no wallet side effect",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REPLY-BOUNDS-macos-arm64",
+          "requirement": "Reject oversized/invalid HTTP responses and ambiguous transport status",
+          "acceptance_predicate": "Bounded authenticated reply reading/decoding; no partial result or hidden retry accepted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REPLY-BOUNDS-windows-x64",
+          "requirement": "Reject oversized/invalid HTTP responses and ambiguous transport status",
+          "acceptance_predicate": "Bounded authenticated reply reading/decoding; no partial result or hidden retry accepted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REPLY-BOUNDS-linux-x86_64",
+          "requirement": "Reject oversized/invalid HTTP responses and ambiguous transport status",
+          "acceptance_predicate": "Bounded authenticated reply reading/decoding; no partial result or hidden retry accepted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-TIMEOUT-macos-arm64",
+          "requirement": "Bound genuine Core request timeout and quarantine the session",
+          "acceptance_predicate": "Use actual owned Core bounded long-poll or owned-node suspension; no fabricated timeout success or write replay",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-TIMEOUT-windows-x64",
+          "requirement": "Bound genuine Core request timeout and quarantine the session",
+          "acceptance_predicate": "Use actual owned Core bounded long-poll or owned-node suspension; no fabricated timeout success or write replay",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-TIMEOUT-linux-x86_64",
+          "requirement": "Bound genuine Core request timeout and quarantine the session",
+          "acceptance_predicate": "Use actual owned Core bounded long-poll or owned-node suspension; no fabricated timeout success or write replay",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-UNAVAILABLE-macos-arm64",
+          "requirement": "Reject genuinely stopped/unavailable owned Core",
+          "acceptance_predicate": "Owned process termination observed; no stale healthy result, alternate endpoint or automatic node/wallet creation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-UNAVAILABLE-windows-x64",
+          "requirement": "Reject genuinely stopped/unavailable owned Core",
+          "acceptance_predicate": "Owned process termination observed; no stale healthy result, alternate endpoint or automatic node/wallet creation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-UNAVAILABLE-linux-x86_64",
+          "requirement": "Reject genuinely stopped/unavailable owned Core",
+          "acceptance_predicate": "Owned process termination observed; no stale healthy result, alternate endpoint or automatic node/wallet creation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-READONLY-macos-arm64",
+          "requirement": "Read-only capability cannot sign/broadcast/mine/create/load/stop/reindex",
+          "acceptance_predicate": "Denied before network activity; actual original process/height/mempool/wallet inventory unchanged",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-READONLY-windows-x64",
+          "requirement": "Read-only capability cannot sign/broadcast/mine/create/load/stop/reindex",
+          "acceptance_predicate": "Denied before network activity; actual original process/height/mempool/wallet inventory unchanged",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-READONLY-linux-x86_64",
+          "requirement": "Read-only capability cannot sign/broadcast/mine/create/load/stop/reindex",
+          "acceptance_predicate": "Denied before network activity; actual original process/height/mempool/wallet inventory unchanged",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRITE-CONSENT-macos-arm64",
+          "requirement": "Mutating capability requires existing explicit owned disposable-session authorization",
+          "acceptance_predicate": "No implicit rights from successful authentication; existing genuine send/sign/broadcast/mining regressions retain separate approval gates",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRITE-CONSENT-windows-x64",
+          "requirement": "Mutating capability requires existing explicit owned disposable-session authorization",
+          "acceptance_predicate": "No implicit rights from successful authentication; existing genuine send/sign/broadcast/mining regressions retain separate approval gates",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-WRITE-CONSENT-linux-x86_64",
+          "requirement": "Mutating capability requires existing explicit owned disposable-session authorization",
+          "acceptance_predicate": "No implicit rights from successful authentication; existing genuine send/sign/broadcast/mining regressions retain separate approval gates",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-UNCERTAIN-NO-RETRY-macos-arm64",
+          "requirement": "Malformed/lost response after an actual authorized mutation never retries",
+          "acceptance_predicate": "Actual owned-node mutation invoked once; ambiguous response quarantines; existing signed/uncertain reservations remain immutable",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-UNCERTAIN-NO-RETRY-windows-x64",
+          "requirement": "Malformed/lost response after an actual authorized mutation never retries",
+          "acceptance_predicate": "Actual owned-node mutation invoked once; ambiguous response quarantines; existing signed/uncertain reservations remain immutable",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-UNCERTAIN-NO-RETRY-linux-x86_64",
+          "requirement": "Malformed/lost response after an actual authorized mutation never retries",
+          "acceptance_predicate": "Actual owned-node mutation invoked once; ambiguous response quarantines; existing signed/uncertain reservations remain immutable",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-PRIVACY-macos-arm64",
+          "requirement": "No plaintext credentials in argv/log/errors/repr/diagnostic artifacts",
+          "acceptance_predicate": "Search emitted public receipts/log/canary capture; fixed error categories, no password/cookie/header echo",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-PRIVACY-windows-x64",
+          "requirement": "No plaintext credentials in argv/log/errors/repr/diagnostic artifacts",
+          "acceptance_predicate": "Search emitted public receipts/log/canary capture; fixed error categories, no password/cookie/header echo",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-PRIVACY-linux-x86_64",
+          "requirement": "No plaintext credentials in argv/log/errors/repr/diagnostic artifacts",
+          "acceptance_predicate": "Search emitted public receipts/log/canary capture; fixed error categories, no password/cookie/header echo",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-NATIVE-CUSTODY-macos-arm64",
+          "requirement": "Preserve strict config/cookie ACL/owner/link/reparse/size/lease boundaries",
+          "acceptance_predicate": "Real native filesystem negatives fail before auth; native custody/anchor code not weakened",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-NATIVE-CUSTODY-windows-x64",
+          "requirement": "Preserve strict config/cookie ACL/owner/link/reparse/size/lease boundaries",
+          "acceptance_predicate": "Real native filesystem negatives fail before auth; native custody/anchor code not weakened",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-NATIVE-CUSTODY-linux-x86_64",
+          "requirement": "Preserve strict config/cookie ACL/owner/link/reparse/size/lease boundaries",
+          "acceptance_predicate": "Real native filesystem negatives fail before auth; native custody/anchor code not weakened",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BINARY-REPLACE-macos-arm64",
+          "requirement": "Reject changed/copied executable or mapped process identity",
+          "acceptance_predicate": "Mutate only disposable copies; independent original pair hashes unchanged; fail before credentials",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BINARY-REPLACE-windows-x64",
+          "requirement": "Reject changed/copied executable or mapped process identity",
+          "acceptance_predicate": "Mutate only disposable copies; independent original pair hashes unchanged; fail before credentials",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BINARY-REPLACE-linux-x86_64",
+          "requirement": "Reject changed/copied executable or mapped process identity",
+          "acceptance_predicate": "Mutate only disposable copies; independent original pair hashes unchanged; fail before credentials",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REAUTH-macos-arm64",
+          "requirement": "Reconnect only through explicit complete authentication and chain reattestation",
+          "acceptance_predicate": "Old closed client cannot silently revive; new explicit read scope verifies credentials/process/chain/genesis/version",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REAUTH-windows-x64",
+          "requirement": "Reconnect only through explicit complete authentication and chain reattestation",
+          "acceptance_predicate": "Old closed client cannot silently revive; new explicit read scope verifies credentials/process/chain/genesis/version",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-REAUTH-linux-x86_64",
+          "requirement": "Reconnect only through explicit complete authentication and chain reattestation",
+          "acceptance_predicate": "Old closed client cannot silently revive; new explicit read scope verifies credentials/process/chain/genesis/version",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BORROWED-LIFECYCLE-macos-arm64",
+          "requirement": "Borrowed read scope never gains managed stop/reindex/mining authority",
+          "acceptance_predicate": "Closing read client leaves genuine disposable fixture node running; no external/owner node touched",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BORROWED-LIFECYCLE-windows-x64",
+          "requirement": "Borrowed read scope never gains managed stop/reindex/mining authority",
+          "acceptance_predicate": "Closing read client leaves genuine disposable fixture node running; no external/owner node touched",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BORROWED-LIFECYCLE-linux-x86_64",
+          "requirement": "Borrowed read scope never gains managed stop/reindex/mining authority",
+          "acceptance_predicate": "Closing read client leaves genuine disposable fixture node running; no external/owner node touched",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BEFORE-AFTER-macos-arm64",
+          "requirement": "Every negative preserves original disposable wallet and transaction state",
+          "acceptance_predicate": "Compare genuine Core height/tip/wallet inventory/mempool and relevant source identities before/after; no reset or auto creation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BEFORE-AFTER-windows-x64",
+          "requirement": "Every negative preserves original disposable wallet and transaction state",
+          "acceptance_predicate": "Compare genuine Core height/tip/wallet inventory/mempool and relevant source identities before/after; no reset or auto creation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-BEFORE-AFTER-linux-x86_64",
+          "requirement": "Every negative preserves original disposable wallet and transaction state",
+          "acceptance_predicate": "Compare genuine Core height/tip/wallet inventory/mempool and relevant source identities before/after; no reset or auto creation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-OS-IDENTITY-macos-arm64",
+          "requirement": "Native kernel image/socket proof on the actual required OS",
+          "acceptance_predicate": "POSIX/macOS/Win32 native evidence, process-exit/PID/endpoint mismatch refusal; no same-user-malware or hardened loader overclaim",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-OS-IDENTITY-windows-x64",
+          "requirement": "Native kernel image/socket proof on the actual required OS",
+          "acceptance_predicate": "POSIX/macOS/Win32 native evidence, process-exit/PID/endpoint mismatch refusal; no same-user-malware or hardened loader overclaim",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-OS-IDENTITY-linux-x86_64",
+          "requirement": "Native kernel image/socket proof on the actual required OS",
+          "acceptance_predicate": "POSIX/macOS/Win32 native evidence, process-exit/PID/endpoint mismatch refusal; no same-user-malware or hardened loader overclaim",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G1",
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-INPUT-CONTRACTS-macos-arm64",
+          "requirement": "Supplemental strict method/parameter/result/envelope/limit contracts",
+          "acceptance_predicate": "Current named tests execute on this OS; source tests never replace real Core acceptance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-INPUT-CONTRACTS-windows-x64",
+          "requirement": "Supplemental strict method/parameter/result/envelope/limit contracts",
+          "acceptance_predicate": "Current named tests execute on this OS; source tests never replace real Core acceptance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-INPUT-CONTRACTS-linux-x86_64",
+          "requirement": "Supplemental strict method/parameter/result/envelope/limit contracts",
+          "acceptance_predicate": "Current named tests execute on this OS; source tests never replace real Core acceptance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-PROFILE-CONTRACTS-macos-arm64",
+          "requirement": "Supplemental credential/profile/endpoint denial before any connect",
+          "acceptance_predicate": "Current named tests execute on this OS; source tests never replace real Core acceptance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-PROFILE-CONTRACTS-windows-x64",
+          "requirement": "Supplemental credential/profile/endpoint denial before any connect",
+          "acceptance_predicate": "Current named tests execute on this OS; source tests never replace real Core acceptance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-PROFILE-CONTRACTS-linux-x86_64",
+          "requirement": "Supplemental credential/profile/endpoint denial before any connect",
+          "acceptance_predicate": "Current named tests execute on this OS; source tests never replace real Core acceptance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-FAILURE-CONTRACTS-macos-arm64",
+          "requirement": "Supplemental explicit error/state/timeout/close and no retry contracts",
+          "acceptance_predicate": "Current named tests execute on this OS; source tests never replace real Core acceptance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-FAILURE-CONTRACTS-windows-x64",
+          "requirement": "Supplemental explicit error/state/timeout/close and no retry contracts",
+          "acceptance_predicate": "Current named tests execute on this OS; source tests never replace real Core acceptance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-FAILURE-CONTRACTS-linux-x86_64",
+          "requirement": "Supplemental explicit error/state/timeout/close and no retry contracts",
+          "acceptance_predicate": "Current named tests execute on this OS; source tests never replace real Core acceptance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-NATIVE-REGRESSION-macos-arm64",
+          "requirement": "Existing exact Core/WSP BIP352/SQLite and native GUI/custody/reorg/sign/reservation regressions",
+          "acceptance_predicate": "Actual current-source native Core/WSP/Qt with platform anchors and retained mandatory negative gates",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-FROZEN-AUTH-macos-arm64",
+          "requirement": "Execute complete Q02 trust/auth/failure cases inside final actual frozen entry",
+          "acceptance_predicate": "Exact-source final executable proof and artifact digest; both Linux frontends where applicable; no historical binary relabelling",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-FROZEN-REGRESSION-macos-arm64",
+          "requirement": "Final actual packaged Core/WSP/GUI/custody regression; Linux headless separately",
+          "acceptance_predicate": "Exact-source final executable proof and artifact digest; both Linux frontends where applicable; no historical binary relabelling",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-ARTIFACT-macos-arm64",
+          "requirement": "Download final candidate archives; inspect exact source/Core/WSP identities, manifests and executable hashes",
+          "acceptance_predicate": "Exact-source final executable proof and artifact digest; both Linux frontends where applicable; no historical binary relabelling",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-PHYSICAL-macos-arm64",
+          "requirement": "Clean isolated operator host verifies final Q02 connection/refusal behavior",
+          "acceptance_predicate": "Exact candidate/artifact/operator receipt required",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "PHYSICAL",
+          "gates": [
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "OWNER_MACOS_OPERATOR",
+            "missing_evidence": "Clean isolated non-treasury host plus exact frozen Q02 operator observations",
+            "next_action": "After technical qualification, execute approved disposable REGTEST procedure on exact selected artifact; never owner wallet/miner"
+          }
+        },
+        {
+          "id": "Q02-NATIVE-REGRESSION-windows-x64",
+          "requirement": "Existing exact Core/WSP BIP352/SQLite and native GUI/custody/reorg/sign/reservation regressions",
+          "acceptance_predicate": "Actual current-source native Core/WSP/Qt with platform anchors and retained mandatory negative gates",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-FROZEN-AUTH-windows-x64",
+          "requirement": "Execute complete Q02 trust/auth/failure cases inside final actual frozen entry",
+          "acceptance_predicate": "Exact-source final executable proof and artifact digest; both Linux frontends where applicable; no historical binary relabelling",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-FROZEN-REGRESSION-windows-x64",
+          "requirement": "Final actual packaged Core/WSP/GUI/custody regression; Linux headless separately",
+          "acceptance_predicate": "Exact-source final executable proof and artifact digest; both Linux frontends where applicable; no historical binary relabelling",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-ARTIFACT-windows-x64",
+          "requirement": "Download final candidate archives; inspect exact source/Core/WSP identities, manifests and executable hashes",
+          "acceptance_predicate": "Exact-source final executable proof and artifact digest; both Linux frontends where applicable; no historical binary relabelling",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-PHYSICAL-windows-x64",
+          "requirement": "Clean isolated operator host verifies final Q02 connection/refusal behavior",
+          "acceptance_predicate": "Exact candidate/artifact/operator receipt required",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "PHYSICAL",
+          "gates": [
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "AUTHORIZED_WINDOWS_LINUX_OPERATOR",
+            "missing_evidence": "Clean isolated non-treasury host plus exact frozen Q02 operator observations",
+            "next_action": "After technical qualification, execute approved disposable REGTEST procedure on exact selected artifact; never owner wallet/miner"
+          }
+        },
+        {
+          "id": "Q02-NATIVE-REGRESSION-linux-x86_64",
+          "requirement": "Existing exact Core/WSP BIP352/SQLite and native GUI/custody/reorg/sign/reservation regressions",
+          "acceptance_predicate": "Actual current-source native Core/WSP/Qt with platform anchors and retained mandatory negative gates",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-FROZEN-AUTH-linux-x86_64",
+          "requirement": "Execute complete Q02 trust/auth/failure cases inside final actual frozen entry",
+          "acceptance_predicate": "Exact-source final executable proof and artifact digest; both Linux frontends where applicable; no historical binary relabelling",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-FROZEN-REGRESSION-linux-x86_64",
+          "requirement": "Final actual packaged Core/WSP/GUI/custody regression; Linux headless separately",
+          "acceptance_predicate": "Exact-source final executable proof and artifact digest; both Linux frontends where applicable; no historical binary relabelling",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-ARTIFACT-linux-x86_64",
+          "requirement": "Download final candidate archives; inspect exact source/Core/WSP identities, manifests and executable hashes",
+          "acceptance_predicate": "Exact-source final executable proof and artifact digest; both Linux frontends where applicable; no historical binary relabelling",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G4",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q02-PHYSICAL-linux-x86_64",
+          "requirement": "Clean isolated operator host verifies final Q02 connection/refusal behavior",
+          "acceptance_predicate": "Exact candidate/artifact/operator receipt required",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "PHYSICAL",
+          "gates": [
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "AUTHORIZED_WINDOWS_LINUX_OPERATOR",
+            "missing_evidence": "Clean isolated non-treasury host plus exact frozen Q02 operator observations",
+            "next_action": "After technical qualification, execute approved disposable REGTEST procedure on exact selected artifact; never owner wallet/miner"
+          }
+        },
+        {
+          "id": "Q02-INDEPENDENT",
+          "requirement": "Independent source/security/provenance review of Q02 trust and credentials",
+          "acceptance_predicate": "Explicit independent exact-source/artifact review",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "DEV_REVIEWED",
+          "gates": [
+            "G1",
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "INDEPENDENT_DEV_SECURITY_REVIEWER",
+            "missing_evidence": "Independent exact-source Q02 assessment and signed-off evidence",
+            "next_action": "Review focused Q02 Draft, real-Core failure cases and actual package manifests; engineering review is not independent approval"
+          }
+        },
+        {
+          "id": "Q02-MERGE-AUTH",
+          "requirement": "Explicit owner approval to merge qualified focused Q02 candidate",
+          "acceptance_predicate": "Owner action linked after candidate qualification",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "MAIN",
+          "gates": [
+            "G7"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "REPOSITORY_OWNER",
+            "missing_evidence": "Explicit scoped Q02 merge authorization",
+            "next_action": "Review concrete Q02 deliverable after technical gates; no automatic merge"
+          }
+        },
+        {
+          "id": "Q02-MAIN-RECHECK-macos-arm64",
+          "requirement": "Exact merged-main native/frozen Q02 qualification and artifact audit",
+          "acceptance_predicate": "Real postmerge evidence required",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "MAIN",
+          "gates": [
+            "G7"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "OWNER_MERGE_THEN_CI_OPERATOR",
+            "missing_evidence": "Owner-authorized merge SHA and actual exact-main Q02 proof",
+            "next_action": "After authorized merge, run and inspect exact-main on required OS; do not recycle PR receipts"
+          }
+        },
+        {
+          "id": "Q02-MAIN-RECHECK-windows-x64",
+          "requirement": "Exact merged-main native/frozen Q02 qualification and artifact audit",
+          "acceptance_predicate": "Real postmerge evidence required",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "MAIN",
+          "gates": [
+            "G7"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "OWNER_MERGE_THEN_CI_OPERATOR",
+            "missing_evidence": "Owner-authorized merge SHA and actual exact-main Q02 proof",
+            "next_action": "After authorized merge, run and inspect exact-main on required OS; do not recycle PR receipts"
+          }
+        },
+        {
+          "id": "Q02-MAIN-RECHECK-linux-x86_64",
+          "requirement": "Exact merged-main native/frozen Q02 qualification and artifact audit",
+          "acceptance_predicate": "Real postmerge evidence required",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#g-continuous-cross-platform-acceptance-matrix-mandatory",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "MAIN",
+          "gates": [
+            "G7"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "OWNER_MERGE_THEN_CI_OPERATOR",
+            "missing_evidence": "Owner-authorized merge SHA and actual exact-main Q02 proof",
+            "next_action": "After authorized merge, run and inspect exact-main on required OS; do not recycle PR receipts"
+          }
+        }
+      ],
       "gates": {
         "G0": {
           "applicable": true,
@@ -3312,18 +6100,22 @@
         },
         "G6": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "not_applicable_reason": null
         },
         "G7": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "not_applicable_reason": null
         }
       },
       "owner_merge_authorization": null,
       "post_merge_main_sha": null,
-      "historical_evidence": []
+      "historical_evidence": [],
+      "engineering_status": "PENDING",
+      "full_acceptance_status": "BLOCKED",
+      "failure_history": [],
+      "engineering_scope": "Q02 authentication/chain/process/credential fail-closed only. Shared HTTP/native binding reused as necessary dependency; Q03 performance/flicker and Q04 miner/attach workflows remain QUEUED, unqualified."
     },
     {
       "id": "Q03",
@@ -3506,7 +6298,7 @@
     },
     {
       "id": "Q06",
-      "requirement": "New 12-word BIP39 Create→Receive→Sign→Broadcast→Reopen→Restore same identity",
+      "requirement": "New 12-word BIP39 Create\u2192Receive\u2192Sign\u2192Broadcast\u2192Reopen\u2192Restore same identity",
       "processing": "QUEUED",
       "status": "PENDING",
       "accepted": false,
@@ -3859,7 +6651,7 @@
     },
     {
       "id": "Q12",
-      "requirement": "Pending→confirmed→conflicted/dropped/reorg; restart with uncertain broadcast/UTXO reservations",
+      "requirement": "Pending\u2192confirmed\u2192conflicted/dropped/reorg; restart with uncertain broadcast/UTXO reservations",
       "processing": "QUEUED",
       "status": "PENDING",
       "accepted": false,
