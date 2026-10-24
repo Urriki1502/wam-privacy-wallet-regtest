@@ -440,9 +440,10 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "FAIL",
+          "status": "STALE",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Original failure corrected and replayed successfully on f68fcc8; additional reproduced root-code closure gap and isolated builder startup change now require exact-head requalification."
         },
         {
           "id": "Q01-NATIVE-GUI-linux-x86_64",
@@ -512,9 +513,10 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "FAIL",
+          "status": "STALE",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Original failure corrected and replayed successfully on f68fcc8; additional reproduced root-code closure gap and isolated builder startup change now require exact-head requalification."
         },
         {
           "id": "Q01-FROZEN-CORE-macos-arm64",
@@ -692,7 +694,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "acceptance_evidence": [],
           "blocker": null
         },
@@ -1126,17 +1128,17 @@
         },
         "G1": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "not_applicable_reason": null
         },
         "G2": {
           "applicable": true,
-          "status": "FAIL",
+          "status": "STALE",
           "not_applicable_reason": null
         },
         "G3": {
           "applicable": true,
-          "status": "FAIL",
+          "status": "STALE",
           "not_applicable_reason": null
         },
         "G4": {
@@ -1146,7 +1148,7 @@
         },
         "G5": {
           "applicable": true,
-          "status": "FAIL",
+          "status": "STALE",
           "not_applicable_reason": null
         },
         "G6": {
@@ -1169,6 +1171,17 @@
           "references": [
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064052265",
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064052246"
+          ]
+        },
+        {
+          "source_sha": "f68fcc8e9d0b12c394da7f84a85082f8d4b734d7",
+          "status": "STALE",
+          "scope": "First four workflows SUCCESS; 17 actual outer artifacts and four inner packages independently verified, 33 WSP source files each against literal Git objects, Core pair pins unchanged. Actual read-only DMG on MacBook passed full closure/codesign/selfcheck/real Core Cocoa and ejected cleanly. Additional root-shadow mandatory negative coverage invalidates affected qualification for the next source revision. No human/independent acceptance inferred.",
+          "references": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064951140",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064951148",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064951189",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40064951157"
           ]
         }
       ],
@@ -1235,6 +1248,13 @@
           "status": "FAIL",
           "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/127",
           "observation": "Actual public disposable Git fixture: original capture accepted replaced Git objects and altered source. Literal --no-replace-objects now enforced; original reproducer retained in Q01 audit package."
+        },
+        {
+          "case_id": "Q01-SHADOW-macos-arm64",
+          "source_sha": "f68fcc8e9d0b12c394da7f84a85082f8d4b734d7",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/127",
+          "observation": "Actual disposable Git fixture: build capture accepted an untracked root startup module and package. Neither fixture executed. Broaden source closure and isolate builder/PyInstaller startup; native/frozen replay required."
         }
       ],
       "selectively_reviewed_dependencies": [

@@ -59,6 +59,25 @@ class Q01BuildSourceTests(unittest.TestCase):
         with self.assertRaises(BuildSourceError):
             verify(self.root, stamp)
 
+    def test_root_startup_module_and_package_shadow_are_refused(self):
+        for relative in ('sitecustomize.py','shadow_package/__init__.py'):
+            with self.subTest(relative=relative):
+                path=self.root/relative
+                path.parent.mkdir(exist_ok=True)
+                path.write_bytes(b'# inert public shadow; never executed\n')
+                try:
+                    with self.assertRaisesRegex(BuildSourceError,'BUILD_SOURCE_UNTRACKED_MODULE'):
+                        capture(self.root)
+                finally:path.unlink()
+
+    def test_declared_output_root_cannot_redirect_writes_through_a_link(self):
+        target=self.root/'public-target';target.mkdir()
+        sentinel=target/'public.txt';sentinel.write_bytes(b'unchanged public data')
+        (self.root/'dist').symlink_to(target,target_is_directory=True)
+        with self.assertRaisesRegex(BuildSourceError,'BUILD_SOURCE_TREE_DENIED'):
+            capture(self.root)
+        self.assertEqual(sentinel.read_bytes(),b'unchanged public data')
+
     def test_git_replacement_cannot_authenticate_modified_source(self):
         pin = self.git('rev-parse', 'HEAD').decode().strip()
         self.source.write_bytes(b'# substituted public source\n')

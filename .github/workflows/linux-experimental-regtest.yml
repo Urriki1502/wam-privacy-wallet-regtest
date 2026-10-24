@@ -243,13 +243,13 @@ jobs:
         if: matrix.frontend == 'headless'
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python scripts/build_linux_wallet.py --core-dir qualified-linux-core/linux-core
+        run: python -I scripts/build_linux_wallet.py --core-dir qualified-linux-core/linux-core
       - name: Freeze and execute FINAL native xcb desktop binary with real Core
         if: matrix.frontend == 'desktop'
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           QT_QPA_PLATFORM: xcb
-        run: xvfb-run -a python scripts/build_linux_wallet.py --core-dir qualified-linux-core/linux-core --desktop
+        run: xvfb-run -a python -I scripts/build_linux_wallet.py --core-dir qualified-linux-core/linux-core --desktop
       - uses: actions/upload-artifact@v4
         with:
           name: WAM-Fusion-REGTEST-RC1-linux-x86_64-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}

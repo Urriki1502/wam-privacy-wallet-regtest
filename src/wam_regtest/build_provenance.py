@@ -16,6 +16,10 @@ import sys
 SCHEMA='wam-build-source/v1'
 TEXT_SUFFIXES={'.py','.sh','.md','.txt','.toml','.yml','.yaml','.json','.h','.cpp','.lock'}
 TEXT_NAMES={'LICENSE','.gitattributes','.gitignore'}
+# Generated package trees are outputs, never source import roots. The immutable
+# WSP checkout is authenticated separately before backend execution and build.
+BUILD_OUTPUTS={'.git','wsp-upstream','build','dist','bundle-input','package-output',
+    'windows-package-output','linux-package-output','linux-upstream'}
 
 
 class BuildSourceError(ValueError):
@@ -119,14 +123,24 @@ def capture(root):
             files[name]={'blob':oid,'sha256':sha256(raw).hexdigest(),'metadata':metadata}
         # PyInstaller discovers importable modules, including ignored .py files.
         # Deny extra code even if git status/assume-unchanged would hide it.
-        for folder in ('src','scripts','assets'):
-            base=root/folder
-            if not base.exists():continue
-            if base.is_symlink():raise BuildSourceError('BUILD_SOURCE_TREE_DENIED')
-            for path in base.rglob('*'):
+        count=0
+        def walk_error(_error):raise BuildSourceError('BUILD_SOURCE_UNVERIFIED')
+        for current,directories,names in os.walk(root,followlinks=False,onerror=walk_error):
+            base=Path(current)
+            if base==root:
+                for name in directories:
+                    if name in BUILD_OUTPUTS and name!='.git':
+                        path=base/name
+                        if path.is_symlink() or getattr(path.lstat(),'st_file_attributes',0)&0x400:
+                            raise BuildSourceError('BUILD_SOURCE_TREE_DENIED')
+                directories[:]=[name for name in directories if name not in BUILD_OUTPUTS]
+            if len(base.relative_to(root).parts)>32:raise BuildSourceError('BUILD_SOURCE_SIZE_DENIED')
+            for name in (*directories,*names):
+                path=base/name;count+=1
+                if count>20000:raise BuildSourceError('BUILD_SOURCE_SIZE_DENIED')
                 if path.is_symlink() or getattr(path.lstat(),'st_file_attributes',0)&0x400:
                     raise BuildSourceError('BUILD_SOURCE_TREE_DENIED')
-                imported=(path.suffix.lower() in ('.py','.pyw','.so','.pyd','.dll')
+                imported=(path.suffix.lower() in ('.py','.pyw','.so','.pyd','.dll','.dylib')
                     or path.suffix.lower()=='.pyc' and '__pycache__' not in path.relative_to(root).parts)
                 if imported and path.relative_to(root).as_posix() not in files:
                     raise BuildSourceError('BUILD_SOURCE_UNTRACKED_MODULE')

@@ -48,7 +48,7 @@ def main():
         icon=stage/'wam-wallet.ico'
         with Image.open(brand_image()) as image:
             image.save(icon,format='ICO',sizes=[(n,n) for n in (16,24,32,48,64,128,256)])
-        subprocess.run([sys.executable,'-m','PyInstaller','--noconfirm','--clean','--onedir','--windowed',
+        subprocess.run([sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--onedir','--windowed',
             '--name','WAM-Privacy-Wallet-REGTEST','--icon',str(icon),'--paths','src',
             '--collect-submodules','wam_regtest','--collect-submodules','wam_sp',
             '--collect-all','coincurve','--hidden-import','_cffi_backend',

@@ -148,7 +148,9 @@ python -I scripts/q01_environment.py --profile gui \
 The declared bootstrap interpreter is CPython **3.12.10 on macOS/Windows** and
 **3.12.15 on Linux**; setup-python's current manifest supplies these native
 architectures (3.12.15 is unavailable there on macOS/Windows). Subsequent build
-and test commands must use that new venv's `bin/python` or `Scripts/python.exe`.
+and test commands must use that new venv's `bin/python` or `Scripts/python.exe`
+with `-I`. Builders and their PyInstaller children use isolated startup before
+source authentication, so an untracked root startup module cannot execute first.
 CI exports its path only after the installer step. `--profile headless` has no
 Qt; Linux desktop uses the separate GUI profile. Wheel versions and hashes live
 in `requirements/q01-*.lock`, install reports record actual download hashes,

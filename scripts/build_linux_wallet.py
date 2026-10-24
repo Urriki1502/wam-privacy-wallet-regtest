@@ -39,7 +39,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='wam-linux-package-') as temporary:
         stage=Path(temporary);wsp=stage/'wsp-source'
         stage_pinned_wsp(Path('wsp-upstream').absolute(),wsp)
-        command=[sys.executable,'-m','PyInstaller','--noconfirm','--clean','--onedir','--noupx',
+        command=[sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--onedir','--noupx',
             '--name',name,'--paths','src','--collect-submodules','wam_regtest',
             '--collect-submodules','wam_sp','--collect-all','coincurve','--hidden-import','_cffi_backend',
             '--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
