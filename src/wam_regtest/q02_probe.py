@@ -142,6 +142,25 @@ class _Node:
     def call(self,*args,timeout=15):
         return _read_cli([str(self.cli),'-datadir='+str(self.directory),*args],timeout=timeout)
     def start(self):
+        if self.proc is not None and self.proc.poll() is None:
+            raise Q02ProbeError('Q02_NODE_ALREADY_RUNNING')
+        if self.cookie and sys.platform=='win32':
+            # Pinned Core writes .cookie.tmp with ofstream then RenameOver.
+            # On the native elevated runner, default-created cookie owner is
+            # not the token user despite an inherited user-only DACL. Create
+            # ONLY the empty staging file in this fresh owned fixture with
+            # the existing explicit native owner descriptor. Core supplies
+            # every secret byte. No repair of an existing cookie/owner node.
+            from . import windows_private_storage as store
+            with store.directory_guard(self.directory/'regtest'):
+                with store.security_attributes() as attributes:
+                    handle=store.create(str(self.directory/'regtest/.cookie.tmp'),
+                        0xc0030000,1,attributes,1,0x80200080,None)
+                if handle in (None,store.INVALID):raise Q02ProbeError('Q02_COOKIE_STAGE_CREATE_DENIED')
+                try:
+                    info=store._metadata(handle);store.verify_security(handle)
+                    if info[3]!=0 or not store.flush(handle):raise Q02ProbeError('Q02_COOKIE_STAGE_CUSTODY_DENIED')
+                finally:store.close(handle)
         if sys.platform=='win32':
             from .windows_core_regtest_smoke import _host_env
             env=_host_env(self.directory)
@@ -263,15 +282,29 @@ def probe(core):
             case('BAD-PASSWORD',lambda:wrong_auth(b'rpcpassword'))
             cookie=c.directory/'regtest/.cookie';original=cookie.read_bytes()
             def cookie_wrong(raw,missing=False,replace=False,bind=False):
+                held=cookie.with_name('q02-held-cookie');moved=False
                 try:
-                    if missing:cookie.unlink()
-                    elif replace:
-                        tmp=cookie.with_name('replacement.cookie');tmp.write_bytes(raw);tmp.chmod(0o600);os.replace(tmp,cookie)
-                    else:cookie.write_bytes(raw)
+                    if missing or replace:
+                        # Retain the actual Core-created file and its native
+                        # owner/ACL identity. A plain newly recreated Windows
+                        # file would reproduce the deliberately refused owner.
+                        os.replace(cookie,held);moved=True
+                    if replace:
+                        tmp=cookie.with_name('replacement.cookie');tmp.write_bytes(raw)
+                        if os.name=='posix':tmp.chmod(0o600)
+                        os.replace(tmp,cookie)
+                    elif not missing:cookie.write_bytes(raw)
                     if bind:identity(c.directory).credentials=CredentialSource(c.directory)
                     _expect(('CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE',),lambda:c.call('getblockcount')) if not bind else _expect(('CORE_RPC_AUTHENTICATION_DENIED',),lambda:c.call('getblockcount'))
                 finally:
-                    cookie.write_bytes(original);cookie.chmod(0o600);c.reauth()
+                    if moved:
+                        cookie.unlink(missing_ok=True);os.replace(held,cookie)
+                    else:cookie.write_bytes(original)
+                    if os.name=='posix':cookie.chmod(0o600)
+                    # Putting the original file back alone cannot revive the
+                    # quarantined scope, even when its file identity matches.
+                    _expect(('CORE_RPC_SCOPE_FAULTED',),lambda:c.call('getblockcount'))
+                    c.reauth()
             case('BAD-COOKIE',lambda:cookie_wrong(b'__cookie__:'+secrets.token_hex(32).encode()+b'\n',bind=True))
             case('MISSING-COOKIE',lambda:cookie_wrong(b'',missing=True))
             case('REPLACED-COOKIE',lambda:cookie_wrong(original,replace=True))

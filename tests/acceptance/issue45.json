@@ -6312,6 +6312,13 @@
           "status": "FAIL",
           "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40150384429",
           "observation": "Redacted diagnostics prove config node boot succeeds but Core-generated cookie custody is refused, then scope remains quarantined. Strict precreated private parent alone did not resolve it. Add owned-fixture read-only native owner/ACL metadata summaries (no SID or cookie values) to identify the exact mismatch; all runtime guards remain unchanged. No qualification claimed."
+        },
+        {
+          "case_id": "Q02-COOKIE-AUTH-windows-x64",
+          "source_sha": "f9f850744208e3dd4fbde673fbddeb1107594335",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40150786617",
+          "observation": "Native metadata confirms private parent owner correct, cookie exactly one current-user FA ACE but cookie owner does not match token user. Guard correctly refuses. Pinned upstream writes .cookie.tmp then renames; prepare only a new empty staging file with existing strict native explicit-owner APIs before the owned fixture starts. No ACL/owner waiver or existing-node repair. Replay required."
         }
       ]
     },

@@ -109,3 +109,23 @@ skipped test or source-only result. Final frozen qualification requires the new
 candidate's native bootloaders, receipts, exact Core/WSP bytes and artifact
 SHA-256. Physical clean-host/UX and genuinely independent security/provenance
 review, owner merge and postmerge gates remain separate and nonpassing.
+
+### Native Windows cookie fixture owner finding
+
+Run 40150786617 on `f9f850744208e3dd4fbde673fbddeb1107594335`
+confirmed that the fresh Core cookie inherited exactly one current-user FA ACE,
+but the file owner did not match the current token user. The owner check correctly
+refused it. The strict private parent alone was insufficient; this is retained
+as FAIL evidence, not a credential/profile PASS.
+
+The pinned upstream `src/rpc/request.cpp` at Bitcoin revision
+`32efe850438ef22e2de39e562af557872a402c31` writes `.cookie.tmp` using `ofstream`
+and renames it over `.cookie`. The acceptance fixture now uses the existing
+native explicit-owner security descriptor to **create a new empty staging file**
+before starting its own Core. Core still generates all random secret bytes.
+The staging constructor refuses an existing file, holds the strict parent, checks
+native file/owner/DACL metadata, flushes and closes before Core starts. Native
+custody verification itself is unchanged. This neither repairs an existing
+owner/external cookie nor weakens owner/ACL requirements. Missing/replacement
+negative tests retain and restore the original actual cookie object, rather than
+recreating it with an unqualified default Windows owner. Replay remains required.
