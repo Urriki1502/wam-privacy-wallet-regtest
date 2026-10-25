@@ -13,6 +13,7 @@ from wam_regtest.wallet_read import format_wam
 from wam_regtest.desktop import qt_application,shutdown_qt
 from wam_regtest.operational_gui import OperationalWalletWindow
 from wam_regtest.wallet_probe import _approve_dialog,_capture_fusion_views
+from wam_regtest.rpc_scope import register,unregister
 from wam_regtest import custody
 
 RESULTS=[];OUT=None
@@ -57,6 +58,7 @@ def isolated_chain(core,source):
   prefix=[str(cli),f'-datadir={data}'];proc=None
   try:
    with (data/'core-output.log').open('xb') as log:proc=subprocess.Popen([str(node),f'-datadir={data}','-daemon=0'],cwd=data,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT)
+   register(proc,core,data,authorized_disposable_mutation=True)
    end=time.monotonic()+90
    while True:
     assert proc.poll() is None,'OWNED_CORE_EXITED'
@@ -73,9 +75,12 @@ def isolated_chain(core,source):
    assert scan['synthetic_rpc'] is False
    yield data,mining,receipt
   finally:
-   if proc is not None and proc.poll() is None:
-    try:_read_cli(prefix+['stop'],timeout=10);proc.wait(timeout=20)
-    except Exception:proc.terminate();proc.wait(timeout=10)
+   try:
+    if proc is not None and proc.poll() is None:
+     try:_read_cli(prefix+['stop'],timeout=10);proc.wait(timeout=20)
+     except Exception:proc.terminate();proc.wait(timeout=10)
+   finally:
+    unregister(data)
 
 def audit(core,source):
  from wam_sp.keystore import Keyring

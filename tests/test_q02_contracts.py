@@ -145,5 +145,40 @@ class Q02Contracts(unittest.TestCase):
                     with self.assertRaisesRegex(CoreSmokeError,'CORE_RPC_SCOPE_FAULTED'):_read_cli(command)
                 invoke.assert_not_called()
 
+    def test_mac_socket_probe_translate_subprocess_and_decode_failures(self):
+        import subprocess
+        from unittest.mock import Mock,patch
+        from wam_regtest.core_process import _mac_socket,CoreBindingError
+        good_stat=Mock(st_mode=0o100644,st_uid=0)
+        with patch('wam_regtest.core_process.sys.platform','darwin'):
+            with patch('wam_regtest.core_process.Path.lstat',return_value=good_stat):
+                with patch('wam_regtest.core_process.subprocess.run',side_effect=subprocess.TimeoutExpired('lsof',2)):
+                    with self.assertRaisesRegex(CoreBindingError,'RPC_SOCKET_PROOF_DENIED'):
+                        _mac_socket(1,12345,54321)
+                bad_stdout=Mock(stdout=b'\xff'*8,returncode=0)
+                with patch('wam_regtest.core_process.subprocess.run',return_value=bad_stdout):
+                    with self.assertRaisesRegex(CoreBindingError,'RPC_SOCKET_PROOF_DENIED'):
+                        _mac_socket(1,12345,54321)
+
+    def test_headless_core_reauth_requires_explicit_typed_approval(self):
+        from unittest.mock import patch
+        from wam_regtest import linux_headless
+        class Session:
+            def __init__(self,flag):self._core_reauthentication_required=flag
+        self.assertTrue(linux_headless._core_reauth_prompt(Session(False)))
+        need=Session(True)
+        with patch('sys.stdin.isatty',return_value=True),patch('sys.stderr.isatty',return_value=True):
+            with patch('builtins.input',return_value='REAUTH'):
+                self.assertTrue(linux_headless._core_reauth_prompt(need))
+            with patch('builtins.input',return_value='no'):
+                with self.assertRaises(WalletSessionError):linux_headless._core_reauth_prompt(need)
+        with patch('sys.stdin.isatty',return_value=False):
+            with self.assertRaises(WalletSessionError):linux_headless._core_reauth_prompt(need)
+
+    def test_owner_acceptance_harness_registers_owned_scope(self):
+        text=(Path(__file__).resolve().parents[1]/'scripts'/'owner_acceptance.py').read_text()
+        self.assertIn('register(proc,core,data,authorized_disposable_mutation=True)',text)
+        self.assertIn('unregister(data)',text)
+
 
 if __name__=='__main__':unittest.main()

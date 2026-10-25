@@ -94,11 +94,18 @@ def _lsof_match(raw,pid,server_port,client_port):
 def _mac_socket(pid,server_port,client_port):
     tool=Path('/usr/sbin/lsof');s=tool.lstat()
     if not stat.S_ISREG(s.st_mode) or s.st_uid!=0 or s.st_mode&0o022:raise CoreBindingError('RPC_SYSTEM_SOCKET_PROBE_DENIED')
-    result=subprocess.run([str(tool),'-nP','-a','-p',str(pid),f'-iTCP:{server_port}','-sTCP:ESTABLISHED','-FpfnT'],
-        stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=2,
-        env={'PATH':'/usr/bin:/bin:/usr/sbin:/sbin','LC_ALL':'C'},check=False)
+    try:
+        result=subprocess.run([str(tool),'-nP','-a','-p',str(pid),f'-iTCP:{server_port}','-sTCP:ESTABLISHED','-FpfnT'],
+            stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=2,
+            env={'PATH':'/usr/bin:/bin:/usr/sbin:/sbin','LC_ALL':'C'},check=False)
+    except (OSError,subprocess.SubprocessError):
+        raise CoreBindingError('RPC_SOCKET_PROOF_DENIED') from None
     if len(result.stdout)>65536 or result.returncode not in (0,1):raise CoreBindingError('RPC_SOCKET_PROOF_DENIED')
-    return _lsof_match(result.stdout.decode('ascii'),pid,server_port,client_port)
+    try:
+        raw=result.stdout.decode('ascii')
+    except UnicodeDecodeError:
+        raise CoreBindingError('RPC_SOCKET_PROOF_DENIED') from None
+    return _lsof_match(raw,pid,server_port,client_port)
 
 
 def _windows_socket(pid,server_port,client_port,directory):
