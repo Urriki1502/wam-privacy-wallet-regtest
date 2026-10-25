@@ -9,8 +9,7 @@
 
 | Mục | Giá trị |
 |---|---|
-| Source SHA đang review (HEAD hiện tại) | `43d94c173c5728e7f96579820e4985af5c6bc97e` |
-| Source SHA sau bản fix F1 (chưa push) | *sẽ được tính sau khi commit* |
+| Source SHA hiện tại (HEAD sau fix F1 + F2 + CI exact-head) | `277fb8c8bbe0947f82a90b94123c8b05a6c9900a` |
 | Source SHA của 3 bản fix trước đó | `913da26e0d36017b29bbc4841a495d4b1b6a7f27` |
 | Source SHA sau đối chiếu ledger/docs lần 1 | `f015fd9c41d4efcdddc2bce61d383e85a72d6398` |
 | Source SHA sau push và báo cáo lần 1 | `ba0745d835f72054f5a7d1cddd489820eb610427` |
@@ -51,7 +50,7 @@
 ### Báo cáo tiếng Việt lần 1 (`ba0745d`)
 - `docs/Q02_ENGINEERING_REPORT_VI_20261025.md`
 
-### Xử lý findings F1 + F2 (commit mới, chưa push)
+### Xử lý findings F1 + F2 (code fix đã push; ledger/doc đang chờ push cuối cùng)
 - `src/wam_regtest/custody.py` — thêm `private_temporary_directory()`
 - `src/wam_regtest/core.py` — dùng `private_temporary_directory()` cho datadir disposable
 - `src/wam_regtest/q02_probe.py` — dùng `private_temporary_directory()` cho Q02 owned nodes
@@ -81,28 +80,28 @@ OK (skipped=33)
 - GUI real Core E2E PASS.
 - Receipt local: `/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json`
 
-### Exact-head CI trước fix F1 (nguồn `f669152f`, runtime giống `43d94c1`)
-Tất cả các run triggered tại `f669152f` đều green và được dùng để requalify F2:
-- macOS ARM64 native real Core E2E: run **40182785805** job 121138603094
-- macOS ARM64 frozen .app/.dmg E2E: run **40182785805** job 121139729216 artifact **12595735393**
-- Windows x64 real Core smoke: run **40182785817**
-- Windows x64 credential/vault/Q02 auth: run **40182785868** job 121137187826
-- Windows x64 WSP receive + Qt read: runs **40182785794**, **40182785801**
-- Linux x86_64 experimental Core REGTEST: run **40182785844**
-- WSP-1 canonical 28 BIP352 vectors (macOS ARM64): run **40182785807**
+### Exact-head CI sau fix F1 (nguồn `277fb8c8`)
+Tất cả các run triggered tại `277fb8c8` đều green:
+- macOS ARM64 native real Core E2E: run **40188235385** job 121153481853
+- macOS ARM64 frozen .app/.dmg E2E: run **40188235385** job 121154716709 artifact **12597572612**
+- Windows x64 credential/vault/Q02 auth: run **40188235465** job 121153482060 artifact **12597099709**
+- Windows x64 WSP receive + Qt read: runs **40188235437**, **40188235458**
+- Windows x64 real Core smoke: run **40188235495**
+- Linux x86_64 experimental Core REGTEST: run **40188235392**
+- WSP-1 canonical 28 BIP352 vectors (macOS ARM64): run **40188235360**
 
 ### F1 — macOS frozen E2E failure (run 40184340811 tại `43d94c1`)
 - Native job PASS; frozen .app/.dmg E2E FAIL.
 - Lỗi: `CORE_LOCAL_NETWORK_POLICY_DENIED` → `CORE_RPC_SCOPE_FAULTED` → `Q02_NODE_START_TIMEOUT`.
 - Nguyên nhân gốc: thư mục temp hệ thống trên runner macOS có ACL kế thừa (file-inherit); file `wam.conf` mới tạo bị kế thừa ACL và bị `private_bytes` từ chối. Đã tái hiện cục bộ trên macOS.
 - Patch: `wam_regtest.custody.private_temporary_directory()` tạo private root dưới cwd, validate không có ACL, sau đó mới tạo temp con. Không làm suy yếu RPC auth/process ownership/network policy/fail-closed.
-- Cần chạy lại CI exact-head tại commit mới sau khi push để xác nhận G3.
+- Exact-head CI tại `277fb8c8` run 40188235385 đã PASS, xác nhận F1 được giải quyết và G3 PASS.
 
 ### F2 — acceptance evidence provenance mismatch
 - Audit 115 entry có `workflow_run_id`: 77 entry khai báo sai `source_sha`/`checkout_sha` so với head SHA thực tế của workflow.
 - Các run bị mismatch: `40151555636`, `40151555639`, `40151555640`, `40151555642`, `40151555712`.
-- Đã đánh dấu 77 entry STALE, giữ nguyên lịch sử CI, và requalify trên exact-head `f669152f`.
-- Sau reconcile: 114 entry có `workflow_run_id`, tất cả đều khớp source SHA; 0 mismatch.
+- Đã đánh dấu 77 entry STALE, giữ nguyên lịch sử CI, requalify trên exact-head `f669152f`, sau đó refresh lên exact-head `277fb8c8` sau khi patch F1 được merge.
+- Sau refresh: 115 entry có `workflow_run_id`, tất cả đều khớp source SHA; 0 mismatch.
 
 ### Ledger validation sau reconcile F2
 ```bash
@@ -122,9 +121,9 @@ Kết quả:
 | G0 | Xác định Q02 là Q active duy nhất | PASS |
 | G1 | Source review & regression contracts | PASS |
 | G2 | Native Core E2E trên ít nhất một nền tảng | PASS |
-| G3 | Frozen binary qualification (exact-source bytes) | **PENDING** — cần CI exact-head tại commit sau patch F1 |
+| G3 | Frozen binary qualification (exact-source bytes) | **PASS** |
 | G4 | Negative injection / fail-closed | PASS |
-| G5 | Ledger reconcile & validator PASS | **PENDING** — cần refresh bằng chứng exact-head tại commit sau patch F1 |
+| G5 | Ledger reconcile & validator PASS | **PASS** |
 | G6 | Independent review / physical clean-host UX | **BLOCKED** |
 | G7 | Owner merge authorization | **BLOCKED** |
 
@@ -132,24 +131,23 @@ Kết quả:
 
 | Nền tảng | Loại | Trạng thái | Bằng chứng |
 |---|---|---|---|
-| macOS ARM64 | Native source smoke | **PASS** | Exact-head CI run 40182785805 job 121138603094 + local receipt |
-| macOS ARM64 | Frozen binary (.app / .dmg) | **PENDING** | Run 40184340811 tại `43d94c1` FAIL do ACL kế thừa từ system temp; patch F1 đã sẵn sàng, cần rebuild exact-head sau push |
-| Windows x64 | Native source / Q02 auth | **PASS** | Exact-head CI run 40182785868 job 121137187826 |
-| Windows x64 | Frozen binary | **PASS** | Exact-head CI run 40182785868 artifact 12595296816; payload zip `c30c38eadf297047c2b7eca03faa137744c98cc184e7b2e0054e47bca4c53265` |
-| Linux x86_64 | Native source / Q02 auth | **PASS** | Exact-head CI run 40182785844 job 121137286097 |
-| Linux x86_64 | Desktop frozen | **PASS** | Exact-head CI run 40182785844 job 121137778108 artifact 12595122150; payload tar.gz `3ed2ff88d3893f6fd462f4e9c2a6d1022ce451973e589cc0a29fe6399eaa6b42` |
-| Linux x86_64 | Headless frozen | **PASS** | Exact-head CI run 40182785844 job 121137778146 artifact 12595027351; payload tar.gz `9f8bc7e3e2e4520620cb99df28d7181e4687e37089ded5d826d1707cfe532f4a` |
+| macOS ARM64 | Native source smoke | **PASS** | Exact-head CI run 40188235385 job 121153481853 + local receipt |
+| macOS ARM64 | Frozen binary (.app / .dmg) | **PASS** | Exact-head CI run 40188235385 job 121154716709 artifact 12597572612; app.zip `2bff141825ed859f725e83b5181b9cb1fdd1dd93f9c086014d8b03eef8e5c503`, dmg `165e1bb27228fd875713be020558266e620b3245862175d9b830a6af3432ce99` |
+| Windows x64 | Native source / Q02 auth | **PASS** | Exact-head CI run 40188235465 job 121153482060 |
+| Windows x64 | Frozen binary | **PASS** | Exact-head CI run 40188235465 artifact 12597099709; payload zip `e39f4ad9201a8c51dd6f7cabfa3103983d13b5ef7a2ff83f0a214e5285356d52` |
+| Linux x86_64 | Native source / Q02 auth | **PASS** | Exact-head CI run 40188235392 job 121153589150 |
+| Linux x86_64 | Desktop frozen | **PASS** | Exact-head CI run 40188235392 job 121153982212 artifact 12596747010; payload tar.gz `7a331dfc1f6c941385b13c27fd7e1c996be08faba804cf2c4b1ae049a0e723e6` |
+| Linux x86_64 | Headless frozen | **PASS** | Exact-head CI run 40188235392 job 121153982178 artifact 12597142606; payload tar.gz `5ca9ab49403473ef863e90676c6df69d38e69f4ada2513330e1743caca45fe97` |
 
 ## 7. Các blocker còn lại
 
-1. **G3/G5 — Cần CI exact-head tại commit sau patch F1:** patch đã sẵn sàng cục bộ, nhưng chưa push. Sau khi chủ sở hữu phê duyệt push, cần chạy lại CI macOS frozen (và các nền tảng khác để giữ exact-head consistency), sau đó cập nhật ledger với artifact SHA-256 mới và chuyển G3/G5 sang PASS.
-2. **G6 — Independent review / physical operator:** thuộc về chủ sở hữu hoặc reviewer bên ngoài; không thể tự hoàn thành bởi agent kỹ thuật.
-3. **G7 — Owner merge authorization:** chủ sở hữu PR phải phê duyệt merge sau khi G6 xong.
+1. **G6 — Independent review / physical operator:** thuộc về chủ sở hữu hoặc reviewer bên ngoài; không thể tự hoàn thành bởi agent kỹ thuật.
+2. **G7 — Owner merge authorization:** chủ sở hữu PR phải phê duyệt merge sau khi G6 xong.
 
 ## 8. Khuyến nghị và yêu cầu chủ sở hữu
 
-- **Phê duyệt push** commit mới chứa patch F1 + reconcile F2 + cập nhật docs lên nhánh `acceptance/issue45-q02-core-auth-20261024` của PR #129 (normal non-force push).
-- Sau khi push, chờ CI chạy xong exact-head build cho macOS frozen, Windows frozen, Linux frozen; cung cấp artifact ID/payload SHA-256 để cập nhật ledger chuyển G3/G5 từ `PENDING` sang `PASS`.
+- G0–G5 và G3 đã PASS. Không cần thêm thay đổi kỹ thuật nào từ agent.
+- Chủ sở hữu cần sắp xếp independent review / physical clean-host UX (G6) và phê duyệt merge (G7).
 - Giữ nguyên lease kỹ thuật hiện tại cho đến khi Q02 đạt full acceptance hoặc chủ sở hữu quyết định chuyển giao.
 - Không kích hoạt Q03, không merge tự động, không sử dụng mainnet/real funds.
 
