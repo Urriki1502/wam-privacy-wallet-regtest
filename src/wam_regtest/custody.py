@@ -35,20 +35,24 @@ def create_directory(directory):
 def private_temporary_directory(prefix: str):
     """Return a tempfile.TemporaryDirectory isolated from system-temp ACLs.
 
-    System temporary directories on some CI hosts carry file-inherit ACLs that
-    propagate to freshly created owner-only files and cause custody rejection.
-    Create a validated private root under the current working directory instead
-    so inherited ACLs fail closed at the validation boundary.
+    System temporary directories on some CI hosts (notably macOS GitHub Actions
+    runners) carry file-inherit ACLs that propagate to freshly created owner-only
+    files and cause custody rejection. Create a private root under the current
+    working directory and validate it is free of inherited ACLs; on Windows the
+    actual datadir is created later with an explicit native security descriptor,
+    so only the existence of the parent root is required here.
     """
     root = Path.cwd() / '.wam-regtest-temp'
     try:
         root.mkdir(mode=0o700)
     except FileExistsError:
         pass
-    # Fail closed if the cwd or any inherited ACL is not qualified.
+    # Validate the root on POSIX so inherited ACLs fail closed. On Windows the
+    # explicit create_private_directory used for the child datadir ignores root
+    # ACL inheritance; validating the root here would reject the default DACL.
     if sys.platform == 'darwin':
         encrypted_storage.validate_directory(root)
-    else:
+    elif sys.platform == 'linux':
         storage().validate_directory(root)
     return tempfile.TemporaryDirectory(prefix=prefix, dir=root)
 
