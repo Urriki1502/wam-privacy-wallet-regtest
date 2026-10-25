@@ -53,6 +53,15 @@ def identity(directory):
     with _lock:return _contexts.get(str(directory.resolve(strict=True)))
 
 
+def quarantine(directory):
+    """A failed pre-transport profile check revokes an existing owned grant."""
+    try:key=str(directory.resolve(strict=True))
+    except (OSError,ValueError):return
+    with _lock:context=_contexts.get(key)
+    if context is not None:
+        with context.lock:context.faulted=True
+
+
 def reauthenticate_owned(directory,*,authorized=False):
     """Explicit fresh attestation of the SAME owned process. Never unlocks a wallet."""
     if authorized is not True:raise CliRpcError('CORE_RPC_REAUTHENTICATION_REQUIRED')

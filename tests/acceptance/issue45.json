@@ -6319,6 +6319,13 @@
           "status": "FAIL",
           "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40150786617",
           "observation": "Native metadata confirms private parent owner correct, cookie exactly one current-user FA ACE but cookie owner does not match token user. Guard correctly refuses. Pinned upstream writes .cookie.tmp then renames; prepare only a new empty staging file with existing strict native explicit-owner APIs before the owned fixture starts. No ACL/owner waiver or existing-node repair. Replay required."
+        },
+        {
+          "case_id": "Q02-AUTH-LOSS-windows-x64",
+          "source_sha": "94eafe7179057a9ae434d721c7f3530cebf858ee",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151232882",
+          "observation": "Native explicit-owner staging passed genuine config/cookie auth and cookie-negative/restart cases, then AUTH-LOSS failed. Fixture recreated config with an unqualified default owner. Preserve the actual file by held rename; also latch the owned scope on pre-transport network/profile failure so restoring even the identical original file cannot silently revive authentication. Source contract plus genuine replay required."
         }
       ]
     },

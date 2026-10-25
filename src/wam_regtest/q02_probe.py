@@ -317,14 +317,16 @@ def probe(core):
             # Refresh the saved bytes after the genuine cookie-generating restart.
             original=cookie.read_bytes()
             def config_loss():
-                saved=a.config.read_bytes()
+                held=a.config.with_name('q02-held.conf')
+                os.replace(a.config,held)
                 try:
-                    a.config.unlink()
                     _expect(('CORE_LOCAL_NETWORK_POLICY_DENIED',),lambda:a.call('getblockcount'))
                 finally:
-                    a.config.write_bytes(saved);a.config.chmod(0o600)
-                    _expect(('CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE',),lambda:a.call('getblockcount'))
-                    a.reauth()
+                    # Preserve the original protected file, not a new file
+                    # with the platform's unqualified default owner.
+                    os.replace(held,a.config)
+                _expect(('CORE_RPC_SCOPE_FAULTED',),lambda:a.call('getblockcount'))
+                a.reauth()
             case('AUTH-LOSS',config_loss)
             case('WRONG-CHAIN',lambda:fault_attest('getblockchaininfo',lambda raw,v:json.dumps({**v,'chain':'main'}).encode(),'WSP_LIVE_CHAIN_DENIED'),fault=True)
             case('WRONG-GENESIS',lambda:fault_attest('getblockhash',lambda raw,v:b'0'*64,'WSP_LIVE_GENESIS_DENIED'),fault=True)

@@ -79,7 +79,10 @@ def _read_cli(cmd: list[str], timeout: int = 15) -> object:
             raise CoreSmokeError('CORE_LOCAL_RPC_COMMAND_DENIED')
         local_rpc_port(directory) # Deny unsafe/remote profiles before process or RPC.
         return route(Path(cmd[0]),directory,cmd[2:],timeout=timeout)
-    except NetworkPolicyError:raise CoreSmokeError('CORE_LOCAL_NETWORK_POLICY_DENIED') from None
+    except NetworkPolicyError:
+        from .rpc_scope import quarantine
+        quarantine(directory)
+        raise CoreSmokeError('CORE_LOCAL_NETWORK_POLICY_DENIED') from None
     except CliRpcError as error:raise CoreSmokeError(error.args[0]) from None
     except CoreSmokeError:raise
     except (OSError,ValueError):raise CoreSmokeError('CORE_LOCAL_RPC_COMMAND_DENIED') from None

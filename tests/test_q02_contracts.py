@@ -128,5 +128,22 @@ class Q02Contracts(unittest.TestCase):
                     _read_cli([binary,'-datadir='+directory,'getblockcount'])
             profile.assert_not_called();route.assert_not_called()
 
+    def test_profile_failure_revokes_scope_before_transport_and_file_restore_cannot_revive_it(self):
+        import threading
+        from wam_regtest.core import _read_cli
+        from wam_regtest.network_policy import NetworkPolicyError
+        from wam_regtest import rpc_scope
+        with tempfile.TemporaryDirectory() as temp:
+            directory=Path(temp).resolve()
+            context=SimpleNamespace(lock=threading.RLock(),faulted=False)
+            command=[str(Path('source-cli').absolute()),'-datadir='+str(directory),'getblockcount']
+            with patch.dict(rpc_scope._contexts,{str(directory):context}),patch('wam_regtest.cli_rpc.execute') as invoke:
+                with patch('wam_regtest.network_policy.local_rpc_port',side_effect=NetworkPolicyError('LOCAL_RPC_CONFIG_DENIED')):
+                    with self.assertRaisesRegex(CoreSmokeError,'CORE_LOCAL_NETWORK_POLICY_DENIED'):_read_cli(command)
+                self.assertTrue(context.faulted)
+                with patch('wam_regtest.network_policy.local_rpc_port',return_value=12345):
+                    with self.assertRaisesRegex(CoreSmokeError,'CORE_RPC_SCOPE_FAULTED'):_read_cli(command)
+                invoke.assert_not_called()
+
 
 if __name__=='__main__':unittest.main()
