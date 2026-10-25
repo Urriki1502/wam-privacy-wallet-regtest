@@ -6298,6 +6298,13 @@
           "status": "FAIL",
           "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40100908165",
           "observation": "Native Cocoa reached genuine send, confirmation and reorg, then second Prepare timed out at the lost-broadcast regression. Queued automation can race real Sync between idle check and button dispatch. Wait at dispatch and force the actual Core-worker overlap to qualify the repair; never disable timers or force-enable protected controls. Replay required."
+        },
+        {
+          "case_id": "Q02-CONFIG-AUTH-windows-x64",
+          "source_sha": "397bcced83a6287d8f95ea9cc5b9e16241b5ea61",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40101445954",
+          "observation": "Genuine Windows operational gate timed out while creating config/cookie Q02 fixture nodes, before scenario enumeration. Existing config-auth 101-block/BIP352/vault gates passed. Failing mode/cause not yet observed; add fixed-category boot diagnostics and create only the fresh owned cookie parent with existing strict native owner-only custody. No timeout increase or gate waiver; replay required."
         }
       ]
     },

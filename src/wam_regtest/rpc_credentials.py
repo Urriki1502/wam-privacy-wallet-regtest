@@ -20,25 +20,10 @@ def private_bytes(directory, name, limit, *, core_cookie=False):
     if name not in ('wam.conf','.cookie') or core_cookie != (name=='.cookie'):
         raise CredentialError('RPC_CREDENTIAL_PATH_DENIED')
     if sys.platform=='win32':
-        from . import windows_private_storage as s
-        import ctypes as c
-        # Cookie directory was created by Core beneath a protected datadir.
-        root=directory.parent if core_cookie else directory
-        with s.directory_guard(root),s.directory_guard(directory,private=not core_cookie) as dfd:
-            if core_cookie:s.verify_security(dfd,protected=False)
-            h=s.create(str(directory/name),0x80020080,1,None,3,0x200080,None)
-            if h in (None,s.INVALID):raise CredentialError('RPC_CREDENTIAL_MISSING_OR_UNSAFE')
-            try:
-                before=s._metadata(h);s.verify_security(h,protected=not core_cookie)
-                if not 1<=before[3]<=limit:raise CredentialError('RPC_CREDENTIAL_SIZE_DENIED')
-                buf=c.create_string_buffer(limit+1);count=s.w.DWORD()
-                if not s.readfile(h,buf,limit+1,c.byref(count),None):
-                    raise CredentialError('RPC_CREDENTIAL_READ_DENIED')
-                if before!=s._metadata(h) or count.value!=before[3]:
-                    raise CredentialError('RPC_CREDENTIAL_CHANGED')
-                s.verify_security(h,protected=not core_cookie)
-                return buf.raw[:count.value],before
-            finally:s.close(h)
+        from .windows_private_storage import WindowsCustodyError
+        try:return _windows_private_bytes(directory,name,limit,core_cookie=core_cookie)
+        except WindowsCustodyError:
+            raise CredentialError('RPC_CREDENTIAL_CUSTODY_DENIED') from None
     if sys.platform=='darwin':
         from .private_directory import open_macos_private_directory as open_dir,_require_absent_acl as no_acl
     elif sys.platform=='linux':
@@ -66,6 +51,28 @@ def private_bytes(directory, name, limit, *, core_cookie=False):
     finally:
         if fd is not None:os.close(fd)
         if dfd is not None:os.close(dfd)
+
+
+def _windows_private_bytes(directory,name,limit,*,core_cookie):
+    from . import windows_private_storage as s
+    import ctypes as c
+    # Cookie directory was created by Core beneath a protected datadir.
+    root=directory.parent if core_cookie else directory
+    with s.directory_guard(root),s.directory_guard(directory,private=not core_cookie) as dfd:
+        if core_cookie:s.verify_security(dfd,protected=False)
+        h=s.create(str(directory/name),0x80020080,1,None,3,0x200080,None)
+        if h in (None,s.INVALID):raise CredentialError('RPC_CREDENTIAL_MISSING_OR_UNSAFE')
+        try:
+            before=s._metadata(h);s.verify_security(h,protected=not core_cookie)
+            if not 1<=before[3]<=limit:raise CredentialError('RPC_CREDENTIAL_SIZE_DENIED')
+            buf=c.create_string_buffer(limit+1);count=s.w.DWORD()
+            if not s.readfile(h,buf,limit+1,c.byref(count),None):
+                raise CredentialError('RPC_CREDENTIAL_READ_DENIED')
+            if before!=s._metadata(h) or count.value!=before[3]:
+                raise CredentialError('RPC_CREDENTIAL_CHANGED')
+            s.verify_security(h,protected=not core_cookie)
+            return buf.raw[:count.value],before
+        finally:s.close(h)
 
 
 def parse_profile(raw,mode):

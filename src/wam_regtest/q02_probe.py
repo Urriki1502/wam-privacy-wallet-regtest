@@ -86,6 +86,10 @@ class _Node:
         _write_private_config(self.directory,self.port,peer)
         self.config=self.directory/'wam.conf'
         if cookie:
+            # Fresh owned environment only. Use the existing strict native
+            # owner/ACL constructor for the Core cookie parent; never repair
+            # or relax custody on an existing external/owner directory.
+            create_directory(self.directory/'regtest')
             raw=b'\n'.join(l for l in self.config.read_bytes().splitlines()
                 if not l.startswith((b'rpcuser=',b'rpcpassword=')))+b'\n'
             self.config.write_bytes(raw)
@@ -103,13 +107,30 @@ class _Node:
                 stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,
                 creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0) if sys.platform=='win32' else 0)
         register(self.proc,self.core,self.directory,authorized_disposable_mutation=True)
-        deadline=time.monotonic()+30
+        deadline=time.monotonic()+30;refusals=set()
+        print('Q02_OWNED_BOOT_MODE='+('cookie' if self.cookie else 'config'),flush=True)
         while time.monotonic()<deadline:
             if self.proc.poll() is not None:raise Q02ProbeError('Q02_OWNED_NODE_EARLY_EXIT')
             try:
                 assert self.call('getblockcount')==0
                 return self
-            except CoreSmokeError:time.sleep(.1)
+            except CoreSmokeError as error:
+                code=error.args[0] if len(error.args)==1 else None
+                allowed=('CORE_RPC_UNAVAILABLE','CORE_RPC_WARMUP','CORE_RPC_SCOPE_FAULTED',
+                    'CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE','CORE_RPC_PROCESS_IDENTITY_DENIED',
+                    'CORE_RPC_AUTHENTICATION_DENIED','CORE_LOCAL_NETWORK_POLICY_DENIED',
+                    'CORE_LOCAL_RPC_COMMAND_DENIED','CORE_RPC_DENIED')
+                if code in allowed and code not in refusals:
+                    refusals.add(code);print('Q02_BOOT_FIXED_REFUSAL='+code,flush=True)
+                time.sleep(.1)
+        # Diagnose only credential metadata on this owned fixture; never print
+        # cookie/config contents, SID, datadir, process arguments or node logs.
+        try:CredentialSource(self.directory).attest()
+        except Exception as error:
+            code=error.args[0] if len(error.args)==1 else None
+            if code in ('RPC_CREDENTIAL_CUSTODY_DENIED','RPC_CREDENTIAL_MISSING_OR_UNSAFE',
+                        'RPC_CREDENTIAL_SIZE_DENIED','RPC_COOKIE_FORMAT_DENIED','RPC_CONFIG_PROFILE_DENIED'):
+                print('Q02_BOOT_CREDENTIAL_REFUSAL='+code,flush=True)
         raise Q02ProbeError('Q02_NODE_START_TIMEOUT')
     def reader(self):
         client=LiveCoreReadOnlyCli(self.cli,self.directory);client.attest();return client
