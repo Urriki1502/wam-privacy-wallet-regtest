@@ -1,6 +1,8 @@
 """Native custody; Linux requires explicit Core trust and a root witness."""
 import os
 import sys
+import tempfile
+from pathlib import Path
 from . import encrypted_storage
 
 
@@ -28,6 +30,27 @@ def create_directory(directory):
         encrypted_storage.validate_directory(directory)
     else:
         raise ValueError('VAULT_NATIVE_PLATFORM_REQUIRED')
+
+
+def private_temporary_directory(prefix: str):
+    """Return a tempfile.TemporaryDirectory isolated from system-temp ACLs.
+
+    System temporary directories on some CI hosts carry file-inherit ACLs that
+    propagate to freshly created owner-only files and cause custody rejection.
+    Create a validated private root under the current working directory instead
+    so inherited ACLs fail closed at the validation boundary.
+    """
+    root = Path.cwd() / '.wam-regtest-temp'
+    try:
+        root.mkdir(mode=0o700)
+    except FileExistsError:
+        pass
+    # Fail closed if the cwd or any inherited ACL is not qualified.
+    if sys.platform == 'darwin':
+        encrypted_storage.validate_directory(root)
+    else:
+        storage().validate_directory(root)
+    return tempfile.TemporaryDirectory(prefix=prefix, dir=root)
 
 
 def envelope_profile():

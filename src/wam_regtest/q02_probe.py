@@ -60,6 +60,7 @@ from .core import _read_cli,_port,_write_private_config,verified_core_paths,Core
 from .cli_rpc import CliRpcError
 from .rpc_scope import register,unregister,reauthenticate_owned,identity
 from .wsp_live import LiveCoreReadOnlyCli,RealWspScanError,REGTEST_GENESIS
+from .custody import create_directory, private_temporary_directory
 
 
 class Q02ProbeError(ValueError):pass
@@ -121,9 +122,8 @@ def _windows_cookie_metadata(directory):
 class _Node:
     def __init__(self,core,*,cookie=False):
         self.core=core;self.cookie=cookie;self.proc=None
-        self.temp=tempfile.TemporaryDirectory(prefix='wam-q02-owned-')
+        self.temp=private_temporary_directory(prefix='wam-q02-owned-')
         self.root=Path(self.temp.name).resolve(strict=True);self.directory=self.root/'chain'
-        from .custody import create_directory
         create_directory(self.directory)
         self.node,self.cli,self.receipt=verified_core_paths(core)
         self.port=_port();peer=_port()
@@ -416,9 +416,8 @@ def probe(core):
             def replacement():
                 # Preserve the original signed bytes. Tamper only an independent
                 # disposable copy; Linux's explicit-directory trust also denies.
-                with tempfile.TemporaryDirectory(prefix='wam-q02-copy-') as tmp:
+                with private_temporary_directory(prefix='wam-q02-copy-') as tmp:
                     copied=Path(tmp).resolve()/'core'
-                    from .custody import create_directory
                     create_directory(copied)
                     if sys.platform=='win32':
                         from .windows_core_transport import write_new

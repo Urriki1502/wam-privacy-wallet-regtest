@@ -3426,24 +3426,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-CONFIG-AUTH-linux-x86_64",
@@ -3466,24 +3467,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-COOKIE-AUTH-macos-arm64",
@@ -3547,24 +3549,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-COOKIE-AUTH-linux-x86_64",
@@ -3587,24 +3590,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-CHAIN-GENESIS-macos-arm64",
@@ -3668,24 +3672,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-CHAIN-GENESIS-linux-x86_64",
@@ -3708,24 +3713,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-RPC-VERSION-macos-arm64",
@@ -3790,25 +3796,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-RPC-VERSION-linux-x86_64",
@@ -3831,25 +3838,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BAD-USER-macos-arm64",
@@ -3913,24 +3921,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BAD-USER-linux-x86_64",
@@ -3953,24 +3962,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BAD-PASSWORD-macos-arm64",
@@ -4034,24 +4044,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BAD-PASSWORD-linux-x86_64",
@@ -4074,24 +4085,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BAD-COOKIE-macos-arm64",
@@ -4155,24 +4167,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BAD-COOKIE-linux-x86_64",
@@ -4195,24 +4208,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-MISSING-COOKIE-macos-arm64",
@@ -4276,24 +4290,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-MISSING-COOKIE-linux-x86_64",
@@ -4316,24 +4331,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-REPLACED-COOKIE-macos-arm64",
@@ -4397,24 +4413,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-REPLACED-COOKIE-linux-x86_64",
@@ -4437,24 +4454,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-STALE-COOKIE-macos-arm64",
@@ -4518,24 +4536,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-STALE-COOKIE-linux-x86_64",
@@ -4558,24 +4577,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-AUTH-LOSS-macos-arm64",
@@ -4639,24 +4659,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-AUTH-LOSS-linux-x86_64",
@@ -4679,24 +4700,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-WRONG-CHAIN-macos-arm64",
@@ -4761,25 +4783,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-WRONG-CHAIN-linux-x86_64",
@@ -4802,25 +4825,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-WRONG-GENESIS-macos-arm64",
@@ -4885,25 +4909,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-WRONG-GENESIS-linux-x86_64",
@@ -4926,25 +4951,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-WRONG-PROCESS-macos-arm64",
@@ -5008,24 +5034,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-WRONG-PROCESS-linux-x86_64",
@@ -5048,24 +5075,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-ENDPOINT-macos-arm64",
@@ -5129,24 +5157,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-ENDPOINT-linux-x86_64",
@@ -5169,24 +5198,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-REMOTE-PROFILE-macos-arm64",
@@ -5250,24 +5280,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-REMOTE-PROFILE-linux-x86_64",
@@ -5290,24 +5321,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-MALFORMED-JSON-macos-arm64",
@@ -5372,25 +5404,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-MALFORMED-JSON-linux-x86_64",
@@ -5413,25 +5446,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-ENVELOPE-macos-arm64",
@@ -5496,25 +5530,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-ENVELOPE-linux-x86_64",
@@ -5537,25 +5572,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-RESULT-SHAPE-macos-arm64",
@@ -5620,25 +5656,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-RESULT-SHAPE-linux-x86_64",
@@ -5661,25 +5698,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-REPLY-BOUNDS-macos-arm64",
@@ -5744,25 +5782,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-REPLY-BOUNDS-linux-x86_64",
@@ -5785,25 +5824,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-TIMEOUT-macos-arm64",
@@ -5867,24 +5907,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-TIMEOUT-linux-x86_64",
@@ -5907,24 +5948,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-UNAVAILABLE-macos-arm64",
@@ -5988,24 +6030,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-UNAVAILABLE-linux-x86_64",
@@ -6028,24 +6071,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-READONLY-macos-arm64",
@@ -6109,24 +6153,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-READONLY-linux-x86_64",
@@ -6149,24 +6194,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-WRITE-CONSENT-macos-arm64",
@@ -6230,24 +6276,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-WRITE-CONSENT-linux-x86_64",
@@ -6270,24 +6317,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-UNCERTAIN-NO-RETRY-macos-arm64",
@@ -6352,25 +6400,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-UNCERTAIN-NO-RETRY-linux-x86_64",
@@ -6393,25 +6442,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-PRIVACY-macos-arm64",
@@ -6475,24 +6525,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-PRIVACY-linux-x86_64",
@@ -6515,24 +6566,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-NATIVE-CUSTODY-macos-arm64",
@@ -6596,24 +6648,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-NATIVE-CUSTODY-linux-x86_64",
@@ -6636,24 +6689,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BINARY-REPLACE-macos-arm64",
@@ -6717,24 +6771,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BINARY-REPLACE-linux-x86_64",
@@ -6757,24 +6812,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-REAUTH-macos-arm64",
@@ -6838,24 +6894,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-REAUTH-linux-x86_64",
@@ -6878,24 +6935,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BORROWED-LIFECYCLE-macos-arm64",
@@ -6959,24 +7017,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BORROWED-LIFECYCLE-linux-x86_64",
@@ -6999,24 +7058,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BEFORE-AFTER-macos-arm64",
@@ -7080,24 +7140,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-BEFORE-AFTER-linux-x86_64",
@@ -7120,24 +7181,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-OS-IDENTITY-macos-arm64",
@@ -7201,24 +7263,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-OS-IDENTITY-linux-x86_64",
@@ -7241,24 +7304,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-INPUT-CONTRACTS-macos-arm64",
@@ -7742,24 +7806,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555642/job/121043966933",
-              "workflow_run_id": 40151555642,
-              "job_id": 121043966933,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-FROZEN-AUTH-windows-x64",
@@ -7781,26 +7846,30 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
-              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555639/job/121043966966",
-              "workflow_run_id": 40151555639,
-              "job_id": 121043966966,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
               "synthetic_rpc": false,
-              "artifact_id": 12583008539,
-              "artifact_sha256": "af1894e165af08d84a72623eaaba9f75800b91479f43501f47e32aa19ca103b6"
+              "artifact_id": 12595296816,
+              "artifact_sha256": "e59378e77559d6af706d902b754826119419f2d09cea1d7ec3003bbad5b63fa6",
+              "payload_zip_sha256": "c30c38eadf297047c2b7eca03faa137744c98cc184e7b2e0054e47bca4c53265",
+              "manifest_sha256": "269cb6b6f030da741961d8cdbed62225219cb17b95efc345fe52328998d8fb98",
+              "build_os": "windows-2022-x64",
+              "scope": "Exact-head f669152 Windows x64 frozen .zip"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-FROZEN-REGRESSION-windows-x64",
@@ -7822,26 +7891,30 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
-              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555639/job/121043966966",
-              "workflow_run_id": 40151555639,
-              "job_id": 121043966966,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
               "synthetic_rpc": false,
-              "artifact_id": 12583008539,
-              "artifact_sha256": "af1894e165af08d84a72623eaaba9f75800b91479f43501f47e32aa19ca103b6"
+              "artifact_id": 12595296816,
+              "artifact_sha256": "e59378e77559d6af706d902b754826119419f2d09cea1d7ec3003bbad5b63fa6",
+              "payload_zip_sha256": "c30c38eadf297047c2b7eca03faa137744c98cc184e7b2e0054e47bca4c53265",
+              "manifest_sha256": "269cb6b6f030da741961d8cdbed62225219cb17b95efc345fe52328998d8fb98",
+              "build_os": "windows-2022-x64",
+              "scope": "Exact-head f669152 Windows x64 frozen .zip"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-ARTIFACT-windows-x64",
@@ -7863,31 +7936,30 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
-              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555639/job/121043966966",
-              "workflow_run_id": 40151555639,
-              "job_id": 121043966966,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
               "synthetic_rpc": false,
-              "artifact_id": 12583008539,
-              "artifact_sha256": "af1894e165af08d84a72623eaaba9f75800b91479f43501f47e32aa19ca103b6",
-              "manifest_reference": "RELEASE_CANDIDATE_MANIFEST.json",
-              "windows_core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
-              }
+              "artifact_id": 12595296816,
+              "artifact_sha256": "e59378e77559d6af706d902b754826119419f2d09cea1d7ec3003bbad5b63fa6",
+              "payload_zip_sha256": "c30c38eadf297047c2b7eca03faa137744c98cc184e7b2e0054e47bca4c53265",
+              "manifest_sha256": "269cb6b6f030da741961d8cdbed62225219cb17b95efc345fe52328998d8fb98",
+              "build_os": "windows-2022-x64",
+              "scope": "Exact-head f669152 Windows x64 frozen .zip"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-PHYSICAL-windows-x64",
@@ -7932,24 +8004,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-FROZEN-AUTH-linux-x86_64",
@@ -7971,27 +8044,30 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
-              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044461688",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044461688,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137778108",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137778108,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
               "synthetic_rpc": false,
-              "artifact_id": 12582986776,
-              "artifact_sha256": "f4a6ff49d9f09efcd7a68ff0ad42b07d54cd2eef6cccbd1065f9db1110dfac7b",
-              "variant": "headless"
+              "artifact_id": 12595122150,
+              "artifact_sha256": "16af39b0d08f962927998b86b63c7c00f3084decd36821ea772027dedbf5d4d9",
+              "payload_desktop_tar_sha256": "3ed2ff88d3893f6fd462f4e9c2a6d1022ce451973e589cc0a29fe6399eaa6b42",
+              "manifest_sha256": "b8ba4d35da41b81c6dd6f0e15b6074ca77cd3f2f858ffaa2987acaff5dfdcdf6",
+              "build_os": "ubuntu-24.04-x86_64",
+              "scope": "Exact-head f669152 Linux x86_64 frozen desktop tar.gz"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-FROZEN-REGRESSION-linux-x86_64",
@@ -8013,27 +8089,30 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
-              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044461693",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044461693,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137778146",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137778146,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
               "synthetic_rpc": false,
-              "artifact_id": 12582657262,
-              "artifact_sha256": "f1305891dd857c52dc06be02fad699bd35299a555e638cc20eb137cbcaa9e32a",
-              "variant": "desktop"
+              "artifact_id": 12595027351,
+              "artifact_sha256": "49c19bd734f27b737b37d77c12fb5cef3971e9e7d30acad42a1e5d05b05c827f",
+              "payload_headless_tar_sha256": "9f8bc7e3e2e4520620cb99df28d7181e4687e37089ded5d826d1707cfe532f4a",
+              "manifest_sha256": "d7cffd6add7a209269dfccbfa2e58bb72c85a29a4f5c56d4ed8ced1dc649cf1e",
+              "build_os": "ubuntu-24.04-x86_64",
+              "scope": "Exact-head f669152 Linux x86_64 frozen headless tar.gz"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-ARTIFACT-linux-x86_64",
@@ -8055,47 +8134,30 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
-              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044461688",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044461688,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137778108",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137778108,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
               "synthetic_rpc": false,
-              "artifact_id": 12582986776,
-              "artifact_sha256": "f4a6ff49d9f09efcd7a68ff0ad42b07d54cd2eef6cccbd1065f9db1110dfac7b",
-              "variant": "headless"
-            },
-            {
-              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
-              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
-              "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044461693",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044461693,
-              "core_version": "v0.1.11",
-              "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
-              },
-              "core_trust": "reviewed-developer-source-build",
-              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false,
-              "artifact_id": 12582657262,
-              "artifact_sha256": "f1305891dd857c52dc06be02fad699bd35299a555e638cc20eb137cbcaa9e32a",
-              "variant": "desktop"
+              "artifact_id": 12595122150,
+              "artifact_sha256": "16af39b0d08f962927998b86b63c7c00f3084decd36821ea772027dedbf5d4d9",
+              "payload_desktop_tar_sha256": "3ed2ff88d3893f6fd462f4e9c2a6d1022ce451973e589cc0a29fe6399eaa6b42",
+              "manifest_sha256": "b8ba4d35da41b81c6dd6f0e15b6074ca77cd3f2f858ffaa2987acaff5dfdcdf6",
+              "build_os": "ubuntu-24.04-x86_64",
+              "scope": "Exact-head f669152 Linux x86_64 frozen desktop tar.gz"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-PHYSICAL-linux-x86_64",
@@ -8296,24 +8358,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555712/job/121043967291",
-              "workflow_run_id": 40151555712,
-              "job_id": 121043967291,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 operational wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-GUI-CORE-FAULT-linux-x86_64",
@@ -8335,24 +8398,25 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070218",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070218,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 headless wallet + Q02 auth E2E"
             }
           ],
-          "blocker": null
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-PEERS-macos-arm64",
@@ -8417,25 +8481,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "windows-x64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
-              "workflow_run_id": 40151555640,
-              "job_id": 121043966862,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785868/job/121137187826",
+              "workflow_run_id": 40182785868,
+              "job_id": 121137187826,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
-                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
               "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Windows x64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         },
         {
           "id": "Q02-PEERS-linux-x86_64",
@@ -8458,25 +8523,26 @@
           "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
-              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "source_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "checkout_sha": "f669152fca09bc06d2b477e04ded4ac3e14c7436",
+              "timestamp_utc": "2026-10-25T11:03:09.581170+00:00",
               "platform": "linux-x86_64",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
-              "workflow_run_id": 40151555636,
-              "job_id": 121044070221,
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40182785844/job/121137286097",
+              "workflow_run_id": 40182785844,
+              "job_id": 121137286097,
               "core_version": "v0.1.11",
               "core_sha256": {
-                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
-                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
               },
-              "core_trust": "reviewed-developer-source-build",
+              "core_trust": "official-signed-v0.1.11",
               "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
-              "synthetic_rpc": false
+              "synthetic_rpc": false,
+              "scope": "Exact-head f669152 Linux x86_64 negative injection after validated genuine CLI"
             }
           ],
-          "blocker": null,
-          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
+          "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E",
+          "stale_reason": "Evidence declared source_sha/checkout_sha inconsistent with actual GitHub workflow head SHA; requalified on exact-head f669152"
         }
       ],
       "gates": {
@@ -8497,7 +8563,7 @@
         },
         "G3": {
           "applicable": true,
-          "status": "PASS",
+          "status": "PENDING",
           "not_applicable_reason": null
         },
         "G4": {
@@ -8507,7 +8573,7 @@
         },
         "G5": {
           "applicable": true,
-          "status": "PASS",
+          "status": "PENDING",
           "not_applicable_reason": null
         },
         "G6": {
@@ -8524,7 +8590,7 @@
       "owner_merge_authorization": null,
       "post_merge_main_sha": null,
       "historical_evidence": [],
-      "engineering_status": "TECHNICAL_COMPLETE_PENDING_EXTERNAL_GATES",
+      "engineering_status": "F1_PATCH_READY_F2_RECONCILED_PENDING_EXACT_HEAD_CI",
       "full_acceptance_status": "BLOCKED",
       "failure_history": [],
       "engineering_scope": "Q02 authentication/chain/process/credential fail-closed only. Shared HTTP/native binding reused as necessary dependency; Q03 performance/flicker and Q04 miner/attach workflows remain QUEUED, unqualified.",

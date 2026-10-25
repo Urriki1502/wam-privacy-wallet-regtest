@@ -13,10 +13,10 @@ import secrets
 import socket
 import stat
 import subprocess
-import tempfile
 import time
 
 from .release import ARCHIVES, CLI_SHA256, _sha
+from .custody import private_temporary_directory
 
 
 class CoreSmokeError(RuntimeError):
@@ -209,7 +209,7 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
         except Q02ProbeError as error:raise CoreSmokeError(error.args[0]) from None
     # The caller runs on a dedicated CI runner or owner-approved macOS test host.
     # We intentionally do NOT claim fd-to-loader or hardened process provenance.
-    with tempfile.TemporaryDirectory(prefix="wam-real-regtest-") as temp:
+    with private_temporary_directory(prefix="wam-real-regtest-") as temp:
         # Canonicalize the OS-created temporary directory: macOS /var is a
         # system symlink. Private storage then walks canonical ancestors with
         # O_NOFOLLOW rather than relaxing its symlink checks.

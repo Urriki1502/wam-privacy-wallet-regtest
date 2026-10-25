@@ -180,5 +180,16 @@ class Q02Contracts(unittest.TestCase):
         self.assertIn('register(proc,core,data,authorized_disposable_mutation=True)',text)
         self.assertIn('unregister(data)',text)
 
+    @unittest.skipUnless(sys.platform=='darwin','macOS temp ACL regression only')
+    def test_private_temporary_directory_avoids_inherited_system_temp_acl(self):
+        from wam_regtest.custody import private_temporary_directory
+        from wam_regtest.private_directory import open_macos_private_directory
+        with private_temporary_directory(prefix='q02-contract-') as t:
+            p=Path(t)
+            fd=open_macos_private_directory(p)
+            os.close(fd)
+            self.assertTrue(p.exists())
+        self.assertFalse(p.exists())
+
 
 if __name__=='__main__':unittest.main()

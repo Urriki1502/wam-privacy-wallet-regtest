@@ -70,25 +70,46 @@ Local genuine Core smoke on macOS ARM64 after the fixes produced 33/33 Q02 case
 PASS and full wallet/security E2E PASS. The local receipt is retained at
 `/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json`.
 
-Exact-head CI artifacts after the push were downloaded and inspected:
+Exact-head CI artifacts audited after F2 reconciliation:
 
 | Platform | Artifact | SHA-256 | Status |
 |---|---|---|---|
-| macOS ARM64 | `WAM-Fusion-REGTEST-RC1-macos-arm64-f669152f...` | app.zip `240828c2a5cdac4501e71c178cfe11d78b703220eefa3ea70f4016be0abfd416`, DMG `0e6dea188c400ffd10ce3f62b602c5e2c269246d964377f537f81c39ef565c11` | **PASS** at exact-head CI run 40182785805 |
-| Windows x64 | `WAM-Privacy-Wallet-REGTEST-windows-x64-9985e443...zip` | `af1894e165af08d84a72623eaaba9f75800b91479f43501f47e32aa19ca103b6` | PASS at exact-head CI run 40151555639 |
-| Linux x86_64 desktop | `wam-regtest-desktop-linux-x86_64-9985e443...tar.gz` | `f1305891dd857c52dc06be02fad699bd35299a555e638cc20eb137cbcaa9e32a` | PASS at exact-head CI run 40151555636 |
-| Linux x86_64 headless | `wam-regtest-headless-linux-x86_64-9985e443...tar.gz` | `f4a6ff49d9f09efcd7a68ff0ad42b07d54cd2eef6cccbd1065f9db1110dfac7b` | PASS at exact-head CI run 40151555636 |
+| macOS ARM64 | `WAM-Fusion-REGTEST-RC1-macos-arm64-f669152f...` | app.zip `240828c2a5cdac4501e71c178cfe11d78b703220eefa3ea70f4016be0abfd416`, DMG `0e6dea188c400ffd10ce3f62b602c5e2c269246d964377f537f81c39ef565c11` | Green exact-head run 40182785805; **G3 pending new exact-head rebuild after F1 patch** |
+| Windows x64 | `WAM-Privacy-Wallet-REGTEST-windows-x64-f669152f...zip` | `c30c38eadf297047c2b7eca03faa137744c98cc184e7b2e0054e47bca4c53265` | Green exact-head run 40182785868 artifact 12595296816 |
+| Linux x86_64 desktop | `wam-regtest-desktop-linux-x86_64-f669152f...tar.gz` | `3ed2ff88d3893f6fd462f4e9c2a6d1022ce451973e589cc0a29fe6399eaa6b42` | Green exact-head run 40182785844 job 121137778108 artifact 12595122150 |
+| Linux x86_64 headless | `wam-regtest-headless-linux-x86_64-f669152f...tar.gz` | `9f8bc7e3e2e4520620cb99df28d7181e4687e37089ded5d826d1707cfe532f4a` | Green exact-head run 40182785844 job 121137778146 artifact 12595027351 |
 
-**Rerun note:** the first native-app-dmg attempt at the new exact-head flaked on
-`WALLET_E2E_STAGE=REOPEN_ON_NEW_CORE` (likely a scheduler/timing issue during
-cross-session recovery). No source change occurred between the two attempts; a
-rerun of the same job with the same commit succeeded. The failed attempt remains
-in CI history; only the green exact-head run is used as ledger evidence.
+**F1 — macOS frozen E2E `CORE_LOCAL_NETWORK_POLICY_DENIED`:**
+- Root cause: the macOS CI runner's system temporary directory carries a
+  file-inherit ACL. `tempfile.TemporaryDirectory` created private directories
+  under `/var/folders/...`; newly created `wam.conf` inherited the ACL and was
+  rejected by `private_bytes` → `local_rpc_port` → `CORE_LOCAL_NETWORK_POLICY_DENIED`.
+  This is an environment-dependent defect, not a regression in RPC authentication,
+  process ownership or local-network policy.
+- Patch: `wam_regtest.custody.private_temporary_directory()` now creates a
+  validated private root under the current working directory and returns a
+  `tempfile.TemporaryDirectory` under that root. `core.py` and `q02_probe.py`
+  use it for all disposable REGTEST datadirs. The validated root fails closed if
+  the cwd carries an inherited ACL. No RPC/auth/network policy/fail-closed
+  boundary was weakened.
+- Regression contract: `tests/test_q02_contracts.py` now verifies on macOS that
+  `private_temporary_directory()` yields a directory that passes
+  `open_macos_private_directory()` and is cleaned up afterwards.
+- A new exact-head macOS frozen build at the patched commit is required before
+  G3 can be marked PASS.
 
-Ledger validation (`python -m wam_regtest.q_gate --ledger tests/acceptance/issue45.json`)
-now reports: **PASS 126, STALE 0, BLOCKED 8, FAIL 0, coverage 134**.
-Gates: G0/G1/G2/G3/G4/G5 PASS; G6/G7 BLOCKED
-(external independent review/physical operator and owner merge authorization).
+**F2 — acceptance evidence provenance mismatch:**
+- Audit of all 115 workflow-linked ledger entries found 77 entries declaring
+  `source_sha`/`checkout_sha` inconsistent with the actual GitHub workflow head
+  SHA (pre-fix runs `40151555636/39/40/42/712` ran on `9985e443`, not the
+  declared `913da26` or test-merge tree `3de9c51`).
+- All 77 mismatched entries were marked with a `stale_reason` and requalified on
+  exact-head green runs at `f669152f`. macOS evidence was already exact-head.
+- Post-reconciliation ledger validation reports: **PASS 126, STALE 0, BLOCKED 8,
+  FAIL 0, coverage 134**. Gates: G0/G1/G2/G4 PASS; **G3/G5 PENDING** until a new
+  exact-head CI run at the patched commit refreshes the frozen artifacts;
+  G6/G7 BLOCKED (external independent review/physical operator and owner merge
+  authorization).
 
 ## Identity, credentials and mutation rights
 
