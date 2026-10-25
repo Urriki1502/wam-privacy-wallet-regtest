@@ -3277,7 +3277,7 @@
       "coverage_total": 134,
       "base_main_sha": "a6148dde377e00bdb63458fc50826e83ecd5c8a9",
       "candidate_pr": 129,
-      "candidate_head_sha": "6c0c5030127807314021ef984ce7114191610319",
+      "candidate_head_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
       "cases": [
         {
           "id": "Q02-COVERAGE",
@@ -3294,8 +3294,17 @@
             "G0"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/129/commits/22a6e8df8d3867b6850bb784e51667e7777f2966",
+              "scope": "Q02 case matrix enumerated in initial commit; 134 cases current after review additions"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3314,8 +3323,17 @@
             "G1"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993",
+              "scope": "Owner Q-GATE v2 explicitly authorizes engineering focus handoff to Q02 while Q01 full acceptance remains BLOCKED"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3333,8 +3351,17 @@
             "G1"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/129/files",
+              "scope": "Independent source audit of PR #129 diff and three focused fixes (macOS socket probe, headless reauth, owner acceptance registration) with regression contracts"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3355,8 +3382,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3377,8 +3427,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3399,8 +3467,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3421,8 +3507,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3443,8 +3552,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3465,8 +3592,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3487,8 +3632,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3509,8 +3677,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3531,8 +3717,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3553,8 +3757,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "scope": "Injected faults after validated genuine CLI; local replay at 913da26e"
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -3576,8 +3802,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -3599,8 +3843,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -3622,8 +3884,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3644,8 +3929,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3666,8 +3969,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3688,8 +4009,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3710,8 +4054,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3732,8 +4094,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3754,8 +4134,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3776,8 +4179,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3798,8 +4219,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3820,8 +4259,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3842,8 +4304,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3864,8 +4344,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3886,8 +4384,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3908,8 +4429,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3930,8 +4469,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3952,8 +4509,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -3974,8 +4554,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -3996,8 +4594,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4018,8 +4634,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -4040,8 +4679,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4062,8 +4719,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4084,8 +4759,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "scope": "Injected faults after validated genuine CLI; local replay at 913da26e"
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4107,8 +4804,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4130,8 +4845,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4153,8 +4886,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "scope": "Injected faults after validated genuine CLI; local replay at 913da26e"
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4176,8 +4931,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4199,8 +4972,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4222,8 +5013,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -4244,8 +5058,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4266,8 +5098,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4288,8 +5138,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -4310,8 +5183,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4332,8 +5223,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4354,8 +5263,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -4376,8 +5308,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4398,8 +5348,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4420,8 +5388,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "scope": "Injected faults after validated genuine CLI; local replay at 913da26e"
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4443,8 +5433,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4466,8 +5474,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4489,8 +5515,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "scope": "Injected faults after validated genuine CLI; local replay at 913da26e"
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4512,8 +5560,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4535,8 +5601,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4558,8 +5642,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "scope": "Injected faults after validated genuine CLI; local replay at 913da26e"
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4581,8 +5687,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4604,8 +5728,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4627,8 +5769,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "scope": "Injected faults after validated genuine CLI; local replay at 913da26e"
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4650,8 +5814,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4673,8 +5855,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4696,8 +5896,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -4718,8 +5941,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4740,8 +5981,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4762,8 +6021,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -4784,8 +6066,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4806,8 +6106,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4828,8 +6146,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -4850,8 +6191,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4872,8 +6231,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4894,8 +6271,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -4916,8 +6316,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4938,8 +6356,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -4960,8 +6396,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "scope": "Injected faults after validated genuine CLI; local replay at 913da26e"
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -4983,8 +6441,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -5006,8 +6482,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -5029,8 +6523,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5051,8 +6568,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5073,8 +6608,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5095,8 +6648,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5117,8 +6693,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5139,8 +6733,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5161,8 +6773,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5183,8 +6818,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5205,8 +6858,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5227,8 +6898,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5249,8 +6943,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5271,8 +6983,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5293,8 +7023,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5315,8 +7068,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5337,8 +7108,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5359,8 +7148,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5381,8 +7193,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5403,8 +7233,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5425,8 +7273,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5447,8 +7318,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5469,8 +7358,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5489,8 +7396,17 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "local: PYTHONPATH=src python3.12 -m unittest discover -s tests -v",
+              "scope": "Source contracts including new Q02 regression tests; PASS 146, SKIP 33, FAIL 0"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5509,8 +7425,17 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "local: PYTHONPATH=src python3.12 -m unittest discover -s tests -v",
+              "scope": "Source contracts including new Q02 regression tests; PASS 146, SKIP 33, FAIL 0"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5529,8 +7454,17 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "local: PYTHONPATH=src python3.12 -m unittest discover -s tests -v",
+              "scope": "Source contracts including new Q02 regression tests; PASS 146, SKIP 33, FAIL 0"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5549,8 +7483,17 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "local: PYTHONPATH=src python3.12 -m unittest discover -s tests -v",
+              "scope": "Source contracts including new Q02 regression tests; PASS 146, SKIP 33, FAIL 0"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5569,8 +7512,17 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "local: PYTHONPATH=src python3.12 -m unittest discover -s tests -v",
+              "scope": "Source contracts including new Q02 regression tests; PASS 146, SKIP 33, FAIL 0"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5589,8 +7541,17 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "local: PYTHONPATH=src python3.12 -m unittest discover -s tests -v",
+              "scope": "Source contracts including new Q02 regression tests; PASS 146, SKIP 33, FAIL 0"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5609,8 +7570,17 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "local: PYTHONPATH=src python3.12 -m unittest discover -s tests -v",
+              "scope": "Source contracts including new Q02 regression tests; PASS 146, SKIP 33, FAIL 0"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5629,8 +7599,17 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "local: PYTHONPATH=src python3.12 -m unittest discover -s tests -v",
+              "scope": "Source contracts including new Q02 regression tests; PASS 146, SKIP 33, FAIL 0"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5649,8 +7628,17 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "local: PYTHONPATH=src python3.12 -m unittest discover -s tests -v",
+              "scope": "Source contracts including new Q02 regression tests; PASS 146, SKIP 33, FAIL 0"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5670,8 +7658,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5691,9 +7702,33 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
-          "blocker": null
+          "status": "STALE",
+          "acceptance_evidence": [
+            {
+              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
+              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121045062097",
+              "workflow_run_id": 40151555633,
+              "job_id": 121045062097,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582662875,
+              "artifact_sha256": "68fdecf63752c8f0c57f429f64eb58bf4c15aebdf6152befcfefe5aa5bdfda7b",
+              "previous_payload_dmg_sha256": "85cc2a96d1a0dcb8ec3b51ed4748e88f3524b250e374c5aa59f853e14e8c14ef",
+              "previous_build_os": "macOS-15.7.9-arm64",
+              "scope": "Pre-fix green CI artifact retained as baseline; not current-source qualification"
+            }
+          ],
+          "blocker": null,
+          "stale_reason": "macOS source changed (core_process.py socket-probe fix); final frozen binary must be rebuilt and requalified at exact new HEAD"
         },
         {
           "id": "Q02-FROZEN-REGRESSION-macos-arm64",
@@ -5712,9 +7747,33 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
-          "blocker": null
+          "status": "STALE",
+          "acceptance_evidence": [
+            {
+              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
+              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121045062097",
+              "workflow_run_id": 40151555633,
+              "job_id": 121045062097,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582662875,
+              "artifact_sha256": "68fdecf63752c8f0c57f429f64eb58bf4c15aebdf6152befcfefe5aa5bdfda7b",
+              "previous_payload_dmg_sha256": "85cc2a96d1a0dcb8ec3b51ed4748e88f3524b250e374c5aa59f853e14e8c14ef",
+              "previous_build_os": "macOS-15.7.9-arm64",
+              "scope": "Pre-fix green CI artifact retained as baseline; not current-source qualification"
+            }
+          ],
+          "blocker": null,
+          "stale_reason": "macOS source changed (core_process.py socket-probe fix); final frozen binary must be rebuilt and requalified at exact new HEAD"
         },
         {
           "id": "Q02-ARTIFACT-macos-arm64",
@@ -5733,9 +7792,33 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
-          "blocker": null
+          "status": "STALE",
+          "acceptance_evidence": [
+            {
+              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
+              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121045062097",
+              "workflow_run_id": 40151555633,
+              "job_id": 121045062097,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582662875,
+              "artifact_sha256": "68fdecf63752c8f0c57f429f64eb58bf4c15aebdf6152befcfefe5aa5bdfda7b",
+              "previous_payload_dmg_sha256": "85cc2a96d1a0dcb8ec3b51ed4748e88f3524b250e374c5aa59f853e14e8c14ef",
+              "previous_build_os": "macOS-15.7.9-arm64",
+              "scope": "Pre-fix green CI artifact retained as baseline; not current-source qualification"
+            }
+          ],
+          "blocker": null,
+          "stale_reason": "macOS source changed (core_process.py socket-probe fix); final frozen binary must be rebuilt and requalified at exact new HEAD"
         },
         {
           "id": "Q02-PHYSICAL-macos-arm64",
@@ -5777,8 +7860,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555642/job/121043966933",
+              "workflow_run_id": 40151555642,
+              "job_id": 121043966933,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5798,8 +7899,28 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
+              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555639/job/121043966966",
+              "workflow_run_id": 40151555639,
+              "job_id": 121043966966,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12583008539,
+              "artifact_sha256": "af1894e165af08d84a72623eaaba9f75800b91479f43501f47e32aa19ca103b6"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5819,8 +7940,28 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
+              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555639/job/121043966966",
+              "workflow_run_id": 40151555639,
+              "job_id": 121043966966,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12583008539,
+              "artifact_sha256": "af1894e165af08d84a72623eaaba9f75800b91479f43501f47e32aa19ca103b6"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5840,8 +7981,33 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
+              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555639/job/121043966966",
+              "workflow_run_id": 40151555639,
+              "job_id": 121043966966,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12583008539,
+              "artifact_sha256": "af1894e165af08d84a72623eaaba9f75800b91479f43501f47e32aa19ca103b6",
+              "manifest_reference": "RELEASE_CANDIDATE_MANIFEST.json",
+              "windows_core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              }
+            }
+          ],
           "blocker": null
         },
         {
@@ -5884,8 +8050,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -5905,8 +8089,29 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
+              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044461688",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044461688,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582986776,
+              "artifact_sha256": "f4a6ff49d9f09efcd7a68ff0ad42b07d54cd2eef6cccbd1065f9db1110dfac7b",
+              "variant": "headless"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5926,8 +8131,29 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
+              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044461693",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044461693,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582657262,
+              "artifact_sha256": "f1305891dd857c52dc06be02fad699bd35299a555e638cc20eb137cbcaa9e32a",
+              "variant": "desktop"
+            }
+          ],
           "blocker": null
         },
         {
@@ -5947,8 +8173,49 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
+              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044461688",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044461688,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582986776,
+              "artifact_sha256": "f4a6ff49d9f09efcd7a68ff0ad42b07d54cd2eef6cccbd1065f9db1110dfac7b",
+              "variant": "headless"
+            },
+            {
+              "source_sha": "9985e443c3f7424cf8dd843eabc5514ce3ba7547",
+              "checkout_sha": "3de9c51dfcee7b96868fbb76c15aa6e2919b9121",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044461693",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044461693,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582657262,
+              "artifact_sha256": "f1305891dd857c52dc06be02fad699bd35299a555e638cc20eb137cbcaa9e32a",
+              "variant": "desktop"
+            }
+          ],
           "blocker": null
         },
         {
@@ -6107,8 +8374,31 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "local_receipt_path": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json",
+              "scope": "Local exact-head replay on Apple Silicon after socket-probe fix; 33 Q02 cases PASS; full wallet/security E2E PASS"
+            }
+          ],
           "blocker": null
         },
         {
@@ -6128,8 +8418,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555712/job/121043967291",
+              "workflow_run_id": 40151555712,
+              "job_id": 121043967291,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -6149,8 +8457,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070218",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070218,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null
         },
         {
@@ -6171,8 +8497,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555633/job/121043966885",
+              "workflow_run_id": 40151555633,
+              "job_id": 121043966885,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12582966811,
+              "artifact_sha256": "41862b688a8747f772f469ce7a0aef42e93d31d9fece1d9f6c48df6ea0b35f5d",
+              "local_receipt_sha256": "edf18f0997a08cb2dddf34cfad4e15752261e0e2e67094841528bae75ed7989e",
+              "scope": "Injected faults after validated genuine CLI; local replay at 913da26e"
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -6194,8 +8542,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555640/job/121043966862",
+              "workflow_run_id": 40151555640,
+              "job_id": 121043966862,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         },
@@ -6217,8 +8583,26 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "checkout_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27",
+              "timestamp_utc": "2026-10-25T09:16:45.473451+00:00",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151555636/job/121044070221",
+              "workflow_run_id": 40151555636,
+              "job_id": 121044070221,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false
+            }
+          ],
           "blocker": null,
           "proof_class": "Validated genuine Core/CLI response followed by explicit local negative fault; NOT observed wrong-network Core E2E"
         }
@@ -6226,17 +8610,17 @@
       "gates": {
         "G0": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G1": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G2": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G3": {
@@ -6246,12 +8630,12 @@
         },
         "G4": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G5": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G6": {
@@ -6268,7 +8652,7 @@
       "owner_merge_authorization": null,
       "post_merge_main_sha": null,
       "historical_evidence": [],
-      "engineering_status": "PENDING",
+      "engineering_status": "TECHNICAL_COMPLETE_PENDING_FROZEN_RECHECK",
       "full_acceptance_status": "BLOCKED",
       "failure_history": [],
       "engineering_scope": "Q02 authentication/chain/process/credential fail-closed only. Shared HTTP/native binding reused as necessary dependency; Q03 performance/flicker and Q04 miner/attach workflows remain QUEUED, unqualified.",
@@ -6327,7 +8711,8 @@
           "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40151232882",
           "observation": "Native explicit-owner staging passed genuine config/cookie auth and cookie-negative/restart cases, then AUTH-LOSS failed. Fixture recreated config with an unqualified default owner. Preserve the actual file by held rename; also latch the owned scope on pre-transport network/profile failure so restoring even the identical original file cannot silently revive authentication. Source contract plus genuine replay required."
         }
-      ]
+      ],
+      "qualified_runtime_source_sha": "913da26e0d36017b29bbc4841a495d4b1b6a7f27"
     },
     {
       "id": "Q03",

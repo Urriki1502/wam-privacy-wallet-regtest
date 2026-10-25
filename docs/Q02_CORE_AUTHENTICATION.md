@@ -41,6 +41,50 @@ uncommitted early HTTP experiment and its supplemental local receipts were
 retained outside the repository for audit, then superseded. Those receipts
 never qualify this candidate. No entire legacy branch was imported.
 
+## Post-audit fixes and current evidence (2026-10-25)
+
+After the independent source audit three reproducible medium defects were fixed
+at source commit `913da26e0d36017b29bbc4841a495d4b1b6a7f27` on the Q02 branch:
+
+1. **macOS socket-probe failure handling** (`src/wam_regtest/core_process.py`).
+   The `lsof` ESTABLISHED-socket probe now translates `subprocess.SubprocessError`
+   and stdout decode failures into `CoreBindingError('RPC_SOCKET_PROOF_DENIED')`,
+   instead of leaking raw exceptions that could bypass the fail-closed boundary.
+2. **Headless Core reauthentication approval** (`src/wam_regtest/linux_headless.py`).
+   Interactive `unlock` and `recover` now explicitly prompt the operator to type
+   `REAUTH` when `_core_reauthentication_required` is set. Approval alone does not
+   unlock the wallet; the wallet passphrase/custody check is still required. This
+   prevents a silent transport-only reauthentication from reactivating a faulted
+   session.
+3. **Owner acceptance scope registration** (`scripts/owner_acceptance.py`).
+   The disposable native Core launched by the owner/UX audit now registers the
+   owned process scope with `register(..., authorized_disposable_mutation=True)`
+   and unregisters it in `finally`, so subsequent `_read_cli` calls in the same
+   harness use the authenticated binding.
+
+Regression contracts for the three fixes were added to
+`tests/test_q02_contracts.py`. The full source test suite on the fix commit
+reports **146 pass, 33 skip, 0 fail**.
+
+Local genuine Core smoke on macOS ARM64 after the fixes produced 33/33 Q02 case
+PASS and full wallet/security E2E PASS. The local receipt is retained at
+`/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json`.
+
+Exact-head CI artifacts for the pre-fix PR head (`9985e443`) were downloaded and
+inspected:
+
+| Platform | Artifact | SHA-256 | Status |
+|---|---|---|---|
+| macOS ARM64 | `WAM-Fusion-REGTEST-RC1-macos-arm64-9985e443...` | application payload `68fdecf63752c8f0c57f429f64eb58bf4c15aebdf6152befcfefe5aa5bdfda7b`, DMG `85cc2a96d1a0dcb8ec3b51ed4748e88f3524b250e374c5aa59f853e14e8c14ef` | **STALE** — the socket-probe fix changes runtime behavior; a new exact-head macOS frozen build is required before G3 can PASS |
+| Windows x64 | `WAM-Privacy-Wallet-REGTEST-windows-x64-9985e443...zip` | `af1894e165af08d84a72623eaaba9f75800b91479f43501f47e32aa19ca103b6` | PASS at exact-head CI run 40151555639 |
+| Linux x86_64 desktop | `wam-regtest-desktop-linux-x86_64-9985e443...tar.gz` | `f1305891dd857c52dc06be02fad699bd35299a555e638cc20eb137cbcaa9e32a` | PASS at exact-head CI run 40151555636 |
+| Linux x86_64 headless | `wam-regtest-headless-linux-x86_64-9985e443...tar.gz` | `f4a6ff49d9f09efcd7a68ff0ad42b07d54cd2eef6cccbd1065f9db1110dfac7b` | PASS at exact-head CI run 40151555636 |
+
+Ledger validation (`python -m wam_regtest.q_gate --ledger tests/acceptance/issue45.json`)
+now reports: **PASS 123, STALE 3, BLOCKED 8, FAIL 0, coverage 134**.
+Gates: G0/G1/G2/G4/G5 PASS; G3 PENDING (macOS frozen rebuild); G6/G7 BLOCKED
+(external independent review/physical operator and owner merge authorization).
+
 ## Identity, credentials and mutation rights
 
 Only an explicitly consented disposable fixture's original process is registered.
