@@ -6305,6 +6305,13 @@
           "status": "FAIL",
           "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40101445954",
           "observation": "Genuine Windows operational gate timed out while creating config/cookie Q02 fixture nodes, before scenario enumeration. Existing config-auth 101-block/BIP352/vault gates passed. Failing mode/cause not yet observed; add fixed-category boot diagnostics and create only the fresh owned cookie parent with existing strict native owner-only custody. No timeout increase or gate waiver; replay required."
+        },
+        {
+          "case_id": "Q02-COOKIE-AUTH-windows-x64",
+          "source_sha": "6231514aeaaa4a0a4649f34767ea49f183262c38",
+          "status": "FAIL",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40150384429",
+          "observation": "Redacted diagnostics prove config node boot succeeds but Core-generated cookie custody is refused, then scope remains quarantined. Strict precreated private parent alone did not resolve it. Add owned-fixture read-only native owner/ACL metadata summaries (no SID or cookie values) to identify the exact mismatch; all runtime guards remain unchanged. No qualification claimed."
         }
       ]
     },

@@ -73,6 +73,51 @@ def _expect(codes,action):
     raise Q02ProbeError('Q02_REQUIRED_REFUSAL_MISSING')
 
 
+def _windows_cookie_metadata(directory):
+    """Owned-fixture diagnostics ONLY: booleans/ACL numbers, never SID or auth."""
+    if sys.platform!='win32':return
+    import ctypes as c
+    from . import windows_private_storage as store
+    records=[]
+    try:
+        with store.directory_guard(directory):
+            current=store.owner_sid()
+            for label,path,is_dir in (('parent',directory/'regtest',True),
+                    ('cookie',directory/'regtest/.cookie',False),
+                    ('temporary',directory/'regtest/.cookie.tmp',False)):
+                flags=0x2200000 if is_dir else 0x200080
+                handle=store.create(str(path),0x20080,1,None,3,flags,None)
+                row={'object':label,'opened':handle not in (None,store.INVALID)}
+                if not row['opened']:records.append(row);continue
+                descriptor=c.c_void_p();owner=c.c_void_p();acl=c.c_void_p()
+                try:
+                    store._metadata(handle,directory=is_dir)
+                    if store.security(handle,1,5,c.byref(owner),None,c.byref(acl),None,c.byref(descriptor)):
+                        row['security_query_ok']=False;continue
+                    control=store.w.WORD();revision=store.w.DWORD()
+                    row['security_query_ok']=True
+                    row['owner_matches_current_user']=bool(owner.value and store._sid_text(owner)==current)
+                    row['control_read']=bool(store.control(descriptor,c.byref(control),c.byref(revision)))
+                    row['protected_dacl']=bool(control.value&0x1000)
+                    info=store.ACLINFO();aces=[]
+                    if acl.value and store.acl_info(acl,c.byref(info),c.sizeof(info),2) and info.count<=32:
+                        row['ace_count']=info.count
+                        for index in range(info.count):
+                            ptr=c.c_void_p()
+                            if not store.get_ace(acl,index,c.byref(ptr)) or not ptr.value:continue
+                            ace=c.cast(ptr,c.POINTER(store.ACE)).contents
+                            entry={'kind':ace.kind,'flags':ace.flags,'mask':ace.mask}
+                            if ace.kind==0 and ace.size>=12:
+                                entry['sid_matches_current_user']=store._sid_text(c.c_void_p(ptr.value+8))==current
+                            aces.append(entry)
+                        row['aces']=aces
+                finally:
+                    if descriptor.value:store.free(descriptor)
+                    store.close(handle);records.append(row)
+        print('Q02_COOKIE_NATIVE_METADATA='+json.dumps(records,sort_keys=True),flush=True)
+    except Exception:print('Q02_COOKIE_NATIVE_METADATA_UNAVAILABLE',flush=True)
+
+
 class _Node:
     def __init__(self,core,*,cookie=False):
         self.core=core;self.cookie=cookie;self.proc=None
@@ -131,6 +176,7 @@ class _Node:
             if code in ('RPC_CREDENTIAL_CUSTODY_DENIED','RPC_CREDENTIAL_MISSING_OR_UNSAFE',
                         'RPC_CREDENTIAL_SIZE_DENIED','RPC_COOKIE_FORMAT_DENIED','RPC_CONFIG_PROFILE_DENIED'):
                 print('Q02_BOOT_CREDENTIAL_REFUSAL='+code,flush=True)
+        _windows_cookie_metadata(self.directory)
         raise Q02ProbeError('Q02_NODE_START_TIMEOUT')
     def reader(self):
         client=LiveCoreReadOnlyCli(self.cli,self.directory);client.attest();return client
