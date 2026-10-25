@@ -74,7 +74,7 @@ Exact-head CI artifacts after the push were downloaded and inspected:
 
 | Platform | Artifact | SHA-256 | Status |
 |---|---|---|---|
-| macOS ARM64 | `WAM-Fusion-REGTEST-RC1-macos-arm64-ba0745d8...` | app.zip `e56eeab19aa173b3f67d916039c70b0f8524d6a08b6933dd92207278b4459d00`, DMG `8a7164b01ad37f5b003d1ab9494bdd38cd413922e27180471fd7c7df0a45655c` | **PASS** at exact-head CI run 40180467296 |
+| macOS ARM64 | `WAM-Fusion-REGTEST-RC1-macos-arm64-f669152f...` | app.zip `240828c2a5cdac4501e71c178cfe11d78b703220eefa3ea70f4016be0abfd416`, DMG `0e6dea188c400ffd10ce3f62b602c5e2c269246d964377f537f81c39ef565c11` | **PASS** at exact-head CI run 40182785805 |
 | Windows x64 | `WAM-Privacy-Wallet-REGTEST-windows-x64-9985e443...zip` | `af1894e165af08d84a72623eaaba9f75800b91479f43501f47e32aa19ca103b6` | PASS at exact-head CI run 40151555639 |
 | Linux x86_64 desktop | `wam-regtest-desktop-linux-x86_64-9985e443...tar.gz` | `f1305891dd857c52dc06be02fad699bd35299a555e638cc20eb137cbcaa9e32a` | PASS at exact-head CI run 40151555636 |
 | Linux x86_64 headless | `wam-regtest-headless-linux-x86_64-9985e443...tar.gz` | `f4a6ff49d9f09efcd7a68ff0ad42b07d54cd2eef6cccbd1065f9db1110dfac7b` | PASS at exact-head CI run 40151555636 |

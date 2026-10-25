@@ -9,9 +9,10 @@
 
 | Mục | Giá trị |
 |---|---|
-| Source SHA hiện tại (HEAD sau push, ledger/doc update) | `ba0745d835f72054f5a7d1cddd489820eb610427` |
+| Source SHA hiện tại (HEAD sau requalify + ledger/doc cập nhật) | `f669152fca09bc06d2b477e04ded4ac3e14c7436` |
 | Source SHA của 3 bản fix | `913da26e0d36017b29bbc4841a495d4b1b6a7f27` |
-| Source SHA sau khi đối chiếu ledger/docs | `f015fd9c41d4efcdddc2bce61d383e85a72d6398` |
+| Source SHA sau khi đối chiếu ledger/docs lần 1 | `f015fd9c41d4efcdddc2bce61d383e85a72d6398` |
+| Source SHA sau push và báo cáo lần 1 | `ba0745d835f72054f5a7d1cddd489820eb610427` |
 | PR remote HEAD trước fix | `9985e443c3f7424cf8dd843eabc5514ce3ba7547` |
 | GitHub test-merge tree | `3de9c51dfcee7b96868fbb76c15aa6e2919b9121` |
 | WSP source commit đã ghim | `ac55f13423620252bdbf848c7e8a280c3b84721e` |
@@ -68,15 +69,16 @@ OK (skipped=33)
 - Receipt local: `/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/opencode/wam-q02-9985e44/local-real-core-evidence-2.json`
 
 ### Exact-head CI sau push
-Tất cả các run triggered tại `ba0745d8` đều green:
-- macOS ARM64 native real Core E2E: run **40180467296** job 121134794130
-- macOS ARM64 frozen .app/.dmg E2E: run **40180467296** job 121134772996 artifact **12594891340**
-- Windows x64 real Core smoke: run **40180467279**
-- Windows x64 credential/vault: run **40180467273**
-- Windows x64 WSP receive + Qt read: runs **40180467269**, **40180467270**
-- Linux x86_64 experimental Core REGTEST: run **40180467301**
+Tất cả các run triggered tại `f669152f` đều green:
+- macOS ARM64 native real Core E2E: run **40182785805** job 121138603094
+- macOS ARM64 frozen .app/.dmg E2E: run **40182785805** job 121139729216 artifact **12595735393**
+- Windows x64 real Core smoke: run **40182785817**
+- Windows x64 credential/vault: run **40182785868**
+- Windows x64 WSP receive + Qt read: runs **40182785794**, **40182785801**
+- Linux x86_64 experimental Core REGTEST: run **40182785844**
+- WSP-1 canonical 28 BIP352 vectors (macOS ARM64): run **40182785807**
 
-**Lưu ý rerun:** job native-app-dmg macOS lần đầu bị fail ở `WALLET_E2E_STAGE=REOPEN_ON_NEW_CORE` do lỗi flaky (không có thay đổi source giữa hai lần chạy). Rerun cùng job với cùng commit thành công.
+**Lưu ý rerun:** job native-app-dmg macOS lần đầu bị fail do lỗi upload artifact (DNS ENOTFOUND `productionresultssa4.blob.core.windows.net`) sau khi tất cả các bước thực tế đã PASS. Rerun cùng job với cùng commit thành công.
 
 ### Ledger validation
 ```bash
@@ -106,8 +108,8 @@ Kết quả:
 
 | Nền tảng | Loại | Trạng thái | Bằng chứng |
 |---|---|---|---|
-| macOS ARM64 | Native source smoke | **PASS** | Exact-head CI run 40180467296 job 121134794130 + local receipt |
-| macOS ARM64 | Frozen binary (.app / .dmg) | **PASS** | Exact-head CI run 40180467296 job 121134772996 artifact 12594891340; app.zip `e56eeab19aa173b3f67d916039c70b0f8524d6a08b6933dd92207278b4459d00`, dmg `8a7164b01ad37f5b003d1ab9494bdd38cd413922e27180471fd7c7df0a45655c` |
+| macOS ARM64 | Native source smoke | **PASS** | Exact-head CI run 40182785805 job 121138603094 + local receipt |
+| macOS ARM64 | Frozen binary (.app / .dmg) | **PASS** | Exact-head CI run 40182785805 job 121139729216 artifact 12595735393; app.zip `240828c2a5cdac4501e71c178cfe11d78b703220eefa3ea70f4016be0abfd416`, dmg `0e6dea188c400ffd10ce3f62b602c5e2c269246d964377f537f81c39ef565c11` |
 | Windows x64 | Frozen binary | **PASS** | CI run 40151555639; payload SHA-256 `af1894e165af08d84a72623eaaba9f75800b91479f43501f47e32aa19ca103b6` |
 | Linux x86_64 | Desktop frozen | **PASS** | CI run 40151555636; payload SHA-256 `f1305891dd857c52dc06be02fad699bd35299a555e638cc20eb137cbcaa9e32a` |
 | Linux x86_64 | Headless frozen | **PASS** | CI run 40151555636; payload SHA-256 `f4a6ff49d9f09efcd7a68ff0ad42b07d54cd2eef6cccbd1065f9db1110dfac7b` |
