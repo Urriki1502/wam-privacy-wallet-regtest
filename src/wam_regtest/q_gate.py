@@ -18,7 +18,7 @@ def _engineering_handoff_qualified(record, index):
     sha=lambda value:type(value) is str and re.fullmatch('[0-9a-f]{40}',value) is not None
     if not (handoff.get('owner_authorized_handoff') is True
             and type(handoff.get('owner_decision_url')) is str
-            and handoff['owner_decision_url'].startswith(owner_issue)
+            and re.fullmatch(re.escape(owner_issue)+r'[1-9][0-9]*',handoff['owner_decision_url']) is not None
             and type(record.get('owner_merge_authorization')) is str
             and record['owner_merge_authorization'].startswith(
                 'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/')

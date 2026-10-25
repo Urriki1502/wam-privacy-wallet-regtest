@@ -63,6 +63,32 @@ class SequentialQGateContracts(unittest.TestCase):
             else:data['questions'][0]['accepted']=True
             with self.subTest(change=change),self.assertRaises(ValueError):validate(data)
 
+    def test_handoff_owner_comment_requires_real_numeric_github_url_shape(self):
+        # URL shape cannot authenticate a human decision; live GitHub review
+        # remains mandatory. Reject the supplied draft's nonnumeric placeholder.
+        prefix='https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-'
+        for suffix in ('Q02_OWNER_DECISION_20261025','','0','6379544993/extra',
+                       '6379544993?approved=true','6379544993\n'):
+            data=copy.deepcopy(self.ledger)
+            data['questions'][0]['engineering_handoff']['owner_decision_url']=prefix+suffix
+            with self.subTest(suffix=suffix),self.assertRaises(ValueError):validate(data)
+
+    def test_q02_correction_preserves_release_and_next_q_boundaries(self):
+        q02=self.ledger['questions'][1]
+        self.assertEqual(self.ledger['active_q'],'Q02')
+        self.assertEqual(sum(c['status']=='PASS' for c in q02['cases']),130)
+        self.assertFalse(q02['accepted'])
+        self.assertNotIn('engineering_handoff',q02)
+        self.assertEqual(self.ledger['questions'][2]['processing'],'QUEUED')
+        self.assertEqual({c['id'] for c in q02['cases'] if c['status']=='BLOCKED'},
+            {'Q02-INDEPENDENT','Q02-PHYSICAL-macos-arm64',
+             'Q02-PHYSICAL-windows-x64','Q02-PHYSICAL-linux-x86_64'})
+        for case in q02['cases']:
+            if case['status']=='PASS' and case['platform']=='linux-x86_64':
+                for evidence in case['acceptance_evidence']:
+                    if 'core_trust' in evidence:
+                        self.assertEqual(evidence['core_trust'],'reviewed-developer-source-build')
+
     def test_false_acceptance_or_green_ci_without_evidence_is_denied(self):
         for change in ('case-pass','accepted','auto-merge','second-active'):
             data=copy.deepcopy(self.ledger)
