@@ -87,7 +87,7 @@ def validate(ledger):
                             and e['owner_decision_url'].startswith(
                                 'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/'))
                     else:
-                        if c['layer'] in ('CORE_E2E','FROZEN','MAIN'):
+                        if c['layer'] in ('CORE_E2E','NEGATIVE_INJECTION','FROZEN','MAIN'):
                             require(e.get('synthetic_rpc') is False and e.get('core_version')=='v0.1.11'
                                 and e.get('wsp_source_commit')=='ac55f13423620252bdbf848c7e8a280c3b84721e')
                             require(all(e.get(k) for k in ('core_sha256','core_trust','workflow_run_id','job_id')))

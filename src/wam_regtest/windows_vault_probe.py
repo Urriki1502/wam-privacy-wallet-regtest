@@ -28,7 +28,7 @@ class WindowsVaultFixtureRpc(LiveCoreReadOnlyCli):
         self.port, self.env = port, env
 
     def _call(self, method, args):
-        permitted = {'getblockchaininfo','getconnectioncount','getblockcount',
+        permitted = {'getblockchaininfo','getnetworkinfo','getconnectioncount','getblockcount',
                      'getbestblockhash','getblockhash','getblock','sendrawtransaction',
                      'generatetoaddress','invalidateblock','reconsiderblock'}
         if method not in permitted or type(args) is not list or any(type(a) is not str for a in args):

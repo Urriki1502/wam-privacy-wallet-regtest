@@ -54,6 +54,18 @@ def open_session(core,datadir,source,mining,password,backup=None):
         password,mining,authorized=True)
 
 
+def _core_reauth_prompt(session):
+    """Explicit headless approval to reauthenticate the same owned process."""
+    if not session._core_reauthentication_required:
+        return True
+    if not sys.stdin.isatty() or not sys.stderr.isatty():
+        raise WalletSessionError('HEADLESS_PRIVATE_TERMINAL_REQUIRED')
+    response=input('Core authentication lost — type REAUTH to reauthenticate the same owned REGTEST process: ').strip()
+    if response!='REAUTH':
+        raise WalletSessionError('WALLET_CORE_REAUTHENTICATION_REQUIRED')
+    return True
+
+
 def launch(core,datadir,source,mining,*,backup=None):
     from . import custody
     password=passphrase('Backup passphrase: ' if backup is not None else 'New disposable REGTEST passphrase: ')
@@ -92,11 +104,15 @@ def launch(core,datadir,source,mining,*,backup=None):
                 elif command=='lock' and len(args)==1:session.lock();frontend.clear();print('LOCKED')
                 elif command=='unlock' and len(args)==1:
                     password=passphrase('Wallet passphrase: ')
-                    try:session.unlock(password)
+                    try:
+                        reauth_approved=_core_reauth_prompt(session)
+                        session.unlock(password,reauth_approved)
                     finally:password=None
                 elif command=='recover' and len(args)==2:
                     password=passphrase('Backup passphrase: ')
-                    try:session.recover_backup(Path(args[1]).expanduser().absolute(),'wallet-backup.enc',password);frontend.clear()
+                    try:
+                        reauth_approved=_core_reauth_prompt(session)
+                        session.recover_backup(Path(args[1]).expanduser().absolute(),'wallet-backup.enc',password,reauth_approved);frontend.clear()
                     finally:password=None
                 elif command=='mine' and len(args)==1:session.mine();print('One disposable REGTEST block mined')
                 else:raise ValueError
@@ -131,7 +147,8 @@ def run(args):
                     raise WalletSessionError('LINUX_QT_WINDOW_DENIED')
                 return {'status':'LINUX_QT_DISPOSABLE_SESSION_CLOSED','mainnet_allowed':False}
         result=smoke_real_core(core,explicit_consent=args.confirm_experimental_developer_regtest,
-            wsp_source=source,wsp_payment_e2e=True,headless_callback=callback)
+            wsp_source=source,wsp_payment_e2e=True,headless_callback=callback,
+            q02_e2e=bool(args.confirm_headless_e2e or args.confirm_qt_e2e))
         result.update({'official_signed_release':False,'developer_manifest_sha256':args.manifest_sha256,
             'frozen_runtime':bool(getattr(sys,'frozen',False)),
             'linux_headless':not (args.gui or args.confirm_qt_e2e),'qt_imported':any(n.startswith('PySide6') for n in sys.modules)})

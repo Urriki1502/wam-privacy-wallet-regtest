@@ -102,6 +102,8 @@ def probe(core,datadir,source,mining):
         assert session.locked and not session.runtime.exists()
         recovered=_operation(app,window,'recover',lambda:window.start_operation('recover',backup,'wallet-backup.enc',PASSWORD))
         assert recovered==confirmed and session.ring.accounts()==accounts and locks(session)==retained
+        from .q02_probe import probe_gui_auth_loss
+        gui_auth=probe_gui_auth_loss(app,window)
         window.close();window.deleteLater();QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete);window=None;session=None
         stage='FRESH_CORE_REOPEN';print('LINUX_QT_STAGE='+stage,flush=True)
         def reopen(c,d,s,m):
@@ -118,7 +120,7 @@ def probe(core,datadir,source,mining):
         second=smoke_real_core(core,explicit_consent=True,wsp_source=source,wsp_payment_e2e=True,headless_callback=reopen)
         assert second['wallet_live_core']['fresh_core_same_keys_reservations_native_qt']
         return {'status':'REAL_LINUX_CORE_ROOT_WITNESS_NATIVE_QT_WALLET_E2E_PASS',
-            'synthetic_rpc':False,'mainnet_allowed':False,'qt_platform':app.platformName(),
+            'synthetic_rpc':False,'mainnet_allowed':False,'q02_gui_auth':gui_auth,'qt_platform':app.platformName(),
             'native_pages':6,'background_timer_live_core_verified':True,
             'separate_native_sign_broadcast_approvals':True,'cancel_is_default':True,
             'confirmed_recipient_atoms':100000,'confirmed_sender_change':True,
