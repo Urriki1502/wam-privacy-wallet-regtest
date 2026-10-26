@@ -12,10 +12,10 @@ class SequentialQGateContracts(unittest.TestCase):
 
     def test_committed_ledger_has_one_active_q_and_explicit_cases(self):
         result=validate(self.ledger)
-        self.assertEqual(result['active_q'],'Q03')
+        self.assertEqual(result['active_q'],'Q04')
         self.assertEqual(sum(result['case_results'].values()),result['coverage_identified'])
         self.assertFalse(result['q_accepted'])
-        self.assertEqual(result['prior_engineering_handoffs'],['Q01','Q02'])
+        self.assertEqual(result['prior_engineering_handoffs'],['Q01','Q02','Q03'])
 
     def _reset_to_q02_active(self):
         """Fixture: revert committed Q03 activation to exercise Q01->Q02 handoff."""
@@ -37,6 +37,12 @@ class SequentialQGateContracts(unittest.TestCase):
         q03['coverage_identified']=False
         q03['coverage_total']=None
         q03['cases']=[]
+        q03.pop('engineering_handoff',None)
+        q04=self.ledger['questions'][3]
+        q04['processing']='QUEUED'
+        q04['coverage_identified']=False
+        q04['coverage_total']=None
+        q04['cases']=[]
 
     def test_owner_authorized_engineering_handoff_does_not_accept_predecessor(self):
         self._reset_to_q02_active()
@@ -83,19 +89,18 @@ class SequentialQGateContracts(unittest.TestCase):
             data['questions'][1]['engineering_handoff']['owner_decision_url']=prefix+suffix
             with self.subTest(suffix=suffix),self.assertRaises(ValueError):validate(data)
 
-    def test_q02_handoff_preserves_release_and_next_q_boundaries(self):
-        q02=self.ledger['questions'][1]
+    def test_q03_handoff_preserves_release_and_next_q_boundaries(self):
         q03=self.ledger['questions'][2]
-        self.assertEqual(self.ledger['active_q'],'Q03')
-        self.assertEqual(sum(c['status']=='PASS' for c in q02['cases']),130)
-        self.assertFalse(q02['accepted'])
-        self.assertIn('engineering_handoff',q02)
-        self.assertEqual(q02['engineering_handoff']['next_q'],'Q03')
-        self.assertEqual(q03['processing'],'ACTIVE')
-        self.assertEqual({c['id'] for c in q02['cases'] if c['status']=='BLOCKED'},
-            {'Q02-INDEPENDENT','Q02-PHYSICAL-macos-arm64',
-             'Q02-PHYSICAL-windows-x64','Q02-PHYSICAL-linux-x86_64'})
-        for case in q02['cases']:
+        q04=self.ledger['questions'][3]
+        self.assertEqual(self.ledger['active_q'],'Q04')
+        self.assertEqual(sum(c['status']=='PASS' for c in q03['cases']),24)
+        self.assertFalse(q03['accepted'])
+        self.assertIn('engineering_handoff',q03)
+        self.assertEqual(q03['engineering_handoff']['next_q'],'Q04')
+        self.assertEqual(q04['processing'],'ACTIVE')
+        self.assertEqual({c['id'] for c in q03['cases'] if c['status']=='BLOCKED'},
+            {'Q03-INDEPENDENT','Q03-WINDOWS-NO-FLICKER'})
+        for case in q03['cases']:
             if case['status']=='PASS' and case['platform']=='linux-x86_64':
                 for evidence in case['acceptance_evidence']:
                     if 'core_trust' in evidence:
@@ -111,7 +116,7 @@ class SequentialQGateContracts(unittest.TestCase):
                 data['questions'][0]['cases'][0]['acceptance_evidence']=[]
             elif change=='accepted':data['questions'][0]['accepted']=True
             elif change=='auto-merge':data['automatic_merge_allowed']=True
-            else:data['questions'][3]['processing']='ACTIVE'  # Q04 while Q03 active
+            else:data['questions'][4]['processing']='ACTIVE'  # Q05 while Q04 active
             with self.subTest(change=change),self.assertRaises(ValueError):validate(data)
 
     def test_unexplained_external_block_and_missing_case_are_denied(self):

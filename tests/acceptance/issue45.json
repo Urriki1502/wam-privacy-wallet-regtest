@@ -2,7 +2,7 @@
   "schema": "wam-issue45-sequential-q-ledger/v1",
   "authoritative_spec": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
   "owner_protocol": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993",
-  "active_q": "Q03",
+  "active_q": "Q04",
   "execution_order": [
     "Q01",
     "Q02",
@@ -10306,7 +10306,7 @@
     {
       "id": "Q03",
       "requirement": "Shared JSON-RPC repeated sync with no per-call CLI/rehash; no Windows console flicker or independent GUI crash",
-      "processing": "ACTIVE",
+      "processing": "ENGINEERING_DONE",
       "status": "BLOCKED",
       "accepted": false,
       "coverage_identified": true,
@@ -13184,7 +13184,7 @@
           "not_applicable_reason": null
         }
       },
-      "owner_merge_authorization": null,
+      "owner_merge_authorization": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/131",
       "post_merge_main_sha": "a305864d4a5af966beb468786f44c6917378a98e",
       "historical_evidence": [
         {
@@ -13227,7 +13227,7 @@
           ]
         }
       ],
-      "engineering_status": "TECHNICAL_COMPLETE_PENDING_EXTERNAL_AND_OWNER_INTEGRATION",
+      "engineering_status": "INTEGRATED_PENDING_EXTERNAL",
       "qualified_runtime_source_sha": "5af0899b9654ef109858f267b174e5e5a7062ab3",
       "failure_history": [
         {
@@ -13360,20 +13360,38 @@
         "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e"
       },
       "candidate_head_policy": "candidate_head_sha identifies the last artifact-qualified workflow source. Later governance-only PR commits are separately verified on GitHub; they never relabel the original receipts.",
-      "integration_blocker": {
-        "actor": "REPOSITORY_OWNER_THEN_CI_OPERATOR",
-        "missing_evidence": "Q03 owner-approved merge and exact-main postmerge qualification. Q02 focus authorization does not authorize merging Q03.",
-        "next_action": "Review concrete Draft PR #131; authorize integration separately, then qualify merged main. Keep Draft and Q04 queued."
+      "integration_blocker": null,
+      "engineering_handoff": {
+        "engineering_status": "INTEGRATED_PENDING_EXTERNAL",
+        "owner_authorized_handoff": true,
+        "owner_decision_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6413858061",
+        "merged_pr": 131,
+        "merged_main_sha": "a305864d4a5af966beb468786f44c6917378a98e",
+        "qualified_runtime_source_sha": "5af0899b9654ef109858f267b174e5e5a7062ab3",
+        "next_q": "Q04",
+        "postmerge_status": "PASS",
+        "postmerge_pass_runs": [
+          40285367194,
+          40285367219,
+          40287753694,
+          40287753650
+        ],
+        "postmerge_missing": null,
+        "unresolved_case_ids": [
+          "Q03-INDEPENDENT",
+          "Q03-WINDOWS-NO-FLICKER"
+        ],
+        "timestamp_utc": "2026-10-26T10:36:17Z"
       }
     },
     {
       "id": "Q04",
       "requirement": "REGTEST node and solo miner coexistence: read-only attachment, RPC busy/work-queue rejection, reconnect and recovery without disrupting the external miner.",
-      "processing": "QUEUED",
+      "processing": "ACTIVE",
       "status": "PENDING",
       "accepted": false,
       "coverage_identified": true,
-      "coverage_total": 22,
+      "coverage_total": 24,
       "base_main_sha": "a305864d4a5af966beb468786f44c6917378a98e",
       "candidate_pr": null,
       "candidate_head_sha": null,
@@ -13395,9 +13413,10 @@
             {
               "source_sha": "a305864d4a5af966beb468786f44c6917378a98e",
               "checkout_sha": "a305864d4a5af966beb468786f44c6917378a98e",
-              "timestamp_utc": "2026-10-26T10:24:07Z",
+              "timestamp_utc": "2026-10-26T10:36:17Z",
               "platform": "shared",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45"
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6413858061",
+              "note": "22 Q04 cases enumerated and bound to owner decision."
             }
           ],
           "blocker": null
@@ -13414,17 +13433,13 @@
             "G0"
           ],
           "mandatory": true,
-          "status": "PASS",
-          "acceptance_evidence": [
-            {
-              "source_sha": "a305864d4a5af966beb468786f44c6917378a98e",
-              "checkout_sha": "a305864d4a5af966beb468786f44c6917378a98e",
-              "timestamp_utc": "2026-10-26T10:24:07Z",
-              "platform": "shared",
-              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45"
-            }
-          ],
-          "blocker": null
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": {
+            "actor": "ENGINEERING",
+            "missing_evidence": "Implementation PR demonstrating managed Core / attached Core / external miner separation",
+            "next_action": "Submit focused Q04 implementation PR with architecture evidence"
+          }
         },
         {
           "id": "Q04-ATTACH-CONSENT",
