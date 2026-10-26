@@ -102,7 +102,7 @@ class SoloMinerFixture:
         node, cli, receipt = self._verified_core_paths(self._core_dir)
 
         # Start Core in non-daemon mode so we own the Popen.
-        argv = [str(node), f'-datadir={self._datadir}', '-daemon=0']
+        argv = [str(node), f'-datadir={self._datadir}', '-regtest=1', '-daemon=0']
         self._core_process = subprocess.Popen(
             argv, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
 
