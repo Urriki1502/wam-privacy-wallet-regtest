@@ -132,6 +132,7 @@ class _JsonRpcHandler(http.server.BaseHTTPRequestHandler):
     fail_next_status: int | None = None
     fail_next_body: bytes = b""
     _id_counter: int = 0
+    genesis: str = REGTEST_GENESIS
     _lock = threading.Lock()
 
     def log_message(self, fmt, *args):
@@ -186,7 +187,7 @@ class _JsonRpcHandler(http.server.BaseHTTPRequestHandler):
             result = {"chain": "regtest", "blocks": 102}
         elif method == "getblockhash":
             height = req["params"][0]
-            result = REGTEST_GENESIS if height == 0 else "a" * 64
+            result = self.genesis if height == 0 else "a" * 64
         elif method == "getnetworkinfo":
             result = {"version": 111, "subversion": "/WAM:0.1.11/", "protocolversion": 70016}
         elif method == "getconnectioncount":
@@ -234,6 +235,7 @@ class LocalJsonRpcContracts(unittest.TestCase):
         _JsonRpcHandler.busy_remaining = 0
         _JsonRpcHandler.fail_next_status = None
         _JsonRpcHandler.fail_next_body = b""
+        _JsonRpcHandler.genesis = REGTEST_GENESIS
         self._config_patch = patch.object(
             json_rpc_module, "_private_config", return_value=VALID_CONFIG
         )
@@ -384,6 +386,27 @@ class LocalJsonRpcContracts(unittest.TestCase):
         with self.assertRaisesRegex(RpcError, "RPC_OWNED_PROCESS_EXITED"):
             with self._transport(binding=binding) as rpc:
                 rpc.call("getblockcount", [])
+
+    def test_expired_trust_cache_rechecks_genesis_before_returning_reads(self):
+        rpc = self._transport()
+        self.addCleanup(rpc.close)
+        _JsonRpcHandler.genesis = 'f' * 64
+        rpc._last_attest = json_rpc_module.time.monotonic() - json_rpc_module.MAX_TRUST_CACHE_SECONDS - 1
+        with self.assertRaisesRegex(RpcError, 'RPC_GENESIS_DENIED'):
+            rpc.call('getblockcount', [])
+        self.assertTrue(rpc._closed)
+        self.assertIsNone(rpc._auth)
+
+    def test_process_loss_after_cached_attestation_sends_no_new_request(self):
+        rpc = self._transport()
+        self.addCleanup(rpc.close)
+        binding = rpc._connection._binding
+        binding._fail_after = binding._calls
+        before = _JsonRpcHandler._id_counter
+        with self.assertRaisesRegex(RpcError, 'RPC_OWNED_PROCESS_EXITED'):
+            rpc.call('getblockcount', [])
+        self.assertEqual(_JsonRpcHandler._id_counter, before)
+        self.assertTrue(rpc._closed)
 
     def test_credential_fault_revokes_transport_before_config_can_be_restored(self):
         from wam_regtest.rpc_credentials import CredentialError

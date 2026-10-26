@@ -55,7 +55,14 @@ def check_pins(platform,pair,trust):
     require(trust==('reviewed-developer-source-build' if platform=='linux-x86_64'
                     else 'official-signed-v0.1.11'))
 
+def check_package_platform(platform,declared,frontend=None):
+    if platform=='linux-x86_64':
+        require(frontend in ('desktop','headless'))
+        require(declared==platform+'-'+frontend)
+    else:require(declared==platform)
+
 def check_reuse(value):
+    require(value.get('status') in ('Q03_REPEATED_READ_REUSE_PASS','Q03_REUSE_MEASURED'))
     require(value.get('cycles')==5 and type(value.get('delta')) is dict)
     require(all(type(value['delta'].get(k)) is int and value['delta'][k]==0 for k in ZERO_COUNTERS))
     require(type(value['delta'].get('http_request')) is int and value['delta']['http_request']>=5)
@@ -67,6 +74,12 @@ def check_genuine(obj,platform):
     require(obj['q02_authentication']['genuine_core_processes'] is True
         and obj['q02_authentication']['synthetic_rpc_server'] is False
         and obj['q02_authentication']['core_sha256']==PINS[platform])
+    q02=obj['q02_authentication']
+    require(q02['status']=='REAL_Q02_SIGNED_CLI_AUTH_FAIL_CLOSED_PASS'
+        and q02['core_version']=='v0.1.11' and q02['observed_rpc_version']==111
+        and len(q02['cases'])==33
+        and len({c['case'] for c in q02['cases']})==33
+        and all(c['status']=='PASS' and c['genuine_core_observed'] is True for c in q02['cases']))
     require(obj['wsp_live_scan']['source_commit']==WSP)
     require(obj['wallet_live_core']['synthetic_rpc'] is False)
 
@@ -92,7 +105,7 @@ def package_record(z,platform,head):
     require(len(found)==1)
     name=found[0];prefix=name.removesuffix('RELEASE_CANDIDATE_MANIFEST.json')
     m,mhash=read_json(z,name)
-    require(m['source_head_sha']==head and m['wsp_source_commit']==WSP and m['platform']==platform)
+    require(m['source_head_sha']==head and m['wsp_source_commit']==WSP)
     require(re.fullmatch('[0-9a-f]{40}',m['checkout_sha']) is not None)
     require(m['native_final_executable_e2e_pass'] is True and m['network']=='regtest')
     require(m['production_qualified'] is False and m['dev_wam_reviewed'] is False)
@@ -100,9 +113,13 @@ def package_record(z,platform,head):
     check_pins(platform,m['core_sha256'],m['core_provenance'])
     if platform=='linux-x86_64':
         linux,_=read_json(z,prefix+'LINUX_PACKAGE_MANIFEST.json')
-        require(linux['official_signed_core_release'] is False
+        check_package_platform(platform,m['platform'],linux['frontend'])
+        require(linux['platform']==platform and linux['source_head_sha']==head
+            and linux['checkout_sha']==m['checkout_sha']
+            and linux['official_signed_core_release'] is False
             and linux['approved_core_manifest_sha256']=='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806'
             and linux['developer_core_sha256']==PINS[platform])
+    else:check_package_platform(platform,m['platform'])
     b,bhash=read_json(z,prefix+'BUILD_SOURCE_RECEIPT.json')
     require(b['source_head_sha']==head and b['checkout_sha']==m['checkout_sha'])
     require(b['tracked_source_matches_head'] is True and b['source_unchanged_across_build'] is True)
@@ -215,7 +232,10 @@ def main():
             a=find_artifact(artifacts,prefix);j=job(jname)
             with archive(args.artifacts/f"{a['id']}.zip",a)[0] as z:
                 m,extra=package_record(z,platform,head)
+                if platform=='linux-x86_64':
+                    require(m['platform']==platform+('-headless' if jname=='frozen-wallet (headless)' else '-desktop'))
                 record=common(a,j,m['checkout_sha']);record.update(extra)
+                record['package_platform']=m['platform']
                 if platform=='linux-x86_64':
                     record.update(official_signed_release=False,
                         approved_developer_manifest_sha256='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
@@ -280,7 +300,18 @@ def main():
     require(data['active_q']=='Q03' and q['candidate_pr']==131 and q['accepted'] is False)
     for c in q['cases']:
         if c['layer'] in ('PHYSICAL','DEV_REVIEWED'):
+            # This importer has no authority to supply or erase a genuine
+            # human signoff; stop if those externally owned states changed.
+            require(c['status']=='BLOCKED')
             c['acceptance_evidence']=[]
+            if c['layer']=='PHYSICAL':
+                c['blocker']={'actor':'AUTHORIZED_PHYSICAL_WINDOWS_OPERATOR',
+                    'missing_evidence':'Actual Windows console/flicker and independent-GUI survival observation on the exact final packaged bytes.',
+                    'next_action':'Owner assigns an authorized clean-host Windows operator and records exact package hash, OS, observations and signed receipt. Automated Qt success does not replace physical observation.'}
+            else:
+                c['blocker']={'actor':'INDEPENDENT_DEV_SECURITY_REVIEWER',
+                    'missing_evidence':'Independent review of the exact shared transport/runtime source and evidence; this engineering audit is not independent approval.',
+                    'next_action':'Owner obtains an independent security assessment and records reviewer identity, exact source and findings/signoff.'}
             continue
         platform=c['platform']
         if c['layer']=='SOURCE':
