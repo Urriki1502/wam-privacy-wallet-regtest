@@ -44,6 +44,7 @@ class SoloMinerFixture:
         self._timeout = timeout
         self._core_process: subprocess.Popen | None = None
         self._miner_process: subprocess.Popen | None = None
+        self._datadir_tmp = None
         self._datadir: Path | None = None
         self._rpc_port: int | None = None
         self._p2p_port: int | None = None
@@ -92,7 +93,8 @@ class SoloMinerFixture:
 
     def start(self) -> dict:
         """Start isolated Core and miner. Returns attachment spec."""
-        self._datadir = private_temporary_directory(prefix='q04_miner_')
+        self._datadir_tmp = private_temporary_directory(prefix='q04_miner_')
+        self._datadir = Path(self._datadir_tmp.name).resolve()
         self._rpc_port = _port()
         self._p2p_port = _port()
         self._write_cookie_config(self._datadir, self._rpc_port, self._p2p_port)
@@ -202,6 +204,12 @@ class SoloMinerFixture:
             except subprocess.TimeoutExpired:
                 self._core_process.kill()
             self._core_process = None
+        if self._datadir_tmp is not None:
+            try:
+                self._datadir_tmp.cleanup()
+            except Exception:
+                pass
+            self._datadir_tmp = None
         increment('q04_fixture_stopped')
 
     def __enter__(self):

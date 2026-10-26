@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -35,16 +36,52 @@ def _ok(result: dict):
     return evidence
 
 
+def _read_manifest_sha256(core_dir: Path) -> str:
+    candidates = [
+        core_dir.parent / 'LINUX_DEVELOPER_CORE_MANIFEST_SHA256.txt',
+        core_dir / 'LINUX_DEVELOPER_CORE_MANIFEST_SHA256.txt',
+        core_dir / 'manifest.sha256',
+    ]
+    for path in candidates:
+        if path.is_file():
+            return path.read_text().strip()
+    _fail('MANIFEST_SHA256_FILE_NOT_FOUND')
+
+
+def _linux_setup_trust(core_dir: Path):
+    """Configure the Linux explicit trust policy required by verified_core_paths."""
+    if sys.platform != 'linux':
+        return
+    manifest_sha256 = _read_manifest_sha256(core_dir)
+    root = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root / 'tests'))
+    os.environ['WAM_ROOT_WITNESS_NATIVE_TESTS'] = '1'
+    from test_linux_anchor_witness import NativeRootWitness
+    NativeRootWitness.setUpClass()
+    try:
+        from wam_regtest.linux_runtime import configure
+        configure(core_dir, manifest_sha256, NativeRootWitness.root / 'anchor.sock',
+                  authorized=True)
+    except Exception:
+        NativeRootWitness.tearDownClass()
+        raise
+    return NativeRootWitness
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--core-dir', required=True, type=Path)
     parser.add_argument('--max-duration', type=int, default=120)
     args = parser.parse_args()
 
-    if not args.core_dir.is_absolute():
+    core_dir = args.core_dir.resolve()
+    if not core_dir.is_absolute():
         _fail('CORE_DIR_ABSOLUTE_REQUIRED')
 
-    with SoloMinerFixture(args.core_dir, timeout=args.max_duration) as fixture:
+    witness = None
+    try:
+        witness = _linux_setup_trust(core_dir)
+        with SoloMinerFixture(core_dir, timeout=args.max_duration) as fixture:
         spec = fixture.start()
         pid = spec['pid']
         rpc_port = spec['rpc_port']
@@ -116,7 +153,7 @@ def main():
                 _fail('PORT_CHANGE_WRONG_ERROR')
 
         _ok({
-            'core_dir': str(args.core_dir),
+            'core_dir': str(core_dir),
             'fixture_pid': pid,
             'rpc_port': rpc_port,
             'height_before': height_before,
@@ -127,6 +164,9 @@ def main():
             'port_change_detected': True,
             'synthetic_rpc': False,
         })
+    finally:
+        if witness is not None:
+            witness.tearDownClass()
 
 
 if __name__ == '__main__':
