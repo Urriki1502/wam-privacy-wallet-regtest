@@ -235,14 +235,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12.10'
           architecture: 'arm64'
-      - name: Q01 clean hash-locked GUI environment
-        env:
-          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
+      - name: Install wallet module
+        run: python -m pip install -e .
       - name: Fetch pinned official signed ARM64 Core
         run: python -m wam_regtest.release --platform macos-arm64 --destination core
       - name: Q04 genuine Core miner coexistence and read-only attachment

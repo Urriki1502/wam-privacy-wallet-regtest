@@ -101,7 +101,29 @@ jobs:
       - name: Fetch pinned official signed Windows x64 Core
         shell: pwsh
         run: |
-          python -m wam_regtest.release --platform windows-x64 --destination core
+          @'
+          from pathlib import Path
+          from wam_regtest.release import _download_exact
+          from wam_regtest.windows_core_regtest_smoke import smoke_signed_windows_regtest
+          from wam_regtest.windows_release_preflight import ASSET
+          core_dir = Path('core').resolve()
+          core_dir.mkdir(parents=True, exist_ok=True)
+          files=(
+              ("/SIGNING-KEY.asc","SIGNING-KEY.asc",32768),
+              ("/downloads/v0.1.11/SHA256SUMS","SHA256SUMS",131072),
+              ("/downloads/v0.1.11/SHA256SUMS.asc","SHA256SUMS.asc",16384),
+              ("/downloads/v0.1.11/"+ASSET,ASSET,320*1024*1024),
+          )
+          for remote,name,limit in files:
+              _download_exact(remote,limit,core_dir/name)
+          receipt=smoke_signed_windows_regtest(
+              core_dir/ASSET,core_dir/"SIGNING-KEY.asc",core_dir/"SHA256SUMS",
+              core_dir/"SHA256SUMS.asc",consent=True,timeout=120)
+          assert receipt["status"]=="WIN64_SIGNED_WAM_CORE_REGTEST_101_BLOCK_SMOKE_PASS"
+          print(receipt["status"])
+          print("CORE_SHA256",receipt["core_sha256"])
+          print("CLI_SHA256",receipt["cli_sha256"])
+          '@ | python -
       - name: Q04 genuine Core miner coexistence and read-only attachment
         shell: pwsh
         run: |
