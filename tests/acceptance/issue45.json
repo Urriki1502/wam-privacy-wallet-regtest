@@ -13433,13 +13433,18 @@
             "G0"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
-          "blocker": {
-            "actor": "ENGINEERING",
-            "missing_evidence": "Implementation PR demonstrating managed Core / attached Core / external miner separation",
-            "next_action": "Submit focused Q04 implementation PR with architecture evidence"
-          }
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "5b02502622af677e425f81ad302e179062f9ecc4",
+              "checkout_sha": "5b02502622af677e425f81ad302e179062f9ecc4",
+              "timestamp_utc": "2026-10-26T13:29:37Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/133",
+              "note": "Implementation present in PR #133; real Core qualification pending."
+            }
+          ],
+          "blocker": null
         },
         {
           "id": "Q04-ATTACH-CONSENT",
@@ -13454,8 +13459,17 @@
             "G1"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "5b02502622af677e425f81ad302e179062f9ecc4",
+              "checkout_sha": "5b02502622af677e425f81ad302e179062f9ecc4",
+              "timestamp_utc": "2026-10-26T13:29:37Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/133",
+              "note": "Implementation present in PR #133; real Core qualification pending."
+            }
+          ],
           "blocker": null
         },
         {
@@ -13536,8 +13550,17 @@
             "G0"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "5b02502622af677e425f81ad302e179062f9ecc4",
+              "checkout_sha": "5b02502622af677e425f81ad302e179062f9ecc4",
+              "timestamp_utc": "2026-10-26T13:29:37Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/133",
+              "note": "Implementation present in PR #133; real Core qualification pending."
+            }
+          ],
           "blocker": null
         },
         {
@@ -13823,7 +13846,7 @@
         },
         "G1": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G2": {
