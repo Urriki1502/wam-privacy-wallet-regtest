@@ -2,7 +2,7 @@
   "schema": "wam-issue45-sequential-q-ledger/v1",
   "authoritative_spec": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
   "owner_protocol": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993",
-  "active_q": "Q02",
+  "active_q": "Q03",
   "execution_order": [
     "Q01",
     "Q02",
@@ -3270,7 +3270,7 @@
     {
       "id": "Q02",
       "requirement": "Real Core node authenticated, correct chain/genesis; wrong-chain/credentials fail closed",
-      "processing": "ACTIVE",
+      "processing": "ENGINEERING_DONE",
       "status": "BLOCKED",
       "accepted": false,
       "coverage_identified": true,
@@ -10217,7 +10217,7 @@
           "untrusted_draft_policy": "Attached uncommitted 130/4 draft was not imported. Its 444 repeated same-content claims differing only by audit timestamp/reference do not represent new receipts. All distinct native/frozen runs/jobs/artifacts/receipts are preserved in versioned history or explicit records."
         }
       ],
-      "engineering_status": "TECHNICAL_COMPLETE_PENDING_OWNER_HANDOFF",
+      "engineering_status": "INTEGRATED_PENDING_EXTERNAL",
       "full_acceptance_status": "BLOCKED",
       "failure_history": [],
       "engineering_scope": "Q02 authentication/chain/process/credential fail-closed only. Shared HTTP/native binding reused as necessary dependency; Q03 performance/flicker and Q04 miner/attach workflows remain QUEUED, unqualified.",
@@ -10279,24 +10279,71 @@
         }
       ],
       "qualified_runtime_source_sha": "277fb8c8bbe0947f82a90b94123c8b05a6c9900a",
-      "engineering_handoff_blocker": {
-        "actor": "REPOSITORY_OWNER",
-        "missing_evidence": "Authentic Issue #45 comment explicitly authorizing Q02-to-Q03 engineering focus and owner-approved governance integration. No Q02 decision comment exists as of this audit.",
-        "next_action": "Review the concrete governance-only changes, post the owner decision on Issue #45, then record its real numeric comment URL and merge the reviewed governance transition. Keep Q02 active until that valid transition."
+      "engineering_handoff": {
+        "engineering_status": "INTEGRATED_PENDING_EXTERNAL",
+        "owner_authorized_handoff": true,
+        "owner_decision_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+        "merged_pr": 129,
+        "merged_main_sha": "e929d9069e03f6b02a7e1d7a0ed64561f7c60e43",
+        "qualified_runtime_source_sha": "277fb8c8bbe0947f82a90b94123c8b05a6c9900a",
+        "next_q": "Q03",
+        "postmerge_status": "PASS",
+        "postmerge_pass_runs": [
+          40192345012,
+          40192413115,
+          40192413244
+        ],
+        "postmerge_missing": null,
+        "unresolved_case_ids": [
+          "Q02-INDEPENDENT",
+          "Q02-PHYSICAL-linux-x86_64",
+          "Q02-PHYSICAL-macos-arm64",
+          "Q02-PHYSICAL-windows-x64"
+        ],
+        "scope": "ENGINEERING FOCUS ONLY. Q02 accepted=false; G6 physical three-OS and G7 independent review remain BLOCKED. Stop Q03 for any real late Q02 failure."
       }
     },
     {
       "id": "Q03",
       "requirement": "Shared JSON-RPC repeated sync with no per-call CLI/rehash; no Windows console flicker or independent GUI crash",
-      "processing": "QUEUED",
+      "processing": "ACTIVE",
       "status": "PENDING",
       "accepted": false,
-      "coverage_identified": false,
-      "coverage_total": null,
-      "base_main_sha": null,
+      "coverage_identified": true,
+      "coverage_total": 1,
+      "base_main_sha": "e929d9069e03f6b02a7e1d7a0ed64561f7c60e43",
       "candidate_pr": null,
       "candidate_head_sha": null,
-      "cases": [],
+      "cases": [
+        {
+          "id": "Q03-COVERAGE",
+          "requirement": "Enumerate all Q03 Phase 1 shared authenticated JSON-RPC cases before runtime changes",
+          "acceptance_predicate": "Traceable source review only; no runtime/human acceptance inferred",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [
+            {
+              "source_sha": "e929d9069e03f6b02a7e1d7a0ed64561f7c60e43",
+              "checkout_sha": "e929d9069e03f6b02a7e1d7a0ed64561f7c60e43",
+              "timestamp_utc": "2026-10-26T01:34:39Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Owner-authorized engineering handoff activates Q03; full case matrix to be enumerated in the focused Q03 Draft PR."
+            }
+          ],
+          "blocker": null
+        }
+      ],
       "gates": {
         "G0": {
           "applicable": true,
