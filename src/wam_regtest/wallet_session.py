@@ -94,7 +94,8 @@ class WalletCoreCli(LiveCoreReadOnlyCli):
 
 
 class WalletSession:
-    def __init__(self, core_dir, datadir, source, ring, scanner, vault, password, mining_address):
+    def __init__(self, core_dir, datadir, source, ring, scanner, vault, password, mining_address,
+                 *, core_cli=None, core_receipt=None):
         self.core_dir, self.datadir, self.source = core_dir, datadir, source
         self.ring, self.scanner, self.vault = ring, scanner, vault
         self._password = password
@@ -105,6 +106,17 @@ class WalletSession:
         self._core_reauthentication_required=False
         self._disclosure_gate = None
         self.runtime = scanner.store.path
+        self._core_cli = core_cli
+        self._core_receipt = core_receipt
+
+    def _ensure_core_identity(self):
+        """One-time verified Core path/receipt; subsequent reads avoid full rehash."""
+        if self._core_cli is None or self._core_receipt is None:
+            _, cli, receipt = verified_core_paths(self.core_dir)
+            if receipt["platform"] != custody.platform_name():
+                raise WalletSessionError("WALLET_MACOS_CORE_DENIED")
+            self._core_cli, self._core_receipt = cli, receipt
+        return self._core_cli, self._core_receipt
 
     @classmethod
     def create(cls, core_dir, datadir, source, password, mining_address, *, authorized, keychain=None):
@@ -134,7 +146,8 @@ class WalletSession:
             scanner.sync(rpc)
             anchor = custody.anchor(secrets.token_hex(16), keychain)
             vault = CheckpointVault(folder, anchor, source)
-            session = cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address)
+            session = cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address,
+                          core_cli=cli,core_receipt=receipt)
             vault.save(ring,scanner,password)
             return session
         except Exception:
@@ -189,7 +202,8 @@ class WalletSession:
             _public_fixture_payment(rpc,account,mining_address,funding_height=height-100,
                                     expected_before_height=height)
             scanner.sync(rpc)
-            session=cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address)
+            session=cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address,
+                        core_cli=cli,core_receipt=receipt)
             session._save()
             return session
         except Exception:
@@ -211,7 +225,14 @@ class WalletSession:
             raise WalletSessionError("WALLET_STALE_SESSION_DENIED")
         try:
             _pinned_source(self.source)
-            _, cli, _ = verified_core_paths(self.core_dir)
+            cli, receipt = self._ensure_core_identity()
+            from .rpc_scope import identity
+            if (self._core_receipt is not None and self._core_receipt.get("wamd_sha256")
+                    != receipt.get("wamd_sha256")):
+                self._fault_core()
+                raise WalletSessionError("WALLET_CORE_IDENTITY_CHANGED")
+            if identity(self.datadir) is None:
+                raise WalletSessionError("WALLET_CORE_OWNED_SCOPE_REQUIRED")
             rpc = WalletCoreCli(cli,self.datadir,on_trust_failure=self._fault_core)
             rpc.attest()
             return rpc
@@ -251,7 +272,7 @@ class WalletSession:
             return WalletReadSnapshot(
                 "regtest",tip[0],tip[1],self.ring.accounts()[-1].payment_code(),
                 balance["confirmed_atoms"],len(self.scanner.coins()),history,
-                verified_core_paths(self.core_dir)[2]["wamd_sha256"],
+                self._ensure_core_identity()[1]["wamd_sha256"],
                 signer_allowed=True,broadcast_allowed=True,
             )
 
