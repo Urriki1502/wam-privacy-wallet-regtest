@@ -13394,7 +13394,7 @@
       "coverage_total": 24,
       "base_main_sha": "a305864d4a5af966beb468786f44c6917378a98e",
       "candidate_pr": 133,
-      "candidate_head_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+      "candidate_head_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
       "cases": [
         {
           "id": "Q04-COVERAGE",
@@ -13528,6 +13528,27 @@
               "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
               "receipt_name": "q04-evidence.json",
               "scope": "Genuine read-only attachment to external Core; process image and socket ownership attested before credentials."
+            },
+            {
+              "source_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "checkout_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "timestamp_utc": "2026-10-26T16:10:28Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40356241287/job/121689840905",
+              "workflow_run_id": 40356241287,
+              "job_id": 121689840905,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-windows-x64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12666151567,
+              "artifact_sha256": "9cb5736903eab1f8805e7afa0b296cfbb5822f19659d6cd4d50d7cabab5952d2",
+              "receipt_name": "q04-evidence.json",
+              "scope": "Genuine read-only attachment to external Core; process image and socket ownership attested before credentials."
             }
           ],
           "blocker": null
@@ -13585,6 +13606,27 @@
               "synthetic_rpc": false,
               "artifact_id": 12665102498,
               "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
+              "receipt_name": "q04-evidence.json",
+              "scope": "Cookie auth read via owner-only regtest/.cookie; no rpcuser/rpcpassword in config."
+            },
+            {
+              "source_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "checkout_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "timestamp_utc": "2026-10-26T16:10:28Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40356241287/job/121689840905",
+              "workflow_run_id": 40356241287,
+              "job_id": 121689840905,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-windows-x64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12666151567,
+              "artifact_sha256": "9cb5736903eab1f8805e7afa0b296cfbb5822f19659d6cd4d50d7cabab5952d2",
               "receipt_name": "q04-evidence.json",
               "scope": "Cookie auth read via owner-only regtest/.cookie; no rpcuser/rpcpassword in config."
             }
@@ -13646,6 +13688,27 @@
               "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
               "receipt_name": "q04-evidence.json",
               "scope": "sendrawtransaction refused at read-only boundary with EXTERNAL_ATTACHMENT_READ_SCOPE_DENIED."
+            },
+            {
+              "source_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "checkout_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "timestamp_utc": "2026-10-26T16:10:28Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40356241287/job/121689840905",
+              "workflow_run_id": 40356241287,
+              "job_id": 121689840905,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-windows-x64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12666151567,
+              "artifact_sha256": "9cb5736903eab1f8805e7afa0b296cfbb5822f19659d6cd4d50d7cabab5952d2",
+              "receipt_name": "q04-evidence.json",
+              "scope": "sendrawtransaction refused at read-only boundary with EXTERNAL_ATTACHMENT_READ_SCOPE_DENIED."
             }
           ],
           "blocker": null
@@ -13704,6 +13767,27 @@
               "synthetic_rpc": false,
               "artifact_id": 12665102498,
               "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
+              "receipt_name": "q04-evidence.json",
+              "scope": "External miner process continued producing blocks while Fusion polled; no stop/restart/config edit."
+            },
+            {
+              "source_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "checkout_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "timestamp_utc": "2026-10-26T16:10:28Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40356241287/job/121689840905",
+              "workflow_run_id": 40356241287,
+              "job_id": 121689840905,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-windows-x64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12666151567,
+              "artifact_sha256": "9cb5736903eab1f8805e7afa0b296cfbb5822f19659d6cd4d50d7cabab5952d2",
               "receipt_name": "q04-evidence.json",
               "scope": "External miner process continued producing blocks while Fusion polled; no stop/restart/config edit."
             }
@@ -13870,6 +13954,27 @@
               "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
               "receipt_name": "q04-evidence.json",
               "scope": "ExternalCoreSession re-attached to same authorized spec after fresh ownership proof."
+            },
+            {
+              "source_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "checkout_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "timestamp_utc": "2026-10-26T16:10:28Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40356241287/job/121689840905",
+              "workflow_run_id": 40356241287,
+              "job_id": 121689840905,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-windows-x64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12666151567,
+              "artifact_sha256": "9cb5736903eab1f8805e7afa0b296cfbb5822f19659d6cd4d50d7cabab5952d2",
+              "receipt_name": "q04-evidence.json",
+              "scope": "ExternalCoreSession re-attached to same authorized spec after fresh ownership proof."
             }
           ],
           "blocker": null
@@ -13928,6 +14033,27 @@
               "synthetic_rpc": false,
               "artifact_id": 12665102498,
               "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
+              "receipt_name": "q04-evidence.json",
+              "scope": "Each reconnect re-attests same PID and loopback socket ownership."
+            },
+            {
+              "source_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "checkout_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "timestamp_utc": "2026-10-26T16:10:28Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40356241287/job/121689840905",
+              "workflow_run_id": 40356241287,
+              "job_id": 121689840905,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-windows-x64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12666151567,
+              "artifact_sha256": "9cb5736903eab1f8805e7afa0b296cfbb5822f19659d6cd4d50d7cabab5952d2",
               "receipt_name": "q04-evidence.json",
               "scope": "Each reconnect re-attests same PID and loopback socket ownership."
             }
@@ -13989,6 +14115,27 @@
               "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
               "receipt_name": "q04-evidence.json",
               "scope": "PID/port/datadir/core_dir change requires fresh authorization; stale consent not reused."
+            },
+            {
+              "source_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "checkout_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "timestamp_utc": "2026-10-26T16:10:28Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40356241287/job/121689840905",
+              "workflow_run_id": 40356241287,
+              "job_id": 121689840905,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-windows-x64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12666151567,
+              "artifact_sha256": "9cb5736903eab1f8805e7afa0b296cfbb5822f19659d6cd4d50d7cabab5952d2",
+              "receipt_name": "q04-evidence.json",
+              "scope": "PID/port/datadir/core_dir change requires fresh authorization; stale consent not reused."
             }
           ],
           "blocker": null
@@ -14047,8 +14194,30 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "checkout_sha": "46d9d69aba13c834d3297be8d950122eb977d17c",
+              "timestamp_utc": "2026-10-26T16:10:28Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40356241287/job/121689840905",
+              "workflow_run_id": 40356241287,
+              "job_id": 121689840905,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-windows-x64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12666151567,
+              "artifact_sha256": "9cb5736903eab1f8805e7afa0b296cfbb5822f19659d6cd4d50d7cabab5952d2",
+              "receipt_name": "q04-evidence.json",
+              "scope": "Native Windows x64 genuine Core E2E with isolated solo-miner fixture."
+            }
+          ],
           "blocker": null
         },
         {
