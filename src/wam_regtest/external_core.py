@@ -10,17 +10,14 @@ import base64
 import http.client
 import json
 import os
-import re
 import socket
 import stat
-import subprocess
 import sys
 import time
 from pathlib import Path
-from decimal import Decimal
 
 from .core_process import CoreBindingError, _image, _metadata, _linux_socket, _mac_socket, _windows_socket
-from .json_rpc import RpcError, _reply, _params, _HTTP_READS, SUPPORTED_RPC, MAX_REPLY, MAX_BLOCK_REPLY, MAX_TRUST_CACHE_SECONDS
+from .json_rpc import RpcError, _reply, _params, _HTTP_READS, SUPPORTED_RPC, MAX_REPLY, MAX_BLOCK_REPLY
 from .telemetry import increment
 from .wsp_live import REGTEST_GENESIS
 
@@ -106,31 +103,39 @@ class ExternalCoreAttachment:
     def _load_auth(self):
         """Load credentials from cookie file only when safely accessible.
 
-        We accept either an explicit cookie path supplied by the operator or the
-        standard `regtest/.cookie` inside the declared datadir. The cookie file
-        must be regular, owner-only, not a symlink, and owned by the current user
-        (same-user attachment only; cross-user attachment is denied).
+        On Windows we use the repository's existing native private-file boundary.
+        On POSIX the cookie file must be regular, owner-only, not a symlink, and
+        owned by the current user (same-user attachment only).
         """
         if self._auth_cookie is not None:
             cookie_path = self._auth_cookie
         else:
             cookie_path = self._datadir / 'regtest' / '.cookie'
 
-        try:
-            s = cookie_path.lstat()
-        except OSError:
-            raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_COOKIE_INACCESSIBLE') from None
+        if sys.platform == 'win32':
+            from .windows_core_transport import read_private, WindowsCoreTransportError
+            # Windows: read through native private-file guard; path must be under datadir.
+            rel = cookie_path.relative_to(self._datadir)
+            try:
+                raw = read_private(self._datadir, str(rel).replace('\\', '/'))
+            except WindowsCoreTransportError as exc:
+                raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_COOKIE_CUSTODY_DENIED') from None
+        else:
+            try:
+                s = cookie_path.lstat()
+            except OSError:
+                raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_COOKIE_INACCESSIBLE') from None
 
-        if (not stat.S_ISREG(s.st_mode) or s.st_nlink != 1 or cookie_path.is_symlink()
-                or s.st_uid != os.geteuid() or stat.S_IMODE(s.st_mode) != 0o600):
-            raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_COOKIE_CUSTODY_DENIED')
+            if (not stat.S_ISREG(s.st_mode) or s.st_nlink != 1 or cookie_path.is_symlink()
+                    or s.st_uid != os.geteuid() or stat.S_IMODE(s.st_mode) != 0o600):
+                raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_COOKIE_CUSTODY_DENIED')
 
-        try:
-            raw = cookie_path.read_bytes()
-        except OSError:
-            raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_COOKIE_INACCESSIBLE') from None
+            try:
+                raw = cookie_path.read_bytes()
+            except OSError:
+                raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_COOKIE_INACCESSIBLE') from None
 
-        if not 10 <= len(raw) <= 256 or b':' not in raw:
+        if not 10 <= len(raw) <= 512 or b':' not in raw:
             raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_COOKIE_INVALID')
         return base64.b64encode(raw).decode('ascii')
 
@@ -166,8 +171,6 @@ class ExternalCoreAttachment:
 
         # Only after socket ownership proof do we send credentials for chain attestation.
         blockchain = self._rpc('getblockchaininfo', [])
-        genesis = blockchain.get('bestblockhash') if type(blockchain) is dict else None
-        # bestblockhash may not be genesis if chain is advanced; validate chain name and genesis via hash 0.
         if type(blockchain) is not dict or blockchain.get('chain') != 'regtest':
             raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_CHAIN_DENIED')
         genesis_hash = self._rpc('getblockhash', [0])
@@ -218,6 +221,14 @@ class ExternalCoreAttachment:
                 }
                 conn.request('POST', '/', body, headers)
                 response = conn.getresponse()
+                # Distinguish HTTP 503 work-queue busy from transport/auth/identity failures.
+                if response.status == 503:
+                    increment('external_attachment_503_observed')
+                    raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_RPC_NODE_BUSY')
+                if response.status == 401:
+                    raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_RPC_AUTH_DENIED')
+                if response.status != 200:
+                    raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_RPC_TRANSPORT_DENIED')
                 raw = response.read(MAX_BLOCK_REPLY if method == 'getblock' else MAX_REPLY)
             except http.client.HTTPException:
                 raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_RPC_FAILED') from None
@@ -229,6 +240,9 @@ class ExternalCoreAttachment:
         try:
             return _reply(raw, identifier, method)
         except RpcError as exc:
+            # Pass through known busy/error signals so contention layer can handle them.
+            if exc.args[0] in ('RPC_CORE_WARMUP',):
+                raise
             raise ExternalAttachmentError(exc.args[0]) from None
 
     def read(self, method: str, params: list | None = None):
@@ -238,6 +252,16 @@ class ExternalCoreAttachment:
         if method not in _HTTP_READS:
             raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_READ_SCOPE_DENIED')
         return self._rpc(method, params)
+
+    def status(self) -> dict:
+        """Return externally observed status; never claim managed-Core ownership."""
+        return {
+            'busy': False,
+            'external_core_process_observed': self._pid if not self._closed else None,
+            'core_process_owned': False,  # External attachment is observation, not ownership.
+            'chain_height': None,
+            'tip': None,
+        }
 
     def close(self):
         self._closed = True

@@ -48,16 +48,24 @@ class ExternalCoreSession:
         self._attachment: ExternalCoreAttachment | None = None
         self._last_identity_time: float = 0.0
         self._recovery_needed = False
+        self._last_spec: dict | None = None
 
     def _is_fresh_identity(self) -> bool:
         return (self._attachment is not None
                 and time.monotonic() - self._last_identity_time <= self._policy.identity_ttl_seconds)
 
-    def _connect(self):
-        spec = self._authorize()
+    def _connect(self, spec: dict | None = None):
+        if spec is None:
+            spec = self._authorize()
         required = ('pid', 'rpc_port', 'datadir', 'core_dir', 'operator_consent')
         if not all(k in spec for k in required) or spec.get('operator_consent') is not True:
             raise ExternalRecoveryError('EXTERNAL_RECOVERY_AUTHORIZATION_DENIED')
+        # Treat any change in PID, port, datadir, core_dir or cookie path as a
+        # different external node that requires explicit fresh authorization.
+        if self._last_spec is not None:
+            for key in ('pid', 'rpc_port', 'datadir', 'core_dir', 'auth_cookie'):
+                if self._last_spec.get(key) != spec.get(key):
+                    raise ExternalRecoveryError('EXTERNAL_RECOVERY_IDENTITY_CHANGED')
         attachment = ExternalCoreAttachment(
             pid=int(spec['pid']),
             rpc_port=int(spec['rpc_port']),
@@ -68,6 +76,7 @@ class ExternalCoreSession:
             auth_cookie=Path(spec['auth_cookie']) if spec.get('auth_cookie') else None,
         )
         self._attachment = attachment
+        self._last_spec = dict(spec)
         self._last_identity_time = time.monotonic()
         self._recovery_needed = False
         increment('external_recovery_connected')
@@ -92,7 +101,8 @@ class ExternalCoreSession:
         last_error = None
         for attempt in range(self._policy.max_attempts):
             try:
-                self._connect()
+                # Reconnect to the originally authorized spec only.
+                self._connect(self._last_spec)
                 return
             except ExternalAttachmentError as exc:
                 last_error = exc
@@ -116,6 +126,7 @@ class ExternalCoreSession:
             self._attachment = None
             if exc.args[0] in (
                 'EXTERNAL_ATTACHMENT_RPC_UNREACHABLE',
+                'EXTERNAL_ATTACHMENT_RPC_NODE_BUSY',
                 'EXTERNAL_ATTACHMENT_SOCKET_OWNER_DENIED',
                 'EXTERNAL_ATTACHMENT_IMAGE_DENIED',
                 'EXTERNAL_ATTACHMENT_BINARY_CHANGED',

@@ -75,22 +75,29 @@ class ContentionAwareRpc:
     _BUSY_SIGNALS = frozenset((
         'RPC_CORE_WARMUP',
         'RPC_NODE_BUSY',
-        'EXTERNAL_ATTACHMENT_RPC_FAILED',
+        'EXTERNAL_ATTACHMENT_RPC_NODE_BUSY',
         'EXTERNAL_ATTACHMENT_RPC_UNREACHABLE',
     ))
 
     def __init__(self, read_callable: Callable, policy: BackoffPolicy | None = None,
-                 coalescer: ReadCoalescer | None = None):
+                 coalescer: ReadCoalescer | None = None,
+                 ownership_attest_callable: Callable | None = None):
         if not callable(read_callable):
             raise RpcContentionError('RPC_CONTENTION_CALLABLE_REQUIRED')
         self._read = read_callable
         self._policy = policy or BackoffPolicy()
         self._coalescer = coalescer or ReadCoalescer()
+        self._ownership_attest = ownership_attest_callable
 
     def _is_busy_signal(self, error) -> bool:
         return (isinstance(error, Exception)
                 and error.args
                 and error.args[0] in self._BUSY_SIGNALS)
+
+    def _is_auth_signal(self, error) -> bool:
+        return (isinstance(error, Exception)
+                and error.args
+                and error.args[0] in ('EXTERNAL_ATTACHMENT_RPC_AUTH_DENIED',))
 
     def read(self, method: str, params: list | None = None):
         if params is None:
@@ -105,6 +112,9 @@ class ContentionAwareRpc:
                 return self._read(method, params)
             except Exception as exc:
                 last_error = exc
+                if self._is_auth_signal(exc):
+                    # Auth failure is never a transient busy signal.
+                    raise
                 if not self._is_busy_signal(exc):
                     raise
                 if attempt < self._policy.max_retries:
@@ -122,9 +132,15 @@ class ContentionAwareRpc:
     def status(self) -> dict:
         """Return supervisor-visible status without hitting Core RPC if busy."""
         busy = self._coalescer.is_busy()
+        owned = False
+        if self._ownership_attest is not None:
+            try:
+                owned = bool(self._ownership_attest())
+            except Exception:
+                owned = False
         return {
             'busy': busy,
-            'core_process_owned': True,  # Caller must re-attest separately.
+            'core_process_owned': owned,
             'chain_height': None,
             'tip': None,
         }

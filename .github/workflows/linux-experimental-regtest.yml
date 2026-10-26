@@ -272,6 +272,46 @@ jobs:
             q01-core-negatives.json
           if-no-files-found: warn
           retention-days: 14
+  q04-miner-coexistence:
+    needs: headless-wallet
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.15'
+      - name: Q01 clean hash-locked headless environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile headless --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
+      - name: Fetch previously qualified immutable developer Core artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-developer-core-576082d227ccd9eb139686ded431c69c07399237
+          run-id: 38697805476
+          github-token: ${{ github.token }}
+          path: qualified-linux-core
+      - name: Q04 genuine Core miner coexistence and read-only attachment
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libevent-dev libsqlite3-dev binutils
+          chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
+          python scripts/q04_miner_coexistence.py --core-dir qualified-linux-core/linux-core --max-duration 180
+      - uses: actions/upload-artifact@v4
+        with:
+          name: q04-miner-coexistence-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q04-evidence.json
+          if-no-files-found: error
+          retention-days: 14
   developer-core:
     needs: native-contracts
     if: needs.native-contracts.outputs.core_changed == 'true'
