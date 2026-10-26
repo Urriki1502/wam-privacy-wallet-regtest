@@ -267,6 +267,9 @@ class LiveCoreReadOnlyCli:
 
     __slots__ = ("_binary", "_datadir", "_genesis", "_scope", "_transport")
 
+    # Subclasses may disable HTTP to force the signed CLI path (e.g. Q02 probe).
+    _http_enabled = True
+
     def __init__(self, binary: Path, datadir: Path) -> None:
         if (type(binary) is not type(Path()) or type(datadir) is not type(Path())
                 or not binary.is_absolute() or not datadir.is_absolute()):
@@ -360,7 +363,7 @@ class LiveCoreReadOnlyCli:
                 if self._transport is not None:
                     self._transport.close(); self._transport = None
                 raise RealWspScanError('WSP_LIVE_RPC_IDENTITY_DENIED')
-        if method in _HTTP_READS:
+        if self._http_enabled and method in _HTTP_READS:
             try:
                 scope = identity(self._datadir)
             except Exception:
