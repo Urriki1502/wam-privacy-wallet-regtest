@@ -13394,7 +13394,7 @@
       "coverage_total": 24,
       "base_main_sha": "a305864d4a5af966beb468786f44c6917378a98e",
       "candidate_pr": 133,
-      "candidate_head_sha": "ee5734cd78cda0ff23df3d9f3af1d1040f19c89e",
+      "candidate_head_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
       "cases": [
         {
           "id": "Q04-COVERAGE",
@@ -13507,6 +13507,27 @@
               "artifact_sha256": "8fd4649ab47f8a5cd6a91998b8fd4309d58240565ca7521a2afed292389d53b5",
               "receipt_name": "q04-evidence.json",
               "scope": "Genuine read-only attachment to external Core; process image and socket ownership attested before credentials."
+            },
+            {
+              "source_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "checkout_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "timestamp_utc": "2026-10-26T15:56:05Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40351736143/job/121678836238",
+              "workflow_run_id": 40351736143,
+              "job_id": 121678836238,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+              },
+              "core_trust": "official-signed-macos-arm64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12665102498,
+              "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
+              "receipt_name": "q04-evidence.json",
+              "scope": "Genuine read-only attachment to external Core; process image and socket ownership attested before credentials."
             }
           ],
           "blocker": null
@@ -13543,6 +13564,27 @@
               "synthetic_rpc": false,
               "artifact_id": 12660494188,
               "artifact_sha256": "8fd4649ab47f8a5cd6a91998b8fd4309d58240565ca7521a2afed292389d53b5",
+              "receipt_name": "q04-evidence.json",
+              "scope": "Cookie auth read via owner-only regtest/.cookie; no rpcuser/rpcpassword in config."
+            },
+            {
+              "source_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "checkout_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "timestamp_utc": "2026-10-26T15:56:05Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40351736143/job/121678836238",
+              "workflow_run_id": 40351736143,
+              "job_id": 121678836238,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+              },
+              "core_trust": "official-signed-macos-arm64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12665102498,
+              "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
               "receipt_name": "q04-evidence.json",
               "scope": "Cookie auth read via owner-only regtest/.cookie; no rpcuser/rpcpassword in config."
             }
@@ -13583,6 +13625,27 @@
               "artifact_sha256": "8fd4649ab47f8a5cd6a91998b8fd4309d58240565ca7521a2afed292389d53b5",
               "receipt_name": "q04-evidence.json",
               "scope": "sendrawtransaction refused at read-only boundary with EXTERNAL_ATTACHMENT_READ_SCOPE_DENIED."
+            },
+            {
+              "source_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "checkout_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "timestamp_utc": "2026-10-26T15:56:05Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40351736143/job/121678836238",
+              "workflow_run_id": 40351736143,
+              "job_id": 121678836238,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+              },
+              "core_trust": "official-signed-macos-arm64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12665102498,
+              "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
+              "receipt_name": "q04-evidence.json",
+              "scope": "sendrawtransaction refused at read-only boundary with EXTERNAL_ATTACHMENT_READ_SCOPE_DENIED."
             }
           ],
           "blocker": null
@@ -13620,6 +13683,27 @@
               "synthetic_rpc": false,
               "artifact_id": 12660494188,
               "artifact_sha256": "8fd4649ab47f8a5cd6a91998b8fd4309d58240565ca7521a2afed292389d53b5",
+              "receipt_name": "q04-evidence.json",
+              "scope": "External miner process continued producing blocks while Fusion polled; no stop/restart/config edit."
+            },
+            {
+              "source_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "checkout_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "timestamp_utc": "2026-10-26T15:56:05Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40351736143/job/121678836238",
+              "workflow_run_id": 40351736143,
+              "job_id": 121678836238,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+              },
+              "core_trust": "official-signed-macos-arm64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12665102498,
+              "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
               "receipt_name": "q04-evidence.json",
               "scope": "External miner process continued producing blocks while Fusion polled; no stop/restart/config edit."
             }
@@ -13765,6 +13849,27 @@
               "artifact_sha256": "8fd4649ab47f8a5cd6a91998b8fd4309d58240565ca7521a2afed292389d53b5",
               "receipt_name": "q04-evidence.json",
               "scope": "ExternalCoreSession re-attached to same authorized spec after fresh ownership proof."
+            },
+            {
+              "source_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "checkout_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "timestamp_utc": "2026-10-26T15:56:05Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40351736143/job/121678836238",
+              "workflow_run_id": 40351736143,
+              "job_id": 121678836238,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+              },
+              "core_trust": "official-signed-macos-arm64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12665102498,
+              "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
+              "receipt_name": "q04-evidence.json",
+              "scope": "ExternalCoreSession re-attached to same authorized spec after fresh ownership proof."
             }
           ],
           "blocker": null
@@ -13802,6 +13907,27 @@
               "synthetic_rpc": false,
               "artifact_id": 12660494188,
               "artifact_sha256": "8fd4649ab47f8a5cd6a91998b8fd4309d58240565ca7521a2afed292389d53b5",
+              "receipt_name": "q04-evidence.json",
+              "scope": "Each reconnect re-attests same PID and loopback socket ownership."
+            },
+            {
+              "source_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "checkout_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "timestamp_utc": "2026-10-26T15:56:05Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40351736143/job/121678836238",
+              "workflow_run_id": 40351736143,
+              "job_id": 121678836238,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+              },
+              "core_trust": "official-signed-macos-arm64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12665102498,
+              "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
               "receipt_name": "q04-evidence.json",
               "scope": "Each reconnect re-attests same PID and loopback socket ownership."
             }
@@ -13842,6 +13968,27 @@
               "artifact_sha256": "8fd4649ab47f8a5cd6a91998b8fd4309d58240565ca7521a2afed292389d53b5",
               "receipt_name": "q04-evidence.json",
               "scope": "PID/port/datadir/core_dir change requires fresh authorization; stale consent not reused."
+            },
+            {
+              "source_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "checkout_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "timestamp_utc": "2026-10-26T15:56:05Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40351736143/job/121678836238",
+              "workflow_run_id": 40351736143,
+              "job_id": 121678836238,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+              },
+              "core_trust": "official-signed-macos-arm64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12665102498,
+              "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
+              "receipt_name": "q04-evidence.json",
+              "scope": "PID/port/datadir/core_dir change requires fresh authorization; stale consent not reused."
             }
           ],
           "blocker": null
@@ -13860,8 +14007,30 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "checkout_sha": "70cd2d5d55156e6af30d153077a68c30abceaaab",
+              "timestamp_utc": "2026-10-26T15:56:05Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40351736143/job/121678836238",
+              "workflow_run_id": 40351736143,
+              "job_id": 121678836238,
+              "core_version": "v0.1.11",
+              "core_sha256": {
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+              },
+              "core_trust": "official-signed-macos-arm64-release",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 12665102498,
+              "artifact_sha256": "b0cb13c300c500371026eea97252b7e7132db25e44a160ef08c0e06a6debf0d1",
+              "receipt_name": "q04-evidence.json",
+              "scope": "Native macOS ARM64 genuine Core E2E with isolated solo-miner fixture."
+            }
+          ],
           "blocker": null
         },
         {

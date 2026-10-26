@@ -50,6 +50,7 @@ class SoloMinerFixture:
         self._p2p_port: int | None = None
         self._attachment: ExternalCoreAttachment | None = None
         self._wallet_name: str | None = None
+        self._env = None
 
     def _write_cookie_config(self, datadir: Path, rpcport: int, p2pport: int) -> None:
         """Provision regtest config that uses cookie auth (no rpcuser/rpcpassword).
@@ -91,6 +92,34 @@ class SoloMinerFixture:
                 pass
             raise
 
+    def _stage_windows_cookie(self, datadir: Path) -> None:
+        """Pre-create the Core cookie staging file with an explicit owner-only DACL.
+
+        Pinned Windows Core writes .cookie.tmp with ofstream and then RenameOver.
+        The default-created cookie owner on the native CI runner is not the token
+        user, so we stage an empty .cookie.tmp inside a private regtest directory
+        before Core starts; the rename preserves the explicit descriptor.
+        """
+        from . import windows_private_storage as store
+        from .windows_core_regtest_smoke import _host_env
+        regtest = datadir / 'regtest'
+        create_directory(regtest)
+        store.require_native()
+        with store.directory_guard(regtest):
+            with store.security_attributes() as attributes:
+                handle = store.create(str(regtest / '.cookie.tmp'),
+                                      0xc0030000, 1, attributes, 1, 0x80200080, None)
+            if handle in (None, store.INVALID):
+                raise Q04FixtureError('Q04_FIXTURE_COOKIE_STAGE_CREATE_DENIED')
+            try:
+                info = store._metadata(handle)
+                store.verify_security(handle)
+                if info[3] != 0 or not store.flush(handle):
+                    raise Q04FixtureError('Q04_FIXTURE_COOKIE_STAGE_CUSTODY_DENIED')
+            finally:
+                store.close(handle)
+        return _host_env(datadir)
+
     def start(self) -> dict:
         """Start isolated Core and miner. Returns attachment spec."""
         self._datadir_tmp = private_temporary_directory(prefix='q04_miner_')
@@ -102,10 +131,18 @@ class SoloMinerFixture:
 
         node, cli, receipt = self._verified_core_paths(self._core_dir)
 
+        # On Windows, stage the cookie file before Core starts so the owner/DACL
+        # matches the custody token instead of the default inherited ACL.
+        self._env = None
+        if sys.platform == 'win32':
+            self._env = self._stage_windows_cookie(self._datadir)
+
         # Start Core in non-daemon mode so we own the Popen.
         argv = [str(node), f'-datadir={self._datadir}', '-regtest=1', '-daemon=0']
         self._core_process = subprocess.Popen(
-            argv, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+            argv, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
+            env=self._env, cwd=str(node.parent) if sys.platform == 'win32' else None,
+            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
 
         # Wait for RPC cookie to appear (cookie auth mode).
         cookie = self._datadir / 'regtest' / '.cookie'
@@ -131,7 +168,8 @@ class SoloMinerFixture:
         self._wallet_name = 'q04_fixture_' + secrets.token_hex(6)
         result = subprocess.run(
             [str(cli), f'-datadir={self._datadir}', '-regtest=1', 'createwallet', self._wallet_name],
-            capture_output=True, text=True, timeout=30)
+            capture_output=True, text=True, timeout=30, env=self._env, cwd=str(node.parent) if sys.platform == 'win32' else None,
+            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
         if result.returncode != 0:
             raise Q04FixtureError('Q04_FIXTURE_WALLET_CREATE_FAILED')
 
@@ -141,7 +179,9 @@ class SoloMinerFixture:
             [sys.executable, '-m', 'wam_regtest.q04_miner_loop',
              '--cli', str(cli), '--datadir', str(self._datadir),
              '--wallet', self._wallet_name, '--interval', '5.0'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            env=self._env, cwd=str(node.parent) if sys.platform == 'win32' else None,
+            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
 
         increment('q04_fixture_started')
         return {
@@ -157,10 +197,13 @@ class SoloMinerFixture:
         return verified_core_paths(core_dir)
 
     def _fixture_address(self, cli: Path) -> str:
+        node = self._verified_core_paths(self._core_dir)[0]
         result = subprocess.run(
             [str(cli), f'-datadir={self._datadir}', '-regtest=1',
              '-rpcwallet=' + self._wallet_name, 'getnewaddress'],
-            capture_output=True, text=True, timeout=30)
+            capture_output=True, text=True, timeout=30,
+            env=self._env, cwd=str(node.parent) if sys.platform == 'win32' else None,
+            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
         if result.returncode != 0:
             raise Q04FixtureError('Q04_FIXTURE_ADDRESS_FAILED')
         return result.stdout.strip()
@@ -176,7 +219,9 @@ class SoloMinerFixture:
                 [str(cli), f'-datadir={self._datadir}', '-regtest=1',
                  '-rpcwallet=' + self._wallet_name, 'generatetoaddress',
                  '1', self._fixture_address(cli)],
-                capture_output=True, text=True, timeout=30)
+                capture_output=True, text=True, timeout=30,
+                env=self._env, cwd=str(node.parent) if sys.platform == 'win32' else None,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
             if result.returncode != 0:
                 raise Q04FixtureError('Q04_FIXTURE_MINING_FAILED')
         after = self._attachment.read('getblockcount', [])
