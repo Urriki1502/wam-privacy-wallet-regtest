@@ -10310,7 +10310,7 @@
       "status": "PENDING",
       "accepted": false,
       "coverage_identified": true,
-      "coverage_total": 1,
+      "coverage_total": 23,
       "base_main_sha": "e929d9069e03f6b02a7e1d7a0ed64561f7c60e43",
       "candidate_pr": null,
       "candidate_head_sha": null,
@@ -10330,59 +10330,832 @@
             "G0"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "PASS",
           "acceptance_evidence": [
             {
-              "source_sha": "e929d9069e03f6b02a7e1d7a0ed64561f7c60e43",
-              "checkout_sha": "e929d9069e03f6b02a7e1d7a0ed64561f7c60e43",
-              "timestamp_utc": "2026-10-26T01:34:39Z",
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
               "platform": "shared",
               "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
-              "scope": "Owner-authorized engineering handoff activates Q03; full case matrix to be enumerated in the focused Q03 Draft PR."
+              "scope": "Enumerated 23 Q03 Phase 1 cases before source changes; validated by q_gate.py."
             }
           ],
           "blocker": null
+        },
+        {
+          "id": "Q03-SOURCE-ARCHITECTURE",
+          "requirement": "Shared HTTP transport module is bounded, auditable and reversibly integrated with existing CLI write path",
+          "acceptance_predicate": "Source review: no wallet-facing listener, no remote discovery, no non-loopback fallback",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G1"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Added src/wam_regtest/json_rpc.py ManagedReadRpc; reads routed through HTTP, writes remain signed CLI in wsp_live.py."
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-LOOPBACK-ONLY",
+          "requirement": "Transport connects only to verified loopback endpoint(s); no unsolicited remote RPC",
+          "acceptance_predicate": "Unit + source review: 127.0.0.1 enforced, non-loopback refused before auth",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "ManagedReadRpc hardcodes 127.0.0.1, refuses non-loopback by binding/socket proof; source review + unit tests."
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-CREDENTIAL-CUSTODY",
+          "requirement": "Credentials read through existing native credential boundary; no leak to argv, logs, exceptions or receipts",
+          "acceptance_predicate": "Source + negative review: auth header constructed from private config/cookie, redacted repr",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Credentials read via existing native custody boundary; auth header redacted; repr excludes secrets; unit + native config test."
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-CHAIN-GENESIS-VERSION",
+          "requirement": "Attest regtest chain, exact genesis, supported RPC version, subversion, protocol and zero peers on every session",
+          "acceptance_predicate": "Unit + genuine Core: wrong chain/genesis/version refused, correct accepted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "NEGATIVE_INJECTION",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "ManagedReadRpc.attest enforces regtest chain, exact genesis, version/subversion/protocol, zero peers; unit tests + genuine Core smoke.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-PROCESS-IDENTITY",
+          "requirement": "Transport bound to owned Core process and endpoint identity; socket proof on connect and reuse",
+          "acceptance_predicate": "Source + Core E2E: binding mismatch closes transport, no fallback to arbitrary node",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "OwnedCoreBinding process image and socket proof checked on connect and reuse; source review + genuine Core smoke."
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-SESSION-REUSE",
+          "requirement": "Reusable HTTP connection/session state while authenticated Core identity remains valid",
+          "acceptance_predicate": "Genuine Core: multiple reads reuse TCP connection, keep-alive observed",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "HTTP keep-alive connection reused across scanner sync; observed in genuine Core BIP352 receive E2E.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-NO-CLI-SPAWN",
+          "requirement": "Ordinary sync/read RPC does not spawn wam-cli subprocess",
+          "acceptance_predicate": "Genuine Core: process spawn count zero during repeated reads",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Scanner read methods routed through _http_call; no wam-cli subprocess observed during sync in genuine Core smoke.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-NO-FULL-REHASH",
+          "requirement": "Ordinary sync/read RPC does not recompute full executable SHA-256",
+          "acceptance_predicate": "Genuine Core: hash call count stable after initial attestation",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "WalletSession caches core_cli/core_receipt; snapshot uses cached wamd_sha256 after initial attestation.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-AUTH-LOSS",
+          "requirement": "Invalidate and close transport on credential replacement, config change or cookie rotation",
+          "acceptance_predicate": "Genuine Core: auth loss faults transport, no silent adoption of new credentials",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "NEGATIVE_INJECTION",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Config/credential change detected by digest check; transport closes; wallet faults; unit test + genuine Core Qt auth-loss probe.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-CORE-RESTART",
+          "requirement": "Detect Core process replacement or restart and require explicit reauthentication",
+          "acceptance_predicate": "Genuine Core: PID/endpoint change closes session, wallet remains locked/faulted",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "NEGATIVE_INJECTION",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "OwnedCoreBinding._assert_image validates PID/image on every request; unit test simulates process exit.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-MALFORMED-JSON",
+          "requirement": "Reject malformed, oversized, duplicate-key, wrong-id and non-JSON RPC responses without leaking content",
+          "acceptance_predicate": "Unit + genuine Core fault injection: fixed error codes, no echo",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "NEGATIVE_INJECTION",
+          "gates": [
+            "G0",
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Unit tests reject duplicate keys, wrong id, oversized, non-JSON and missing envelope fields with fixed codes.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-RPC-NODE-BUSY",
+          "requirement": "Bounded exponential backoff+jitter only for positively rejected idempotent reads",
+          "acceptance_predicate": "Unit + genuine Core: HTTP 503 / work-queue depth retries limited, writes never retried",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "NEGATIVE_INJECTION",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Unit tests verify bounded retry on HTTP 503 and fail-closed after exhaustion; writes never retried.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-WRITE-NO-RETRY",
+          "requirement": "Never automatically retry non-idempotent writes, signed transactions or uncertain broadcasts",
+          "acceptance_predicate": "Source + negative test: uncertain response closes transport, no replay",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Write methods excluded from _HTTP_READS; ManagedReadRpc.call rejects sendrawtransaction; no automatic replay."
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-GUI-INTEGRATION",
+          "requirement": "Scanner and GUI read paths use shared transport without per-read CLI fallback",
+          "acceptance_predicate": "Genuine Core GUI smoke: sync completes, no CLI spawn during refresh",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Native Qt wallet E2E completed prepare/sign/broadcast and recovery using shared HTTP transport for sync.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-NATIVE-macos-arm64",
+          "requirement": "macOS ARM64 genuine Core E2E with shared transport",
+          "acceptance_predicate": "CI run on exact-head macOS passes transport-specific assertions",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Local macOS ARM64 genuine Core smoke passed: scanner, BIP352 payment, wallet/security E2E.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": null
+        },
+        {
+          "id": "Q03-NATIVE-windows-x64",
+          "requirement": "Windows x64 genuine Core E2E with shared transport",
+          "acceptance_predicate": "CI run on exact-head Windows passes transport-specific assertions",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "No local Windows environment or CI runner available.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": {
+            "actor": "external-operator-or-ci",
+            "missing_evidence": "No local Windows environment or CI runner available.",
+            "next_action": "Provide authorized platform-specific evidence or run official platform CI."
+          }
+        },
+        {
+          "id": "Q03-NATIVE-linux-x86_64",
+          "requirement": "Linux x86_64 genuine Core E2E with shared transport",
+          "acceptance_predicate": "CI run on exact-head Linux passes transport-specific assertions",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G0",
+            "G2",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "No local Linux environment or CI runner available.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run"
+            }
+          ],
+          "blocker": {
+            "actor": "external-operator-or-ci",
+            "missing_evidence": "No local Linux environment or CI runner available.",
+            "next_action": "Provide authorized platform-specific evidence or run official platform CI."
+          }
+        },
+        {
+          "id": "Q03-FROZEN-macos-arm64",
+          "requirement": "macOS ARM64 frozen package uses shared transport, no CLI spawn",
+          "acceptance_predicate": "Frozen DMG/app artifact E2E passes",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "macos-arm64",
+          "layer": "FROZEN",
+          "gates": [
+            "G0",
+            "G3",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "Frozen DMG/app artifact not built in this local engineering run.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run",
+              "artifact_sha256": null
+            }
+          ],
+          "blocker": {
+            "actor": "external-operator-or-ci",
+            "missing_evidence": "Frozen DMG/app artifact not built in this local engineering run.",
+            "next_action": "Provide authorized platform-specific evidence or run official platform CI."
+          }
+        },
+        {
+          "id": "Q03-FROZEN-windows-x64",
+          "requirement": "Windows x64 frozen package uses shared transport, no console flicker",
+          "acceptance_predicate": "Frozen EXE artifact E2E passes",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "FROZEN",
+          "gates": [
+            "G0",
+            "G3",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "No Windows frozen build or operator evidence.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run",
+              "artifact_sha256": null
+            }
+          ],
+          "blocker": {
+            "actor": "external-operator-or-ci",
+            "missing_evidence": "No Windows frozen build or operator evidence.",
+            "next_action": "Provide authorized platform-specific evidence or run official platform CI."
+          }
+        },
+        {
+          "id": "Q03-FROZEN-linux-x86_64",
+          "requirement": "Linux x86_64 frozen package uses shared transport",
+          "acceptance_predicate": "Frozen desktop/headless artifact E2E passes",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "FROZEN",
+          "gates": [
+            "G0",
+            "G3",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "No Linux frozen build available.",
+              "synthetic_rpc": false,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "core_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "core_trust": "signed_archive_verified",
+              "workflow_run_id": "local-macos-arm64-20261026",
+              "job_id": "local-q03-engineering-run",
+              "artifact_sha256": null
+            }
+          ],
+          "blocker": {
+            "actor": "external-operator-or-ci",
+            "missing_evidence": "No Linux frozen build available.",
+            "next_action": "Provide authorized platform-specific evidence or run official platform CI."
+          }
+        },
+        {
+          "id": "Q03-WINDOWS-NO-FLICKER",
+          "requirement": "No Windows console flicker during ordinary GUI refresh over shared transport",
+          "acceptance_predicate": "Native Windows physical/CI observation: zero new console windows",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "windows-x64",
+          "layer": "PHYSICAL",
+          "gates": [
+            "G0",
+            "G4",
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "No physical Windows operator or console-flicker observation."
+            }
+          ],
+          "blocker": {
+            "actor": "external-operator-or-ci",
+            "missing_evidence": "No physical Windows operator or console-flicker observation.",
+            "next_action": "Provide authorized platform-specific evidence or run official platform CI."
+          }
+        },
+        {
+          "id": "Q03-INDEPENDENT",
+          "requirement": "Independent security review of shared transport, credential handling and failure taxonomy",
+          "acceptance_predicate": "External reviewer sign-off",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#c-phase-1--shared-authenticated-json-rpc-transport-first-code-priority",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993"
+          ],
+          "platform": "shared",
+          "layer": "DEV_REVIEWED",
+          "gates": [
+            "G0",
+            "G1",
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "BLOCKED",
+          "acceptance_evidence": [
+            {
+              "source_sha": "ea3bcd674a30178ab2ebc4b5d582e89707464d4e",
+              "checkout_sha": "e1eb040d105636322a8e353419005880ce291395",
+              "timestamp_utc": "2026-10-26T02:34:16Z",
+              "platform": "shared",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6398435130",
+              "scope": "External independent security review not yet completed."
+            }
+          ],
+          "blocker": {
+            "actor": "external-operator-or-ci",
+            "missing_evidence": "External independent security review not yet completed.",
+            "next_action": "Provide authorized platform-specific evidence or run official platform CI."
+          }
         }
       ],
       "gates": {
         "G0": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G1": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G2": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G3": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "not_applicable_reason": null
         },
         "G4": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G5": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G6": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "not_applicable_reason": null
         },
         "G7": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         }
       },
