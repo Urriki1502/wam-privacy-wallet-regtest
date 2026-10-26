@@ -107,6 +107,8 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         print("WALLET_E2E_STAGE=CREATE",flush=True)
         session=WalletSession.create(core_dir,datadir,source,password,mining_address,authorized=True,keychain=keychain)
         initial=session.snapshot()
+        from .q03_probe import measure_repeated_snapshots
+        q03_reuse=measure_repeated_snapshots(session)
         assert initial.height==104 and initial.confirmed_utxos==1
         recipient=Keyring()
         code=recipient.accounts()[0].payment_code()
@@ -425,7 +427,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         assert reopened['mainnet_allowed'] is False and reopened['node_sha256']==initial.core_sha256
         return {
             'status':('WIN64_REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS' if sys.platform=='win32' else 'REAL_CORE_NATIVE_QT_SEND_SIGN_BROADCAST_SECURITY_E2E_PASS'),
-            'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,'q02_gui_auth':gui_auth,
+            'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,'q02_gui_auth':gui_auth,'q03_reuse':q03_reuse,
             'authenticated_selected_local_disclosure':True,'local_network_privacy_diagnostics':True,'disposable_test_keys_only':True,'native_qt_prepare_sign_broadcast':True,'prepare_dispatch_waited_for_genuine_sync':True,
             'native_psbtv2_payjoin_bip352_fail_closed':True,'payjoin_signing_authorized':False,'payjoin_transport_implemented':False,
             'exact_intent_approval_required':True,'real_core_mempool_accepted':True,

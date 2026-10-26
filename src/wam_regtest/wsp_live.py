@@ -280,6 +280,14 @@ class LiveCoreReadOnlyCli:
         self._scope = None
         self._transport = None
 
+    def _revoke_http(self):
+        from .rpc_scope import quarantine
+        quarantine(self._datadir)
+        self._genesis = None
+        if self._transport is not None:
+            self._transport.close()
+            self._transport = None
+
     def _http_call(self, method: str, args: list) -> object:
         """Shared authenticated HTTP transport for owned Core reads."""
         from .rpc_scope import identity
@@ -295,6 +303,7 @@ class LiveCoreReadOnlyCli:
                     scope.binding.core, self._datadir,
                     authorized_readonly=True, binding=scope.binding)
             except RpcError as error:
+                self._revoke_http()
                 if (len(error.args) == 1 and type(error.args[0]) is str
                         and error.args[0] in ('RPC_AUTHENTICATION_DENIED', 'RPC_CONFIG_CHANGED',
                                                'RPC_COOKIE_CHANGED')):
@@ -310,6 +319,7 @@ class LiveCoreReadOnlyCli:
                 params = list(args)
             return self._transport.call(method, params)
         except RpcError as error:
+            self._revoke_http()
             safe = {
                 'RPC_AUTHENTICATION_DENIED': 'WSP_LIVE_RPC_AUTHENTICATION_DENIED',
                 'RPC_CONFIG_CHANGED': 'WSP_LIVE_RPC_AUTHENTICATION_DENIED',

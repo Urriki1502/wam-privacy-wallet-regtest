@@ -10,6 +10,7 @@ _counts = {
     "verified_core_paths": 0,
     "cli_spawn": 0,
     "http_connection_create": 0,
+    "http_socket_connect": 0,
     "http_request": 0,
     "rpc_attest": 0,
     "wallet_session_rpc_client_create": 0,

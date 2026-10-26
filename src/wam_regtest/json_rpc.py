@@ -172,6 +172,7 @@ class _BoundConnection(http.client.HTTPConnection):
             self._binding._assert_image()
             super().connect()
             self._binding.assert_socket(self.sock)
+            increment('http_socket_connect')
         except CoreBindingError as error:
             self.close()
             raise RpcError(error.args[0]) from None
@@ -218,6 +219,9 @@ class ManagedReadRpc:
             credentials = CredentialSource(directory)
             self._credentials = credentials
             self._auth = self._build_auth(credentials)
+            # The bytes used for the header must still belong to the pinned
+            # credential snapshot before any authenticated connection opens.
+            credentials.attest()
             self._connection = _BoundConnection(credentials.port, timeout, binding)
             self._connection.set_debuglevel(0)
             self.attest()
@@ -271,19 +275,18 @@ class ManagedReadRpc:
             self._last_completed = None
 
     def _current_auth(self):
-        if self._credentials.mode == 'config':
-            return self._auth
-        raw, _ = private_bytes(self._config_directory / 'regtest', '.cookie', 256, core_cookie=True)
-        return 'Basic ' + base64.b64encode(raw.strip()).decode('ascii')
+        # Never adopt a freshly rotated cookie between attestation and send.
+        # Config and cookie headers are pinned at construction; drift revokes.
+        return self._auth
 
     def _request_once(self, method, params):
         if self._closed:
             raise RpcError('RPC_SESSION_CLOSED')
         _params(method, params)
-        self._assert_config()
         self._identifier += 1
         identifier = self._identifier
         try:
+            self._assert_config()
             self._discard_idle_connection()
             increment('http_request')
             body = json.dumps({'jsonrpc': '1.0', 'id': identifier, 'method': method, 'params': params},
@@ -294,6 +297,8 @@ class ManagedReadRpc:
                                       'Connection': 'keep-alive'})
             response = self._connection.getresponse()
             raw = response.read((MAX_BLOCK_REPLY if method == 'getblock' else MAX_REPLY) + 1)
+            # Do not return a reply obtained while credentials changed.
+            self._assert_config()
             if response.status == 401:
                 raise RpcError('RPC_AUTHENTICATION_DENIED')
             if response.status == 503:
@@ -311,7 +316,7 @@ class ManagedReadRpc:
             else:
                 self.close()
             raise
-        except (OSError, http.client.HTTPException, ValueError):
+        except Exception:
             self.close()
             raise RpcError('RPC_CONNECTION_UNCERTAIN_READ_FAILED') from None
 
@@ -321,6 +326,7 @@ class ManagedReadRpc:
                 return self._request_once(method, params)
             except RpcError as error:
                 if error.args != ('RPC_NODE_BUSY',) or attempt == 2:
+                    self.close()
                     raise
                 time.sleep(random.SystemRandom().uniform(.05, .15) * (2 ** attempt))
 
@@ -342,8 +348,8 @@ class ManagedReadRpc:
         args = [] if params is None else params
         _params(method, args)
         with self._lock:
-            self._assert_config()
-            self._discard_idle_connection()
+            if self._closed:
+                raise RpcError('RPC_SESSION_CLOSED')
             if (self._connection is None or self._last_attest is None
                     or time.monotonic() - self._last_attest >= MAX_TRUST_CACHE_SECONDS):
                 self.attest()

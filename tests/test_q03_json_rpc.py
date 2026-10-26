@@ -385,6 +385,115 @@ class LocalJsonRpcContracts(unittest.TestCase):
             with self._transport(binding=binding) as rpc:
                 rpc.call("getblockcount", [])
 
+    def test_credential_fault_revokes_transport_before_config_can_be_restored(self):
+        from wam_regtest.rpc_credentials import CredentialError
+        rpc = self._transport()
+        self.addCleanup(rpc.close)
+        with patch.object(rpc._credentials, 'attest', side_effect=CredentialError('RPC_CONFIG_CHANGED')):
+            with self.assertRaisesRegex(RpcError, 'RPC_CONFIG_CHANGED'):
+                rpc.call('getblockcount', [])
+        self.assertTrue(rpc._closed)
+        self.assertIsNone(rpc._auth)
+        with self.assertRaisesRegex(RpcError, 'RPC_SESSION_CLOSED'):
+            rpc.call('getblockcount', [])
+
+    def test_credential_change_during_reply_is_rejected_and_revoked(self):
+        from wam_regtest.rpc_credentials import CredentialError
+        rpc = self._transport()
+        self.addCleanup(rpc.close)
+        with patch.object(rpc._credentials, 'attest', side_effect=[None, CredentialError('RPC_CONFIG_CHANGED')]):
+            with self.assertRaisesRegex(RpcError, 'RPC_CONFIG_CHANGED'):
+                rpc._request('getblockcount', [])
+        self.assertTrue(rpc._closed)
+
+    def test_cookie_rotation_between_attestation_and_header_never_adopts_new_cookie(self):
+        config = COOKIE_CONFIG.replace(b'rpcport=19001', f'rpcport={self.port}'.encode())
+        _JsonRpcHandler.expected_auth = _auth_for_cookie(COOKIE)
+        rpc = self._transport(config=config, mode='cookie', cookie=COOKIE)
+        self.addCleanup(rpc.close)
+        rotated = b'__cookie__:' + b'1' * 64
+        with patch.object(json_rpc_module, 'private_bytes', side_effect=[(COOKIE, None), (rotated, None)]), \
+             patch.object(rpc._connection, 'request', wraps=rpc._connection.request) as send:
+            with self.assertRaisesRegex(RpcError, 'RPC_CONFIG_CHANGED'):
+                rpc._request('getblockcount', [])
+            self.assertEqual(send.call_args.args[3]['Authorization'], _auth_for_cookie(COOKIE))
+        self.assertTrue(rpc._closed)
+
+    def test_busy_exhaustion_revokes_existing_session(self):
+        rpc = self._transport()
+        self.addCleanup(rpc.close)
+        _JsonRpcHandler.busy_remaining = 3
+        with patch.object(json_rpc_module.time, 'sleep') as sleep:
+            with self.assertRaisesRegex(RpcError, 'RPC_NODE_BUSY'):
+                rpc.call('getblockcount', [])
+        self.assertEqual(sleep.call_count, 2)
+        self.assertTrue(rpc._closed)
+        self.assertIsNone(rpc._auth)
+
+    def test_unexpected_transport_exception_is_redacted_and_revoked(self):
+        rpc = self._transport()
+        self.addCleanup(rpc.close)
+        with patch.object(rpc._connection, 'getresponse', side_effect=RuntimeError('private-test-marker')):
+            with self.assertRaisesRegex(RpcError, '^RPC_CONNECTION_UNCERTAIN_READ_FAILED$'):
+                rpc.call('getblockcount', [])
+        self.assertTrue(rpc._closed)
+
+    def test_http_failure_quarantines_owned_scope_and_drops_cached_grant(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        from wam_regtest import rpc_scope
+        scope = SimpleNamespace(faulted=False, binding=_DummyBinding(self.core_dir, self.datadir),
+                                lock=threading.RLock())
+        reader = LiveCoreReadOnlyCli(self.core_dir, self.datadir)
+        reader._genesis = REGTEST_GENESIS
+        reader._scope = scope
+        transport = Mock()
+        transport.call.side_effect = RpcError('RPC_CONNECTION_UNCERTAIN_READ_FAILED')
+        reader._transport = transport
+        with patch.dict(rpc_scope._contexts, {str(self.datadir.resolve()): scope}):
+            with self.assertRaisesRegex(RealWspScanError, 'WSP_LIVE_RPC_UNAVAILABLE'):
+                reader.call('getblockcount')
+            self.assertTrue(scope.faulted)
+        transport.close.assert_called()
+        self.assertIsNone(reader._genesis)
+
+    def test_failed_http_construction_also_quarantines_scope(self):
+        from types import SimpleNamespace
+        from wam_regtest import rpc_scope
+        scope = SimpleNamespace(faulted=False, binding=_DummyBinding(self.core_dir, self.datadir),
+                                lock=threading.RLock())
+        reader = LiveCoreReadOnlyCli(self.core_dir, self.datadir)
+        with patch.dict(rpc_scope._contexts, {str(self.datadir.resolve()): scope}), \
+             patch.object(json_rpc_module, 'ManagedReadRpc', side_effect=RpcError('RPC_AUTHENTICATION_DENIED')):
+            with self.assertRaisesRegex(RealWspScanError, 'WSP_LIVE_RPC_AUTHENTICATION_DENIED'):
+                reader._http_call('getblockcount', [])
+            self.assertTrue(scope.faulted)
+
+    def test_revoked_scope_faults_cached_wallet_client(self):
+        from unittest.mock import Mock
+        from wam_regtest import wallet_session
+        wallet = wallet_session.WalletSession.__new__(wallet_session.WalletSession)
+        wallet.ring = object()
+        wallet.faulted = False
+        wallet._core_reauthentication_required = False
+        wallet.source = self.core_dir
+        wallet.datadir = self.datadir
+        wallet._core_receipt = {'wamd_sha256': 'a' * 64}
+        wallet.vault = Mock()
+        wallet.vault._expected = ('anchored-test-generation',)
+        wallet.vault.anchor.read.return_value = wallet.vault._expected
+        client = Mock()
+        wallet._rpc_client = client
+        with patch.object(wallet_session, '_pinned_source'), \
+             patch.object(wallet, '_ensure_core_identity', return_value=(self.core_dir, wallet._core_receipt)), \
+             patch('wam_regtest.rpc_scope.identity', return_value=None):
+            with self.assertRaisesRegex(wallet_session.WalletSessionError, 'WALLET_CORE_OWNED_SCOPE_REQUIRED'):
+                wallet._rpc()
+        self.assertTrue(wallet.faulted)
+        self.assertTrue(wallet._core_reauthentication_required)
+        self.assertIsNone(wallet._rpc_client)
+        client._transport.close.assert_called_once()
+
     def test_no_write_retry(self):
         with self._transport() as rpc:
             with self.assertRaisesRegex(RpcError, "RPC_READ_SCOPE_DENIED"):

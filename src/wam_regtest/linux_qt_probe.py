@@ -45,6 +45,8 @@ def probe(core,datadir,source,mining):
         assert app.platformName()=='xcb','LINUX_NATIVE_XCB_REQUIRED'
         session=WalletSession.create(core,datadir,source,PASSWORD,mining,authorized=True)
         initial=session.snapshot();accounts=session.ring.accounts()
+        from .q03_probe import measure_repeated_snapshots
+        q03_reuse=measure_repeated_snapshots(session)
         assert initial.height==103 and initial.confirmed_utxos==1 and initial.history
         window=OperationalWalletWindow(session);window.show();window.apply_snapshot(initial)
         validation_cases=_validation_feedback_probe(app,window,session)
@@ -120,7 +122,7 @@ def probe(core,datadir,source,mining):
         second=smoke_real_core(core,explicit_consent=True,wsp_source=source,wsp_payment_e2e=True,headless_callback=reopen)
         assert second['wallet_live_core']['fresh_core_same_keys_reservations_native_qt']
         return {'status':'REAL_LINUX_CORE_ROOT_WITNESS_NATIVE_QT_WALLET_E2E_PASS',
-            'synthetic_rpc':False,'mainnet_allowed':False,'q02_gui_auth':gui_auth,'qt_platform':app.platformName(),
+            'synthetic_rpc':False,'mainnet_allowed':False,'q02_gui_auth':gui_auth,'q03_reuse':q03_reuse,'qt_platform':app.platformName(),
             'native_pages':6,'background_timer_live_core_verified':True,
             'separate_native_sign_broadcast_approvals':True,'cancel_is_default':True,
             'confirmed_recipient_atoms':100000,'confirmed_sender_change':True,

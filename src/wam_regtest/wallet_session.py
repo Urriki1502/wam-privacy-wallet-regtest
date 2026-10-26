@@ -241,7 +241,9 @@ class WalletSession:
                 self._rpc_client = WalletCoreCli(cli,self.datadir,on_trust_failure=self._fault_core)
                 self._rpc_client.attest()
             return self._rpc_client
-        except WalletSessionError:raise
+        except WalletSessionError:
+            self._fault_core()
+            raise
         except (ValueError,RuntimeError,OSError):
             self._fault_core()
             raise WalletSessionError('WALLET_CORE_UNVERIFIED') from None
