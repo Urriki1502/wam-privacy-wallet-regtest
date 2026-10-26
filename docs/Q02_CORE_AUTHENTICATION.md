@@ -199,3 +199,55 @@ custody verification itself is unchanged. This neither repairs an existing
 owner/external cookie nor weakens owner/ACL requirements. Missing/replacement
 negative tests retain and restore the original actual cookie object, rather than
 recreating it with an unqualified default Windows owner. Replay remains required.
+# Post-merge provenance correction — 25 October 2026
+
+Q02 runtime PR #129 was owner-merged at
+`e929d9069e03f6b02a7e1d7a0ed64561f7c60e43`, reviewed HEAD
+`f8ffb842949e396541d016d08c85619f9e6c7c24`, qualified runtime source
+`277fb8c8bbe0947f82a90b94123c8b05a6c9900a`. The latter-to-main compare
+changes only ledger/report files. This governance correction changes no wallet,
+Core, transport, custody, GUI or signer runtime.
+
+Independent artifact inspection of merged-main runs
+[macOS 40192345012](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40192345012),
+[Windows 40192413115](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40192413115),
+and [Linux 40192413244](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40192413244)
+found the complete 33-case Q02 native/final-frozen executions. Windows packaged
+receipts cover default/125%/150%; Linux desktop and headless each have separate
+native and final-frozen evidence. Mac frozen offscreen/Cocoa case execution is
+in the exact job log; app ZIP/DMG hashes and bundled Core were checked separately.
+This is not physical installation, Windows flicker observation, full DPI or
+independent security acceptance. The negative reply injections remain labelled
+as occurring after validated genuine CLI output, not observed wrong-network Core.
+
+The prior ledger misattributed macOS Core hashes to 77 Windows/Linux records and
+official-signed trust to 39 Linux records. Current runtime evidence is replaced
+with audited merged-main run/job/receipt/artifact/payload identities. All 115
+prior runtime case-record associations are retained as 10 distinct original
+records with explicit case lists in Q02 historical evidence; historical failures
+and Q01 records remain unchanged. The uncommitted attachment's duplicate claims
+and fake owner comment URL were not imported.
+
+Correct Windows CLI/daemon SHA-256:
+`538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21` /
+`31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1`.
+Correct Linux CLI/daemon SHA-256:
+`ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652` /
+`ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6`.
+Linux native/frozen jobs consume the pinned developer artifact from run
+38697805476, manifest
+`e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806`;
+they do not consume the new developer-core build in the post-merge run.
+Linux trust remains `reviewed-developer-source-build`, never official-signed.
+
+The corrected ledger has **130 PASS / 4 external BLOCKED**. Q02 remains
+`accepted=false`, G6/G7 remain BLOCKED, and **Q02 remains the one active Q**.
+Actual owner merge of #129 closes only the scoped merge-authorization case.
+There is no authentic Issue #45 Q02-to-Q03 decision comment yet, so no
+`engineering_handoff` is recorded and Q03 remains QUEUED. Record a real owner
+decision URL and merge the reviewed governance transition before Q03 engineering.
+The validator now rejects nonnumeric comment placeholders; URL syntax alone
+still cannot establish owner identity or approval content.
+
+The earlier technical notes above remain historical context; this correction
+and current case-level ledger govern the post-merge state.
