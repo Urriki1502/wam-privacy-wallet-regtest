@@ -20,7 +20,7 @@ import time
 from pathlib import Path
 
 from .core import CoreSmokeError, _port
-from .custody import private_temporary_directory
+from .custody import create_directory, private_temporary_directory
 from .external_core import ExternalCoreAttachment, ExternalAttachmentError
 from .telemetry import increment
 
@@ -94,7 +94,8 @@ class SoloMinerFixture:
     def start(self) -> dict:
         """Start isolated Core and miner. Returns attachment spec."""
         self._datadir_tmp = private_temporary_directory(prefix='q04_miner_')
-        self._datadir = Path(self._datadir_tmp.name).resolve()
+        self._datadir = Path(self._datadir_tmp.name).resolve() / 'datadir'
+        create_directory(self._datadir)
         self._rpc_port = _port()
         self._p2p_port = _port()
         self._write_cookie_config(self._datadir, self._rpc_port, self._p2p_port)
