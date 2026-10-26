@@ -253,9 +253,12 @@ class WalletSession:
         # uncertain operation. Lock/unlock remains explicit and authenticated.
         self.faulted=True
         self._core_reauthentication_required=True
-        if self._rpc_client is not None:
-            self._rpc_client._transport.close() if getattr(self._rpc_client,'_transport',None) is not None else None
-            self._rpc_client=None
+        self._close_rpc()
+
+    def _close_rpc(self):
+        client,self._rpc_client=self._rpc_client,None
+        if client is not None and getattr(client,'_transport',None) is not None:
+            client._transport.close()
 
     def _save(self):
         try:
@@ -424,6 +427,7 @@ class WalletSession:
 
     def lock(self):
         with self._lock:
+            self._close_rpc()
             if self._disclosure_gate is not None:
                 self._disclosure_gate.close()
                 self._disclosure_gate=None

@@ -494,6 +494,25 @@ class LocalJsonRpcContracts(unittest.TestCase):
         self.assertIsNone(wallet._rpc_client)
         client._transport.close.assert_called_once()
 
+    def test_wallet_lock_and_close_release_cached_http_credentials(self):
+        from unittest.mock import Mock
+        from wam_regtest.wallet_session import WalletSession
+        for already_locked in (False, True):
+            with self.subTest(already_locked=already_locked):
+                wallet = WalletSession.__new__(WalletSession)
+                wallet._lock = threading.RLock()
+                wallet._disclosure_gate = None
+                wallet.ring = None if already_locked else Mock()
+                wallet.scanner = Mock()
+                wallet.runtime = Mock()
+                client = Mock()
+                wallet._rpc_client = client
+                wallet.lock()
+                client._transport.close.assert_called_once()
+                self.assertIsNone(wallet._rpc_client)
+                wallet.close()
+                client._transport.close.assert_called_once()
+
     def test_no_write_retry(self):
         with self._transport() as rpc:
             with self.assertRaisesRegex(RpcError, "RPC_READ_SCOPE_DENIED"):
