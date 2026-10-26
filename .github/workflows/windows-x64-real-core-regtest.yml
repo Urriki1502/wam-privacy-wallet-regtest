@@ -75,3 +75,41 @@ jobs:
               print("REGTEST_ONLY_NO_SIGNER_NO_WALLET_NO_FUNDS")
           '@ | python -
           if ($LASTEXITCODE -ne 0) { throw "WIN_REAL_CORE_101_BLOCK_SMOKE_DENIED" }
+
+  q04-miner-coexistence:
+    name: Q04 Windows x64 solo-miner coexistence
+    needs: win64-real-core-101-blocks
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Verify native Windows x64 and pinned GnuPG
+        shell: pwsh
+        run: |
+          python -c "import os,platform,struct; assert os.name=='nt' and platform.machine().lower() in ('amd64','x86_64') and struct.calcsize('P')==8, 'WIN64_NATIVE_DENIED'"
+          if (!(Get-Command gpg -ErrorAction SilentlyContinue)) { throw "WIN_GPG_REQUIRED" }
+      - name: Install inspected application module
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+      - name: Fetch pinned official signed Windows x64 Core
+        shell: pwsh
+        run: |
+          python -m wam_regtest.release --platform windows-x64 --destination core
+      - name: Q04 genuine Core miner coexistence and read-only attachment
+        shell: pwsh
+        run: |
+          python scripts/q04_miner_coexistence.py --core-dir core --max-duration 180
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: q04-miner-coexistence-evidence-windows-x64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q04-evidence.json
+          if-no-files-found: error
+          retention-days: 14

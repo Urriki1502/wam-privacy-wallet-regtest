@@ -222,6 +222,38 @@ jobs:
             q01-core-negatives.json
           if-no-files-found: warn
           retention-days: 14
+
+  q04-miner-coexistence:
+    name: Q04 macOS ARM64 solo-miner coexistence
+    needs: real-wamd
+    runs-on: macos-15
+    timeout-minutes: 15
+    env:
+      PYTHONUNBUFFERED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.10'
+          architecture: 'arm64'
+      - name: Q01 clean hash-locked GUI environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
+      - name: Fetch pinned official signed ARM64 Core
+        run: python -m wam_regtest.release --platform macos-arm64 --destination core
+      - name: Q04 genuine Core miner coexistence and read-only attachment
+        run: python scripts/q04_miner_coexistence.py --core-dir core --max-duration 180
+      - uses: actions/upload-artifact@v4
+        with:
+          name: q04-miner-coexistence-evidence-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q04-evidence.json
+          if-no-files-found: error
+          retention-days: 14
+
   native-app-dmg:
     name: Signed real Core + bundled WSP .app/.dmg macOS ARM64 E2E
     needs: real-wamd
