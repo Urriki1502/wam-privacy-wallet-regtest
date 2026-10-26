@@ -33,6 +33,28 @@ from wam_regtest.wallet_session import WalletSession
 from wam_regtest.wsp_live import public_regtest_mining_address, scan_actual_core_blocks
 
 
+def _write_cookie_config(datadir: Path, rpcport: int, p2pport: int) -> None:
+    """Cookie-auth variant: omit rpcuser/rpcpassword so Core generates .cookie."""
+    import os
+    global_values = {"regtest": "1", "server": "1"}
+    network_values = {
+        "rpcbind": "127.0.0.1", "rpcallowip": "127.0.0.1", "rpcport": str(rpcport),
+        "port": str(p2pport), "listen": "0", "connect": "0", "dnsseed": "0",
+        "discover": "0", "upnp": "0", "txindex": "1", "blockfilterindex": "1",
+        "coinstatsindex": "1", "fallbackfee": "0.0001",
+    }
+    config = datadir / "wam.conf"
+    fd = os.open(config, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w") as out:
+        for k, v in global_values.items():
+            out.write(f"{k}={v}\n")
+        out.write("[regtest]\n")
+        for k, v in network_values.items():
+            out.write(f"{k}={v}\n")
+        out.flush()
+        os.fsync(out.fileno())
+
+
 def wait_for_chain(prefix: list[str], proc: subprocess.Popen, timeout: float = 90.0) -> None:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -48,7 +70,7 @@ def wait_for_chain(prefix: list[str], proc: subprocess.Popen, timeout: float = 9
     raise CoreSmokeError("CORE_MEASURE_START_TIMEOUT")
 
 
-def measure_reuse(core_dir: Path, source_root: Path, cycles: int = 5) -> dict:
+def measure_reuse(core_dir: Path, source_root: Path, cycles: int = 5, *, cookie_auth: bool = False) -> dict:
     node, cli, receipt = verified_core_paths(core_dir)
     node_sha256 = receipt["wamd_sha256"]
     with tempfile.TemporaryDirectory(prefix="wam-q03-measure-") as temp:
@@ -57,7 +79,10 @@ def measure_reuse(core_dir: Path, source_root: Path, cycles: int = 5) -> dict:
         rpc_port, peer_port = _port(), _port()
         if rpc_port == peer_port:
             raise CoreSmokeError("CORE_MEASURE_PORT_COLLISION")
-        _write_private_config(datadir, rpc_port, peer_port)
+        if cookie_auth:
+            _write_cookie_config(datadir, rpc_port, peer_port)
+        else:
+            _write_private_config(datadir, rpc_port, peer_port)
         env = {
             "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
             "HOME": str(datadir),
@@ -130,6 +155,7 @@ def measure_reuse(core_dir: Path, source_root: Path, cycles: int = 5) -> dict:
             delta = {k: final[k] - baseline.get(k, 0) for k in final}
             return {
                 "status": "Q03_REUSE_MEASURED",
+                "auth_mode": "cookie" if cookie_auth else "config",
                 "platform": receipt.get("platform"),
                 "node_sha256": node_sha256,
                 "initial_height": initial.height,
@@ -173,8 +199,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--core-dir", type=Path, default=Path("core-macos-arm64").resolve())
     parser.add_argument("--wsp-source", type=Path, default=Path("wsp-upstream").resolve())
     parser.add_argument("--cycles", type=int, default=5)
+    parser.add_argument("--cookie-auth", action="store_true", help="Use Core-generated cookie authentication")
     args = parser.parse_args(argv)
-    result = measure_reuse(args.core_dir.resolve(), args.wsp_source.resolve(), args.cycles)
+    result = measure_reuse(
+        args.core_dir.resolve(), args.wsp_source.resolve(), args.cycles,
+        cookie_auth=args.cookie_auth,
+    )
     print(json.dumps(result, indent=2, default=str))
     return 0
 
