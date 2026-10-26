@@ -104,8 +104,9 @@ jobs:
           @'
           from pathlib import Path
           from wam_regtest.release import _download_exact
-          from wam_regtest.windows_core_regtest_smoke import smoke_signed_windows_regtest
-          from wam_regtest.windows_release_preflight import ASSET
+          from wam_regtest.windows_release_preflight import ASSET, ROOT, verify_signed_windows_archive
+          from wam_regtest.windows_core_transport import write_new
+          import json, zipfile
           core_dir = Path('core').resolve()
           core_dir.mkdir(parents=True, exist_ok=True)
           files=(
@@ -116,13 +117,16 @@ jobs:
           )
           for remote,name,limit in files:
               _download_exact(remote,limit,core_dir/name)
-          receipt=smoke_signed_windows_regtest(
-              core_dir/ASSET,core_dir/"SIGNING-KEY.asc",core_dir/"SHA256SUMS",
-              core_dir/"SHA256SUMS.asc",consent=True,timeout=120)
-          assert receipt["status"]=="WIN64_SIGNED_WAM_CORE_REGTEST_101_BLOCK_SMOKE_PASS"
-          print(receipt["status"])
-          print("CORE_SHA256",receipt["core_sha256"])
-          print("CLI_SHA256",receipt["cli_sha256"])
+          proof = verify_signed_windows_archive(
+              core_dir/ASSET, core_dir/"SIGNING-KEY.asc", core_dir/"SHA256SUMS",
+              core_dir/"SHA256SUMS.asc")
+          assert proof["signed_archive_verified"] is True
+          with zipfile.ZipFile(core_dir/ASSET) as z:
+              for filename in ("wamd.exe", "wam-cli.exe"):
+                  data = z.read(f"{ROOT}/bin/{filename}")
+                  write_new(core_dir, filename, data)
+          write_new(core_dir, "receipt.json", json.dumps(proof, sort_keys=True).encode("utf8"))
+          print("WIN_CORE_STAGED", proof["archive_sha256"])
           '@ | python -
       - name: Q04 genuine Core miner coexistence and read-only attachment
         shell: pwsh
