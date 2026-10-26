@@ -98,40 +98,45 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --disable-pip-version-check -e .
-      - name: Fetch pinned official signed Windows x64 Core
+      - name: Fetch pinned official signed Windows x64 Core and run Q04
         shell: pwsh
         run: |
           @'
+          import os, subprocess, tempfile, json, zipfile
           from pathlib import Path
           from wam_regtest.release import _download_exact
           from wam_regtest.windows_release_preflight import ASSET, ROOT, verify_signed_windows_archive
           from wam_regtest.windows_core_transport import write_new
-          import json, zipfile
-          core_dir = Path('core').resolve()
-          core_dir.mkdir(parents=True, exist_ok=True)
-          files=(
-              ("/SIGNING-KEY.asc","SIGNING-KEY.asc",32768),
-              ("/downloads/v0.1.11/SHA256SUMS","SHA256SUMS",131072),
-              ("/downloads/v0.1.11/SHA256SUMS.asc","SHA256SUMS.asc",16384),
-              ("/downloads/v0.1.11/"+ASSET,ASSET,320*1024*1024),
-          )
-          for remote,name,limit in files:
-              _download_exact(remote,limit,core_dir/name)
-          proof = verify_signed_windows_archive(
-              core_dir/ASSET, core_dir/"SIGNING-KEY.asc", core_dir/"SHA256SUMS",
-              core_dir/"SHA256SUMS.asc")
-          assert proof["signed_archive_verified"] is True
-          with zipfile.ZipFile(core_dir/ASSET) as z:
-              for filename in ("wamd.exe", "wam-cli.exe"):
-                  data = z.read(f"{ROOT}/bin/{filename}")
-                  write_new(core_dir, filename, data)
-          write_new(core_dir, "receipt.json", json.dumps(proof, sort_keys=True).encode("utf8"))
-          print("WIN_CORE_STAGED", proof["archive_sha256"])
+          from wam_regtest.custody import create_directory
+          with tempfile.TemporaryDirectory(prefix='wam-q04-core-') as tmp:
+              core_dir = Path(tmp) / 'core'
+              create_directory(core_dir)
+              files=(
+                  ("/SIGNING-KEY.asc","SIGNING-KEY.asc",32768),
+                  ("/downloads/v0.1.11/SHA256SUMS","SHA256SUMS",131072),
+                  ("/downloads/v0.1.11/SHA256SUMS.asc","SHA256SUMS.asc",16384),
+                  ("/downloads/v0.1.11/"+ASSET,ASSET,320*1024*1024),
+              )
+              for remote,name,limit in files:
+                  _download_exact(remote,limit,core_dir/name)
+              proof = verify_signed_windows_archive(
+                  core_dir/ASSET, core_dir/"SIGNING-KEY.asc", core_dir/"SHA256SUMS",
+                  core_dir/"SHA256SUMS.asc")
+              assert proof["signed_archive_verified"] is True
+              with zipfile.ZipFile(core_dir/ASSET) as z:
+                  for filename in ("wamd.exe", "wam-cli.exe"):
+                      data = z.read(f"{ROOT}/bin/{filename}")
+                      write_new(core_dir, filename, data)
+              write_new(core_dir, "receipt.json", json.dumps(proof, sort_keys=True).encode("utf8"))
+              print("WIN_CORE_STAGED", proof["archive_sha256"])
+              env = dict(os.environ)
+              env['Q04_CORE_DIR'] = str(core_dir)
+              result = subprocess.run([
+                  'python', 'scripts/q04_miner_coexistence.py',
+                  '--core-dir', str(core_dir), '--max-duration', '180'], env=env)
+              if result.returncode != 0:
+                  raise SystemExit(result.returncode)
           '@ | python -
-      - name: Q04 genuine Core miner coexistence and read-only attachment
-        shell: pwsh
-        run: |
-          python scripts/q04_miner_coexistence.py --core-dir core --max-duration 180
       - uses: actions/upload-artifact@v4
         if: success()
         with:
