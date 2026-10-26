@@ -13823,27 +13823,27 @@
         },
         "G1": {
           "applicable": true,
-          "status": "PASS",
+          "status": "PENDING",
           "not_applicable_reason": null
         },
         "G2": {
           "applicable": true,
-          "status": "PASS",
+          "status": "PENDING",
           "not_applicable_reason": null
         },
         "G3": {
           "applicable": true,
-          "status": "PASS",
+          "status": "PENDING",
           "not_applicable_reason": null
         },
         "G4": {
           "applicable": true,
-          "status": "PASS",
+          "status": "PENDING",
           "not_applicable_reason": null
         },
         "G5": {
           "applicable": true,
-          "status": "PASS",
+          "status": "PENDING",
           "not_applicable_reason": null
         },
         "G6": {
