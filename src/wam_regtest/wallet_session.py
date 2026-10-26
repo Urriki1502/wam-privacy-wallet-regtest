@@ -15,6 +15,7 @@ import threading
 from .linux_anchor_witness import LinuxWitnessError
 from wam_regtest import custody
 from wam_regtest.core import verified_core_paths
+from wam_regtest.telemetry import increment
 from wam_regtest.wsp_live import LiveCoreReadOnlyCli, RealWspScanError, _pinned_source, _public_fixture_payment
 from wam_regtest.vault import CheckpointVault, KeychainAnchor
 from wam_regtest.wallet_read import HistoryRow, WalletReadSnapshot
@@ -108,6 +109,7 @@ class WalletSession:
         self.runtime = scanner.store.path
         self._core_cli = core_cli
         self._core_receipt = core_receipt
+        self._rpc_client = None
 
     def _ensure_core_identity(self):
         """One-time verified Core path/receipt; subsequent reads avoid full rehash."""
@@ -231,11 +233,14 @@ class WalletSession:
                     != receipt.get("wamd_sha256")):
                 self._fault_core()
                 raise WalletSessionError("WALLET_CORE_IDENTITY_CHANGED")
-            if identity(self.datadir) is None:
+            current = identity(self.datadir)
+            if current is None or current.faulted:
                 raise WalletSessionError("WALLET_CORE_OWNED_SCOPE_REQUIRED")
-            rpc = WalletCoreCli(cli,self.datadir,on_trust_failure=self._fault_core)
-            rpc.attest()
-            return rpc
+            if self._rpc_client is None:
+                increment('wallet_session_rpc_client_create')
+                self._rpc_client = WalletCoreCli(cli,self.datadir,on_trust_failure=self._fault_core)
+                self._rpc_client.attest()
+            return self._rpc_client
         except WalletSessionError:raise
         except (ValueError,RuntimeError,OSError):
             self._fault_core()
@@ -246,6 +251,9 @@ class WalletSession:
         # uncertain operation. Lock/unlock remains explicit and authenticated.
         self.faulted=True
         self._core_reauthentication_required=True
+        if self._rpc_client is not None:
+            self._rpc_client._transport.close() if getattr(self._rpc_client,'_transport',None) is not None else None
+            self._rpc_client=None
 
     def _save(self):
         try:

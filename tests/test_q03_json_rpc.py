@@ -28,6 +28,9 @@ from wam_regtest.json_rpc import (
     _result,
 )
 from wam_regtest.network_policy import NetworkPolicyError, parse_local_config
+from wam_regtest import rpc_credentials as rpc_credentials_module
+from wam_regtest.rpc_credentials import private_bytes
+from wam_regtest.wsp_live import LiveCoreReadOnlyCli, RealWspScanError
 
 
 VALID_CONFIG = b"""regtest=1
@@ -54,12 +57,53 @@ _CHANGED_CONFIG = VALID_CONFIG.replace(b"rpcport=19001", b"rpcport=19002")
 
 REGTEST_GENESIS = "b88f3d262f285e38e184f50bf3eea1c8e615486ae67d3d9eaf0976fbd6d3d30d"
 
+COOKIE_CONFIG = b"""regtest=1
+server=1
+[regtest]
+port=19000
+rpcport=19001
+rpcbind=127.0.0.1
+rpcallowip=127.0.0.1
+listen=0
+connect=0
+dnsseed=0
+discover=0
+upnp=0
+txindex=1
+blockfilterindex=1
+coinstatsindex=1
+fallbackfee=0.0001
+"""
+
+COOKIE = b"__cookie__:0000000000000000000000000000000000000000000000000000000000000001"
+
 
 def _auth_for(config: bytes) -> str:
     values = dict(line.split("=", 1) for line in config.decode("ascii").splitlines()[3:])
     return "Basic " + base64.b64encode(
         (values["rpcuser"] + ":" + values["rpcpassword"]).encode("ascii")
     ).decode("ascii")
+
+
+def _auth_for_cookie(cookie: bytes) -> str:
+    return "Basic " + base64.b64encode(cookie.strip()).decode("ascii")
+
+
+class _FakeCredentials:
+    """Stand-in for CredentialSource so unit tests avoid real private custody."""
+
+    def __init__(self, directory: Path, port: int, mode: str = "config", cookie: bytes | None = None):
+        self.directory = directory
+        self.port = port
+        self.mode = mode
+        self._cookie = cookie
+
+    def attest(self):
+        if self.mode == "cookie":
+            raw, _ = json_rpc_module.private_bytes(self.directory / "regtest", ".cookie", 256, core_cookie=True)
+            if raw.strip() != self._cookie:
+                from wam_regtest.rpc_credentials import CredentialError
+                raise CredentialError("RPC_COOKIE_CHANGED")
 
 
 class _DummyBinding:
@@ -195,19 +239,41 @@ class LocalJsonRpcContracts(unittest.TestCase):
         )
         self._config_patch.start()
         self.addCleanup(self._config_patch.stop)
+        self._cred_patch = patch.object(
+            json_rpc_module, "CredentialSource",
+            side_effect=lambda d: _FakeCredentials(d, 19001, "config")
+        )
+        self._cred_patch.start()
+        self.addCleanup(self._cred_patch.stop)
 
     def _make_config_for_port(self, port: int) -> bytes:
         return VALID_CONFIG.replace(b"rpcport=19001", f"rpcport={port}".encode("ascii"))
 
-    def _transport(self, *, config: bytes | None = None, binding: _DummyBinding | None = None):
+    def _transport(self, *, config: bytes | None = None, binding: _DummyBinding | None = None,
+                   mode: str = "config", cookie: bytes | None = None,
+                   cookie_side_effect=None):
         if config is None:
             config = self._make_config_for_port(self.port)
         if binding is None:
             binding = _DummyBinding(self.core_dir, self.datadir)
         self._config_patch.stop()
-        new_patch = patch.object(json_rpc_module, "_private_config", return_value=config)
-        new_patch.start()
-        self.addCleanup(new_patch.stop)
+        new_config_patch = patch.object(json_rpc_module, "_private_config", return_value=config)
+        new_config_patch.start()
+        self.addCleanup(new_config_patch.stop)
+        self._cred_patch.stop()
+        port = int(dict(line.split(b"=", 1) for line in config.splitlines()[3:])[b"rpcport"])
+        new_cred_patch = patch.object(
+            json_rpc_module, "CredentialSource",
+            side_effect=lambda d: _FakeCredentials(d, port, mode, cookie)
+        )
+        new_cred_patch.start()
+        self.addCleanup(new_cred_patch.stop)
+        if cookie is not None and cookie_side_effect is None:
+            cookie_side_effect = lambda *args, **kwargs: (cookie, None)
+        if cookie_side_effect is not None:
+            cookie_patch = patch.object(json_rpc_module, "private_bytes", side_effect=cookie_side_effect)
+            cookie_patch.start()
+            self.addCleanup(cookie_patch.stop)
         return ManagedReadRpc(self.core_dir, self.datadir, authorized_readonly=True, binding=binding)
 
     def test_parse_local_config_accepts_valid(self):
@@ -301,15 +367,17 @@ class LocalJsonRpcContracts(unittest.TestCase):
                 rpc.call("getblockcount", [])
 
     def test_config_drift_fails_closed(self):
-        base_config = self._make_config_for_port(self.port)
-        changed_config = base_config.replace(b"rpcport=" + str(self.port).encode(),
-                                             b"rpcport=19002")
-
-        with self._transport(config=base_config) as rpc:
+        with self._transport() as rpc:
             rpc._request("getblockcount", [])
-            with patch.object(json_rpc_module, "_private_config", return_value=changed_config):
+            from wam_regtest.rpc_credentials import CredentialError
+            calls = [0]
+            def failing_attest():
+                calls[0] += 1
+                if calls[0] >= 1:
+                    raise CredentialError('RPC_CONFIG_CHANGED')
+            with patch.object(rpc._credentials, "attest", side_effect=failing_attest):
                 with self.assertRaisesRegex(RpcError, "RPC_CONFIG_CHANGED"):
-                    rpc._assert_config()
+                    rpc._request("getblockcount", [])
 
     def test_core_restart_fails_closed(self):
         binding = _DummyBinding(self.core_dir, self.datadir, fail_after=1)
@@ -342,27 +410,71 @@ class LocalJsonRpcContracts(unittest.TestCase):
             ManagedReadRpc(self.core_dir, self.datadir, authorized_readonly=True,
                            binding=NotABinding())
 
+    def test_cookie_mode_reads(self):
+        config = COOKIE_CONFIG.replace(b"rpcport=19001", f"rpcport={self.port}".encode("ascii"))
+        _JsonRpcHandler.expected_auth = _auth_for_cookie(COOKIE)
+        with self._transport(config=config, mode="cookie", cookie=COOKIE) as rpc:
+            self.assertEqual(rpc._credentials.mode, "cookie")
+            self.assertEqual(rpc.call("getblockcount", []), 102)
+
+    def test_cookie_rotation_fails_closed(self):
+        config = COOKIE_CONFIG.replace(b"rpcport=19001", f"rpcport={self.port}".encode("ascii"))
+        _JsonRpcHandler.expected_auth = _auth_for_cookie(COOKIE)
+        cookies = [COOKIE]
+        def next_cookie(*args, **kwargs):
+            return cookies[-1], None
+        with self._transport(config=config, mode="cookie", cookie=COOKIE,
+                             cookie_side_effect=next_cookie) as rpc:
+            rpc._request("getblockcount", [])
+            rotated = b"__cookie__:1111111111111111111111111111111111111111111111111111111111111111"
+            cookies.append(rotated)
+            with self.assertRaisesRegex(RpcError, "RPC_CONFIG_CHANGED"):
+                rpc._request("getblockcount", [])
+
+    def test_scope_faulted_before_request(self):
+        from wam_regtest import rpc_scope
+
+        class FaultedScope:
+            faulted = True
+            binding = _DummyBinding(self.core_dir, self.datadir)
+
+        with patch.object(rpc_scope, "identity", return_value=FaultedScope()):
+            rpc = LiveCoreReadOnlyCli(self.core_dir, self.datadir)
+            with self.assertRaisesRegex(RealWspScanError, "WSP_LIVE_RPC_IDENTITY_DENIED"):
+                rpc._http_call("getblockcount", [])
+
+    def test_call_passes_string_args_to_subclasses(self):
+        """CLI adapters (e.g. Windows vault fixture) still receive string parameters."""
+        received = []
+        h = "a" * 64
+
+        class Subclass(LiveCoreReadOnlyCli):
+            def _call(self, method, args):
+                received.append((method, args))
+                if method == "getblockhash":
+                    return h
+                return {"hash": h, "tx": []}
+
+        sub = Subclass(self.core_dir, self.datadir)
+        sub._genesis = REGTEST_GENESIS
+        sub.call("getblockhash", [1])
+        self.assertEqual(received, [("getblockhash", ["1"])])
+        sub.call("getblock", [h, 3])
+        self.assertEqual(received, [("getblockhash", ["1"]), ("getblock", [h, "3"])])
+
 
 class NativeConfigCustodyContracts(unittest.TestCase):
     """Exercise the real native config path on POSIX, if available."""
 
     @unittest.skipUnless(os.name == "posix", "native custody test is POSIX only")
     def test_private_config_parses_generated_profile(self):
-        import sys
         from wam_regtest.core import _write_private_config
         with tempfile.TemporaryDirectory() as t:
             d = Path(t).resolve()
             os.chmod(d, 0o700)
             _write_private_config(d, 12345, 12346)
-            # On macOS the native path requires an ACL-free 0o700 directory.
-            if sys.platform == "darwin":
-                with patch.object(json_rpc_module, "parse_local_config",
-                                  side_effect=parse_local_config) as _:
-                    raw = json_rpc_module._private_config(d)
-                    self.assertEqual(parse_local_config(raw), 12345)
-            else:
-                raw = json_rpc_module._private_config(d)
-                self.assertEqual(parse_local_config(raw), 12345)
+            raw = json_rpc_module._private_config(d)
+            self.assertEqual(parse_local_config(raw), 12345)
 
 
 if __name__ == "__main__":

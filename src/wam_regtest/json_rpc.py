@@ -20,13 +20,15 @@ import time
 import random
 
 from .core_process import OwnedCoreBinding, CoreBindingError
-from .network_policy import parse_local_config
+from .rpc_credentials import CredentialSource, CredentialError, private_bytes
+from .telemetry import increment
 from .wsp_live import REGTEST_GENESIS
 
 
 MAX_REPLY = 1024 * 1024
 MAX_BLOCK_REPLY = 32 * 1024 * 1024
 MAX_IDLE_REUSE_SECONDS = 5
+MAX_TRUST_CACHE_SECONDS = 5
 SUPPORTED_RPC = (111, '/WAM:0.1.11/', 70016)
 
 _HTTP_READS = frozenset((
@@ -163,6 +165,7 @@ class _BoundConnection(http.client.HTTPConnection):
     def __init__(self, port, timeout, binding):
         self._binding = binding
         super().__init__('127.0.0.1', port, timeout=timeout)
+        increment('http_connection_create')
 
     def connect(self):
         try:
@@ -208,20 +211,32 @@ class ManagedReadRpc:
         self._lock = threading.RLock()
         self._identifier = 0
         self._last_completed = None
+        self._last_attest = None
         self._config_directory = directory
+        self._credentials = None
         try:
-            raw = _private_config(directory)
-            port = parse_local_config(raw)
-            self._config_digest = hashlib.sha256(raw).digest()
-            values = dict(line.split('=', 1) for line in raw.decode('ascii').splitlines()[3:])
-            self._auth = 'Basic ' + base64.b64encode(
-                (values['rpcuser'] + ':' + values['rpcpassword']).encode('ascii')).decode('ascii')
-            self._connection = _BoundConnection(port, timeout, binding)
+            credentials = CredentialSource(directory)
+            self._credentials = credentials
+            self._auth = self._build_auth(credentials)
+            self._connection = _BoundConnection(credentials.port, timeout, binding)
             self._connection.set_debuglevel(0)
             self.attest()
         except RpcError:
             self.close()
             raise
+        except CredentialError as error:
+            self.close()
+            code = error.args[0] if len(error.args) == 1 and type(error.args[0]) is str else None
+            mapped = {
+                'RPC_AUTHENTICATION_DENIED': 'RPC_AUTHENTICATION_DENIED',
+                'RPC_CONFIG_CHANGED': 'RPC_CONFIG_CHANGED',
+                'RPC_COOKIE_CHANGED': 'RPC_CONFIG_CHANGED',
+                'RPC_CREDENTIAL_CUSTODY_DENIED': 'RPC_CONFIG_CUSTODY_DENIED',
+                'RPC_CREDENTIAL_CHANGED': 'RPC_CONFIG_CHANGED',
+                'RPC_COOKIE_FORMAT_DENIED': 'RPC_AUTHENTICATION_DENIED',
+                'RPC_CONFIG_PROFILE_DENIED': 'RPC_CONFIG_CHANGED',
+            }
+            raise RpcError(mapped.get(code, 'RPC_MANAGED_OPEN_DENIED')) from None
         except Exception:
             self.close()
             raise RpcError('RPC_MANAGED_OPEN_DENIED') from None
@@ -229,15 +244,37 @@ class ManagedReadRpc:
     def __repr__(self):
         return '<ManagedReadRpc redacted>'
 
+    def _build_auth(self, credentials):
+        if credentials.mode == 'config':
+            raw = _private_config(self._config_directory)
+            values = dict(line.split('=', 1) for line in raw.decode('ascii').splitlines()[3:])
+            return 'Basic ' + base64.b64encode(
+                (values['rpcuser'] + ':' + values['rpcpassword']).encode('ascii')).decode('ascii')
+        # Cookie mode: read the Core-generated cookie under regtest/.cookie.
+        raw, _ = private_bytes(self._config_directory / 'regtest', '.cookie', 256, core_cookie=True)
+        return 'Basic ' + base64.b64encode(raw.strip()).decode('ascii')
+
     def _assert_config(self):
-        if hashlib.sha256(_private_config(self._config_directory)).digest() != self._config_digest:
-            raise RpcError('RPC_CONFIG_CHANGED')
+        try:
+            self._credentials.attest()
+        except CredentialError as error:
+            code = error.args[0] if len(error.args) == 1 and type(error.args[0]) is str else None
+            if code in ('RPC_COOKIE_CHANGED', 'RPC_CONFIG_CHANGED',
+                        'RPC_CREDENTIAL_CHANGED', 'RPC_CONFIG_PROFILE_DENIED'):
+                raise RpcError('RPC_CONFIG_CHANGED') from None
+            raise RpcError('RPC_AUTHENTICATION_DENIED') from None
 
     def _discard_idle_connection(self):
         if (self._last_completed is not None
                 and time.monotonic() - self._last_completed >= MAX_IDLE_REUSE_SECONDS):
             self._connection.close()
             self._last_completed = None
+
+    def _current_auth(self):
+        if self._credentials.mode == 'config':
+            return self._auth
+        raw, _ = private_bytes(self._config_directory / 'regtest', '.cookie', 256, core_cookie=True)
+        return 'Basic ' + base64.b64encode(raw.strip()).decode('ascii')
 
     def _request_once(self, method, params):
         if self._closed:
@@ -248,10 +285,11 @@ class ManagedReadRpc:
         identifier = self._identifier
         try:
             self._discard_idle_connection()
+            increment('http_request')
             body = json.dumps({'jsonrpc': '1.0', 'id': identifier, 'method': method, 'params': params},
                               separators=(',', ':')).encode('ascii')
             self._connection.request('POST', '/', body,
-                                     {'Authorization': self._auth,
+                                     {'Authorization': self._current_auth(),
                                       'Content-Type': 'application/json',
                                       'Connection': 'keep-alive'})
             response = self._connection.getresponse()
@@ -288,6 +326,7 @@ class ManagedReadRpc:
 
     def attest(self):
         with self._lock:
+            increment('rpc_attest')
             info = self._request('getblockchaininfo', [])
             if self._request('getblockhash', [0]) != REGTEST_GENESIS:
                 self.close()
@@ -296,14 +335,21 @@ class ManagedReadRpc:
             if self._request('getconnectioncount', []) != 0:
                 self.close()
                 raise RpcError('RPC_EXTERNAL_PEERS_DENIED')
+            self._last_attest = time.monotonic()
             return info
 
     def call(self, method, params=None):
         args = [] if params is None else params
         _params(method, args)
         with self._lock:
-            info = self.attest()
-            return info if method == 'getblockchaininfo' else self._request(method, args)
+            self._assert_config()
+            self._discard_idle_connection()
+            if (self._connection is None or self._last_attest is None
+                    or time.monotonic() - self._last_attest >= MAX_TRUST_CACHE_SECONDS):
+                self.attest()
+            if method == 'getblockchaininfo':
+                return self._request('getblockchaininfo', [])
+            return self._request(method, args)
 
     def close(self):
         with self._lock:

@@ -281,17 +281,20 @@ class LiveCoreReadOnlyCli:
         """Shared authenticated HTTP transport for owned Core reads."""
         from .rpc_scope import identity
         from .json_rpc import ManagedReadRpc, RpcError
+        scope = identity(self._datadir)
+        if scope is None or scope.faulted:
+            if self._transport is not None:
+                self._transport.close(); self._transport = None
+            raise RealWspScanError('WSP_LIVE_RPC_IDENTITY_DENIED')
         if self._transport is None:
-            scope = identity(self._datadir)
-            if scope is None:
-                raise RealWspScanError('WSP_LIVE_RPC_OWNED_SCOPE_REQUIRED')
             try:
                 self._transport = ManagedReadRpc(
                     scope.binding.core, self._datadir,
                     authorized_readonly=True, binding=scope.binding)
             except RpcError as error:
                 if (len(error.args) == 1 and type(error.args[0]) is str
-                        and error.args[0] == 'RPC_AUTHENTICATION_DENIED'):
+                        and error.args[0] in ('RPC_AUTHENTICATION_DENIED', 'RPC_CONFIG_CHANGED',
+                                               'RPC_COOKIE_CHANGED')):
                     raise RealWspScanError('WSP_LIVE_RPC_AUTHENTICATION_DENIED') from None
                 raise RealWspScanError('WSP_LIVE_RPC_DENIED') from None
         try:
@@ -307,6 +310,7 @@ class LiveCoreReadOnlyCli:
             safe = {
                 'RPC_AUTHENTICATION_DENIED': 'WSP_LIVE_RPC_AUTHENTICATION_DENIED',
                 'RPC_CONFIG_CHANGED': 'WSP_LIVE_RPC_AUTHENTICATION_DENIED',
+                'RPC_COOKIE_CHANGED': 'WSP_LIVE_RPC_AUTHENTICATION_DENIED',
                 'RPC_CONNECTION_UNCERTAIN_READ_FAILED': 'WSP_LIVE_RPC_UNAVAILABLE',
                 'RPC_NATIVE_PROCESS_PROOF_DENIED': 'WSP_LIVE_RPC_IDENTITY_DENIED',
                 'RPC_NATIVE_ENDPOINT_PROOF_DENIED': 'WSP_LIVE_RPC_IDENTITY_DENIED',
@@ -322,6 +326,8 @@ class LiveCoreReadOnlyCli:
     def _cli_call(self, method: str, args: list) -> object:
         """Signed CLI fallback for write paths and unbound scopes."""
         from .core import _read_cli, CoreSmokeError
+        from .telemetry import increment
+        increment('cli_spawn')
         try:
             return _read_cli(
                 [str(self._binary), f"-datadir={self._datadir}", method, *(str(a) for a in args)],
@@ -348,15 +354,18 @@ class LiveCoreReadOnlyCli:
                 current = identity(self._datadir)
             except Exception:
                 current = None
-            if current is not self._scope:
+            if current is not self._scope or (current is not None and current.faulted):
                 self._genesis = None
+                self._scope = None
+                if self._transport is not None:
+                    self._transport.close(); self._transport = None
                 raise RealWspScanError('WSP_LIVE_RPC_IDENTITY_DENIED')
         if method in _HTTP_READS:
             try:
                 scope = identity(self._datadir)
             except Exception:
                 scope = None
-            if scope is not None:
+            if scope is not None and not scope.faulted:
                 return self._http_call(method, args)
         return self._cli_call(method, args)
 
@@ -400,7 +409,7 @@ class LiveCoreReadOnlyCli:
                     or not _HASH.fullmatch(args[0])
                     or type(args[1]) is not int or args[1] != 3):
                 raise RealWspScanError("WSP_LIVE_PARAMS_DENIED")
-        reply = self._call(method, args)
+        reply = self._call(method, [str(a) for a in args])
         if method in ("getbestblockhash", "getblockhash"):
             if type(reply) is not str or not _HASH.fullmatch(reply):
                 raise RealWspScanError("WSP_LIVE_REPLY_DENIED")
