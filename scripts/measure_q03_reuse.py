@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -28,6 +29,7 @@ from wam_regtest.core import (
     verified_core_paths,
 )
 from wam_regtest.rpc_scope import register, unregister
+from wam_regtest.custody import private_temporary_directory
 from wam_regtest.telemetry import reset as reset_telemetry, snapshot as telemetry_snapshot
 from wam_regtest.wallet_session import WalletSession
 from wam_regtest.wsp_live import public_regtest_mining_address, scan_actual_core_blocks
@@ -73,7 +75,7 @@ def wait_for_chain(prefix: list[str], proc: subprocess.Popen, timeout: float = 9
 def measure_reuse(core_dir: Path, source_root: Path, cycles: int = 5, *, cookie_auth: bool = False) -> dict:
     node, cli, receipt = verified_core_paths(core_dir)
     node_sha256 = receipt["wamd_sha256"]
-    with tempfile.TemporaryDirectory(prefix="wam-q03-measure-") as temp:
+    with private_temporary_directory(prefix="wam-q03-measure-") as temp:
         datadir = Path(temp).resolve(strict=True)
         datadir.chmod(0o700)
         rpc_port, peer_port = _port(), _port()
@@ -158,6 +160,7 @@ def measure_reuse(core_dir: Path, source_root: Path, cycles: int = 5, *, cookie_
                 "auth_mode": "cookie" if cookie_auth else "config",
                 "platform": receipt.get("platform"),
                 "node_sha256": node_sha256,
+                "core_sha256": {"wamd": node_sha256, "wam-cli": receipt["wam_cli_sha256"]},
                 "initial_height": initial.height,
                 "initial_confirmed_utxos": initial.confirmed_utxos,
                 "initial_confirmed_atoms": initial.confirmed_atoms,
@@ -200,11 +203,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--wsp-source", type=Path, default=Path("wsp-upstream").resolve())
     parser.add_argument("--cycles", type=int, default=5)
     parser.add_argument("--cookie-auth", action="store_true", help="Use Core-generated cookie authentication")
+    parser.add_argument("--report", type=Path, help="Write the sanitized measurement JSON separately from progress logs")
     args = parser.parse_args(argv)
     result = measure_reuse(
         args.core_dir.resolve(), args.wsp_source.resolve(), args.cycles,
         cookie_auth=args.cookie_auth,
     )
+    if any(result['delta'][key] != 0 for key in ('verified_core_paths','cli_spawn',
+            'http_connection_create','http_socket_connect','wallet_session_rpc_client_create')):
+        raise CoreSmokeError('CORE_MEASURE_REUSE_DENIED')
+    checkout = subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+    result.update(source_head_sha=os.environ.get('WAM_SOURCE_HEAD', checkout),checkout_sha=checkout,
+                  core_version='v0.1.11',wsp_source_commit='ac55f13423620252bdbf848c7e8a280c3b84721e',
+                  synthetic_rpc=False,mainnet_allowed=False)
+    if args.report is not None:
+        args.report.write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result, indent=2, default=str))
     return 0
 
