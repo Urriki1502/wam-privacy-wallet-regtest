@@ -123,7 +123,7 @@ def main():
         with ExternalCoreSession(
             authorize=lambda: {
                 'pid': pid, 'rpc_port': rpc_port, 'datadir': str(datadir),
-                'core_dir': str(args.core_dir), 'operator_consent': True,
+                'core_dir': str(core_dir), 'operator_consent': True,
             },
             policy=__import__('wam_regtest.external_recovery').external_recovery.ReconnectPolicy(
                 max_attempts=3, base_delay_seconds=0.5, max_delay_seconds=2.0),
@@ -139,11 +139,11 @@ def main():
         bad_session = ExternalCoreSession(
             authorize=lambda: {
                 'pid': pid, 'rpc_port': rpc_port + 1, 'datadir': str(datadir),
-                'core_dir': str(args.core_dir), 'operator_consent': True,
+                'core_dir': str(core_dir), 'operator_consent': True,
             })
         bad_session._last_spec = {
             'pid': pid, 'rpc_port': rpc_port, 'datadir': str(datadir),
-            'core_dir': str(args.core_dir), 'operator_consent': True,
+            'core_dir': str(core_dir), 'operator_consent': True,
         }
         try:
             bad_session.read('getblockcount', [])
