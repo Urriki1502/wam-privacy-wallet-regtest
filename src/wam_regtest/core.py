@@ -17,6 +17,7 @@ import time
 
 from .release import ARCHIVES, CLI_SHA256, _sha
 from .custody import private_temporary_directory
+from .telemetry import increment
 
 
 class CoreSmokeError(RuntimeError):
@@ -24,6 +25,7 @@ class CoreSmokeError(RuntimeError):
 
 
 def verified_core_paths(core_dir: Path) -> tuple[Path, Path, dict]:
+    increment('verified_core_paths')
     import sys
     if sys.platform == 'linux':
         from .linux_runtime import verified_paths

@@ -63,6 +63,11 @@ from .wsp_live import LiveCoreReadOnlyCli,RealWspScanError,REGTEST_GENESIS
 from .custody import create_directory, private_temporary_directory
 
 
+class _CliOnlyCoreReadOnlyCli(LiveCoreReadOnlyCli):
+    """Q02 probe uses the signed CLI path so it can inject faults at cli_rpc.decode."""
+    _http_enabled = False
+
+
 class Q02ProbeError(ValueError):pass
 
 
@@ -198,7 +203,7 @@ class _Node:
         _windows_cookie_metadata(self.directory)
         raise Q02ProbeError('Q02_NODE_START_TIMEOUT')
     def reader(self):
-        client=LiveCoreReadOnlyCli(self.cli,self.directory);client.attest();return client
+        client=_CliOnlyCoreReadOnlyCli(self.cli,self.directory);client.attest();return client
     def state(self):
         return (self.call('getblockcount'),self.call('getbestblockhash'),
                 tuple(self.call('listwallets')),tuple(self.call('getrawmempool')))

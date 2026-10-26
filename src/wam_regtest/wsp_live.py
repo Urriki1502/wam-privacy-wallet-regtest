@@ -265,7 +265,10 @@ def _public_fixture_payment(rpc, account, mining_address: str, *,
 class LiveCoreReadOnlyCli:
     """Strict method surface; actual signed wam-cli -> actual localhost wamd."""
 
-    __slots__ = ("_binary", "_datadir", "_genesis", "_scope")
+    __slots__ = ("_binary", "_datadir", "_genesis", "_scope", "_transport")
+
+    # Subclasses may disable HTTP to force the signed CLI path (e.g. Q02 probe).
+    _http_enabled = True
 
     def __init__(self, binary: Path, datadir: Path) -> None:
         if (type(binary) is not type(Path()) or type(datadir) is not type(Path())
@@ -275,31 +278,109 @@ class LiveCoreReadOnlyCli:
         self._datadir = datadir
         self._genesis = None
         self._scope = None
+        self._transport = None
 
-    def _call(self, method: str, args: list[str]) -> object:
-        # Use only the exact signed official CLI verified by parent Core smoke.
-        from .core import _read_cli, CoreSmokeError
+    def _revoke_http(self):
+        from .rpc_scope import quarantine
+        quarantine(self._datadir)
+        self._genesis = None
+        if self._transport is not None:
+            self._transport.close()
+            self._transport = None
+
+    def _http_call(self, method: str, args: list) -> object:
+        """Shared authenticated HTTP transport for owned Core reads."""
         from .rpc_scope import identity
-        if self._scope is not None and identity(self._datadir) is not self._scope:
-            self._genesis=None
+        from .json_rpc import ManagedReadRpc, RpcError
+        scope = identity(self._datadir)
+        if scope is None or scope.faulted:
+            if self._transport is not None:
+                self._transport.close(); self._transport = None
             raise RealWspScanError('WSP_LIVE_RPC_IDENTITY_DENIED')
+        if self._transport is None:
+            try:
+                self._transport = ManagedReadRpc(
+                    scope.binding.core, self._datadir,
+                    authorized_readonly=True, binding=scope.binding)
+            except RpcError as error:
+                self._revoke_http()
+                if (len(error.args) == 1 and type(error.args[0]) is str
+                        and error.args[0] in ('RPC_AUTHENTICATION_DENIED', 'RPC_CONFIG_CHANGED',
+                                               'RPC_COOKIE_CHANGED')):
+                    raise RealWspScanError('WSP_LIVE_RPC_AUTHENTICATION_DENIED') from None
+                raise RealWspScanError('WSP_LIVE_RPC_DENIED') from None
+        try:
+            # Convert CLI-style string args to typed HTTP params.
+            if method == 'getblockhash':
+                params = [int(args[0])]
+            elif method == 'getblock':
+                params = [args[0], int(args[1])]
+            else:
+                params = list(args)
+            return self._transport.call(method, params)
+        except RpcError as error:
+            self._revoke_http()
+            safe = {
+                'RPC_AUTHENTICATION_DENIED': 'WSP_LIVE_RPC_AUTHENTICATION_DENIED',
+                'RPC_CONFIG_CHANGED': 'WSP_LIVE_RPC_AUTHENTICATION_DENIED',
+                'RPC_COOKIE_CHANGED': 'WSP_LIVE_RPC_AUTHENTICATION_DENIED',
+                'RPC_CONNECTION_UNCERTAIN_READ_FAILED': 'WSP_LIVE_RPC_UNAVAILABLE',
+                'RPC_NATIVE_PROCESS_PROOF_DENIED': 'WSP_LIVE_RPC_IDENTITY_DENIED',
+                'RPC_NATIVE_ENDPOINT_PROOF_DENIED': 'WSP_LIVE_RPC_IDENTITY_DENIED',
+                'RPC_MANAGED_PROCESS_CHANGED': 'WSP_LIVE_RPC_IDENTITY_DENIED',
+                'RPC_GENESIS_DENIED': 'WSP_LIVE_GENESIS_DENIED',
+                'RPC_EXTERNAL_PEERS_DENIED': 'WSP_LIVE_PEERS_DENIED',
+                'RPC_VERSION_CAPABILITY_DENIED': 'WSP_LIVE_VERSION_DENIED',
+            }
+            code = safe.get(error.args[0] if len(error.args) == 1 and type(error.args[0]) is str else None,
+                            'WSP_LIVE_RPC_DENIED')
+            raise RealWspScanError(code) from None
+
+    def _cli_call(self, method: str, args: list) -> object:
+        """Signed CLI fallback for write paths and unbound scopes."""
+        from .core import _read_cli, CoreSmokeError
+        from .telemetry import increment
+        increment('cli_spawn')
         try:
             return _read_cli(
-                [str(self._binary), f"-datadir={self._datadir}", method, *args],
+                [str(self._binary), f"-datadir={self._datadir}", method, *(str(a) for a in args)],
                 timeout=10,
             )
         except CoreSmokeError as error:
-            self._genesis=None
-            safe={
-                'CORE_RPC_AUTHENTICATION_DENIED':'WSP_LIVE_RPC_AUTHENTICATION_DENIED',
-                'CORE_RPC_UNAVAILABLE':'WSP_LIVE_RPC_UNAVAILABLE',
-                'CORE_RPC_PROCESS_IDENTITY_DENIED':'WSP_LIVE_RPC_IDENTITY_DENIED',
-                'CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE':'WSP_LIVE_RPC_IDENTITY_DENIED',
-                'CORE_LOCAL_NETWORK_POLICY_DENIED':'WSP_LIVE_RPC_IDENTITY_DENIED',
+            self._genesis = None
+            safe = {
+                'CORE_RPC_AUTHENTICATION_DENIED': 'WSP_LIVE_RPC_AUTHENTICATION_DENIED',
+                'CORE_RPC_UNAVAILABLE': 'WSP_LIVE_RPC_UNAVAILABLE',
+                'CORE_RPC_PROCESS_IDENTITY_DENIED': 'WSP_LIVE_RPC_IDENTITY_DENIED',
+                'CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE': 'WSP_LIVE_RPC_IDENTITY_DENIED',
+                'CORE_LOCAL_NETWORK_POLICY_DENIED': 'WSP_LIVE_RPC_IDENTITY_DENIED',
             }
-            code=safe.get(error.args[0] if len(error.args)==1 and type(error.args[0]) is str else None,
-                          'WSP_LIVE_RPC_DENIED')
+            code = safe.get(error.args[0] if len(error.args) == 1 and type(error.args[0]) is str else None,
+                            'WSP_LIVE_RPC_DENIED')
             raise RealWspScanError(code) from None
+
+    def _call(self, method: str, args: list) -> object:
+        from .rpc_scope import identity
+        from .json_rpc import _HTTP_READS
+        if self._scope is not None:
+            try:
+                current = identity(self._datadir)
+            except Exception:
+                current = None
+            if current is not self._scope or (current is not None and current.faulted):
+                self._genesis = None
+                self._scope = None
+                if self._transport is not None:
+                    self._transport.close(); self._transport = None
+                raise RealWspScanError('WSP_LIVE_RPC_IDENTITY_DENIED')
+        if self._http_enabled and method in _HTTP_READS:
+            try:
+                scope = identity(self._datadir)
+            except Exception:
+                scope = None
+            if scope is not None and not scope.faulted:
+                return self._http_call(method, args)
+        return self._cli_call(method, args)
 
     def attest(self) -> None:
         # A failed fresh attestation never leaves an earlier cached grant.

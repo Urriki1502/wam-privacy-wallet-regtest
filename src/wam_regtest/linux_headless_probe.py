@@ -32,6 +32,8 @@ def probe(core,datadir,source,mining):
         print('LINUX_HEADLESS_STAGE='+stage,flush=True)
         session=WalletSession.create(core,datadir,source,PASSWORD,mining,authorized=True)
         front=HeadlessWallet(session);initial=session.snapshot();original_accounts=session.ring.accounts()
+        from .q03_probe import measure_repeated_snapshots
+        q03_reuse=measure_repeated_snapshots(session)
         assert initial.height==103 and initial.confirmed_utxos==1 and initial.history
         receiver=Keyring();code=receiver.accounts()[0].payment_code()
         receiver_scan=Scanner(datadir/'recipient.sqlite',receiver.accounts())
@@ -126,7 +128,7 @@ def probe(core,datadir,source,mining):
             headless_callback=reopen(next_backup,True))
         assert len(recovery)==2 and not any(n.startswith('PySide6') for n in sys.modules)
         return {'status':'REAL_LINUX_CORE_ROOT_WITNESS_HEADLESS_WALLET_E2E_PASS',
-            'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,
+            'real_core_rpc':True,'synthetic_rpc':False,'mainnet_allowed':False,'q03_reuse':q03_reuse,
             'confirmed_recipient_atoms':100000,'confirmed_sender_change':True,
             'actual_reorg_depths':[1,12,100],'fresh_chain_key_recovery':True,
             'irreversible_reservations_retained':True,'lost_actual_broadcast_reply_retained':True,

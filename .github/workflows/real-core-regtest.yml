@@ -189,6 +189,10 @@ jobs:
           assert result['security_live_core']['actual_core_reorg_depths']==[1,12,100]
           with Path('q01-native-cocoa.json').open('x') as output:
               json.dump(result,output,sort_keys=True,indent=2)
+      - name: Q03 genuine cookie-auth persistent read qualification
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python scripts/measure_q03_reuse.py --core-dir core --wsp-source wsp-upstream --cookie-auth --report q03-cookie-reuse.json
       - name: Upload only sanitized live-Core evidence
         if: success()
         uses: actions/upload-artifact@v4
@@ -198,6 +202,7 @@ jobs:
             real-core-evidence.json
             q01-native-cocoa.json
             independent-wallet-security.json
+            q03-cookie-reuse.json
             fusion-ui-review/
             real-regtest-gui-preview.png
             real-regtest-wallet-preview.png
