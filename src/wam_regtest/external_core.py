@@ -152,14 +152,19 @@ class ExternalCoreAttachment:
             if local[0] != '127.0.0.1' or remote[0] != '127.0.0.1':
                 raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_LOOPBACK_REQUIRED')
             self._assert_process_image()
-            if sys.platform == 'darwin':
-                found = _mac_socket(self._pid, remote[1], local[1])
-            elif sys.platform == 'linux':
-                found = _linux_socket(self._pid, remote[1], local[1])
-            elif sys.platform == 'win32':
-                found = _windows_socket(self._pid, remote[1], local[1], self._datadir)
-            else:
-                raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_PLATFORM_UNSUPPORTED')
+            deadline = time.monotonic() + 2.0
+            while True:
+                if sys.platform == 'darwin':
+                    found = _mac_socket(self._pid, remote[1], local[1])
+                elif sys.platform == 'linux':
+                    found = _linux_socket(self._pid, remote[1], local[1])
+                elif sys.platform == 'win32':
+                    found = _windows_socket(self._pid, remote[1], local[1], self._datadir)
+                else:
+                    raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_PLATFORM_UNSUPPORTED')
+                if found or time.monotonic() >= deadline:
+                    break
+                time.sleep(0.05)
             if not found:
                 raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_SOCKET_OWNER_DENIED')
             return probe
@@ -201,14 +206,19 @@ class ExternalCoreAttachment:
                 raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_RPC_UNREACHABLE') from None
             local, remote = probe.getsockname(), probe.getpeername()
             self._assert_process_image()
-            if sys.platform == 'darwin':
-                found = _mac_socket(self._pid, remote[1], local[1])
-            elif sys.platform == 'linux':
-                found = _linux_socket(self._pid, remote[1], local[1])
-            elif sys.platform == 'win32':
-                found = _windows_socket(self._pid, remote[1], local[1], self._datadir)
-            else:
-                raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_PLATFORM_UNSUPPORTED')
+            deadline = time.monotonic() + 2.0
+            while True:
+                if sys.platform == 'darwin':
+                    found = _mac_socket(self._pid, remote[1], local[1])
+                elif sys.platform == 'linux':
+                    found = _linux_socket(self._pid, remote[1], local[1])
+                elif sys.platform == 'win32':
+                    found = _windows_socket(self._pid, remote[1], local[1], self._datadir)
+                else:
+                    raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_PLATFORM_UNSUPPORTED')
+                if found or time.monotonic() >= deadline:
+                    break
+                time.sleep(0.05)
             if not found:
                 raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_SOCKET_OWNER_DENIED')
 
