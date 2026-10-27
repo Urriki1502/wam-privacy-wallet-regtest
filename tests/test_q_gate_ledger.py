@@ -26,7 +26,19 @@ class SequentialQGateContracts(unittest.TestCase):
         self.assertEqual(q04['owner_merge_authorization'],
             'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/133')
         self.assertEqual(p['status'],'PARTIAL_PASS')
-        self.assertEqual(len(p['exact_main_runs']),2)
+        self.assertEqual(len(p['exact_main_runs']),4)
+        self.assertEqual(p['latest_governance_main_sha'],
+            'a0e4c0c2f48e92c7cd8ebfd38a062aa03d1aa15e')
+        self.assertEqual({x['run_id'] for x in p['exact_main_runs']},
+            {40446287827,40446287701,40450255431,40450255365})
+        latest=[x for x in p['exact_main_runs'] if x.get('checkout_sha')]
+        self.assertEqual(len(latest),2)
+        self.assertTrue(all(x['checkout_sha']==p['latest_governance_main_sha'] for x in latest))
+        mac_core=next(x for x in latest if x['run_id']==40450255431)
+        self.assertEqual(len(mac_core['artifact_archives']),3)
+        self.assertTrue(all(len(x['archive_sha256'])==64 for x in mac_core['artifact_archives']))
+        self.assertEqual({x['required_ref_sha'] for x in p['pending_exact_main_runs']},
+            {p['latest_governance_main_sha']})
         self.assertTrue(all(x['status']=='PASS' for x in p['exact_main_runs']))
         self.assertEqual({x['platform'] for x in p['pending_exact_main_runs']},
             {'windows-x64','linux-x86_64'})
