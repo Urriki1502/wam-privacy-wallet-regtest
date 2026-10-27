@@ -3,6 +3,7 @@ from contextlib import ExitStack
 import json
 from pathlib import Path
 import socket
+import sys
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
@@ -19,7 +20,12 @@ class SupervisorLifecycleUnit(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve() / 'wam-fusion-core-0123456789abcdef'
-        self.root.mkdir(mode=0o700)
+        if sys.platform == 'win32':
+            from wam_regtest.windows_private_storage import create_private_directory
+            self.create_private_directory = create_private_directory
+        else:
+            self.create_private_directory = lambda p: p.mkdir(mode=0o700)
+        self.create_private_directory(self.root)
         self.core = self.root.parent / 'core'
         self.stack = ExitStack()
         self.addCleanup(self.stack.close)
@@ -30,7 +36,7 @@ class SupervisorLifecycleUnit(unittest.TestCase):
         # Only Core verification/process/RPC and platform policy are fixtures.
         self.stack.enter_context(patch.object(module, 'storage', return_value=Mock()))
         self.stack.enter_context(patch.object(module, 'create_directory',
-            side_effect=lambda p: p.mkdir(mode=0o700)))
+            side_effect=self.create_private_directory))
 
     def owner(self):
         owner = CoreSupervisor(self.root, self.core, authorized=True)
