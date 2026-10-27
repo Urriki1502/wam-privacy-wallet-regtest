@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 
 from .core import CoreSmokeError, smoke_real_core
+from .q04_runner import Q04RunnerError, run_q04_scenario
 
 
 def main() -> int:
@@ -55,6 +56,11 @@ def main() -> int:
     frontend.add_argument('--confirm-headless-e2e',action='store_true',help='Explicit disposable real-process acceptance operator, no personal keys')
     linux.add_argument('--recover-backup',type=Path,help='Recover the latest same-host anchored encrypted backup on this fresh disposable chain')
     linux.add_argument('--report',type=Path)
+    q04 = sub.add_parser('q04-external-miner', help='Q04 external Core + solo-miner coexistence qualification')
+    q04.add_argument('--core-dir', required=True, type=Path)
+    q04.add_argument('--confirm-disposable-regtest', action='store_true')
+    q04.add_argument('--report', type=Path, default=Path('q04-evidence.json'))
+    q04.add_argument('--max-duration', type=int, default=180)
     args = ap.parse_args()
     try:
         if args.command=='linux-wallet':
@@ -100,8 +106,17 @@ def main() -> int:
                 args.datadir.expanduser().absolute(),
                 args.wsp_source_root.expanduser().absolute(),
             )
+        if args.command == 'q04-external-miner':
+            if args.confirm_disposable_regtest is not True:
+                raise Q04RunnerError('Q04_RUNNER_CONSENT_REQUIRED')
+            evidence = run_q04_scenario(
+                args.core_dir.expanduser().absolute(),
+                report_path=args.report.expanduser().absolute(),
+                max_duration=args.max_duration)
+            print(json.dumps(evidence, sort_keys=True))
+            return 0
         raise CoreSmokeError("CORE_COMMAND_DENIED")
-    except CoreSmokeError as error:
+    except (CoreSmokeError, Q04RunnerError) as error:
         print(str(error), file=sys.stderr)
         return 2
     finally:

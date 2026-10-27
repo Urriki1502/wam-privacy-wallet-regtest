@@ -61,10 +61,19 @@ def main():
     if sys.stdout is None:sys.stdout=io.StringIO()
     if sys.stderr is None:sys.stderr=io.StringIO()
     ci=sys.argv[1:]==['--ci-real-core-wallet']
+    q04_mode=sys.argv[1:]==['--ci-q04-external-miner']
     try:
-        if sys.argv[1:] and not ci:raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
+        if sys.argv[1:] and not (ci or q04_mode):raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
         core,source=_resources()
         from wam_regtest.core import smoke_real_core,CoreSmokeError
+        if q04_mode:
+            with tempfile.TemporaryDirectory(prefix='wam-win-frozen-') as t:
+                stage=Path(t).absolute()/'core';_stage_original_core(core,stage)
+                evidence=run_q04_scenario(stage,report_path=Path('q04-frozen-evidence.json'),max_duration=180)
+                if evidence.get('status')!='Q04_MINER_COEXISTENCE_PASS':
+                    raise CoreSmokeError('WIN_BUNDLE_Q04_EXTERNAL_MINER_DENIED')
+                print('WIN64_PACKAGED_Q04_EXTERNAL_MINER_PASS')
+                return 0
         if ci:
             # Probe native Qt's OS-backed provider without making a connection.
             # Packaging must not silently intake arbitrary PATH OpenSSL DLLs.
@@ -104,7 +113,7 @@ def main():
             import re
             reason = str(error) if type(error).__name__ in (
                 'CoreSmokeError','WindowsCoreSmokeError','WalletProbeError',
-                'RealWspScanError','WindowsWspError') else ''
+                'RealWspScanError','WindowsWspError','Q04RunnerError') else ''
             if (not re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',reason)
                     or len(reason)>110):
                 reason='WIN_BUNDLE_UNCLASSIFIED'

@@ -37,11 +37,12 @@ class SoloMinerFixture:
     user-declared external nodes.
     """
 
-    def __init__(self, core_dir: Path, timeout: int = 180):
+    def __init__(self, core_dir: Path, timeout: int = 180, extra_config: dict | None = None):
         if type(core_dir) is not type(Path()) or not core_dir.is_absolute():
             raise Q04FixtureError('Q04_FIXTURE_CORE_DIR_REQUIRED')
         self._core_dir = core_dir
         self._timeout = timeout
+        self._extra_config = dict(extra_config) if extra_config else {}
         self._core_process: subprocess.Popen | None = None
         self._miner_process: subprocess.Popen | None = None
         self._datadir_tmp = None
@@ -73,6 +74,7 @@ class SoloMinerFixture:
             "blockfilterindex": "1",
             "coinstatsindex": "1",
             "fallbackfee": "0.0001",
+            **self._extra_config,
         }
         config = datadir / "wam.conf"
         fd = os.open(config, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)

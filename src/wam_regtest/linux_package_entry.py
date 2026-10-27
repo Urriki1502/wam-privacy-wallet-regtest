@@ -21,6 +21,7 @@ def main():
         if shared_point((1).to_bytes(32,'big'),pub(2))!=pub(2) or len(hash160(pub(31)))!=20:
             raise ValueError('LINUX_BUNDLE_NATIVE_CRYPTO_DENIED')
         args=sys.argv[1:]
+        q04_mode = args and args[0] == 'q04-external-miner'
         if not args:
             # Desktop launch still requires independent manifest approval and
             # an already provisioned witness. Never auto-install root code.
@@ -44,7 +45,11 @@ def main():
         if any(a=='--core-dir' or a.startswith('--core-dir=') or a=='--wsp-source-root'
                 or a.startswith('--wsp-source-root=') for a in args):
             raise ValueError('LINUX_BUNDLE_EXTERNAL_RESOURCE_OVERRIDE_DENIED')
-        sys.argv=[sys.argv[0],'linux-wallet','--core-dir',str(core),'--wsp-source-root',str(source),*args]
+        if q04_mode:
+            sys.argv=[sys.argv[0],'q04-external-miner','--core-dir',str(core),
+                '--confirm-disposable-regtest',*args[1:]]
+        else:
+            sys.argv=[sys.argv[0],'linux-wallet','--core-dir',str(core),'--wsp-source-root',str(source),*args]
         from wam_regtest.cli import main as cli_main
         return cli_main()
     except Exception:

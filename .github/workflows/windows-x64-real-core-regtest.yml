@@ -8,6 +8,11 @@ on:
       - "src/wam_regtest/windows_core_regtest_smoke.py"
       - "src/wam_regtest/windows_release_preflight.py"
       - "src/wam_regtest/release.py"
+      - "src/wam_regtest/q04_fixture.py"
+      - "src/wam_regtest/q04_runner.py"
+      - "src/wam_regtest/rpc_contention.py"
+      - "scripts/q04_miner_coexistence.py"
+      - "scripts/q04_contention.py"
       - "tests/test_windows_core_regtest_smoke.py"
       - ".github/workflows/windows-x64-real-core-regtest.yml"
   workflow_dispatch:
@@ -142,5 +147,73 @@ jobs:
         with:
           name: q04-miner-coexistence-evidence-windows-x64-${{ github.event.pull_request.head.sha || github.sha }}
           path: q04-evidence.json
+          if-no-files-found: error
+          retention-days: 14
+  q04-contention:
+    name: Q04 Windows x64 RPC contention
+    needs: win64-real-core-101-blocks
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Verify native Windows x64 and pinned GnuPG
+        shell: pwsh
+        run: |
+          python -c "import os,platform,struct; assert os.name=='nt' and platform.machine().lower() in ('amd64','x86_64') and struct.calcsize('P')==8, 'WIN64_NATIVE_DENIED'"
+          if (!(Get-Command gpg -ErrorAction SilentlyContinue)) { throw "WIN_GPG_REQUIRED" }
+      - name: Install inspected application module
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+      - name: Fetch pinned official signed Windows x64 Core and run Q04 contention
+        shell: pwsh
+        run: |
+          @'
+          import os, subprocess, tempfile, json, zipfile
+          from pathlib import Path
+          from wam_regtest.release import _download_exact
+          from wam_regtest.windows_release_preflight import ASSET, ROOT, verify_signed_windows_archive
+          from wam_regtest.windows_core_transport import write_new
+          from wam_regtest.custody import create_directory
+          with tempfile.TemporaryDirectory(prefix='wam-q04-core-') as tmp:
+              core_dir = Path(tmp) / 'core'
+              create_directory(core_dir)
+              files=(
+                  ("/SIGNING-KEY.asc","SIGNING-KEY.asc",32768),
+                  ("/downloads/v0.1.11/SHA256SUMS","SHA256SUMS",131072),
+                  ("/downloads/v0.1.11/SHA256SUMS.asc","SHA256SUMS.asc",16384),
+                  ("/downloads/v0.1.11/"+ASSET,ASSET,320*1024*1024),
+              )
+              for remote,name,limit in files:
+                  _download_exact(remote,limit,core_dir/name)
+              proof = verify_signed_windows_archive(
+                  core_dir/ASSET, core_dir/"SIGNING-KEY.asc", core_dir/"SHA256SUMS",
+                  core_dir/"SHA256SUMS.asc")
+              assert proof["signed_archive_verified"] is True
+              with zipfile.ZipFile(core_dir/ASSET) as z:
+                  for filename in ("wamd.exe", "wam-cli.exe"):
+                      data = z.read(f"{ROOT}/bin/{filename}")
+                      write_new(core_dir, filename, data)
+              write_new(core_dir, "receipt.json", json.dumps(proof, sort_keys=True).encode("utf8"))
+              print("WIN_CORE_STAGED", proof["archive_sha256"])
+              env = dict(os.environ)
+              env['Q04_CORE_DIR'] = str(core_dir)
+              result = subprocess.run([
+                  'python', 'scripts/q04_contention.py',
+                  '--core-dir', str(core_dir), '--max-duration', '180'], env=env)
+              if result.returncode != 0:
+                  raise SystemExit(result.returncode)
+          '@ | python -
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: q04-contention-evidence-windows-x64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q04-contention-evidence.json
           if-no-files-found: error
           retention-days: 14

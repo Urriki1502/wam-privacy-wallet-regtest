@@ -125,6 +125,17 @@ with tempfile.TemporaryDirectory(prefix='wam-q01-mac-frozen-cwd-') as clean:
     for name in ('real-regtest-wallet-preview.png', 'real-regtest-security-preview.png'):
         shutil.copyfile(review/name, public/name)
 print("MACOS_APP_STAGE=FROZEN_NATIVE_COCOA_REAL_CORE_PASS", flush=True)
+print("MACOS_APP_STAGE=FROZEN_Q04_EXTERNAL_MINER_START", flush=True)
+with tempfile.TemporaryDirectory(prefix='wam-q04-mac-frozen-') as clean:
+    q04_env = {k:v for k,v in os.environ.items() if k not in
+        ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV','DYLD_LIBRARY_PATH','DYLD_INSERT_LIBRARIES')
+        and not k.startswith(('QT_', 'QML_'))}
+    q04_env['QT_QPA_PLATFORM'] = 'offscreen'
+    q04_env['PATH'] = '/usr/bin:/bin:/usr/sbin:/sbin'
+    subprocess.run([str(Path(binary).resolve()), '--ci-q04-external-miner'],
+                   cwd=clean, env=q04_env, timeout=600, check=True)
+    shutil.copyfile(Path(clean)/'q04-frozen-evidence.json', 'package-output/q04-frozen-evidence.json')
+print("MACOS_APP_STAGE=FROZEN_Q04_EXTERNAL_MINER_PASS", flush=True)
 PY
 test -s real-regtest-gui-preview.png
 test -s real-regtest-wallet-preview.png
