@@ -13394,7 +13394,7 @@
       "coverage_total": 24,
       "base_main_sha": "fe6a9e93903800743a1b0e5f87658f71524d57e5",
       "candidate_pr": 133,
-      "candidate_head_sha": "16a6b49d58af64c030cdc7fa6bcdeaf838474837",
+      "candidate_head_sha": "96ca7e21600f187015c9d9b1f70810f266d71304",
       "cases": [
         {
           "id": "Q04-COVERAGE",
@@ -15505,8 +15505,8 @@
           "not_applicable_reason": null
         }
       },
-      "owner_merge_authorization": null,
-      "post_merge_main_sha": null,
+      "owner_merge_authorization": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/133",
+      "post_merge_main_sha": "e032c1f95e8654a84b1ee548a88dba9ed65a84ed",
       "historical_evidence": [
         {
           "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/blob/423bd9dc4e99e61b7fed42722721ecb965bb216c/tests/acceptance/issue45.json",
@@ -15560,7 +15560,7 @@
         }
       ],
       "qualified_runtime_source_sha": "16a6b49d58af64c030cdc7fa6bcdeaf838474837",
-      "engineering_status": "TECHNICAL_COMPLETE_PENDING_EXTERNAL_AND_OWNER_INTEGRATION",
+      "engineering_status": "INTEGRATED_PENDING_POSTMERGE_AND_EXTERNAL",
       "evidence_qualification": {
         "workflow_source_sha": "16a6b49d58af64c030cdc7fa6bcdeaf838474837",
         "qualified_runtime_source_sha": "16a6b49d58af64c030cdc7fa6bcdeaf838474837",
@@ -15595,9 +15595,66 @@
         "policy": "Actual GH artifact ZIP SHA-256, nested package manifests/payload hashes, pinned Core/WSP, native/frozen genuine-Core receipts, job checkout/source tree and Q04 cases independently cross-checked; later governance-only commits require check-only verification."
       },
       "integration_blocker": {
-        "actor": "OWNER_THEN_CI_OPERATOR",
-        "missing_evidence": "Separate owner authorization for PR #133 merge and exact-main postmerge qualification; G6 physical solo-miner observation and G7 independent review remain BLOCKED.",
-        "next_action": "Owner reviews PR #133 after final CI and approves merge separately; qualify exact-main postmerge before Q04->Q05 engineering handoff."
+        "actor": "GITHUB_ACTIONS_DISPATCH_OPERATOR_AND_EXTERNAL_SECURITY_REVIEWERS",
+        "missing_evidence": "Exact-main e032c1f Windows x64 signed Core Q04 and credential/vault runs plus Linux x86_64 developer Core Q04 native/frozen run remain PENDING. G6 authorized physical solo-miner observation and G7 independent review remain BLOCKED.",
+        "next_action": "Manually workflow_dispatch the three named Windows/Linux workflows on main e032c1f; reconcile exact-main artifact hashes and results in a follow-up focused ledger update. Secure separate owner Q04->Q05 focus authorization. Never auto-promote acceptance."
+      },
+      "owner_merge_decision_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6433299588",
+      "full_acceptance_status": "BLOCKED",
+      "postmerge_qualification": {
+        "scope": "Q04 REGTEST owner-authorized code integration, not full Q04 acceptance or Q05 handoff",
+        "merged_main_sha": "e032c1f95e8654a84b1ee548a88dba9ed65a84ed",
+        "premerge_head_sha": "96ca7e21600f187015c9d9b1f70810f266d71304",
+        "identical_git_tree_sha": "bfccff1b3fa18e7da03cb90c72b422bed2205c9a",
+        "qualified_runtime_source_sha": "16a6b49d58af64c030cdc7fa6bcdeaf838474837",
+        "status": "PARTIAL_PASS",
+        "exact_main_runs": [
+          {
+            "platform": "macos-arm64",
+            "scope": "signed WAM Core v0.1.11, Q04 coexistence/RPC contention, final frozen app/dmg",
+            "run_id": 40446287827,
+            "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40446287827",
+            "status": "PASS"
+          },
+          {
+            "platform": "macos-arm64",
+            "scope": "28 BIP352 WSP-1 canonical vectors",
+            "run_id": 40446287701,
+            "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40446287701",
+            "status": "PASS"
+          }
+        ],
+        "pending_exact_main_runs": [
+          {
+            "platform": "windows-x64",
+            "scope": "signed Core native and Q04 miner-coexistence/contention",
+            "workflow": "windows-x64-real-core-regtest.yml",
+            "status": "PENDING",
+            "premerge_pass_run_id": 40442852189,
+            "reason": "workflow_dispatch not available through current GitHub connector; no exact-main Windows run"
+          },
+          {
+            "platform": "windows-x64",
+            "scope": "credential/vault and final frozen qualification",
+            "workflow": "windows-x64-credential-anchor.yml",
+            "status": "PENDING",
+            "premerge_pass_run_id": 40442852065,
+            "reason": "workflow_dispatch not available through current GitHub connector; no exact-main Windows run"
+          },
+          {
+            "platform": "linux-x86_64",
+            "scope": "reviewed developer-Core native/frozen and Q04 miner-coexistence/contention",
+            "workflow": "linux-experimental-regtest.yml",
+            "status": "PENDING",
+            "premerge_pass_run_id": 40442852088,
+            "core_trust": "reviewed-developer-source-build",
+            "reason": "workflow_dispatch not available through current GitHub connector; no exact-main Linux run"
+          }
+        ],
+        "physical_external_case": "Q04-PHYSICAL-SOLO-MINER",
+        "independent_review_case": "Q04-INDEPENDENT",
+        "release_or_mainnet_authorized": false,
+        "handoff_to_q05_authorized": false
       }
     },
     {
