@@ -260,7 +260,7 @@ def main():
             def reset_shim(method, params):
                 reset_state['calls'] += 1
                 if reset_state['busy_remaining'] > 0:
-                    reset_state['busy_remaining'] -= 0
+                    reset_state['busy_remaining'] -= 1
                     raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_RPC_NODE_BUSY')
                 return fixture.fusion_read(method, params)
 
