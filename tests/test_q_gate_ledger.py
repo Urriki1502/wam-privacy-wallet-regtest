@@ -12,12 +12,12 @@ class SequentialQGateContracts(unittest.TestCase):
 
     def test_committed_ledger_has_one_active_q_and_explicit_cases(self):
         result=validate(self.ledger)
-        self.assertEqual(result['active_q'],'Q04')
+        self.assertEqual(result['active_q'],'Q05')
         self.assertEqual(sum(result['case_results'].values()),result['coverage_identified'])
         self.assertFalse(result['q_accepted'])
-        self.assertEqual(result['prior_engineering_handoffs'],['Q01','Q02','Q03'])
+        self.assertEqual(result['prior_engineering_handoffs'],['Q01','Q02','Q03','Q04'])
 
-    def test_q04_exact_main_postmerge_evidence_is_complete_without_handoff(self):
+    def test_q04_exact_main_postmerge_evidence_is_preserved_at_handoff(self):
         q04=self.ledger['questions'][3];p=q04['postmerge_qualification']
         baseline='c316671ac0e483640736e1b3c599a8b2541a839a'
         self.assertEqual(p['status'],'PASS')
@@ -51,27 +51,61 @@ class SequentialQGateContracts(unittest.TestCase):
                         self.assertEqual(evidence['core_trust'],'reviewed-developer-source-build')
             else:self.assertEqual(case['status'],'BLOCKED')
         preparation=q04['engineering_handoff_preparation']
-        self.assertFalse(preparation['owner_authorized_handoff'])
-        self.assertIsNone(preparation['owner_decision_url'])
-        self.assertFalse(p['handoff_to_q05_authorized'])
+        self.assertTrue(preparation['owner_authorized_handoff'])
+        self.assertEqual(preparation['owner_decision_url'],
+            'https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6443330102')
+        self.assertTrue(p['handoff_to_q05_authorized'])
         self.assertFalse(q04['accepted'])
-        self.assertNotIn('engineering_handoff',q04)
-        self.assertEqual(self.ledger['active_q'],'Q04')
-        self.assertEqual(q04['processing'],'ACTIVE')
-        self.assertEqual(self.ledger['questions'][4]['processing'],'QUEUED')
+        self.assertEqual(q04['engineering_handoff']['owner_decision_url'],
+            'https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6443330102')
+        self.assertEqual(q04['engineering_handoff']['next_q'],'Q05')
+        self.assertEqual(q04['engineering_handoff']['postmerge_status'],'PASS')
+        self.assertEqual(q04['engineering_handoff']['unresolved_case_ids'],
+            ['Q04-INDEPENDENT','Q04-PHYSICAL-SOLO-MINER'])
+        self.assertEqual(self.ledger['active_q'],'Q05')
+        self.assertEqual(q04['processing'],'ENGINEERING_DONE')
+        self.assertEqual(self.ledger['questions'][4]['processing'],'ACTIVE')
         self.assertEqual({k:q04['gates'][k]['status'] for k in ('G6','G7')},
             {'G6':'BLOCKED','G7':'BLOCKED'})
 
-    def test_q04_readiness_does_not_authorize_q05_activation(self):
-        data=copy.deepcopy(self.ledger)
-        data['active_q']='Q05';data['questions'][3]['processing']='ENGINEERING_DONE'
-        q05=data['questions'][4];q05['processing']='ACTIVE'
-        q05['coverage_identified']=True;q05['coverage_total']=1
-        q05['cases']=[{'id':'Q05-COVERAGE-FIXTURE','requirement':'governance refusal fixture only',
-            'requirement_refs':['https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45'],
-            'platform':'shared','layer':'SOURCE','gates':['G0'],'mandatory':True,
-            'status':'PENDING','acceptance_evidence':[],'blocker':None}]
-        with self.assertRaises(ValueError):validate(data)
+    def test_q05_activation_requires_no_waiver_and_real_owner_handoff(self):
+        result=validate(self.ledger)
+        self.assertEqual(result['active_q'],'Q05')
+        q04=self.ledger['questions'][3]
+        self.assertFalse(q04['accepted'])
+        self.assertEqual(q04['postmerge_qualification']['status'],'PASS')
+        self.assertEqual(q04['postmerge_qualification']['pending_exact_main_runs'],[])
+        self.assertFalse(q04['postmerge_qualification']['waiver_applied'])
+        self.assertFalse(q04['postmerge_qualification']['postmerge_exception_applied'])
+        self.assertEqual(q04['gates']['G6']['status'],'BLOCKED')
+        self.assertEqual(q04['gates']['G7']['status'],'BLOCKED')
+        for change in ('no-handoff','no-owner','bad-owner-url','bad-merge-sha',
+                       'tech-stale','missing-blocker','gate-fail'):
+            data=copy.deepcopy(self.ledger)
+            q=data['questions'][3];handoff=q['engineering_handoff']
+            if change=='no-handoff':q.pop('engineering_handoff')
+            elif change=='no-owner':handoff['owner_authorized_handoff']=False
+            elif change=='bad-owner-url':handoff['owner_decision_url']='owner said yes'
+            elif change=='bad-merge-sha':handoff['merged_main_sha']='missing'
+            elif change=='tech-stale':q['cases'][0]['status']='STALE'
+            elif change=='missing-blocker':handoff['unresolved_case_ids'].pop()
+            elif change=='gate-fail':q['gates']['G3']['status']='FAIL'
+            with self.subTest(change=change),self.assertRaises(ValueError):validate(data)
+
+    def test_q05_scope_is_explicit_pending_and_historical_fail_preserved(self):
+        q05=self.ledger['questions'][4]
+        self.assertEqual(q05['processing'],'ACTIVE')
+        self.assertTrue(q05['coverage_identified'])
+        self.assertEqual(q05['coverage_total'],37)
+        self.assertEqual(len(q05['cases']),37)
+        self.assertEqual({c['status'] for c in q05['cases']},{'PENDING'})
+        self.assertFalse(q05['accepted'])
+        self.assertEqual({c['platform'] for c in q05['cases']},
+            {'shared','macos-arm64','windows-x64','linux-x86_64'})
+        self.assertTrue(all(c['mandatory'] and not c['acceptance_evidence']
+            for c in q05['cases']))
+        self.assertTrue(any('125%' in str(e) for e in q05['historical_evidence']))
+        self.assertFalse(self.ledger['production_qualified'])
 
     def _reset_to_q02_active(self):
         """Fixture: revert committed Q03 activation to exercise Q01->Q02 handoff."""
@@ -99,6 +133,12 @@ class SequentialQGateContracts(unittest.TestCase):
         q04['coverage_identified']=False
         q04['coverage_total']=None
         q04['cases']=[]
+        q04.pop('engineering_handoff',None)
+        q05=self.ledger['questions'][4]
+        q05['processing']='QUEUED'
+        q05['coverage_identified']=False
+        q05['coverage_total']=None
+        q05['cases']=[]
 
     def test_owner_authorized_engineering_handoff_does_not_accept_predecessor(self):
         self._reset_to_q02_active()
@@ -148,12 +188,12 @@ class SequentialQGateContracts(unittest.TestCase):
     def test_q03_handoff_preserves_release_and_next_q_boundaries(self):
         q03=self.ledger['questions'][2]
         q04=self.ledger['questions'][3]
-        self.assertEqual(self.ledger['active_q'],'Q04')
+        self.assertEqual(self.ledger['active_q'],'Q05')
         self.assertEqual(sum(c['status']=='PASS' for c in q03['cases']),24)
         self.assertFalse(q03['accepted'])
         self.assertIn('engineering_handoff',q03)
         self.assertEqual(q03['engineering_handoff']['next_q'],'Q04')
-        self.assertEqual(q04['processing'],'ACTIVE')
+        self.assertEqual(q04['processing'],'ENGINEERING_DONE')
         self.assertEqual({c['id'] for c in q03['cases'] if c['status']=='BLOCKED'},
             {'Q03-INDEPENDENT','Q03-WINDOWS-NO-FLICKER'})
         for case in q03['cases']:
@@ -172,7 +212,7 @@ class SequentialQGateContracts(unittest.TestCase):
                 data['questions'][0]['cases'][0]['acceptance_evidence']=[]
             elif change=='accepted':data['questions'][0]['accepted']=True
             elif change=='auto-merge':data['automatic_merge_allowed']=True
-            else:data['questions'][4]['processing']='ACTIVE'  # Q05 while Q04 active
+            else:data['questions'][3]['processing']='ACTIVE'  # Q04 while Q05 active
             with self.subTest(change=change),self.assertRaises(ValueError):validate(data)
 
     def test_unexplained_external_block_and_missing_case_are_denied(self):
