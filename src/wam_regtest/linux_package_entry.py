@@ -4,6 +4,7 @@ No downloads, system Python, environment trust bypass or privileged installer.
 """
 from pathlib import Path
 import platform
+import re
 import sys
 
 from wam_regtest.external_core import ExternalAttachmentError
@@ -53,12 +54,20 @@ def main():
         else:
             sys.argv=[sys.argv[0],'linux-wallet','--core-dir',str(core),'--wsp-source-root',str(source),*args]
         from wam_regtest.cli import main as cli_main
-        try:
-            return cli_main()
-        except ExternalAttachmentError as exc:
-            raise ValueError('LINUX_FROZEN_Q04_EXTERNAL_MINER_' + str(exc)) from None
-    except Exception:
-        print('LINUX_FROZEN_WALLET_DENIED',file=sys.stderr)
+        return cli_main()
+    except Exception as error:
+        # Emit only a fixed code from known boundaries, never exception text,
+        # OS paths, credentials or a traceback. The process still fails.
+        from wam_regtest.linux_developer_core import LinuxCoreError
+        from wam_regtest.q04_runner import Q04RunnerError
+        from wam_regtest.q04_fixture import Q04FixtureError
+        reason='LINUX_FROZEN_UNCLASSIFIED'
+        if type(error) in (LinuxCoreError,Q04RunnerError,Q04FixtureError,ExternalAttachmentError):
+            args=error.args
+            if (len(args)==1 and type(args[0]) is str and len(args[0])<=110
+                    and re.fullmatch(r'(?:LINUX|Q04|EXTERNAL_ATTACHMENT)_[A-Z0-9_]{4,100}',args[0])):
+                reason=args[0]
+        print('LINUX_FROZEN_WALLET_DENIED:'+reason,file=sys.stderr)
         return 2
     finally:
         desktop=sys.modules.get('wam_regtest.desktop')

@@ -13,7 +13,8 @@ import platform
 import os
 import sys
 
-from .external_core import ExternalAttachmentError
+from wam_regtest.external_core import ExternalAttachmentError
+from wam_regtest.q04_runner import run_q04_scenario
 
 
 class BundleLaunchError(ValueError):

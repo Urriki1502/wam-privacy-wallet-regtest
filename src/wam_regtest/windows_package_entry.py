@@ -8,6 +8,7 @@ import sys
 import tempfile
 
 from wam_regtest.external_core import ExternalAttachmentError
+from wam_regtest.q04_runner import run_q04_scenario
 
 
 def _resources():
@@ -121,7 +122,7 @@ def main():
                 'CoreSmokeError','WindowsCoreSmokeError','WalletProbeError',
                 'RealWspScanError','WindowsWspError','Q04RunnerError','ValueError'}
             reason = str(error) if type(error).__name__ in accepted_names else ''
-            if (not re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',reason)
+            if (not re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',reason)
                     or len(reason)>110):
                 reason='WIN_BUNDLE_UNCLASSIFIED'
             with Path('windows-packaged-wallet-denied.json').open('x',encoding='utf8') as out:

@@ -94,7 +94,6 @@ def main():
             # The windowed PyInstaller process has no console output. Report only
             # the strict public token emitted by the disposable frozen test entry.
             # Never print OS/RPC logs, paths, exception text or credentials.
-            import re
             refusal=isolated/'windows-packaged-wallet-denied.json'
             code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
             if refusal.is_file():
@@ -103,7 +102,7 @@ def main():
                     candidate=payload.get('reason_code')
                     if (payload.get('status')=='WIN_BUNDLE_DENIED'
                             and type(candidate) is str and len(candidate)<=110
-                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',candidate)):
+                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',candidate)):
                         code=candidate
                 except (OSError,ValueError,TypeError):
                     pass
@@ -126,7 +125,6 @@ def main():
             if result.returncode!=0:
                 # The windowed frozen process has no stdout/stderr. Read ONLY a
                 # fixed public status token, never Core/Qt logs or user paths.
-                import re
                 refusal=review/'windows-packaged-wallet-denied.json'
                 code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
                 if refusal.is_file():
@@ -135,7 +133,7 @@ def main():
                         candidate=payload.get('reason_code')
                         if (payload.get('status')=='WIN_BUNDLE_DENIED'
                                 and type(candidate) is str and len(candidate)<=110
-                                and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',candidate)):
+                                and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',candidate)):
                             code=candidate
                     except (OSError,ValueError,TypeError):
                         pass
@@ -168,7 +166,7 @@ def main():
                     candidate=payload.get('reason_code')
                     if (payload.get('status')=='WIN_BUNDLE_DENIED' and type(candidate) is str
                             and len(candidate)<=110
-                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',candidate)):
+                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',candidate)):
                         code=candidate
                 except (OSError,ValueError,TypeError):
                     pass

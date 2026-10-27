@@ -61,6 +61,9 @@ def main() -> int:
     q04.add_argument('--confirm-disposable-regtest', action='store_true')
     q04.add_argument('--report', type=Path, default=Path('q04-evidence.json'))
     q04.add_argument('--max-duration', type=int, default=180)
+    q04.add_argument('--manifest-sha256')
+    q04.add_argument('--anchor-socket', type=Path)
+    q04.add_argument('--confirm-experimental-developer-regtest', action='store_true')
     args = ap.parse_args()
     try:
         if args.command=='linux-wallet':
@@ -109,6 +112,13 @@ def main() -> int:
         if args.command == 'q04-external-miner':
             if args.confirm_disposable_regtest is not True:
                 raise Q04RunnerError('Q04_RUNNER_CONSENT_REQUIRED')
+            if sys.platform == 'linux':
+                if not args.manifest_sha256 or args.anchor_socket is None:
+                    raise Q04RunnerError('Q04_LINUX_EXPLICIT_TRUST_REQUIRED')
+                from .linux_runtime import configure
+                configure(args.core_dir.expanduser().absolute(), args.manifest_sha256,
+                          args.anchor_socket.expanduser().absolute(),
+                          authorized=args.confirm_experimental_developer_regtest)
             evidence = run_q04_scenario(
                 args.core_dir.expanduser().absolute(),
                 report_path=args.report.expanduser().absolute(),
