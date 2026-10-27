@@ -14396,7 +14396,46 @@
       },
       "owner_merge_authorization": null,
       "post_merge_main_sha": null,
-      "historical_evidence": []
+      "historical_evidence": [
+        {
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/blob/423bd9dc4e99e61b7fed42722721ecb965bb216c/tests/acceptance/issue45.json",
+          "source_sha": "423bd9dc4e99e61b7fed42722721ecb965bb216c",
+          "scope": "Original Q04 14 PASS / 8 PENDING / 2 BLOCKED snapshot, including earlier native receipts, retained as historical evidence; not fresh qualification of the frozen repairs."
+        }
+      ],
+      "failure_history": [
+        {
+          "source_sha": "423bd9dc4e99e61b7fed42722721ecb965bb216c",
+          "status": "FAIL",
+          "platform": "linux-x86_64",
+          "workflow_run_id": 40433978760,
+          "job_ids": [
+            121958799058,
+            121958799108
+          ],
+          "observation": "Frozen desktop/headless exited 2. New process had no explicit developer-Core/root-witness policy; previous harness witness was already torn down. Trust is now configured explicitly while the harness witness remains alive."
+        },
+        {
+          "source_sha": "423bd9dc4e99e61b7fed42722721ecb965bb216c",
+          "status": "FAIL",
+          "platform": "macos-arm64",
+          "workflow_run_id": 40433978882,
+          "job_ids": [
+            121959636190
+          ],
+          "observation": "PyInstaller script entry used a relative import without package parent. Q04 runner import was also missing. Absolute package imports repair both."
+        },
+        {
+          "source_sha": "423bd9dc4e99e61b7fed42722721ecb965bb216c",
+          "status": "FAIL",
+          "platform": "windows-x64",
+          "workflow_run_id": 40433978854,
+          "job_ids": [
+            121958135643
+          ],
+          "observation": "Conditional inner import re made re a local variable; Q04 error reporting reached it before assignment. Removed inner imports, added missing frozen runner import; genuine failures still return nonzero."
+        }
+      ]
     },
     {
       "id": "Q05",
