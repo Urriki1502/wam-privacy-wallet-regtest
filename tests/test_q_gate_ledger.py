@@ -17,38 +17,61 @@ class SequentialQGateContracts(unittest.TestCase):
         self.assertFalse(result['q_accepted'])
         self.assertEqual(result['prior_engineering_handoffs'],['Q01','Q02','Q03'])
 
-    def test_q04_integrated_postmerge_evidence_is_explicitly_partial(self):
-        q04=self.ledger['questions'][3]
-        p=q04['postmerge_qualification']
-        self.assertEqual(q04['processing'],'ACTIVE')
+    def test_q04_exact_main_postmerge_evidence_is_complete_without_handoff(self):
+        q04=self.ledger['questions'][3];p=q04['postmerge_qualification']
+        baseline='c316671ac0e483640736e1b3c599a8b2541a839a'
+        self.assertEqual(p['status'],'PASS')
+        self.assertEqual(p['qualified_main_sha'],baseline)
         self.assertEqual(q04['candidate_head_sha'],p['premerge_head_sha'])
         self.assertEqual(q04['post_merge_main_sha'],p['merged_main_sha'])
         self.assertEqual(q04['owner_merge_authorization'],
             'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/133')
-        self.assertEqual(p['status'],'PARTIAL_PASS')
-        self.assertEqual(len(p['exact_main_runs']),4)
-        self.assertEqual(p['latest_governance_main_sha'],
-            'a0e4c0c2f48e92c7cd8ebfd38a062aa03d1aa15e')
-        self.assertEqual({x['run_id'] for x in p['exact_main_runs']},
-            {40446287827,40446287701,40450255431,40450255365})
-        latest=[x for x in p['exact_main_runs'] if x.get('checkout_sha')]
-        self.assertEqual(len(latest),2)
-        self.assertTrue(all(x['checkout_sha']==p['latest_governance_main_sha'] for x in latest))
-        mac_core=next(x for x in latest if x['run_id']==40450255431)
-        self.assertEqual(len(mac_core['artifact_archives']),3)
-        self.assertTrue(all(len(x['archive_sha256'])==64 for x in mac_core['artifact_archives']))
-        self.assertEqual({x['required_ref_sha'] for x in p['pending_exact_main_runs']},
-            {p['latest_governance_main_sha']})
-        self.assertTrue(all(x['status']=='PASS' for x in p['exact_main_runs']))
-        self.assertEqual({x['platform'] for x in p['pending_exact_main_runs']},
-            {'windows-x64','linux-x86_64'})
-        self.assertEqual(len(p['pending_exact_main_runs']),3)
-        self.assertTrue(all(x['status']=='PENDING' for x in p['pending_exact_main_runs']))
+        self.assertEqual({r['run_id'] for r in p['exact_main_runs']},
+            {40453663770,40453663835,40490271229,40490290000,40490308482})
+        self.assertTrue(all(r['head_sha']==baseline and r['checkout_sha']==baseline
+            and r['conclusion']=='success' for r in p['exact_main_runs']))
+        jobs=[j for r in p['exact_main_runs'] for j in r['jobs']]
+        self.assertEqual(len(jobs),17)
+        self.assertTrue(all(j['head_sha']==baseline and j['checkout_sha']==baseline
+            and j['conclusion']=='success' for j in jobs))
+        self.assertEqual(p['pending_exact_main_runs'],[])
+        self.assertFalse(p['postmerge_exception_applied'])
+        self.assertFalse(p['waiver_applied'])
+        self.assertTrue(p['artifact_provenance_verified'])
+        history=q04['postmerge_qualification_history'][-1]['qualification']
+        self.assertEqual(history['status'],'PARTIAL_PASS')
+        self.assertEqual(len(history['pending_exact_main_runs']),3)
+        self.assertTrue(all(r['status']=='PENDING' for r in history['pending_exact_main_runs']))
+        for case in q04['cases']:
+            if case['status']=='PASS':
+                self.assertTrue(all(e['source_sha']==baseline and e['checkout_sha']==baseline
+                    for e in case['acceptance_evidence']))
+                for evidence in case['acceptance_evidence']:
+                    if evidence['platform']=='linux-x86_64':
+                        self.assertEqual(evidence['core_trust'],'reviewed-developer-source-build')
+            else:self.assertEqual(case['status'],'BLOCKED')
+        preparation=q04['engineering_handoff_preparation']
+        self.assertFalse(preparation['owner_authorized_handoff'])
+        self.assertIsNone(preparation['owner_decision_url'])
         self.assertFalse(p['handoff_to_q05_authorized'])
         self.assertFalse(q04['accepted'])
         self.assertNotIn('engineering_handoff',q04)
-        self.assertEqual(sum(x['status']=='BLOCKED' for x in q04['cases']),2)
         self.assertEqual(self.ledger['active_q'],'Q04')
+        self.assertEqual(q04['processing'],'ACTIVE')
+        self.assertEqual(self.ledger['questions'][4]['processing'],'QUEUED')
+        self.assertEqual({k:q04['gates'][k]['status'] for k in ('G6','G7')},
+            {'G6':'BLOCKED','G7':'BLOCKED'})
+
+    def test_q04_readiness_does_not_authorize_q05_activation(self):
+        data=copy.deepcopy(self.ledger)
+        data['active_q']='Q05';data['questions'][3]['processing']='ENGINEERING_DONE'
+        q05=data['questions'][4];q05['processing']='ACTIVE'
+        q05['coverage_identified']=True;q05['coverage_total']=1
+        q05['cases']=[{'id':'Q05-COVERAGE-FIXTURE','requirement':'governance refusal fixture only',
+            'requirement_refs':['https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45'],
+            'platform':'shared','layer':'SOURCE','gates':['G0'],'mandatory':True,
+            'status':'PENDING','acceptance_evidence':[],'blocker':None}]
+        with self.assertRaises(ValueError):validate(data)
 
     def _reset_to_q02_active(self):
         """Fixture: revert committed Q03 activation to exercise Q01->Q02 handoff."""
