@@ -17,6 +17,27 @@ class SequentialQGateContracts(unittest.TestCase):
         self.assertFalse(result['q_accepted'])
         self.assertEqual(result['prior_engineering_handoffs'],['Q01','Q02','Q03'])
 
+    def test_q04_integrated_postmerge_evidence_is_explicitly_partial(self):
+        q04=self.ledger['questions'][3]
+        p=q04['postmerge_qualification']
+        self.assertEqual(q04['processing'],'ACTIVE')
+        self.assertEqual(q04['candidate_head_sha'],p['premerge_head_sha'])
+        self.assertEqual(q04['post_merge_main_sha'],p['merged_main_sha'])
+        self.assertEqual(q04['owner_merge_authorization'],
+            'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/133')
+        self.assertEqual(p['status'],'PARTIAL_PASS')
+        self.assertEqual(len(p['exact_main_runs']),2)
+        self.assertTrue(all(x['status']=='PASS' for x in p['exact_main_runs']))
+        self.assertEqual({x['platform'] for x in p['pending_exact_main_runs']},
+            {'windows-x64','linux-x86_64'})
+        self.assertEqual(len(p['pending_exact_main_runs']),3)
+        self.assertTrue(all(x['status']=='PENDING' for x in p['pending_exact_main_runs']))
+        self.assertFalse(p['handoff_to_q05_authorized'])
+        self.assertFalse(q04['accepted'])
+        self.assertNotIn('engineering_handoff',q04)
+        self.assertEqual(sum(x['status']=='BLOCKED' for x in q04['cases']),2)
+        self.assertEqual(self.ledger['active_q'],'Q04')
+
     def _reset_to_q02_active(self):
         """Fixture: revert committed Q03 activation to exercise Q01->Q02 handoff."""
         self.ledger['active_q']='Q02'
