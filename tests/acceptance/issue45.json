@@ -15595,9 +15595,9 @@
         "policy": "Actual GH artifact ZIP SHA-256, nested package manifests/payload hashes, pinned Core/WSP, native/frozen genuine-Core receipts, job checkout/source tree and Q04 cases independently cross-checked; later governance-only commits require check-only verification."
       },
       "integration_blocker": {
-        "actor": "GITHUB_ACTIONS_DISPATCH_OPERATOR_AND_EXTERNAL_SECURITY_REVIEWERS",
-        "missing_evidence": "Exact-main e032c1f Windows x64 signed Core Q04 and credential/vault runs plus Linux x86_64 developer Core Q04 native/frozen run remain PENDING. G6 authorized physical solo-miner observation and G7 independent review remain BLOCKED.",
-        "next_action": "Manually workflow_dispatch the three named Windows/Linux workflows on main e032c1f; reconcile exact-main artifact hashes and results in a follow-up focused ledger update. Secure separate owner Q04->Q05 focus authorization. Never auto-promote acceptance."
+        "actor": "GITHUB_ACTIONS_DISPATCH_OPERATOR_AND_EXTERNAL_REVIEWERS",
+        "missing_evidence": "Exact-main a0e4c0c Windows Core/Q04 and Windows credential/frozen and Linux developer-Core Q04 native/frozen runs remain PENDING. Physical Q04 solo-miner G6 and independent security G7 remain BLOCKED.",
+        "next_action": "Dispatch Windows signed Core/Q04, Windows native credential/vault and Linux developer-Core Q04 workflows on main; verify actual run SHA/receipt/digest. Request separate owner decision to authorize Q04→Q05 engineering handoff, or an explicit postmerge exception if checks unavailable."
       },
       "owner_merge_decision_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6433299588",
       "full_acceptance_status": "BLOCKED",
@@ -15622,6 +15622,40 @@
             "run_id": 40446287701,
             "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40446287701",
             "status": "PASS"
+          },
+          {
+            "platform": "macos-arm64",
+            "scope": "exact-main post-PR134 signed WAM Core v0.1.11; Qt/WSP genuine E2E, Q04 miner coexistence + RPC contention and final frozen .app/.dmg",
+            "run_id": 40450255431,
+            "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40450255431",
+            "checkout_sha": "a0e4c0c2f48e92c7cd8ebfd38a062aa03d1aa15e",
+            "status": "PASS",
+            "artifact_archives": [
+              {
+                "name": "q04-miner-coexistence-evidence-macos-arm64",
+                "artifact_id": 12710421649,
+                "archive_sha256": "97ec78659f212e49a74e473cd3c1aeb49aeacbcfa9d2368181816dc2dbef8c5b"
+              },
+              {
+                "name": "q04-contention-evidence-macos-arm64",
+                "artifact_id": 12710182795,
+                "archive_sha256": "ccf8d7a3811d0025b4994158f74d7d5ceb8df5d69da54c17078eaccd235e9007"
+              },
+              {
+                "name": "WAM-Fusion-REGTEST-RC1-macos-arm64",
+                "artifact_id": 12710905782,
+                "archive_sha256": "d4b8645392bcc77c3b2ccd2cee2e984ddd1fc74e879a8d11ebda9ffce3f575e4"
+              }
+            ],
+            "note": "Job conclusions and GitHub archive digest metadata verified; archive internal manifests still require separate hash reconciliation."
+          },
+          {
+            "platform": "macos-arm64",
+            "scope": "post-PR134 exact-main WSP BIP352 28 canonical vectors",
+            "run_id": 40450255365,
+            "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40450255365",
+            "checkout_sha": "a0e4c0c2f48e92c7cd8ebfd38a062aa03d1aa15e",
+            "status": "PASS"
           }
         ],
         "pending_exact_main_runs": [
@@ -15631,7 +15665,8 @@
             "workflow": "windows-x64-real-core-regtest.yml",
             "status": "PENDING",
             "premerge_pass_run_id": 40442852189,
-            "reason": "workflow_dispatch not available through current GitHub connector; no exact-main Windows run"
+            "reason": "Not automatically triggered on push to main; requires workflow_dispatch on main. Neither premerge PR #133 nor PR #134 runs are exact-main qualification.",
+            "required_ref_sha": "a0e4c0c2f48e92c7cd8ebfd38a062aa03d1aa15e"
           },
           {
             "platform": "windows-x64",
@@ -15639,7 +15674,8 @@
             "workflow": "windows-x64-credential-anchor.yml",
             "status": "PENDING",
             "premerge_pass_run_id": 40442852065,
-            "reason": "workflow_dispatch not available through current GitHub connector; no exact-main Windows run"
+            "reason": "Not automatically triggered on push to main; requires workflow_dispatch on main. Neither premerge PR #133 nor PR #134 runs are exact-main qualification.",
+            "required_ref_sha": "a0e4c0c2f48e92c7cd8ebfd38a062aa03d1aa15e"
           },
           {
             "platform": "linux-x86_64",
@@ -15648,13 +15684,16 @@
             "status": "PENDING",
             "premerge_pass_run_id": 40442852088,
             "core_trust": "reviewed-developer-source-build",
-            "reason": "workflow_dispatch not available through current GitHub connector; no exact-main Linux run"
+            "reason": "Not automatically triggered on push to main; requires workflow_dispatch on main. Neither premerge PR #133 nor PR #134 runs are exact-main qualification.",
+            "required_ref_sha": "a0e4c0c2f48e92c7cd8ebfd38a062aa03d1aa15e"
           }
         ],
         "physical_external_case": "Q04-PHYSICAL-SOLO-MINER",
         "independent_review_case": "Q04-INDEPENDENT",
         "release_or_mainnet_authorized": false,
-        "handoff_to_q05_authorized": false
+        "handoff_to_q05_authorized": false,
+        "latest_governance_main_sha": "a0e4c0c2f48e92c7cd8ebfd38a062aa03d1aa15e",
+        "owner_focus_transition_condition": "Q05 engineering handoff is separate owner-authorized decision under Q-GATE v2, after all runnable exact-main checks or explicit named postmerge exception. No authorization recorded yet."
       }
     },
     {
