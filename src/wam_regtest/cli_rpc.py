@@ -86,7 +86,10 @@ def decode(raw,method,params):
             if not 20<=len(text)<=120 or not re.fullmatch('wamrt1[023456789acdefghjklmnpqrstuvwxyz]+',text):raise ValueError
             return text
         if method=='stop':
-            if text!='WAM Core stopping':raise ValueError
+            # The pinned signed v0.1.11 macOS binary returns WAM Coin stopping.
+            # Keep the former literal for existing platform fixtures; never
+            # accept arbitrary text, generic success or a prefix match.
+            if text not in ('WAM Core stopping','WAM Coin stopping'):raise ValueError
             return text
         def nonfinite(_):raise ValueError
         value=json.loads(text,object_pairs_hook=_pairs,parse_constant=nonfinite)

@@ -59,7 +59,8 @@ def main():
         return subprocess.Popen([sys.executable, '-m', 'wam_regtest.supervisor_cli',
             'serve', '--root', str(root), '--core-dir', str(args.core_dir),
             '--confirm-regtest-managed-core'], cwd=source, env=env,
-            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            start_new_session=True)
 
     def end_stopped_owner():
         # Only our exact Python child after authenticated owned Core shutdown.
