@@ -6,6 +6,8 @@ from pathlib import Path
 import platform
 import sys
 
+from wam_regtest.external_core import ExternalAttachmentError
+
 
 def main():
     try:
@@ -51,7 +53,10 @@ def main():
         else:
             sys.argv=[sys.argv[0],'linux-wallet','--core-dir',str(core),'--wsp-source-root',str(source),*args]
         from wam_regtest.cli import main as cli_main
-        return cli_main()
+        try:
+            return cli_main()
+        except ExternalAttachmentError as exc:
+            raise ValueError('LINUX_FROZEN_Q04_EXTERNAL_MINER_' + str(exc)) from None
     except Exception:
         print('LINUX_FROZEN_WALLET_DENIED',file=sys.stderr)
         return 2

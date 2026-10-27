@@ -16,6 +16,7 @@ import secrets
 import socket
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -44,7 +45,9 @@ class SoloMinerFixture:
         self._timeout = timeout
         self._extra_config = dict(extra_config) if extra_config else {}
         self._core_process: subprocess.Popen | None = None
-        self._miner_process: subprocess.Popen | None = None
+        self._miner_thread: threading.Thread | None = None
+        self._miner_stop: threading.Event | None = None
+        self._miner_current_proc: subprocess.Popen | None = None
         self._datadir_tmp = None
         self._datadir: Path | None = None
         self._rpc_port: int | None = None
@@ -122,6 +125,23 @@ class SoloMinerFixture:
                 store.close(handle)
         return _host_env(datadir)
 
+    def _wait_for_rpc_ready(self, cli: Path) -> None:
+        """Poll the Core CLI until RPC is accepting requests or timeout."""
+        deadline = time.monotonic() + self._timeout
+        while True:
+            result = subprocess.run(
+                [str(cli), f'-datadir={self._datadir}', '-regtest=1', 'getblockchaininfo'],
+                capture_output=True, text=True, timeout=30,
+                env=self._env, cwd=str(cli.parent) if sys.platform == 'win32' else None,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
+            if result.returncode == 0:
+                return
+            if self._core_process.poll() is not None:
+                raise Q04FixtureError('Q04_FIXTURE_CORE_EXITED')
+            if time.monotonic() >= deadline:
+                raise Q04FixtureError('Q04_FIXTURE_RPC_READY_TIMEOUT')
+            time.sleep(0.3)
+
     def start(self) -> dict:
         """Start isolated Core and miner. Returns attachment spec."""
         self._datadir_tmp = private_temporary_directory(prefix='q04_miner_')
@@ -156,6 +176,10 @@ class SoloMinerFixture:
                 raise Q04FixtureError('Q04_FIXTURE_CORE_START_TIMEOUT')
             time.sleep(0.2)
 
+        # Wait until RPC is actually accepting requests; the cookie file can
+        # appear before the HTTP worker thread is ready on macOS/Windows.
+        self._wait_for_rpc_ready(cli)
+
         # Attach Fusion read-only.
         self._attachment = ExternalCoreAttachment(
             pid=self._core_process.pid,
@@ -175,15 +199,14 @@ class SoloMinerFixture:
         if result.returncode != 0:
             raise Q04FixtureError('Q04_FIXTURE_WALLET_CREATE_FAILED')
 
-        # Start a sustained solo-miner loop as a separate Python process.
-        # It mines to the fixture wallet address periodically while Fusion observes.
-        self._miner_process = subprocess.Popen(
-            [sys.executable, '-m', 'wam_regtest.q04_miner_loop',
-             '--cli', str(cli), '--datadir', str(self._datadir),
-             '--wallet', self._wallet_name, '--interval', '5.0'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            env=self._env, cwd=str(node.parent) if sys.platform == 'win32' else None,
-            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
+        # Start a sustained solo-miner loop in a background thread.  A separate
+        # subprocess Python module would re-execute the PyInstaller bootloader in
+        # frozen builds, so we run the loop inside this process and invoke the
+        # Core CLI directly for each mining step.
+        self._miner_stop = threading.Event()
+        self._miner_thread = threading.Thread(
+            target=self._miner_loop, args=(cli,), daemon=True)
+        self._miner_thread.start()
 
         increment('q04_fixture_started')
         return {
@@ -229,19 +252,59 @@ class SoloMinerFixture:
         after = self._attachment.read('getblockcount', [])
         return {'before': before, 'after': after, 'mined': after - before}
 
+    def _miner_loop(self, cli: Path) -> None:
+        """Background thread: repeatedly mine one block to a fixture address."""
+        try:
+            address = subprocess.run(
+                [str(cli), f'-datadir={self._datadir}', '-regtest=1',
+                 f'-rpcwallet={self._wallet_name}', 'getnewaddress'],
+                capture_output=True, text=True, timeout=30,
+                env=self._env, cwd=str(cli.parent) if sys.platform == 'win32' else None,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0).stdout.strip()
+        except Exception:
+            return
+        mined = 0
+        while mined < 1000 and not self._miner_stop.is_set():
+            proc = subprocess.Popen(
+                [str(cli), f'-datadir={self._datadir}', '-regtest=1',
+                 f'-rpcwallet={self._wallet_name}', 'generatetoaddress', '1', address],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                env=self._env, cwd=str(cli.parent) if sys.platform == 'win32' else None,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
+            self._miner_current_proc = proc
+            try:
+                proc.wait(timeout=60)
+            except subprocess.TimeoutExpired:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+            finally:
+                self._miner_current_proc = None
+            if proc.returncode == 0:
+                mined += 1
+            if not self._miner_stop.is_set():
+                time.sleep(5.0)
+
     def fusion_read(self, method: str, params: list | None = None):
         if self._attachment is None:
             raise Q04FixtureError('Q04_FIXTURE_NOT_STARTED')
         return self._attachment.read(method, params)
 
     def stop(self):
-        if self._miner_process is not None:
-            self._miner_process.terminate()
-            try:
-                self._miner_process.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                self._miner_process.kill()
-            self._miner_process = None
+        if self._miner_thread is not None:
+            self._miner_stop.set()
+            current = self._miner_current_proc
+            if current is not None:
+                current.terminate()
+            self._miner_thread.join(timeout=10)
+            if self._miner_thread.is_alive():
+                if current is not None and self._miner_current_proc is current:
+                    current.kill()
+                self._miner_thread.join(timeout=5)
+            self._miner_thread = None
+            self._miner_current_proc = None
         if self._attachment is not None:
             self._attachment.close()
             self._attachment = None

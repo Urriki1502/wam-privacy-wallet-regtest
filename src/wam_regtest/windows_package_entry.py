@@ -7,6 +7,8 @@ import platform
 import sys
 import tempfile
 
+from wam_regtest.external_core import ExternalAttachmentError
+
 
 def _resources():
     if (sys.platform!='win32' or platform.machine().lower() not in ('amd64','x86_64')
@@ -62,6 +64,7 @@ def main():
     if sys.stderr is None:sys.stderr=io.StringIO()
     ci=sys.argv[1:]==['--ci-real-core-wallet']
     q04_mode=sys.argv[1:]==['--ci-q04-external-miner']
+    report_denied=ci or q04_mode
     try:
         if sys.argv[1:] and not (ci or q04_mode):raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
         core,source=_resources()
@@ -69,7 +72,10 @@ def main():
         if q04_mode:
             with tempfile.TemporaryDirectory(prefix='wam-win-frozen-') as t:
                 stage=Path(t).absolute()/'core';_stage_original_core(core,stage)
-                evidence=run_q04_scenario(stage,report_path=Path('q04-frozen-evidence.json'),max_duration=180)
+                try:
+                    evidence=run_q04_scenario(stage,report_path=Path('q04-frozen-evidence.json'),max_duration=180)
+                except ExternalAttachmentError as exc:
+                    raise CoreSmokeError('WIN_BUNDLE_Q04_EXTERNAL_MINER_' + str(exc)) from None
                 if evidence.get('status')!='Q04_MINER_COEXISTENCE_PASS':
                     raise CoreSmokeError('WIN_BUNDLE_Q04_EXTERNAL_MINER_DENIED')
                 print('WIN64_PACKAGED_Q04_EXTERNAL_MINER_PASS')
@@ -109,11 +115,12 @@ def main():
     except Exception as error:
         # Only public, bounded, explicitly typed status tokens. NEVER include
         # exception arguments from OS/RPC/Qt, stack traces or secret values.
-        if ci:
+        if report_denied:
             import re
-            reason = str(error) if type(error).__name__ in (
+            accepted_names = {
                 'CoreSmokeError','WindowsCoreSmokeError','WalletProbeError',
-                'RealWspScanError','WindowsWspError','Q04RunnerError') else ''
+                'RealWspScanError','WindowsWspError','Q04RunnerError','ValueError'}
+            reason = str(error) if type(error).__name__ in accepted_names else ''
             if (not re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',reason)
                     or len(reason)>110):
                 reason='WIN_BUNDLE_UNCLASSIFIED'

@@ -13,6 +13,8 @@ import platform
 import os
 import sys
 
+from .external_core import ExternalAttachmentError
+
 
 class BundleLaunchError(ValueError):
     pass
@@ -75,8 +77,11 @@ def main() -> int:
             print("MACOS_ARM64_SELF_CONTAINED_CORE_WSP_BUNDLE_PASS")
             return 0
         if q04_mode:
-            evidence = run_q04_scenario(core_dir, report_path=Path("q04-frozen-evidence.json"),
-                                        max_duration=180)
+            try:
+                evidence = run_q04_scenario(core_dir, report_path=Path("q04-frozen-evidence.json"),
+                                            max_duration=180)
+            except ExternalAttachmentError as exc:
+                raise BundleLaunchError("WAM_BUNDLE_Q04_EXTERNAL_MINER_" + str(exc)) from None
             if evidence.get("status") != "Q04_MINER_COEXISTENCE_PASS":
                 raise BundleLaunchError("WAM_BUNDLE_Q04_EXTERNAL_MINER_DENIED")
             print("MACOS_ARM64_PACKAGED_Q04_EXTERNAL_MINER_PASS")
