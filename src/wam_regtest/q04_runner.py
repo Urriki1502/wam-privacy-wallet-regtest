@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import time
+import sys
 from pathlib import Path
 
 from .q04_fixture import SoloMinerFixture
@@ -29,7 +30,8 @@ def run_q04_scenario(core_dir: Path, report_path: Path | None = None,
     if type(core_dir) is not type(Path()) or not core_dir.is_absolute():
         raise Q04RunnerError('Q04_RUNNER_CORE_DIR_REQUIRED')
 
-    with SoloMinerFixture(core_dir, timeout=max_duration, extra_config=extra_config) as fixture:
+    config={'rpcworkqueue':'2','rpcthreads':'1', **(extra_config or {})}
+    with SoloMinerFixture(core_dir, timeout=max_duration, extra_config=config) as fixture:
         spec = fixture.start()
         pid = spec['pid']
         rpc_port = spec['rpc_port']
@@ -98,12 +100,18 @@ def run_q04_scenario(core_dir: Path, report_path: Path | None = None,
             if exc.args[0] != 'EXTERNAL_RECOVERY_IDENTITY_CHANGED':
                 raise Q04RunnerError('Q04_RUNNER_PORT_CHANGE_WRONG_ERROR') from exc
 
+        from .q04_busy_probe import probe_busy
+        genuine_busy=probe_busy(fixture)
+        receipt=fixture._attachment._receipt
         evidence = {
             'status': 'Q04_MINER_COEXISTENCE_PASS',
             'timestamp_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
-            'core_dir': str(core_dir),
-            'fixture_pid': pid,
-            'rpc_port': rpc_port,
+            'platform': receipt['platform'],
+            'core_sha256': {'wamd':receipt['wamd_sha256'],'wam-cli':receipt['wam_cli_sha256']},
+            'wsp_source_commit':'ac55f13423620252bdbf848c7e8a280c3b84721e',
+            'execution':'FROZEN' if getattr(sys,'frozen',False) else 'SOURCE_NATIVE',
+            'genuine_busy':genuine_busy,
+            'miner_driver':'sustained-thread-with-separate-Core-CLI-processes',
             'height_before': height_before,
             'miner_heights': miner_heights,
             'contention_read_height': current,

@@ -274,10 +274,11 @@ def main():
             if recovery_height < baseline:
                 _fail('RECOVERY_HEIGHT_REGRESSED')
 
+            from wam_regtest.q04_busy_probe import probe_busy
+            genuine_busy=probe_busy(fixture)
             _ok({
-                'core_dir': str(core_dir),
-                'fixture_pid': pid,
-                'rpc_port': rpc_port,
+                'genuine_busy':genuine_busy,
+                'injected_busy_contracts_are_supplemental':True,
                 'baseline_height': baseline,
                 'observed_503': observed_503,
                 'flood_requests': flood_total,
