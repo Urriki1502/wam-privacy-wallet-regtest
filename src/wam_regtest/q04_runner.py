@@ -101,7 +101,8 @@ def run_q04_scenario(core_dir: Path, report_path: Path | None = None,
                 raise Q04RunnerError('Q04_RUNNER_PORT_CHANGE_WRONG_ERROR') from exc
 
         from .q04_busy_probe import probe_busy
-        genuine_busy=probe_busy(fixture)
+        import importlib.util
+        genuine_busy=probe_busy(fixture,gui=importlib.util.find_spec('PySide6') is not None)
         receipt=fixture._attachment._receipt
         evidence = {
             'status': 'Q04_MINER_COEXISTENCE_PASS',

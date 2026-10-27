@@ -59,3 +59,12 @@ class FrozenDispatchContracts(unittest.TestCase):
              contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(main(),0)
         self.assertEqual(order,['trust','run'])
+
+    def test_external_monitor_requires_consent_before_attachment(self):
+        from wam_regtest.cli import main
+        with patch.object(sys,'argv',['wallet','attach-core-readonly','--core-dir',str(ROOT),
+                '--datadir',str(ROOT),'--pid','123','--rpc-port','18443']), \
+             patch('wam_regtest.external_core.ExternalCoreAttachment') as attachment, \
+             contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(main(),2)
+            attachment.assert_not_called()

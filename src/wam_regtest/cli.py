@@ -8,6 +8,7 @@ import sys
 
 from .core import CoreSmokeError, smoke_real_core
 from .q04_runner import Q04RunnerError, run_q04_scenario
+from .external_core import ExternalAttachmentError
 
 
 def main() -> int:
@@ -64,8 +65,32 @@ def main() -> int:
     q04.add_argument('--manifest-sha256')
     q04.add_argument('--anchor-socket', type=Path)
     q04.add_argument('--confirm-experimental-developer-regtest', action='store_true')
+    attach=sub.add_parser('attach-core-readonly',help='Explicit REGTEST external-node status monitor; never stops or writes Core')
+    attach.add_argument('--core-dir',type=Path,required=True)
+    attach.add_argument('--datadir',type=Path,required=True)
+    attach.add_argument('--pid',type=int,required=True)
+    attach.add_argument('--rpc-port',type=int,required=True)
+    attach.add_argument('--confirm-readonly-regtest-attachment',action='store_true')
+    attach.add_argument('--manifest-sha256')
+    attach.add_argument('--anchor-socket',type=Path)
+    attach.add_argument('--confirm-experimental-developer-regtest',action='store_true')
     args = ap.parse_args()
     try:
+        if args.command=='attach-core-readonly':
+            if args.confirm_readonly_regtest_attachment is not True:
+                raise Q04RunnerError('Q04_ATTACH_EXPLICIT_CONSENT_REQUIRED')
+            if sys.platform=='linux':
+                if not args.manifest_sha256 or args.anchor_socket is None:
+                    raise Q04RunnerError('Q04_LINUX_EXPLICIT_TRUST_REQUIRED')
+                from .linux_runtime import configure
+                configure(args.core_dir.expanduser().absolute(),args.manifest_sha256,
+                    args.anchor_socket.expanduser().absolute(),authorized=args.confirm_experimental_developer_regtest)
+            from .external_core import ExternalCoreAttachment
+            from .external_core_gui import launch
+            with ExternalCoreAttachment(pid=args.pid,rpc_port=args.rpc_port,
+                    datadir=args.datadir.expanduser().absolute(),core_dir=args.core_dir.expanduser().absolute(),
+                    operator_consent=True) as attachment:
+                return launch(attachment)
         if args.command=='linux-wallet':
             from .linux_headless import run
             return run(args)
@@ -126,7 +151,7 @@ def main() -> int:
             print(json.dumps(evidence, sort_keys=True))
             return 0
         raise CoreSmokeError("CORE_COMMAND_DENIED")
-    except (CoreSmokeError, Q04RunnerError) as error:
+    except (CoreSmokeError, Q04RunnerError, ExternalAttachmentError) as error:
         print(str(error), file=sys.stderr)
         return 2
     finally:
