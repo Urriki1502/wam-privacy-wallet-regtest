@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -93,7 +94,6 @@ def main():
             # The windowed PyInstaller process has no console output. Report only
             # the strict public token emitted by the disposable frozen test entry.
             # Never print OS/RPC logs, paths, exception text or credentials.
-            import re
             refusal=isolated/'windows-packaged-wallet-denied.json'
             code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
             if refusal.is_file():
@@ -102,7 +102,7 @@ def main():
                     candidate=payload.get('reason_code')
                     if (payload.get('status')=='WIN_BUNDLE_DENIED'
                             and type(candidate) is str and len(candidate)<=110
-                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',candidate)):
+                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',candidate)):
                         code=candidate
                 except (OSError,ValueError,TypeError):
                     pass
@@ -125,7 +125,6 @@ def main():
             if result.returncode!=0:
                 # The windowed frozen process has no stdout/stderr. Read ONLY a
                 # fixed public status token, never Core/Qt logs or user paths.
-                import re
                 refusal=review/'windows-packaged-wallet-denied.json'
                 code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
                 if refusal.is_file():
@@ -134,7 +133,7 @@ def main():
                         candidate=payload.get('reason_code')
                         if (payload.get('status')=='WIN_BUNDLE_DENIED'
                                 and type(candidate) is str and len(candidate)<=110
-                                and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP)_[A-Z0-9_]{4,105}',candidate)):
+                                and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',candidate)):
                             code=candidate
                     except (OSError,ValueError,TypeError):
                         pass
@@ -149,6 +148,31 @@ def main():
             shutil.copytree(review/'fusion-ui-review',target/'fusion-ui-review')
             shutil.copyfile(review/'windows-packaged-wallet-evidence.json',target/'windows-packaged-wallet-evidence.json')
             scales[factor]={'native_qwindows_real_frozen_e2e':True,'device_pixel_ratio':record['device_pixel_ratio']}
+    # Q04 external-miner coexistence through the frozen executable.
+    with tempfile.TemporaryDirectory(prefix='wam-q04-win-frozen-cwd-') as q04_clean:
+        q04_isolated=Path(q04_clean).resolve()
+        q04_env={k:v for k,v in os.environ.items() if k not in
+            ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV') and not k.startswith(('QT_','QML_'))}
+        system_root=Path(os.environ['SystemRoot'])
+        q04_env.update({'QT_QPA_PLATFORM':'windows','PATH':str(system_root/'System32')+os.pathsep+str(system_root)})
+        q04_result=subprocess.run([str(executable),'--ci-q04-external-miner'],env=q04_env,cwd=q04_isolated,
+            stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=600)
+        if q04_result.returncode!=0:
+            refusal=q04_isolated/'windows-packaged-wallet-denied.json'
+            code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
+            if refusal.is_file():
+                try:
+                    payload=json.loads(refusal.read_text(encoding='utf8'))
+                    candidate=payload.get('reason_code')
+                    if (payload.get('status')=='WIN_BUNDLE_DENIED' and type(candidate) is str
+                            and len(candidate)<=110
+                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',candidate)):
+                        code=candidate
+                except (OSError,ValueError,TypeError):
+                    pass
+            print('WIN_Q04_FROZEN_PUBLIC_DENIAL='+code,flush=True)
+            raise AssertionError('WIN_Q04_FROZEN_EXTERNAL_MINER_DENIED')
+        shutil.copyfile(q04_isolated/'q04-frozen-evidence.json',output/'q04-frozen-evidence.json')
     members={p.relative_to(bundle).as_posix():sha256(p.read_bytes()).hexdigest() for p in bundle.rglob('*') if p.is_file()}
     assert not any(p.is_symlink() for p in bundle.rglob('*'))
     verify(source_root,source_stamp);verify(source,wsp_stamp)

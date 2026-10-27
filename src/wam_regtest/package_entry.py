@@ -13,6 +13,9 @@ import platform
 import os
 import sys
 
+from wam_regtest.external_core import ExternalAttachmentError
+from wam_regtest.q04_runner import run_q04_scenario
+
 
 class BundleLaunchError(ValueError):
     pass
@@ -64,7 +67,8 @@ def main() -> int:
         from wam_regtest.core import smoke_real_core
         # Hidden CI mode: actual signed Core + genuine BIP352 + Qt screen.
         cocoa_mode = sys.argv[1:] == ["--ci-real-core-wallet-cocoa"]
-        ci_mode = sys.argv[1:] == ["--ci-real-core-gui"] or cocoa_mode
+        q04_mode = sys.argv[1:] == ["--ci-q04-external-miner"]
+        ci_mode = sys.argv[1:] == ["--ci-real-core-gui"] or cocoa_mode or q04_mode
         if cocoa_mode and os.environ.get("QT_QPA_PLATFORM") != "cocoa":
             raise BundleLaunchError("WAM_BUNDLE_COCOA_PLATFORM_REQUIRED")
         self_test = sys.argv[1:] == ["--check-bundle"]
@@ -72,6 +76,16 @@ def main() -> int:
             raise BundleLaunchError("WAM_BUNDLE_ARGUMENT_DENIED")
         if self_test:
             print("MACOS_ARM64_SELF_CONTAINED_CORE_WSP_BUNDLE_PASS")
+            return 0
+        if q04_mode:
+            try:
+                evidence = run_q04_scenario(core_dir, report_path=Path("q04-frozen-evidence.json"),
+                                            max_duration=180)
+            except ExternalAttachmentError as exc:
+                raise BundleLaunchError("WAM_BUNDLE_Q04_EXTERNAL_MINER_" + str(exc)) from None
+            if evidence.get("status") != "Q04_MINER_COEXISTENCE_PASS":
+                raise BundleLaunchError("WAM_BUNDLE_Q04_EXTERNAL_MINER_DENIED")
+            print("MACOS_ARM64_PACKAGED_Q04_EXTERNAL_MINER_PASS")
             return 0
 
         # Finder launch runs the EXACT same signed actual Core E2E code that
@@ -155,7 +169,7 @@ def main() -> int:
         # text, RPC credentials, paths, traceback or secrets.
         code = str(error)
         accepted = {"BundleLaunchError", "CoreSmokeError",
-                    "RealWspScanError", "ReleaseError"}
+                    "RealWspScanError", "ReleaseError", "Q04RunnerError"}
         reason = (code if type(error).__name__ in accepted
                   and 5 <= len(code) <= 110
                   and code == code.upper()

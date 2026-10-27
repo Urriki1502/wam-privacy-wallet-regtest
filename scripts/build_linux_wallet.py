@@ -63,6 +63,8 @@ def main():
     environment={k:v for k,v in os.environ.items() if k not in ('PYTHONPATH','PYTHONHOME')}
     subprocess.run([sys.executable,'scripts/linux_headless_acceptance.py','--core-dir',str(core),
         '--executable',str(binary),*(['--qt'] if args.desktop else [])],env=environment,check=True,timeout=900)
+    # Q04 external-miner coexistence through the frozen executable.
+    shutil.copyfile('q04-evidence.json',output/'q04-frozen-evidence.json')
     evidence=Path('linux-qt-evidence.json' if args.desktop else 'linux-headless-evidence.json')
     record=json.loads(evidence.read_text());wallet=record['wallet_live_core']
     assert record['frozen_runtime'] is True

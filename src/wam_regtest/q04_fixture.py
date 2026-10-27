@@ -1,0 +1,331 @@
+"""Disposable isolated REGTEST fixture for Q04 solo-miner coexistence.
+
+Creates an independently controlled WAM Core node and a separate solo-miner
+process. Fusion wallet attaches read-only to the Core. The fixture verifies that
+Fusion monitoring does not disrupt miner block production or RPC.
+
+This fixture performs explicitly authorized test mining inside its own isolated
+REGTEST environment. It NEVER accesses, modifies, restarts or interferes with
+the repository owner's real mining equipment, node, configuration, wallet or
+private keys.
+"""
+from __future__ import annotations
+
+import os
+import secrets
+import socket
+import subprocess
+import sys
+import threading
+import time
+from pathlib import Path
+
+from .core import CoreSmokeError, _port
+from .custody import create_directory, private_temporary_directory
+from .external_core import ExternalCoreAttachment, ExternalAttachmentError
+from .telemetry import increment
+
+
+class Q04FixtureError(RuntimeError):
+    """Fixed redacted fixture status."""
+
+
+class SoloMinerFixture:
+    """Isolated REGTEST Core + solo miner + Fusion read-only observer.
+
+    The fixture owns and controls the Core and miner processes. Fusion attaches
+    read-only to the Core using the same ExternalCoreAttachment boundary used for
+    user-declared external nodes.
+    """
+
+    def __init__(self, core_dir: Path, timeout: int = 180, extra_config: dict | None = None):
+        if type(core_dir) is not type(Path()) or not core_dir.is_absolute():
+            raise Q04FixtureError('Q04_FIXTURE_CORE_DIR_REQUIRED')
+        self._core_dir = core_dir
+        self._timeout = timeout
+        self._extra_config = dict(extra_config) if extra_config else {}
+        self._core_process: subprocess.Popen | None = None
+        self._miner_thread: threading.Thread | None = None
+        self._miner_stop: threading.Event | None = None
+        self._miner_current_proc: subprocess.Popen | None = None
+        self._datadir_tmp = None
+        self._datadir: Path | None = None
+        self._rpc_port: int | None = None
+        self._p2p_port: int | None = None
+        self._attachment: ExternalCoreAttachment | None = None
+        self._wallet_name: str | None = None
+        self._env = None
+
+    def _write_cookie_config(self, datadir: Path, rpcport: int, p2pport: int) -> None:
+        """Provision regtest config that uses cookie auth (no rpcuser/rpcpassword).
+
+        WAM Core creates regtest/.cookie automatically when neither rpcuser nor
+        rpcpassword is set. The config file is created owner-only and fsynced.
+        """
+        global_values = {"regtest": "1", "server": "1"}
+        network_values = {
+            "rpcbind": "127.0.0.1",
+            "rpcallowip": "127.0.0.1",
+            "rpcport": str(rpcport),
+            "port": str(p2pport),
+            "listen": "0",
+            "connect": "0",
+            "dnsseed": "0",
+            "discover": "0",
+            "upnp": "0",
+            "txindex": "1",
+            "blockfilterindex": "1",
+            "coinstatsindex": "1",
+            "fallbackfee": "0.0001",
+            **self._extra_config,
+        }
+        config = datadir / "wam.conf"
+        fd = os.open(config, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        try:
+            with os.fdopen(fd, "w") as out:
+                for k, v in global_values.items():
+                    out.write(f"{k}={v}\n")
+                out.write("[regtest]\n")
+                for k, v in network_values.items():
+                    out.write(f"{k}={v}\n")
+                out.flush()
+                os.fsync(out.fileno())
+        except Exception:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+            raise
+
+    def _stage_windows_cookie(self, datadir: Path) -> None:
+        """Pre-create the Core cookie staging file with an explicit owner-only DACL.
+
+        Pinned Windows Core writes .cookie.tmp with ofstream and then RenameOver.
+        The default-created cookie owner on the native CI runner is not the token
+        user, so we stage an empty .cookie.tmp inside a private regtest directory
+        before Core starts; the rename preserves the explicit descriptor.
+        """
+        from . import windows_private_storage as store
+        from .windows_core_regtest_smoke import _host_env
+        regtest = datadir / 'regtest'
+        create_directory(regtest)
+        store.require_native()
+        with store.directory_guard(regtest):
+            with store.security_attributes() as attributes:
+                handle = store.create(str(regtest / '.cookie.tmp'),
+                                      0xc0030000, 1, attributes, 1, 0x80200080, None)
+            if handle in (None, store.INVALID):
+                raise Q04FixtureError('Q04_FIXTURE_COOKIE_STAGE_CREATE_DENIED')
+            try:
+                info = store._metadata(handle)
+                store.verify_security(handle)
+                if info[3] != 0 or not store.flush(handle):
+                    raise Q04FixtureError('Q04_FIXTURE_COOKIE_STAGE_CUSTODY_DENIED')
+            finally:
+                store.close(handle)
+        return _host_env(datadir)
+
+    def _wait_for_rpc_ready(self, cli: Path) -> None:
+        """Poll the Core CLI until RPC is accepting requests or timeout."""
+        deadline = time.monotonic() + self._timeout
+        while True:
+            result = subprocess.run(
+                [str(cli), f'-datadir={self._datadir}', '-regtest=1', 'getblockchaininfo'],
+                capture_output=True, text=True, timeout=30,
+                env=self._env, cwd=str(cli.parent) if sys.platform == 'win32' else None,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
+            if result.returncode == 0:
+                return
+            if self._core_process.poll() is not None:
+                raise Q04FixtureError('Q04_FIXTURE_CORE_EXITED')
+            if time.monotonic() >= deadline:
+                raise Q04FixtureError('Q04_FIXTURE_RPC_READY_TIMEOUT')
+            time.sleep(0.3)
+
+    def start(self) -> dict:
+        """Start isolated Core and miner. Returns attachment spec."""
+        self._datadir_tmp = private_temporary_directory(prefix='q04_miner_')
+        self._datadir = Path(self._datadir_tmp.name).resolve() / 'datadir'
+        create_directory(self._datadir)
+        self._rpc_port = _port()
+        self._p2p_port = _port()
+        self._write_cookie_config(self._datadir, self._rpc_port, self._p2p_port)
+
+        node, cli, receipt = self._verified_core_paths(self._core_dir)
+
+        # On Windows, stage the cookie file before Core starts so the owner/DACL
+        # matches the custody token instead of the default inherited ACL.
+        self._env = None
+        if sys.platform == 'win32':
+            self._env = self._stage_windows_cookie(self._datadir)
+
+        # Start Core in non-daemon mode so we own the Popen.
+        argv = [str(node), f'-datadir={self._datadir}', '-regtest=1', '-daemon=0']
+        self._core_process = subprocess.Popen(
+            argv, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
+            env=self._env, cwd=str(node.parent) if sys.platform == 'win32' else None,
+            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
+
+        # Wait for RPC cookie to appear (cookie auth mode).
+        cookie = self._datadir / 'regtest' / '.cookie'
+        deadline = time.monotonic() + self._timeout
+        while not cookie.exists():
+            if self._core_process.poll() is not None:
+                raise Q04FixtureError('Q04_FIXTURE_CORE_EXITED')
+            if time.monotonic() >= deadline:
+                raise Q04FixtureError('Q04_FIXTURE_CORE_START_TIMEOUT')
+            time.sleep(0.2)
+
+        # Wait until RPC is actually accepting requests; the cookie file can
+        # appear before the HTTP worker thread is ready on macOS/Windows.
+        self._wait_for_rpc_ready(cli)
+
+        # Attach Fusion read-only.
+        self._attachment = ExternalCoreAttachment(
+            pid=self._core_process.pid,
+            rpc_port=self._rpc_port,
+            datadir=self._datadir,
+            core_dir=self._core_dir,
+            operator_consent=True,
+            timeout=10.0,
+        )
+
+        # Create and load a disposable wallet before generating addresses.
+        self._wallet_name = 'q04_fixture_' + secrets.token_hex(6)
+        result = subprocess.run(
+            [str(cli), f'-datadir={self._datadir}', '-regtest=1', 'createwallet', self._wallet_name],
+            capture_output=True, text=True, timeout=30, env=self._env, cwd=str(node.parent) if sys.platform == 'win32' else None,
+            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
+        if result.returncode != 0:
+            raise Q04FixtureError('Q04_FIXTURE_WALLET_CREATE_FAILED')
+
+        # Start a sustained solo-miner loop in a background thread.  A separate
+        # subprocess Python module would re-execute the PyInstaller bootloader in
+        # frozen builds, so we run the loop inside this process and invoke the
+        # Core CLI directly for each mining step.
+        self._miner_stop = threading.Event()
+        self._miner_thread = threading.Thread(
+            target=self._miner_loop, args=(cli,), daemon=True)
+        self._miner_thread.start()
+
+        increment('q04_fixture_started')
+        return {
+            'pid': self._core_process.pid,
+            'rpc_port': self._rpc_port,
+            'datadir': str(self._datadir),
+            'core_dir': str(self._core_dir),
+            'operator_consent': True,
+        }
+
+    def _verified_core_paths(self, core_dir: Path):
+        from .core import verified_core_paths
+        return verified_core_paths(core_dir)
+
+    def _fixture_address(self, cli: Path) -> str:
+        node = self._verified_core_paths(self._core_dir)[0]
+        result = subprocess.run(
+            [str(cli), f'-datadir={self._datadir}', '-regtest=1',
+             '-rpcwallet=' + self._wallet_name, 'getnewaddress'],
+            capture_output=True, text=True, timeout=30,
+            env=self._env, cwd=str(node.parent) if sys.platform == 'win32' else None,
+            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
+        if result.returncode != 0:
+            raise Q04FixtureError('Q04_FIXTURE_ADDRESS_FAILED')
+        return result.stdout.strip()
+
+    def mine_blocks(self, count: int = 1) -> dict:
+        """Mine blocks without Fusion intervention; measure miner continuity."""
+        if self._attachment is None:
+            raise Q04FixtureError('Q04_FIXTURE_NOT_STARTED')
+        before = self._attachment.read('getblockcount', [])
+        node, cli, _ = self._verified_core_paths(self._core_dir)
+        for _ in range(count):
+            result = subprocess.run(
+                [str(cli), f'-datadir={self._datadir}', '-regtest=1',
+                 '-rpcwallet=' + self._wallet_name, 'generatetoaddress',
+                 '1', self._fixture_address(cli)],
+                capture_output=True, text=True, timeout=30,
+                env=self._env, cwd=str(node.parent) if sys.platform == 'win32' else None,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
+            if result.returncode != 0:
+                raise Q04FixtureError('Q04_FIXTURE_MINING_FAILED')
+        after = self._attachment.read('getblockcount', [])
+        return {'before': before, 'after': after, 'mined': after - before}
+
+    def _miner_loop(self, cli: Path) -> None:
+        """Background thread: repeatedly mine one block to a fixture address."""
+        try:
+            address = subprocess.run(
+                [str(cli), f'-datadir={self._datadir}', '-regtest=1',
+                 f'-rpcwallet={self._wallet_name}', 'getnewaddress'],
+                capture_output=True, text=True, timeout=30,
+                env=self._env, cwd=str(cli.parent) if sys.platform == 'win32' else None,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0).stdout.strip()
+        except Exception:
+            return
+        mined = 0
+        while mined < 1000 and not self._miner_stop.is_set():
+            proc = subprocess.Popen(
+                [str(cli), f'-datadir={self._datadir}', '-regtest=1',
+                 f'-rpcwallet={self._wallet_name}', 'generatetoaddress', '1', address],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                env=self._env, cwd=str(cli.parent) if sys.platform == 'win32' else None,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0)
+            self._miner_current_proc = proc
+            try:
+                proc.wait(timeout=60)
+            except subprocess.TimeoutExpired:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+            finally:
+                self._miner_current_proc = None
+            if proc.returncode == 0:
+                mined += 1
+            if not self._miner_stop.is_set():
+                time.sleep(5.0)
+
+    def fusion_read(self, method: str, params: list | None = None):
+        if self._attachment is None:
+            raise Q04FixtureError('Q04_FIXTURE_NOT_STARTED')
+        return self._attachment.read(method, params)
+
+    def stop(self):
+        if self._miner_thread is not None:
+            self._miner_stop.set()
+            current = self._miner_current_proc
+            if current is not None:
+                current.terminate()
+            self._miner_thread.join(timeout=10)
+            if self._miner_thread.is_alive():
+                if current is not None and self._miner_current_proc is current:
+                    current.kill()
+                self._miner_thread.join(timeout=5)
+            self._miner_thread = None
+            self._miner_current_proc = None
+        if self._attachment is not None:
+            self._attachment.close()
+            self._attachment = None
+        if self._core_process is not None:
+            self._core_process.terminate()
+            try:
+                self._core_process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                self._core_process.kill()
+            self._core_process = None
+        if self._datadir_tmp is not None:
+            try:
+                self._datadir_tmp.cleanup()
+            except Exception:
+                pass
+            self._datadir_tmp = None
+        increment('q04_fixture_stopped')
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.stop()
+        return False

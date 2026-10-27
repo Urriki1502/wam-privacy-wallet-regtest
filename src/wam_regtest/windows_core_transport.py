@@ -15,7 +15,7 @@ class WindowsCoreTransportError(ValueError):
     pass
 
 
-_LIMITS={'wamd.exe':128*1024*1024,'wam-cli.exe':128*1024*1024,'wam.conf':4096,'receipt.json':4096}
+_LIMITS={'wamd.exe':128*1024*1024,'wam-cli.exe':128*1024*1024,'wam.conf':4096,'receipt.json':4096,'regtest/.cookie':512}
 
 
 def write_new(directory,name,data):

@@ -56,5 +56,18 @@ try:
     assert wallet['confirmed_recipient_atoms']==100000
     if not args.qt:assert wallet['actual_reorg_depths']==[1,12,100]
     else:assert wallet['qt_platform']=='xcb' and wallet['fresh_core_same_keys_reservations'] is True
+    if args.executable:
+        # Keep the operator-provisioned witness alive for the separate Q04
+        # process. The frozen app must authenticate it itself; no inherited
+        # process-global policy or privileged installer is available there.
+        q04_report=report.parent/'q04-evidence.json'
+        with tempfile.TemporaryDirectory(prefix='wam-q04-linux-frozen-cwd-') as clean:
+            subprocess.run([str(args.executable.absolute()), 'q04-external-miner',
+                '--manifest-sha256','e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
+                '--anchor-socket',str(NativeRootWitness.root/'anchor.sock'),
+                '--confirm-experimental-developer-regtest','--report',str(q04_report)],
+                env=environment,cwd=clean,stdin=subprocess.DEVNULL,timeout=600,check=True)
+        q04=json.loads(q04_report.read_text())
+        assert q04['status']=='Q04_MINER_COEXISTENCE_PASS' and q04['synthetic_rpc'] is False
     print('LINUX_REAL_CORE_ROOT_WITNESS_'+('NATIVE_QT' if args.qt else 'NO_QT_HEADLESS')+'_WALLET_PASS')
 finally:NativeRootWitness.tearDownClass()
