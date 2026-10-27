@@ -24,6 +24,10 @@ def check_runtime(receipt,platform,frozen,gui):
     heights=receipt['miner_heights']
     require(len(heights)==5 and all(type(h) is int for h in heights) and heights[-1]>heights[0])
     require(receipt['reconnect_height']>=receipt['height_before'])
+    require(receipt['reconnect_real_tcp_reset_count']==1 and receipt['reconnect_fresh_attachment'] is True)
+    require(receipt['changed_cookie_reconnect_denied_before_auth'] is True
+        and receipt['restored_cookie_still_requires_new_authorization'] is True
+        and receipt['credential_fault_actor']=='disposable_fixture_operator')
     busy=receipt['genuine_busy']
     require(busy['status']=='Q04_GENUINE_BUSY_PATH_PASS' and busy['synthetic_busy'] is False)
     require(busy['attachment_http_503_count']==4 and busy['read_attempts']==4)

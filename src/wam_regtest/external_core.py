@@ -14,6 +14,9 @@ import socket
 import stat
 import sys
 import time
+from hashlib import sha256
+import secrets
+import re
 from pathlib import Path
 
 from .core_process import CoreBindingError, _image, _metadata, _linux_socket, _mac_socket, _windows_socket
@@ -42,7 +45,8 @@ class ExternalCoreAttachment:
 
     def __init__(self, *, pid: int, rpc_port: int, datadir: Path,
                  core_dir: Path, operator_consent: bool,
-                 timeout: float = 10.0, auth_cookie: Path | None = None):
+                 timeout: float = 10.0, auth_cookie: Path | None = None,
+                 _expected_credential_digest: str | None = None):
         if operator_consent is not True:
             raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_CONSENT_REQUIRED')
         if type(pid) is not int or pid <= 0:
@@ -73,6 +77,13 @@ class ExternalCoreAttachment:
 
         # Load credentials from explicit cookie path or datadir cookie file.
         self._auth = self._load_auth()
+        if _expected_credential_digest is not None:
+            if (type(_expected_credential_digest) is not str
+                    or re.fullmatch('[0-9a-f]{64}',_expected_credential_digest) is None
+                    or not secrets.compare_digest(_expected_credential_digest,
+                        sha256(self._auth.encode('ascii')).hexdigest())):
+                self.close()
+                raise ExternalAttachmentError('EXTERNAL_ATTACHMENT_CREDENTIAL_CHANGED')
 
         # Verify RPC endpoint ownership and chain identity before any credential use.
         self._attest_endpoint()
@@ -275,6 +286,7 @@ class ExternalCoreAttachment:
 
     def close(self):
         self._closed = True
+        self._auth = None
 
     def __enter__(self):
         return self

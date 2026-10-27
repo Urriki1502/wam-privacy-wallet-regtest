@@ -14434,6 +14434,13 @@
             121958135643
           ],
           "observation": "Conditional inner import re made re a local variable; Q04 error reporting reached it before assignment. Removed inner imports, added missing frozen runner import; genuine failures still return nonzero."
+        },
+        {
+          "source_sha": "e73260cf8fb5a1401f8bf9de82a5754c4f337fd5",
+          "status": "FAIL",
+          "scope": "SOURCE_NEGATIVE",
+          "reference": "tests/test_q04_reconnect.py::test_cookie_change_cannot_be_adopted_during_reconnect",
+          "observation": "Regression test reproduced acceptance of changed cookie credentials on reconnect despite unchanged endpoint. The repair pins the digest and refuses before endpoint authentication. Prior reconnect receipts did not inject a disconnect and cannot qualify the corrected scenario."
         }
       ]
     },

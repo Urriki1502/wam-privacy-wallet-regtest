@@ -51,8 +51,9 @@ acceptance stay separate.
 
 ## Provenance and acceptance boundaries
 
-Runtime source: e16b80b24d056ae8fb96bbb1d13285187a2c1fc1. Requalification on
-this source is required before case promotion. The canonical ledger records the
+Initial repaired runtime: e16b80b24d056ae8fb96bbb1d13285187a2c1fc1. The later
+credential-pin and actual reconnect repair requires fresh qualification before
+case promotion; the importer requires the exact runtime-source SHA explicitly. The canonical ledger records the
 actual artifact-qualified workflow source and merge checkout, not a later ledger
 commit. All artifact ZIP hashes, internal manifests, final payload hashes and
 actual nested Core binaries must match live Actions metadata. Native Q04 and
@@ -84,3 +85,20 @@ though the release manifest included its hash. This is missing acceptance proof,
 not a qualified artifact. The upload list now includes that exact receipt;
 a fresh same-runtime source snapshot must pass before ledger promotion. Linux
 frozen desktop/headless outer/payload/Core evidence from e16 was verified.
+
+## Reconnect and credential continuity correction
+
+The old reconnect scenario created a session but never exercised its disconnect
+branch. The probe now aborts one real client TCP connection to the genuine Core
+using SO_LINGER, restores the socket factory in finally, and requires a fresh
+fully attested attachment and real response. This is explicit transport fault
+injection, not a fabricated RPC server or result.
+
+A new negative contract reproduced that reconnect adopted changed cookie bytes
+under the same PID/port. ExternalCoreSession now pins a credential digest, and
+the attachment compares it BEFORE sending any authentication. Changed bytes
+revoke recovery; restoring the old cookie does not resume the revoked session.
+Closing an attachment clears its cached auth. The genuine-Core fixture operator
+also changes/restores ONLY its disposable node cookie and verifies both refusals.
+Product external attachment never edits the cookie, datadir or node. Independent
+security approval remains outstanding.

@@ -7,6 +7,8 @@ attached node to Fusion managed-Core ownership.
 from __future__ import annotations
 
 import time
+from hashlib import sha256
+import secrets
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -49,6 +51,7 @@ class ExternalCoreSession:
         self._last_identity_time: float = 0.0
         self._recovery_needed = False
         self._last_spec: dict | None = None
+        self._credential_digest: str | None = None
 
     def _is_fresh_identity(self) -> bool:
         return (self._attachment is not None
@@ -66,15 +69,28 @@ class ExternalCoreSession:
             for key in ('pid', 'rpc_port', 'datadir', 'core_dir', 'auth_cookie'):
                 if self._last_spec.get(key) != spec.get(key):
                     raise ExternalRecoveryError('EXTERNAL_RECOVERY_IDENTITY_CHANGED')
-        attachment = ExternalCoreAttachment(
-            pid=int(spec['pid']),
-            rpc_port=int(spec['rpc_port']),
-            datadir=Path(spec['datadir']),
-            core_dir=Path(spec['core_dir']),
-            operator_consent=True,
-            timeout=float(spec.get('timeout', 10.0)),
-            auth_cookie=Path(spec['auth_cookie']) if spec.get('auth_cookie') else None,
-        )
+        try:
+            attachment = ExternalCoreAttachment(
+                pid=int(spec['pid']),
+                rpc_port=int(spec['rpc_port']),
+                datadir=Path(spec['datadir']),
+                core_dir=Path(spec['core_dir']),
+                operator_consent=True,
+                timeout=float(spec.get('timeout', 10.0)),
+                auth_cookie=Path(spec['auth_cookie']) if spec.get('auth_cookie') else None,
+                _expected_credential_digest=self._credential_digest,
+            )
+        except ExternalAttachmentError as error:
+            if error.args==('EXTERNAL_ATTACHMENT_CREDENTIAL_CHANGED',):
+                self._recovery_needed=True
+                raise ExternalRecoveryError('EXTERNAL_RECOVERY_CREDENTIAL_CHANGED') from None
+            raise
+        credential_digest=sha256(attachment._auth.encode('ascii')).hexdigest()
+        if (self._credential_digest is not None
+                and not secrets.compare_digest(self._credential_digest,credential_digest)):
+            attachment.close();self._recovery_needed=True
+            raise ExternalRecoveryError('EXTERNAL_RECOVERY_CREDENTIAL_CHANGED')
+        self._credential_digest=credential_digest
         self._attachment = attachment
         self._last_spec = dict(spec)
         self._last_identity_time = time.monotonic()

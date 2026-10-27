@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import time
 import sys
+import os
 from pathlib import Path
 
 from .q04_fixture import SoloMinerFixture
@@ -80,8 +81,54 @@ def run_q04_scenario(core_dir: Path, report_path: Path | None = None,
                 reconn_height = session.read('getblockcount', [])
             except ExternalRecoveryError as exc:
                 raise Q04RunnerError('Q04_RUNNER_RECONNECT_FAILED') from exc
+            # Reset ONE real client TCP socket after connecting to the genuine
+            # Core. No HTTP reply or RPC result is synthesized; recovery must
+            # create and fully attest a fresh attachment to the same node.
+            from . import external_core
+            original_socket=external_core.socket.socket
+            reset={'count':0}
+            class ResetOnce(original_socket):
+                def connect(self,address):
+                    super().connect(address)
+                    if address==('127.0.0.1',rpc_port) and reset['count']==0:
+                        reset['count']+=1
+                        import struct
+                        linger=struct.pack('hh' if sys.platform=='win32' else 'ii',1,0)
+                        self.setsockopt(external_core.socket.SOL_SOCKET,external_core.socket.SO_LINGER,linger)
+                        self.close()
+                        raise ConnectionResetError('fixture transport reset')
+            previous=session._attachment
+            try:
+                external_core.socket.socket=ResetOnce
+                reconn_height=session.read('getblockcount',[])
+            finally:external_core.socket.socket=original_socket
+            if reset['count']!=1 or session._attachment is previous:
+                raise Q04RunnerError('Q04_RUNNER_RECONNECT_NOT_EXERCISED')
             if reconn_height < height_before:
                 raise Q04RunnerError('Q04_RUNNER_RECONNECT_HEIGHT_REGRESSED')
+            # Authorized fixture-operator fault, never a product attach action:
+            # replace this disposable node's on-disk cookie while its genuine
+            # server remains running. A reconnect must refuse before using it.
+            cookie=datadir/'regtest'/'.cookie';original=cookie.read_bytes()
+            replacement=b'__cookie__:'+b'0'*(len(original)-11)
+            if replacement==original:replacement=b'__cookie__:'+b'1'*(len(original)-11)
+            def fixture_cookie(data):
+                with cookie.open('r+b') as out:
+                    out.write(data);out.truncate();out.flush();os.fsync(out.fileno())
+            try:
+                fixture_cookie(replacement)
+                session._attachment.close();session._attachment=None
+                try:
+                    session._reconnect()
+                    raise Q04RunnerError('Q04_RUNNER_COOKIE_CHANGE_ADOPTED')
+                except ExternalRecoveryError as error:
+                    if error.args!=('EXTERNAL_RECOVERY_CREDENTIAL_CHANGED',):raise
+            finally:fixture_cookie(original)
+            try:
+                session.read('getblockcount',[])
+                raise Q04RunnerError('Q04_RUNNER_RESTORED_COOKIE_RESUMED')
+            except ExternalRecoveryError as error:
+                if error.args!=('EXTERNAL_RECOVERY_NEEDED',):raise
 
         # Scenario 6: Credential/port change detection — altered port must require new auth.
         bad_session = ExternalCoreSession(
@@ -117,6 +164,11 @@ def run_q04_scenario(core_dir: Path, report_path: Path | None = None,
             'miner_heights': miner_heights,
             'contention_read_height': current,
             'reconnect_height': reconn_height,
+            'reconnect_real_tcp_reset_count':reset['count'],
+            'reconnect_fresh_attachment':True,
+            'changed_cookie_reconnect_denied_before_auth':True,
+            'restored_cookie_still_requires_new_authorization':True,
+            'credential_fault_actor':'disposable_fixture_operator',
             'write_denied': True,
             'port_change_detected': True,
             'synthetic_rpc': False,
