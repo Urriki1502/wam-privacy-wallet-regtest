@@ -14,6 +14,7 @@ class Peer:
     def __init__(self, *, bad_hello=False, bad_reply=False, duplicate=False):
         self.guard = ReplayGuard(SECRET)
         hello = self.guard.hello()
+        self.challenge = hello['challenge']
         if bad_hello:
             hello['proof'] = 'é' * 64
         self.data = (json.dumps(hello) + '\n').encode()
@@ -30,7 +31,7 @@ class Peer:
 
     def sendall(self, raw):
         self.sent.append(raw)
-        self.guard.verify(raw)
+        self.guard.verify(raw, self.challenge)
         message = json.loads(raw)
         status = public_status(state='ready', owned=True, chain_height=101)
         proof = response_proof(SECRET, message['nonce'], status)

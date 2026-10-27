@@ -10,6 +10,8 @@ import hmac
 import json
 import re
 import secrets
+import threading
+import time
 
 MAX_FRAME=4096
 PROTOCOL="wam-fusion-managed-supervisor/v2"
@@ -84,30 +86,55 @@ def request_proof(secret,op,nonce,challenge):
 
 
 class ReplayGuard:
-    """Fresh boot challenge prevents replay across owner restart as well."""
-    def __init__(self,secret,limit=4096):
+    """Bounded live, single-use connection challenges; no lifetime request cap.
+
+    Retired/expired challenges are not reaccepted: verification requires a live
+    entry AND the challenge issued to this connection. Fresh 128-bit CSPRNG
+    challenges also separate supervisor instances without persisting nonces.
+    """
+    def __init__(self,secret,limit=4096,*,ttl=5):
         if type(secret) is not bytes or len(secret)!=32:
             raise SupervisorProtocolError("SUPERVISOR_SECRET_DENIED")
         if type(limit) is not int or not 1<=limit<=65536:
             raise SupervisorProtocolError("SUPERVISOR_REPLAY_LIMIT_DENIED")
+        if type(ttl) not in (int,float) or not 1<=ttl<=30:
+            raise SupervisorProtocolError("SUPERVISOR_CHALLENGE_TTL_DENIED")
         self.__secret=secret
-        self.__seen=set()
+        self.__pending={}
         self.__limit=limit
-        self.challenge=secrets.token_hex(16)
+        self.__ttl=ttl
+        self.__lock=threading.Lock()
 
     def hello(self):
-        return dict(protocol=PROTOCOL,challenge=self.challenge,
-                    proof=challenge_proof(self.__secret,self.challenge))
+        with self.__lock:
+            now=time.monotonic()
+            self.__pending={c:end for c,end in self.__pending.items() if end>now}
+            if len(self.__pending)>=self.__limit:
+                raise SupervisorProtocolError('SUPERVISOR_CHALLENGE_CAPACITY')
+            challenge=secrets.token_hex(16)
+            if challenge in self.__pending:
+                raise SupervisorProtocolError('SUPERVISOR_CHALLENGE_COLLISION')
+            self.__pending[challenge]=now+self.__ttl
+            return dict(protocol=PROTOCOL,challenge=challenge,
+                        proof=challenge_proof(self.__secret,challenge))
 
-    def verify(self,raw):
-        message=decode_frame(raw)
-        if (message['challenge']!=self.challenge
-                or len(self.__seen)>=self.__limit or message["nonce"] in self.__seen
-                or not hmac.compare_digest(message["proof"],
-                    request_proof(self.__secret,message["op"],message["nonce"],self.challenge))):
-            raise SupervisorProtocolError("SUPERVISOR_AUTH_DENIED")
-        self.__seen.add(message["nonce"])
-        return message["op"]
+    def discard(self,challenge):
+        with self.__lock:
+            self.__pending.pop(challenge,None)
+
+    def verify(self,raw,challenge):
+        # Consume the connection grant atomically, even on malformed/bad auth.
+        # A competing connection cannot use its own grant to consume another's.
+        with self.__lock:
+            expiry=self.__pending.pop(challenge,None)
+            if expiry is None or time.monotonic()>=expiry:
+                raise SupervisorProtocolError('SUPERVISOR_AUTH_DENIED')
+            message=decode_frame(raw)
+            if (message['challenge']!=challenge or not hmac.compare_digest(
+                    message['proof'],request_proof(self.__secret,message['op'],
+                                                  message['nonce'],challenge))):
+                raise SupervisorProtocolError('SUPERVISOR_AUTH_DENIED')
+            return message['op']
 
     def sign_status(self,nonce,status):
         return response_proof(self.__secret,nonce,status)

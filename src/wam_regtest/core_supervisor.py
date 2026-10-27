@@ -248,9 +248,9 @@ class CoreSupervisor:
         self.read = self.binding = self.process = None
         self.state = 'stopped'
 
-    def handle(self, raw):
+    def handle(self, raw, challenge):
         message = decode_frame(raw)
-        op = self.guard.verify(raw)
+        op = self.guard.verify(raw, challenge)
         if op == 'start':
             self.start()
         elif op == 'shutdown':
@@ -266,9 +266,12 @@ class CoreSupervisor:
             except socket.timeout:
                 continue
             with conn:
+                challenge = None
                 try:
                     conn.settimeout(3)
-                    conn.sendall(json.dumps(self.guard.hello()).encode('ascii') + b'\n')
+                    hello = self.guard.hello()
+                    challenge = hello['challenge']
+                    conn.sendall(json.dumps(hello).encode('ascii') + b'\n')
                     deadline = time.monotonic() + 3
                     raw = bytearray()
                     while len(raw) <= MAX_FRAME and not raw.endswith(b'\n'):
@@ -280,12 +283,15 @@ class CoreSupervisor:
                         if not part:
                             break
                         raw.extend(part)
-                    reply = self.handle(bytes(raw))
+                    reply = self.handle(bytes(raw), challenge)
                     conn.settimeout(3)
                     conn.sendall(json.dumps(reply, sort_keys=True).encode('ascii') + b'\n')
                 except (OSError, ValueError, RuntimeError):
                     # Do not echo arbitrary errors or unauthenticated state.
                     continue
+                finally:
+                    if challenge is not None:
+                        self.guard.discard(challenge)
 
     def close(self):
         # Explicit supervisor exit cannot quietly relinquish a live owner.

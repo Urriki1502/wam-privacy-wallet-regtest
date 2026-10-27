@@ -105,11 +105,12 @@ class SupervisorLifecycleUnit(unittest.TestCase):
     def test_invalid_auth_never_reaches_lifecycle(self):
         owner = self.owner()
         nonce = 'a' * 32
-        raw = (json.dumps(dict(protocol=PROTOCOL, op='start', nonce=nonce, challenge=owner.guard.challenge,
-            proof=request_proof(b'x' * 32, 'start', nonce, owner.guard.challenge))) + '\n').encode()
+        challenge = owner.guard.hello()['challenge']
+        raw = (json.dumps(dict(protocol=PROTOCOL, op='start', nonce=nonce, challenge=challenge,
+            proof=request_proof(b'x' * 32, 'start', nonce, challenge))) + '\n').encode()
         with patch.object(owner, 'start') as start:
             with self.assertRaises(SupervisorProtocolError):
-                owner.handle(raw)
+                owner.handle(raw, challenge)
             start.assert_not_called()
 
     def test_live_owner_cannot_be_closed_by_gui_disconnect(self):
@@ -182,10 +183,11 @@ class SupervisorLifecycleUnit(unittest.TestCase):
         owner = self.owner()
         secret = read_exact(self.root, 'supervisor.token', length=32)
         nonce = 'a' * 32
-        raw = (json.dumps(dict(protocol=PROTOCOL, op='status', nonce=nonce, challenge=owner.guard.challenge,
-            proof=request_proof(secret, 'status', nonce, owner.guard.challenge))) + '\n').encode()
-        result = owner.handle(raw)
+        challenge = owner.guard.hello()['challenge']
+        raw = (json.dumps(dict(protocol=PROTOCOL, op='status', nonce=nonce, challenge=challenge,
+            proof=request_proof(secret, 'status', nonce, challenge))) + '\n').encode()
+        result = owner.handle(raw, challenge)
         self.assertEqual(result['nonce'], nonce)
         self.assertEqual(len(result['proof']), 64)
         with self.assertRaises(SupervisorProtocolError):
-            owner.handle(raw)
+            owner.handle(raw, challenge)
