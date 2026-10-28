@@ -48,6 +48,13 @@ def main():
         'python_version':platform.python_version(),
         'dependencies':{p:importlib.metadata.version(p) for p in ('coincurve','cryptography')},
         'adapter_sha256':sha256((source/'src/wam_regtest/managed_wallet_checkpoint.py').read_bytes()).hexdigest(),
+        'source_files':{p:sha256((source/p).read_bytes()).hexdigest() for p in (
+            'src/wam_regtest/core_supervisor.py','src/wam_regtest/supervisor_journal.py',
+            'src/wam_regtest/supervisor_identity.py','src/wam_regtest/supervisor_store.py',
+            'src/wam_regtest/supervisor_protocol.py','src/wam_regtest/managed_wallet_checkpoint.py',
+            'src/wam_regtest/vault.py','src/wam_regtest/wallet_session.py',
+            'src/wam_regtest/rpc_scope.py','src/wam_regtest/json_rpc.py',
+            'src/wam_regtest/cli_rpc.py','scripts/probe_q05_wallet_checkpoint.py')},
         'synthetic_rpc':False,'funding_or_mining':a.fund_disposable_wallet,
         'wallet_signing':a.reservation!='none','wallet_broadcast_requested':a.reservation=='uncertain',
         'public_fixture_signature_and_broadcast':a.fund_disposable_wallet,
@@ -68,6 +75,9 @@ def main():
     try:
         create_directory(a.root)
         owner=CoreSupervisor(a.root,a.core_dir,authorized=True)
+        record['lifecycle_schema']=owner.journal.schema
+        record['directory_identity_sha256']=sha256(json.dumps(owner.journal.identity,
+            sort_keys=True,separators=(',',':')).encode()).hexdigest()
         owner.start(timeout=30)
         keychain=a.root/'q05-disposable.keychain-db'
         result=subprocess.run(['/usr/bin/security','create-keychain','-p',

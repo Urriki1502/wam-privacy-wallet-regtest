@@ -37,7 +37,12 @@ def main():
         'core_version':'v0.1.11','core_trust':'official-signed-v0.1.11',
         'wsp_source_commit':PINNED_WSP_COMMIT,'wsp_executed':False,
         'synthetic_rpc':False,'frozen':False,'mainnet_allowed':False,'observations':[]}
+    record['source_files']={p:sha256((source/p).read_bytes()).hexdigest() for p in (
+        'src/wam_regtest/core_supervisor.py','src/wam_regtest/supervisor_journal.py',
+        'src/wam_regtest/supervisor_identity.py','src/wam_regtest/core_process.py',
+        'src/wam_regtest/rpc_scope.py','scripts/probe_q05_core_crash.py')}
     create_directory(a.root);owner=CoreSupervisor(a.root,a.core_dir,authorized=True)
+    record['lifecycle_schema']=owner.journal.schema
     try:
         owner.start(timeout=30)
         before=owner.status()
