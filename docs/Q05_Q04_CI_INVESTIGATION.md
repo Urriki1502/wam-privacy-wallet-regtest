@@ -1,3 +1,46 @@
+# Current disposition — 28 October 2026
+
+The previous STOP instructions below are historical and superseded by owner
+standing authorization comment 6458347904. New failed evidence is retained:
+
+- 9167337, run 40615788565 / job 122578379496: Q04_BUSY_RETRY_UNPROVEN.
+- 3c40a1d, run 40617866635 / desktop 122585102171: three attachment 503s plus
+  one transport-unreachable in four attempts. Removing unreachable from busy
+  classification is required; it is not HTTP busy evidence.
+- 55beb7e, run 40643772393 / headless 122668369581: actual TimeoutError after
+  10.017 seconds, attempt 3, two real attachment 503s. Native Q04/contention
+  and frozen desktop in this same run succeeded. Not infrastructure-only.
+
+Upstream Bitcoin pinned HTTP WorkQueue enqueues against pending queue depth;
+a worker pops a queue item before executing it. Six submitted requests and a
+rejection can precede the first worker dequeue. That dequeue frees a slot and
+an attachment request can enter the queue and time out behind a long-poll.
+This race is demonstrated by source semantics; the precise old CI scheduling
+trace is unavailable and is not claimed as directly observed.
+Source references: Bitcoin v28.1 `src/httpserver.cpp` (`WorkQueue::Enqueue`,
+`Run`) and `src/rpc/request.cpp` (method log emitted within RPC execution),
+immutable tag object 0e6ddeca339cef84d862bd8ce4e38f4bf83a8760.
+
+Repair 056d770 submits one load request, waits for its new Core method-log
+marker (bounded private read, request still live), then submits the remaining
+five and requires all sent plus actual load-channel 503. This is fixture-only
+readiness, never endpoint/credential authority. Debug RPC is enabled only for
+these disposable fixture processes. Long-polls span 30 seconds, with 100-second
+bounded read/drain; product RPC timeout/auth/native attestation unchanged.
+All four actual busy replies, bounded retry/backoff, GUI coalescing, successful
+recovery and write-no-retry predicates remain mandatory. Transport failure still
+propagates as FAIL. Supplemental regression tests cover old log exclusion,
+unfinished request, delayed worker start, load error and bounded diagnostics.
+
+Fresh signed macOS ARM64 native Q04 probe on module snapshot 056d770 PASS,
+receipt `docs/evidence/q05/q04-worker-dequeue-native-056d770.json`, SHA-256
+5776840e40428442ae8bd16b8e682972876e6fbe56e0010e228a692ee8748b1d.
+This does not qualify corrected Linux frozen binaries; exact-source CI remains
+required. No source/framework/final artifact provenance is inherited from old
+passes. The original reports below remain as history.
+
+---
+
 # Q04 regression investigation on Q05 PR #138 — 28 October 2026
 
 Failed run 40539812345, PR head `d52187832250a4852a8387297440038e6f192611`,

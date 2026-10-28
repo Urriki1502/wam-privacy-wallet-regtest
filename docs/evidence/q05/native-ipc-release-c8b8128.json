@@ -1,0 +1,102 @@
+{
+  "schema": "q05-stage-a-native-lifecycle/v1",
+  "source_sha": "c8b812825c32eddbc6d314b9f564b687ffbb8f86",
+  "checkout_sha": "c8b812825c32eddbc6d314b9f564b687ffbb8f86",
+  "platform": "macos-arm64",
+  "core_version": "v0.1.11",
+  "python_version": "3.12.15",
+  "command": [
+    "python3.12",
+    "scripts/probe_q05_macos_lifecycle.py",
+    "--core-dir",
+    "<verified signed Core>",
+    "--root",
+    "<new isolated profile>",
+    "--receipt",
+    "<new receipt>",
+    "--confirm-disposable-regtest"
+  ],
+  "core_trust": "official-signed-v0.1.11",
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_execution": false,
+  "synthetic_rpc": false,
+  "frozen": false,
+  "mainnet_allowed": false,
+  "core_intake": {
+    "archive": "wam-coin-v0.1.11-arm64-apple-darwin.tar.gz",
+    "archive_sha256": "6e10ea10cc324e947c9d646ba8276412175edd0f168c0d95ca5228ccc37f5afb",
+    "loader_process_binding_qualified": false,
+    "mainnet_allowed": false,
+    "platform": "macos-arm64",
+    "publisher_fingerprint": "4BD4A8D3AFD43F5CBCB500E23798462FE00ADBA4",
+    "real_wsp_e2e_qualified": false,
+    "signed_archive_verified": true,
+    "tag": "v0.1.11",
+    "wam_cli_sha256": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+    "wamd_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+  },
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "source_files": {
+    "src/wam_regtest/core_supervisor.py": "f3262b97faf70bb20bddabac27823395658e8a965f5ebdd4c5102bb00bf76c5e",
+    "src/wam_regtest/supervisor_protocol.py": "7f91a2fc43c7e9fe3eaf62d01a638f2b470adf1a24a0b97ff36f8089b9a6c022",
+    "src/wam_regtest/supervisor_journal.py": "533e4e67cacbbda7a53ff74ad33d6d6421e631511d503859bc6468a989bd114c",
+    "src/wam_regtest/supervisor_client.py": "870cfbb4a7891709188a5cfa5fa90d34d4d4d5fcacbdf4bb5238140083a0e4a0",
+    "scripts/probe_q05_macos_lifecycle.py": "e61b224f6169e74a08076f5fc174638f647d217706a6769d08841f1d954694cc"
+  },
+  "observations": [
+    {
+      "authenticated_start": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "syncing",
+        "height": 0,
+        "core_process_owned": true,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      },
+      "ownership_proof": "OwnedCoreBinding actual Popen, image metadata and kernel socket before HTTP auth"
+    },
+    {
+      "client_disconnect_core_continues": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "syncing",
+        "height": 0,
+        "core_process_owned": true,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    },
+    {
+      "authenticated_shutdown": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "stopped",
+        "height": null,
+        "core_process_owned": false,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    },
+    {
+      "supervisor_reopen_same_profile_datadir": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "stopped",
+        "height": null,
+        "core_process_owned": false,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    }
+  ],
+  "status": "PASS",
+  "profile_id": "f032629eb87aae9b3f0e9dbe363034eb",
+  "profile_sha256": "1be13f4f5f0f20c16d465c7a806fad1bbf24afa810dcc325b5ae47902225b28a",
+  "config_sha256": "10b7f2c3303f831a741ea253f2847c3d77cf7aed826668dc456d4cc89b64dde5",
+  "datadir_identity": [
+    16777233,
+    13818280
+  ],
+  "timestamp_utc": "2026-10-28T06:29:48.241955+00:00",
+  "core_shutdown_confirmed": true
+}

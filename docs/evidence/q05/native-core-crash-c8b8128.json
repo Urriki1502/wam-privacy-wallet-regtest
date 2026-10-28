@@ -1,0 +1,64 @@
+{
+  "source_sha": "c8b812825c32eddbc6d314b9f564b687ffbb8f86",
+  "checkout_sha": "c8b812825c32eddbc6d314b9f564b687ffbb8f86",
+  "status": "PASS",
+  "platform": "macos-arm64",
+  "fault_model": "SIGKILL of freshly verified original owned Popen",
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "core_version": "v0.1.11",
+  "core_trust": "official-signed-v0.1.11",
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_executed": false,
+  "synthetic_rpc": false,
+  "frozen": false,
+  "mainnet_allowed": false,
+  "observations": [
+    {
+      "before_crash": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "syncing",
+        "height": 0,
+        "core_process_owned": true,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    },
+    {
+      "crash_detected": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "recovery-needed",
+        "height": null,
+        "core_process_owned": false,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    },
+    {
+      "same_owner_explicit_recovery": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "syncing",
+        "height": 0,
+        "core_process_owned": true,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    },
+    {
+      "clean_reopen": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "stopped",
+        "height": null,
+        "core_process_owned": false,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    }
+  ],
+  "original_core_pid": 52856,
+  "profile_sha256": "680f163d3bdacb2a3ea4ed57d7b47470ecf482d74bc2d33746788f7943320686",
+  "config_sha256": "fc10b22d5fad7c4b0785468989d972439e1142376b02f917aca0525bd507b48f",
+  "timestamp_utc": "2026-10-28T06:29:11.029779+00:00"
+}

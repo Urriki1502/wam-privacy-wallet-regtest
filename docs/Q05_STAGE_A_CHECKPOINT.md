@@ -1,3 +1,112 @@
+# Current Q05 checkpoint — 28 October 2026, autonomous authority active
+
+This section supersedes every STOP/one-retest instruction in the historical
+checkpoints below. Owner standing authorization:
+https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6458347904.
+Continue the SAME Draft PR #138 / branch
+`feature/issue45-q05-managed-core-stage-a-20261027`, worktree `work/q05-stage-a`.
+Main remains `4bc6f658e4c00e0a8c5d3c9da7d79aab0a54dfae`; Q05 sole ACTIVE,
+Q04 ENGINEERING_DONE with G6/G7 BLOCKED and accepted=false. No merge/handoff.
+
+## Completed source units and reproducible evidence
+
+- `9152214`: private fixed startup diagnostics and original-Popen recover-stop.
+  A fresh diagnostic reproduced RPC_HTTP_DENIED, before HTTP readiness; that
+  profile's original Popen subsequently reattested and gracefully stopped Core.
+- `3c40a1d`: signed scoped CLI bootstrap readiness, then unchanged Q03 HTTP.
+- `2850be6`: create-only HMAC chained lifecycle journal; clean/dirty reentry,
+  identity, sequence, truncated/partial/foreign state refusal. No PID adoption.
+- `c8b812825c32eddbc6d314b9f564b687ffbb8f86`: explicit recovery of positively
+  exited original Popen, same registered scope and owner, unchanged original
+  datadir/config/Core pins, no authenticated height regression. Authenticated
+  `release` exits an owner only after no live child remains.
+- `056d770`: Q04 workload waits for its first long-poll to enter the actual Core
+  worker before filling its bounded queue. Six sent + a raw 503 alone could
+  race worker dequeue and leave a slot. Thirty-second long-polls / bounded
+  100-second drain, no change to product RPC timeout, assertions or trust.
+- `0620564f9f203f1c79142cb32848fa330cb54436`: reverify signed pinned Core and
+  profile digests immediately BEFORE Popen, not only after launch.
+
+Sequential focused regression batch: **150 tests PASS** (68 Q05, 20 Q04,
+35 Q03, 6 external attachment, 5 contention, 13 ledger, 3 encrypted storage).
+Genuine signed macOS ARM64 source-only receipts in `docs/evidence/q05/`:
+
+| Receipt | Actual source | Outcome | SHA-256 |
+|---|---|---|---|
+| native-core-crash-c8b8128.json | c8b8128 | PASS: real original-owned Core SIGKILL, explicit same-owner recovery, no height regression, clean reopen | 3c42133c52ec61b6c601f11bc628ed66aecb4af5dddd4e2815f1d7583bea9c0c |
+| native-ipc-release-c8b8128.json | c8b8128 | PASS: four lifecycle observations, authenticated normal owner release | 122e43741df49cf059ca0bd33a5141f92d62594a422e74f6348dccdf4121bd85 |
+| native-preflight-0620564.json | 0620564 | PASS: four lifecycle observations after pre-spawn check | f1c62da77ce888afecb44d9140e57ae5ae72ff9f68569604805d5d658b430479 |
+| q04-worker-dequeue-native-056d770.json | Q04 module snapshot 056d770 | PASS: four actual attachment 503s, backoff/coalescing/recovery/write refusal; standalone source probe | 5776840e40428442ae8bd16b8e682972876e6fbe56e0010e228a692ee8748b1d |
+
+The Q04 standalone receipt itself does not embed source SHA; its module snapshot
+and execution are recorded here, not retroactively written into that receipt.
+The supervisor receipts embed exact clean source/probe hashes. Wamd SHA-256
+`7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068`,
+CLI `81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82`;
+WSP pin `ac55f13423620252bdbf848c7e8a280c3b84721e` recorded but not executed by
+these Core-only probes. No source probe proves integrated frozen GUI/wallet use.
+All older FAIL receipts/profiles remain preserved.
+
+## CI requiring current repair-source qualification
+
+Latest published source at this checkpoint was 55beb7e. Linux run 40643772393:
+native Q04 122668260484, contention 122668260574 and frozen desktop 122668369466
+PASS; **frozen headless 122668369581 FAIL**, TimeoutError after 10.017 seconds
+on attempt 3, with 2 actual attachment 503 replies. This is a real unresolved
+qualification failure, not infrastructure-only. Earlier 3c40a1d desktop had
+3 busy replies and one unreachable transport; unreachable is now correctly
+propagated, never fabricated as NODE BUSY. Full failure history is in the ledger.
+The worker-dequeue race exists in upstream WorkQueue semantics; old CI did not
+record worker timing, so that historical scheduling trace cannot be proved.
+Native macOS recheck supports the repair; new exact-source Linux frozen/native
+CI is still required before broader Q05 integration. Do not replay full CI
+manually or count old green jobs as qualification of changed source.
+
+## Remaining security and integration gaps
+
+Journal is an authenticated create-only chain under native profile lease, not
+an independent antirollback witness against same-user/OS/full snapshot rollback.
+Tail-prefix rollback and long-term journal compaction remain design gaps.
+100,000 lifecycle-event cap is fail-closed with reserved stop/failure capacity;
+status requests do not consume that cap. No vault format/KDF/AEAD migration.
+
+A supervisor-process crash loses the original Popen capability. New owners
+refuse dirty state and DO NOT adopt a PID. Positive live-orphan reattachment
+needs a reviewed retained original-owner/service architecture; Core-only
+same-owner restart is narrower and must not be presented as that case PASS.
+Wallet/scanner/SQLite/native-anchor/checkpoint and uncertain reservation
+continuity, ordinary packaged onboarding/Send/Sign/Broadcast, three-platform
+native/frozen, Windows 125% DPI, physical and independent gates remain incomplete.
+Use `docs/Q05_VAULT_COMPATIBILITY_REVIEW.md` before Stage C; preserve legacy
+32-byte Keyring and vault envelope, exclude historical account/KDF migrations.
+
+Legacy profile `wam-fusion-core-2f8b039e7c6145ad` has old owner/runtime without
+an original-Popen recovery endpoint. Historical PIDs 48111/48112 are observations,
+not termination targets. Do not adopt, signal, delete locks, overwrite profile
+or patch a running interpreter. Diagnostic profile 85e926b3d4071cfa's Core was
+stopped by its original owner; its old Python controller may remain. A later
+strict executable comparison refused a proposed signal BEFORE sending it.
+These action-specific blocks do not prevent isolated safe engineering.
+
+## Next exact actions
+
+1. Verify current branch/remote HEAD, clean tree and official engineering lease;
+   continue/acquire normally, never delete locks. Check current quota.
+2. Inspect the automatic CI for the next pushed HEAD, especially Linux native
+   Q04/contention and both frozen variants. Read full failed job logs and keep
+   diagnostics/evidence. Fix a new regression before broad Q05 work.
+3. Once Q04 requalification is sound, complete persistent original-owner/service
+   recovery design and tests, then create-once managed wallet integration without
+   fixture funding or height-102 assumptions. Keep original vault/native-anchor
+   custody and signed/uncertain reservations; no fake owned RPC context.
+4. All 37 canonical Q05 cases remain PENDING; G0–G7 PENDING, accepted=false.
+   Local source successes are supplemental only. ENGINEERING HANDOFF NO,
+   FULL ACCEPTED NO. No new routine native-test approval is needed.
+
+---
+
+# Historical checkpoints (superseded where noted)
+
 # Q05 Stage A checkpoint — 28 October 2026: STOP after authorized native retest FAIL
 
 **This update supersedes the earlier checkpoints below. Do not retry or start
