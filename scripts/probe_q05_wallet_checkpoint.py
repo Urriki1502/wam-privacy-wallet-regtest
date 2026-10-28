@@ -13,6 +13,7 @@ from pathlib import Path
 import platform
 import subprocess
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from wam_regtest.core import verified_core_paths
 from wam_regtest.core_supervisor import CoreSupervisor
@@ -29,10 +30,11 @@ def main():
     parser.add_argument('--receipt',required=True,type=Path)
     parser.add_argument('--confirm-disposable-regtest',action='store_true')
     parser.add_argument('--fund-disposable-wallet',action='store_true')
+    parser.add_argument('--reservation',choices=('none','signed','uncertain'),default='none')
     a=parser.parse_args();source=Path(__file__).resolve().parents[1]
     if (not a.confirm_disposable_regtest or platform.system()!='Darwin'
             or platform.machine()!='arm64' or a.root.exists() or a.root.is_symlink()
-            or a.receipt.exists()
+            or a.receipt.exists() or a.reservation!='none' and not a.fund_disposable_wallet
             or subprocess.check_output(['git','status','--porcelain'],cwd=source)):
         raise SystemExit('Q05_WALLET_PROBE_SCOPE_DENIED')
     head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()
@@ -47,10 +49,22 @@ def main():
         'dependencies':{p:importlib.metadata.version(p) for p in ('coincurve','cryptography')},
         'adapter_sha256':sha256((source/'src/wam_regtest/managed_wallet_checkpoint.py').read_bytes()).hexdigest(),
         'synthetic_rpc':False,'funding_or_mining':a.fund_disposable_wallet,
-        'wallet_signing_or_broadcast':False,
+        'wallet_signing':a.reservation!='none','wallet_broadcast_requested':a.reservation=='uncertain',
         'public_fixture_signature_and_broadcast':a.fund_disposable_wallet,
         'physical_device_acceptance':False,'mainnet_allowed':False,'observations':[]}
-    owner=None;stage='KEYCHAIN'
+    owner=None;session=None;stage='KEYCHAIN';send_calls=[];submitted_txid=None
+    # A test-only observer may drop the caller result ONLY after the real
+    # signed CLI returned Core's actual matching txid. Never fabricate RPC.
+    from wam_regtest.wallet_session import WalletCoreCli,WalletSession,WalletSessionError
+    original_call=WalletCoreCli.call
+    def observe_call(client,method,params=None):
+        if method=='sendrawtransaction':send_calls.append(True)
+        result=original_call(client,method,params)
+        if method=='sendrawtransaction' and a.reservation=='uncertain':
+            if result!=submitted_txid:raise ValueError('Q05_REAL_CORE_TXID_MISMATCH')
+            raise WalletSessionError('Q05_FIXTURE_LOST_RESULT_AFTER_REAL_CORE')
+        return result
+    observer=patch.object(WalletCoreCli,'call',observe_call);observer.start()
     try:
         create_directory(a.root)
         owner=CoreSupervisor(a.root,a.core_dir,authorized=True)
@@ -113,6 +127,53 @@ def main():
             record['observations'].append({'real_fixture_payment_txid':txid,
                 'height':height,'confirmed_atoms':atoms,'history_count':1,
                 'history_sha256':initial['history_sha256'],'wallet_signing_or_broadcast':False})
+        if a.reservation!='none':
+            stage='NATIVE_WALLET_SIGNED_RESERVATION'
+            from wam_regtest.vault import CheckpointVault
+            from wam_sp.keystore import Keyring
+            from wam_sp.psbt import PSBT
+            from wam_sp.wallet import Wallet
+            vault=CheckpointVault(owner.directory/'wallet-vault',native_anchor,a.wsp_source)
+            ring,scanner=vault.restore(owner.directory/'wallet-runtime.sqlite',password)
+            session=WalletSession(a.core_dir,owner.directory,a.wsp_source,ring,scanner,vault,
+                password,None,core_cli=owner.cli,core_receipt=owner.receipt)
+            recipient=Keyring()
+            try:code=recipient.accounts()[0].payment_code()
+            finally:recipient.close()
+            review=session.prepare(code,100000,10000);session.sign(review.commitment)
+            submitted_txid=PSBT.decode(session._signed).txid()
+            if a.reservation=='uncertain':
+                stage='REAL_BROADCAST_CALLER_RESULT_LOSS'
+                try:
+                    session.broadcast(review.commitment)
+                    raise ValueError('Q05_LOST_RESULT_NOT_OBSERVED')
+                except WalletSessionError as error:
+                    if error.args!=('WALLET_BROADCAST_UNCERTAIN_LOCK_RETAINED',):raise
+                if len(send_calls)!=1:
+                    raise ValueError('Q05_BROADCAST_ATTEMPT_COUNT_DENIED')
+                rpc=WalletCoreCli(owner.cli,owner.directory)
+                if submitted_txid not in rpc.call('getrawmempool'):
+                    raise ValueError('Q05_REAL_BROADCAST_NOT_OBSERVED')
+                if getattr(rpc,'_transport',None) is not None:rpc._transport.close()
+            rows=session.scanner.store.db.execute('SELECT state FROM reservations').fetchall()
+            if not rows or any(row[0]!=a.reservation for row in rows):
+                raise ValueError('Q05_RESERVATION_STATE_NOT_DURABLE')
+            token=session._prepared.proposal.token
+            try:
+                Wallet(session.scanner).release_draft(token)
+                raise ValueError('Q05_IRREVERSIBLE_RESERVATION_RELEASED')
+            except ValueError as error:
+                if error.args!=('RESERVATION_NOT_DRAFT',):raise
+            session.lock();session=None
+            initial=checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
+            if (initial['reservation_count']!=1 or initial['reservation_states']!=[a.reservation]
+                    or initial['reserved_atoms']!=initial['confirmed_atoms']
+                    or initial['available_atoms']!=0):
+                raise ValueError('Q05_RESERVATION_RESTORE_DENIED')
+            record['observations'].append({'genuine_wallet_signature':True,
+                'reservation_state':a.reservation,'reservation_sha256':initial['reservation_sha256'],
+                'irreversible_draft_release_refused':True,'actual_wallet_broadcast_calls':len(send_calls),
+                'core_acceptance_before_caller_loss':a.reservation=='uncertain'})
         stage='CORE_OWNER_REOPEN'
         owner.shutdown();owner.close()
         owner=CoreSupervisor(a.root,a.core_dir,authorized=True);owner.start(timeout=30)
@@ -124,6 +185,9 @@ def main():
                 or restored['confirmed_atoms']!=initial['confirmed_atoms']
                 or restored['history_count']!=initial['history_count']
                 or restored['history_sha256']!=initial['history_sha256']
+                or restored['reservation_sha256']!=initial['reservation_sha256']
+                or restored['reservation_states']!=initial['reservation_states']
+                or restored['reserved_atoms']!=initial['reserved_atoms']
                 or restored['checkpoint'][0]!=initial['checkpoint'][0]+1
                 or sha256(first.read_bytes()).hexdigest()!=first_digest):
             raise ValueError('Q05_REOPEN_WALLET_CONTINUITY_DENIED')
@@ -132,6 +196,10 @@ def main():
             'height':restored['height'],'confirmed_atoms':restored['confirmed_atoms'],
             'history_count':restored['history_count'],'history_sha256':restored['history_sha256'],
             'plaintext_runtime_removed':True})
+        if len(send_calls)!=(1 if a.reservation=='uncertain' else 0):
+            raise ValueError('Q05_UNCERTAIN_TRANSACTION_REPLAYED')
+        record['wallet_broadcast_calls_total']=len(send_calls)
+        record['automatic_wallet_transaction_replay']=False
         stage='SAFE_SHUTDOWN'
         owner.shutdown();owner.close();owner=None
         record['status']='PASS'
@@ -139,11 +207,15 @@ def main():
         record['failure_stage']=stage;record['failure_type']=type(error).__name__
         context=error.__context__
         if context is not None:record['inner_failure_type']=type(context).__name__
+        if session is not None:
+            try:session.lock()
+            except (OSError,ValueError,RuntimeError):record['wallet_lock_blocked']=True
         # Original in-process Popen only, never guessed PID cleanup.
         if owner is not None and owner.process is not None and owner.process.poll() is None:
             try:owner.recover_stop()
             except (OSError,ValueError,RuntimeError):record['owned_release_blocked']=True
     finally:
+        observer.stop()
         if owner is not None:
             try:owner.close()
             except (OSError,ValueError,RuntimeError):record['owner_close_blocked']=True

@@ -108,9 +108,17 @@ def _snapshot(ring,scanner,rpc,vault):
     # truncated summary rather than report a complete-history fingerprint.
     if len(history)==1000:
         raise ManagedWalletError('MANAGED_WALLET_HISTORY_PAGE_REQUIRED')
+    reservations=sha256();reservation_count=0;states=set()
+    for row in wallet.db.execute('SELECT txid,vout,token,state,created FROM reservations ORDER BY txid,vout'):
+        reservations.update(_canonical(list(row))+b'\n')
+        reservation_count+=1;states.add(row[3])
+    balance=wallet.balance()
     return {'wallet_id':vault.anchor.wallet_id,'height':height,'tip':tip,
             'payment_code':ring.accounts()[-1].payment_code(),
-            'confirmed_atoms':wallet.balance()['confirmed_atoms'],
+            'confirmed_atoms':balance['confirmed_atoms'],'reserved_atoms':balance['reserved_atoms'],
+            'available_atoms':balance['available_atoms'],
+            'reservation_count':reservation_count,'reservation_states':sorted(states),
+            'reservation_sha256':reservations.hexdigest(),
             'history_count':len(history),'history_sha256':sha256(_canonical(history)).hexdigest(),
             'checkpoint':list(vault._expected or ()),
             'wallet_locked':True,'signer_allowed':False,'broadcast_allowed':False,
