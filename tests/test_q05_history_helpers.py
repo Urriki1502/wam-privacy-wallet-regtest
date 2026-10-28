@@ -18,7 +18,7 @@ def _row(index,height,tip):
 
 class HistoryPagesContracts(unittest.TestCase):
     def test_sql_pages_include_exactly_1000_and_1001(self):
-        path=tempfile.mkstemp(suffix='.sqlite')[1]
+        descriptor,path=tempfile.mkstemp(suffix='.sqlite');os.close(descriptor)
         self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
         db=sqlite3.connect(path,isolation_level=None)
         self.addCleanup(db.close)
@@ -61,7 +61,7 @@ class HistoryPagesContracts(unittest.TestCase):
         self.assertEqual(full[1],tail[1])
         self.assertEqual(len(tail[2]),GUI_HISTORY_LIMIT)
         self.assertEqual(tail[2],rows[-GUI_HISTORY_LIMIT:])
-        path=tempfile.mkstemp(suffix='.sqlite')[1]
+        descriptor,path=tempfile.mkstemp(suffix='.sqlite');os.close(descriptor)
         self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
         db=sqlite3.connect(path,isolation_level=None);self.addCleanup(db.close)
         db.execute('CREATE TABLE history(txid TEXT PRIMARY KEY,height INTEGER NOT NULL,'
@@ -88,7 +88,7 @@ class HistoryPagesContracts(unittest.TestCase):
         self.assertEqual(older[2],rows[-2*GUI_HISTORY_LIMIT:-GUI_HISTORY_LIMIT])
         newest=complete_history(page,len(rows),3000,keep_tail=GUI_HISTORY_LIMIT)
         self.assertEqual(newest[2],rows[-GUI_HISTORY_LIMIT:])
-        path=tempfile.mkstemp(suffix='.sqlite')[1]
+        descriptor,path=tempfile.mkstemp(suffix='.sqlite');os.close(descriptor)
         self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
         db=sqlite3.connect(path,isolation_level=None);self.addCleanup(db.close)
         db.execute('CREATE TABLE history(txid TEXT PRIMARY KEY,height INTEGER NOT NULL,'

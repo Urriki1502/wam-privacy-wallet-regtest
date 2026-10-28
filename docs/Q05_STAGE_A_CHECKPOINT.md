@@ -25,7 +25,11 @@ macOS run 40788571264 stays FAIL, not proof of the new harness repair.
 See Q05_CURSOR_INTEGRATION_REVIEW.md for exact scoped dependencies.
 
 217 local targeted tests PASS after integration (119 Q05 + 8 history helpers +
-90 existing Q01-Q04/custody/ledger contracts). First selective test attempt lacked
+90 existing Q01-Q04/custody/ledger contracts). The 8 helper tests are now named
+test_q05_history_helpers.py so existing all-OS Q05 discovery executes them;
+mkstemp descriptors close before SQLite/cleanup (Windows portability). The 8
+affected helpers and 13 ledger contracts were rechecked PASS after that test-only
+fix. No runtime file changed after native cf74d67 qualification. First selective test attempt lacked
 shared exported constants; fixed. Broad Cursor source-string assertion initially
 expected unimported session/read work; retained helper behavior tests and adapted
 that assertion explicitly to this checkpoint-only scope. Other read/GUI paths
@@ -38,8 +42,7 @@ source tree and imported package path are also recorded; no CI receipt borrowed.
 
 Canonical: 0 PASS / 0 FAIL / 37 PENDING / 0 BLOCKED / 0 STALE; G0-G7 PENDING,
 accepted=false. Q04 G6/G7 BLOCKED. Handoff NO; full acceptance NO.
-Next: qualify combined checkpoint recovery natively, publish same PR, inspect
-exact-HEAD CI; then explicit pending-reference completion design/tests and
+Next: inspect exact-HEAD CI in the same PR; then explicit pending-reference completion design/tests and
 recovery-aware owned-session integration. No source-only probe proves packaged
 GUI lifecycle, physical acceptance or independent review.
 
