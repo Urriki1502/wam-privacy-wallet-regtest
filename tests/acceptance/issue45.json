@@ -17459,15 +17459,15 @@
           "acceptance_evidence": [],
           "blocker": {
             "actor": "Q05_ENGINEER_AND_NATIVE_RUNNERS",
-            "missing_evidence": "Required integrated packaged behavior and all relevant wallet/reservation/crash/native/frozen scopes remain incomplete. This narrow direct-API probe is supplemental only.",
-            "next_action": "Continue same PR with exact-checkpoint failure/reservation reconciliation and authenticated GUI/service integration; keep native custody and existing vault format."
+            "missing_evidence": "Same-owner macOS signed/uncertain reservation source probes now pass, but supervisor-process crash, interrupted publication/reconciliation, normal packaged integration and required three-OS native/frozen cases remain unqualified.",
+            "next_action": "Retain failed profile/receipt. Inspect exact-HEAD CI; then design/test interrupted checkpoint reconciliation and reviewed persistent ownership without PID adoption or unauthorized native-anchor advancement."
           },
           "local_requalification": {
             "status": "PASS",
-            "source_sha": "fca311526f8503776e5b40a39279d00519294c6c",
-            "receipt_path": "docs/evidence/q05/native-wallet-fca3115.json",
-            "receipt_sha256": "543872b472b21a498becab7d5bd6ca792eff6d9f778b9b6924ca6ed0dae7581e",
-            "scope": "Source-only owner-local adapter: native vault/anchor, pinned WSP real receive/scan, funded balance/history fingerprint and wallet identity across clean owner/Core reopen; wrong-password and duplicate-create refuse unchanged state. Public disposable fixture funding only. No GUI/frozen, signed/uncertain reservation, supervisor-crash or clean-device acceptance."
+            "source_sha": "3436ab7082831b5cd4122ce7bd1e29fa1a58b88b",
+            "receipt_path": "docs/evidence/q05/q05-uncertain-reservation-3436ab7.json",
+            "receipt_sha256": "e1303f6ceef4d6ebd3ac64e778a520130b7805160b1afd68a49cb46170a72131",
+            "scope": "Source-only genuine disposable wallet broadcast accepted by signed Core before explicit caller-result loss; uncertain reservation and balance/history/identity preserved through live checkpoint resync and clean owner/Core reopen. Exactly one wallet submission, no automatic replay. Not true TCP-loss, physical crash, normal packaged GUI or three-platform qualification."
           },
           "failure_history": [
             {
@@ -17476,7 +17476,30 @@
               "source_sha": "49f7fec70facae854002806a94b8abaa534e9147",
               "receipt_path": "docs/evidence/q05/q05-uncertain-reservation-49f7fec.json",
               "receipt_sha256": "9ec603f20206a23eca3d4e9d6e6abdf844621132b6e182f43b0672a8e0194a07",
-              "observation": "Uncertain native probe failed during post-submission mempool observation: new scanner client denies getrawmempool by design. Actual original-owner wallet broadcast result-loss path preceded this observation. Preserve failed profile; repair fixture observation with existing signed CLI read, never relax scanner method scope. Retest on a fresh profile pending."
+              "observation": "Uncertain native probe failed during post-submission mempool observation: new scanner client denies getrawmempool by design. Actual original-owner wallet broadcast result-loss path preceded this observation. Preserve failed profile; repair fixture observation with existing signed CLI read, never relax scanner method scope. Retest on a fresh profile pending.",
+              "repair_requalification": {
+                "status": "PASS",
+                "source_sha": "3436ab7082831b5cd4122ce7bd1e29fa1a58b88b",
+                "receipt_path": "docs/evidence/q05/q05-uncertain-reservation-3436ab7.json",
+                "receipt_sha256": "e1303f6ceef4d6ebd3ac64e778a520130b7805160b1afd68a49cb46170a72131",
+                "scope": "Source-only genuine disposable wallet broadcast accepted by signed Core before explicit caller-result loss; uncertain reservation and balance/history/identity preserved through live checkpoint resync and clean owner/Core reopen. Exactly one wallet submission, no automatic replay. Not true TCP-loss, physical crash, normal packaged GUI or three-platform qualification."
+              }
+            }
+          ],
+          "local_requalification_history": [
+            {
+              "status": "PASS",
+              "source_sha": "fca311526f8503776e5b40a39279d00519294c6c",
+              "receipt_path": "docs/evidence/q05/native-wallet-fca3115.json",
+              "receipt_sha256": "543872b472b21a498becab7d5bd6ca792eff6d9f778b9b6924ca6ed0dae7581e",
+              "scope": "Source-only owner-local adapter: native vault/anchor, pinned WSP real receive/scan, funded balance/history fingerprint and wallet identity across clean owner/Core reopen; wrong-password and duplicate-create refuse unchanged state. Public disposable fixture funding only. No GUI/frozen, signed/uncertain reservation, supervisor-crash or clean-device acceptance."
+            },
+            {
+              "status": "PASS",
+              "source_sha": "49f7fec70facae854002806a94b8abaa534e9147",
+              "receipt_path": "docs/evidence/q05/q05-signed-reservation-49f7fec.json",
+              "receipt_sha256": "f1592f8365e80acba49d202d08e9e4f2c3352ac325fb751aaeed8256c599689b",
+              "scope": "Source-only genuine wallet signature, irreversible signed reservation preserved through live resync and clean original-owner/Core reopen; zero wallet broadcast calls. Not GUI/frozen or supervisor-crash qualification."
             }
           ]
         },

@@ -1,3 +1,53 @@
+# Latest reservation checkpoint — real signed and uncertain native PASS
+
+Runtime summary source **49f7fec**, corrected probe/source **3436ab7082831b5cd4122ce7bd1e29fa1a58b88b**.
+80 Q05 source/security tests PASS after keeping getrawmempool outside scanner
+scope. Same Draft PR #138 / feature/issue45-q05-managed-core-stage-a-20261027.
+
+Actual signed macOS ARM64 Core v0.1.11 + literal ac55f134 WSP:
+- Signed reservation PASS at 49f7fec, receipt
+  `docs/evidence/q05/q05-signed-reservation-49f7fec.json`, SHA-256
+  f1592f8365e80acba49d202d08e9e4f2c3352ac325fb751aaeed8256c599689b.
+  Genuine wallet signature, irreversible draft-release refusal, same reservation
+  fingerprint/reserved balance after clean Core/owner reopen; zero submissions.
+- Uncertain reservation initial observation FAIL retained at 49f7fec (scanner
+  method correctly denied getrawmempool; no allowlist expansion). New profile
+  retest PASS at 3436ab7, receipt
+  `docs/evidence/q05/q05-uncertain-reservation-3436ab7.json`. Actual signed CLI
+  submission returned Core's matching txid before the probe deliberately lost
+  the caller result. Existing signed CLI read confirms actual mempool presence.
+  Durable uncertain fingerprint/reserved balance and identity/history survive
+  live checkpoint resync and clean Core/owner reopen. Exactly ONE wallet
+  submission total; no automatic transaction replay. This is caller-result fault
+  injection AFTER real acceptance, not physical/TCP fault proof or GUI acceptance.
+
+Native probe uses existing WalletSession prepare/sign/broadcast under original
+Popen scope and native anchor lease. No new production signing/IPC endpoint,
+password transport, format/KDF migration or native-anchor recovery shortcut.
+All new test owners/Core shut down normally; profiles/evidence remain preserved.
+Legacy 48111/48112 and childless 48993 observations are not termination targets.
+
+The 37 canonical Q05 cases remain PENDING, accepted=false, G0–G7 PENDING.
+Native successes are supplemental local_requalification only. Q04 G6/G7 stay
+BLOCKED. New current-HEAD CI is required; 88f7ace native Windows contract/vault/
+Qt steps had passed while its final frozen step was still running at observation.
+Linux Q05 88f7ace job 122679273036 PASS, 79 tests; this is source/native storage,
+not integrated genuine Q05 Core/frozen qualification. Do not attribute it to a
+later HEAD or to the new 80th test.
+
+Next exact unit: interrupted native checkpoint/publication reconciliation with
+strict original-runtime identity, unchanged native anchor and no forgotten
+signed/uncertain reservations. Existing behavior preserves ambiguous runtime/
+orphan ciphertext and refuses; do NOT delete unknown SQLite, reset/advance an
+anchor based only on newest filename/password, replace vault/datadir, or grant
+new controller ownership from PID/journal alone. Reviewed cross-process owner
+architecture, normal packaged GUI and three-platform qualification remain open.
+Inspect current CI first; do not rerun unchanged native probes or redo reuse
+research. Standing bounded-test authority remains active; merge/release/formal
+handoff still require separate owner approval.
+
+---
+
 # Reservation probe checkpoint — signed PASS, uncertain observation repair
 
 Runtime summary source 49f7fec adds nonsecret signed/uncertain reservation

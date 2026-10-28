@@ -118,3 +118,22 @@ History summary refuses a full 1000-row page pending proper pagination; it does
 not silently claim a complete truncated history. All canonical Q05 cases remain
 PENDING. A strict boolean reference guard also rejects authenticated integer 0
 as a substitute for `mainnet_allowed=false`.
+
+
+## Signed/uncertain native continuity (49f7fec / 3436ab7)
+
+The owner-local adapter now returns nonsecret reservation count/state/fingerprint
+and reserved/available balances. It does not release or mutate reservations.
+Actual existing WalletSession signing at 49f7fec proves signed-state continuity
+with zero wallet submissions. At 3436ab7, actual signed CLI/Core submission
+returned the matching txid, then the probe discarded only the caller result;
+explicit signed CLI observation confirms mempool acceptance. Uncertain state,
+reserved balance and full reservation fingerprint survive resync and clean
+Core/owner reopen; total wallet submissions remain one. Irreversible draft release
+is refused. This is controlled result-loss injection, not physical power loss,
+independent review or integrated packaged behavior.
+The first uncertain probe failed because its observer used a disallowed scanner
+method. That FAIL/profile are preserved; only probe observation was corrected.
+No scanner HTTP/method expansion, replay retry or synthetic Core result was used.
+Interrupted publication/runtime ownership reconciliation still needs explicit
+design and adversarial/native evidence before any recovery policy is introduced.
