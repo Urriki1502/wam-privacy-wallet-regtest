@@ -51,7 +51,27 @@ class SupervisorStoreContracts(unittest.TestCase):
         self.assertTrue((self.root/"supervisor.lock").exists())
 
     def test_untrusted_file_or_link_denied(self):
-        if sys.platform=="win32":self.skipTest("native DACL/reparse files tested on Windows dedicated runner")
+        if sys.platform=="win32":
+            # Exercise this control-file boundary itself, not a POSIX chmod
+            # surrogate or a skipped claim about another test suite.
+            import ctypes
+            from wam_regtest import windows_private_storage as native
+            file=self.root/'supervisor.token'
+            descriptor='O:'+native.owner_sid()+'D:P(A;;FA;;;'+native.owner_sid()+')(A;;FR;;;WD)'
+            with native.security_attributes(descriptor=descriptor) as attributes:
+                handle=native.create(str(file),0xc0000000,0,attributes,1,0x200080,None)
+            self.assertNotIn(handle,(None,native.INVALID))
+            try:
+                raw=ctypes.create_string_buffer(TOKEN);count=native.w.DWORD()
+                self.assertTrue(native.write(handle,raw,len(TOKEN),ctypes.byref(count),None))
+                self.assertEqual(count.value,len(TOKEN));self.assertTrue(native.flush(handle))
+            finally:native.close(handle)
+            with self.assertRaises(SupervisorStorageError):read_exact(self.root,'supervisor.token')
+            file.unlink()
+            create_once(self.root,'supervisor.token',TOKEN)
+            os.link(file,self.root/'hardlink-fixture')
+            with self.assertRaises(SupervisorStorageError):read_exact(self.root,'supervisor.token')
+            return
         file=self.root/"supervisor.token"
         file.symlink_to(self.root/"supervisor.lock")
         with self.assertRaises(SupervisorStorageError):

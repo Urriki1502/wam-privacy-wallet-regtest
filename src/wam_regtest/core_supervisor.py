@@ -16,7 +16,7 @@ import sys
 import time
 
 from .core import verified_core_paths, _write_private_config, _read_cli, CoreSmokeError
-from .core_process import OwnedCoreBinding, CoreBindingError
+from .core_process import OwnedCoreBinding, CoreBindingError, _metadata
 from .custody import create_directory, storage
 from .json_rpc import ManagedReadRpc, RpcError
 from .network_policy import local_rpc_port
@@ -172,6 +172,7 @@ class CoreSupervisor:
         # the binding created after Popen. Native binding still rechecks the
         # actual child; this is not hardened fd-to-loader attestation.
         node,cli,receipt=verified_core_paths(self.core)
+        _metadata(node);_metadata(cli)
         if (node!=self.node or cli!=self.cli
                 or receipt['wamd_sha256']!=self.profile['core_sha256']
                 or receipt['wam_cli_sha256']!=self.profile['cli_sha256']):

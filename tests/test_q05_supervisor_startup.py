@@ -14,6 +14,15 @@ class StartupContracts(unittest.TestCase):
     setUp = lifecycle_fixture.SupervisorLifecycleUnit.setUp
     owner = lifecycle_fixture.SupervisorLifecycleUnit.owner
 
+    def test_unsafe_native_executable_custody_refuses_before_spawn(self):
+        owner=self.owner()
+        with patch.object(module,'_metadata',side_effect=
+                CoreBindingError('RPC_EXECUTABLE_CUSTODY_DENIED')), \
+             patch.object(module.subprocess,'Popen') as spawn:
+            with self.assertRaises(CoreBindingError):owner.start()
+            spawn.assert_not_called()
+        self.assertEqual(owner.journal.state,'CLEAN')
+
     def test_changed_binary_is_refused_before_spawn_and_dirty_intent(self):
         owner=self.owner()
         before=(owner.directory/'wam.conf').read_bytes()

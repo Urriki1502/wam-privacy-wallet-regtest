@@ -32,6 +32,7 @@ class SupervisorLifecycleUnit(unittest.TestCase):
         self.stack.enter_context(patch.object(module, 'verified_core_paths', return_value=(
             self.core / 'wamd', self.core / 'wam-cli',
             {'wamd_sha256': 'a' * 64, 'wam_cli_sha256': 'b' * 64})))
+        self.stack.enter_context(patch.object(module,'_metadata',return_value=('fixture-only',)))
         # Keep real native supervisor storage, profile/config files and locks.
         # Only Core verification/process/RPC and platform policy are fixtures.
         self.stack.enter_context(patch.object(module, 'storage', return_value=Mock()))
