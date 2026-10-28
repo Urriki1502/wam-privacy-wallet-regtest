@@ -1,0 +1,65 @@
+{
+  "schema": "q05-stage-a-native-lifecycle/v1",
+  "source_sha": "9152214cb42e4f337b07feae690e4438129c977d",
+  "checkout_sha": "9152214cb42e4f337b07feae690e4438129c977d",
+  "platform": "macos-arm64",
+  "core_version": "v0.1.11",
+  "python_version": "3.12.15",
+  "command": [
+    "python3.12",
+    "scripts/probe_q05_macos_lifecycle.py",
+    "--core-dir",
+    "<verified signed Core>",
+    "--root",
+    "<new isolated profile>",
+    "--receipt",
+    "<new receipt>",
+    "--confirm-disposable-regtest"
+  ],
+  "core_trust": "official-signed-v0.1.11",
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_execution": false,
+  "synthetic_rpc": false,
+  "frozen": false,
+  "mainnet_allowed": false,
+  "core_intake": {
+    "archive": "wam-coin-v0.1.11-arm64-apple-darwin.tar.gz",
+    "archive_sha256": "6e10ea10cc324e947c9d646ba8276412175edd0f168c0d95ca5228ccc37f5afb",
+    "loader_process_binding_qualified": false,
+    "mainnet_allowed": false,
+    "platform": "macos-arm64",
+    "publisher_fingerprint": "4BD4A8D3AFD43F5CBCB500E23798462FE00ADBA4",
+    "real_wsp_e2e_qualified": false,
+    "signed_archive_verified": true,
+    "tag": "v0.1.11",
+    "wam_cli_sha256": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+    "wamd_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+  },
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "source_files": {
+    "src/wam_regtest/core_supervisor.py": "27a8fe8ddbd5408fdbce38713998adc4055a3e77c67f232d9efeaae1ff4c602f",
+    "src/wam_regtest/supervisor_protocol.py": "baca019201fcb68017490157dcd5adbcc4cef9b047814eb22f26e7273e1b3266",
+    "src/wam_regtest/supervisor_client.py": "4cc5d21b0891313273b6d6817394ee19fcfd07a282c1148d721a1a9b4a57eb12",
+    "scripts/probe_q05_macos_lifecycle.py": "c3900080dfbcbea5c65db211e80664f84656fd37bc2aba205f02e95331882856"
+  },
+  "observations": [],
+  "status": "FAIL",
+  "profile_id": "5b666b482fda94e7f5bd366b6c35739c",
+  "profile_sha256": "5a4e6a5705d26e5db5afeb8e84f3435991cf4bf2eb49f1c45bc578ab5c94341e",
+  "config_sha256": "75f22c283fe954bb5b6a3c709bc60a0dc3000d6862c0fb1faf7dfcf597044e42",
+  "datadir_identity": [
+    16777233,
+    13762813
+  ],
+  "failure": "MANAGED_CLIENT_REPLY_DENIED",
+  "owner_pid_for_manual_review": 48993,
+  "private_failure_diagnostic": {
+    "code": "RPC_HTTP_DENIED",
+    "stage": "start"
+  },
+  "timestamp_utc": "2026-10-28T01:51:42.643102+00:00",
+  "core_shutdown_confirmed": false
+}

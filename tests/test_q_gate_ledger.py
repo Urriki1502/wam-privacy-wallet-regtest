@@ -92,19 +92,19 @@ class SequentialQGateContracts(unittest.TestCase):
             elif change=='gate-fail':q['gates']['G3']['status']='FAIL'
             with self.subTest(change=change),self.assertRaises(ValueError):validate(data)
 
-    def test_q05_scope_preserves_native_start_fail_and_unqualified_pending(self):
+    def test_q05_scope_preserves_fail_history_without_promoting_local_success(self):
         q05=self.ledger['questions'][4]
         self.assertEqual(q05['processing'],'ACTIVE')
         self.assertTrue(q05['coverage_identified'])
         self.assertEqual(q05['coverage_total'],37)
         self.assertEqual(len(q05['cases']),37)
-        self.assertEqual({c['id'] for c in q05['cases'] if c['status']=='FAIL'},
-            {'Q05-MANAGED-START-MACOS'})
-        self.assertEqual(sum(c['status']=='PENDING' for c in q05['cases']),36)
-        self.assertEqual(q05['status'],'FAIL')
-        failed=next(c for c in q05['cases'] if c['status']=='FAIL')
-        self.assertEqual(failed['failure_history'][-1]['source_sha'],
+        self.assertEqual(sum(c['status']=='PENDING' for c in q05['cases']),37)
+        self.assertEqual(q05['status'],'PENDING')
+        failed=next(c for c in q05['cases'] if c['id']=='Q05-MANAGED-START-MACOS')
+        self.assertEqual(failed['failure_history'][0]['source_sha'],
             'a89848b22cae85d766310687fe968157f35657e8')
+        self.assertEqual(failed['local_requalification']['status'],'PASS')
+        self.assertFalse(failed['acceptance_evidence'])
         self.assertTrue(failed['blocker']['next_action'])
         self.assertFalse(q05['accepted'])
         self.assertEqual({c['platform'] for c in q05['cases']},

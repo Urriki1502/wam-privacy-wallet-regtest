@@ -17039,7 +17039,7 @@
       "id": "Q05",
       "requirement": "Managed Core persistent: close/reopen, crash, reattach, no new datadir or dropped history",
       "processing": "ACTIVE",
-      "status": "FAIL",
+      "status": "PENDING",
       "accepted": false,
       "coverage_identified": true,
       "coverage_total": 37,
@@ -17215,12 +17215,12 @@
             "G2"
           ],
           "mandatory": true,
-          "status": "FAIL",
+          "status": "PENDING",
           "acceptance_evidence": [],
           "blocker": {
-            "actor": "REPOSITORY_OWNER_AND_Q05_ENGINEER",
-            "missing_evidence": "Successful authenticated native start, explicit safe shutdown and same-profile supervisor reopen. Native retest quota consumed; original test supervisor/Core remain live in fail-closed recovery-needed state.",
-            "next_action": "Stop engineering and obtain owner direction for focused diagnostic and verified safe release through the original owner/Popen. Preserve profile, logs and both FAIL receipts. No further native retry, lock deletion, foreign PID adoption, guessed process kill or journal work."
+            "actor": "Q05_ENGINEER_AND_NATIVE_RUNNERS",
+            "missing_evidence": "Required current integrated native/frozen cross-platform and full managed-wallet scope; local source-only lifecycle success is supplemental. Legacy owner runtime lacks original-Popen recovery endpoint and remains untouched.",
+            "next_action": "Continue under standing owner authorization. Resolve remaining Q04 transport diagnostic, implement/test explicit durable recovery then wallet/scanner/normal packaged integration; no routine approval required."
           },
           "failure_history": [
             {
@@ -17232,8 +17232,23 @@
               "receipt_path": "docs/evidence/q05/stage-a-native-retest-a89848b.json",
               "receipt_sha256": "48e9f32e511a569738d577b833ab0df89c44f2f6785e032d8d350030317150f6",
               "failure": "MANAGED_CLIENT_REPLY_DENIED at authenticated start; no shutdown/reopen observation. Subsequent authenticated status recovery-needed/core_process_owned=false, while original supervisor 48111 and Core child 48112 remain alive. Inner startup cause not exposed and remains unresolved."
+            },
+            {
+              "status": "FAIL",
+              "source_sha": "9152214cb42e4f337b07feae690e4438129c977d",
+              "timestamp_utc": "2026-10-28T01:51:42.643102+00:00",
+              "receipt_path": "docs/evidence/q05/native-diagnostic-9152214.json",
+              "receipt_sha256": "be7f534d9942ce8539ba7279b86fb8aac23f51564d570b4e861e5fa328c0387a",
+              "observed_failure": "Private fixed diagnostic RPC_HTTP_DENIED before HTTP startup attestation; original Popen recover-stop subsequently reattested REGTEST and gracefully stopped this disposable child. Legacy pre-diagnostic owner remains untouched."
             }
-          ]
+          ],
+          "local_requalification": {
+            "status": "PASS",
+            "source_sha": "2850be63930bf60a2c61ca8e3fa5137c644fc3a3",
+            "receipt_path": "docs/evidence/q05/native-journal-2850be6.json",
+            "receipt_sha256": "60dd04fe3e76c96784be0e9008e0eb97d1fd33fe96e23b005aaceb4a60996b7f",
+            "scope": "Local signed-Core macOS start/status/disconnect/graceful stop/supervisor reopen with same profile/config/datadir and authenticated journal; supplemental, not workflow-native/frozen or full-case promotion."
+          }
         },
         {
           "id": "Q05-GRACEFUL-SHUTDOWN-MACOS",
@@ -17785,7 +17800,7 @@
       "gates": {
         "G0": {
           "applicable": true,
-          "status": "FAIL",
+          "status": "PENDING",
           "not_applicable_reason": null
         },
         "G1": {
@@ -17795,7 +17810,7 @@
         },
         "G2": {
           "applicable": true,
-          "status": "FAIL",
+          "status": "PENDING",
           "not_applicable_reason": null
         },
         "G3": {
