@@ -98,6 +98,33 @@ def _runtime(owner):
     return path
 
 
+def publication_ambiguity(owner,source,*,authorized=False):
+    """Read-only interrupted-publication evidence. Never repair or adopt files."""
+    if authorized is not True:
+        raise ManagedWalletError('MANAGED_WALLET_EXPLICIT_CONSENT_REQUIRED')
+    if type(source) is not type(Path()) or not source.is_absolute():
+        raise ManagedWalletError('MANAGED_WALLET_INPUT_DENIED')
+    _owned(owner);_pinned_source(source)
+    runtime=owner.directory/'wallet-runtime.sqlite'
+    folder=owner.directory/'wallet-vault'
+    sidecars=tuple(suffix for suffix in ('','-journal','-wal','-shm')
+                   if runtime.with_name(runtime.name+suffix).exists()
+                   or runtime.with_name(runtime.name+suffix).is_symlink())
+    ciphertexts=()
+    if folder.is_dir() and not folder.is_symlink():
+        ciphertexts=tuple(sorted(p.name for p in folder.iterdir()
+                                 if p.is_file() and p.name.startswith('snapshot-')
+                                 and p.name.endswith('.enc')))
+    reference=(owner.root/'supervisor.wallet').exists()
+    return {'schema':SCHEMA,'automatic_recovery_allowed':False,
+            'anchor_advancement_allowed':False,'runtime_suffixes':sidecars,
+            'orphan_or_present_ciphertext':ciphertexts,
+            'wallet_reference_present':reference,
+            'checkpoint_open_blocked':bool(sidecars),
+            'required_action':'Authenticated operator reconciliation; do not delete '
+                              'unknown SQLite, orphan ciphertext or advance the native anchor.'}
+
+
 def _require_matching_tip(scanner,rpc):
     height,tip=scanner.store.tip()
     if (height,tip)!=(rpc.call('getblockcount'),rpc.call('getbestblockhash')):

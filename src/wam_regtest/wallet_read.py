@@ -50,6 +50,9 @@ class WalletReadSnapshot:
     signer_allowed: bool = False
     broadcast_allowed: bool = False
     mainnet_allowed: bool = False
+    history_count: int | None = None
+    history_sha256: str | None = None
+    history_complete: bool = True
 
 
 def read_real_wallet_snapshot(
@@ -70,7 +73,7 @@ def read_real_wallet_snapshot(
                 not (datadir / "wam.conf").is_file()):
             raise RealWalletReadError("WALLET_PRIVATE_DATADIR_DENIED")
         from .core import verified_core_paths
-        from .history_pages import sql_history_pages
+        from .history_pages import GUI_HISTORY_LIMIT,sql_history_pages
         from .wsp_live import (
             _pinned_source, LiveCoreReadOnlyCli, REGTEST_GENESIS,
         )
@@ -108,11 +111,12 @@ def read_real_wallet_snapshot(
                     raise RealWalletReadError("WALLET_AMOUNT_DENIED")
                 values.append(v)
             with scanner.store.transaction():
-                raw=sql_history_pages(
+                history_count,raw=sql_history_pages(
                     scanner.store.db,tip_height,
                     "SELECT txid,height,credit,debit FROM history "
                     "ORDER BY height DESC,txid LIMIT ? OFFSET ?",
-                    error=RealWalletReadError,code="WALLET_HISTORY_DENIED")
+                    error=RealWalletReadError,code="WALLET_HISTORY_DENIED",
+                    window=GUI_HISTORY_LIMIT)
             history=tuple(HistoryRow(txid,block,conf,credit,debit)
                           for txid,block,credit,debit,conf in raw)
             # Final tip revalidation: refuse to show potentially stale balances.
@@ -128,6 +132,8 @@ def read_real_wallet_snapshot(
                 confirmed_utxos=len(coins),
                 history=history,
                 core_sha256=signed["wamd_sha256"],
+                history_count=history_count,
+                history_complete=history_count<=GUI_HISTORY_LIMIT,
             )
         finally:
             scanner.close()

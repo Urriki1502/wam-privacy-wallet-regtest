@@ -80,6 +80,24 @@ class WalletCheckpointContracts(unittest.TestCase):
                 module._runtime(owner)
             self.assertEqual(path.read_bytes(),b'preserve');path.unlink()
 
+    def test_publication_ambiguity_needs_consent_and_preserves_orphan_runtime(self):
+        owner=self.owner()
+        with patch.object(module,'_owned') as owned,patch.object(module,'_pinned_source') as source:
+            with self.assertRaisesRegex(module.ManagedWalletError,'EXPLICIT_CONSENT'):
+                module.publication_ambiguity(object(),Path('/unused'))
+            owned.assert_not_called();source.assert_not_called()
+        runtime=owner.directory/'wallet-runtime.sqlite';runtime.write_bytes(b'preserve-runtime')
+        vault=owner.directory/'wallet-vault';vault.mkdir();orphan=vault/'snapshot-000000002.enc'
+        orphan.write_bytes(b'preserve-orphan')
+        with patch.object(module,'_owned'),patch.object(module,'_pinned_source'):
+            row=module.publication_ambiguity(owner,Path('/unused'),authorized=True)
+        self.assertFalse(row['automatic_recovery_allowed'])
+        self.assertFalse(row['anchor_advancement_allowed'])
+        self.assertTrue(row['checkpoint_open_blocked'])
+        self.assertIn('snapshot-000000002.enc',row['orphan_or_present_ciphertext'])
+        self.assertEqual(runtime.read_bytes(),b'preserve-runtime')
+        self.assertEqual(orphan.read_bytes(),b'preserve-orphan')
+
     def test_control_protocol_does_not_gain_password_wallet_or_spending_ops(self):
         from wam_regtest.supervisor_protocol import CONTROL_COMMANDS,READ_COMMANDS
         self.assertFalse({'wallet-create','wallet-unlock','sign','broadcast','scan'} &

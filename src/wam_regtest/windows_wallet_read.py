@@ -9,7 +9,7 @@ from hashlib import sha256
 import re
 from pathlib import Path
 
-from .history_pages import sql_history_pages
+from .history_pages import GUI_HISTORY_LIMIT,sql_history_pages
 from .wallet_read import WalletReadSnapshot, HistoryRow
 from .wsp_live import _pinned_source, PINNED_WSP_COMMIT, REGTEST_GENESIS
 from .windows_wsp_regtest import WindowsWspCoreRpc
@@ -67,11 +67,12 @@ def read_native_windows_wallet(core: Path, cli: Path, datadir: Path, port: int,
                     raise WindowsWalletReadError("WIN_READ_AMOUNT_DENIED")
                 amounts.append(n)
             with scanner.store.transaction():
-                raw=sql_history_pages(
+                history_count,raw=sql_history_pages(
                     scanner.store.db,tip_height,
                     "SELECT txid,height,credit,debit FROM history "
                     "ORDER BY height DESC,txid LIMIT ? OFFSET ?",
-                    error=WindowsWalletReadError,code="WIN_READ_HISTORY_DENIED")
+                    error=WindowsWalletReadError,code="WIN_READ_HISTORY_DENIED",
+                    window=GUI_HISTORY_LIMIT)
             history=tuple(HistoryRow(txid,block,conf,credit,debit)
                           for txid,block,credit,debit,conf in raw)
             if rpc.call("getblockcount") != tip_height or rpc.call("getbestblockhash") != tip_hash:
@@ -81,11 +82,13 @@ def read_native_windows_wallet(core: Path, cli: Path, datadir: Path, port: int,
             return WalletReadSnapshot(
                 chain="regtest", height=tip_height, tip=tip_hash,
                 receive_code=code, confirmed_atoms=sum(amounts),
-                confirmed_utxos=len(coins), history=tuple(history),
+                confirmed_utxos=len(coins), history=history,
                 core_sha256=expected_core_sha256,
                 synthetic_rpc=False, demo_account_only=True,
                 signer_allowed=False, broadcast_allowed=False,
                 mainnet_allowed=False,
+                history_count=history_count,
+                history_complete=history_count<=GUI_HISTORY_LIMIT,
             )
         finally:
             scanner.close()

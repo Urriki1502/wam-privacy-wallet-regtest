@@ -5,6 +5,7 @@ public history() call starts its own BEGIN IMMEDIATE. Callers must hold one
 store.transaction() and read via _history or equivalent SQL, never separate
 public history() pages.
 """
+from collections import deque
 from hashlib import sha256
 import json
 import re
@@ -12,6 +13,8 @@ import re
 HISTORY_PAGE_LIMIT=1000
 HISTORY_OFFSET_MAX=1_000_000
 HISTORY_COMPLETE_MAX=HISTORY_OFFSET_MAX+HISTORY_PAGE_LIMIT
+# GUI/session display window. Full fingerprint still visits every row.
+GUI_HISTORY_LIMIT=250
 _TXID=re.compile('[0-9a-f]{64}\\Z')
 
 
@@ -23,8 +26,8 @@ def _canonical(value):
     return json.dumps(value,sort_keys=True,separators=(',',':')).encode('ascii')
 
 
-def complete_history(read_page,declared,height,*,collect=False,error=HistoryPageError):
-    """Hash every canonical WSP history row; optionally retain rows.
+def complete_history(read_page,declared,height,*,collect=False,keep_tail=0,error=HistoryPageError):
+    """Hash every canonical WSP history row; optionally retain a bounded tail.
 
     read_page(limit, offset) must observe the same snapshot as declared.
     Order is WSP canonical: height,txid ascending.
@@ -33,7 +36,10 @@ def complete_history(read_page,declared,height,*,collect=False,error=HistoryPage
         raise error('HISTORY_INCONSISTENT')
     if declared>HISTORY_COMPLETE_MAX:
         raise error('HISTORY_INCOMPLETE')
-    digest=sha256(b'[');seen=0;offset=0;previous=None;rows=[] if collect else None
+    if type(keep_tail) is not int or keep_tail<0 or (collect and keep_tail):
+        raise error('HISTORY_INCONSISTENT')
+    digest=sha256(b'[');seen=0;offset=0;previous=None
+    rows=[] if collect else (deque(maxlen=keep_tail) if keep_tail else None)
     while True:
         if offset>HISTORY_OFFSET_MAX:
             raise error('HISTORY_INCOMPLETE')
@@ -57,7 +63,7 @@ def complete_history(read_page,declared,height,*,collect=False,error=HistoryPage
             if seen:
                 digest.update(b',')
             digest.update(_canonical(row));seen+=1;previous=order
-            if collect:
+            if rows is not None:
                 rows.append(row)
             if seen>declared:
                 raise error('HISTORY_INCONSISTENT')
@@ -67,15 +73,24 @@ def complete_history(read_page,declared,height,*,collect=False,error=HistoryPage
     digest.update(b']')
     if seen!=declared:
         raise error('HISTORY_INCONSISTENT')
+    if isinstance(rows,deque):
+        rows=list(rows)
     return seen,digest.hexdigest(),rows
 
 
-def sql_history_pages(db,tip_height,sql,error=HistoryPageError,code='HISTORY_DENIED'):
-    """Page a stable ORDER BY query; refuse truncation and count mismatch."""
+def sql_history_pages(db,tip_height,sql,error=HistoryPageError,code='HISTORY_DENIED',
+                     window=None):
+    """Page a stable ORDER BY query; refuse truncation and count mismatch.
+
+    window keeps only the first N already-ordered rows (newest-first SQL).
+    Every row is still validated so the GUI cannot silently drop a tail.
+    """
     declared=db.execute('SELECT count(*) FROM history').fetchone()[0]
     if type(declared) is not int or declared<0:
         raise error(code)
     if declared>HISTORY_COMPLETE_MAX:
+        raise error(code)
+    if window is not None and (type(window) is not int or window<1):
         raise error(code)
     seen=0;offset=0;out=[]
     while True:
@@ -93,7 +108,8 @@ def sql_history_pages(db,tip_height,sql,error=HistoryPageError,code='HISTORY_DEN
                     or not 0<=credit<=22_000_000*100_000_000
                     or not 0<=debit<=22_000_000*100_000_000):
                 raise error(code)
-            out.append((txid,block,credit,debit,tip_height-block+1))
+            if window is None or seen<window:
+                out.append((txid,block,credit,debit,tip_height-block+1))
             seen+=1
             if seen>declared:
                 raise error(code)
@@ -102,4 +118,4 @@ def sql_history_pages(db,tip_height,sql,error=HistoryPageError,code='HISTORY_DEN
         offset+=len(page)
     if seen!=declared:
         raise error(code)
-    return out
+    return declared,out

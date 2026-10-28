@@ -6,7 +6,8 @@ import os
 import unittest
 
 from wam_regtest.history_pages import (
-    HISTORY_COMPLETE_MAX,HISTORY_PAGE_LIMIT,complete_history,sql_history_pages,_canonical)
+    GUI_HISTORY_LIMIT,HISTORY_COMPLETE_MAX,HISTORY_PAGE_LIMIT,complete_history,
+    sql_history_pages,_canonical)
 from wam_regtest.wallet_read import HistoryRow
 
 
@@ -28,11 +29,12 @@ class HistoryPagesContracts(unittest.TestCase):
             db.executemany('INSERT INTO history VALUES(?,?,?,?)',
                            [(f'{i:064x}',i+1,i+1,0) for i in range(count)])
             db.execute('BEGIN IMMEDIATE')
-            raw=sql_history_pages(
+            declared,raw=sql_history_pages(
                 db,10_000,
                 'SELECT txid,height,credit,debit FROM history '
                 'ORDER BY height DESC,txid LIMIT ? OFFSET ?')
             db.execute('COMMIT')
+            self.assertEqual(declared,count)
             self.assertEqual(len(raw),count)
             if count:
                 self.assertEqual(raw[0][1],count)  # newest height first
@@ -48,6 +50,31 @@ class HistoryPagesContracts(unittest.TestCase):
         newest=tuple(HistoryRow(r['txid'],r['height'],r['confirmations'],r['credit'],r['debit'])
                      for r in reversed(collected))
         self.assertEqual(newest[0].block_height,1001)
+
+    def test_keep_tail_bounds_gui_memory_without_changing_fingerprint(self):
+        rows=[_row(i,i+1,3000) for i in range(2500)]
+        def page(limit,offset):
+            return [dict(r) for r in rows[offset:offset+limit]]
+        full=complete_history(page,len(rows),3000,collect=True)
+        tail=complete_history(page,len(rows),3000,keep_tail=GUI_HISTORY_LIMIT)
+        self.assertEqual(full[0],2500)
+        self.assertEqual(full[1],tail[1])
+        self.assertEqual(len(tail[2]),GUI_HISTORY_LIMIT)
+        self.assertEqual(tail[2],rows[-GUI_HISTORY_LIMIT:])
+        path=tempfile.mkstemp(suffix='.sqlite')[1]
+        self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
+        db=sqlite3.connect(path,isolation_level=None);self.addCleanup(db.close)
+        db.execute('CREATE TABLE history(txid TEXT PRIMARY KEY,height INTEGER NOT NULL,'
+                   'credit INTEGER NOT NULL,debit INTEGER NOT NULL)')
+        db.executemany('INSERT INTO history VALUES(?,?,?,?)',
+                       [(f'{i:064x}',i+1,i+1,0) for i in range(2500)])
+        count,raw=sql_history_pages(
+            db,10_000,
+            'SELECT txid,height,credit,debit FROM history '
+            'ORDER BY height DESC,txid LIMIT ? OFFSET ?',window=GUI_HISTORY_LIMIT)
+        self.assertEqual(count,2500)
+        self.assertEqual(len(raw),GUI_HISTORY_LIMIT)
+        self.assertEqual(raw[0][1],2500)
 
     def test_complete_max_constant_matches_wsp_offset_plus_page(self):
         self.assertEqual(HISTORY_COMPLETE_MAX,1_000_000+HISTORY_PAGE_LIMIT)

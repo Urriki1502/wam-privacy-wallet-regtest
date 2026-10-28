@@ -17,7 +17,7 @@ from wam_regtest import custody
 from wam_regtest.core import verified_core_paths
 from wam_regtest.telemetry import increment
 from wam_regtest.wsp_live import LiveCoreReadOnlyCli, RealWspScanError, _pinned_source, _public_fixture_payment
-from wam_regtest.history_pages import complete_history
+from wam_regtest.history_pages import GUI_HISTORY_LIMIT,complete_history
 from wam_regtest.vault import CheckpointVault, KeychainAnchor
 from wam_regtest.wallet_read import HistoryRow, WalletReadSnapshot
 
@@ -297,10 +297,14 @@ class WalletSession:
                             return wallet._history(limit,offset)
                         except ValueError:
                             raise _SessionHistoryDenied('HISTORY_INCONSISTENT') from None
-                    _count,_digest,rows=complete_history(
-                        page,declared,tip[0],collect=True,error=_SessionHistoryDenied)
+                    count,digest,rows=complete_history(
+                        page,declared,tip[0],keep_tail=GUI_HISTORY_LIMIT,
+                        error=_SessionHistoryDenied)
             except _SessionHistoryDenied as error:
                 raise WalletSessionError(error.args[0]) from None
+            if (self.scanner.store.tip()!=tip
+                    or tip!=(rpc.call("getblockcount"),rpc.call("getbestblockhash"))):
+                raise WalletSessionError("WALLET_CHAIN_CHANGED_DENIED")
             history = tuple(HistoryRow(r["txid"],r["height"],r["confirmations"],r["credit"],r["debit"])
                             for r in reversed(rows))
             return WalletReadSnapshot(
@@ -308,6 +312,8 @@ class WalletSession:
                 balance["confirmed_atoms"],utxos,history,
                 self._ensure_core_identity()[1]["wamd_sha256"],
                 signer_allowed=True,broadcast_allowed=True,
+                history_count=count,history_sha256=digest,
+                history_complete=count<=GUI_HISTORY_LIMIT,
             )
 
     def prepare(self, code, atoms, fee):
