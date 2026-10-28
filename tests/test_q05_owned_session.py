@@ -44,6 +44,22 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertTrue(row['checkpoint_open_blocked'])
         self.assertEqual(runtime.read_bytes(),b'preserve-runtime')
 
+    def test_cli_wires_in_process_managed_gui_not_control_wallet_ops(self):
+        text=(Path(__file__).resolve().parents[1]/'src/wam_regtest/cli.py').read_text()
+        self.assertIn("'managed-gui'",text)
+        self.assertIn('launch_owned_wallet',text)
+        self.assertIn('open_owned',Path(__file__).resolve().parents[1]
+                      .joinpath('src/wam_regtest/wallet_session.py').read_text())
+        from wam_regtest.supervisor_protocol import CONTROL_COMMANDS
+        self.assertNotIn('managed-gui',CONTROL_COMMANDS)
+
+    def test_cli_wires_in_process_managed_gui_not_control_wallet_ops_probe_exists(self):
+        probe=Path(__file__).resolve().parents[1]/'scripts/probe_q05_owned_session.py'
+        source=probe.read_text()
+        self.assertIn('WalletSession.open_owned',source)
+        self.assertIn('wallet_lock_left_core_running',source)
+        self.assertNotIn('owner.shutdown()',source.split('LOCK_WITHOUT_CORE_SHUTDOWN')[1].split('CORE_REOPEN')[0])
+
     def test_control_protocol_still_has_no_wallet_password_ops(self):
         from wam_regtest.supervisor_protocol import CONTROL_COMMANDS,READ_COMMANDS
         self.assertFalse({'wallet-create','wallet-unlock','sign','broadcast','scan',
