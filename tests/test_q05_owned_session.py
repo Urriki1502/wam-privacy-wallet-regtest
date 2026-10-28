@@ -1,6 +1,7 @@
 """Owned-session attach contracts; not genuine Core E2E."""
 from pathlib import Path
 from unittest.mock import patch
+import sys
 import unittest
 
 import test_q05_core_supervisor as fixture
@@ -61,11 +62,30 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertNotIn('managed-gui',CONTROL_COMMANDS)
 
     def test_cli_wires_in_process_managed_gui_not_control_wallet_ops_probe_exists(self):
-        probe=Path(__file__).resolve().parents[1]/'scripts/probe_q05_owned_session.py'
-        source=probe.read_text()
-        self.assertIn('WalletSession.open_owned',source)
-        self.assertIn('wallet_lock_left_core_running',source)
-        self.assertNotIn('owner.shutdown()',source.split('LOCK_WITHOUT_CORE_SHUTDOWN')[1].split('CORE_REOPEN')[0])
+        root=Path(__file__).resolve().parents[1]
+        probe=(root/'scripts/probe_q05_owned_session.py').read_text()
+        harness=(root/'src/wam_regtest/q05_owned_lifecycle.py').read_text()
+        self.assertIn('run_owned_lifecycle',probe)
+        self.assertIn('WalletSession.open_owned',harness)
+        self.assertIn('wallet_lock_left_core_running',harness)
+        self.assertNotIn('owner.shutdown()',harness.split('LOCK_WITHOUT_CORE_SHUTDOWN')[1].split('CORE_REOPEN')[0])
+        self.assertNotIn("platform.system()!='Darwin'",probe)
+        self.assertIn('WindowsX64Adapter',harness)
+        self.assertIn('LinuxX64Adapter',harness)
+        self.assertIn('WindowsCredentialAnchor',root.joinpath('src/wam_regtest/custody.py').read_text())
+        self.assertIn('APPROVED_LINUX_MANIFEST',harness)
+
+    def test_host_adapter_matches_this_os_and_refuses_foreign_linux_manifest_pin(self):
+        from wam_regtest.q05_owned_lifecycle import (
+            APPROVED_LINUX_MANIFEST,detect_adapter,LinuxX64Adapter,OwnedLifecycleError)
+        adapter=detect_adapter()
+        adapter.enforce_host()
+        if sys.platform=='linux':
+            self.assertEqual(adapter.platform_id,'linux-x86_64')
+            with self.assertRaisesRegex(OwnedLifecycleError,'LINUX_APPROVED_MANIFEST'):
+                LinuxX64Adapter().prepare_trust(Path('/unused'),manifest='0'*64)
+        self.assertEqual(APPROVED_LINUX_MANIFEST,
+                         'e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806')
 
     def test_control_protocol_still_has_no_wallet_password_ops(self):
         from wam_regtest.supervisor_protocol import CONTROL_COMMANDS,READ_COMMANDS

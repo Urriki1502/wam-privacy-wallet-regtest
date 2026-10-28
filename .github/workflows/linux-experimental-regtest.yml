@@ -274,6 +274,122 @@ jobs:
             q01-core-negatives.json
           if-no-files-found: warn
           retention-days: 14
+  q05-owned-session:
+    name: Q05 owned-session qualified Linux developer Core START→RESTORE
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      PYTHONUNBUFFERED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.15'
+      - name: Q01 clean hash-locked GUI environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
+      - name: Fetch previously qualified immutable developer Core artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-developer-core-576082d227ccd9eb139686ded431c69c07399237
+          run-id: 38697805476
+          github-token: ${{ github.token }}
+          path: qualified-linux-core
+      - name: Native x86_64, ACL, qualified Core identity
+        run: |
+          set -euo pipefail
+          test "$(uname -sm)" = 'Linux x86_64'
+          test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
+          sudo apt-get update -qq
+          sudo apt-get install -y acl libevent-dev libsqlite3-dev binutils xvfb xauth libegl1 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxcb-xkb1 libxcb-shape0 libdbus-1-3 fonts-noto-core
+          chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          approved='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806'
+          manifest=Path('qualified-linux-core/linux-core/DEVELOPER_CORE_MANIFEST.json')
+          digest=sha256(manifest.read_bytes()).hexdigest()
+          assert digest==approved, 'LINUX_QUALIFIED_ARTIFACT_MANIFEST_DENIED'
+          print('LINUX_Q05_APPROVED_MANIFEST', digest)
+          PY
+      - name: Q05 empty owned-session plus fail-closed on qualified Core
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          QT_QPA_PLATFORM: xcb
+          WAM_ROOT_WITNESS_NATIVE_TESTS: '1'
+        run: |
+          set -euo pipefail
+          xvfb-run -a python scripts/probe_q05_owned_session.py \
+            --core-dir "${GITHUB_WORKSPACE}/qualified-linux-core/linux-core" \
+            --wsp-source "${GITHUB_WORKSPACE}/wsp-upstream" \
+            --root "${RUNNER_TEMP}/q05-owned-empty" \
+            --receipt q05-owned-session-empty.json \
+            --confirm-disposable-regtest \
+            --linux-developer-manifest e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806 \
+            --confirm-gui-lifecycle
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          proof=json.loads(Path('q05-owned-session-empty.json').read_text())
+          assert proof['status'] in ('PASS','BLOCKED')
+          assert proof['platform']=='linux-x86_64'
+          assert proof['mainnet_allowed'] is False
+          assert proof['official_signed_release'] is False
+          assert proof['linux_manifest_sha256']=='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806'
+          if proof['status']=='BLOCKED':
+              raise SystemExit('Q05_LINUX_OWNED_SESSION_BLOCKED_PREREQUISITE')
+          assert proof['scenarios']['crash_fail_closed']=='PASS'
+          assert proof['pid_adoption'] is False
+          print('Q05_LINUX_OWNED_SESSION_EMPTY_PASS')
+          PY
+      - name: Q05 funded owned-session BIP352 + sign/broadcast
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          WAM_ROOT_WITNESS_NATIVE_TESTS: '1'
+        run: |
+          set -euo pipefail
+          python scripts/probe_q05_owned_session.py \
+            --core-dir "${GITHUB_WORKSPACE}/qualified-linux-core/linux-core" \
+            --wsp-source "${GITHUB_WORKSPACE}/wsp-upstream" \
+            --root "${RUNNER_TEMP}/q05-owned-funded" \
+            --receipt q05-owned-session-funded.json \
+            --confirm-disposable-regtest \
+            --fund-disposable-wallet \
+            --linux-developer-manifest e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806 \
+            --skip-fail-closed
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          proof=json.loads(Path('q05-owned-session-funded.json').read_text())
+          assert proof['status'] in ('PASS','BLOCKED')
+          if proof['status']=='BLOCKED':
+              raise SystemExit('Q05_LINUX_FUNDED_OWNED_SESSION_BLOCKED_PREREQUISITE')
+          assert proof['fixture_funding'] is True
+          assert proof['scenarios']['sign_broadcast']=='PASS'
+          assert proof['automatic_wallet_transaction_replay'] is False
+          print('Q05_LINUX_OWNED_SESSION_FUNDED_PASS')
+          PY
+      - name: Upload Q05 Linux owned-session receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q05-owned-session-linux-x86_64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            q05-owned-session-empty.json
+            q05-owned-session-funded.json
+            q01-install.json
+          if-no-files-found: warn
+          retention-days: 14
   q04-miner-coexistence:
     needs: headless-wallet
     runs-on: ubuntu-24.04

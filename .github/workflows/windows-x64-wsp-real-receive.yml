@@ -5,6 +5,9 @@ on:
     paths:
       - "src/wam_regtest/windows_wsp_regtest.py"
       - "src/wam_regtest/windows_core_regtest_smoke.py"
+      - "src/wam_regtest/q05_owned_lifecycle.py"
+      - "src/wam_regtest/wallet_session.py"
+      - "scripts/probe_q05_owned_session.py"
       - "tests/test_windows_wsp_regtest.py"
       - ".github/workflows/windows-x64-wsp-real-receive.yml"
   workflow_dispatch:
@@ -80,3 +83,58 @@ jobs:
               print("CONFIRM_BLOCK_HEIGHT",evidence["wsp_receipt"]["confirm_height"])
           '@ | python -
           if ($LASTEXITCODE -ne 0) { throw "WIN_REAL_CORE_WSP_BIP352_E2E_DENIED" }
+
+  q05-owned-session-funded:
+    name: Q05 owned-session funded BIP352 sign/broadcast on signed Windows Core
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Native Windows x64, GPG and pinned WSP
+        shell: pwsh
+        run: |
+          python -c "import os,platform,struct; assert os.name=='nt' and platform.machine().lower() in ('amd64','x86_64') and struct.calcsize('P')==8"
+          $head = git -C wsp-upstream rev-parse HEAD
+          if ($head.Trim() -ne "ac55f13423620252bdbf848c7e8a280c3b84721e") { throw "WSP_PIN_DENIED" }
+          if (!(Get-Command gpg -ErrorAction SilentlyContinue)) { throw "WIN_GPG_REQUIRED" }
+      - name: Install wallet and pinned WSP
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -e . -e ./wsp-upstream
+          python -m pip check
+      - name: Stage official signed Windows Core
+        shell: pwsh
+        run: |
+          python -c "from pathlib import Path; from wam_regtest.q05_owned_lifecycle import stage_windows_core; stage_windows_core(Path('core').resolve())"
+          if ($LASTEXITCODE -ne 0) { throw "WIN_Q05_CORE_STAGE_DENIED" }
+      - name: Q05 funded owned-session BIP352 + sign/broadcast
+        shell: pwsh
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python scripts/probe_q05_owned_session.py --core-dir (Resolve-Path core) --wsp-source (Resolve-Path wsp-upstream) --root "$env:RUNNER_TEMP\q05-owned-funded" --receipt q05-owned-session-funded.json --confirm-disposable-regtest --fund-disposable-wallet --skip-fail-closed
+          if ($LASTEXITCODE -ne 0) { throw "WIN_Q05_FUNDED_OWNED_DENIED" }
+          python -c "import json; from pathlib import Path; p=json.loads(Path('q05-owned-session-funded.json').read_text()); assert p['status']=='PASS' and p['fixture_funding'] is True and p['mainnet_allowed'] is False and p['scenarios']['sign_broadcast']=='PASS' and p['automatic_wallet_transaction_replay'] is False; print('Q05_WINDOWS_OWNED_SESSION_FUNDED_PASS')"
+      - name: Upload Q05 Windows funded owned-session receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q05-owned-session-funded-windows-x64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q05-owned-session-funded.json
+          if-no-files-found: warn
+          retention-days: 14

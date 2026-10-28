@@ -1,0 +1,561 @@
+"""Platform-neutral Q05 owned-session START→RESTORE harness.
+
+Adapters isolate Core provenance, OS credential anchors, Popen ownership,
+filesystem durability, disposable REGTEST profiles and GUI environment.
+WalletSession.open_owned is the single wallet implementation.
+"""
+from datetime import datetime,timezone
+from hashlib import sha256
+import json
+import os
+from pathlib import Path
+import platform
+import secrets
+import subprocess
+import sys
+import tempfile
+import zipfile
+
+from wam_regtest.core import verified_core_paths
+from wam_regtest.core_supervisor import CoreSupervisor,ManagedCoreError
+from wam_regtest.custody import create_directory
+from wam_regtest.rpc_scope import identity
+from wam_regtest.wallet_session import WalletSession,WalletSessionError
+from wam_regtest.wsp_live import PINNED_WSP_COMMIT,_pinned_source
+
+APPROVED_LINUX_MANIFEST='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806'
+PASSWORD=b'public-disposable-q05-native-only'
+SCHEMA='q05-owned-session-native/v2'
+
+
+class OwnedLifecycleError(ValueError):
+    pass
+
+
+def assert_live_original(owner):
+    process=owner.process
+    scope=identity(owner.directory)
+    if (type(process) is not subprocess.Popen or process.poll() is not None
+            or owner.binding is None or owner.binding.process is not process
+            or owner._faulted or not owner._registered
+            or scope is None or scope.binding.process is not process):
+        raise OwnedLifecycleError('Q05_ORIGINAL_POPEN_DENIED')
+    status=owner.status()
+    if not status.get('core_process_owned') or status.get('state') not in ('ready','syncing'):
+        raise OwnedLifecycleError('Q05_OWNED_CORE_NOT_READY')
+    return process.pid
+
+
+def stop_owned(owner):
+    if owner is None:
+        return
+    if owner.process is not None and owner.process.poll() is None:
+        try:
+            owner.shutdown()
+        except (ManagedCoreError,OSError,ValueError,RuntimeError):
+            try:
+                owner.recover_stop()
+            except (ManagedCoreError,OSError,ValueError,RuntimeError):
+                pass
+    try:
+        owner.close()
+    except (ManagedCoreError,OSError,ValueError,RuntimeError):
+        pass
+
+
+def _git_head(source):
+    return subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()
+
+
+def _dirty_tracked(source):
+    return subprocess.check_output(
+        ['git','status','--porcelain','--untracked-files=no'],cwd=source)
+
+
+class PlatformAdapter:
+    platform_id=''
+    core_trust=''
+    core_version='v0.1.11'
+    official_signed=False
+    gui_mode='none'
+    frozen=False
+
+    def enforce_host(self):
+        raise OwnedLifecycleError('Q05_OWNED_SESSION_PROBE_SCOPE_DENIED')
+
+    def prepare_trust(self,core_dir,manifest=None,witness=None):
+        return None
+
+    def make_anchor(self,root):
+        return None
+
+    def teardown(self):
+        pass
+
+    def node_name(self):
+        return 'wamd.exe' if sys.platform=='win32' else 'wamd'
+
+
+class DarwinArm64Adapter(PlatformAdapter):
+    platform_id='macos-arm64'
+    core_trust='official-signed-v0.1.11'
+    official_signed=True
+    gui_mode='offscreen'
+
+    def enforce_host(self):
+        if platform.system()!='Darwin' or platform.machine()!='arm64':
+            raise OwnedLifecycleError('Q05_OWNED_SESSION_PROBE_SCOPE_DENIED')
+
+    def make_anchor(self,root):
+        keychain=root/'q05-disposable.keychain-db'
+        result=subprocess.run(['/usr/bin/security','create-keychain','-p',
+            'public-test-only',str(keychain)],capture_output=True,timeout=15)
+        if result.returncode:
+            raise OwnedLifecycleError('Q05_DISPOSABLE_KEYCHAIN_DENIED')
+        return keychain
+
+
+class WindowsX64Adapter(PlatformAdapter):
+    platform_id='windows-x64'
+    core_trust='official-signed-v0.1.11'
+    official_signed=True
+    gui_mode='offscreen'
+
+    def enforce_host(self):
+        machine=platform.machine().lower()
+        if os.name!='nt' or machine not in ('amd64','x86_64') or sys.maxsize<=2**32:
+            raise OwnedLifecycleError('Q05_OWNED_SESSION_PROBE_SCOPE_DENIED')
+
+    def make_anchor(self,root):
+        # WindowsCredentialAnchor via custody.anchor; never a macOS keychain.
+        return None
+
+
+class LinuxX64Adapter(PlatformAdapter):
+    platform_id='linux-x86_64'
+    core_trust='qualified-developer-core-reviewed-manifest'
+    official_signed=False
+    gui_mode='xcb-xvfb'
+    _witness=None
+
+    def enforce_host(self):
+        if platform.system()!='Linux' or platform.machine()!='x86_64':
+            raise OwnedLifecycleError('Q05_OWNED_SESSION_PROBE_SCOPE_DENIED')
+
+    def prepare_trust(self,core_dir,manifest=None,witness=None):
+        pin=manifest or APPROVED_LINUX_MANIFEST
+        if pin!=APPROVED_LINUX_MANIFEST:
+            raise OwnedLifecycleError('LINUX_APPROVED_MANIFEST_DENIED')
+        on_disk=None
+        for path in (core_dir/'DEVELOPER_CORE_MANIFEST.json',
+                     core_dir/'LINUX_DEVELOPER_CORE_MANIFEST_SHA256.txt',
+                     core_dir.parent/'LINUX_DEVELOPER_CORE_MANIFEST_SHA256.txt'):
+            if path.is_file() and not path.is_symlink():
+                if path.name.endswith('.json'):
+                    on_disk=sha256(path.read_bytes()).hexdigest()
+                else:
+                    on_disk=path.read_text().strip()
+                break
+        if on_disk is not None and on_disk!=APPROVED_LINUX_MANIFEST:
+            raise OwnedLifecycleError('LINUX_QUALIFIED_ARTIFACT_MANIFEST_DENIED')
+        endpoint=witness
+        if endpoint is None:
+            tests=Path(__file__).resolve().parents[2]/'tests'
+            if str(tests) not in sys.path:
+                sys.path.insert(0,str(tests))
+            os.environ['WAM_ROOT_WITNESS_NATIVE_TESTS']='1'
+            from test_linux_anchor_witness import NativeRootWitness
+            NativeRootWitness.setUpClass()
+            self._witness=NativeRootWitness
+            endpoint=NativeRootWitness.root/'anchor.sock'
+        from wam_regtest.linux_runtime import configure
+        configure(core_dir,APPROVED_LINUX_MANIFEST,endpoint,authorized=True)
+        return endpoint
+
+    def make_anchor(self,root):
+        return None
+
+    def teardown(self):
+        if self._witness is not None:
+            try:
+                self._witness.tearDownClass()
+            finally:
+                self._witness=None
+
+
+def detect_adapter():
+    system=platform.system()
+    if system=='Darwin':
+        return DarwinArm64Adapter()
+    if system=='Windows' or os.name=='nt':
+        return WindowsX64Adapter()
+    if system=='Linux':
+        return LinuxX64Adapter()
+    raise OwnedLifecycleError('Q05_OWNED_SESSION_PROBE_SCOPE_DENIED')
+
+
+def stage_windows_core(destination):
+    """Hash-verified official Windows x64 Core into a private destination."""
+    if os.name!='nt':
+        raise OwnedLifecycleError('Q05_WINDOWS_CORE_STAGE_HOST_DENIED')
+    from wam_regtest.release import _download_exact
+    from wam_regtest.windows_release_preflight import ASSET,ROOT,verify_signed_windows_archive
+    from wam_regtest.windows_core_transport import write_new
+    destination=destination.expanduser().resolve()
+    if destination.exists() or destination.is_symlink():
+        raise OwnedLifecycleError('Q05_WINDOWS_CORE_DESTINATION_DENIED')
+    create_directory(destination)
+    with tempfile.TemporaryDirectory(prefix='wam-q05-win-core-') as temp:
+        root=Path(temp)
+        files=(
+            ('/SIGNING-KEY.asc','SIGNING-KEY.asc',32768),
+            ('/downloads/v0.1.11/SHA256SUMS','SHA256SUMS',131072),
+            ('/downloads/v0.1.11/SHA256SUMS.asc','SHA256SUMS.asc',16384),
+            ('/downloads/v0.1.11/'+ASSET,ASSET,320*1024*1024),
+        )
+        for remote,name,limit in files:
+            _download_exact(remote,limit,root/name)
+        proof=verify_signed_windows_archive(
+            root/ASSET,root/'SIGNING-KEY.asc',root/'SHA256SUMS',root/'SHA256SUMS.asc')
+        if proof.get('signed_archive_verified') is not True:
+            raise OwnedLifecycleError('Q05_WINDOWS_SIGNED_ARCHIVE_DENIED')
+        with zipfile.ZipFile(root/ASSET) as bundle:
+            for filename in ('wamd.exe','wam-cli.exe'):
+                write_new(destination,filename,bundle.read(f'{ROOT}/bin/{filename}'))
+        write_new(destination,'receipt.json',json.dumps(proof,sort_keys=True).encode('utf8'))
+    return proof
+
+
+def _base_record(head,adapter,intake,funded):
+    run=os.environ.get('GITHUB_RUN_ID')
+    repo=os.environ.get('GITHUB_REPOSITORY','Urriki1502/wam-privacy-wallet-regtest')
+    server=os.environ.get('GITHUB_SERVER_URL','https://github.com')
+    return {
+        'schema':SCHEMA,'status':'FAIL','source_sha':head,'checkout_sha':head,
+        'github_sha':os.environ.get('GITHUB_SHA'),
+        'github_run_id':run,
+        'github_run_url':(f'{server}/{repo}/actions/runs/{run}' if run else None),
+        'platform':adapter.platform_id,
+        'os':platform.system(),'arch':platform.machine(),
+        'frozen':adapter.frozen,'core_trust':adapter.core_trust,
+        'core_version':adapter.core_version,
+        'core_intake_platform':intake.get('platform'),
+        'core_sha256':{},
+        'core_release_signature_or_linux_provenance':adapter.core_trust,
+        'official_signed_release':adapter.official_signed,
+        'wsp_source_commit':PINNED_WSP_COMMIT,'synthetic_rpc':False,
+        'fixture_funding':bool(funded),'mainnet_allowed':False,
+        'automatic_wallet_transaction_replay':False,'pid_adoption':False,
+        'real_popen':False,'real_rpc':False,
+        'gui_mode':'none','gui_status':'NOT EXECUTED','frozen_status':'NOT EXECUTED',
+        'scenarios':{
+            'authentic_core_startup':'NOT EXECUTED',
+            'owned_session_create':'NOT EXECUTED',
+            'encrypted_checkpoint':'NOT EXECUTED',
+            'wallet_restore':'NOT EXECUTED',
+            'real_bip352_receiving':'NOT EXECUTED',
+            'sign_broadcast':'NOT EXECUTED',
+            'crash_fail_closed':'NOT EXECUTED',
+            'dirty_runtime_fail_closed':'NOT EXECUTED',
+            'wrong_core_refused':'NOT EXECUTED',
+            'interrupted_publication_fail_closed':'NOT EXECUTED',
+            'native_gui':'NOT EXECUTED',
+            'frozen_build':'NOT EXECUTED',
+        },
+        'observations':[],
+    }
+
+
+def _gui_lifecycle(session,record,adapter):
+    try:
+        from wam_regtest.operational_gui import OperationalWalletWindow
+        from wam_regtest.desktop import qt_application
+    except ImportError:
+        record['gui_status']='NOT EXECUTED'
+        record['gui_mode']='unavailable'
+        record['scenarios']['native_gui']='NOT EXECUTED'
+        return
+    app=qt_application()
+    window=OperationalWalletWindow(session)
+    window.show()
+    app.processEvents()
+    # closeEvent locks the owned session; leave the window open for later lock().
+    record['gui_status']='PASS'
+    record['gui_mode']=os.environ.get('QT_QPA_PLATFORM') or adapter.gui_mode
+    record['scenarios']['native_gui']='PASS'
+
+
+def _positive_lifecycle(adapter,core,source,root,keychain,funded,record,gui):
+    stage='CORE_START'
+    owner=session=None
+    try:
+        create_directory(root)
+        owner=CoreSupervisor(root,core,authorized=True)
+        owner.start(timeout=90)
+        pid=assert_live_original(owner)
+        if owner.process.pid!=pid or type(owner.process.pid) is not int:
+            raise OwnedLifecycleError('Q05_ORIGINAL_POPEN_DENIED')
+        record['real_popen']=True
+        record['scenarios']['authentic_core_startup']='PASS'
+        record['observations'].append({'original_popen_owned':True,'core_pid':pid,
+            'wamd_sha256':record.get('core_node_sha256')})
+        stage='CREATE_OWNED_SESSION'
+        session=WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
+                                         create=True,keychain=keychain)
+        assert_live_original(owner)
+        snap=session.snapshot()
+        expected_core=record.get('core_node_sha256')
+        if (snap.chain!='regtest' or snap.mainnet_allowed or not snap.signer_allowed
+                or type(snap.receive_count) is not int or snap.receive_count!=0
+                or snap.history_count!=0
+                or (expected_core and snap.core_sha256!=expected_core)):
+            raise OwnedLifecycleError('Q05_EMPTY_OWNED_SNAPSHOT_DENIED')
+        code=snap.receive_code;digest=snap.core_sha256
+        record['real_rpc']=True
+        record['scenarios']['owned_session_create']='PASS'
+        record['scenarios']['encrypted_checkpoint']='PASS'
+        record['observations'].append({'created_empty_owned_session':True,
+            'height':snap.height,'history_count':0,'receive_count':0,
+            'receive_code_sha256':sha256(code.encode()).hexdigest()})
+        if funded:
+            stage='PUBLIC_DISPOSABLE_FIXTURE_FUNDING'
+            from wam_regtest.wsp_live import _public_fixture_payment,public_regtest_mining_address
+            from wam_sp.keystore import Keyring
+            rpc=session._rpc()
+            address=public_regtest_mining_address(source)
+            generated=rpc._call('generatetoaddress',['101',address])
+            if type(generated) is not list or len(generated)!=101:
+                raise OwnedLifecycleError('Q05_REGTEST_MATURITY_DENIED')
+            txid,atoms,height=_public_fixture_payment(
+                rpc,session.ring.accounts()[0],address)
+            funded_snap=session.snapshot()
+            if (funded_snap.history_count!=1 or funded_snap.receive_count!=1
+                    or funded_snap.confirmed_atoms!=atoms or funded_snap.height!=height):
+                raise OwnedLifecycleError('Q05_FUNDED_OWNED_SCAN_DENIED')
+            record['scenarios']['real_bip352_receiving']='PASS'
+            record['observations'].append({'real_fixture_payment_txid':txid,
+                'height':height,'confirmed_atoms':atoms,'history_count':1,
+                'receive_count':1})
+            stage='OWNED_PREPARE_SIGN_BROADCAST'
+            recipient=Keyring()
+            try:
+                pay=recipient.accounts()[0].payment_code()
+            finally:
+                recipient.close()
+            review=session.prepare(pay,100000,10000)
+            session.sign(review.commitment)
+            sent=session.broadcast(review.commitment)
+            if type(sent) is not str or len(sent)!=64:
+                raise OwnedLifecycleError('Q05_OWNED_BROADCAST_DENIED')
+            mined=rpc._call('generatetoaddress',['1',address])
+            if type(mined) is not list or len(mined)!=1:
+                raise OwnedLifecycleError('Q05_OWNED_CONFIRM_DENIED')
+            paid=session.snapshot()
+            if paid.history_count<2 or paid.receive_count!=1:
+                raise OwnedLifecycleError('Q05_OWNED_CONFIRMED_HISTORY_DENIED')
+            record['scenarios']['sign_broadcast']='PASS'
+            record['observations'].append({'genuine_owned_broadcast':True,
+                'broadcast_txid':sent,'history_count':paid.history_count})
+        if gui:
+            stage='NATIVE_GUI'
+            _gui_lifecycle(session,record,adapter)
+        stage='LOCK_WITHOUT_CORE_SHUTDOWN'
+        pid=assert_live_original(owner)
+        session.lock();session=None
+        if owner.process is None or owner.process.poll() is not None or owner.process.pid!=pid:
+            raise OwnedLifecycleError('Q05_WALLET_LOCK_STOPPED_CORE')
+        assert_live_original(owner)
+        record['observations'].append({'wallet_lock_left_core_running':True,'core_pid':pid})
+        stage='CORE_REOPEN'
+        owner.shutdown();owner.close()
+        owner=CoreSupervisor(root,core,authorized=True)
+        owner.start(timeout=90)
+        assert_live_original(owner)
+        stage='RESTORE_OWNED_SESSION'
+        session=WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
+                                         create=False,keychain=keychain)
+        restored=session.snapshot()
+        if restored.receive_code!=code or restored.core_sha256!=digest:
+            raise OwnedLifecycleError('Q05_OWNED_RESTORE_CONTINUITY_DENIED')
+        if not funded:
+            if restored.history_count!=0 or restored.receive_count!=0:
+                raise OwnedLifecycleError('Q05_OWNED_RESTORE_CONTINUITY_DENIED')
+        else:
+            if restored.history_count<2 or restored.receive_count!=1:
+                raise OwnedLifecycleError('Q05_OWNED_FUNDED_RESTORE_DENIED')
+        session.lock();session=None
+        owner.shutdown();owner.close();owner=None
+        record['scenarios']['wallet_restore']='PASS'
+        record['observations'].append({'restored_same_payment_code':True,
+            'funded_restore':bool(funded)})
+        return stage
+    finally:
+        if session is not None:
+            try:
+                session.lock()
+            except (OSError,ValueError,RuntimeError):
+                record['wallet_lock_blocked']=True
+        stop_owned(owner)
+
+
+def _fail_closed_dirty_runtime(core,source,root,keychain,record):
+    owner=None
+    try:
+        create_directory(root)
+        owner=CoreSupervisor(root,core,authorized=True)
+        owner.start(timeout=90)
+        assert_live_original(owner)
+        sidecar=owner.directory/'wallet-runtime.sqlite-wal'
+        sidecar.write_bytes(b'preserve-wal')
+        try:
+            WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
+                                     create=True,keychain=keychain)
+        except WalletSessionError as error:
+            text=str(error)
+            if 'EXISTING_RUNTIME' not in text and 'OWNED_OPEN' not in text:
+                raise
+        else:
+            raise OwnedLifecycleError('Q05_DIRTY_RUNTIME_OPEN_SHOULD_DENY')
+        if sidecar.read_bytes()!=b'preserve-wal':
+            raise OwnedLifecycleError('Q05_DIRTY_RUNTIME_MUTATED')
+        record['scenarios']['dirty_runtime_fail_closed']='PASS'
+        record['observations'].append({'dirty_runtime_preserved':True,
+            'automatic_recovery_allowed':False})
+    finally:
+        stop_owned(owner)
+
+
+def _fail_closed_interrupted_publication(core,source,root,keychain,record):
+    from wam_regtest.managed_wallet_checkpoint import publication_ambiguity
+    owner=None
+    try:
+        create_directory(root)
+        owner=CoreSupervisor(root,core,authorized=True)
+        owner.start(timeout=90)
+        assert_live_original(owner)
+        runtime=owner.directory/'wallet-runtime.sqlite'
+        runtime.write_bytes(b'preserve-runtime')
+        row=publication_ambiguity(owner,source,authorized=True)
+        if row['automatic_recovery_allowed'] or not row['checkpoint_open_blocked']:
+            raise OwnedLifecycleError('Q05_INTERRUPTED_PUBLICATION_SHOULD_BLOCK')
+        if runtime.read_bytes()!=b'preserve-runtime':
+            raise OwnedLifecycleError('Q05_INTERRUPTED_PUBLICATION_MUTATED')
+        record['scenarios']['interrupted_publication_fail_closed']='PASS'
+        record['observations'].append({'interrupted_publication_inspect_only':True,
+            'automatic_recovery_allowed':False})
+    finally:
+        stop_owned(owner)
+
+
+def _fail_closed_crash(core,source,root,keychain,record):
+    owner=None
+    try:
+        create_directory(root)
+        owner=CoreSupervisor(root,core,authorized=True)
+        owner.start(timeout=90)
+        assert_live_original(owner)
+        session=WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
+                                         create=True,keychain=keychain)
+        session.lock();session=None
+        process=owner.process
+        process.kill()
+        process.wait(timeout=30)
+        try:
+            owner.close()
+        except (ManagedCoreError,OSError,ValueError,RuntimeError):
+            pass
+        owner=None
+        blocked=CoreSupervisor(root,core,authorized=True)
+        try:
+            try:
+                blocked.start(timeout=90)
+            except ManagedCoreError:
+                record['scenarios']['crash_fail_closed']='PASS'
+                record['observations'].append({'crash_dirty_journal_start_denied':True,
+                    'automatic_pid_adoption':False})
+                return
+            raise OwnedLifecycleError('Q05_CRASH_START_SHOULD_DENY')
+        finally:
+            stop_owned(blocked)
+            blocked=None
+    finally:
+        stop_owned(owner)
+
+
+def _wrong_core_refused(core,root,record):
+    foreign=root/'missing-core'
+    try:
+        CoreSupervisor(root/'unused-wrong-core',foreign,authorized=True)
+    except (ManagedCoreError,OSError,ValueError,RuntimeError):
+        record['scenarios']['wrong_core_refused']='PASS'
+        record['observations'].append({'wrong_core_directory_refused':True})
+        return
+    raise OwnedLifecycleError('Q05_WRONG_CORE_SHOULD_DENY')
+
+
+def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
+                        linux_manifest=None,linux_witness=None,gui=False,
+                        fail_closed=True):
+    source=Path(__file__).resolve().parents[2]
+    adapter=detect_adapter()
+    if (not confirm or root.exists() or root.is_symlink()
+            or receipt.exists() or _dirty_tracked(source)):
+        raise OwnedLifecycleError('Q05_OWNED_SESSION_PROBE_SCOPE_DENIED')
+    adapter.enforce_host()
+    head=_git_head(source)
+    expected=os.environ.get('GITHUB_SHA')
+    if expected and expected!=head:
+        raise OwnedLifecycleError('Q05_OWNED_SESSION_SOURCE_SHA_DENIED')
+    record=_base_record(head,adapter,{},funded)
+    record['linux_manifest_sha256']=(APPROVED_LINUX_MANIFEST
+        if adapter.platform_id=='linux-x86_64' else None)
+    stage='TRUST'
+    try:
+        adapter.prepare_trust(core_dir,linux_manifest,linux_witness)
+        node,cli,intake=verified_core_paths(core_dir);_pinned_source(wsp_source)
+        record['core_intake_platform']=intake.get('platform')
+        try:
+            record['core_sha256']={node.name:sha256(node.read_bytes()).hexdigest(),
+                                   cli.name:sha256(cli.read_bytes()).hexdigest()}
+        except OSError:
+            record['core_sha256']={node.name:intake.get('wamd_sha256'),
+                                   cli.name:intake.get('wam_cli_sha256')}
+        record['core_node_sha256']=intake.get('wamd_sha256')
+        keychain=adapter.make_anchor(root)
+        _positive_lifecycle(adapter,core_dir,wsp_source,root,keychain,funded,record,gui)
+        if fail_closed:
+            stage='FAIL_CLOSED'
+            parent=root.parent
+            token=secrets.token_hex(4)
+            _fail_closed_dirty_runtime(core_dir,wsp_source,parent/f'q05-dirty-{token}',keychain,record)
+            _fail_closed_interrupted_publication(core_dir,wsp_source,parent/f'q05-interrupt-{token}',keychain,record)
+            _fail_closed_crash(core_dir,wsp_source,parent/f'q05-crash-{token}',keychain,record)
+            _wrong_core_refused(core_dir,parent/f'q05-wrong-{token}',record)
+        required=['authentic_core_startup','owned_session_create','encrypted_checkpoint',
+                  'wallet_restore']
+        if funded:
+            required.extend(['real_bip352_receiving','sign_broadcast'])
+        if fail_closed:
+            required.extend(['crash_fail_closed','dirty_runtime_fail_closed',
+                             'interrupted_publication_fail_closed','wrong_core_refused'])
+        if gui:
+            required.append('native_gui')
+        if any(record['scenarios'][name]!='PASS' for name in required):
+            raise OwnedLifecycleError('Q05_REQUIRED_SCENARIO_INCOMPLETE')
+        record['status']='PASS'
+    except Exception as error:
+        record['failure_stage']=stage
+        record['failure_type']=type(error).__name__
+        code=error.args[0] if getattr(error,'args',None) else type(error).__name__
+        record['failure_code']=code
+        blocked=(isinstance(error,subprocess.CalledProcessError)
+                 and 'sudo' in str(getattr(error,'cmd','')))
+        if blocked or code in ('LINUX_ROOT_WITNESS_PREREQUISITE_BLOCKED',
+                               'LINUX_EXPLICIT_CORE_AND_WITNESS_POLICY_REQUIRED'):
+            record['status']='BLOCKED'
+    finally:
+        adapter.teardown()
+        record['timestamp_utc']=datetime.now(timezone.utc).isoformat()
+        with receipt.open('x') as out:
+            json.dump(record,out,indent=2);out.write('\n')
+    return record
