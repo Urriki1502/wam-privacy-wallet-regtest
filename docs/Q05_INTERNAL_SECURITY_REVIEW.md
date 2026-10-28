@@ -137,3 +137,21 @@ method. That FAIL/profile are preserved; only probe observation was corrected.
 No scanner HTTP/method expansion, replay retry or synthetic Core result was used.
 Interrupted publication/runtime ownership reconciliation still needs explicit
 design and adversarial/native evidence before any recovery policy is introduced.
+
+
+## Native persistent directory identity (264faa2)
+
+A real host restart changed st_dev from 16777233 to 16777230 for two unchanged
+legacy directories (same inode). V1 metadata cannot safely infer the prior
+volume and is not automatically rebound. Fresh v2 journal HMACs native stable
+volume/file/birth identity. macOS uses fgetattrlist volume UUID and common
+file-ID/creation attributes from one guarded FD; Linux uses fstatvfs fsid and
+statx INO/BTIME from a guarded FD; Windows uses existing guarded handle native
+volume/file/creation data. Unsupported identity fails, no path/st_dev fallback.
+V1 remains readable/appendable only under its original exact binding/MAC and
+mixed-schema chains refuse. This changes the separate supervisor journal for
+fresh records, not a vault/encryption/KDF migration or process-adoption grant.
+Source ABI references: Darwin SDK sys/attr.h ATTR_VOL_UUID/ATTR_CMN_FILEID/
+ATTR_CMN_CRTIME; Linux v6.8 include/uapi/linux/stat.h (256-byte statx ABI,
+INO/BTIME masks); existing Win32 INFO metadata wrapper. Native tests still need
+all target OS. A real v2 reboot and full-OS snapshot rollback are not proven.

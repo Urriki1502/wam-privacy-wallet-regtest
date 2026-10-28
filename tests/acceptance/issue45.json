@@ -17406,10 +17406,10 @@
           },
           "local_requalification": {
             "status": "PASS",
-            "source_sha": "7c03988f9ee382dbde47474cccc4fb7ded6ad8ac",
-            "receipt_path": "docs/evidence/q05/native-core-crash-7c03988.json",
-            "receipt_sha256": "e1b970fe8a409db0d946e3d10495cf8e67b82198c31d75054b54c16f529bc8b1",
-            "scope": "Actual Core crash and retained-original-Popen explicit recovery after fixing prior-cycle PID-reuse authorization. Same original profile/config/datadir and no height regression; not supervisor-process crash/live orphan reattachment or wallet recovery."
+            "source_sha": "264faa2b2db6aa717312cd1a984c15e01d2cbd04",
+            "receipt_path": "docs/evidence/q05/native-identity-crash-264faa2.json",
+            "receipt_sha256": "ea0e3c7bd909517bfb394faf02c05a860478f5425ce7bdb6382cba30f0bbfa00",
+            "scope": "Source-only same-original-Popen Core crash/recovery and clean reopen with native persistent identity journal v2. No foreign process adoption or true supervisor/host crash recovery."
           },
           "local_requalification_history": [
             {
@@ -17418,6 +17418,13 @@
               "receipt_path": "docs/evidence/q05/native-core-crash-c8b8128.json",
               "receipt_sha256": "3c42133c52ec61b6c601f11bc628ed66aecb4af5dddd4e2815f1d7583bea9c0c",
               "scope": "Genuine disposable Core SIGKILL and explicit recovery by its retained original Popen owner only. Same profile/config/datadir, no height regression, graceful stop/clean reopen. Not supervisor-process crash, power loss, wallet/reservation or frozen proof."
+            },
+            {
+              "status": "PASS",
+              "source_sha": "7c03988f9ee382dbde47474cccc4fb7ded6ad8ac",
+              "receipt_path": "docs/evidence/q05/native-core-crash-7c03988.json",
+              "receipt_sha256": "e1b970fe8a409db0d946e3d10495cf8e67b82198c31d75054b54c16f529bc8b1",
+              "scope": "Actual Core crash and retained-original-Popen explicit recovery after fixing prior-cycle PID-reuse authorization. Same original profile/config/datadir and no height regression; not supervisor-process crash/live orphan reattachment or wallet recovery."
             }
           ]
         },
@@ -17464,10 +17471,10 @@
           },
           "local_requalification": {
             "status": "PASS",
-            "source_sha": "3436ab7082831b5cd4122ce7bd1e29fa1a58b88b",
-            "receipt_path": "docs/evidence/q05/q05-uncertain-reservation-3436ab7.json",
-            "receipt_sha256": "e1303f6ceef4d6ebd3ac64e778a520130b7805160b1afd68a49cb46170a72131",
-            "scope": "Source-only genuine disposable wallet broadcast accepted by signed Core before explicit caller-result loss; uncertain reservation and balance/history/identity preserved through live checkpoint resync and clean owner/Core reopen. Exactly one wallet submission, no automatic replay. Not true TCP-loss, physical crash, normal packaged GUI or three-platform qualification."
+            "source_sha": "264faa2b2db6aa717312cd1a984c15e01d2cbd04",
+            "receipt_path": "docs/evidence/q05/native-identity-wallet-264faa2.json",
+            "receipt_sha256": "187c33bce5e3179a7ead9163354c8cc21bab43481f0c036e1c64a98e584fbb90",
+            "scope": "Source-only real signed wallet result-loss after Core acceptance; uncertain reservation, reserved balance/history/identity and exactly one submission across clean owner/Core reopen under journal v2. Actual v2 host reboot, interrupted publication, normal GUI and three-OS native/frozen remain unqualified."
           },
           "failure_history": [
             {
@@ -17500,6 +17507,13 @@
               "receipt_path": "docs/evidence/q05/q05-signed-reservation-49f7fec.json",
               "receipt_sha256": "f1592f8365e80acba49d202d08e9e4f2c3352ac325fb751aaeed8256c599689b",
               "scope": "Source-only genuine wallet signature, irreversible signed reservation preserved through live resync and clean original-owner/Core reopen; zero wallet broadcast calls. Not GUI/frozen or supervisor-crash qualification."
+            },
+            {
+              "status": "PASS",
+              "source_sha": "3436ab7082831b5cd4122ce7bd1e29fa1a58b88b",
+              "receipt_path": "docs/evidence/q05/q05-uncertain-reservation-3436ab7.json",
+              "receipt_sha256": "e1303f6ceef4d6ebd3ac64e778a520130b7805160b1afd68a49cb46170a72131",
+              "scope": "Source-only genuine disposable wallet broadcast accepted by signed Core before explicit caller-result loss; uncertain reservation and balance/history/identity preserved through live checkpoint resync and clean owner/Core reopen. Exactly one wallet submission, no automatic replay. Not true TCP-loss, physical crash, normal packaged GUI or three-platform qualification."
             }
           ]
         },

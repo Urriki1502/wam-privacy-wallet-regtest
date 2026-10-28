@@ -1,0 +1,38 @@
+{
+  "status": "OBSERVED_LEGACY_PERSISTENCE_GAP",
+  "host_boot_unix": 1793183156,
+  "observations": [
+    {
+      "profile": "wam-fusion-core-4d0be7132fc698a5",
+      "schema": "wam-managed-lifecycle/v1",
+      "recorded_identity": [
+        16777233,
+        13767109
+      ],
+      "current_legacy_identity": [
+        16777230,
+        13767109
+      ],
+      "same_inode": true,
+      "journal_sha256_preserved": "b0858cee2dd3d8b1140a589497a7e11106952e098479e2753a1c917c98fcacd6"
+    },
+    {
+      "profile": "wam-fusion-core-fc37de06583940b5",
+      "schema": "wam-managed-lifecycle/v1",
+      "recorded_identity": [
+        16777233,
+        13829075
+      ],
+      "current_legacy_identity": [
+        16777230,
+        13829075
+      ],
+      "same_inode": true,
+      "journal_sha256_preserved": "019eaffc818497c84b1ad76901a0a1f00c948595c5d77fb3d01c1dacb056f6a4"
+    }
+  ],
+  "diagnosis": "st_dev renumbered after host restart while directory inode remained. Legacy v1 has no recorded stable volume UUID and must not be rebound automatically.",
+  "repair_source": "264faa2b2db6aa717312cd1a984c15e01d2cbd04",
+  "repair": "Fresh v2 records use native volume/file/birth identity. V1 records retain their exact v1 schema/MAC/device-inode checks; no migration.",
+  "qualification_limit": "Current native lifecycle + simulated transient-device regression only. Actual post-reboot v2 and all required three-platform native/frozen qualification remain pending."
+}

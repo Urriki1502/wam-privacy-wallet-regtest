@@ -1,3 +1,51 @@
+# Latest persistence checkpoint — journal v2 stable native identity
+
+Source **264faa2b2db6aa717312cd1a984c15e01d2cbd04**. Official engineering lease
+was reacquired normally after the prior session/host exited; no lock deletion.
+Same PR #138 and feature branch, origin/main still 4bc6f658. 87 Q05 contracts PASS.
+
+Observed real post-restart gap: two preserved legacy v1 profiles record device
+16777233 but now have device 16777230, with the SAME inode. Host boot time is
+1793183156. See `docs/evidence/q05/native-mount-device-observation.json`.
+The old device/inode binding is fail-closed but cannot prove a legitimate
+persistent directory after mount renumbering. No legacy journal was modified.
+
+Fresh v2 journal identity uses macOS native volume UUID + file ID + birth time;
+Linux fstatvfs filesystem ID + statx inode/birth time; Windows native volume serial
++ file ID + creation FILETIME, all from guarded descriptors/handles. There is NO
+st_dev/path fallback. V1 records keep v1 schema/MAC/device-inode checks, append
+v1 on a valid same-mount reopen, and refuse changed binding. No auto migration,
+relabeling, custody/KDF/AEAD/vault change or PID authority is introduced.
+New tests prove stable identity despite simulated transient-device change,
+actual child-content change, wrong volume/file/birth refusal, unavailable native
+API refusal, strict v1 compatibility and mixed-schema-chain refusal.
+
+New signed macOS ARM64 native probes at this exact clean source PASS:
+- `docs/evidence/q05/native-identity-crash-264faa2.json`: genuine original owned
+  Core crash/recovery, same datadir and clean reopen, journal v2.
+- `docs/evidence/q05/native-identity-wallet-264faa2.json`: genuine Core + pinned
+  WSP wallet, wrong-password and duplicate refusal, public fixture funding,
+  native signature and real accepted submission before caller-result loss;
+  uncertain reservation/balance/history preserved across owner/Core reopen,
+  exactly one wallet submission, no automatic replay, journal v2.
+The receipts bind critical source-file hashes; no old profile or failed receipt
+was reused. Actual post-reboot v2 and all-OS native/frozen cases remain PENDING.
+Do NOT call the simulated device test or same-boot reopen a real reboot PASS.
+
+Prior published source 88f7ace completed all six workflow runs SUCCESS: macOS
+40647391379, Linux Q04/frozen 40647391496, Windows credential/native/frozen
+40647391362, Linux Q05 source 40647391452, Windows Core 40647391580, WSP 40647391493.
+These do not qualify changed v2 runtime. Push the combined source/evidence batch
+and inspect its own Windows/Linux native identity tests before broader work.
+
+Next: native interrupted checkpoint publication/runtime-ownership reconciliation
+without auto-deleting SQLite, forgetting reservations or advancing an unknown
+native anchor. Cross-process dirty-owner recovery, actual host reboot, normal
+packaged onboarding/GUI and three-platform Q05 qualification remain incomplete.
+All 37 canonical cases and G0–G7 PENDING, accepted=false; Q04 G6/G7 BLOCKED.
+
+---
+
 # Latest reservation checkpoint — real signed and uncertain native PASS
 
 Runtime summary source **49f7fec**, corrected probe/source **3436ab7082831b5cd4122ce7bd1e29fa1a58b88b**.
