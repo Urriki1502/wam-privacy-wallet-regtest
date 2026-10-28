@@ -12,6 +12,16 @@ from wam_regtest.rpc_contention import RpcContentionError
 
 
 class BusyReadinessContracts(unittest.TestCase):
+    def test_transport_unreachable_is_not_fabricated_busy_evidence(self):
+        from wam_regtest.rpc_contention import ContentionAwareRpc
+        from wam_regtest.external_core import ExternalAttachmentError
+        from unittest.mock import Mock
+        read=Mock(side_effect=ExternalAttachmentError('EXTERNAL_ATTACHMENT_RPC_UNREACHABLE'))
+        rpc=ContentionAwareRpc(read)
+        with self.assertRaises(ExternalAttachmentError):rpc.read('getblockcount',[])
+        self.assertEqual(read.call_count,1)
+        self.assertFalse(rpc.status()['busy'])
+
     def test_partial_transmission_or_no_real_rejection_is_not_ready(self):
         for complete,rejected in ((False,True),(True,False),(False,False)):
             sent=[threading.Event() for _ in range(6)];busy=threading.Event()

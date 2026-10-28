@@ -55,6 +55,13 @@ def probe_busy(fixture, *, gui=False):
                 'EXTERNAL_ATTACHMENT_RPC_NODE_BUSY','EXTERNAL_ATTACHMENT_RPC_UNREACHABLE',
                 'EXTERNAL_ATTACHMENT_RPC_FAILED','EXTERNAL_ATTACHMENT_RPC_AUTH_DENIED',
                 'EXTERNAL_ATTACHMENT_RPC_TRANSPORT_DENIED') else 'OTHER_FIXED_REFUSAL')
+            if code=='EXTERNAL_ATTACHMENT_RPC_UNREACHABLE':
+                cause=error.__context__
+                kind=type(cause).__name__ if type(cause) in (
+                    TimeoutError,ConnectionResetError,BrokenPipeError,ConnectionRefusedError,OSError) else 'OTHER'
+                print('Q04_TRANSPORT_DIAGNOSTIC '+json.dumps({'kind':kind,
+                    'elapsed_seconds':time.monotonic()-calls[-1],
+                    'attempt':len(calls),'attachment_503':len(busy)},sort_keys=True),file=sys.stderr)
             if error.args==('EXTERNAL_ATTACHMENT_RPC_NODE_BUSY',):busy.append(True)
             raise
     policy=BackoffPolicy(base_seconds=.1,max_seconds=.5,max_retries=3,jitter=.1)

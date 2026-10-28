@@ -76,7 +76,6 @@ class ContentionAwareRpc:
         'RPC_CORE_WARMUP',
         'RPC_NODE_BUSY',
         'EXTERNAL_ATTACHMENT_RPC_NODE_BUSY',
-        'EXTERNAL_ATTACHMENT_RPC_UNREACHABLE',
     ))
 
     def __init__(self, read_callable: Callable, policy: BackoffPolicy | None = None,

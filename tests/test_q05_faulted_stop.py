@@ -46,6 +46,8 @@ class FaultedOwnerContracts(unittest.TestCase):
             child.wait(timeout=5)
         self.addCleanup(cleanup)
         owner.process=child;owner._registered=True;owner._faulted=True
+        owner.journal.append('STARTING')
+        owner.journal.append('FAULT',child.pid)
         return child
 
     def test_original_popen_requires_fresh_native_and_chain_attestation_before_stop(self):

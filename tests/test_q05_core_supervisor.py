@@ -45,6 +45,9 @@ class SupervisorLifecycleUnit(unittest.TestCase):
 
     def runtime(self, owner):
         owner.process = Mock()
+        owner.process.pid = 12345
+        owner.journal.append('STARTING')
+        owner.journal.append('RUNNING',owner.process.pid)
         owner.process.poll.return_value = None
         owner.binding = Mock()
         owner.read = Mock()

@@ -47,6 +47,7 @@ def main():
         core_sha256={p.name: sha256(p.read_bytes()).hexdigest() for p in (node, cli)},
         source_files={p: sha256((source/p).read_bytes()).hexdigest() for p in (
             'src/wam_regtest/core_supervisor.py', 'src/wam_regtest/supervisor_protocol.py',
+            'src/wam_regtest/supervisor_journal.py',
             'src/wam_regtest/supervisor_client.py', 'scripts/probe_q05_macos_lifecycle.py')},
         observations=[], status='FAIL')
     owner = None

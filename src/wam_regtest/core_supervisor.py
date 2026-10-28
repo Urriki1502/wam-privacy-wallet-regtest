@@ -27,6 +27,7 @@ from .supervisor_protocol import (
     SupervisorProtocolError, _distinct,
 )
 from .supervisor_store import create_once, read_exact, exclusive_lease
+from .supervisor_journal import LifecycleJournal
 from .wsp_live import REGTEST_GENESIS
 
 PROFILE_SCHEMA = 'wam-fusion-owned-supervisor-profile/v1'
@@ -115,12 +116,14 @@ class CoreSupervisor:
         self._busy_until = 0
         self._faulted = False
         self._registered = False
+        fresh=False
         try:
             self.stack.enter_context(exclusive_lease(root))
             # Only a completely empty namespace may be initialized. Partial,
             # legacy or corrupt state stays untouched for explicit review.
             entries = {p.name for p in root.iterdir()} - {'supervisor.lock'}
             if not entries:
+                fresh=True
                 self.listener = _listener(0)
                 create_directory(self.directory)
                 with _ports() as (rpc, peer):
@@ -140,6 +143,10 @@ class CoreSupervisor:
             storage().validate_directory(self.directory)
             self._check_profile()
             self.guard = ReplayGuard(read_exact(root, 'supervisor.token', length=32))
+            self.journal=LifecycleJournal(root,self.profile,
+                read_exact(root,'supervisor.token',length=32),self.directory,fresh=fresh)
+            if self.journal.state!='CLEAN':
+                self._faulted=True;self.state='recovery-needed'
             if self.listener is None:
                 self.listener = _listener(self.profile['control_port'])
         except BaseException:
@@ -174,6 +181,9 @@ class CoreSupervisor:
                 or self.process is not None or self._faulted):
             raise ManagedCoreError('MANAGED_START_NOT_ALLOWED')
         port = self._check_profile()
+        self.journal.reserve_start()
+        if self.journal.state!='CLEAN':
+            raise ManagedCoreError('MANAGED_DIRTY_RECOVERY_REQUIRED')
         # Never adopt a listener or rewrite durable config to evade a conflict.
         with _listener(port):
             pass
@@ -184,6 +194,7 @@ class CoreSupervisor:
             env = {'PATH': '/usr/bin:/bin:/usr/sbin:/sbin',
                    'HOME': str(self.directory), 'LC_ALL': 'C'}
         self.state = 'starting'
+        self.journal.append('STARTING')
         try:
             self.process = subprocess.Popen(
                 [str(self.node), f'-datadir={self.directory}', '-daemon=0'],
@@ -216,6 +227,7 @@ class CoreSupervisor:
                                'getblockchaininfo'],timeout=min(5,max(.1,deadline-time.monotonic())))
                     self.read = ManagedReadRpc(self.core, self.directory,
                         authorized_readonly=True, binding=self.binding)
+                    self.journal.append('RUNNING',self.process.pid)
                     self.state = 'ready'
                     return
                 except RpcError as error:
@@ -233,12 +245,17 @@ class CoreSupervisor:
             self._faulted = True
             self.state = 'recovery-needed'
             self._record_failure('start',error)
+            try:self.journal.append('FAULT')
+            except (OSError,ValueError):pass
             raise
 
     def status(self):
         if self.process is None:
             return public_status(state=self.state)
         if self.process.poll() is not None:
+            if not self._faulted:
+                try:self.journal.append('FAULT',self.process.pid)
+                except (OSError,ValueError):pass
             self._faulted = True
             self.state = 'recovery-needed'
             if self.read is not None:
@@ -270,6 +287,7 @@ class CoreSupervisor:
             raise ManagedCoreError('MANAGED_STOP_NOT_ALLOWED')
         self._check_profile()
         self.binding._assert_image()
+        self.journal.append('STOPPING',self.process.pid)
         try:
             _read_cli([str(self.cli), f'-datadir={self.directory}', 'stop'])
             self.process.wait(timeout=20)
@@ -279,6 +297,7 @@ class CoreSupervisor:
             raise ManagedCoreError('MANAGED_SHUTDOWN_UNCERTAIN') from None
         if self.read is not None:
             self.read.close()
+        self.journal.append('CLEAN')
         unregister(self.directory)
         self._registered = False
         self.read = self.binding = self.process = None
@@ -302,6 +321,7 @@ class CoreSupervisor:
         # or a foreign PID-based mutation capability. It checks endpoint before
         # auth and attests REGTEST genesis/version/peers before stop.
         reauthenticate_owned(self.directory,authorized=True)
+        self.journal.append('STOPPING',self.process.pid)
         try:
             _read_cli([str(self.cli),f'-datadir={self.directory}','stop'])
             self.process.wait(timeout=20)
@@ -310,6 +330,7 @@ class CoreSupervisor:
             self._record_failure('recover-stop',error)
             raise ManagedCoreError('MANAGED_SHUTDOWN_UNCERTAIN') from None
         if self.read is not None:self.read.close()
+        self.journal.append('CLEAN')
         unregister(self.directory)
         self._registered=False
         self.read=self.binding=self.process=None

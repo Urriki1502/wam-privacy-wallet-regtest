@@ -18,6 +18,7 @@ class StartupContracts(unittest.TestCase):
         stack = ExitStack()
         self.addCleanup(stack.close)
         process = Mock(spec=subprocess.Popen)
+        process.pid=12345
         process.poll.return_value = None
         binding = Mock(spec=OwnedCoreBinding)
         probe = Mock()
@@ -75,8 +76,10 @@ class StartupContracts(unittest.TestCase):
         self.assertEqual(spawn.call_count, 1)
 
     def test_wrong_chain_auth_or_config_never_retried_as_warmup(self):
-        for code in ('RPC_GENESIS_DENIED', 'RPC_AUTHENTICATION_DENIED', 'RPC_CONFIG_CHANGED'):
+        for index,code in enumerate(('RPC_GENESIS_DENIED', 'RPC_AUTHENTICATION_DENIED', 'RPC_CONFIG_CHANGED')):
             with self.subTest(code=code):
+                self.root=self.root.parent/f'wam-fusion-core-{index+100:016x}'
+                self.create_private_directory(self.root)
                 owner = self.owner()
                 with ExitStack() as transient:
                     process = Mock();process.poll.return_value = None
