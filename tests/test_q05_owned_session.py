@@ -74,6 +74,8 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('LinuxX64Adapter',harness)
         self.assertIn('WindowsCredentialAnchor',root.joinpath('src/wam_regtest/custody.py').read_text())
         self.assertIn('APPROVED_LINUX_MANIFEST',harness)
+        self.assertIn('wam-fusion-core-',harness)
+        self.assertIn('private_temporary_directory',harness)
 
     def test_host_adapter_matches_this_os_and_refuses_foreign_linux_manifest_pin(self):
         from wam_regtest.q05_owned_lifecycle import (

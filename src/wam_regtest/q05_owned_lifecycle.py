@@ -18,7 +18,7 @@ import zipfile
 
 from wam_regtest.core import verified_core_paths
 from wam_regtest.core_supervisor import CoreSupervisor,ManagedCoreError
-from wam_regtest.custody import create_directory
+from wam_regtest.custody import create_directory,private_temporary_directory
 from wam_regtest.rpc_scope import identity
 from wam_regtest.wallet_session import WalletSession,WalletSessionError
 from wam_regtest.wsp_live import PINNED_WSP_COMMIT,_pinned_source
@@ -285,11 +285,14 @@ def _gui_lifecycle(session,record,adapter):
     record['scenarios']['native_gui']='PASS'
 
 
-def _positive_lifecycle(adapter,core,source,root,keychain,funded,record,gui):
+def _profile_name():
+    return f'wam-fusion-core-{secrets.token_hex(8)}'
+
+
+def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
     stage='CORE_START'
     owner=session=None
     try:
-        create_directory(root)
         owner=CoreSupervisor(root,core,authorized=True)
         owner.start(timeout=90)
         pid=assert_live_original(owner)
@@ -300,6 +303,7 @@ def _positive_lifecycle(adapter,core,source,root,keychain,funded,record,gui):
         record['observations'].append({'original_popen_owned':True,'core_pid':pid,
             'wamd_sha256':record.get('core_node_sha256')})
         stage='CREATE_OWNED_SESSION'
+        keychain=adapter.make_anchor(root)
         session=WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
                                          create=True,keychain=keychain)
         assert_live_original(owner)
@@ -398,10 +402,9 @@ def _positive_lifecycle(adapter,core,source,root,keychain,funded,record,gui):
         stop_owned(owner)
 
 
-def _fail_closed_dirty_runtime(core,source,root,keychain,record):
+def _fail_closed_dirty_runtime(adapter,core,source,root,record):
     owner=None
     try:
-        create_directory(root)
         owner=CoreSupervisor(root,core,authorized=True)
         owner.start(timeout=90)
         assert_live_original(owner)
@@ -409,7 +412,7 @@ def _fail_closed_dirty_runtime(core,source,root,keychain,record):
         sidecar.write_bytes(b'preserve-wal')
         try:
             WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
-                                     create=True,keychain=keychain)
+                                     create=True,keychain=adapter.make_anchor(root))
         except WalletSessionError as error:
             text=str(error)
             if 'EXISTING_RUNTIME' not in text and 'OWNED_OPEN' not in text:
@@ -425,11 +428,10 @@ def _fail_closed_dirty_runtime(core,source,root,keychain,record):
         stop_owned(owner)
 
 
-def _fail_closed_interrupted_publication(core,source,root,keychain,record):
+def _fail_closed_interrupted_publication(core,source,root,record):
     from wam_regtest.managed_wallet_checkpoint import publication_ambiguity
     owner=None
     try:
-        create_directory(root)
         owner=CoreSupervisor(root,core,authorized=True)
         owner.start(timeout=90)
         assert_live_original(owner)
@@ -447,15 +449,14 @@ def _fail_closed_interrupted_publication(core,source,root,keychain,record):
         stop_owned(owner)
 
 
-def _fail_closed_crash(core,source,root,keychain,record):
+def _fail_closed_crash(adapter,core,source,root,record):
     owner=None
     try:
-        create_directory(root)
         owner=CoreSupervisor(root,core,authorized=True)
         owner.start(timeout=90)
         assert_live_original(owner)
         session=WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
-                                         create=True,keychain=keychain)
+                                         create=True,keychain=adapter.make_anchor(root))
         session.lock();session=None
         process=owner.process
         process.kill()
@@ -510,6 +511,7 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
     record['linux_manifest_sha256']=(APPROVED_LINUX_MANIFEST
         if adapter.platform_id=='linux-x86_64' else None)
     stage='TRUST'
+    holder=None
     try:
         adapter.prepare_trust(core_dir,linux_manifest,linux_witness)
         node,cli,intake=verified_core_paths(core_dir);_pinned_source(wsp_source)
@@ -521,16 +523,20 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
             record['core_sha256']={node.name:intake.get('wamd_sha256'),
                                    cli.name:intake.get('wam_cli_sha256')}
         record['core_node_sha256']=intake.get('wamd_sha256')
-        keychain=adapter.make_anchor(root)
-        _positive_lifecycle(adapter,core_dir,wsp_source,root,keychain,funded,record,gui)
+        holder=private_temporary_directory(prefix='wam-q05-owned-')
+        base=Path(holder.name)
+        profile=base/_profile_name()
+        create_directory(profile)
+        _positive_lifecycle(adapter,core_dir,wsp_source,profile,funded,record,gui)
         if fail_closed:
             stage='FAIL_CLOSED'
-            parent=root.parent
-            token=secrets.token_hex(4)
-            _fail_closed_dirty_runtime(core_dir,wsp_source,parent/f'q05-dirty-{token}',keychain,record)
-            _fail_closed_interrupted_publication(core_dir,wsp_source,parent/f'q05-interrupt-{token}',keychain,record)
-            _fail_closed_crash(core_dir,wsp_source,parent/f'q05-crash-{token}',keychain,record)
-            _wrong_core_refused(core_dir,parent/f'q05-wrong-{token}',record)
+            dirty=base/_profile_name();create_directory(dirty)
+            _fail_closed_dirty_runtime(adapter,core_dir,wsp_source,dirty,record)
+            interrupted=base/_profile_name();create_directory(interrupted)
+            _fail_closed_interrupted_publication(core_dir,wsp_source,interrupted,record)
+            crashed=base/_profile_name();create_directory(crashed)
+            _fail_closed_crash(adapter,core_dir,wsp_source,crashed,record)
+            _wrong_core_refused(core_dir,base/_profile_name(),record)
         required=['authentic_core_startup','owned_session_create','encrypted_checkpoint',
                   'wallet_restore']
         if funded:
@@ -555,6 +561,8 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
             record['status']='BLOCKED'
     finally:
         adapter.teardown()
+        if holder is not None:
+            holder.cleanup()
         record['timestamp_utc']=datetime.now(timezone.utc).isoformat()
         with receipt.open('x') as out:
             json.dump(record,out,indent=2);out.write('\n')

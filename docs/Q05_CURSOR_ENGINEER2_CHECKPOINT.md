@@ -30,3 +30,10 @@ gh workflow run linux-experimental-regtest.yml --repo Urriki1502/wam-privacy-wal
 ```
 
 Inspect `head_sha` against the pushed commit. Do not reuse old receipts.
+
+Owner macOS dispatch `40788571264` ran `85d5c5c` (not this SHA). Job
+`q05-owned-session` FAIL: `SupervisorStorageError` at stage KEYCHAIN because
+`--root ${RUNNER_TEMP}/q05-owned-empty` is not `wam-fusion-core-[0-9a-f]{16}`
+and GitHub macOS temp carries inherited ACLs. Harness now allocates
+`private_temporary_directory` + a correctly named profile. Re-dispatch this
+HEAD.
