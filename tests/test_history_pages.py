@@ -104,6 +104,13 @@ class HistoryPagesContracts(unittest.TestCase):
         self.assertEqual(len(raw),GUI_HISTORY_LIMIT)
         self.assertEqual(raw[0][1],800-GUI_HISTORY_LIMIT)
 
+    def test_skip_newest_without_window_is_inconsistent(self):
+        rows=[_row(i,i+1,10) for i in range(3)]
+        def page(limit,offset):
+            return [dict(r) for r in rows[offset:offset+limit]]
+        with self.assertRaisesRegex(Exception,'HISTORY_INCONSISTENT'):
+            complete_history(page,len(rows),10,skip_newest=1)
+
     def test_complete_max_constant_matches_wsp_offset_plus_page(self):
         self.assertEqual(HISTORY_COMPLETE_MAX,1_000_000+HISTORY_PAGE_LIMIT)
 

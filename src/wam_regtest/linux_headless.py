@@ -10,6 +10,12 @@ from .wallet_session import WalletSession,WalletSessionError
 from .wallet_read import format_wam
 
 
+def history_view(snap):
+    return {'history_count':snap.history_count,'history_offset':snap.history_offset,
+            'history_complete':snap.history_complete,'receive_count':snap.receive_count,
+            'rows':[row.__dict__ for row in snap.history]}
+
+
 def passphrase(prompt):
     if not sys.stdin.isatty() or not sys.stderr.isatty():
         raise WalletSessionError('HEADLESS_PRIVATE_TERMINAL_REQUIRED')
@@ -82,12 +88,20 @@ def launch(core,datadir,source,mining,*,backup=None):
                 if not args:continue
                 command=args[0]
                 if command=='quit' and len(args)==1:break
-                if command in ('receive','balance','history','sync') and len(args)==1:
+                if command in ('receive','balance','sync') and len(args)==1:
                     snap=session.snapshot()
-                    if command=='receive':print(snap.receive_code)
-                    elif command=='history':
-                        print(json.dumps([row.__dict__ for row in snap.history],sort_keys=True))
+                    if command=='receive':
+                        print(snap.receive_code)
+                        if type(snap.receive_count) is int:
+                            print(str(snap.receive_count)+' confirmed credit record(s)')
                     else:print(f'Confirmed {format_wam(snap.confirmed_atoms)} WAM; height {snap.height}; UTXOs {snap.confirmed_utxos}')
+                elif command=='history' and len(args) in (1,2):
+                    offset=0
+                    if len(args)==2:
+                        if not args[1].isdigit() or int(args[1])<0:
+                            raise ValueError
+                        offset=int(args[1])
+                    print(json.dumps(history_view(session.snapshot(history_offset=offset)),sort_keys=True))
                 elif command=='prepare' and len(args)==4:show_review(frontend.prepare(*args[1:]))
                 elif command=='sign' and len(args)==1:
                     if frontend.review is None:raise ValueError

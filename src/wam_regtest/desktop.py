@@ -131,7 +131,7 @@ class RegtestWalletWindow(QMainWindow):
         shell=QHBoxLayout(base);shell.setContentsMargins(0,0,0,0);shell.setSpacing(0)
         sidebar=QFrame();sidebar.setObjectName('FusionSidebar');sidebar.setFixedWidth(214)
         side=QVBoxLayout(sidebar);side.setContentsMargins(18,26,18,20);side.setSpacing(20)
-        brand=QHBoxLayout();mark=QLabel();mark.setPixmap(QPixmap(str(brand_image())).scaled(44,44,Qt.AspectRatioMode.KeepAspectRatio,Qt.TransformationMode.SmoothTransformation));mark.setFixedSize(44,44);brand.addWidget(mark)
+        brand=QHBoxLayout();mark=QLabel();dpr=max(1.0,float(self.devicePixelRatioF()));logo=QPixmap(str(brand_image()));logo=logo.scaled(int(44*dpr),int(44*dpr),Qt.AspectRatioMode.KeepAspectRatio,Qt.TransformationMode.SmoothTransformation);logo.setDevicePixelRatio(dpr);mark.setPixmap(logo);mark.setFixedSize(44,44);brand.addWidget(mark)
         title=QVBoxLayout();title.addWidget(label('WAM','BrandTitle'));title.addWidget(label('FUSION 2.0','FusionKicker'));brand.addLayout(title);brand.addStretch();side.addLayout(brand)
         side.addWidget(label('WALLET WORKSPACE','FusionKicker'))
         self.navigation=QListWidget();self.navigation.setIconSize(__import__('PySide6.QtCore',fromlist=['QSize']).QSize(22,22))

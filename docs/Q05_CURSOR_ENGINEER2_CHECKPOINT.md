@@ -1,8 +1,12 @@
 # Engineer 2 checkpoint — owned-Core GUI attach (not Q-GATE)
 
-Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 remains
-isolated. Canonical ledger unchanged: 37 Q05 PENDING, `accepted=false`.
+Branch `cursor/q05-history-pagination-9c81` HEAD `fd63e5d1d68faac84833354e5a22f5bb0b513ca6`
+plus follow-up commits on this file. Codex Draft #138 remains isolated.
+Canonical ledger unchanged: 37 Q05 PENDING, `accepted=false`.
 No second PR, no merge, no mainnet.
+
+`gh workflow run` on this token: HTTP 403 Resource not accessible by
+integration (contents:read). No native/frozen CI on this SHA.
 
 ## Implemented (this milestone)
 
