@@ -15767,7 +15767,18 @@
             "Q04_BUSY_RETRY_UNPROVEN"
           ],
           "observation": "Retry failure; original logs lacked per-attempt transport diagnostic.",
-          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615788565"
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615788565",
+          "repair_evidence": {
+            "source_sha": "ef700da7ff8fe0a917452502436557314e15b9c1",
+            "workflow_run_id": 40645229982,
+            "native_job_id": 122673024761,
+            "contention_job_id": 122673024573,
+            "frozen_headless_job_id": 122673024621,
+            "frozen_desktop_job_id": 122673024655,
+            "receipt_path": "docs/evidence/q05/q04-repair-ef700da.json",
+            "scope": "Q04 regression recheck only; not integrated Q05 acceptance",
+            "status": "PASS"
+          }
         },
         {
           "source_sha": "3c40a1dd737816027f4d6606c6076aa502adbf79",
@@ -15781,7 +15792,18 @@
             "Q04_BUSY_RETRY_UNPROVEN"
           ],
           "observation": "Desktop: 3 actual attachment 503 replies and 1 transport-unreachable in 4 attempts. Transport-unreachable must not count as busy; corrected in 2850be6.",
-          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40617866635"
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40617866635",
+          "repair_evidence": {
+            "source_sha": "ef700da7ff8fe0a917452502436557314e15b9c1",
+            "workflow_run_id": 40645229982,
+            "native_job_id": 122673024761,
+            "contention_job_id": 122673024573,
+            "frozen_headless_job_id": 122673024621,
+            "frozen_desktop_job_id": 122673024655,
+            "receipt_path": "docs/evidence/q05/q04-repair-ef700da.json",
+            "scope": "Q04 regression recheck only; not integrated Q05 acceptance",
+            "status": "PASS"
+          }
         },
         {
           "source_sha": "55beb7e774641e554129de5f407dbe9a56b77ec5",
@@ -15795,7 +15817,18 @@
             "EXTERNAL_ATTACHMENT_RPC_UNREACHABLE"
           ],
           "observation": "Frozen headless: TimeoutError after 10.017 seconds on attempt 3, after 2 actual attachment 503s. Worker-dequeue/queue-saturation fixture race identified in upstream WorkQueue; 056d770 now requires active-worker log before filling queue. Fresh macOS native probe PASS; corrected Linux native/frozen requalification still required. Not classified infrastructure-only.",
-          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40643772393"
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40643772393",
+          "repair_evidence": {
+            "source_sha": "ef700da7ff8fe0a917452502436557314e15b9c1",
+            "workflow_run_id": 40645229982,
+            "native_job_id": 122673024761,
+            "contention_job_id": 122673024573,
+            "frozen_headless_job_id": 122673024621,
+            "frozen_desktop_job_id": 122673024655,
+            "receipt_path": "docs/evidence/q05/q04-repair-ef700da.json",
+            "scope": "Q04 regression recheck only; not integrated Q05 acceptance",
+            "status": "PASS"
+          }
         }
       ],
       "qualified_runtime_source_sha": "16a6b49d58af64c030cdc7fa6bcdeaf838474837",
@@ -17286,10 +17319,10 @@
           ],
           "local_requalification": {
             "status": "PASS",
-            "source_sha": "0620564f9f203f1c79142cb32848fa330cb54436",
-            "receipt_path": "docs/evidence/q05/native-preflight-0620564.json",
-            "receipt_sha256": "f1c62da77ce888afecb44d9140e57ae5ae72ff9f68569604805d5d658b430479",
-            "scope": "Local signed-Core start/status/disconnect/stop/normal owner release/reopen with pre-spawn binary verification. Source only, no wallet/scanner or frozen qualification."
+            "source_sha": "7eea2f710cb35ac3f769712131071bd9721a0f53",
+            "receipt_path": "docs/evidence/q05/native-custody-7eea2f7.json",
+            "receipt_sha256": "cc94a957e326257ca3bad5d0d6217171c7b1ea0dcdb8b36ce1bfd8d2d96453a2",
+            "scope": "Source-only signed Core lifecycle with fresh pre-Popen binary digest and native executable-custody verification. Four observations PASS; packaged wallet and all-OS acceptance remain unqualified."
           },
           "local_requalification_history": [
             {
@@ -17298,6 +17331,13 @@
               "receipt_path": "docs/evidence/q05/native-journal-2850be6.json",
               "receipt_sha256": "60dd04fe3e76c96784be0e9008e0eb97d1fd33fe96e23b005aaceb4a60996b7f",
               "scope": "Local signed-Core macOS start/status/disconnect/graceful stop/supervisor reopen with same profile/config/datadir and authenticated journal; supplemental, not workflow-native/frozen or full-case promotion."
+            },
+            {
+              "status": "PASS",
+              "source_sha": "0620564f9f203f1c79142cb32848fa330cb54436",
+              "receipt_path": "docs/evidence/q05/native-preflight-0620564.json",
+              "receipt_sha256": "f1c62da77ce888afecb44d9140e57ae5ae72ff9f68569604805d5d658b430479",
+              "scope": "Local signed-Core start/status/disconnect/stop/normal owner release/reopen with pre-spawn binary verification. Source only, no wallet/scanner or frozen qualification."
             }
           ]
         },
@@ -17366,11 +17406,20 @@
           },
           "local_requalification": {
             "status": "PASS",
-            "source_sha": "c8b812825c32eddbc6d314b9f564b687ffbb8f86",
-            "receipt_path": "docs/evidence/q05/native-core-crash-c8b8128.json",
-            "receipt_sha256": "3c42133c52ec61b6c601f11bc628ed66aecb4af5dddd4e2815f1d7583bea9c0c",
-            "scope": "Genuine disposable Core SIGKILL and explicit recovery by its retained original Popen owner only. Same profile/config/datadir, no height regression, graceful stop/clean reopen. Not supervisor-process crash, power loss, wallet/reservation or frozen proof."
-          }
+            "source_sha": "7c03988f9ee382dbde47474cccc4fb7ded6ad8ac",
+            "receipt_path": "docs/evidence/q05/native-core-crash-7c03988.json",
+            "receipt_sha256": "e1b970fe8a409db0d946e3d10495cf8e67b82198c31d75054b54c16f529bc8b1",
+            "scope": "Actual Core crash and retained-original-Popen explicit recovery after fixing prior-cycle PID-reuse authorization. Same original profile/config/datadir and no height regression; not supervisor-process crash/live orphan reattachment or wallet recovery."
+          },
+          "local_requalification_history": [
+            {
+              "status": "PASS",
+              "source_sha": "c8b812825c32eddbc6d314b9f564b687ffbb8f86",
+              "receipt_path": "docs/evidence/q05/native-core-crash-c8b8128.json",
+              "receipt_sha256": "3c42133c52ec61b6c601f11bc628ed66aecb4af5dddd4e2815f1d7583bea9c0c",
+              "scope": "Genuine disposable Core SIGKILL and explicit recovery by its retained original Popen owner only. Same profile/config/datadir, no height regression, graceful stop/clean reopen. Not supervisor-process crash, power loss, wallet/reservation or frozen proof."
+            }
+          ]
         },
         {
           "id": "Q05-REATTACH-MACOS",

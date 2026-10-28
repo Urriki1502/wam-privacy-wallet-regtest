@@ -1,3 +1,16 @@
+# Repair-source qualification update
+
+Linux source ef700da, run 40645229982: native Q04 122673024761, contention
+122673024573 and frozen headless 122673024621 / desktop 122673024655 all PASS.
+Both actual frozen receipts record worker-dequeue readiness and 4 genuine
+attachment 503 replies, bounded backoff, coalescing, successful recovery and
+write-no-retry. Desktop GUI coalescing PASS. See
+`docs/evidence/q05/q04-repair-ef700da.json`. Prior FAILs below remain history;
+old missing scheduling traces are not reconstructed. This resolves the repair
+recheck on this source, not new integrated Q05 qualification or future HEAD CI.
+
+---
+
 # Current disposition — 28 October 2026
 
 The previous STOP instructions below are historical and superseded by owner

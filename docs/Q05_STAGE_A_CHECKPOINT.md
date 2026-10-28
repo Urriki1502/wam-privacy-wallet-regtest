@@ -1,3 +1,48 @@
+# Work in progress: owner-local checkpoint adapter added
+
+Runtime commit `a87772b` adds `managed_wallet_checkpoint.py` and
+`scripts/probe_q05_wallet_checkpoint.py`. 78 Q05 unit/security contracts PASS.
+This is a direct owner-local create/reopen API, not a GUI/control-IPC endpoint.
+It preserves current vault envelopes, native anchor, pinned 32-byte Keyring and
+original Q03 owned scope; no funding/mining/spending. A native empty-wallet
+probe on a NEW profile/receipt with the pinned WSP and separate disposable
+Keychain is next. Do not claim continuity until that actual probe succeeds.
+Failure preserves protected vault/runtime residue for explicit reconciliation.
+Existing/runtime/sidecar or ambiguous create state is refused, never repaired.
+
+---
+
+# Latest checkpoint update — current runtime 7c03988, Q04 repair rechecked
+
+This update supersedes stale CI-pending statements below. Current local runtime
+`7c03988f9ee382dbde47474cccc4fb7ded6ad8ac` adds native executable custody before
+Popen and restricts recovery attestation to the current STARTING-delimited launch
+(PID-reuse negative regression). **70 Q05 tests PASS**; earlier full 151-test
+batch at 7eea2f7 PASS. Signed macOS native custody lifecycle at 7eea2f7 PASS
+(receipt SHA cc94a957e326257ca3bad5d0d6217171c7b1ea0dcdb8b36ce1bfd8d2d96453a2);
+actual original-Popen Core crash/recovery at 7c03988 PASS (receipt SHA
+e1b970fe8a409db0d946e3d10495cf8e67b82198c31d75054b54c16f529bc8b1).
+
+Q04 repair-source ef700da Linux run **40645229982**: native Q04 122673024761,
+contention 122673024573, frozen headless 122673024621 and frozen desktop
+122673024655 all PASS. Both frozen receipts independently record 4 actual
+attachment 503s, worker-dequeue readiness, backoff/coalescing/recovery/write
+refusal; GUI coalescing PASS on desktop. Full logs were read. See
+`docs/evidence/q05/q04-repair-ef700da.json`. Prior failures remain retained.
+No new integrated Q05/final-artifact acceptance is inferred from these Q04 jobs.
+New Q05 Linux source/native-storage workflow is separate from the unchanged
+Core-builder workflow to avoid rebuilding immutable Core for unit coverage;
+Windows native contract job now calls Q05 tests too. These additions still need
+actual OS CI results. Existing custody AST/model audit at ef700da PASS is only
+internal review; read `docs/Q05_INTERNAL_SECURITY_REVIEW.md` for scope and gaps.
+
+Next unit: narrow create-once native wallet/checkpoint adapter in the original
+owner process, no fixture funding, no IPC secrets, no vault/KDF migration. Keep
+supervisor-process-crash/live-orphan reattachment fail-closed and all 37 Q05
+cases PENDING. Same Draft PR/branch; standing owner authority remains active.
+
+---
+
 # Current Q05 checkpoint — 28 October 2026, autonomous authority active
 
 This section supersedes every STOP/one-retest instruction in the historical

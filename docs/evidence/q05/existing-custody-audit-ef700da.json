@@ -1,0 +1,38 @@
+{
+  "contracts": {
+    "backup_create_only_publication_and_fsync": true,
+    "both_core_hashes_independently_pinned": true,
+    "broadcast_anchor_precedes_submission": true,
+    "crash_model_invariants": true,
+    "exact_broadcast_review_before_submission": true,
+    "exact_sign_review_before_crypto": true,
+    "faults_on_crypto_or_submission_failure": true,
+    "live_inputs_before_sensitive_operations": true,
+    "lock_closes_keys_and_plaintext_runtime": true,
+    "model_mutation_sensitivity": true,
+    "sign_anchor_precedes_crypto": true,
+    "sign_broadcast_lease": true,
+    "source_mutation_sensitivity": true,
+    "stale_writer_anchor_comparison": true,
+    "uncertain_before_submission": true
+  },
+  "core_sha256": {
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+  },
+  "external_reviewer_approval": false,
+  "formal_verification_complete": false,
+  "model_crash_boundaries": 8,
+  "mutation_classes_detected": [
+    "signature_before_anchor",
+    "submission_before_anchor",
+    "forget_uncertain",
+    "replay_consent"
+  ],
+  "production_qualified": false,
+  "runtime_pass_flags_trusted": false,
+  "schema": "wam-regtest-independent-contracts/v1",
+  "second_builder_witness": false,
+  "status": "INDEPENDENT_WALLET_CONTRACTS_PASS",
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e"
+}
