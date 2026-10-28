@@ -82,17 +82,20 @@ def main():
     parser.add_argument('--fund-disposable-wallet',action='store_true')
     parser.add_argument('--reservation',choices=('none','signed','uncertain'),default='none')
     parser.add_argument('--interrupt-publication',action='store_true')
+    parser.add_argument('--recover-after-interruption',action='store_true')
     a=parser.parse_args();source=Path(__file__).resolve().parents[1]
     if (not a.confirm_disposable_regtest or platform.system()!='Darwin'
             or platform.machine()!='arm64' or a.root.exists() or a.root.is_symlink()
             or a.receipt.exists() or a.reservation!='none' and not a.fund_disposable_wallet
+            or a.recover_after_interruption and not a.interrupt_publication
             or subprocess.check_output(['git','status','--porcelain'],cwd=source)):
         raise SystemExit('Q05_WALLET_PROBE_SCOPE_DENIED')
     head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()
     node,cli,intake=verified_core_paths(a.core_dir);_pinned_source(a.wsp_source)
     record={'schema':'q05-wallet-checkpoint-native/v1','status':'FAIL',
         'wallet_fixture':'PUBLIC_FIXTURE_FUNDED' if a.fund_disposable_wallet else 'EMPTY',
-        'qualification_scope':'INTERRUPTED_PUBLICATION_SAFE_REFUSAL' if a.interrupt_publication else 'CLEAN_OWNER_REOPEN',
+        'qualification_scope':('EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY' if a.recover_after_interruption else
+            'INTERRUPTED_PUBLICATION_SAFE_REFUSAL' if a.interrupt_publication else 'CLEAN_OWNER_REOPEN'),
         'source_sha':head,'checkout_sha':head,'platform':'macos-arm64','frozen':False,
         'core_trust':'official-signed-v0.1.11','core_version':'v0.1.11',
         'core_sha256':{p.name:sha256(p.read_bytes()).hexdigest() for p in (node,cli)},
@@ -104,6 +107,7 @@ def main():
             'src/wam_regtest/core_supervisor.py','src/wam_regtest/supervisor_journal.py',
             'src/wam_regtest/supervisor_identity.py','src/wam_regtest/supervisor_store.py',
             'src/wam_regtest/supervisor_protocol.py','src/wam_regtest/managed_wallet_checkpoint.py',
+            'src/wam_regtest/wallet_recovery.py',
             'src/wam_regtest/vault.py','src/wam_regtest/wallet_session.py',
             'src/wam_regtest/rpc_scope.py','src/wam_regtest/json_rpc.py',
             'src/wam_regtest/cli_rpc.py','scripts/probe_q05_wallet_checkpoint.py')},
@@ -243,7 +247,29 @@ def main():
             record['observations'].append(interrupted_publication(owner,a.wsp_source,
                 password,keychain,initial))
             record['recovery_completed']=False
-        else:
+            if a.recover_after_interruption:
+                stage='EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY'
+                from wam_regtest.wallet_recovery import recover_checkpoint
+                original=[*(owner.directory/'wallet-vault').glob('snapshot-*.enc'),
+                          owner.root/'supervisor.wallet']
+                original.extend(p for suffix in ('','-journal','-wal','-shm')
+                    if (p:=owner.directory/('wallet-runtime.sqlite'+suffix)).exists())
+                preserved={p:sha256(p.read_bytes()).hexdigest() for p in original}
+                recovered=recover_checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
+                if (recovered['wallet_id']!=initial['wallet_id']
+                        or recovered['payment_code']!=initial['payment_code']
+                        or recovered['history_sha256']!=initial['history_sha256']
+                        or recovered['reservation_sha256']!=initial['reservation_sha256']
+                        or recovered['reserved_atoms']!=initial['reserved_atoms']
+                        or recovered['checkpoint'][0]!=initial['checkpoint'][0]+1
+                        or any(sha256(p.read_bytes()).hexdigest()!=digest for p,digest in preserved.items())):
+                    raise ValueError('Q05_EXPLICIT_RECOVERY_DIVERGED_OR_CHANGED_OLD_EVIDENCE')
+                initial=recovered;record['recovery_completed']=True
+                record['observations'].append({'explicit_same_wallet_checkpoint_recovery':True,
+                    'original_orphan_runtime_reference_preserved':True,
+                    'reservation_sha256':initial['reservation_sha256'],
+                    'native_anchored_generation':initial['checkpoint']})
+        if not a.interrupt_publication or a.recover_after_interruption:
             stage='CORE_OWNER_REOPEN'
             owner.shutdown();owner.close()
             owner=CoreSupervisor(a.root,a.core_dir,authorized=True);owner.start(timeout=30)

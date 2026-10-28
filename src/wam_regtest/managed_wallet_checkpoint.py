@@ -87,8 +87,10 @@ def _read_reference(owner):
         raise ManagedWalletError('MANAGED_WALLET_REFERENCE_UNVERIFIED') from None
 
 
-def _runtime(owner):
-    path=owner.directory/'wallet-runtime.sqlite'
+def _runtime(owner,name='wallet-runtime.sqlite'):
+    if type(name) is not str or not re.fullmatch(r'wallet-runtime(?:-recovery-[0-9a-f]{16})?\.sqlite',name):
+        raise ManagedWalletError('MANAGED_WALLET_RUNTIME_NAME_DENIED')
+    path=owner.directory/name
     if any(path.with_name(path.name+suffix).exists()
             or path.with_name(path.name+suffix).is_symlink()
             for suffix in ('','-journal','-wal','-shm')):
@@ -148,21 +150,26 @@ def checkpoint(owner,source,password,*,authorized=False,keychain=None,create=Fal
     from .wallet_session import WalletCoreCli
     from wam_sp.keystore import Keyring
     from wam_sp.scanner import Scanner
-    runtime=_runtime(owner);folder=owner.directory/'wallet-vault'
+    from .wallet_recovery import active_location,has_recovery_records,require_anchor_floor
+    floor=None
     if create:
+        runtime=_runtime(owner);folder=owner.directory/'wallet-vault'
         if (folder.exists() or folder.is_symlink()
                 or (owner.root/'supervisor.wallet').exists()
-                or (owner.root/'supervisor.wallet').is_symlink()):
+                or (owner.root/'supervisor.wallet').is_symlink() or has_recovery_records(owner)):
             raise ManagedWalletError('MANAGED_WALLET_EXISTS_OR_UNCERTAIN')
         wallet_id=secrets.token_hex(16)
     else:
         wallet_id=_read_reference(owner)
+        folder,runtime_name,floor=active_location(owner,wallet_id)
+        runtime=_runtime(owner,runtime_name)
         custody.storage().validate_directory(folder)
     ring=scanner=rpc=None
     try:
         rpc=WalletCoreCli(owner.cli,owner.directory);rpc.attest()
         anchor=custody.anchor(wallet_id,keychain)
         with anchor.lease():
+            require_anchor_floor(anchor.read(),floor)
             if create:
                 if anchor.read() is not None:
                     raise ManagedWalletError('MANAGED_WALLET_ANCHOR_EXISTS')
