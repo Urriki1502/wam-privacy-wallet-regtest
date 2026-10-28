@@ -1,0 +1,66 @@
+"""Shared complete-history paging; no Core and no native qualification."""
+from hashlib import sha256
+import sqlite3
+import tempfile
+import os
+import unittest
+
+from wam_regtest.history_pages import (
+    HISTORY_COMPLETE_MAX,HISTORY_PAGE_LIMIT,complete_history,sql_history_pages,_canonical)
+from wam_regtest.wallet_read import HistoryRow
+
+
+def _row(index,height,tip):
+    return {'confirmations':tip-height+1,'credit':index+1,'debit':0,
+            'height':height,'txid':f'{index:064x}'}
+
+
+class HistoryPagesContracts(unittest.TestCase):
+    def test_sql_pages_include_exactly_1000_and_1001(self):
+        path=tempfile.mkstemp(suffix='.sqlite')[1]
+        self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
+        db=sqlite3.connect(path,isolation_level=None)
+        self.addCleanup(db.close)
+        db.execute('CREATE TABLE history(txid TEXT PRIMARY KEY,height INTEGER NOT NULL,'
+                   'credit INTEGER NOT NULL,debit INTEGER NOT NULL)')
+        for count in (0,999,1000,1001,2500):
+            db.execute('DELETE FROM history')
+            db.executemany('INSERT INTO history VALUES(?,?,?,?)',
+                           [(f'{i:064x}',i+1,i+1,0) for i in range(count)])
+            db.execute('BEGIN IMMEDIATE')
+            raw=sql_history_pages(
+                db,10_000,
+                'SELECT txid,height,credit,debit FROM history '
+                'ORDER BY height DESC,txid LIMIT ? OFFSET ?')
+            db.execute('COMMIT')
+            self.assertEqual(len(raw),count)
+            if count:
+                self.assertEqual(raw[0][1],count)  # newest height first
+
+    def test_complete_history_collect_matches_canonical_fingerprint(self):
+        rows=[_row(i,i+1,500) for i in range(1001)]
+        def page(limit,offset):
+            return [dict(r) for r in rows[offset:offset+limit]]
+        count,digest,collected=complete_history(page,len(rows),500,collect=True)
+        self.assertEqual(count,1001)
+        self.assertEqual(collected,rows)
+        self.assertEqual(digest,sha256(_canonical(rows)).hexdigest())
+        newest=tuple(HistoryRow(r['txid'],r['height'],r['confirmations'],r['credit'],r['debit'])
+                     for r in reversed(collected))
+        self.assertEqual(newest[0].block_height,1001)
+
+    def test_complete_max_constant_matches_wsp_offset_plus_page(self):
+        self.assertEqual(HISTORY_COMPLETE_MAX,1_000_000+HISTORY_PAGE_LIMIT)
+
+    def test_session_and_read_paths_no_longer_use_truncated_history_apis(self):
+        from pathlib import Path
+        root=Path(__file__).resolve().parents[1]
+        session=(root/'src/wam_regtest/wallet_session.py').read_text(encoding='utf-8')
+        read=(root/'src/wam_regtest/wallet_read.py').read_text(encoding='utf-8')
+        windows=(root/'src/wam_regtest/windows_wallet_read.py').read_text(encoding='utf-8')
+        self.assertNotIn('wallet.history()',session)
+        self.assertIn('complete_history',session)
+        self.assertNotIn('LIMIT 100',read)
+        self.assertNotIn('LIMIT 100',windows)
+        self.assertIn('sql_history_pages',read)
+        self.assertIn('sql_history_pages',windows)

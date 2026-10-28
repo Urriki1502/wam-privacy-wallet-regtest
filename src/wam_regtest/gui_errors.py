@@ -26,6 +26,8 @@ _MESSAGES={
  'WALLET_BACKUP_DIRECTORY_DENIED':'Backup destination was refused. Choose a new private folder owned by this account, without links or inherited access.',
  'WALLET_LOCKED_OR_FAULTED':'Wallet is locked or faulted. Balances are hidden and sensitive operations are unavailable; reservations remain protected.',
  'WALLET_SYNC_UNVERIFIED':'Live REGTEST synchronization could not be verified. Balances are hidden. Verify the local node and use Sync again; do not reset custody.',
+ 'WALLET_HISTORY_INCONSISTENT':'Confirmed history pages do not form one complete snapshot. Balances are hidden. Do not treat a truncated list as the wallet; verify the local node and latest checkpoint.',
+ 'WALLET_HISTORY_INCOMPLETE':'Confirmed history exceeds the readable WSP page range. Balances are hidden. Do not silently omit older records.',
  'WALLET_OPERATION_DENIED_STATE_RETAINED':'Operation could not complete safely. Wallet state and reservations are retained. Verify the live chain and latest checkpoint; do not reset custody.',
 }
 

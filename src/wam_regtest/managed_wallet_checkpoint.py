@@ -13,15 +13,13 @@ import secrets
 import subprocess
 
 from . import custody
+from .history_pages import HISTORY_OFFSET_MAX,HISTORY_PAGE_LIMIT
+from .history_pages import complete_history
 from .supervisor_protocol import _distinct
 from .supervisor_store import create_once,read_exact
 from .wsp_live import PINNED_WSP_COMMIT,REGTEST_GENESIS,_pinned_source
 
 SCHEMA='wam-q05-native-wallet-reference/v1'
-# Pinned WSP Wallet.history() allows 1..1000 rows and offset 0..1_000_000.
-# Each public history() call opens its own BEGIN IMMEDIATE; pages must share one.
-HISTORY_PAGE_LIMIT=1000
-HISTORY_OFFSET_MAX=1_000_000
 
 
 class ManagedWalletError(ValueError):pass
@@ -118,45 +116,18 @@ def _history_page(wallet,limit,offset):
     return page
 
 
-def _fingerprint_history(wallet,height):
+class _HistoryDenied(ManagedWalletError):
+    def __init__(self,code):
+        super().__init__('MANAGED_WALLET_'+code)
+
+
+def _fingerprint_history(wallet,height,*,collect=False):
     """Hash every history row in the caller's SQLite transaction; never truncate."""
     declared=wallet.db.execute('SELECT count(*) FROM history').fetchone()[0]
-    if type(declared) is not int or declared<0:
-        raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCONSISTENT')
-    if declared>HISTORY_OFFSET_MAX+HISTORY_PAGE_LIMIT:
-        raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCOMPLETE')
-    digest=sha256(b'[');seen=0;offset=0;previous=None
-    while True:
-        if offset>HISTORY_OFFSET_MAX:
-            raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCOMPLETE')
-        page=_history_page(wallet,HISTORY_PAGE_LIMIT,offset)
-        if not page:
-            break
-        for row in page:
-            if type(row) is not dict:
-                raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCONSISTENT')
-            txid,row_height=row.get('txid'),row.get('height')
-            if (type(txid) is not str or not re.fullmatch('[0-9a-f]{64}',txid)
-                    or type(row_height) is not int or row_height<1):
-                raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCONSISTENT')
-            order=(row_height,txid)
-            if previous is not None and order<=previous:
-                raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCONSISTENT')
-            expected=height-row_height+1
-            if row.get('confirmations')!=expected:
-                raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCONSISTENT')
-            if seen:
-                digest.update(b',')
-            digest.update(_canonical(row));seen+=1;previous=order
-            if seen>declared:
-                raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCONSISTENT')
-        if len(page)<HISTORY_PAGE_LIMIT:
-            break
-        offset+=len(page)
-    digest.update(b']')
-    if seen!=declared:
-        raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCONSISTENT')
-    return seen,digest.hexdigest()
+    count,digest,rows=complete_history(
+        lambda limit,offset:_history_page(wallet,limit,offset),
+        declared,height,collect=collect,error=_HistoryDenied)
+    return (count,digest,rows) if collect else (count,digest)
 
 
 def _locked_observation(ring,scanner,rpc,vault,wallet):

@@ -16,6 +16,11 @@ class ErrorPrivacy(unittest.TestCase):
   code=operation_error('prepare',ValueError('INSUFFICIENT_SINGLE_CLUSTER_FUNDS'))
   self.assertIn(code,INPUT_ERRORS)
   self.assertNotIn(operation_error('broadcast',ValueError('INSUFFICIENT_SINGLE_CLUSTER_FUNDS')),INPUT_ERRORS)
+ def test_history_snapshot_failures_are_public_and_not_generic(self):
+  from wam_regtest.wallet_session import WalletSessionError
+  for code in ('WALLET_HISTORY_INCONSISTENT','WALLET_HISTORY_INCOMPLETE'):
+   self.assertEqual(operation_error('sync',WalletSessionError(code)),code)
+   self.assertNotIn('traceback',error_text(code).lower())
  def test_unknown_long_or_non_string_codes_have_constant_fallback(self):
   fallback=error_text('UNKNOWN')
   for code in (None,1,object(),'x'*10000,'/private/user/wallet.sqlite'):

@@ -9,6 +9,7 @@ from hashlib import sha256
 import re
 from pathlib import Path
 
+from .history_pages import sql_history_pages
 from .wallet_read import WalletReadSnapshot, HistoryRow
 from .wsp_live import _pinned_source, PINNED_WSP_COMMIT, REGTEST_GENESIS
 from .windows_wsp_regtest import WindowsWspCoreRpc
@@ -65,19 +66,14 @@ def read_native_windows_wallet(core: Path, cli: Path, datadir: Path, port: int,
                 if type(n) is not int or not 0 < n <= 22_000_000 * 100_000_000:
                     raise WindowsWalletReadError("WIN_READ_AMOUNT_DENIED")
                 amounts.append(n)
-            history = []
-            for row in scanner.store.db.execute(
-                "SELECT txid,height,credit,debit FROM history "
-                "ORDER BY height DESC,txid LIMIT 100"
-            ):
-                txid, block, credit, debit = row
-                if (type(txid) is not str or not _HASH.fullmatch(txid)
-                        or type(block) is not int or not 1 <= block <= tip_height
-                        or type(credit) is not int or type(debit) is not int
-                        or not 0 <= credit <= 22_000_000 * 100_000_000
-                        or not 0 <= debit <= 22_000_000 * 100_000_000):
-                    raise WindowsWalletReadError("WIN_READ_HISTORY_DENIED")
-                history.append(HistoryRow(txid, block, tip_height-block+1, credit, debit))
+            with scanner.store.transaction():
+                raw=sql_history_pages(
+                    scanner.store.db,tip_height,
+                    "SELECT txid,height,credit,debit FROM history "
+                    "ORDER BY height DESC,txid LIMIT ? OFFSET ?",
+                    error=WindowsWalletReadError,code="WIN_READ_HISTORY_DENIED")
+            history=tuple(HistoryRow(txid,block,conf,credit,debit)
+                          for txid,block,credit,debit,conf in raw)
             if rpc.call("getblockcount") != tip_height or rpc.call("getbestblockhash") != tip_hash:
                 raise WindowsWalletReadError("WIN_READ_CHAIN_CHANGED_DENIED")
             if rpc._call("getconnectioncount", []) != 0:

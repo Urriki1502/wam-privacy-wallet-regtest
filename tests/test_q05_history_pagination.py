@@ -270,6 +270,19 @@ class HistoryPaginationContracts(unittest.TestCase):
         self.assertNotEqual(_observe(rows)['history_sha256'],
                             _observe(other)['history_sha256'])
 
+    def test_exactly_complete_max_records_do_not_raise_after_last_full_page(self):
+        tip=2_000_000
+        count=module.HISTORY_OFFSET_MAX+module.HISTORY_PAGE_LIMIT
+        seen,digest=module._fingerprint_history(_GeneratedWallet(count,tip),tip)
+        self.assertEqual(seen,count)
+        self.assertEqual(len(digest),64)
+
+    def test_one_past_complete_max_is_incomplete(self):
+        tip=2_000_000
+        count=module.HISTORY_OFFSET_MAX+module.HISTORY_PAGE_LIMIT+1
+        with self.assertRaisesRegex(module.ManagedWalletError,'HISTORY_INCOMPLETE'):
+            module._fingerprint_history(_GeneratedWallet(count,tip),tip)
+
     def test_offset_ceiling_refuses_unreadable_tail(self):
         store=FakeStore([])
         wallet=FakeWallet(store)
@@ -357,6 +370,25 @@ class HistoryPaginationContracts(unittest.TestCase):
         self.assertTrue(done.wait(5));thread.join(5)
         self.assertEqual(error,[])
         self.assertEqual(db.execute('SELECT count(*) FROM history').fetchone()[0],1501)
+
+
+class _GeneratedWallet:
+    def __init__(self,count,tip):
+        self.count=count;self.tip=tip;self.db=self
+
+    def execute(self,sql,params=None):
+        if sql=='SELECT count(*) FROM history':
+            return FakeCursor(((self.count,),))
+        raise AssertionError(sql)
+
+    def _history(self,limit,offset):
+        if (type(limit) is not int or not 1<=limit<=1000
+                or type(offset) is not int or not 0<=offset<=1_000_000):
+            raise ValueError('HISTORY_PAGE')
+        end=min(self.count,offset+limit)
+        if offset>=self.count:
+            return []
+        return [_row(i,i+1,self.tip) for i in range(offset,end)]
 
 
 class _SqliteWallet:

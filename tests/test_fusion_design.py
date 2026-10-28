@@ -56,6 +56,14 @@ class FusionDesignContracts(unittest.TestCase):
             ):
                 activity_by_block(verified_snapshot(synthetic=synthetic, mainnet=mainnet))
 
+    def test_complete_history_beyond_legacy_page_still_aggregates(self):
+        from dataclasses import replace
+        rows=tuple(HistoryRow(f'{i:064x}',90+i,16-i,100,0) for i in range(16))
+        chart=activity_by_block(replace(verified_snapshot(),history=rows))
+        self.assertEqual(len(chart),14)
+        self.assertEqual(chart[0][0],92)
+        self.assertEqual(chart[-1][0],105)
+
     def test_unconfirmed_rows_cannot_impersonate_verified_chain(self):
         snap = verified_snapshot()
         from dataclasses import replace

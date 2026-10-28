@@ -17,12 +17,18 @@ from wam_regtest import custody
 from wam_regtest.core import verified_core_paths
 from wam_regtest.telemetry import increment
 from wam_regtest.wsp_live import LiveCoreReadOnlyCli, RealWspScanError, _pinned_source, _public_fixture_payment
+from wam_regtest.history_pages import complete_history
 from wam_regtest.vault import CheckpointVault, KeychainAnchor
 from wam_regtest.wallet_read import HistoryRow, WalletReadSnapshot
 
 
 class WalletSessionError(ValueError):
     pass
+
+
+class _SessionHistoryDenied(WalletSessionError):
+    def __init__(self,code):
+        super().__init__('WALLET_'+code)
 
 
 @dataclass(frozen=True)
@@ -279,12 +285,27 @@ class WalletSession:
             if result.blocks or result.rollback:
                 self._save()
             wallet = Wallet(self.scanner)
-            balance = wallet.balance()
+            try:
+                with self.scanner.store.transaction():
+                    if self.scanner.store.tip()!=tip:
+                        raise WalletSessionError("WALLET_CHAIN_CHANGED_DENIED")
+                    balance=wallet._balance(1)
+                    utxos=len(self.scanner.coins())
+                    declared=wallet.db.execute('SELECT count(*) FROM history').fetchone()[0]
+                    def page(limit,offset):
+                        try:
+                            return wallet._history(limit,offset)
+                        except ValueError:
+                            raise _SessionHistoryDenied('HISTORY_INCONSISTENT') from None
+                    _count,_digest,rows=complete_history(
+                        page,declared,tip[0],collect=True,error=_SessionHistoryDenied)
+            except _SessionHistoryDenied as error:
+                raise WalletSessionError(error.args[0]) from None
             history = tuple(HistoryRow(r["txid"],r["height"],r["confirmations"],r["credit"],r["debit"])
-                            for r in reversed(wallet.history()))
+                            for r in reversed(rows))
             return WalletReadSnapshot(
                 "regtest",tip[0],tip[1],self.ring.accounts()[-1].payment_code(),
-                balance["confirmed_atoms"],len(self.scanner.coins()),history,
+                balance["confirmed_atoms"],utxos,history,
                 self._ensure_core_identity()[1]["wamd_sha256"],
                 signer_allowed=True,broadcast_allowed=True,
             )
@@ -394,12 +415,16 @@ class WalletSession:
                     or not hmac.compare_digest(password,self._password)):
                 raise WalletSessionError("WALLET_DISCLOSURE_REAUTH_CONSENT_REQUIRED")
             self.snapshot()  # Facts belong to live validated local WSP history.
-            rows=[row for row in Wallet(self.scanner).history() if row['txid']==txid]
-            if len(rows)!=1:
+            if type(txid) is not str or not re.fullmatch('[0-9a-f]{64}',txid):
                 raise WalletSessionError("WALLET_DISCLOSURE_LOCAL_RECORD_REQUIRED")
-            row=rows[0]
-            fact={'txid':row['txid'],'block_height':row['height'],
-                  'credit_atoms':row['credit'],'debit_atoms':row['debit']}
+            with self.scanner.store.transaction():
+                found=Wallet(self.scanner).db.execute(
+                    'SELECT txid,height,credit,debit FROM history WHERE txid=?',(txid,)).fetchall()
+            if len(found)!=1:
+                raise WalletSessionError("WALLET_DISCLOSURE_LOCAL_RECORD_REQUIRED")
+            row=found[0]
+            fact={'txid':row[0],'block_height':row[1],
+                  'credit_atoms':row[2],'debit_atoms':row[3]}
             if self._disclosure_gate is None:
                 self._disclosure_gate=LocalDisclosureGate(self.vault.anchor.wallet_id)
             anchor=self.vault.anchor.read()
