@@ -1,5 +1,6 @@
 """Real native journal storage, mocked Core; no platform acceptance claim."""
 import json
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -53,7 +54,15 @@ class JournalContracts(unittest.TestCase):
                 LifecycleJournal(self.root,profile,secret,owner.directory)
 
     def test_changed_datadir_identity_refuses_even_same_config(self):
-        owner=self.owner();owner.directory.rename(self.root/'preserved-chain')
+        owner=self.owner()
+        if sys.platform=='win32':
+            # Native no-delete-share guards prevent the POSIX-style live
+            # rename attack. Prove that first, then exercise durable identity
+            # checking after normal owner/lease closure permits replacement.
+            with self.assertRaises(PermissionError):
+                owner.directory.rename(self.root/'preserved-chain')
+            owner.close()
+        owner.directory.rename(self.root/'preserved-chain')
         self.create_private_directory(owner.directory)
         with self.assertRaises(JournalError):owner.journal.reserve_start()
 
