@@ -155,3 +155,16 @@ Source ABI references: Darwin SDK sys/attr.h ATTR_VOL_UUID/ATTR_CMN_FILEID/
 ATTR_CMN_CRTIME; Linux v6.8 include/uapi/linux/stat.h (256-byte statx ABI,
 INO/BTIME masks); existing Win32 INFO metadata wrapper. Native tests still need
 all target OS. A real v2 reboot and full-OS snapshot rollback are not proven.
+
+
+## Interrupted publication safety (a77a78e)
+
+Real encrypted native publication/fsync is executed, then a typed controlled
+fault is injected before anchor advancement. The probe requires the actual
+fault context (other failures cannot PASS), unchanged native anchor/reference/
+old ciphertext, preserved orphan and runtime, and refusal on the next open.
+It runs after a genuinely signed/accepted-but-caller-uncertain disposable wallet
+transaction; no extra submission occurs. This is a narrow safety-negative
+PASS, not positive recovery, physical failure, independent review or Q05 case
+promotion. Recovery must preserve the exact native-anchor authority and all
+signed/uncertain reservations; an unknown runtime/orphan is never a cleanup cue.

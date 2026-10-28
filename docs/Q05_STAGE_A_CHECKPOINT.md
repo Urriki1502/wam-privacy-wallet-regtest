@@ -1,3 +1,42 @@
+# Latest publication-safety checkpoint — exact recovery still incomplete
+
+Probe source a77a78e: `--interrupt-publication` deliberately cuts AFTER real
+native encrypted create-only publication/fsync and BEFORE anchor advancement.
+Actual signed-Core/pinned-WSP uncertain-wallet probe PASS for SAFE REFUSAL ONLY:
+`docs/evidence/q05/interrupted-publication-a77a78e.json`. Native anchor, old
+ciphertexts/reference and prior durable uncertainty remain unchanged; orphan
+ciphertext and ambiguous runtime are preserved. A second open refuses before
+wallet keys/balance. Core shuts down normally. `recovery_completed=false`;
+this is NOT successful interrupted-write recovery, true process/power loss or
+packaged acceptance. No unknown SQLite/lock/ciphertext is removed or adopted.
+Runtime files match their literal source-file digests; a Windows test-only path
+edit was pending while this source-only probe completed. No runtime file changed.
+
+Source d6a3acf Linux Q05 native/source job PASS (87 tests). Windows run
+40683047974 / job 122798348528 had one test ERROR: the new scanner-method test
+used POSIX /unused paths, which are not fully absolute Windows paths. Constructor
+correctly refused scope before the intended method-denial check. Corrected test
+uses its absolute fixture roots and still requires getrawmempool denial before
+sending. Native volume/file/birth tests themselves passed on that Windows run.
+Full log retained outside checkout; failure summary
+`docs/evidence/q05/windows-fixture-path-d6a3acf-failure.json`. Recheck the corrected
+HEAD; do not relabel the failed whole job PASS or borrow old frozen qualification.
+
+Before this test-only correction: 177 targeted local tests PASS at journal-v2
+runtime (87 Q05 + 90 unchanged contracts). Canonical cases remain 37 PENDING,
+G0–G7 PENDING, accepted=false; Q04 G6/G7 BLOCKED unchanged. Current owner lease
+is a normal acquired official hold, not an old lock stolen after restart.
+
+Next unit must start from a reviewed recovery transaction model: native anchor
+and its exact ciphertext stay authoritative, signed/uncertain locks cannot be
+forgotten/replayed, incomplete reference publication must deny, old/orphan
+containers and unknown runtimes must be preserved. No newer-filename/password
+heuristic, default new-wallet path, unverified Core adoption or opaque anchor
+advance is authorized by a safety-negative PASS. Positive cross-process/host
+recovery, normal packaged GUI, all-OS native/frozen and external gates remain open.
+
+---
+
 # Latest persistence checkpoint — journal v2 stable native identity
 
 Source **264faa2b2db6aa717312cd1a984c15e01d2cbd04**. Official engineering lease

@@ -17534,7 +17534,19 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "Q05_ENGINEER",
+            "missing_evidence": "Positive explicit recovery/reconciliation after interrupted publication is not designed/qualified; no old-state fallback, unknown SQLite deletion or unauthorized native-anchor advance is permitted.",
+            "next_action": "Design and model exact native-anchor-authoritative recovery, preserve original/orphan evidence, prove signed/uncertain monotonicity, then implement/retest within same PR."
+          },
+          "local_negative_evidence": {
+            "status": "PASS",
+            "source_sha": "a77a78e89f5dfe0859e40686fdf9b9d06e017968",
+            "receipt_path": "docs/evidence/q05/interrupted-publication-a77a78e.json",
+            "receipt_sha256": "f4014577be1d71de2bd1b1ac07a3a79849597acffabe31f52fc5c3fda046c1f3",
+            "scope": "Genuine durable encrypted publication then controlled exception before native-anchor advance. Existing ciphertext/anchor/reference and irreversible uncertainty remain protected; ambiguous runtime/orphan preserved and next API open denied. This proves safety refusal ONLY, not successful interrupted-write recovery or physical power loss.",
+            "recovery_completed": false
+          }
         },
         {
           "id": "Q05-CONCURRENT-OWNER-MACOS",
@@ -18028,7 +18040,20 @@
         }
       ],
       "engineering_status": "STAGE_A_B_FOUNDATION_AND_OWNER_LOCAL_CHECKPOINT_SUPPLEMENTAL_VERIFIED",
-      "scope_note": "All 37 canonical cases remain PENDING, accepted=false. Local signed macOS Core lifecycle and retained-original-owner crash recovery are supplemental only; full managed wallet, supervisor-crash reattachment, scanner/vault continuity and three-OS native/frozen qualification remain incomplete. Standing owner authorization permits bounded documented-fix engineering in Draft PR #138; original FAIL history is retained."
+      "scope_note": "All 37 canonical cases remain PENDING, accepted=false. Local signed macOS Core lifecycle and retained-original-owner crash recovery are supplemental only; full managed wallet, supervisor-crash reattachment, scanner/vault continuity and three-OS native/frozen qualification remain incomplete. Standing owner authorization permits bounded documented-fix engineering in Draft PR #138; original FAIL history is retained.",
+      "failure_history": [
+        {
+          "source_sha": "d6a3acfdd80076d20aaca01e0eaab653255ddcbb",
+          "workflow_run_id": 40683047974,
+          "job_id": 122798348528,
+          "status": "FAIL",
+          "scope": "Q05 native source/storage fixture",
+          "test": "test_scanner_client_never_expands_for_mempool_probe_introspection",
+          "observed_failure": "Unix-only /unused paths are not fully absolute Windows Paths, so constructor correctly refused WSP_LIVE_CLI_SCOPE_DENIED before method-denial assertion.",
+          "repair": "Use absolute fixture self.core/self.root paths; preserve constructor and method guards; no skip.",
+          "requalification": "PENDING corrected exact-HEAD Windows CI"
+        }
+      ]
     },
     {
       "id": "Q06",

@@ -88,7 +88,7 @@ class WalletCheckpointContracts(unittest.TestCase):
     def test_scanner_client_never_expands_for_mempool_probe_introspection(self):
         from wam_regtest.wallet_session import WalletCoreCli
         from wam_regtest.wsp_live import RealWspScanError,REGTEST_GENESIS
-        client=WalletCoreCli(Path('/unused/cli'),Path('/unused/profile'))
+        client=WalletCoreCli(self.core/'wam-cli',self.root/'chain')
         client._genesis=REGTEST_GENESIS
         with patch.object(WalletCoreCli,'_call') as send:
             with self.assertRaisesRegex(RealWspScanError,'WSP_LIVE_METHOD_DENIED'):

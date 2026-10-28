@@ -1,0 +1,11 @@
+{
+  "source_sha": "d6a3acfdd80076d20aaca01e0eaab653255ddcbb",
+  "workflow_run_id": 40683047974,
+  "job_id": 122798348528,
+  "status": "FAIL",
+  "scope": "Q05 native source/storage fixture",
+  "test": "test_scanner_client_never_expands_for_mempool_probe_introspection",
+  "observed_failure": "Unix-only /unused paths are not fully absolute Windows Paths, so constructor correctly refused WSP_LIVE_CLI_SCOPE_DENIED before method-denial assertion.",
+  "repair": "Use absolute fixture self.core/self.root paths; preserve constructor and method guards; no skip.",
+  "requalification": "PENDING corrected exact-HEAD Windows CI"
+}
