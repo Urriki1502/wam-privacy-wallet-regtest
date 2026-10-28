@@ -1,6 +1,7 @@
-"""Bounded EMPTY-wallet create/reopen on a fresh signed macOS REGTEST owner.
+"""Bounded wallet create/reopen on a fresh signed macOS REGTEST owner.
 
-Uses a new disposable Keychain only. No funding/mining/spending, existing wallet,
+Uses a new disposable Keychain only. Optional explicitly requested public
+fixture funding is probe-only, never product onboarding. No existing wallet,
 GUI, default Keychain changes, control-IPC secrets or full acceptance claims.
 """
 import argparse
@@ -11,6 +12,7 @@ import json
 from pathlib import Path
 import platform
 import subprocess
+from types import SimpleNamespace
 
 from wam_regtest.core import verified_core_paths
 from wam_regtest.core_supervisor import CoreSupervisor
@@ -26,6 +28,7 @@ def main():
     parser.add_argument('--root',required=True,type=Path)
     parser.add_argument('--receipt',required=True,type=Path)
     parser.add_argument('--confirm-disposable-regtest',action='store_true')
+    parser.add_argument('--fund-disposable-wallet',action='store_true')
     a=parser.parse_args();source=Path(__file__).resolve().parents[1]
     if (not a.confirm_disposable_regtest or platform.system()!='Darwin'
             or platform.machine()!='arm64' or a.root.exists() or a.root.is_symlink()
@@ -42,7 +45,9 @@ def main():
         'python_version':platform.python_version(),
         'dependencies':{p:importlib.metadata.version(p) for p in ('coincurve','cryptography')},
         'adapter_sha256':sha256((source/'src/wam_regtest/managed_wallet_checkpoint.py').read_bytes()).hexdigest(),
-        'synthetic_rpc':False,'funding_or_mining':False,'signing_or_broadcast':False,
+        'synthetic_rpc':False,'funding_or_mining':a.fund_disposable_wallet,
+        'wallet_signing_or_broadcast':False,
+        'public_fixture_signature_and_broadcast':a.fund_disposable_wallet,
         'physical_device_acceptance':False,'mainnet_allowed':False,'observations':[]}
     owner=None;stage='KEYCHAIN'
     try:
@@ -73,6 +78,22 @@ def main():
             if error.args!=('MANAGED_WALLET_EXISTS_OR_UNCERTAIN',):raise
         if sha256(first.read_bytes()).hexdigest()!=first_digest:
             raise ValueError('Q05_DUPLICATE_MUTATED_VAULT')
+        if a.fund_disposable_wallet:
+            stage='PUBLIC_DISPOSABLE_FIXTURE_FUNDING'
+            from wam_regtest.wallet_session import WalletCoreCli
+            from wam_regtest.wsp_live import _public_fixture_payment,public_regtest_mining_address
+            rpc=WalletCoreCli(owner.cli,owner.directory);rpc.attest()
+            address=public_regtest_mining_address(a.wsp_source)
+            rpc._call('generatetoaddress',['101',address])
+            txid,atoms,height=_public_fixture_payment(rpc,
+                SimpleNamespace(payment_code=lambda:initial['payment_code']),address)
+            if getattr(rpc,'_transport',None) is not None:rpc._transport.close()
+            initial=checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
+            if (initial['confirmed_atoms']!=atoms or initial['height']!=height
+                    or initial['history_count']!=1):raise ValueError('Q05_FUNDED_SCAN_DENIED')
+            record['observations'].append({'real_fixture_payment_txid':txid,
+                'height':height,'confirmed_atoms':atoms,'history_count':1,
+                'history_sha256':initial['history_sha256'],'wallet_signing_or_broadcast':False})
         stage='CORE_OWNER_REOPEN'
         owner.shutdown();owner.close()
         owner=CoreSupervisor(a.root,a.core_dir,authorized=True);owner.start(timeout=30)
@@ -81,13 +102,17 @@ def main():
         if (restored['wallet_id']!=initial['wallet_id']
                 or restored['payment_code']!=initial['payment_code']
                 or restored['tip']!=initial['tip'] or restored['height']!=initial['height']
-                or restored['confirmed_atoms']!=0 or restored['history_count']!=0
-                or restored['checkpoint'][0]!=2
+                or restored['confirmed_atoms']!=initial['confirmed_atoms']
+                or restored['history_count']!=initial['history_count']
+                or restored['history_sha256']!=initial['history_sha256']
+                or restored['checkpoint'][0]!=initial['checkpoint'][0]+1
                 or sha256(first.read_bytes()).hexdigest()!=first_digest):
             raise ValueError('Q05_REOPEN_WALLET_CONTINUITY_DENIED')
         record['observations'].append({'reopened_same_wallet_live_resync':True,
             'anchored_generation':restored['checkpoint'],'original_generation_preserved':True,
-            'height':restored['height'],'confirmed_atoms':0,'history_count':0,'plaintext_runtime_removed':True})
+            'height':restored['height'],'confirmed_atoms':restored['confirmed_atoms'],
+            'history_count':restored['history_count'],'history_sha256':restored['history_sha256'],
+            'plaintext_runtime_removed':True})
         stage='SAFE_SHUTDOWN'
         owner.shutdown();owner.close();owner=None
         record['status']='PASS'

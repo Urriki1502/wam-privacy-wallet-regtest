@@ -102,10 +102,16 @@ def _snapshot(ring,scanner,rpc,vault):
     if (height,tip)!=(rpc.call('getblockcount'),rpc.call('getbestblockhash')):
         raise ManagedWalletError('MANAGED_WALLET_CHAIN_CHANGED')
     wallet=Wallet(scanner)
+    history=wallet.history(limit=1000)
+    # This narrow adapter has no history pagination UI. Refuse an ambiguous
+    # truncated summary rather than report a complete-history fingerprint.
+    if len(history)==1000:
+        raise ManagedWalletError('MANAGED_WALLET_HISTORY_PAGE_REQUIRED')
     return {'wallet_id':vault.anchor.wallet_id,'height':height,'tip':tip,
             'payment_code':ring.accounts()[-1].payment_code(),
             'confirmed_atoms':wallet.balance()['confirmed_atoms'],
-            'history_count':len(wallet.history()),'checkpoint':list(vault._expected or ()),
+            'history_count':len(history),'history_sha256':sha256(_canonical(history)).hexdigest(),
+            'checkpoint':list(vault._expected or ()),
             'wallet_locked':True,'signer_allowed':False,'broadcast_allowed':False,
             'mainnet_allowed':False}
 
