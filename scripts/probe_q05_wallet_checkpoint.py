@@ -22,6 +22,56 @@ from wam_regtest.managed_wallet_checkpoint import checkpoint,ManagedWalletError
 from wam_regtest.wsp_live import PINNED_WSP_COMMIT,_pinned_source
 
 
+class AfterPublicationCut(ValueError):pass
+
+
+def interrupted_publication(owner,source,password,keychain,initial):
+    """Real durable ciphertext, controlled cut before native anchor advance.
+
+    Safety refusal evidence ONLY. Preserve the ambiguous runtime/orphan; never
+    call this successful interrupted-write recovery or physical power loss.
+    """
+    from wam_regtest import custody
+    from wam_regtest.vault import CheckpointVault
+    anchor=custody.anchor(initial['wallet_id'],keychain)
+    before=anchor.read();folder=owner.directory/'wallet-vault'
+    reference=(owner.root/'supervisor.wallet').read_bytes()
+    files={p.name:sha256(p.read_bytes()).hexdigest() for p in folder.glob('snapshot-*.enc')}
+    store=custody.storage();publish=store.publish;published={}
+    next_name=CheckpointVault._filename(before[0]+1)
+    def cut(directory,name,blob):
+        publish(directory,name,blob)  # Existing native fsync/create-only publication.
+        if directory==folder and name==next_name:
+            published['sha256']=sha256(blob).hexdigest()
+            raise AfterPublicationCut('Q05_TEST_CUT_AFTER_DURABLE_PUBLICATION')
+    try:
+        with patch.object(store,'publish',cut):
+            checkpoint(owner,source,password,authorized=True,keychain=keychain)
+        raise ValueError('Q05_PUBLICATION_CUT_NOT_EXERCISED')
+    except ManagedWalletError as error:
+        if (error.args!=('MANAGED_WALLET_CHECKPOINT_DENIED',)
+                or type(error.__context__) is not AfterPublicationCut or not published):raise
+    if (anchor.read()!=before or (owner.root/'supervisor.wallet').read_bytes()!=reference
+            or any(sha256((folder/name).read_bytes()).hexdigest()!=digest for name,digest in files.items())
+            or sha256(store.read(folder,next_name)).hexdigest()!=published['sha256']
+            or not (owner.directory/'wallet-runtime.sqlite').exists()):
+        raise ValueError('Q05_INTERRUPTED_CHECKPOINT_STATE_NOT_PRESERVED')
+    runtime=owner.directory/'wallet-runtime.sqlite';runtime_digest=sha256(runtime.read_bytes()).hexdigest()
+    try:
+        checkpoint(owner,source,password,authorized=True,keychain=keychain)
+        raise ValueError('Q05_AMBIGUOUS_RUNTIME_ADOPTED')
+    except ManagedWalletError as error:
+        if error.args!=('MANAGED_WALLET_EXISTING_RUNTIME_DENIED',):raise
+    if anchor.read()!=before or sha256(runtime.read_bytes()).hexdigest()!=runtime_digest:
+        raise ValueError('Q05_AMBIGUOUS_STATE_REPAIRED')
+    return {'cut_after_real_durable_publication_before_anchor':True,
+            'unchanged_native_anchor':list(before),'original_ciphertexts_reference_preserved':True,
+            'orphan_ciphertext_sha256':published['sha256'],'runtime_preserved':True,
+            'next_open_refused_before_keys_or_balance':True,
+            'prior_anchored_reservation_sha256':initial['reservation_sha256'],
+            'recovery_completed':False,'physical_power_loss_test':False}
+
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--core-dir',required=True,type=Path)
@@ -31,6 +81,7 @@ def main():
     parser.add_argument('--confirm-disposable-regtest',action='store_true')
     parser.add_argument('--fund-disposable-wallet',action='store_true')
     parser.add_argument('--reservation',choices=('none','signed','uncertain'),default='none')
+    parser.add_argument('--interrupt-publication',action='store_true')
     a=parser.parse_args();source=Path(__file__).resolve().parents[1]
     if (not a.confirm_disposable_regtest or platform.system()!='Darwin'
             or platform.machine()!='arm64' or a.root.exists() or a.root.is_symlink()
@@ -41,6 +92,7 @@ def main():
     node,cli,intake=verified_core_paths(a.core_dir);_pinned_source(a.wsp_source)
     record={'schema':'q05-wallet-checkpoint-native/v1','status':'FAIL',
         'wallet_fixture':'PUBLIC_FIXTURE_FUNDED' if a.fund_disposable_wallet else 'EMPTY',
+        'qualification_scope':'INTERRUPTED_PUBLICATION_SAFE_REFUSAL' if a.interrupt_publication else 'CLEAN_OWNER_REOPEN',
         'source_sha':head,'checkout_sha':head,'platform':'macos-arm64','frozen':False,
         'core_trust':'official-signed-v0.1.11','core_version':'v0.1.11',
         'core_sha256':{p.name:sha256(p.read_bytes()).hexdigest() for p in (node,cli)},
@@ -186,28 +238,34 @@ def main():
                 'reservation_state':a.reservation,'reservation_sha256':initial['reservation_sha256'],
                 'irreversible_draft_release_refused':True,'actual_wallet_broadcast_calls':len(send_calls),
                 'core_acceptance_before_caller_loss':a.reservation=='uncertain'})
-        stage='CORE_OWNER_REOPEN'
-        owner.shutdown();owner.close()
-        owner=CoreSupervisor(a.root,a.core_dir,authorized=True);owner.start(timeout=30)
-        stage='RESTORE_AND_LIVE_RESYNC'
-        restored=checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
-        if (restored['wallet_id']!=initial['wallet_id']
-                or restored['payment_code']!=initial['payment_code']
-                or restored['tip']!=initial['tip'] or restored['height']!=initial['height']
-                or restored['confirmed_atoms']!=initial['confirmed_atoms']
-                or restored['history_count']!=initial['history_count']
-                or restored['history_sha256']!=initial['history_sha256']
-                or restored['reservation_sha256']!=initial['reservation_sha256']
-                or restored['reservation_states']!=initial['reservation_states']
-                or restored['reserved_atoms']!=initial['reserved_atoms']
-                or restored['checkpoint'][0]!=initial['checkpoint'][0]+1
-                or sha256(first.read_bytes()).hexdigest()!=first_digest):
-            raise ValueError('Q05_REOPEN_WALLET_CONTINUITY_DENIED')
-        record['observations'].append({'reopened_same_wallet_live_resync':True,
-            'anchored_generation':restored['checkpoint'],'original_generation_preserved':True,
-            'height':restored['height'],'confirmed_atoms':restored['confirmed_atoms'],
-            'history_count':restored['history_count'],'history_sha256':restored['history_sha256'],
-            'plaintext_runtime_removed':True})
+        if a.interrupt_publication:
+            stage='INTERRUPTED_PUBLICATION_SAFE_REFUSAL'
+            record['observations'].append(interrupted_publication(owner,a.wsp_source,
+                password,keychain,initial))
+            record['recovery_completed']=False
+        else:
+            stage='CORE_OWNER_REOPEN'
+            owner.shutdown();owner.close()
+            owner=CoreSupervisor(a.root,a.core_dir,authorized=True);owner.start(timeout=30)
+            stage='RESTORE_AND_LIVE_RESYNC'
+            restored=checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
+            if (restored['wallet_id']!=initial['wallet_id']
+                    or restored['payment_code']!=initial['payment_code']
+                    or restored['tip']!=initial['tip'] or restored['height']!=initial['height']
+                    or restored['confirmed_atoms']!=initial['confirmed_atoms']
+                    or restored['history_count']!=initial['history_count']
+                    or restored['history_sha256']!=initial['history_sha256']
+                    or restored['reservation_sha256']!=initial['reservation_sha256']
+                    or restored['reservation_states']!=initial['reservation_states']
+                    or restored['reserved_atoms']!=initial['reserved_atoms']
+                    or restored['checkpoint'][0]!=initial['checkpoint'][0]+1
+                    or sha256(first.read_bytes()).hexdigest()!=first_digest):
+                raise ValueError('Q05_REOPEN_WALLET_CONTINUITY_DENIED')
+            record['observations'].append({'reopened_same_wallet_live_resync':True,
+                'anchored_generation':restored['checkpoint'],'original_generation_preserved':True,
+                'height':restored['height'],'confirmed_atoms':restored['confirmed_atoms'],
+                'history_count':restored['history_count'],'history_sha256':restored['history_sha256'],
+                'plaintext_runtime_removed':True})
         if len(send_calls)!=(1 if a.reservation=='uncertain' else 0):
             raise ValueError('Q05_UNCERTAIN_TRANSACTION_REPLAYED')
         record['wallet_broadcast_calls_total']=len(send_calls)
