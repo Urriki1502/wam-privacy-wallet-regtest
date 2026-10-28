@@ -31,7 +31,7 @@ def run_q04_scenario(core_dir: Path, report_path: Path | None = None,
     if type(core_dir) is not type(Path()) or not core_dir.is_absolute():
         raise Q04RunnerError('Q04_RUNNER_CORE_DIR_REQUIRED')
 
-    config={'rpcworkqueue':'2','rpcthreads':'1', **(extra_config or {})}
+    config={'rpcworkqueue':'2','rpcthreads':'1','debug':'rpc', **(extra_config or {})}
     with SoloMinerFixture(core_dir, timeout=max_duration, extra_config=config) as fixture:
         spec = fixture.start()
         pid = spec['pid']

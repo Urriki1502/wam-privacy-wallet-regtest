@@ -4,14 +4,49 @@ import io
 from pathlib import Path
 import sys
 import threading
+import tempfile
+from concurrent.futures import Future
 import unittest
 from unittest.mock import patch
 
-from wam_regtest.q04_busy_probe import _wait_for_saturation
+from wam_regtest.q04_busy_probe import _wait_for_saturation, _wait_for_worker
 from wam_regtest.rpc_contention import RpcContentionError
 
 
 class BusyReadinessContracts(unittest.TestCase):
+    def test_worker_requires_new_method_log_and_live_request(self):
+        with tempfile.TemporaryDirectory() as root:
+            log=Path(root)/'debug.log'
+            old=b'ThreadRPCServer method=waitforblockheight user=fixture\n'
+            log.write_bytes(old)
+            first=Future()
+            with self.assertRaisesRegex(RpcContentionError,'Q04_BUSY_WORKER_NOT_OCCUPIED'):
+                _wait_for_worker(log,len(old),first,timeout=0)
+            with log.open('ab') as out:out.write(old)
+            _wait_for_worker(log,len(old),first,timeout=0)
+            first.set_result(None)
+            with self.assertRaisesRegex(RpcContentionError,'Q04_BUSY_WORKER_NOT_OCCUPIED'):
+                _wait_for_worker(log,len(old),first,timeout=0)
+
+    def test_worker_waits_for_actual_dequeue_and_propagates_load_error(self):
+        with tempfile.TemporaryDirectory() as root:
+            log=Path(root)/'debug.log';log.write_bytes(b'')
+            first=Future()
+            def dequeued(_):
+                log.write_bytes(b'ThreadRPCServer method=waitforblockheight user=fixture\n')
+            with patch('wam_regtest.q04_busy_probe.time.sleep',side_effect=dequeued) as wait:
+                _wait_for_worker(log,0,first)
+            wait.assert_called_once()
+            first.set_exception(RpcContentionError('Q04_BUSY_LOAD_DENIED'))
+            with self.assertRaisesRegex(RpcContentionError,'Q04_BUSY_LOAD_DENIED'):
+                _wait_for_worker(log,0,first)
+
+    def test_worker_diagnostics_have_a_strict_read_bound(self):
+        with tempfile.TemporaryDirectory() as root:
+            log=Path(root)/'debug.log';log.write_bytes(b'x'*65537)
+            with self.assertRaisesRegex(RpcContentionError,'Q04_BUSY_WORKER_LOG_LIMIT'):
+                _wait_for_worker(log,0,Future())
+
     def test_transport_unreachable_is_not_fabricated_busy_evidence(self):
         from wam_regtest.rpc_contention import ContentionAwareRpc
         from wam_regtest.external_core import ExternalAttachmentError

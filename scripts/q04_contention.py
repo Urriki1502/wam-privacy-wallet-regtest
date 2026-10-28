@@ -161,7 +161,7 @@ def main():
         witness = _linux_setup_trust(core_dir)
         # Small work queue makes 503 more reproducible; single thread serializes.
         fixture = SoloMinerFixture(core_dir, timeout=args.max_duration,
-                                   extra_config={'rpcworkqueue': '2', 'rpcthreads': '1'})
+                                   extra_config={'rpcworkqueue': '2', 'rpcthreads': '1', 'debug': 'rpc'})
         with fixture:
             spec = fixture.start()
             pid = spec['pid']
