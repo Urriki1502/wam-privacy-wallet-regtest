@@ -1,9 +1,13 @@
 # Engineer 2 isolated checkpoint — history completeness (not Q-GATE)
 
-Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 remains
+Branch `cursor/q05-history-pagination-9c81` HEAD after this follow-up
+is recorded in git; Codex Draft #138 remains
 `9b0361c6211f500ef78d0ace171c1bb6a5a10329`. This file is a Cursor work
 log only. Canonical ledger `tests/acceptance/issue45.json` is unchanged
 (37 Q05 PENDING, accepted=false). No second PR, no merge, no mainnet.
+
+Pinned Engineer 2 HEAD at publication of the paging follow-up:
+`5910727d16e8df6c59b81f80578d660e6f676de4`.
 
 ## Completed on this branch
 
