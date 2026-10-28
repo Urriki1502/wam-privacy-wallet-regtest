@@ -53,10 +53,12 @@ class WalletReadSnapshot:
     history_count: int | None = None
     history_sha256: str | None = None
     history_complete: bool = True
+    receive_count: int | None = None
+    history_offset: int = 0
 
 
 def read_real_wallet_snapshot(
-    core_dir: Path, datadir: Path, wsp_source_root: Path
+    core_dir: Path, datadir: Path, wsp_source_root: Path, *, history_offset: int = 0
 ) -> WalletReadSnapshot:
     """Scan the actual running Core, then show only fully current SQLite data."""
     if (sys.platform != "darwin" or platform.machine().lower() != "arm64"
@@ -110,13 +112,19 @@ def read_real_wallet_snapshot(
                 if type(v) is not int or not 0 < v <= 22_000_000 * 100_000_000:
                     raise RealWalletReadError("WALLET_AMOUNT_DENIED")
                 values.append(v)
+            if type(history_offset) is not int or history_offset<0:
+                raise RealWalletReadError("WALLET_HISTORY_DENIED")
             with scanner.store.transaction():
                 history_count,raw=sql_history_pages(
                     scanner.store.db,tip_height,
                     "SELECT txid,height,credit,debit FROM history "
                     "ORDER BY height DESC,txid LIMIT ? OFFSET ?",
                     error=RealWalletReadError,code="WALLET_HISTORY_DENIED",
-                    window=GUI_HISTORY_LIMIT)
+                    window=GUI_HISTORY_LIMIT,skip=history_offset)
+                receive_count=scanner.store.db.execute(
+                    "SELECT count(*) FROM history WHERE credit>0").fetchone()[0]
+            if type(receive_count) is not int or receive_count<0 or receive_count>history_count:
+                raise RealWalletReadError("WALLET_HISTORY_DENIED")
             history=tuple(HistoryRow(txid,block,conf,credit,debit)
                           for txid,block,credit,debit,conf in raw)
             # Final tip revalidation: refuse to show potentially stale balances.
@@ -133,7 +141,9 @@ def read_real_wallet_snapshot(
                 history=history,
                 core_sha256=signed["wamd_sha256"],
                 history_count=history_count,
-                history_complete=history_count<=GUI_HISTORY_LIMIT,
+                history_complete=history_offset==0 and history_count<=GUI_HISTORY_LIMIT,
+                receive_count=receive_count,
+                history_offset=history_offset,
             )
         finally:
             scanner.close()

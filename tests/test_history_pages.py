@@ -76,6 +76,34 @@ class HistoryPagesContracts(unittest.TestCase):
         self.assertEqual(len(raw),GUI_HISTORY_LIMIT)
         self.assertEqual(raw[0][1],2500)
 
+    def test_skip_newest_window_does_not_change_fingerprint(self):
+        rows=[_row(i,i+1,3000) for i in range(800)]
+        def page(limit,offset):
+            return [dict(r) for r in rows[offset:offset+limit]]
+        full=complete_history(page,len(rows),3000,collect=True)
+        older=complete_history(page,len(rows),3000,keep_tail=GUI_HISTORY_LIMIT,
+                               skip_newest=GUI_HISTORY_LIMIT)
+        self.assertEqual(full[1],older[1])
+        self.assertEqual(len(older[2]),GUI_HISTORY_LIMIT)
+        self.assertEqual(older[2],rows[-2*GUI_HISTORY_LIMIT:-GUI_HISTORY_LIMIT])
+        newest=complete_history(page,len(rows),3000,keep_tail=GUI_HISTORY_LIMIT)
+        self.assertEqual(newest[2],rows[-GUI_HISTORY_LIMIT:])
+        path=tempfile.mkstemp(suffix='.sqlite')[1]
+        self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
+        db=sqlite3.connect(path,isolation_level=None);self.addCleanup(db.close)
+        db.execute('CREATE TABLE history(txid TEXT PRIMARY KEY,height INTEGER NOT NULL,'
+                   'credit INTEGER NOT NULL,debit INTEGER NOT NULL)')
+        db.executemany('INSERT INTO history VALUES(?,?,?,?)',
+                       [(f'{i:064x}',i+1,i+1,0) for i in range(800)])
+        count,raw=sql_history_pages(
+            db,10_000,
+            'SELECT txid,height,credit,debit FROM history '
+            'ORDER BY height DESC,txid LIMIT ? OFFSET ?',
+            window=GUI_HISTORY_LIMIT,skip=GUI_HISTORY_LIMIT)
+        self.assertEqual(count,800)
+        self.assertEqual(len(raw),GUI_HISTORY_LIMIT)
+        self.assertEqual(raw[0][1],800-GUI_HISTORY_LIMIT)
+
     def test_complete_max_constant_matches_wsp_offset_plus_page(self):
         self.assertEqual(HISTORY_COMPLETE_MAX,1_000_000+HISTORY_PAGE_LIMIT)
 

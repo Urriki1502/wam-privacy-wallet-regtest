@@ -31,6 +31,22 @@ class FusionV2Widgets(unittest.TestCase):
   page.render_snapshot(fixture())
   with self.assertRaises(ValueError):page.render_snapshot(replace(fixture(),receive_code='wamrtsp1-invalid'))
   self.assertIsNone(page.qr.matrix);self.assertIsNone(page.code);self.assertFalse(page.copy_button.isEnabled())
+ def test_receive_count_uses_complete_fingerprint_not_window(self):
+  page=ReceivePage();self.addCleanup(page.deleteLater)
+  snap=replace(fixture(),history=(HistoryRow('b'*64,104,2,0,1),),receive_count=12)
+  page.render_snapshot(snap)
+  self.assertIn('12 confirmed',page.received.text())
+ def test_older_history_control_emits_offset_without_signing(self):
+  from wam_regtest.history_pages import GUI_HISTORY_LIMIT
+  page=HistoryPage();self.addCleanup(page.deleteLater)
+  rows=tuple(HistoryRow(f'{i:064x}',100+i,2,1,0) for i in range(GUI_HISTORY_LIMIT))
+  snap=replace(fixture(),history=rows,history_count=GUI_HISTORY_LIMIT+40,history_complete=False,
+               history_offset=0,receive_count=40)
+  seen=[]
+  page.page_requested.connect(seen.append)
+  page.render_snapshot(snap)
+  self.assertTrue(page.older.isEnabled());self.assertFalse(page.newer.isEnabled())
+  page.older.click();self.assertEqual(seen,[GUI_HISTORY_LIMIT])
  def test_history_filter_detail_copy_and_failure_clear(self):
   page=HistoryPage();self.addCleanup(page.deleteLater);snap=fixture();page.render_snapshot(snap)
   page.select_txid('b'*64);self.assertEqual(page.detail_id.text(),'b'*64);page.copy_button.click();self.assertEqual(self.app.clipboard().text(),'b'*64)

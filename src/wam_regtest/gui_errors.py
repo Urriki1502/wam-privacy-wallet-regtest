@@ -28,6 +28,12 @@ _MESSAGES={
  'WALLET_SYNC_UNVERIFIED':'Live REGTEST synchronization could not be verified. Balances are hidden. Verify the local node and use Sync again; do not reset custody.',
  'WALLET_HISTORY_INCONSISTENT':'Confirmed history pages do not form one complete snapshot. Balances are hidden. Do not treat a truncated list as the wallet; verify the local node and latest checkpoint.',
  'WALLET_HISTORY_INCOMPLETE':'Confirmed history exceeds the readable WSP page range. Balances are hidden. Do not silently omit older records.',
+ 'WALLET_OWNED_OPEN_DENIED':'Could not open the managed REGTEST wallet on the original Core owner. Reservations and encrypted checkpoints are retained; do not adopt another process or delete unknown runtime files.',
+ 'WALLET_EXISTING_RUNTIME_DENIED':'An existing wallet runtime or sidecar is present. Automatic recovery is refused. Reconcile the orphaned SQLite and ciphertext with the native anchor; do not delete unknown files.',
+ 'MANAGED_WALLET_EXISTING_RUNTIME_DENIED':'An existing wallet runtime or sidecar is present. Automatic recovery is refused. Reconcile the orphaned SQLite and ciphertext with the native anchor; do not delete unknown files.',
+ 'MANAGED_WALLET_EXISTS_OR_UNCERTAIN':'A managed wallet reference or vault already exists. Duplicate create is refused. Use authenticated restore; do not reset custody.',
+ 'MANAGED_WALLET_ORIGINAL_OWNER_REQUIRED':'Wallet access requires the original live CoreSupervisor process. Foreign PID adoption is refused.',
+ 'MANAGED_WALLET_ANCHOR_EXISTS':'A native checkpoint anchor already exists for this wallet identity. Duplicate create is refused.',
  'WALLET_OPERATION_DENIED_STATE_RETAINED':'Operation could not complete safely. Wallet state and reservations are retained. Verify the live chain and latest checkpoint; do not reset custody.',
 }
 

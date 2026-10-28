@@ -48,33 +48,46 @@ class ReceivePage(QWidget):
     def render_snapshot(self,snap):
         self.code=None;self.copy_button.setEnabled(False);self.receive_code.setText('—');self.qr.set_code(None)
         candidate=snap.receive_code if snap else None;self.qr.set_code(candidate);self.code=candidate;self.receive_code.setText(self.code or '—');self.copy_button.setEnabled(bool(self.code));self.copy_status.setText('Copy includes the entire verified address.' if self.code else 'Address unavailable · unlock and verify the chain.')
-        count=sum(r.credit_atoms>0 for r in snap.history) if snap else 0;self.received.setText(f'{count} confirmed transaction(s) with wallet credits' if snap else 'No verified receiving activity')
+        if snap is None:
+            self.received.setText('No verified receiving activity')
+        elif type(snap.receive_count) is int:
+            self.received.setText(f'{snap.receive_count} confirmed transaction(s) with wallet credits')
+        else:
+            self.received.setText('Receive statistics unavailable until complete history is fingerprinted')
     def copy_address(self):
         if self.code:
             QApplication.clipboard().setText(self.code);self.copy_status.setText('Full address copied');self._copy_timer.start(2200)
 
 
 class HistoryPage(QWidget):
+    page_requested=Signal(int)
     def __init__(self):
-        super().__init__();self.setObjectName('FusionInner');self.rows=();self.mode='dark';root=QVBoxLayout(self);root.setContentsMargins(0,0,0,0)
+        super().__init__();self.setObjectName('FusionInner');self.rows=();self.mode='dark';self._offset=0;self._total=0;root=QVBoxLayout(self);root.setContentsMargins(0,0,0,0)
         scroll,layout=page('Transaction history','Explore only the confirmed history verified by WAM Core and WSP-1.','ON-CHAIN / HISTORY');root.addWidget(scroll)
         card,cl=panel();toolbar=QHBoxLayout();self.search=QLineEdit();self.search.setPlaceholderText('Search transaction ID or block height');self.search.setClearButtonEnabled(True);self.search.setAccessibleName('Search confirmed transactions');self.filter=QComboBox();self.filter.addItems(('All activity','Credits','Debits'));toolbar.addWidget(self.search,1);toolbar.addWidget(self.filter);cl.addLayout(toolbar)
         self.table=QTableWidget(0,6);self.table.setObjectName('FusionActivityTable');self.table.setHorizontalHeaderLabels(('DIRECTION','TRANSACTION','BLOCK','CONFIRMED','CREDIT WAM','DEBIT WAM'));self.table.verticalHeader().hide();self.table.setShowGrid(False);self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers);self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows);self.table.horizontalHeader().setSectionResizeMode(1,QHeaderView.ResizeMode.Stretch);self.table.setMinimumHeight(220);self.table.setColumnWidth(0,130);self.table.setColumnWidth(2,65);self.table.setColumnWidth(3,90);self.table.setColumnWidth(4,145);self.table.setColumnWidth(5,145);cl.addWidget(self.table)
+        nav=QHBoxLayout();self.newer=action('Newer confirmed history','history');self.older=action('Older confirmed history','history');self.newer.setEnabled(False);self.older.setEnabled(False);self.newer.clicked.connect(self._newer);self.older.clicked.connect(self._older);nav.addWidget(self.newer);nav.addWidget(self.older);nav.addStretch();cl.addLayout(nav)
         self.scope=label('');cl.addWidget(self.scope)
         self.empty=label('No confirmed transactions · unlock and sync to verify history');cl.addWidget(self.empty);layout.addWidget(card)
         detail,dl=panel('Transaction details','Select a row to inspect its exact confirmed data.');self.detail_id=label('No transaction selected','ReceiveCode',True);dl.addWidget(self.detail_id);self.detail_values=label('');dl.addWidget(self.detail_values);self.copy_button=action('Copy full transaction ID','copy');self.copy_button.setEnabled(False);self.copy_button.clicked.connect(self.copy_txid);dl.addWidget(self.copy_button);layout.addWidget(detail);layout.addStretch()
         self.table.itemSelectionChanged.connect(self.show_details);self.search.textChanged.connect(self.apply_filter);self.filter.currentIndexChanged.connect(self.apply_filter)
     def render_snapshot(self,snap):
         self.rows=snap.history if snap else ();self.search.clear();self.table.setRowCount(len(self.rows));self.detail_id.setText('No transaction selected');self.detail_values.setText('');self.copy_button.setEnabled(False)
+        self._offset=snap.history_offset if snap and type(snap.history_offset) is int else 0
+        self._total=snap.history_count if snap and type(snap.history_count) is int else len(self.rows)
+        shown=len(self.rows)
+        self.newer.setEnabled(bool(snap) and self._offset>0)
+        self.older.setEnabled(bool(snap) and self._offset+shown<self._total)
         if snap is None:
             self.scope.setText('')
         elif snap.history_complete:
-            self.scope.setText(f'{len(self.rows)} verified confirmed record(s)')
+            self.scope.setText(f'{shown} verified confirmed record(s)')
         else:
-            total=snap.history_count if type(snap.history_count) is int else len(self.rows)
+            start=self._offset+1 if shown else 0
+            end=self._offset+shown
             self.scope.setText(
-                f'Showing {len(self.rows)} newest of {total} verified records. '
-                'Older confirmed history is fingerprinted in custody, not discarded.')
+                f'Showing newest-offset {self._offset} records {start}–{end} of {self._total} '
+                'verified records. Full history is fingerprinted in custody, not discarded.')
         c=fusion_palette(self.mode)
         for i,row in enumerate(self.rows):
             net=row.credit_atoms-row.debit_atoms;direction='Received' if net>0 else 'Sent' if net<0 else 'Activity'
@@ -112,6 +125,12 @@ class HistoryPage(QWidget):
     def copy_txid(self):
         row=self.table.currentRow()
         if self.copy_button.isEnabled() and 0<=row<len(self.rows):QApplication.clipboard().setText(self.rows[row].txid)
+    def _older(self):
+        from .history_pages import GUI_HISTORY_LIMIT
+        if self.older.isEnabled():self.page_requested.emit(self._offset+GUI_HISTORY_LIMIT)
+    def _newer(self):
+        from .history_pages import GUI_HISTORY_LIMIT
+        if self.newer.isEnabled():self.page_requested.emit(max(0,self._offset-GUI_HISTORY_LIMIT))
 
 
 class PaymentSteps(QFrame):

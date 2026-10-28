@@ -74,6 +74,16 @@ def main() -> int:
     attach.add_argument('--manifest-sha256')
     attach.add_argument('--anchor-socket',type=Path)
     attach.add_argument('--confirm-experimental-developer-regtest',action='store_true')
+    managed=sub.add_parser('managed-gui',help='Qt wallet on an original in-process CoreSupervisor; no fixture funding')
+    managed.add_argument('--core-dir',type=Path,required=True)
+    managed.add_argument('--root',type=Path,required=True)
+    managed.add_argument('--wsp-source-root',type=Path,required=True)
+    managed.add_argument('--confirm-regtest-managed-core',action='store_true')
+    managed.add_argument('--create-wallet',action='store_true')
+    managed.add_argument('--linux-developer-manifest')
+    managed.add_argument('--linux-root-witness',type=Path)
+    managed.add_argument('--stop-core-on-app-exit',action='store_true',
+                         help='Explicit Core shutdown when this Python process exits after the window')
     args = ap.parse_args()
     try:
         if args.command=='attach-core-readonly':
@@ -91,6 +101,28 @@ def main() -> int:
                     datadir=args.datadir.expanduser().absolute(),core_dir=args.core_dir.expanduser().absolute(),
                     operator_consent=True) as attachment:
                 return launch(attachment)
+        if args.command=='managed-gui':
+            if args.confirm_regtest_managed_core is not True:
+                raise CoreSmokeError('MANAGED_EXPLICIT_CONSENT_REQUIRED')
+            core=args.core_dir.expanduser().absolute()
+            root=args.root.expanduser().absolute()
+            source=args.wsp_source_root.expanduser().absolute()
+            if sys.platform=='linux':
+                if not args.linux_developer_manifest or args.linux_root_witness is None:
+                    raise CoreSmokeError('Q04_LINUX_EXPLICIT_TRUST_REQUIRED')
+                from .linux_runtime import configure
+                configure(core,args.linux_developer_manifest,
+                          args.linux_root_witness.expanduser().absolute(),authorized=True)
+            from .core_supervisor import CoreSupervisor
+            from .custody import create_directory
+            from .operational_gui import launch_owned_wallet
+            if not root.exists() and not root.is_symlink():
+                create_directory(root)
+            owner=CoreSupervisor(root,core,authorized=True)
+            owner.start()
+            return launch_owned_wallet(owner,source,authorized=True,
+                                       create=args.create_wallet,
+                                       stop_core_on_app_exit=args.stop_core_on_app_exit)
         if args.command=='linux-wallet':
             from .linux_headless import run
             return run(args)

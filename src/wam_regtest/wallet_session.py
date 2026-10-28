@@ -17,7 +17,7 @@ from wam_regtest import custody
 from wam_regtest.core import verified_core_paths
 from wam_regtest.telemetry import increment
 from wam_regtest.wsp_live import LiveCoreReadOnlyCli, RealWspScanError, _pinned_source, _public_fixture_payment
-from wam_regtest.history_pages import GUI_HISTORY_LIMIT,complete_history
+from wam_regtest.history_pages import GUI_HISTORY_LIMIT,HISTORY_OFFSET_MAX,complete_history
 from wam_regtest.vault import CheckpointVault, KeychainAnchor
 from wam_regtest.wallet_read import HistoryRow, WalletReadSnapshot
 
@@ -116,6 +116,7 @@ class WalletSession:
         self._core_cli = core_cli
         self._core_receipt = core_receipt
         self._rpc_client = None
+        self._managed_core = False
 
     def _ensure_core_identity(self):
         """One-time verified Core path/receipt; subsequent reads avoid full rehash."""
@@ -221,6 +222,81 @@ class WalletSession:
                 ring.close()
             raise WalletSessionError("WALLET_CROSS_SESSION_RECOVERY_DENIED") from None
 
+    @classmethod
+    def open_owned(cls, owner, source, password, *, authorized, keychain=None,
+                   create=False, mining_address=None):
+        """Create or restore a live session on the ORIGINAL CoreSupervisor Popen.
+
+        No fixture funding, no fresh-chain height 102/103 gate, no competing
+        supervisor, no PID adoption. Dirty runtime/sidecars stay untouched.
+        GUI close must lock this session without shutting Core down.
+        """
+        from .managed_wallet_checkpoint import (
+            ManagedWalletError, _inputs, _publish_reference, _read_reference,
+            _runtime,
+        )
+        from .vault import CheckpointVault
+        ring=scanner=rpc=None
+        try:
+            try:
+                _inputs(owner,source,password,authorized)
+                if type(create) is not bool:
+                    raise ManagedWalletError('MANAGED_WALLET_MODE_DENIED')
+                runtime=_runtime(owner)
+                folder=owner.directory/'wallet-vault'
+                if create:
+                    if (folder.exists() or folder.is_symlink()
+                            or (owner.root/'supervisor.wallet').exists()
+                            or (owner.root/'supervisor.wallet').is_symlink()):
+                        raise ManagedWalletError('MANAGED_WALLET_EXISTS_OR_UNCERTAIN')
+                    wallet_id=secrets.token_hex(16)
+                else:
+                    wallet_id=_read_reference(owner)
+                    custody.storage().validate_directory(folder)
+            except ManagedWalletError as error:
+                code=error.args[0] if len(error.args)==1 and type(error.args[0]) is str else None
+                raise WalletSessionError(code or 'WALLET_OWNED_OPEN_DENIED') from None
+            from wam_sp.keystore import Keyring
+            from wam_sp.scanner import Scanner
+            try:
+                rpc=WalletCoreCli(owner.cli,owner.directory)
+                rpc.attest()
+                height=rpc.call('getblockcount')
+                if type(height) is not int or height<0:
+                    raise WalletSessionError('WALLET_CORE_IDENTITY_DENIED')
+                anchor=custody.anchor(wallet_id,keychain)
+                if create:
+                    if anchor.read() is not None:
+                        raise WalletSessionError('MANAGED_WALLET_ANCHOR_EXISTS')
+                    custody.create_directory(folder)
+                vault=CheckpointVault(folder,anchor,source)
+                if create:
+                    ring=Keyring();ring.backup(password)
+                    scanner=Scanner(runtime,ring.accounts())
+                else:
+                    ring,scanner=vault.restore(runtime,password)
+                scanner.sync(rpc)
+                session=cls(owner.core,owner.directory,source,ring,scanner,vault,password,
+                            mining_address,core_cli=owner.cli,core_receipt=owner.receipt)
+                session._managed_core=True
+                session._save()
+                if create:
+                    _publish_reference(owner,wallet_id)
+                return session
+            except WalletSessionError:
+                raise
+            except Exception:
+                raise WalletSessionError('WALLET_OWNED_OPEN_DENIED') from None
+        except Exception:
+            if scanner is not None:
+                scanner.close()
+            if ring is not None:
+                ring.close()
+            raise
+        finally:
+            if rpc is not None and getattr(rpc,'_transport',None) is not None:
+                rpc._transport.close()
+
     @property
     def locked(self):
         return self.ring is None
@@ -273,9 +349,11 @@ class WalletSession:
             self.faulted = True
             raise WalletSessionError("WALLET_ANCHORED_SAVE_FAILED") from None
 
-    def snapshot(self):
+    def snapshot(self, history_offset=0):
         from wam_sp.wallet import Wallet
         with self._lock:
+            if type(history_offset) is not int or not 0<=history_offset<=HISTORY_OFFSET_MAX:
+                raise WalletSessionError("WALLET_HISTORY_INCONSISTENT")
             rpc = self._rpc()
             result = self.scanner.sync(rpc)
             self.scanner.assert_current()
@@ -292,6 +370,11 @@ class WalletSession:
                     balance=wallet._balance(1)
                     utxos=len(self.scanner.coins())
                     declared=wallet.db.execute('SELECT count(*) FROM history').fetchone()[0]
+                    receive_count=wallet.db.execute(
+                        'SELECT count(*) FROM history WHERE credit>0').fetchone()[0]
+                    if (type(receive_count) is not int or receive_count<0
+                            or type(declared) is not int or receive_count>declared):
+                        raise _SessionHistoryDenied('HISTORY_INCONSISTENT')
                     def page(limit,offset):
                         try:
                             return wallet._history(limit,offset)
@@ -299,7 +382,7 @@ class WalletSession:
                             raise _SessionHistoryDenied('HISTORY_INCONSISTENT') from None
                     count,digest,rows=complete_history(
                         page,declared,tip[0],keep_tail=GUI_HISTORY_LIMIT,
-                        error=_SessionHistoryDenied)
+                        skip_newest=history_offset,error=_SessionHistoryDenied)
             except _SessionHistoryDenied as error:
                 raise WalletSessionError(error.args[0]) from None
             if (self.scanner.store.tip()!=tip
@@ -313,7 +396,8 @@ class WalletSession:
                 self._ensure_core_identity()[1]["wamd_sha256"],
                 signer_allowed=True,broadcast_allowed=True,
                 history_count=count,history_sha256=digest,
-                history_complete=count<=GUI_HISTORY_LIMIT,
+                history_complete=history_offset==0 and count<=GUI_HISTORY_LIMIT,
+                receive_count=receive_count,history_offset=history_offset,
             )
 
     def prepare(self, code, atoms, fee):

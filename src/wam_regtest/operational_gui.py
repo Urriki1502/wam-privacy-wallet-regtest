@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QFileDialog,QMessageBox,QInputDialog,QComboBox,QCheckBox,QScrollArea,
 )
 from wam_regtest.desktop import RegtestWalletWindow, qt_application
-from wam_regtest.wallet_session import WalletSession, PaymentReview
+from wam_regtest.wallet_session import WalletSession, WalletSessionError, PaymentReview
 from wam_regtest.wallet_read import format_wam
 from .fusion_ui import panel,page,label,action,ResponsiveRow,ReadableText
 from .fusion_pages import PaymentSteps,PaymentApproval
@@ -362,6 +362,44 @@ class OperationalWalletWindow(RegtestWalletWindow):
             QApplication.styleHints().colorSchemeChanged.disconnect(self.apply_theme)
             self._appearance_connected=False
         super().closeEvent(event)
+
+
+def launch_owned_wallet(owner,source,*,authorized,create,mining_address=None,
+                        stop_core_on_app_exit=False):
+    """Qt lifecycle on the original CoreSupervisor. Window close locks the wallet only."""
+    if authorized is not True:
+        raise WalletSessionError('WALLET_DISPOSABLE_CONSENT_DENIED')
+    app=qt_application()
+    while True:
+        password,ok=QInputDialog.getText(None,"Managed REGTEST wallet",
+            "Wallet backup passphrase (12+ characters).\n"
+            "Managed Core stays running if this window closes. Stop Core explicitly.",
+            QLineEdit.EchoMode.Password)
+        if not ok:
+            return 0
+        encoded=password.encode()
+        if len(password)>=12 and len(encoded)<=1024:
+            break
+        QMessageBox.warning(None,"Passphrase length","Use a longer passphrase (at least 12 characters).")
+    session=WalletSession.open_owned(owner,source,encoded,authorized=True,create=create,
+                                     mining_address=mining_address)
+    encoded=None
+    password=""
+    window=OperationalWalletWindow(session)
+    window.setWindowTitle("WAM Privacy Wallet · Managed REGTEST")
+    window.warning.setText("REGTEST ONLY · MANAGED CORE · GUI CLOSE DOES NOT STOP CORE")
+    window.show()
+    QTimer.singleShot(0,window.request_sync)
+    result=app.exec()
+    if stop_core_on_app_exit:
+        from .core_supervisor import ManagedCoreError
+        if owner.process is not None and owner.process.poll() is None:
+            owner.shutdown()
+        try:
+            owner.close()
+        except ManagedCoreError:
+            pass
+    return result
 
 
 def launch_disposable_wallet(core_dir,datadir,source,mining_address):

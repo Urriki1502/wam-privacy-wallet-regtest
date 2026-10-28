@@ -5,7 +5,6 @@ public history() call starts its own BEGIN IMMEDIATE. Callers must hold one
 store.transaction() and read via _history or equivalent SQL, never separate
 public history() pages.
 """
-from collections import deque
 from hashlib import sha256
 import json
 import re
@@ -26,20 +25,27 @@ def _canonical(value):
     return json.dumps(value,sort_keys=True,separators=(',',':')).encode('ascii')
 
 
-def complete_history(read_page,declared,height,*,collect=False,keep_tail=0,error=HistoryPageError):
-    """Hash every canonical WSP history row; optionally retain a bounded tail.
+def complete_history(read_page,declared,height,*,collect=False,keep_tail=0,
+                    skip_newest=0,error=HistoryPageError):
+    """Hash every canonical WSP history row; optionally retain a bounded window.
 
     read_page(limit, offset) must observe the same snapshot as declared.
     Order is WSP canonical: height,txid ascending.
+    skip_newest drops newest rows from the display window only after hashing.
     """
     if type(declared) is not int or declared<0:
         raise error('HISTORY_INCONSISTENT')
     if declared>HISTORY_COMPLETE_MAX:
         raise error('HISTORY_INCOMPLETE')
-    if type(keep_tail) is not int or keep_tail<0 or (collect and keep_tail):
+    if (type(keep_tail) is not int or keep_tail<0
+            or type(skip_newest) is not int or skip_newest<0
+            or (collect and (keep_tail or skip_newest))
+            or (skip_newest and not keep_tail)):
         raise error('HISTORY_INCONSISTENT')
     digest=sha256(b'[');seen=0;offset=0;previous=None
-    rows=[] if collect else (deque(maxlen=keep_tail) if keep_tail else None)
+    window_start=max(0,declared-skip_newest-keep_tail) if keep_tail else 0
+    window_end=max(0,declared-skip_newest) if keep_tail else 0
+    rows=[] if collect or keep_tail else None
     while True:
         if offset>HISTORY_OFFSET_MAX:
             raise error('HISTORY_INCOMPLETE')
@@ -63,7 +69,7 @@ def complete_history(read_page,declared,height,*,collect=False,keep_tail=0,error
             if seen:
                 digest.update(b',')
             digest.update(_canonical(row));seen+=1;previous=order
-            if rows is not None:
+            if collect or (keep_tail and window_start<=seen-1<window_end):
                 rows.append(row)
             if seen>declared:
                 raise error('HISTORY_INCONSISTENT')
@@ -73,16 +79,14 @@ def complete_history(read_page,declared,height,*,collect=False,keep_tail=0,error
     digest.update(b']')
     if seen!=declared:
         raise error('HISTORY_INCONSISTENT')
-    if isinstance(rows,deque):
-        rows=list(rows)
     return seen,digest.hexdigest(),rows
 
 
 def sql_history_pages(db,tip_height,sql,error=HistoryPageError,code='HISTORY_DENIED',
-                     window=None):
+                     window=None,skip=0):
     """Page a stable ORDER BY query; refuse truncation and count mismatch.
 
-    window keeps only the first N already-ordered rows (newest-first SQL).
+    window keeps only N already-ordered rows (newest-first SQL) after skip.
     Every row is still validated so the GUI cannot silently drop a tail.
     """
     declared=db.execute('SELECT count(*) FROM history').fetchone()[0]
@@ -91,6 +95,8 @@ def sql_history_pages(db,tip_height,sql,error=HistoryPageError,code='HISTORY_DEN
     if declared>HISTORY_COMPLETE_MAX:
         raise error(code)
     if window is not None and (type(window) is not int or window<1):
+        raise error(code)
+    if type(skip) is not int or skip<0 or (skip and window is None):
         raise error(code)
     seen=0;offset=0;out=[]
     while True:
@@ -108,7 +114,7 @@ def sql_history_pages(db,tip_height,sql,error=HistoryPageError,code='HISTORY_DEN
                     or not 0<=credit<=22_000_000*100_000_000
                     or not 0<=debit<=22_000_000*100_000_000):
                 raise error(code)
-            if window is None or seen<window:
+            if window is None or (seen>=skip and len(out)<window):
                 out.append((txid,block,credit,debit,tip_height-block+1))
             seen+=1
             if seen>declared:

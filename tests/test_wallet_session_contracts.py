@@ -1,7 +1,7 @@
 """Fail-closed wallet contracts, not real E2E acceptance."""
 from pathlib import Path
 import unittest
-from wam_regtest.operational_gui import parse_amount
+from wam_regtest.amounts import parse_amount
 from wam_regtest.wallet_session import WalletSession,WalletSessionError,WalletCoreCli
 from wam_regtest.wsp_live import RealWspScanError
 from wam_regtest.core import smoke_real_core,CoreSmokeError
@@ -18,6 +18,30 @@ class WalletSessionContracts(unittest.TestCase):
         with self.assertRaisesRegex(WalletSessionError,'WALLET_DISPOSABLE_CONSENT_DENIED'):
             WalletSession.from_backup(Path('/unknown'),Path('/unknown'),Path('/unknown'),
                 Path('/unknown'),'wallet.enc',b'', '',authorized=False)
+
+    def test_owned_open_requires_consent_before_owner_or_source(self):
+        from unittest.mock import patch
+        from wam_regtest import managed_wallet_checkpoint as checkpoint
+        with patch.object(checkpoint,'_owned') as owned, patch.object(checkpoint,'_pinned_source') as source:
+            with self.assertRaisesRegex(WalletSessionError,'WALLET_DISPOSABLE_CONSENT_DENIED|MANAGED_WALLET_EXPLICIT_CONSENT'):
+                WalletSession.open_owned(object(),Path('/unused'),b'public-disposable-password',
+                                         authorized=False,create=True)
+            owned.assert_not_called();source.assert_not_called()
+
+    def test_owned_open_preserves_existing_runtime(self):
+        from unittest.mock import patch
+        import tempfile
+        from wam_regtest import managed_wallet_checkpoint as checkpoint
+        with tempfile.TemporaryDirectory() as folder:
+            owner=type('Owner',(),{})()
+            owner.directory=Path(folder).resolve()
+            runtime=owner.directory/'wallet-runtime.sqlite'
+            runtime.write_bytes(b'preserve-runtime')
+            with patch.object(checkpoint,'_inputs'):
+                with self.assertRaisesRegex(WalletSessionError,'EXISTING_RUNTIME'):
+                    WalletSession.open_owned(owner,Path('/unused'),b'public-disposable-password',
+                                             authorized=True,create=True)
+            self.assertEqual(runtime.read_bytes(),b'preserve-runtime')
 
     def test_integer_atoms_without_float_rounding(self):
         self.assertEqual(parse_amount('0.00100000'),100000)
