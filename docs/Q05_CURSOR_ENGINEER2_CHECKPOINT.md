@@ -18,6 +18,9 @@ integration (contents:read). No native/frozen CI on this SHA.
 - History older/newer window (`skip_newest` / SQL `skip`) after full
   fingerprint. Receive stats use `COUNT(credit>0)`, not the GUI window.
 - Fail-closed publication inspect unchanged (`automatic_recovery_allowed=False`).
+- `scripts/probe_q05_owned_session.py`: in-process START→RESTORE harness for
+  signed macOS Core. Linux agent: `Q05_OWNED_SESSION_PROBE_SCOPE_DENIED`.
+- `gh workflow run` HTTP 403 Resource not accessible by integration.
 
 ## Tests actually run (Linux agent)
 
