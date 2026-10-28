@@ -1,5 +1,6 @@
 """Reference/custody refusals; genuine vault/scanner proof is a native probe."""
 import json
+import hmac
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -60,6 +61,16 @@ class WalletCheckpointContracts(unittest.TestCase):
         path.write_bytes(original[:-12])
         with self.assertRaises(module.ManagedWalletError):module._read_reference(owner)
         self.assertEqual(path.read_bytes(),original[:-12])
+
+    def test_authenticated_integer_zero_is_not_false_network_authority(self):
+        owner=self.owner();module._publish_reference(owner,'a'*32)
+        path=self.root/'supervisor.wallet';row=json.loads(path.read_bytes())
+        row.pop('mac');row['mainnet_allowed']=0
+        secret=read_exact(self.root,'supervisor.token',length=32)
+        row['mac']=hmac.digest(secret,module.SCHEMA.encode()+b'\n'+module._canonical(row),'sha256').hex()
+        path.write_bytes(module._canonical(row))
+        with self.assertRaisesRegex(module.ManagedWalletError,'REFERENCE_UNVERIFIED'):
+            module._read_reference(owner)
 
     def test_existing_runtime_or_sidecars_are_preserved(self):
         owner=self.owner();runtime=owner.directory/'wallet-runtime.sqlite'

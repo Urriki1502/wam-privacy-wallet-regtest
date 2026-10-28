@@ -1,0 +1,64 @@
+{
+  "schema": "q05-empty-wallet-checkpoint-native/v1",
+  "status": "PASS",
+  "source_sha": "3d4f1d914605951ed7878293daae855da025f3e0",
+  "checkout_sha": "3d4f1d914605951ed7878293daae855da025f3e0",
+  "platform": "macos-arm64",
+  "frozen": false,
+  "core_trust": "official-signed-v0.1.11",
+  "core_version": "v0.1.11",
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_executed": true,
+  "python_version": "3.12.15",
+  "dependencies": {
+    "coincurve": "21.0.0",
+    "cryptography": "50.0.0"
+  },
+  "adapter_sha256": "bbdb832fba8af015c6c63fca8ef43a1cbc448129289f9935db6da8d6b4413825",
+  "synthetic_rpc": false,
+  "funding_or_mining": true,
+  "wallet_signing_or_broadcast": false,
+  "public_fixture_signature_and_broadcast": true,
+  "physical_device_acceptance": false,
+  "mainnet_allowed": false,
+  "observations": [
+    {
+      "created_empty_anchored_generation": [
+        1,
+        "8eb1ee539eb1408ecea60e53c5e2bbaa6405ed1bbb736bcd940dc4caee703574"
+      ],
+      "height": 0,
+      "confirmed_atoms": 0,
+      "history_count": 0,
+      "plaintext_runtime_removed": true
+    },
+    {
+      "real_fixture_payment_txid": "946156b10d93fd7172102eb75aff54fb5b71c3bd69142277b9754b2dfb50f849",
+      "height": 102,
+      "confirmed_atoms": 4749990000,
+      "history_count": 1,
+      "history_sha256": "ba6b7021f5842a9d7caa237db1af1b42f7909cd754b0e40258f9ac32a9bb2dad",
+      "wallet_signing_or_broadcast": false
+    },
+    {
+      "reopened_same_wallet_live_resync": true,
+      "anchored_generation": [
+        3,
+        "9204a688becdebbd54c7a67222a4f5ae46a7cfac4d626de2147c5f71a9c221a5"
+      ],
+      "original_generation_preserved": true,
+      "height": 102,
+      "confirmed_atoms": 4749990000,
+      "history_count": 1,
+      "history_sha256": "ba6b7021f5842a9d7caa237db1af1b42f7909cd754b0e40258f9ac32a9bb2dad",
+      "plaintext_runtime_removed": true
+    }
+  ],
+  "wallet_id": "38fd90c9f3c0121ddda7552f51f602a2",
+  "payment_code_sha256": "a8c06faaca62f3a602d10dc013443702c0f21e9e7c1730cd7d2b0001f807569c",
+  "timestamp_utc": "2026-10-28T06:53:15.355868+00:00"
+}

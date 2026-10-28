@@ -1,0 +1,69 @@
+{
+  "schema": "q05-wallet-checkpoint-native/v1",
+  "status": "PASS",
+  "wallet_fixture": "PUBLIC_FIXTURE_FUNDED",
+  "source_sha": "fca311526f8503776e5b40a39279d00519294c6c",
+  "checkout_sha": "fca311526f8503776e5b40a39279d00519294c6c",
+  "platform": "macos-arm64",
+  "frozen": false,
+  "core_trust": "official-signed-v0.1.11",
+  "core_version": "v0.1.11",
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_executed": true,
+  "python_version": "3.12.15",
+  "dependencies": {
+    "coincurve": "21.0.0",
+    "cryptography": "50.0.0"
+  },
+  "adapter_sha256": "bcba63b40d2f9e7f8a3caee1786177b713e1ceb82edc4cbc8501c674786e44dd",
+  "synthetic_rpc": false,
+  "funding_or_mining": true,
+  "wallet_signing_or_broadcast": false,
+  "public_fixture_signature_and_broadcast": true,
+  "physical_device_acceptance": false,
+  "mainnet_allowed": false,
+  "observations": [
+    {
+      "created_empty_anchored_generation": [
+        1,
+        "52a9cc3948da95851701df9c819b799c398bc105c71a80d38f799e11ad3dacae"
+      ],
+      "height": 0,
+      "confirmed_atoms": 0,
+      "history_count": 0,
+      "plaintext_runtime_removed": true
+    },
+    {
+      "wrong_password_refused": true,
+      "native_anchor_reference_ciphertext_preserved": true
+    },
+    {
+      "real_fixture_payment_txid": "5d93b8c6c895ed050dbcc7ff2221ecde832e07ff58a6c60b037ec62239b69be6",
+      "height": 102,
+      "confirmed_atoms": 4749990000,
+      "history_count": 1,
+      "history_sha256": "5111a3c27c077ffd65bb00be2cd2230f0f8abb678c188f660d47f31d9493bead",
+      "wallet_signing_or_broadcast": false
+    },
+    {
+      "reopened_same_wallet_live_resync": true,
+      "anchored_generation": [
+        3,
+        "74e28fac42a236443d9630a7bbe82b8f96b210d11470492b1d40a474b1ce2b5b"
+      ],
+      "original_generation_preserved": true,
+      "height": 102,
+      "confirmed_atoms": 4749990000,
+      "history_count": 1,
+      "history_sha256": "5111a3c27c077ffd65bb00be2cd2230f0f8abb678c188f660d47f31d9493bead",
+      "plaintext_runtime_removed": true
+    }
+  ],
+  "wallet_id": "ff4302eb1b4922791f8abecc95ea13ae",
+  "payment_code_sha256": "2d52f0f57b9eb9de0789687832870f536e426148ea941f289769e6fe054097f6",
+  "timestamp_utc": "2026-10-28T06:55:36.554334+00:00"
+}

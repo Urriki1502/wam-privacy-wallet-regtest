@@ -1,3 +1,69 @@
+# Latest saved checkpoint — native wallet continuity verified, final CI next
+
+Runtime source: `fca311526f8503776e5b40a39279d00519294c6c` (adapter introduced
+at a87772b, funded history probe 3d4f1d9). Same branch/Draft PR #138.
+**169 targeted local tests PASS**: 79 Q05, 20 Q04, 35 Q03, 6 external-Core,
+5 contention, 13 ledger, 3 encrypted storage and 8 wallet-session contracts.
+Sequential execution, Python 3.12.15 / coincurve 21.0.0 / cryptography 50.0.0.
+
+New actual signed-Core/pinned-WSP macOS ARM64 probe:
+`docs/evidence/q05/native-wallet-fca3115.json`, SHA-256
+`543872b472b21a498becab7d5bd6ca792eff6d9f778b9b6924ca6ed0dae7581e`.
+Four observations PASS: create empty anchored generation 1; wrong-password
+refusal without anchor/reference/ciphertext mutation; explicitly opted-in PUBLIC
+REGTEST fixture payment scanned at height 102 (4,749,990,000 atoms, one history
+row); clean owner/Core reopen with same wallet/payment code, exact history
+fingerprint and balance, anchored generation 3, old ciphertext preserved.
+No wallet signing/spending occurred. Public fixture signing/broadcast is recorded
+separately and exists ONLY in the native probe, never onboarding/adapter code.
+New Core/owners shut down normally. Earlier empty-wallet 59e073f and funded
+3d4f1d9 receipts remain preserved too. Their legacy schema label contains
+`empty-wallet`; actual funding flags/observations determine scope. The final
+receipt uses explicit `wallet_fixture` and generic checkpoint schema.
+
+The adapter is owner-local API only. No wallet passwords, seeds or checkpoints
+are sent over the HMAC-only control protocol. Native vault/KDF/AEAD/keyring
+formats are unchanged. `supervisor.wallet` is nonsecret HMAC-bound reference;
+the native anchor remains authoritative for generation. Failed publication or
+leftover runtimes are preserved/refused. History summary currently refuses
+1000-row ambiguity; complete pagination is still needed before ordinary use.
+
+Q04 repair run 40645229982 at ef700da is PASS for native/contention and both
+frozen modes. Final pushed HEAD must get its OWN CI, including new Linux Q05
+unit/native-storage workflow and Windows Q05 native tests. Do not infer Q05
+integrated packaged qualification from Q04 frozen jobs. No full matrix was
+manually redispatched; pushes are batched, Core builder recipe is unchanged.
+
+Canonical Q05 remains **0 PASS / 0 FAIL / 37 PENDING / 0 BLOCKED / 0 STALE**;
+G0–G7 PENDING, accepted=false. Q04 G6/G7 BLOCKED unchanged. Supplemental local
+proof is recorded only as local_requalification. Handoff/full acceptance NO.
+
+Next exact actions after verifying HEAD/clean tree/official lease:
+1. Inspect new exact-HEAD CI; fix any Q04/source/native-storage regression first.
+2. Test signed/uncertain reservation preservation, interrupted checkpoint/
+   native-anchor publication, exact-checkpoint refusal/reconciliation and
+   concurrency using actual WSP under the same original Core owner.
+3. Finish reviewed persistent ownership architecture. New controllers still
+   refuse dirty live-orphan state; no PID adoption or Popen facade is permitted.
+4. Design secure wallet/GUI bridge separately (control HMAC is NOT encryption),
+   then normal packaged onboarding/read/Send/Sign/Broadcast, all three native/
+   frozen hosts and Windows 125% DPI. No vault or KDF migration.
+5. Preserve legacy profiles/controllers; no generic kill/repair or lock deletion.
+   Owner approval remains necessary for merge/release/formal Q-GATE transition;
+   physical and independent acceptance remain separate. Routine bounded
+   documented-fix tests are already authorized.
+
+Reproduce only when affected source changes: use Python 3.12.15 with the pinned
+Q01 dependencies, PYTHONPATH containing this repository's src and the actual
+ac55f134 WSP src, then `scripts/probe_q05_wallet_checkpoint.py --core-dir
+<verified signed v0.1.11 ARM64 dir> --wsp-source <literal pinned Git checkout>
+--root <NEW private wam-fusion-core-16hex path> --receipt <NEW JSON path>
+--confirm-disposable-regtest --fund-disposable-wallet`. Require a clean committed
+checkout; never reuse/overwrite any old profile or receipt. All receipts contain
+exact source, binary digests, WSP pin and actual outcomes.
+
+---
+
 # Work in progress: owner-local checkpoint adapter added
 
 Runtime commit `a87772b` adds `managed_wallet_checkpoint.py` and

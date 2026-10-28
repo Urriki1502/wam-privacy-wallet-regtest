@@ -101,3 +101,20 @@ covers one-thread restore/sync/save. Successful operations anchor ciphertext,
 close keyring/scanner and remove only their freshly created runtime; failure
 retains residue and refuses later ambiguous state. A new source-only empty-wallet
 native probe is pending; unit reference/custody refusals do not count as E2E PASS.
+
+
+## Adapter native requalification (fca3115)
+
+Source-only actual signed macOS Core + literal pinned WSP: empty creation,
+wrong-password refusal with unchanged anchor/reference/ciphertext, explicit
+public REGTEST fixture receipt, funded balance and one-row history fingerprint
+across original-owner/Core reopen PASS. Native receipt is
+`docs/evidence/q05/native-wallet-fca3115.json`. The probe explicitly signs a
+PUBLIC funding fixture; it never signs/spends from the created wallet. This
+replaces the earlier adapter-native-PENDING statement only within that narrow
+scope. Signed/uncertain wallet reservations, checkpoint interruption, supervisor
+process loss, clean-device recovery and normal packaged use remain unqualified.
+History summary refuses a full 1000-row page pending proper pagination; it does
+not silently claim a complete truncated history. All canonical Q05 cases remain
+PENDING. A strict boolean reference guard also rejects authenticated integer 0
+as a substitute for `mainnet_allowed=false`.

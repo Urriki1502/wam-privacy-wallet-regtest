@@ -17457,7 +17457,18 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "Q05_ENGINEER_AND_NATIVE_RUNNERS",
+            "missing_evidence": "Required integrated packaged behavior and all relevant wallet/reservation/crash/native/frozen scopes remain incomplete. This narrow direct-API probe is supplemental only.",
+            "next_action": "Continue same PR with exact-checkpoint failure/reservation reconciliation and authenticated GUI/service integration; keep native custody and existing vault format."
+          },
+          "local_requalification": {
+            "status": "PASS",
+            "source_sha": "fca311526f8503776e5b40a39279d00519294c6c",
+            "receipt_path": "docs/evidence/q05/native-wallet-fca3115.json",
+            "receipt_sha256": "543872b472b21a498becab7d5bd6ca792eff6d9f778b9b6924ca6ed0dae7581e",
+            "scope": "Source-only owner-local adapter: native vault/anchor, pinned WSP real receive/scan, funded balance/history fingerprint and wallet identity across clean owner/Core reopen; wrong-password and duplicate-create refuse unchanged state. Public disposable fixture funding only. No GUI/frozen, signed/uncertain reservation, supervisor-crash or clean-device acceptance."
+          }
         },
         {
           "id": "Q05-INTERRUPTED-RECOVERY-MACOS",
@@ -17969,7 +17980,7 @@
           "note": "Historical unmerged scoped Q05/A06 3OS native/frozen receipts and Windows125% visual clipping FAIL; retained as review leads, not current Q05 PASS or completed frozen acceptance."
         }
       ],
-      "engineering_status": "STAGE_A_LOCAL_CORE_VERIFIED_STAGE_B_FOUNDATION_PENDING_Q04_CI",
+      "engineering_status": "STAGE_A_B_FOUNDATION_AND_OWNER_LOCAL_CHECKPOINT_SUPPLEMENTAL_VERIFIED",
       "scope_note": "All 37 canonical cases remain PENDING, accepted=false. Local signed macOS Core lifecycle and retained-original-owner crash recovery are supplemental only; full managed wallet, supervisor-crash reattachment, scanner/vault continuity and three-OS native/frozen qualification remain incomplete. Standing owner authorization permits bounded documented-fix engineering in Draft PR #138; original FAIL history is retained."
     },
     {
