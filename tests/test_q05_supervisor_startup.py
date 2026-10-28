@@ -14,6 +14,28 @@ class StartupContracts(unittest.TestCase):
     setUp = lifecycle_fixture.SupervisorLifecycleUnit.setUp
     owner = lifecycle_fixture.SupervisorLifecycleUnit.owner
 
+    def test_changed_binary_is_refused_before_spawn_and_dirty_intent(self):
+        owner=self.owner()
+        before=(owner.directory/'wam.conf').read_bytes()
+        with patch.object(module,'verified_core_paths',side_effect=
+                module.CoreSmokeError('CORE_EXACT_BINARY_DENIED')), \
+             patch.object(module.subprocess,'Popen') as spawn:
+            with self.assertRaises(module.CoreSmokeError):owner.start()
+            spawn.assert_not_called()
+        self.assertEqual(owner.journal.state,'CLEAN')
+        self.assertEqual((owner.directory/'wam.conf').read_bytes(),before)
+        self.assertIsNone(owner.process)
+
+    def test_changed_verified_receipt_or_path_cannot_replace_profile(self):
+        owner=self.owner()
+        for node,receipt in ((self.core/'other-node',owner.receipt),
+                (owner.node,dict(owner.receipt,wamd_sha256='c'*64))):
+            with patch.object(module,'verified_core_paths',return_value=(node,owner.cli,receipt)), \
+                 patch.object(module.subprocess,'Popen') as spawn:
+                with self.assertRaises(module.ManagedCoreError):owner.start()
+                spawn.assert_not_called()
+        self.assertEqual(owner.journal.state,'CLEAN')
+
     def startup(self, owner, *, rpc_effect=None, socket_error=None):
         stack = ExitStack()
         self.addCleanup(stack.close)

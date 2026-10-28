@@ -166,6 +166,17 @@ class CoreSupervisor:
             raise ManagedCoreError('MANAGED_IDENTITY_CHANGED')
         return local_rpc_port(self.directory)
 
+    def _check_core(self):
+        # A long-running controller must not reuse intake from construction
+        # after executable replacement. Verify before spawning, not only in
+        # the binding created after Popen. Native binding still rechecks the
+        # actual child; this is not hardened fd-to-loader attestation.
+        node,cli,receipt=verified_core_paths(self.core)
+        if (node!=self.node or cli!=self.cli
+                or receipt['wamd_sha256']!=self.profile['core_sha256']
+                or receipt['wam_cli_sha256']!=self.profile['cli_sha256']):
+            raise ManagedCoreError('MANAGED_IDENTITY_CHANGED')
+
     def _record_failure(self, stage, error):
         code = (error.args[0] if type(error) in
                 (RpcError, CoreBindingError, CoreSmokeError, ManagedCoreError)
@@ -185,6 +196,7 @@ class CoreSupervisor:
                 or self.process is not None or self._faulted):
             raise ManagedCoreError('MANAGED_START_NOT_ALLOWED')
         port = self._check_profile()
+        self._check_core()
         self.journal.reserve_start()
         if self.journal.state!=('RECOVERING' if _recovering is True else 'CLEAN'):
             raise ManagedCoreError('MANAGED_DIRTY_RECOVERY_REQUIRED')
@@ -324,7 +336,7 @@ class CoreSupervisor:
                 or not self._registered or self.process.poll() is not None):
             raise ManagedCoreError('MANAGED_RECOVERY_ORIGINAL_OWNER_REQUIRED')
         self._check_profile()
-        verified_core_paths(self.core)
+        self._check_core()
         binding=OwnedCoreBinding(self.process,self.core,self.directory)
         binding._assert_image()
         # Reuse the owned-context explicit reattestation, never external attach
@@ -362,7 +374,7 @@ class CoreSupervisor:
                 or self.binding.process is not process or not self._registered
                 or scope is None or scope.binding.process is not process):
             raise ManagedCoreError('MANAGED_RECOVERY_ORIGINAL_OWNER_REQUIRED')
-        self._check_profile();verified_core_paths(self.core)
+        self._check_profile();self._check_core()
         self.journal.reserve_start()
         if not any(row['state']=='RUNNING' and row['owner']==self.journal.owner
                 and row['core_pid']==process.pid for row in self.journal.events):
