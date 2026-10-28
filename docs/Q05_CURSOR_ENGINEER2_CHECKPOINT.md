@@ -1,41 +1,42 @@
-# Engineer 2 checkpoint — owned-Core GUI attach (not Q-GATE)
+# Engineer 2 checkpoint — macOS real-Core owned-session CI (not Q-GATE)
 
-Branch `cursor/q05-history-pagination-9c81` HEAD `f0448d69e164ad3f0e46c8b429fe335d0dc9c792`.
-Codex Draft #138 remains isolated.
-Canonical ledger unchanged: 37 Q05 PENDING, `accepted=false`.
-No second PR, no merge, no mainnet.
+Branch `cursor/q05-history-pagination-9c81` HEAD `fa6d48a31fe56208dbc278901493ce718c0619b2`.
+Codex Draft #138 remains `9b0361c6211f500ef78d0ace171c1bb6a5a10329`.
+Canonical ledger: 37 Q05 PENDING, `accepted=false`. No second PR, no merge.
 
-`gh workflow run` on this token: HTTP 403 Resource not accessible by
-integration (contents:read). No native/frozen CI on this SHA.
+## This milestone
 
-## Implemented (this milestone)
-
-- `WalletSession.open_owned`: live session on original `CoreSupervisor`
-  Popen. No fixture funding, no height 102/103 gate, no PID adoption.
-  Dirty runtime/sidecars refuse without repair.
-- `wam-regtest managed-gui`: in-process start + Qt. Window close locks
-  the wallet only. Core shutdown only with explicit `--stop-core-on-app-exit`.
-- History older/newer window (`skip_newest` / SQL `skip`) after full
-  fingerprint. Receive stats use `COUNT(credit>0)`, not the GUI window.
-- Fail-closed publication inspect unchanged (`automatic_recovery_allowed=False`).
-- `scripts/probe_q05_owned_session.py`: in-process START→RESTORE harness for
-  signed macOS Core. Linux agent: `Q05_OWNED_SESSION_PROBE_SCOPE_DENIED`.
-- `gh workflow run` HTTP 403 Resource not accessible by integration.
+- Job `q05-owned-session` in `.github/workflows/real-core-regtest.yml`:
+  official signed macOS ARM64 Core + `scripts/probe_q05_owned_session.py`
+  empty START→RESTORE and funded BIP352/sign/broadcast.
+- Probe records original Popen ownership, lock-without-Core-stop, restore.
+- History rejects heights past the verified tip and non-positive confirmations.
+- GUI close ignores in-flight sign/broadcast; in-process CLI stops Core on exit.
 
 ## Tests actually run (Linux agent)
 
-- `unittest discover -s tests -p 'test_q05*.py'`: 111 PASS (includes
-  `test_q05_owned_session`)
-- `test_history_pages`, `test_gui_error_privacy`, owned-open consent/runtime:
-  PASS
-- Qt `test_fusion_v2_widgets`: NOT EXECUTED (no PySide6)
-- Genuine Core / macOS / Windows / frozen / physical: NOT EXECUTED
-- `gh workflow run`: previously 403; re-attempt after push
+- `test_q05*.py`: 114 PASS (SOURCE only)
+- Linux probe: `Q05_OWNED_SESSION_PROBE_SCOPE_DENIED` (expected)
+- REAL CORE / NATIVE macOS: NOT EXECUTED here
 
-## Next unblocked task
+## CI
 
-Dispatch existing Q05/linux/macos/windows workflows on this SHA if
-Actions grants `workflow_dispatch`. If 403, continue source-level
-recovery/reservation contracts. Do not fabricate native PASS.
+- Owner Linux supervisor run https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40786655493
+  PASS on `d87a251` — **not** genuine Core E2E.
+- Cloud Agent `gh workflow run real-core-regtest.yml`: HTTP 403 (no `actions:write`).
 
-Do not promote Q05 cases to canonical PASS from this checkpoint.
+Owner dispatch:
+
+```bash
+gh workflow run real-core-regtest.yml \
+  --repo Urriki1502/wam-privacy-wallet-regtest \
+  --ref cursor/q05-history-pagination-9c81
+```
+
+Inspect job **Q05 owned-session genuine signed Core START→RESTORE** on SHA `fa6d48a`.
+Do not attribute run 40786655493 to this SHA or to Core E2E.
+
+## Next
+
+Owner-dispatched macOS real-Core job, then repair from its receipts.
+Do not mark canonical Q05 PASS from this checkpoint.
