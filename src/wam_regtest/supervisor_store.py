@@ -12,7 +12,7 @@ import sys
 
 MAX_CONTROL_FILE=4096
 CONTROL_NAMES=frozenset({"supervisor.token","supervisor.profile","supervisor.lock",
-                         "supervisor.failure"})
+                         "supervisor.failure","supervisor.wallet"})
 
 
 class SupervisorStorageError(ValueError):pass
