@@ -168,3 +168,30 @@ transaction; no extra submission occurs. This is a narrow safety-negative
 PASS, not positive recovery, physical failure, independent review or Q05 case
 promotion. Recovery must preserve the exact native-anchor authority and all
 signed/uncertain reservations; an unknown runtime/orphan is never a cleanup cue.
+
+
+## 29 October: explicit recovery and selective history integration
+
+Original-owner recovery uses the current native anchor ciphertext under the same
+anchor lease and native target directory identity. Existing vault.save performs
+CAS; authenticated BEGIN/COMMIT selects the new same-wallet container. Old vault,
+orphan and unknown SQLite are preserved. A cut after native CAS before COMMIT
+remains MANAGED_RECOVERY_PENDING. Explicit completion is still unimplemented.
+Local genuine signed Core/WSP/native vault tests at d8d58cb and combined cf74d67
+show anchored uncertain locks preserved and exactly one submission, no replay.
+These controlled exceptions are not power-loss or general malicious-orphan proof.
+
+Cursor 9eea948 history fingerprint alone was selectively adapted into checkpoint
+observation. History, balances and reservation hashes share one SQLite snapshot;
+full declared counts, strict ordering/confirmations and offset ceiling fail closed.
+Its owned session/GUI/CI remains deferred for recovery-reference selection, native
+lease/liveness/failure-cleanup review. No merge of stacked feature ancestry.
+New local source/probe guard checks literal Python Git blobs and candidate trees,
+records CRLF normalization separately and permits CI non-code artifacts only in
+explicit repository/SHA context. It does not establish WSP/Core trust, frozen
+identity, same-user malware resistance or independent review.
+
+Open custody boundaries: pending COMMIT completion; interrupted publication at
+all stage/link windows; real post-reboot v2; cross-process orphan ownership;
+clean-device recovery; native/frozen GUI on all OS; physical and independent G7.
+Q05 stays 37 PENDING and accepted=false. Q04 G6/G7 remain BLOCKED.

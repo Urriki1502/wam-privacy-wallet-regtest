@@ -17557,6 +17557,16 @@
               "receipt_sha256": "a0b5a079f64c54f0c598968f43a439dba72d5e3edb915f64aece5202601958f8",
               "scope": "EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY",
               "recovery_completed": true
+            },
+            {
+              "status": "PASS",
+              "source_sha": "cf74d67e17355bc8fc984970aaaea0444d0123f0",
+              "checkout_sha": "cf74d67e17355bc8fc984970aaaea0444d0123f0",
+              "timestamp_utc": "2026-10-28T23:50:24.378202+00:00",
+              "receipt_path": "docs/evidence/q05/combined-recovery-cf74d67.json",
+              "receipt_sha256": "73499e3ac55d6ab66336bbf9b72fa2647d9d7be84cc36a074c24f48c7f6eafb3",
+              "scope": "EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY; combined checkpoint pagination; seven actual native observations, one wallet submission and no replay. Source-only; not integrated/frozen acceptance.",
+              "recovery_completed": true
             }
           ],
           "local_negative_evidence_history": [

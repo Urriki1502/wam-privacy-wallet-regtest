@@ -30,7 +30,11 @@ shared exported constants; fixed. Broad Cursor source-string assertion initially
 expected unimported session/read work; retained helper behavior tests and adapted
 that assertion explicitly to this checkpoint-only scope. Other read/GUI paths
 remain deferred, not claimed complete. Actual combined-source native recovery
-retest must follow a clean commit. No duplicate Windows/Linux CI authored.
+retest PASS at clean cf74d67e17355bc8fc984970aaaea0444d0123f0: seven
+observations, genuine signed Core and native vault, one actual wallet submission,
+no replay, unchanged identity/history/reservations after recovery and reopen.
+Receipt: docs/evidence/q05/combined-recovery-cf74d67.json. Literal tracked Python
+source tree and imported package path are also recorded; no CI receipt borrowed. No duplicate Windows/Linux CI authored.
 
 Canonical: 0 PASS / 0 FAIL / 37 PENDING / 0 BLOCKED / 0 STALE; G0-G7 PENDING,
 accepted=false. Q04 G6/G7 BLOCKED. Handoff NO; full acceptance NO.
