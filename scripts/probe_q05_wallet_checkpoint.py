@@ -37,7 +37,8 @@ def main():
         raise SystemExit('Q05_WALLET_PROBE_SCOPE_DENIED')
     head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()
     node,cli,intake=verified_core_paths(a.core_dir);_pinned_source(a.wsp_source)
-    record={'schema':'q05-empty-wallet-checkpoint-native/v1','status':'FAIL',
+    record={'schema':'q05-wallet-checkpoint-native/v1','status':'FAIL',
+        'wallet_fixture':'PUBLIC_FIXTURE_FUNDED' if a.fund_disposable_wallet else 'EMPTY',
         'source_sha':head,'checkout_sha':head,'platform':'macos-arm64','frozen':False,
         'core_trust':'official-signed-v0.1.11','core_version':'v0.1.11',
         'core_sha256':{p.name:sha256(p.read_bytes()).hexdigest() for p in (node,cli)},
@@ -78,6 +79,24 @@ def main():
             if error.args!=('MANAGED_WALLET_EXISTS_OR_UNCERTAIN',):raise
         if sha256(first.read_bytes()).hexdigest()!=first_digest:
             raise ValueError('Q05_DUPLICATE_MUTATED_VAULT')
+        stage='WRONG_PASSWORD_REFUSAL'
+        from wam_regtest.custody import anchor
+        native_anchor=anchor(initial['wallet_id'],keychain)
+        anchor_before=native_anchor.read()
+        reference=(a.root/'supervisor.wallet').read_bytes()
+        try:
+            checkpoint(owner,a.wsp_source,b'wrong-public-disposable-password',
+                       authorized=True,keychain=keychain)
+            raise ValueError('Q05_WRONG_PASSWORD_ACCEPTED')
+        except ManagedWalletError as error:
+            if error.args!=('MANAGED_WALLET_CHECKPOINT_DENIED',):raise
+        if (native_anchor.read()!=anchor_before
+                or (a.root/'supervisor.wallet').read_bytes()!=reference
+                or sha256(first.read_bytes()).hexdigest()!=first_digest
+                or (owner.directory/'wallet-runtime.sqlite').exists()):
+            raise ValueError('Q05_PASSWORD_FAILURE_MUTATED_CHECKPOINT')
+        record['observations'].append({'wrong_password_refused':True,
+            'native_anchor_reference_ciphertext_preserved':True})
         if a.fund_disposable_wallet:
             stage='PUBLIC_DISPOSABLE_FIXTURE_FUNDING'
             from wam_regtest.wallet_session import WalletCoreCli

@@ -78,7 +78,8 @@ def _read_reference(owner):
                 or not re.fullmatch('[0-9a-f]{32}',row['wallet_id'])):raise ValueError
         mac=row.pop('mac');expected=_reference(owner,row['wallet_id'])
         secret=read_exact(owner.root,'supervisor.token',length=32)
-        if (row!=expected or type(mac) is not str or not re.fullmatch('[0-9a-f]{64}',mac)
+        if (row!=expected or row['mainnet_allowed'] is not False
+                or type(mac) is not str or not re.fullmatch('[0-9a-f]{64}',mac)
                 or not hmac.compare_digest(mac,hmac.digest(secret,
                     SCHEMA.encode()+b'\n'+_canonical(row),'sha256').hex())):raise ValueError
         return row['wallet_id']
