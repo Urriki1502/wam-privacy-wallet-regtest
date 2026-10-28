@@ -40,10 +40,10 @@ class HistoryPagesContracts(unittest.TestCase):
                 self.assertEqual(raw[0][1],count)  # newest height first
 
     def test_complete_history_collect_matches_canonical_fingerprint(self):
-        rows=[_row(i,i+1,500) for i in range(1001)]
+        rows=[_row(i,i+1,1001) for i in range(1001)]
         def page(limit,offset):
             return [dict(r) for r in rows[offset:offset+limit]]
-        count,digest,collected=complete_history(page,len(rows),500,collect=True)
+        count,digest,collected=complete_history(page,len(rows),1001,collect=True)
         self.assertEqual(count,1001)
         self.assertEqual(collected,rows)
         self.assertEqual(digest,sha256(_canonical(rows)).hexdigest())
@@ -103,6 +103,19 @@ class HistoryPagesContracts(unittest.TestCase):
         self.assertEqual(count,800)
         self.assertEqual(len(raw),GUI_HISTORY_LIMIT)
         self.assertEqual(raw[0][1],800-GUI_HISTORY_LIMIT)
+
+    def test_future_height_or_nonpositive_confirmations_are_inconsistent(self):
+        tip=10
+        def page(limit,offset,rows):
+            return [dict(r) for r in rows[offset:offset+limit]]
+        future=[_row(0,11,tip)]
+        future[0]['confirmations']=0
+        with self.assertRaisesRegex(Exception,'HISTORY_INCONSISTENT'):
+            complete_history(lambda limit,offset:page(limit,offset,future),1,tip,collect=True)
+        bad=[_row(0,5,tip)]
+        bad[0]['confirmations']=0
+        with self.assertRaisesRegex(Exception,'HISTORY_INCONSISTENT'):
+            complete_history(lambda limit,offset:page(limit,offset,bad),1,tip,collect=True)
 
     def test_skip_newest_without_window_is_inconsistent(self):
         rows=[_row(i,i+1,10) for i in range(3)]

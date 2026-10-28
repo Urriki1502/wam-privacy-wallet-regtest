@@ -349,8 +349,9 @@ class OperationalWalletWindow(RegtestWalletWindow):
                 self.start_operation("recover",path.parent,path.name,password,approved)
 
     def closeEvent(self,event):
-        if self._worker is not None:
-            super().closeEvent(event)
+        if self._worker is not None or self._approval_open:
+            event.ignore()
+            self.status.setText("DENIED · waiting for safe wallet shutdown")
             return
         try:
             self.session.close()

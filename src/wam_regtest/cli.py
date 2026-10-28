@@ -120,9 +120,11 @@ def main() -> int:
                 create_directory(root)
             owner=CoreSupervisor(root,core,authorized=True)
             owner.start()
+            # In-process owner cannot outlive this interpreter. Window close
+            # still does not stop Core; process exit must shut it down.
             return launch_owned_wallet(owner,source,authorized=True,
                                        create=args.create_wallet,
-                                       stop_core_on_app_exit=args.stop_core_on_app_exit)
+                                       stop_core_on_app_exit=True)
         if args.command=='linux-wallet':
             from .linux_headless import run
             return run(args)

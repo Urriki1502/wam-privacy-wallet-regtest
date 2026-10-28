@@ -59,12 +59,14 @@ def complete_history(read_page,declared,height,*,collect=False,keep_tail=0,
                 raise error('HISTORY_INCONSISTENT')
             txid,row_height=row.get('txid'),row.get('height')
             if (type(txid) is not str or not _TXID.fullmatch(txid)
-                    or type(row_height) is not int or row_height<1):
+                    or type(row_height) is not int or not 1<=row_height<=height):
                 raise error('HISTORY_INCONSISTENT')
             order=(row_height,txid)
             if previous is not None and order<=previous:
                 raise error('HISTORY_INCONSISTENT')
-            if row.get('confirmations')!=height-row_height+1:
+            confirmations=row.get('confirmations')
+            if (type(confirmations) is not int or confirmations<1
+                    or confirmations!=height-row_height+1):
                 raise error('HISTORY_INCONSISTENT')
             if seen:
                 digest.update(b',')

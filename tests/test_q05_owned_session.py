@@ -44,6 +44,13 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertTrue(row['checkpoint_open_blocked'])
         self.assertEqual(runtime.read_bytes(),b'preserve-runtime')
 
+    def test_gui_close_does_not_proceed_while_sign_or_broadcast_worker_runs(self):
+        text=(Path(__file__).resolve().parents[1]/'src/wam_regtest/operational_gui.py').read_text()
+        self.assertIn('if self._worker is not None or self._approval_open',text)
+        self.assertIn('event.ignore()',text)
+        cli=(Path(__file__).resolve().parents[1]/'src/wam_regtest/cli.py').read_text()
+        self.assertIn('stop_core_on_app_exit=True',cli)
+
     def test_cli_wires_in_process_managed_gui_not_control_wallet_ops(self):
         text=(Path(__file__).resolve().parents[1]/'src/wam_regtest/cli.py').read_text()
         self.assertIn("'managed-gui'",text)

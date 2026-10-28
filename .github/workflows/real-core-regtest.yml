@@ -223,6 +223,108 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  q05-owned-session:
+    name: Q05 owned-session genuine signed Core START→RESTORE
+    runs-on: macos-15
+    timeout-minutes: 25
+    env:
+      PYTHONUNBUFFERED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout immutable WSP-1 upstream source
+        uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.10'
+          architecture: 'arm64'
+      - name: Q01 clean hash-locked GUI environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
+      - name: Require actual Apple Silicon hardware
+        run: test "$(uname -m)" = arm64
+      - name: Setup official GnuPG verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v gpg >/dev/null; then brew install gnupg; fi
+          command -v gpg
+      - name: Pin WSP-1 source identity
+        run: test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
+      - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
+        run: python -m wam_regtest.release --platform macos-arm64 --destination core
+      - name: Q05 empty owned-session START→RESTORE on real signed Core
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          python scripts/probe_q05_owned_session.py \
+            --core-dir "$(pwd)/core" \
+            --wsp-source "$(pwd)/wsp-upstream" \
+            --root "${RUNNER_TEMP}/q05-owned-empty" \
+            --receipt q05-owned-session-empty.json \
+            --confirm-disposable-regtest
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          proof=json.loads(Path('q05-owned-session-empty.json').read_text())
+          assert proof['status']=='PASS'
+          assert proof['synthetic_rpc'] is False
+          assert proof['fixture_funding'] is False
+          assert proof['mainnet_allowed'] is False
+          assert proof['pid_adoption'] is False
+          assert proof['platform']=='macos-arm64'
+          assert proof['wsp_source_commit']=='ac55f13423620252bdbf848c7e8a280c3b84721e'
+          assert any(row.get('original_popen_owned') for row in proof['observations'])
+          assert any(row.get('wallet_lock_left_core_running') for row in proof['observations'])
+          assert any(row.get('restored_same_payment_code') for row in proof['observations'])
+          print('Q05_OWNED_SESSION_EMPTY_REAL_CORE_PASS')
+          PY
+      - name: Q05 funded owned-session BIP352 + sign/broadcast on real signed Core
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          python scripts/probe_q05_owned_session.py \
+            --core-dir "$(pwd)/core" \
+            --wsp-source "$(pwd)/wsp-upstream" \
+            --root "${RUNNER_TEMP}/q05-owned-funded" \
+            --receipt q05-owned-session-funded.json \
+            --confirm-disposable-regtest \
+            --fund-disposable-wallet
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          proof=json.loads(Path('q05-owned-session-funded.json').read_text())
+          assert proof['status']=='PASS'
+          assert proof['synthetic_rpc'] is False
+          assert proof['fixture_funding'] is True
+          assert proof['automatic_wallet_transaction_replay'] is False
+          assert any(row.get('real_fixture_payment_txid') for row in proof['observations'])
+          assert any(row.get('genuine_owned_broadcast') for row in proof['observations'])
+          assert any(row.get('restored_same_payment_code') for row in proof['observations'])
+          print('Q05_OWNED_SESSION_FUNDED_REAL_CORE_PASS')
+          PY
+      - name: Upload Q05 owned-session real-Core receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q05-owned-session-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            q05-owned-session-empty.json
+            q05-owned-session-funded.json
+            q01-install.json
+          if-no-files-found: warn
+          retention-days: 14
+
   q04-miner-coexistence:
     name: Q04 macOS ARM64 solo-miner coexistence
     needs: real-wamd
