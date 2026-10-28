@@ -17535,9 +17535,9 @@
           "status": "PENDING",
           "acceptance_evidence": [],
           "blocker": {
-            "actor": "Q05_ENGINEER",
-            "missing_evidence": "Positive explicit recovery/reconciliation after interrupted publication is not designed/qualified; no old-state fallback, unknown SQLite deletion or unauthorized native-anchor advance is permitted.",
-            "next_action": "Design and model exact native-anchor-authoritative recovery, preserve original/orphan evidence, prove signed/uncertain monotonicity, then implement/retest within same PR."
+            "actor": "Q05_ENGINEER_AND_NATIVE_RUNNERS",
+            "missing_evidence": "Original-owner local recovery prototype succeeds for controlled publication cut with previously anchored uncertainty; pending recovery reference completion, other crash windows and all-OS integrated native/frozen qualification remain unqualified.",
+            "next_action": "Test the combined recovery/pagination source; design explicit pending-reference completion and integrate owned session with authenticated recovery target before normal GUI acceptance."
           },
           "local_negative_evidence": {
             "status": "PASS",
@@ -17546,7 +17546,31 @@
             "receipt_sha256": "f4014577be1d71de2bd1b1ac07a3a79849597acffabe31f52fc5c3fda046c1f3",
             "scope": "Genuine durable encrypted publication then controlled exception before native-anchor advance. Existing ciphertext/anchor/reference and irreversible uncertainty remain protected; ambiguous runtime/orphan preserved and next API open denied. This proves safety refusal ONLY, not successful interrupted-write recovery or physical power loss.",
             "recovery_completed": false
-          }
+          },
+          "local_requalification_history": [
+            {
+              "status": "PASS",
+              "source_sha": "d8d58cb01847b5f8002cd0299431c78860952060",
+              "checkout_sha": "d8d58cb01847b5f8002cd0299431c78860952060",
+              "timestamp_utc": "2026-10-28T12:20:10.463173+00:00",
+              "receipt_path": "docs/evidence/q05/explicit-recovery-d8d58cb.json",
+              "receipt_sha256": "a0b5a079f64c54f0c598968f43a439dba72d5e3edb915f64aece5202601958f8",
+              "scope": "EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY",
+              "recovery_completed": true
+            }
+          ],
+          "local_negative_evidence_history": [
+            {
+              "status": "PASS",
+              "source_sha": "feab99ee42bd0a02cb72962c3f247f786d2a7e05",
+              "checkout_sha": "feab99ee42bd0a02cb72962c3f247f786d2a7e05",
+              "timestamp_utc": "2026-10-28T12:29:26.831774+00:00",
+              "receipt_path": "docs/evidence/q05/pending-recovery-feab99e.json",
+              "receipt_sha256": "4eca1e71b2c8e71f19bfaa4c506cae4a9c2545fa3f757ad3200fecfd39d4c472",
+              "scope": "INCOMPLETE_RECOVERY_REFERENCE_SAFE_REFUSAL",
+              "recovery_completed": false
+            }
+          ]
         },
         {
           "id": "Q05-CONCURRENT-OWNER-MACOS",

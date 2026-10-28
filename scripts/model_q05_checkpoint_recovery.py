@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 import subprocess
 
-ACTIONS=('authenticate','begin','copy','publish','anchor','commit','sync','lock')
+ACTIONS=('authenticate','begin','copy','sync','publish','anchor','lock','commit')
 MUTANTS=('early_commit','trust_orphan','forget_uncertain','overwrite_old',
          'replay_uncertain','delete_runtime','ignore_identity','ignore_cas')
 

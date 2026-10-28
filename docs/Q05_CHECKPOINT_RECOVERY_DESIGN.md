@@ -1,8 +1,12 @@
-# Q05 interrupted-checkpoint recovery proposal — not implemented or approved
+# Q05 interrupted-checkpoint recovery — original-owner prototype
 
-The current native API safely refuses ambiguous runtime/orphan state. Actual
+The ordinary native API safely refuses ambiguous runtime/orphan state. Actual
 publication-cut evidence is `evidence/q05/interrupted-publication-a77a78e.json`;
-it is a safety-negative result, not successful recovery. This proposal keeps the
+it is a safety-negative result, not successful recovery. The explicit prototype in
+wallet_recovery.py now copies only exact native-anchor-authorized state into a
+fresh same-wallet container. Native positive receipt explicit-recovery-d8d58cb.json
+and pending-reference negative receipt pending-recovery-feab99e.json are local
+supplemental evidence, not full Q05 acceptance. This design keeps the
 existing vault/KDF/AEAD, native anchor, original Core owner and wallet identity.
 It does not authorize release/merge or claim independent review/acceptance.
 
@@ -31,11 +35,11 @@ or seeds. No foreign PID adoption or new-wallet/seed path is available.
 5. Use existing vault.save/anchor CAS to publish the next generation in the
    fresh container. This avoids overwriting the old unanchored filename. No
    direct promotion of an arbitrary orphan or bypass of anchor sequencing.
-6. Publish COMMIT only after the target's native identity, ciphertext and
+6. Close only the fresh owned runtime, then publish COMMIT only after the target's native identity, ciphertext and
    actual native anchor match. The reference selects a container, while the
    native anchor stays the authority for current generation/digest. A later
    legitimate generation does not authorize an older container copy.
-7. Close keys/runtime and return a locked state. Future opens select only the
+7. Return a locked state. Future opens select only the
    authenticated committed container, require fresh runtime and live Core sync.
    Old evidence remains preserved; uncertainty is not canceled or replayed.
 
@@ -54,9 +58,10 @@ unknown runtime deletion, foreign target identity and stale/nonmonotonic CAS.
 This is a small single-owner/no-new-chain-events design model, not cryptographic,
 native, process-crash, formal verification or independent DEV evidence.
 `tests/test_q05_recovery_model.py` requires its mutation counterexamples and
-explicitly denies any runtime-implemented/acceptance claim.
+explicitly denies any runtime execution/acceptance claim BY THE SYMBOLIC MODEL.
+The separate runtime prototype does not turn this model into native proof.
 
-Before runtime integration: real native failures at every publication/anchor/
+Before broad GUI integration: real native failures at every publication/anchor/
 reference boundary; actual signed and uncertain locks; wrong password/custody/
 wallet/Core/profile/source; concurrent writers/stale anchor; truncated/tampered
 reference/envelope; native directory replacement; unknown SQLite sidecars;

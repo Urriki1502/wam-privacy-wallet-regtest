@@ -13,6 +13,7 @@ import secrets
 import subprocess
 
 from . import custody
+from .history_pages import HISTORY_OFFSET_MAX,HISTORY_PAGE_LIMIT,complete_history
 from .supervisor_protocol import _distinct
 from .supervisor_store import create_once,read_exact
 from .wsp_live import PINNED_WSP_COMMIT,REGTEST_GENESIS,_pinned_source
@@ -98,33 +99,70 @@ def _runtime(owner,name='wallet-runtime.sqlite'):
     return path
 
 
-def _snapshot(ring,scanner,rpc,vault):
-    from wam_sp.wallet import Wallet
-    scanner.sync(rpc);scanner.assert_current()
+def _require_matching_tip(scanner,rpc):
     height,tip=scanner.store.tip()
     if (height,tip)!=(rpc.call('getblockcount'),rpc.call('getbestblockhash')):
         raise ManagedWalletError('MANAGED_WALLET_CHAIN_CHANGED')
-    wallet=Wallet(scanner)
-    history=wallet.history(limit=1000)
-    # This narrow adapter has no history pagination UI. Refuse an ambiguous
-    # truncated summary rather than report a complete-history fingerprint.
-    if len(history)==1000:
-        raise ManagedWalletError('MANAGED_WALLET_HISTORY_PAGE_REQUIRED')
-    reservations=sha256();reservation_count=0;states=set()
-    for row in wallet.db.execute('SELECT txid,vout,token,state,created FROM reservations ORDER BY txid,vout'):
-        reservations.update(_canonical(list(row))+b'\n')
-        reservation_count+=1;states.add(row[3])
-    balance=wallet.balance()
+    return height,tip
+
+
+def _history_page(wallet,limit,offset):
+    # Public Wallet.history starts a nested BEGIN IMMEDIATE and cannot share a snapshot.
+    try:
+        page=wallet._history(limit,offset)
+    except ValueError:
+        raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCONSISTENT') from None
+    if type(page) is not list or len(page)>limit:
+        raise ManagedWalletError('MANAGED_WALLET_HISTORY_INCONSISTENT')
+    return page
+
+
+class _HistoryDenied(ManagedWalletError):
+    def __init__(self,code):
+        super().__init__('MANAGED_WALLET_'+code)
+
+
+def _fingerprint_history(wallet,height,*,collect=False):
+    """Hash every history row in the caller's SQLite transaction; never truncate."""
+    declared=wallet.db.execute('SELECT count(*) FROM history').fetchone()[0]
+    count,digest,rows=complete_history(
+        lambda limit,offset:_history_page(wallet,limit,offset),
+        declared,height,collect=collect,error=_HistoryDenied)
+    return (count,digest,rows) if collect else (count,digest)
+
+
+def _locked_observation(ring,scanner,rpc,vault,wallet):
+    height,tip=_require_matching_tip(scanner,rpc)
+    with scanner.store.transaction():
+        scanner.assert_current()
+        locked_height,locked_tip=scanner.store.tip()
+        if (locked_height,locked_tip)!=(height,tip):
+            raise ManagedWalletError('MANAGED_WALLET_CHAIN_CHANGED')
+        history_count,history_sha256=_fingerprint_history(wallet,height)
+        reservations=sha256();reservation_count=0;states=set()
+        for row in wallet.db.execute(
+                'SELECT txid,vout,token,state,created FROM reservations ORDER BY txid,vout'):
+            reservations.update(_canonical(list(row))+b'\n')
+            reservation_count+=1;states.add(row[3])
+        # balance() would BEGIN IMMEDIATE again; stay on this snapshot.
+        balance=wallet._balance(1)
+    _require_matching_tip(scanner,rpc)
     return {'wallet_id':vault.anchor.wallet_id,'height':height,'tip':tip,
             'payment_code':ring.accounts()[-1].payment_code(),
             'confirmed_atoms':balance['confirmed_atoms'],'reserved_atoms':balance['reserved_atoms'],
             'available_atoms':balance['available_atoms'],
             'reservation_count':reservation_count,'reservation_states':sorted(states),
             'reservation_sha256':reservations.hexdigest(),
-            'history_count':len(history),'history_sha256':sha256(_canonical(history)).hexdigest(),
+            'history_count':history_count,'history_sha256':history_sha256,
             'checkpoint':list(vault._expected or ()),
             'wallet_locked':True,'signer_allowed':False,'broadcast_allowed':False,
             'mainnet_allowed':False}
+
+
+def _snapshot(ring,scanner,rpc,vault):
+    from wam_sp.wallet import Wallet
+    scanner.sync(rpc);scanner.assert_current()
+    return _locked_observation(ring,scanner,rpc,vault,Wallet(scanner))
 
 
 def _close_owned_runtime(ring,scanner,runtime):

@@ -15,6 +15,7 @@ import subprocess
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from wam_regtest.probe_source import verify_source
 from wam_regtest.core import verified_core_paths
 from wam_regtest.core_supervisor import CoreSupervisor
 from wam_regtest.custody import create_directory
@@ -132,14 +133,16 @@ def main():
             or a.interrupt_recovery_reference and not a.recover_after_interruption
             or subprocess.check_output(['git','status','--porcelain'],cwd=source)):
         raise SystemExit('Q05_WALLET_PROBE_SCOPE_DENIED')
-    head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()
+    provenance=verify_source(source)
+    head=provenance['checkout_sha']
     node,cli,intake=verified_core_paths(a.core_dir);_pinned_source(a.wsp_source)
     record={'schema':'q05-wallet-checkpoint-native/v1','status':'FAIL',
         'wallet_fixture':'PUBLIC_FIXTURE_FUNDED' if a.fund_disposable_wallet else 'EMPTY',
         'qualification_scope':('INCOMPLETE_RECOVERY_REFERENCE_SAFE_REFUSAL' if a.interrupt_recovery_reference else
             'EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY' if a.recover_after_interruption else
             'INTERRUPTED_PUBLICATION_SAFE_REFUSAL' if a.interrupt_publication else 'CLEAN_OWNER_REOPEN'),
-        'source_sha':head,'checkout_sha':head,'platform':'macos-arm64','frozen':False,
+        'source_sha':head,'checkout_sha':head,'source_provenance':provenance,
+        'platform':'macos-arm64','frozen':False,
         'core_trust':'official-signed-v0.1.11','core_version':'v0.1.11',
         'core_sha256':{p.name:sha256(p.read_bytes()).hexdigest() for p in (node,cli)},
         'wsp_source_commit':PINNED_WSP_COMMIT,'wsp_executed':True,
@@ -150,7 +153,8 @@ def main():
             'src/wam_regtest/core_supervisor.py','src/wam_regtest/supervisor_journal.py',
             'src/wam_regtest/supervisor_identity.py','src/wam_regtest/supervisor_store.py',
             'src/wam_regtest/supervisor_protocol.py','src/wam_regtest/managed_wallet_checkpoint.py',
-            'src/wam_regtest/wallet_recovery.py',
+            'src/wam_regtest/wallet_recovery.py','src/wam_regtest/history_pages.py',
+            'src/wam_regtest/probe_source.py',
             'src/wam_regtest/vault.py','src/wam_regtest/wallet_session.py',
             'src/wam_regtest/rpc_scope.py','src/wam_regtest/json_rpc.py',
             'src/wam_regtest/cli_rpc.py','scripts/probe_q05_wallet_checkpoint.py')},

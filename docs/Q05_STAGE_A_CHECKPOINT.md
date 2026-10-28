@@ -1,3 +1,46 @@
+# Engineer 1 resume — 29 October 2026
+
+Same branch/Draft PR #138; local runtime recovery commits d8d58cb and feab99e
+extend published 9b0361c. Official lease PID 2682 verified held by this Codex
+session; no lock removed or foreign work modified. Main remains 4bc6f658.
+
+Explicit original-owner recovery now uses the exact authenticated current native
+anchor ciphertext, a fresh same-wallet container and existing native save/CAS.
+BEGIN/COMMIT bind target native volume/file/birth identity. Unknown runtime,
+sidecars, old vault/orphan/reference remain preserved. Native signed macOS
+uncertain-wallet probe d8d58cb PASS (7 observations, one actual submission,
+no replay). Native feab99e cut after anchor but before COMMIT PASS for safe
+refusal only (6 observations); pending-reference completion remains incomplete.
+Receipts are docs/evidence/q05/explicit-recovery-d8d58cb.json and
+pending-recovery-feab99e.json. They do not qualify later changed source.
+
+Selective Cursor review at 9eea948: import only shared history paging and
+checkpoint single-SQLite-snapshot fingerprint/balance/reservation observation.
+Do not merge the branch wholesale. Owned-session/GUI and CI harness are deferred:
+open_owned hardcodes the old container and does not follow committed recovery
+reference; original-owner validation must recur through wallet operations;
+source receipts and failure cleanup also need combined review. Cursor's new
+exact SHA has no Actions run as observed during this review. Original failed
+macOS run 40788571264 stays FAIL, not proof of the new harness repair.
+See Q05_CURSOR_INTEGRATION_REVIEW.md for exact scoped dependencies.
+
+217 local targeted tests PASS after integration (119 Q05 + 8 history helpers +
+90 existing Q01-Q04/custody/ledger contracts). First selective test attempt lacked
+shared exported constants; fixed. Broad Cursor source-string assertion initially
+expected unimported session/read work; retained helper behavior tests and adapted
+that assertion explicitly to this checkpoint-only scope. Other read/GUI paths
+remain deferred, not claimed complete. Actual combined-source native recovery
+retest must follow a clean commit. No duplicate Windows/Linux CI authored.
+
+Canonical: 0 PASS / 0 FAIL / 37 PENDING / 0 BLOCKED / 0 STALE; G0-G7 PENDING,
+accepted=false. Q04 G6/G7 BLOCKED. Handoff NO; full acceptance NO.
+Next: qualify combined checkpoint recovery natively, publish same PR, inspect
+exact-HEAD CI; then explicit pending-reference completion design/tests and
+recovery-aware owned-session integration. No source-only probe proves packaged
+GUI lifecycle, physical acceptance or independent review.
+
+---
+
 # Latest publication-safety checkpoint — exact recovery still incomplete
 
 Probe source a77a78e: `--interrupt-publication` deliberately cuts AFTER real
