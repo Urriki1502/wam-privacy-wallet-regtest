@@ -1,3 +1,16 @@
+# Windows test cleanup correction after exact-HEAD 12fdb4a FAIL
+
+Run 40790259691 / job 123173445836 ran all 127 Q05 tests but failed two cleanup
+callbacks (WinError 32): test_q05_history_pagination.py had two additional leaked
+mkstemp descriptors beyond the helper file already fixed. Close both returned
+fixture descriptors before SQLite opens the path. Actual inconsistent-page and
+blocked-writer assertions remain; no custody change, skip or swallowed failure.
+Preserved summary: evidence/q05/windows-pagination-cleanup-12fdb4a-failure.json.
+Current runtime remains identical to native-qualified cf74d67. New exact-HEAD
+Windows CI required; historical failed job remains FAIL. Canonical 37 PENDING.
+
+---
+
 # Engineer 1 resume — 29 October 2026
 
 Same branch/Draft PR #138; local runtime recovery commits d8d58cb and feab99e

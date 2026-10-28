@@ -18086,6 +18086,15 @@
           "observed_failure": "Unix-only /unused paths are not fully absolute Windows Paths, so constructor correctly refused WSP_LIVE_CLI_SCOPE_DENIED before method-denial assertion.",
           "repair": "Use absolute fixture self.core/self.root paths; preserve constructor and method guards; no skip.",
           "requalification": "PENDING corrected exact-HEAD Windows CI"
+        },
+        {
+          "status": "FAIL",
+          "source_sha": "12fdb4a52ee4db465f7e538bed4a9020b6765e9d",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40790259691/job/123173445836",
+          "receipt_path": "docs/evidence/q05/windows-pagination-cleanup-12fdb4a-failure.json",
+          "failure": "Two imported SQLite pagination tests leaked mkstemp descriptors. Windows cleanup os.remove correctly refused with WinError 32. Both errors occurred in addCleanup lambdas, not history/custody assertions.",
+          "scope": "CI test cleanup errors; canonical Q05 cases remain unqualified.",
+          "next_action": "Close exactly the newly returned test descriptor before SQLite opens it. Preserve writer blocking, transaction snapshot and inconsistent-page assertions; no skip or exception suppression. Recheck exact new HEAD."
         }
       ]
     },

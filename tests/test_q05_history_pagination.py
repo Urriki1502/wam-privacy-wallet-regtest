@@ -310,7 +310,7 @@ class HistoryPaginationContracts(unittest.TestCase):
 
     def test_sqlite_autocommit_insert_between_pages_is_detected(self):
         import sqlite3,tempfile,os
-        path=tempfile.mkstemp(suffix='.sqlite')[1]
+        descriptor,path=tempfile.mkstemp(suffix='.sqlite');os.close(descriptor)
         self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
         db=sqlite3.connect(path,isolation_level=None)
         self.addCleanup(db.close)
@@ -337,7 +337,7 @@ class HistoryPaginationContracts(unittest.TestCase):
 
     def test_sqlite_immediate_snapshot_excludes_blocked_writer(self):
         import sqlite3,tempfile,os,threading
-        path=tempfile.mkstemp(suffix='.sqlite')[1]
+        descriptor,path=tempfile.mkstemp(suffix='.sqlite');os.close(descriptor)
         self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
         db=sqlite3.connect(path,isolation_level=None,timeout=5)
         self.addCleanup(db.close)
