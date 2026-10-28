@@ -61,8 +61,9 @@ def main():
         from wam_regtest.linux_developer_core import LinuxCoreError
         from wam_regtest.q04_runner import Q04RunnerError
         from wam_regtest.q04_fixture import Q04FixtureError
+        from wam_regtest.rpc_contention import RpcContentionError
         reason='LINUX_FROZEN_UNCLASSIFIED'
-        if type(error) in (LinuxCoreError,Q04RunnerError,Q04FixtureError,ExternalAttachmentError):
+        if type(error) in (LinuxCoreError,Q04RunnerError,Q04FixtureError,ExternalAttachmentError,RpcContentionError):
             args=error.args
             if (len(args)==1 and type(args[0]) is str and len(args[0])<=110
                     and re.fullmatch(r'(?:LINUX|Q04|EXTERNAL_ATTACHMENT)_[A-Z0-9_]{4,100}',args[0])):

@@ -3,10 +3,20 @@ import base64
 from concurrent.futures import ThreadPoolExecutor
 import http.client
 import json
+import threading
 import time
 
 from .external_core import ExternalAttachmentError
 from .rpc_contention import BackoffPolicy, ContentionAwareRpc, RpcContentionError, ReadCoalescer
+
+
+def _wait_for_saturation(sent, rejected, *, timeout=5):
+    """No elapsed-sleep guess: require all requests sent and a real Core 503."""
+    deadline=time.monotonic()+timeout
+    while not (all(event.is_set() for event in sent) and rejected.is_set()):
+        if time.monotonic()>=deadline:
+            raise RpcContentionError('Q04_BUSY_LOAD_NOT_SATURATED')
+        time.sleep(.01)
 
 
 def probe_busy(fixture, *, gui=False):
@@ -16,17 +26,23 @@ def probe_busy(fixture, *, gui=False):
     if fixture._core_process.poll() is not None:
         raise RpcContentionError('Q04_BUSY_FIXTURE_EXITED')
     auth=base64.b64encode((fixture._datadir/'regtest'/'.cookie').read_bytes()).decode('ascii')
-    def occupy():
-        conn=http.client.HTTPConnection('127.0.0.1',fixture._rpc_port,timeout=20)
+    sent=[threading.Event() for _ in range(6)]
+    rejected=threading.Event()
+    load_rejections=[]
+    def occupy(index):
+        conn=http.client.HTTPConnection('127.0.0.1',fixture._rpc_port,timeout=45)
         try:
             conn.request('POST','/',json.dumps({'jsonrpc':'1.0','id':1,
-                'method':'waitforblockheight','params':[1000000000,3000]}),
+                'method':'waitforblockheight','params':[1000000000,10000]}),
                 {'Authorization':'Basic '+auth,'Content-Type':'application/json'})
+            sent[index].set()
             response=conn.getresponse();body=response.read(65536)
             if response.status==200:
                 value=json.loads(body)
                 if value.get('error') is not None:raise RpcContentionError('Q04_BUSY_LONGPOLL_DENIED')
-            elif response.status!=503:raise RpcContentionError('Q04_BUSY_LOAD_DENIED')
+            elif response.status==503:
+                load_rejections.append(True);rejected.set()
+            else:raise RpcContentionError('Q04_BUSY_LOAD_DENIED')
         finally:conn.close()
     calls=[];busy=[]
     def read(method,params):
@@ -48,8 +64,8 @@ def probe_busy(fixture, *, gui=False):
         rpc._read=read;rpc._policy=policy;rpc._coalescer=ReadCoalescer(1.0)
     else:rpc=ContentionAwareRpc(read,policy=policy,coalescer=ReadCoalescer(1.0))
     with ThreadPoolExecutor(max_workers=6) as pool:
-        pending=[pool.submit(occupy) for _ in range(6)]
-        time.sleep(.5)
+        pending=[pool.submit(occupy,index) for index in range(6)]
+        _wait_for_saturation(sent,rejected)
         try:
             rpc.read('getblockcount',[])
             raise RpcContentionError('Q04_BUSY_NOT_OBSERVED')
@@ -75,7 +91,7 @@ def probe_busy(fixture, *, gui=False):
                     or window.status_label.text()!='Node busy · retrying after cooldown'
                     or window.height_label.text()!='Height: unverified'):
                 raise RpcContentionError('Q04_BUSY_GUI_COALESCE_UNPROVEN')
-        for future in pending:future.result(timeout=20)
+        for future in pending:future.result(timeout=45)
     rpc.reset()
     height=rpc.read('getblockcount',[])
     if window is not None:
@@ -100,6 +116,8 @@ def probe_busy(fixture, *, gui=False):
             raise RpcContentionError('Q04_BUSY_GUI_CLOSE_STOPPED_CORE')
     return {'gui_coalescing': 'PASS' if gui else 'NOT_APPLICABLE_NO_QT',
         'status':'Q04_GENUINE_BUSY_PATH_PASS','synthetic_busy':False,
+        'load_readiness':'ALL_SIX_SENT_AND_GENUINE_CORE_503',
+        'load_http_503_count':len(load_rejections),'longpoll_timeout_ms':10000,
         'attachment_http_503_count':len(busy),'read_attempts':4,
         'retry_intervals_seconds':intervals,'coalesced_read_calls':0,
         'recovered_height':height,'write_boundary_attempts':1,'write_retried':False,
