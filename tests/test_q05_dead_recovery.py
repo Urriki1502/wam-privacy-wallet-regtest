@@ -39,6 +39,19 @@ class DeadRecoveryContracts(unittest.TestCase):
                 with self.assertRaises(module.ManagedCoreError):owner.recover_dead(authorized=True)
                 start.assert_not_called()
 
+    def test_prior_cycle_pid_reuse_cannot_authorize_unattested_launch(self):
+        owner=self.owner();child=self.exited_child(owner)
+        owner.journal.append('STOPPING',child.pid);owner.journal.append('CLEAN')
+        # Model PID reuse after a successful earlier cycle. The current launch
+        # failed before RUNNING, so old same-owner/same-PID evidence is stale.
+        owner.journal.append('STARTING');owner.journal.append('FAULT',child.pid)
+        with patch.object(module,'identity',return_value=SimpleNamespace(binding=SimpleNamespace(process=child))), \
+             patch.object(owner,'start') as start:
+            with self.assertRaisesRegex(module.ManagedCoreError,'MANAGED_RECOVERY_ATTESTED_CHILD_REQUIRED'):
+                owner.recover_dead(authorized=True)
+            start.assert_not_called()
+        self.assertEqual(owner.journal.state,'FAULT')
+
     def test_no_consent_or_new_owner_cannot_adopt_recorded_pid(self):
         owner=self.owner();self.exited_child(owner)
         with patch.object(owner,'start') as start:

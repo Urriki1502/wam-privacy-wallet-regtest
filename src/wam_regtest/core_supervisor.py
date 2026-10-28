@@ -377,8 +377,13 @@ class CoreSupervisor:
             raise ManagedCoreError('MANAGED_RECOVERY_ORIGINAL_OWNER_REQUIRED')
         self._check_profile();self._check_core()
         self.journal.reserve_start()
+        # A PID can recur in a later launch by this same long-lived owner.
+        # Only the CURRENT launch's attestation grants recovery; an old RUNNING
+        # record must not authorize replacement of a never-attested new child.
+        start=max((i for i,row in enumerate(self.journal.events)
+                   if row['state']=='STARTING'),default=len(self.journal.events))
         if not any(row['state']=='RUNNING' and row['owner']==self.journal.owner
-                and row['core_pid']==process.pid for row in self.journal.events):
+                and row['core_pid']==process.pid for row in self.journal.events[start:]):
             raise ManagedCoreError('MANAGED_RECOVERY_ATTESTED_CHILD_REQUIRED')
         # Poll/wait on the retained original handle proves exit even if the OS
         # later reuses its numeric PID. We never inspect or signal that PID.
