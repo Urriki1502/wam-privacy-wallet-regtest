@@ -30,6 +30,7 @@ class StartupContracts(unittest.TestCase):
         stack.enter_context(patch.object(module,'_read_cli',return_value={'chain':'regtest'}))
         stack.enter_context(patch.object(module.socket, 'create_connection', return_value=probe))
         read = Mock()
+        read.call.return_value={'blocks':101,'chain':'regtest'}
         rpc = stack.enter_context(patch.object(module, 'ManagedReadRpc',
             side_effect=rpc_effect, return_value=read))
         if socket_error:
@@ -55,6 +56,7 @@ class StartupContracts(unittest.TestCase):
     def test_warmup_only_retry_preserves_spawn_and_scope(self):
         owner = self.owner()
         read = Mock()
+        read.call.return_value={'blocks':101,'chain':'regtest'}
         process, binding, registered, rpc, spawn = self.startup(
             owner, rpc_effect=[RpcError('RPC_CORE_WARMUP'), read])
         with patch.object(module.time, 'sleep'):

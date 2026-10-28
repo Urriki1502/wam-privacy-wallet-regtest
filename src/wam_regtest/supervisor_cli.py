@@ -10,7 +10,7 @@ from .supervisor_client import control
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog='wam-managed-core')
-    parser.add_argument('action', choices=('serve', 'status', 'start', 'shutdown', 'recover-stop'))
+    parser.add_argument('action', choices=('serve','status','start','shutdown','recover-stop','recover-dead','release'))
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--core-dir', type=Path)
     parser.add_argument('--confirm-regtest-managed-core', action='store_true')
@@ -40,6 +40,7 @@ def main(argv=None):
                 while True:
                     try:
                         owner.serve()
+                        break  # Authenticated release completed with no live child.
                     except KeyboardInterrupt:
                         if owner.process is not None and owner.process.poll() is None:
                             print('MANAGED_EXPLICIT_SHUTDOWN_REQUIRED', file=sys.stderr)
@@ -53,7 +54,7 @@ def main(argv=None):
             raise ValueError
         result = control(args.root, args.action,
                          authorized=args.confirm_regtest_managed_core,
-                         timeout=120 if args.action in ('start', 'shutdown', 'recover-stop') else 3)
+                         timeout=120 if args.action in ('start','shutdown','recover-stop','recover-dead') else 3)
         print(json.dumps(result, sort_keys=True))
         return 0
     except (OSError, ValueError, RuntimeError):

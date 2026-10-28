@@ -21,7 +21,7 @@ from .custody import create_directory, storage
 from .json_rpc import ManagedReadRpc, RpcError
 from .network_policy import local_rpc_port
 from .rpc_credentials import private_bytes
-from .rpc_scope import register, unregister, reauthenticate_owned
+from .rpc_scope import register, unregister, reauthenticate_owned, identity
 from .supervisor_protocol import (
     PROTOCOL, MAX_FRAME, ReplayGuard, decode_frame, public_status,
     SupervisorProtocolError, _distinct,
@@ -42,6 +42,7 @@ DIAGNOSTIC_CODES = frozenset((
     'RPC_OWNED_PROCESS_EXITED','MANAGED_START_TIMEOUT','MANAGED_IDENTITY_CHANGED',
     'CORE_RPC_WARMUP','CORE_RPC_UNAVAILABLE','CORE_RPC_SCOPE_FAULTED',
     'MANAGED_SHUTDOWN_UNCERTAIN',
+    'MANAGED_RECOVERY_HEIGHT_REGRESSED',
 ))
 
 
@@ -116,6 +117,9 @@ class CoreSupervisor:
         self._busy_until = 0
         self._faulted = False
         self._registered = False
+        self._release_requested=False
+        self._height_snapshot=0
+        self._minimum_recovery_height=0
         fresh=False
         try:
             self.stack.enter_context(exclusive_lease(root))
@@ -176,13 +180,13 @@ class CoreSupervisor:
         except (ValueError,OSError):
             pass  # No successful operation follows diagnostic publication failure.
 
-    def start(self, *, timeout=90):
+    def start(self, *, timeout=90, _recovering=False):
         if (type(timeout) is not int or not 1 <= timeout <= 90
                 or self.process is not None or self._faulted):
             raise ManagedCoreError('MANAGED_START_NOT_ALLOWED')
         port = self._check_profile()
         self.journal.reserve_start()
-        if self.journal.state!='CLEAN':
+        if self.journal.state!=('RECOVERING' if _recovering is True else 'CLEAN'):
             raise ManagedCoreError('MANAGED_DIRTY_RECOVERY_REQUIRED')
         # Never adopt a listener or rewrite durable config to evade a conflict.
         with _listener(port):
@@ -227,6 +231,11 @@ class CoreSupervisor:
                                'getblockchaininfo'],timeout=min(5,max(.1,deadline-time.monotonic())))
                     self.read = ManagedReadRpc(self.core, self.directory,
                         authorized_readonly=True, binding=self.binding)
+                    info=self.read.call('getblockchaininfo')
+                    if (type(info.get('blocks')) is not int
+                            or info['blocks']<self._minimum_recovery_height):
+                        raise ManagedCoreError('MANAGED_RECOVERY_HEIGHT_REGRESSED')
+                    self._height_snapshot=info['blocks']
                     self.journal.append('RUNNING',self.process.pid)
                     self.state = 'ready'
                     return
@@ -270,6 +279,7 @@ class CoreSupervisor:
             if time.monotonic() < self._busy_until:
                 return public_status(state='busy', owned=True)
             info = self.read.call('getblockchaininfo')
+            self._height_snapshot=info['blocks']
             self.state = 'syncing' if info.get('initialblockdownload') is True else 'ready'
             return public_status(state=self.state, chain_height=info['blocks'], owned=True)
         except RpcError as error:
@@ -338,6 +348,47 @@ class CoreSupervisor:
         # replacement. Keep restart denied pending explicit journal recovery.
         self._faulted=True;self.state='recovery-needed'
 
+    def recover_dead(self,*,authorized=False):
+        """Explicit same-owner recovery of an exited original Popen only.
+
+        No PID lookup/adoption, fault reset on a live process, or new datadir.
+        Another supervisor instance has no Popen capability and must refuse.
+        Wallet recovery/reservation reconciliation is not implied by this API.
+        """
+        process=self.process
+        scope=identity(self.directory)
+        if (authorized is not True or type(process) is not subprocess.Popen
+                or process.poll() is None or self.binding is None
+                or self.binding.process is not process or not self._registered
+                or scope is None or scope.binding.process is not process):
+            raise ManagedCoreError('MANAGED_RECOVERY_ORIGINAL_OWNER_REQUIRED')
+        self._check_profile();verified_core_paths(self.core)
+        self.journal.reserve_start()
+        if not any(row['state']=='RUNNING' and row['owner']==self.journal.owner
+                and row['core_pid']==process.pid for row in self.journal.events):
+            raise ManagedCoreError('MANAGED_RECOVERY_ATTESTED_CHILD_REQUIRED')
+        # Poll/wait on the retained original handle proves exit even if the OS
+        # later reuses its numeric PID. We never inspect or signal that PID.
+        process.wait(timeout=1)
+        self.journal.append('RECOVERING',process.pid)
+        if self.read is not None:self.read.close()
+        unregister(self.directory)
+        self.process=self.read=self.binding=None;self._registered=False
+        self._minimum_recovery_height=self._height_snapshot
+        self._faulted=False
+        try:self.start(_recovering=True)
+        except BaseException:
+            self._faulted=True;self.state='recovery-needed'
+            if self.journal.state=='RECOVERING':
+                try:self.journal.append('FAULT')
+                except (ValueError,OSError):pass
+            raise
+
+    def release(self):
+        if self.process is not None and self.process.poll() is None:
+            raise ManagedCoreError('MANAGED_LIVE_OWNER_CLOSE_DENIED')
+        self._release_requested=True
+
     def handle(self, raw, challenge):
         message = decode_frame(raw)
         op = self.guard.verify(raw, challenge)
@@ -347,12 +398,16 @@ class CoreSupervisor:
             self.shutdown()
         elif op == 'recover-stop':
             self.recover_stop()
+        elif op == 'recover-dead':
+            self.recover_dead(authorized=True)
+        elif op == 'release':
+            self.release()
         status = self.status()
         return {**status, 'nonce': message['nonce'],
                 'proof': self.guard.sign_status(message['nonce'], status)}
 
     def serve(self):
-        while True:
+        while not self._release_requested:
             try:
                 conn, _ = self.listener.accept()
             except socket.timeout:

@@ -6,7 +6,6 @@ import json
 import os
 from pathlib import Path
 import platform
-import signal
 import socket
 import subprocess
 import sys
@@ -65,7 +64,7 @@ def main():
 
     def end_stopped_owner():
         # Only our exact Python child after authenticated owned Core shutdown.
-        owner.send_signal(signal.SIGINT)
+        control(root,'release',authorized=True,timeout=3)
         owner.wait(timeout=5)
         if owner.returncode != 0:
             raise ValueError('Q05_OWNER_EXIT_DENIED')

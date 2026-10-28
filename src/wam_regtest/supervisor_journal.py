@@ -14,10 +14,12 @@ from .supervisor_protocol import _distinct
 from .supervisor_store import create_once,read_exact
 
 SCHEMA='wam-managed-lifecycle/v1'
-STATES=frozenset(('CLEAN','STARTING','RUNNING','STOPPING','FAULT'))
+STATES=frozenset(('CLEAN','STARTING','RUNNING','STOPPING','FAULT','RECOVERING'))
 MAX_EVENTS=100000  # Lifecycle events, not status/IPC calls. No silent compaction.
 TRANSITIONS={None:{'CLEAN'},'CLEAN':{'STARTING'},'STARTING':{'RUNNING','FAULT'},
-             'RUNNING':{'STOPPING','FAULT'},'STOPPING':{'CLEAN','FAULT'},'FAULT':{'STOPPING'}}
+             'RUNNING':{'STOPPING','FAULT','RECOVERING'},
+             'STOPPING':{'CLEAN','FAULT','RECOVERING'},'FAULT':{'STOPPING','RECOVERING'},
+             'RECOVERING':{'STARTING','FAULT'}}
 
 
 class JournalError(ValueError):pass

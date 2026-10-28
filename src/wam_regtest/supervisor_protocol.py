@@ -16,7 +16,7 @@ import time
 MAX_FRAME=4096
 PROTOCOL="wam-fusion-managed-supervisor/v2"
 READ_COMMANDS=frozenset({"status"})
-CONTROL_COMMANDS=frozenset({"start","shutdown","recover-stop"})
+CONTROL_COMMANDS=frozenset({"start","shutdown","recover-stop","recover-dead","release"})
 STATES=frozenset({"stopped","starting","syncing","ready","busy",
                   "recovery-needed","error"})
 
