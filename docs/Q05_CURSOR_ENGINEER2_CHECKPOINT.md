@@ -1,7 +1,7 @@
 # Engineer 2 checkpoint — owned-Core GUI attach (not Q-GATE)
 
-Branch `cursor/q05-history-pagination-9c81` HEAD `fd63e5d1d68faac84833354e5a22f5bb0b513ca6`
-plus follow-up commits on this file. Codex Draft #138 remains isolated.
+Branch `cursor/q05-history-pagination-9c81` HEAD `f0448d69e164ad3f0e46c8b429fe335d0dc9c792`.
+Codex Draft #138 remains isolated.
 Canonical ledger unchanged: 37 Q05 PENDING, `accepted=false`.
 No second PR, no merge, no mainnet.
 
