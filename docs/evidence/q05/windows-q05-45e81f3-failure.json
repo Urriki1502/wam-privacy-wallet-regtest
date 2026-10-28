@@ -1,0 +1,15 @@
+{
+  "source_sha": "45e81f30142d288dc280f46d9b48bbfeaf91eb93",
+  "workflow_run_id": 40647125911,
+  "job_id": 122678431002,
+  "status": "FAIL",
+  "scope": "Q05 native source/storage test; not genuine-Core E2E",
+  "test": "test_changed_datadir_identity_refuses_even_same_config",
+  "observed_failure": "PermissionError WinError 32: native held directory lease prevents live rename before the test reaches journal drift assertion",
+  "tests_run": 79,
+  "errors": 1,
+  "repair_source": "1966094",
+  "repair": "Assert native Windows live-rename refusal, close owner/lease normally, then replace datadir and require journal identity-drift refusal. No skip or relaxed drift assertion.",
+  "requalification": "PENDING new exact-HEAD Windows CI",
+  "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40647125911/job/122678431002"
+}

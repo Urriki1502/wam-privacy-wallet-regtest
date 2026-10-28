@@ -1,3 +1,24 @@
+# Exact-HEAD CI follow-up — Windows journal test fix
+
+Published checkpoint 45e81f3: Linux Q05 native source/storage job **122678431135**,
+run **40647125974**, PASS: 79 tests, no skipped Q05 tests. This is native storage
+and mocked-Core contract proof, not genuine Linux supervisor Core E2E.
+Windows job **122678431002**, run **40647125911**, FAIL in one of 79 Q05 tests:
+WinError 32 prevented the test's attempted live datadir rename while native
+lease handles remained pinned. Runtime custody was stricter than the POSIX-style
+test assumption. Repair **1966094** now asserts that Windows pinning prevents
+live rename, then closes owner/lease normally and actually replaces the datadir
+to verify journal identity-drift refusal. No skip and no weakened assertion.
+79 focused macOS Q05 tests PASS after this test-only fix; runtime source remains
+fca3115 with its genuine native receipts. New exact-HEAD Windows CI is required.
+Retained failure: `docs/evidence/q05/windows-q05-45e81f3-failure.json`; full log
+outside checkout `work/q05-ci-investigation/job-122678431002.log`.
+
+Do not start broad GUI/spending work before this cross-platform source/storage
+CI recheck. Same PR/branch, no new native retest needed for this test-only edit.
+
+---
+
 # Latest saved checkpoint — native wallet continuity verified, final CI next
 
 Runtime source: `fca311526f8503776e5b40a39279d00519294c6c` (adapter introduced
