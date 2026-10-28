@@ -208,12 +208,22 @@ class CoreSupervisor:
                 with probe:
                     self.binding.assert_socket(probe)
                 try:
+                    # HTTP listening is not RPC readiness: Core can still
+                    # return warmup as HTTP 500. Use the existing signed,
+                    # owned-scope public CLI ONLY during bounded bootstrap;
+                    # ordinary reads still use the unchanged Q03 HTTP client.
+                    _read_cli([str(self.cli),f'-datadir={self.directory}',
+                               'getblockchaininfo'],timeout=min(5,max(.1,deadline-time.monotonic())))
                     self.read = ManagedReadRpc(self.core, self.directory,
                         authorized_readonly=True, binding=self.binding)
                     self.state = 'ready'
                     return
                 except RpcError as error:
                     if error.args != ('RPC_CORE_WARMUP',):
+                        raise
+                    time.sleep(.1)
+                except CoreSmokeError as error:
+                    if error.args not in (('CORE_RPC_WARMUP',),('CORE_RPC_UNAVAILABLE',)):
                         raise
                     time.sleep(.1)
             raise ManagedCoreError('MANAGED_START_TIMEOUT')

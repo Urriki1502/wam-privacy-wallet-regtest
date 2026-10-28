@@ -26,6 +26,7 @@ class StartupContracts(unittest.TestCase):
         spawn = stack.enter_context(patch.object(module.subprocess, 'Popen', return_value=process))
         stack.enter_context(patch.object(module, 'OwnedCoreBinding', return_value=binding))
         registered = stack.enter_context(patch.object(module, 'register'))
+        stack.enter_context(patch.object(module,'_read_cli',return_value={'chain':'regtest'}))
         stack.enter_context(patch.object(module.socket, 'create_connection', return_value=probe))
         read = Mock()
         rpc = stack.enter_context(patch.object(module, 'ManagedReadRpc',
@@ -82,6 +83,7 @@ class StartupContracts(unittest.TestCase):
                     transient.enter_context(patch.object(module.subprocess,'Popen',return_value=process))
                     transient.enter_context(patch.object(module,'OwnedCoreBinding',return_value=Mock(spec=OwnedCoreBinding)))
                     transient.enter_context(patch.object(module,'register'))
+                    transient.enter_context(patch.object(module,'_read_cli',return_value={'chain':'regtest'}))
                     transient.enter_context(patch.object(module.socket,'create_connection',return_value=MockSocket()))
                     rpc = transient.enter_context(patch.object(module,'ManagedReadRpc',side_effect=RpcError(code)))
                     with self.assertRaises(RpcError): owner.start(timeout=1)
@@ -117,6 +119,25 @@ class StartupContracts(unittest.TestCase):
         for foreign in (12345,Mock(),object()):
             with self.assertRaises(CoreBindingError):
                 OwnedCoreBinding(foreign,self.core,self.root)
+
+    def test_signed_cli_bootstrap_warmup_does_not_open_http_early(self):
+        owner=self.owner()
+        process,binding,registered,rpc,spawn=self.startup(owner)
+        with patch.object(module,'_read_cli',side_effect=[
+                module.CoreSmokeError('CORE_RPC_WARMUP'),{'chain':'regtest'}]) as boot, \
+             patch.object(module.time,'sleep'):
+            owner.start(timeout=1)
+        self.assertEqual(boot.call_count,2)
+        self.assertEqual(rpc.call_count,1)
+        self.assertEqual(spawn.call_count,1)
+
+    def test_authentication_refusal_is_not_bootstrap_warmup(self):
+        owner=self.owner()
+        process,binding,registered,rpc,spawn=self.startup(owner)
+        with patch.object(module,'_read_cli',side_effect=module.CoreSmokeError('CORE_RPC_AUTHENTICATION_DENIED')):
+            with self.assertRaises(module.CoreSmokeError):owner.start(timeout=1)
+        rpc.assert_not_called()
+        process.terminate.assert_not_called()
 
 
 class MockSocket:
