@@ -23,6 +23,7 @@ from wam_regtest.wsp_live import PINNED_WSP_COMMIT,_pinned_source
 
 
 class AfterPublicationCut(ValueError):pass
+class BeforeRecoveryCommitCut(ValueError):pass
 
 
 def interrupted_publication(owner,source,password,keychain,initial):
@@ -72,6 +73,45 @@ def interrupted_publication(owner,source,password,keychain,initial):
             'recovery_completed':False,'physical_power_loss_test':False}
 
 
+def interrupted_recovery_reference(owner,source,password,keychain,initial,preserved):
+    """Real anchor advance, then deny before COMMIT; no automatic completion."""
+    from wam_regtest import custody,wallet_recovery
+    from wam_regtest.vault import CheckpointVault
+    original_append=wallet_recovery._append;observed={'cut':False}
+    def cut(*args,**kwargs):
+        if kwargs.get('state')=='COMMIT':
+            observed['cut']=True
+            raise BeforeRecoveryCommitCut('Q05_TEST_CUT_BEFORE_RECOVERY_COMMIT')
+        return original_append(*args,**kwargs)
+    try:
+        with patch.object(wallet_recovery,'_append',cut):
+            wallet_recovery.recover_checkpoint(owner,source,password,authorized=True,keychain=keychain)
+        raise ValueError('Q05_RECOVERY_REFERENCE_CUT_NOT_EXERCISED')
+    except ManagedWalletError as error:
+        if (error.args!=('MANAGED_RECOVERY_DENIED',)
+                or type(error.__context__) is not BeforeRecoveryCommitCut or not observed['cut']):raise
+    anchor=custody.anchor(initial['wallet_id'],keychain);actual=anchor.read()
+    rows,_=wallet_recovery._records(owner,initial['wallet_id'])
+    if (rows[-1]['state']!='BEGIN' or actual[0]!=initial['checkpoint'][0]+1
+            or any(sha256(p.read_bytes()).hexdigest()!=digest for p,digest in preserved.items())):
+        raise ValueError('Q05_PENDING_RECOVERY_EVIDENCE_DIVERGED')
+    target=owner.directory/('wallet-recovery-'+rows[-1]['action'])
+    CheckpointVault(target,anchor,source)._load_payload(password,actual)
+    for operation in (checkpoint,wallet_recovery.recover_checkpoint):
+        try:
+            operation(owner,source,password,authorized=True,keychain=keychain)
+            raise ValueError('Q05_PENDING_RECOVERY_AUTO_COMPLETED')
+        except ManagedWalletError as error:
+            if error.args!=('MANAGED_RECOVERY_PENDING',):raise
+    if anchor.read()!=actual:raise ValueError('Q05_PENDING_RECOVERY_ADVANCED_ANCHOR')
+    return {'cut_after_real_target_anchor_before_reference_commit':True,
+            'target_ciphertext_authenticated_by_actual_native_anchor':True,
+            'pending_reference_blocks_normal_open_and_recovery':True,
+            'original_orphan_runtime_reference_preserved':True,
+            'native_anchor':list(actual),'recovery_completed':False,
+            'automatic_reference_completion':False,'physical_power_loss_test':False}
+
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--core-dir',required=True,type=Path)
@@ -83,18 +123,21 @@ def main():
     parser.add_argument('--reservation',choices=('none','signed','uncertain'),default='none')
     parser.add_argument('--interrupt-publication',action='store_true')
     parser.add_argument('--recover-after-interruption',action='store_true')
+    parser.add_argument('--interrupt-recovery-reference',action='store_true')
     a=parser.parse_args();source=Path(__file__).resolve().parents[1]
     if (not a.confirm_disposable_regtest or platform.system()!='Darwin'
             or platform.machine()!='arm64' or a.root.exists() or a.root.is_symlink()
             or a.receipt.exists() or a.reservation!='none' and not a.fund_disposable_wallet
             or a.recover_after_interruption and not a.interrupt_publication
+            or a.interrupt_recovery_reference and not a.recover_after_interruption
             or subprocess.check_output(['git','status','--porcelain'],cwd=source)):
         raise SystemExit('Q05_WALLET_PROBE_SCOPE_DENIED')
     head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()
     node,cli,intake=verified_core_paths(a.core_dir);_pinned_source(a.wsp_source)
     record={'schema':'q05-wallet-checkpoint-native/v1','status':'FAIL',
         'wallet_fixture':'PUBLIC_FIXTURE_FUNDED' if a.fund_disposable_wallet else 'EMPTY',
-        'qualification_scope':('EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY' if a.recover_after_interruption else
+        'qualification_scope':('INCOMPLETE_RECOVERY_REFERENCE_SAFE_REFUSAL' if a.interrupt_recovery_reference else
+            'EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY' if a.recover_after_interruption else
             'INTERRUPTED_PUBLICATION_SAFE_REFUSAL' if a.interrupt_publication else 'CLEAN_OWNER_REOPEN'),
         'source_sha':head,'checkout_sha':head,'platform':'macos-arm64','frozen':False,
         'core_trust':'official-signed-v0.1.11','core_version':'v0.1.11',
@@ -255,21 +298,26 @@ def main():
                 original.extend(p for suffix in ('','-journal','-wal','-shm')
                     if (p:=owner.directory/('wallet-runtime.sqlite'+suffix)).exists())
                 preserved={p:sha256(p.read_bytes()).hexdigest() for p in original}
-                recovered=recover_checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
-                if (recovered['wallet_id']!=initial['wallet_id']
-                        or recovered['payment_code']!=initial['payment_code']
-                        or recovered['history_sha256']!=initial['history_sha256']
-                        or recovered['reservation_sha256']!=initial['reservation_sha256']
-                        or recovered['reserved_atoms']!=initial['reserved_atoms']
-                        or recovered['checkpoint'][0]!=initial['checkpoint'][0]+1
-                        or any(sha256(p.read_bytes()).hexdigest()!=digest for p,digest in preserved.items())):
-                    raise ValueError('Q05_EXPLICIT_RECOVERY_DIVERGED_OR_CHANGED_OLD_EVIDENCE')
-                initial=recovered;record['recovery_completed']=True
-                record['observations'].append({'explicit_same_wallet_checkpoint_recovery':True,
-                    'original_orphan_runtime_reference_preserved':True,
-                    'reservation_sha256':initial['reservation_sha256'],
-                    'native_anchored_generation':initial['checkpoint']})
-        if not a.interrupt_publication or a.recover_after_interruption:
+                if a.interrupt_recovery_reference:
+                    stage='INCOMPLETE_RECOVERY_REFERENCE_SAFE_REFUSAL'
+                    record['observations'].append(interrupted_recovery_reference(owner,a.wsp_source,
+                        password,keychain,initial,preserved))
+                else:
+                    recovered=recover_checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
+                    if (recovered['wallet_id']!=initial['wallet_id']
+                            or recovered['payment_code']!=initial['payment_code']
+                            or recovered['history_sha256']!=initial['history_sha256']
+                            or recovered['reservation_sha256']!=initial['reservation_sha256']
+                            or recovered['reserved_atoms']!=initial['reserved_atoms']
+                            or recovered['checkpoint'][0]!=initial['checkpoint'][0]+1
+                            or any(sha256(p.read_bytes()).hexdigest()!=digest for p,digest in preserved.items())):
+                        raise ValueError('Q05_EXPLICIT_RECOVERY_DIVERGED_OR_CHANGED_OLD_EVIDENCE')
+                    initial=recovered;record['recovery_completed']=True
+                    record['observations'].append({'explicit_same_wallet_checkpoint_recovery':True,
+                        'original_orphan_runtime_reference_preserved':True,
+                        'reservation_sha256':initial['reservation_sha256'],
+                        'native_anchored_generation':initial['checkpoint']})
+        if not a.interrupt_recovery_reference and (not a.interrupt_publication or a.recover_after_interruption):
             stage='CORE_OWNER_REOPEN'
             owner.shutdown();owner.close()
             owner=CoreSupervisor(a.root,a.core_dir,authorized=True);owner.start(timeout=30)
