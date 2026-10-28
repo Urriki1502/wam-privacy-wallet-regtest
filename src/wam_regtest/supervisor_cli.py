@@ -10,7 +10,7 @@ from .supervisor_client import control
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog='wam-managed-core')
-    parser.add_argument('action', choices=('serve', 'status', 'start', 'shutdown'))
+    parser.add_argument('action', choices=('serve', 'status', 'start', 'shutdown', 'recover-stop'))
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--core-dir', type=Path)
     parser.add_argument('--confirm-regtest-managed-core', action='store_true')
@@ -53,7 +53,7 @@ def main(argv=None):
             raise ValueError
         result = control(args.root, args.action,
                          authorized=args.confirm_regtest_managed_core,
-                         timeout=120 if args.action in ('start', 'shutdown') else 3)
+                         timeout=120 if args.action in ('start', 'shutdown', 'recover-stop') else 3)
         print(json.dumps(result, sort_keys=True))
         return 0
     except (OSError, ValueError, RuntimeError):

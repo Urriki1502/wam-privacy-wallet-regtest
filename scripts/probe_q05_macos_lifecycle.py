@@ -133,6 +133,15 @@ def main():
         code = error.args[0] if error.args else ''
         receipt['failure'] = code if isinstance(code, str) and code.startswith(('Q05_', 'RPC_', 'CORE_', 'MANAGED_')) else 'Q05_NATIVE_PROBE_FAILED'
         receipt['owner_pid_for_manual_review'] = owner.pid if owner is not None else None
+        try:
+            # Native private file, fixed allowlisted codes only, no traceback,
+            # args, config, cookie or control secrets enter a public receipt.
+            diagnostic=json.loads(read_exact(root,'supervisor.failure').decode('ascii'))
+            from wam_regtest.core_supervisor import DIAGNOSTIC_CODES
+            if (set(diagnostic)=={'stage','code'} and diagnostic['stage'] in ('start','recover-stop')
+                    and diagnostic['code'] in DIAGNOSTIC_CODES|{'MANAGED_UNCLASSIFIED_FAILURE'}):
+                receipt['private_failure_diagnostic']=diagnostic
+        except (ValueError,OSError):pass
         # Never kill unknown/unverified Core, guess a PID or silently retry a
         # failed native lifecycle. Preserve this profile and report the blocker.
     finally:

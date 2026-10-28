@@ -19,7 +19,7 @@ class ManagedClientError(ValueError):pass
 
 
 def control(root,op="status",*,authorized=False,timeout=3):
-    if (type(op) is not str or op not in ("status","start","shutdown")
+    if (type(op) is not str or op not in ("status","start","shutdown","recover-stop")
             or op!="status" and authorized is not True
             or type(timeout) not in (int,float) or not .1<=timeout<=120):
         raise ManagedClientError("MANAGED_CLIENT_OPERATION_NOT_APPROVED")

@@ -3,6 +3,7 @@ import base64
 from concurrent.futures import ThreadPoolExecutor
 import http.client
 import json
+import sys
 import threading
 import time
 
@@ -44,11 +45,16 @@ def probe_busy(fixture, *, gui=False):
                 load_rejections.append(True);rejected.set()
             else:raise RpcContentionError('Q04_BUSY_LOAD_DENIED')
         finally:conn.close()
-    calls=[];busy=[]
+    calls=[];busy=[];errors=[]
     def read(method,params):
         calls.append(time.monotonic())
         try:return fixture.fusion_read(method,params)
         except ExternalAttachmentError as error:
+            code=error.args[0] if len(error.args)==1 else ''
+            errors.append(code if code in (
+                'EXTERNAL_ATTACHMENT_RPC_NODE_BUSY','EXTERNAL_ATTACHMENT_RPC_UNREACHABLE',
+                'EXTERNAL_ATTACHMENT_RPC_FAILED','EXTERNAL_ATTACHMENT_RPC_AUTH_DENIED',
+                'EXTERNAL_ATTACHMENT_RPC_TRANSPORT_DENIED') else 'OTHER_FIXED_REFUSAL')
             if error.args==('EXTERNAL_ATTACHMENT_RPC_NODE_BUSY',):busy.append(True)
             raise
     policy=BackoffPolicy(base_seconds=.1,max_seconds=.5,max_retries=3,jitter=.1)
@@ -72,6 +78,9 @@ def probe_busy(fixture, *, gui=False):
         except RpcContentionError as error:
             if error.args!=('RPC_NODE_BUSY',):raise
         if len(busy)!=4 or len(calls)!=4:
+            print('Q04_BUSY_DIAGNOSTIC '+json.dumps({'attempts':len(calls),
+                'attachment_503':len(busy),'errors':errors[:12],
+                'load_503':len(load_rejections),'gui':gui},sort_keys=True),file=sys.stderr)
             raise RpcContentionError('Q04_BUSY_RETRY_UNPROVEN')
         intervals=[b-a for a,b in zip(calls,calls[1:])]
         for i,delay in enumerate(intervals):
