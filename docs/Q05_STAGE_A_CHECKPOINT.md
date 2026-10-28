@@ -1,3 +1,21 @@
+# Reservation probe checkpoint — signed PASS, uncertain observation repair
+
+Runtime summary source 49f7fec adds nonsecret signed/uncertain reservation
+fingerprint/count/state/balance observations, no spending or IPC capability.
+Actual native signed-wallet reservation + original-owner/Core reopen PASS,
+receipt `docs/evidence/q05/q05-signed-reservation-49f7fec.json`. No wallet broadcast.
+Native uncertain probe FAIL at REAL_BROADCAST_CALLER_RESULT_LOSS observation,
+receipt `docs/evidence/q05/q05-uncertain-reservation-49f7fec.json`; profile retained.
+Source diagnosis: probe used a new scanner client's public call(getrawmempool),
+which intentionally refuses this method. Fix uses existing original-owner signed
+CLI read solely for fixture mempool observation. Scanner HTTP/method allowlist
+is unchanged; regression requires its denial before sending. Fresh-profile
+bounded uncertain retest is next; no rerun/reuse of the failed profile.
+Windows 88f7ace native source/storage step passed after journal test repair;
+full native/frozen workflows remain separate. Do not assume final-head CI.
+
+---
+
 # Exact-HEAD CI follow-up — Windows journal test fix
 
 Published checkpoint 45e81f3: Linux Q05 native source/storage job **122678431135**,

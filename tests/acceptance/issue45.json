@@ -17468,7 +17468,17 @@
             "receipt_path": "docs/evidence/q05/native-wallet-fca3115.json",
             "receipt_sha256": "543872b472b21a498becab7d5bd6ca792eff6d9f778b9b6924ca6ed0dae7581e",
             "scope": "Source-only owner-local adapter: native vault/anchor, pinned WSP real receive/scan, funded balance/history fingerprint and wallet identity across clean owner/Core reopen; wrong-password and duplicate-create refuse unchanged state. Public disposable fixture funding only. No GUI/frozen, signed/uncertain reservation, supervisor-crash or clean-device acceptance."
-          }
+          },
+          "failure_history": [
+            {
+              "status": "FAIL",
+              "scope": "SUPPLEMENTAL_NATIVE_PROBE",
+              "source_sha": "49f7fec70facae854002806a94b8abaa534e9147",
+              "receipt_path": "docs/evidence/q05/q05-uncertain-reservation-49f7fec.json",
+              "receipt_sha256": "9ec603f20206a23eca3d4e9d6e6abdf844621132b6e182f43b0672a8e0194a07",
+              "observation": "Uncertain native probe failed during post-submission mempool observation: new scanner client denies getrawmempool by design. Actual original-owner wallet broadcast result-loss path preceded this observation. Preserve failed profile; repair fixture observation with existing signed CLI read, never relax scanner method scope. Retest on a fresh profile pending."
+            }
+          ]
         },
         {
           "id": "Q05-INTERRUPTED-RECOVERY-MACOS",

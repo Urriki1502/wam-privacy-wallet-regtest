@@ -151,10 +151,12 @@ def main():
                     if error.args!=('WALLET_BROADCAST_UNCERTAIN_LOCK_RETAINED',):raise
                 if len(send_calls)!=1:
                     raise ValueError('Q05_BROADCAST_ATTEMPT_COUNT_DENIED')
-                rpc=WalletCoreCli(owner.cli,owner.directory)
-                if submitted_txid not in rpc.call('getrawmempool'):
+                from wam_regtest.core import _read_cli
+                # Fixture introspection uses the existing signed CLI read
+                # capability. Do not broaden the scanner's HTTP/method scope.
+                mempool=_read_cli([str(owner.cli),f'-datadir={owner.directory}','getrawmempool'])
+                if submitted_txid not in mempool:
                     raise ValueError('Q05_REAL_BROADCAST_NOT_OBSERVED')
-                if getattr(rpc,'_transport',None) is not None:rpc._transport.close()
             rows=session.scanner.store.db.execute('SELECT state FROM reservations').fetchall()
             if not rows or any(row[0]!=a.reservation for row in rows):
                 raise ValueError('Q05_RESERVATION_STATE_NOT_DURABLE')
