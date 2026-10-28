@@ -15727,6 +15727,33 @@
           "scope": "SOURCE_NEGATIVE",
           "reference": "tests/test_q04_reconnect.py::test_cookie_change_cannot_be_adopted_during_reconnect",
           "observation": "Regression test reproduced acceptance of changed cookie credentials on reconnect despite unchanged endpoint. The repair pins the digest and refuses before endpoint authentication. Prior reconnect receipts did not inject a disconnect and cannot qualify the corrected scenario."
+        },
+        {
+          "source_sha": "d52187832250a4852a8387297440038e6f192611",
+          "checkout_sha": "c3e56966c6656638ff6a892947edcdfc4aa4a4eb",
+          "phase": "Q05_PR_REGRESSION_RECHECK",
+          "workflow_run_id": 40539812345,
+          "job_ids": [
+            122315978220,
+            122315978170
+          ],
+          "status": "FAIL",
+          "observed_codes": [
+            "Q04_BUSY_NOT_OBSERVED",
+            "LINUX_FROZEN_UNCLASSIFIED"
+          ],
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40539812345",
+          "disposition": "Fixture-readiness/reporting repair a89848b22cae85d766310687fe968157f35657e8 rechecked by Linux run 40615131718: native Q04, contention and final frozen headless/desktop SUCCESS. Four genuine attachment 503 replies observed; no assertion relaxation. Original desktop inner error remains unavailable, not retrospectively relabeled.",
+          "repair_evidence": {
+            "source_sha": "a89848b22cae85d766310687fe968157f35657e8",
+            "workflow_run_id": 40615131718,
+            "native_job_id": 122576258488,
+            "frozen_desktop_job_id": 122576343826,
+            "frozen_headless_job_id": 122576343783,
+            "receipt_path": "docs/evidence/q05/q04-repair-a89848b.json",
+            "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615131718",
+            "scope": "Q04 regression recheck only; not integrated Q05 PASS"
+          }
         }
       ],
       "qualified_runtime_source_sha": "16a6b49d58af64c030cdc7fa6bcdeaf838474837",
@@ -17012,7 +17039,7 @@
       "id": "Q05",
       "requirement": "Managed Core persistent: close/reopen, crash, reattach, no new datadir or dropped history",
       "processing": "ACTIVE",
-      "status": "PENDING",
+      "status": "FAIL",
       "accepted": false,
       "coverage_identified": true,
       "coverage_total": 37,
@@ -17188,9 +17215,25 @@
             "G2"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "REPOSITORY_OWNER_AND_Q05_ENGINEER",
+            "missing_evidence": "Successful authenticated native start, explicit safe shutdown and same-profile supervisor reopen. Native retest quota consumed; original test supervisor/Core remain live in fail-closed recovery-needed state.",
+            "next_action": "Stop engineering and obtain owner direction for focused diagnostic and verified safe release through the original owner/Popen. Preserve profile, logs and both FAIL receipts. No further native retry, lock deletion, foreign PID adoption, guessed process kill or journal work."
+          },
+          "failure_history": [
+            {
+              "source_sha": "a89848b22cae85d766310687fe968157f35657e8",
+              "checkout_sha": "a89848b22cae85d766310687fe968157f35657e8",
+              "status": "FAIL",
+              "timestamp_utc": "2026-10-28T01:27:31.029472+00:00",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/blob/a89848b22cae85d766310687fe968157f35657e8/scripts/probe_q05_macos_lifecycle.py",
+              "receipt_path": "docs/evidence/q05/stage-a-native-retest-a89848b.json",
+              "receipt_sha256": "48e9f32e511a569738d577b833ab0df89c44f2f6785e032d8d350030317150f6",
+              "failure": "MANAGED_CLIENT_REPLY_DENIED at authenticated start; no shutdown/reopen observation. Subsequent authenticated status recovery-needed/core_process_owned=false, while original supervisor 48111 and Core child 48112 remain alive. Inner startup cause not exposed and remains unresolved."
+            }
+          ]
         },
         {
           "id": "Q05-GRACEFUL-SHUTDOWN-MACOS",
@@ -17742,7 +17785,7 @@
       "gates": {
         "G0": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "not_applicable_reason": null
         },
         "G1": {
@@ -17752,7 +17795,7 @@
         },
         "G2": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "FAIL",
           "not_applicable_reason": null
         },
         "G3": {

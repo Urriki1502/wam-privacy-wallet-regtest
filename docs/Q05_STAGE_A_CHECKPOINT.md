@@ -1,3 +1,76 @@
+# Q05 Stage A checkpoint — 28 October 2026: STOP after authorized native retest FAIL
+
+**This update supersedes the earlier checkpoints below. Do not retry or start
+the journal milestone.** Same Draft PR #138 and branch; repair source
+`a89848b22cae85d766310687fe968157f35657e8`, based on original d521878 checkpoint.
+The owner authorized ONE additional native lifecycle; that allowance is consumed.
+
+## Native retest and live owner blocker
+
+Fresh profile `wam-fusion-core-2f8b039e7c6145ad`, new receipt
+`docs/evidence/q05/stage-a-native-retest-a89848b.json`, SHA-256
+`48e9f32e511a569738d577b833ab0df89c44f2f6785e032d8d350030317150f6`.
+Exactly one retest was run from clean committed source with the original signed
+v0.1.11 ARM64 binary hashes. Corrected stop allowlist tests passed first.
+
+Result **FAIL at authenticated start: MANAGED_CLIENT_REPLY_DENIED**, zero
+completed lifecycle observations. Shutdown and supervisor reopen were not reached.
+Read-only postmortem: host `MacBook-Pro-cua-ang`, original supervisor **48111**,
+its Core child **48112**, RPC port **60219**; authenticated status recovery-needed,
+height null, core_process_owned=false. Both were alive at observation, with no
+shutdown-start/done log marker. This reports an unresolved startup failure;
+there is no evidence to call it a warmup/timing-only fault. Inner error is hidden
+by current control reply handling and has not been diagnosed. Reverify PIDs and
+native identity before any later action; never treat this snapshot as a kill list.
+
+No retry, adoption, kill, lock deletion, repair or journal implementation followed
+this FAIL. Original failed profile `wam-fusion-core-71c40b6258a3d9e0` and its first
+FAIL receipt remain preserved. The new profile retains the live original owner
+and its per-profile lease; the repository engineering lease is released at stop.
+
+Owner action: authorize a focused diagnostic and verified safe-release plan using
+the original test owner/Popen. Current faulted shutdown API refuses operation;
+safe persistent recovery is not implemented. Do not switch to external attach
+to obtain stop authority or start replacement Core. No further native lifecycle
+until separately authorized after that diagnosis and safe release.
+
+## Q04 CI disposition
+
+Read full logs for d521878 Linux run 40539812345: native Q04 failed
+Q04_BUSY_NOT_OBSERVED; desktop frozen passed native wallet stages then failed its
+Q04 command with UNCLASSIFIED. Q04 source and dependencies were unchanged from
+qualified main and the successful d624abc3 run. No infrastructure-only claim.
+See `docs/Q05_Q04_CI_INVESTIGATION.md` for exact comparison and limitations.
+
+Repair a89848b replaces guessed `.5`-second load readiness with all six requests
+sent plus an actual Core load-channel 503, with bounded readiness/long-poll time.
+All four attachment busy/backoff/coalescing/recovery/write-refusal assertions stay
+unchanged. Frozen reporting now exposes only fixed RpcContentionError codes and
+still exits 2. Sixteen Q04 supplemental tests passed before push. Automatic
+exact-head Linux repair run 40615131718 completed SUCCESS: native Q04 and
+contention, frozen headless and desktop all PASS. Each frozen log records four
+actual attachment 503 replies; desktop GUI coalescing PASS. Evidence summary is
+`docs/evidence/q05/q04-repair-a89848b.json`. Earlier failed jobs stay in Q04
+failure_history, with the old desktop inner exception still unknown. New source is not
+qualified from old main/PR PASS, and Q05 journal work cannot resume from generic CI.
+
+## Current case state and next action
+
+Q05 ACTIVE but engineering stopped: **0 PASS / 1 FAIL / 36 PENDING / 0 BLOCKED /
+0 STALE**, accepted=false. Q05-MANAGED-START-MACOS FAIL; G0/G2 FAIL, other Q05
+gates PENDING. All unqualified cases remain PENDING. Q04 G6/G7 BLOCKED unchanged.
+Native failure history and owner/action are in the canonical ledger. Validator
+and 13 governance tests pass after accurately recording the failure; the earlier
+runtime/source regression batch passed 123 tests before the native run.
+
+Next session: inspect exact-head CI and the retained two FAIL receipts, reverify
+the original owner/Core and both leases, obtain owner direction for diagnosis /
+safe release, then address startup error reporting/root cause. Only after safe
+native lifecycle and Q04 requalification may persistent clean/dirty ownership /
+recovery journal work resume. Same PR/branch, no broad GUI/scanner/spending work.
+
+## Previous checkpoint — retained history, superseded above
+
 # Q05 Stage A checkpoint — 27 October 2026 (continued)
 
 Latest development state; the first checkpoint below is retained as history.

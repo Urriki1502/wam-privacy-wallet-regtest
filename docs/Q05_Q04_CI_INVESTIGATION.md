@@ -47,3 +47,20 @@ readiness refusal and redacted frozen errors. Targeted native/frozen Linux jobs
 must pass on the repair source before Q05 journal engineering resumes. No full
 workflow manually redispatched; automatic PR CI is retained. Any new FAIL remains
 unresolved and suspends broader Q05 work.
+
+## Repair recheck completed
+
+Exact repair source a89848b, Linux run 40615131718: native Q04 job 122576258488,
+contention 122576258508 and frozen desktop 122576343826 / headless 122576343783
+all SUCCESS. Native evidence archive 12784418762 was downloaded and SHA-256
+verified as b1213564e6441ef8adb7f24c1f63b5e76ff1e41dc41a8b7bb0cdac75f79010ea.
+It records 3 real load 503s, 4 attachment 503s, bounded backoff, coalescing and
+write-no-retry. Both final-executable logs independently contain Q04 receipts
+with 4 attachment 503s and real Core hashes; desktop GUI coalescing PASS. See
+`docs/evidence/q05/q04-repair-a89848b.json`. No full frozen archive re-audit or
+Q05 integrated-package claim is made. These results resolve the CI recheck on
+repair source; they cannot reconstruct the old frozen inner error.
+
+Q05 journal work remains STOPPED because the single owner-authorized macOS
+native retest failed at authenticated start and left the original supervisor /
+Core live in recovery-needed state. No further native attempt or cleanup followed.

@@ -1,0 +1,61 @@
+{
+  "schema": "q05-stage-a-native-lifecycle/v1",
+  "source_sha": "a89848b22cae85d766310687fe968157f35657e8",
+  "checkout_sha": "a89848b22cae85d766310687fe968157f35657e8",
+  "platform": "macos-arm64",
+  "core_version": "v0.1.11",
+  "python_version": "3.12.15",
+  "command": [
+    "python3.12",
+    "scripts/probe_q05_macos_lifecycle.py",
+    "--core-dir",
+    "<verified signed Core>",
+    "--root",
+    "<new isolated profile>",
+    "--receipt",
+    "<new receipt>",
+    "--confirm-disposable-regtest"
+  ],
+  "core_trust": "official-signed-v0.1.11",
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_execution": false,
+  "synthetic_rpc": false,
+  "frozen": false,
+  "mainnet_allowed": false,
+  "core_intake": {
+    "archive": "wam-coin-v0.1.11-arm64-apple-darwin.tar.gz",
+    "archive_sha256": "6e10ea10cc324e947c9d646ba8276412175edd0f168c0d95ca5228ccc37f5afb",
+    "loader_process_binding_qualified": false,
+    "mainnet_allowed": false,
+    "platform": "macos-arm64",
+    "publisher_fingerprint": "4BD4A8D3AFD43F5CBCB500E23798462FE00ADBA4",
+    "real_wsp_e2e_qualified": false,
+    "signed_archive_verified": true,
+    "tag": "v0.1.11",
+    "wam_cli_sha256": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+    "wamd_sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+  },
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "source_files": {
+    "src/wam_regtest/core_supervisor.py": "db5c5dce9a99e5955a82a1943717013ad576f3d24678fef9de102a548f3b68ae",
+    "src/wam_regtest/supervisor_protocol.py": "b30f3f04e27c38f763e0a362a089af8e8a97063e156072f7cc50756f597d6f6e",
+    "src/wam_regtest/supervisor_client.py": "06bd32fb4c1be7067bee5b8ed16b4cddb118145d9bdf022e6ee411c2b6a50f6f",
+    "scripts/probe_q05_macos_lifecycle.py": "fd5e516baf456e6015656c6c5bfffa92082e7027e250792f643561f0430f382e"
+  },
+  "observations": [],
+  "status": "FAIL",
+  "profile_id": "e240741b495ac30a1e16a52745925f0e",
+  "profile_sha256": "20cdeac7bc25321725defda18b0d541d24ab51d9fe04b115cd517c532e9a57bd",
+  "config_sha256": "7984a159c5d06d94d8d08edeb91606c65078f28f444acccf0a298c01a47bb1d0",
+  "datadir_identity": [
+    16777233,
+    13756966
+  ],
+  "failure": "MANAGED_CLIENT_REPLY_DENIED",
+  "owner_pid_for_manual_review": 48111,
+  "timestamp_utc": "2026-10-28T01:27:31.029472+00:00",
+  "core_shutdown_confirmed": false
+}
