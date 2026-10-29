@@ -72,10 +72,10 @@ def main():
     assert record['frozen_runtime'] is True
     assert record['platform']=='linux-x86_64' and not record['official_signed_release']
     assert wallet['synthetic_rpc'] is False and wallet['mainnet_allowed'] is False
-    if args.desktop:
-        subprocess.run([sys.executable,'-I','scripts/qualify_q05_frozen.py',
-            '--executable',str(binary),'--output',str((output/'q05-frozen-evidence.json').absolute())],
-            env=environment,check=True,timeout=450)
+    subprocess.run([sys.executable,'-I','scripts/qualify_q05_frozen.py',
+        '--executable',str(binary),'--output',str((output/'q05-frozen-evidence.json').absolute()),
+        *([] if args.desktop else ['--headless'])],
+        env=environment,check=True,timeout=1200)
     # Enumerate links without following arbitrary paths. PyInstaller uses
     # relative internal library links; custody/Core members stay regular files.
     members={};links={}

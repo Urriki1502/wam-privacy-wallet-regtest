@@ -29,7 +29,9 @@ def require_receipt(record,executable,source):
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--executable',type=Path,required=True)
-    p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+    p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--headless',action='store_true');a=p.parse_args()
+    if a.headless and sys.platform!='linux':raise ValueError('Q05_HEADLESS_NATIVE_LINUX_REQUIRED')
     binary=a.executable.absolute();receipt=a.output.absolute()
     if not binary.is_file() or binary.is_symlink() or receipt.exists() or receipt.is_symlink():
         raise ValueError('Q05_FINAL_FROZEN_SCOPE_DENIED')
@@ -40,6 +42,7 @@ def main():
     root=parent/('wam-fusion-core-'+secrets.token_hex(8))
     args=[str(binary),'--ci-q05-managed-wallet','--root',str(root),'--receipt',str(receipt),
         '--confirm-disposable-regtest']
+    if a.headless:args+=['--scenario','security']
     env={k:v for k,v in os.environ.items() if k not in ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV')
         and not k.startswith(('DYLD_','QT_','QML_'))}
     env['QT_QPA_PLATFORM']={'Darwin':'cocoa','Windows':'windows','Linux':'xcb'}[platform.system()]
@@ -57,17 +60,21 @@ def main():
             args+=['--linux-developer-manifest','e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
                 '--linux-root-witness',str(witness.root/'anchor.sock'),'--qualification-test-witness']
         subprocess.run(args,env=env,cwd=parent,check=True,timeout=420)
-        require_receipt(json.loads(receipt.read_text()),binary,source)
-        safe=True
-        print('Q05_FINAL_FROZEN_MANAGED_GUI_LIFECYCLE_PASS')
         base=json.loads(receipt.read_text())
+        if a.headless:
+            require_supplement(base,base,binary,'security',[])
+            if base.get('source_sha')!=source or base.get('platform')!='linux-x86_64':
+                raise ValueError('Q05_FINAL_FROZEN_RECEIPT_DENIED')
+        else:require_receipt(base,binary,source)
+        safe=True
+        print('Q05_FINAL_FROZEN_'+('HEADLESS_SECURITY' if a.headless else 'MANAGED_GUI_LIFECYCLE')+'_PASS')
         # Run the actual bundled code for custody/fault cases too. Each case
         # gets a NEW profile; all failed profiles/receipts stay on disk.
         completion=['--owned-session','--fund-disposable-wallet',
             '--interrupt-publication','--recover-after-interruption',
             '--interrupt-recovery-reference','--complete-pending-recovery']
-        cases=[('security','security',[]),
-            ('signed-completion','checkpoint',[*completion,'--reservation','signed']),
+        cases=[] if a.headless else [('security','security',[])]
+        cases += [('signed-completion','checkpoint',[*completion,'--reservation','signed']),
             ('uncertain-completion','checkpoint',[*completion,'--reservation','uncertain'])]
         cases += [('negative-'+mode,'checkpoint',['--negative',mode]) for mode in
                   ('missing','corrupt','orphan','sidecar','divergent-reference','wrong-wsp')]

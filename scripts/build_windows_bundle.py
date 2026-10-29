@@ -83,7 +83,7 @@ def main():
         python_ssl[name]=digest
     subprocess.run([sys.executable,'-I','scripts/qualify_q05_frozen.py',
         '--executable',str(executable),'--output',str((output/'q05-frozen-evidence.json').absolute())],
-        check=True,timeout=450)
+        check=True,timeout=1200)
     for name,digest in BINARY_SHA256.items():
         matches=[p for p in bundle.rglob(name) if p.is_file()]
         assert len(matches)==1 and not matches[0].is_symlink() and sha256(matches[0].read_bytes()).hexdigest()==digest
