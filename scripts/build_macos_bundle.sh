@@ -32,6 +32,7 @@ python -I -m PyInstaller --noconfirm --clean --onedir --windowed \
   --add-data "$SOURCE_STAGE/Q05_BUILD_SOURCE.json:." \
   --collect-submodules wam_regtest \
   --collect-submodules wam_sp \
+  --copy-metadata coincurve \
   --hidden-import coincurve._cffi_backend \
   --add-data "$(pwd)/core/wamd:core" \
   --add-data "$(pwd)/core/wam-cli:core" \
