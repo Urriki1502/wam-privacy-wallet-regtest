@@ -1,6 +1,17 @@
 name: REAL Windows x64 WAM Core + WSP BIP352 confirmed receive
 
 on:
+  push:
+    branches:
+      - cursor/q05-history-pagination-9c81
+    paths:
+      - "src/wam_regtest/windows_wsp_regtest.py"
+      - "src/wam_regtest/windows_core_regtest_smoke.py"
+      - "src/wam_regtest/q05_owned_lifecycle.py"
+      - "src/wam_regtest/wallet_session.py"
+      - "scripts/probe_q05_owned_session.py"
+      - "tests/test_windows_wsp_regtest.py"
+      - ".github/workflows/windows-x64-wsp-real-receive.yml"
   pull_request:
     paths:
       - "src/wam_regtest/windows_wsp_regtest.py"

@@ -1,5 +1,27 @@
 name: Linux x86_64 experimental developer Core REGTEST
 on:
+  push:
+    branches:
+      - cursor/q05-history-pagination-9c81
+    paths:
+      - 'tests/acceptance/issue45.json'
+      - 'tests/test_q01*.py'
+      - 'tests/test_q03*.py'
+      - 'tests/test_q05*.py'
+      - 'tests/test_q_gate_ledger.py'
+      - 'src/wam_regtest/q_gate.py'
+      - 'scripts/q01_*.py'
+      - 'scripts/q04_*.py'
+      - 'scripts/probe_q05_owned_session.py'
+      - 'requirements/q01-*.lock'
+      - '.github/workflows/linux-experimental-regtest.yml'
+      - 'scripts/build_linux_developer_core.sh'
+      - 'scripts/build_linux_wallet.py'
+      - 'scripts/linux_headless_acceptance.py'
+      - 'src/wam_regtest/*.py'
+      - 'tests/test_v1_k07_real_git_source.py'
+      - 'tests/test_v1_wsp_execution.py'
+      - 'tests/test_linux*.py'
   pull_request:
     paths:
       - 'AGENTS.md'

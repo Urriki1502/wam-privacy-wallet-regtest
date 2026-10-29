@@ -3,6 +3,25 @@
 name: REAL signed WAM Core v0.1.11 Windows x64 REGTEST smoke
 
 on:
+  push:
+    branches:
+      - cursor/q05-history-pagination-9c81
+    paths:
+      - "src/wam_regtest/windows_core_regtest_smoke.py"
+      - "src/wam_regtest/windows_release_preflight.py"
+      - "src/wam_regtest/release.py"
+      - "src/wam_regtest/q04_fixture.py"
+      - "src/wam_regtest/q04_runner.py"
+      - "src/wam_regtest/rpc_contention.py"
+      - "scripts/q04_miner_coexistence.py"
+      - "scripts/q04_contention.py"
+      - "scripts/probe_q05_owned_session.py"
+      - "src/wam_regtest/q05_owned_lifecycle.py"
+      - "src/wam_regtest/wallet_session.py"
+      - "src/wam_regtest/core_supervisor.py"
+      - "tests/test_windows_core_regtest_smoke.py"
+      - "tests/test_q05_owned_session.py"
+      - ".github/workflows/windows-x64-real-core-regtest.yml"
   pull_request:
     paths:
       - "src/wam_regtest/windows_core_regtest_smoke.py"
