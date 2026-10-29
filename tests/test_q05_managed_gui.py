@@ -100,8 +100,12 @@ class ManagedGuiContracts(unittest.TestCase):
 
     def test_authenticated_external_release_closes_qt_after_owner_has_exited(self):
         executor,window,_=self.fixture();executor.request('core_status')
+        observed=[]
+        window.owner_closed.connect(lambda:observed.append((executor.closed,executor.state.core_alive)))
         with patch.object(type(self.app),'quit') as quit_app:
             window._poll_owner();quit_app.assert_not_called()
+            self.assertEqual(observed,[])
             executor.request('quit');self.assertTrue(executor.join())
             self.assertFalse(window._quit_completed)
             window._poll_owner();quit_app.assert_called_once_with()
+            self.assertEqual(observed,[(True,False)])

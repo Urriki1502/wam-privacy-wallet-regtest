@@ -28,6 +28,7 @@ class QuitFilter(QObject):
 
 
 class ManagedWalletWindow(OperationalWalletWindow):
+    owner_closed=Signal()
     def __init__(self,proxy):
         if type(proxy) is not ManagedWalletProxy:raise ValueError('MANAGED_GUI_PROXY_REQUIRED')
         self._close_requested=self._quit_requested=self._quit_completed=False
@@ -102,6 +103,7 @@ class ManagedWalletWindow(OperationalWalletWindow):
         if self._quit_completed or self.session.executor.closed:
             if self.session.executor.closed and self.session.executor.join(0):
                 self._executor_poll.stop()
+                self.owner_closed.emit()
                 from PySide6.QtWidgets import QApplication
                 QApplication.instance().quit()
         elif self._quit_requested:self._control('quit')

@@ -262,6 +262,7 @@ def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
                 publish()
             from PySide6.QtWidgets import QApplication
             QApplication.instance().aboutToQuit.connect(quitting)
+            window.owner_closed.connect(quitting)
         from .managed_gui import launch_managed
         launch_managed(root,core,source,authorized=True,create=True,_backend_factory=factory,_window_hook=hook)
         if not window_holder[0].session.executor.closed:raise ValueError('Q05_GUI_ORIGINAL_OWNER_STILL_ACTIVE')
