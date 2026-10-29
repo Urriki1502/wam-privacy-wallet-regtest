@@ -1,0 +1,67 @@
+{
+  "schema": "q05-executor-gui-native/v1",
+  "status": "FAIL",
+  "source_provenance": {
+    "candidate_source_sha": "e1cf0829d783324e0b3516c363c8826e8a3493bb",
+    "checkout_sha": "e1cf0829d783324e0b3516c363c8826e8a3493bb",
+    "ci_artifacts_allowed": false,
+    "literal_python_files_verified": 160,
+    "python_crlf_normalized": false,
+    "raw_python_tree_sha256": "1a3e9b1a2b6d2b74c51294ba72c106e9e7d2952bf270ede1238ce6da480fd7a4"
+  },
+  "source_sha": "e1cf0829d783324e0b3516c363c8826e8a3493bb",
+  "checkout_sha": "e1cf0829d783324e0b3516c363c8826e8a3493bb",
+  "platform": "macos-arm64",
+  "core_version": "v0.1.11",
+  "core_trust": "official-signed-v0.1.11",
+  "official_signed_release": true,
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "synthetic_rpc": false,
+  "frozen": false,
+  "physical_acceptance": false,
+  "mainnet_allowed": false,
+  "test_root_witness": false,
+  "profile_root": "/private/tmp/wam-fusion-core-6f97d8d61422c095",
+  "observations": [
+    {
+      "normal_managed_create": true,
+      "height": 0,
+      "original_core_pid": 2316,
+      "wallet_execution_thread": 6118158336
+    },
+    {
+      "real_bip352_received": true,
+      "fixture_txid": "1387e9ac86ce93afb0754dc3f9e20cbb27b48cd358401cfd4de8b8f030b052b4",
+      "history_sha256": "4ec3ed89862613e5d148fcd9051501de61818291ca737aeb6c251c4c7c51c3d8"
+    },
+    {
+      "close_during_approved_broadcast_deferred": true,
+      "qt_timer_alive_during_operation": true
+    },
+    {
+      "real_gui_prepare_sign_broadcast_confirm": true,
+      "txid": "9b190ab01d78aa1f36747f9e80eeeba60b5e612436a7783436827a13a9a578e0",
+      "history_sha256": "a8a0e4278098d0a979f69b6f4781a2fb5dd052b65c56d2a2bb1493002160126c",
+      "reservation_sha256": "7bef47857ea9792d0543ff4b1411eb62cf98888549340823b2402aac745f68ff",
+      "wallet_close_reopen_same_core": true,
+      "wallet_submissions": 1,
+      "simulated_test_operator_approval": true
+    }
+  ],
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "original_profile": "c75076bfd158ed2b8d02e204c8e204a3",
+  "failure_stage": "core_restarted",
+  "failure_code": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+  "failure_timestamp_utc": "2026-10-29T10:58:11.613598+00:00",
+  "diagnosis": {
+    "retained_supervisor_failure": {
+      "code": "MANAGED_RECOVERY_HEIGHT_REGRESSED",
+      "stage": "start"
+    },
+    "core_debug_log_observed": "Before kill UpdateTip height=103; subsequent LoadBlockIndexDB blocks=0 then UpdateTip height=0. Cleanup journal STOPPING/CLEAN; no matching Core process remains.",
+    "qualification": "FAIL; no relaxation of recovery floor. Positive durable-checkpoint crash test remains required."
+  }
+}

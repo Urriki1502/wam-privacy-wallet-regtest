@@ -103,17 +103,18 @@ class ExplicitRecoveryContracts(unittest.TestCase):
         b=self.backend();b.execute('core_restart',(),{})
         b.session.lock.assert_called_once_with()
         b.owner.recover_dead.assert_called_once_with(authorized=True)
-        b.owner.start.assert_called_once_with()
+        b.owner.start.assert_not_called()
         b.owner.shutdown.assert_not_called()
 
-    def test_quit_recovers_dead_child_before_releasing_original_owner(self):
-        b=self.backend();b.execute('quit',(),{})
-        self.assertEqual([c[0] for c in b.owner.method_calls],
-            ['process.poll','recover_dead','release','close'])
-        b.owner.recover_dead.assert_called_once_with(authorized=True)
+    def test_quit_never_replaces_dead_child_or_releases_unresolved_owner(self):
+        b=self.backend()
+        with self.assertRaisesRegex(WalletExecutorError,'DEAD_OWNER_RECOVERY_REQUIRED'):
+            b.execute('quit',(),{})
+        b.owner.recover_dead.assert_not_called()
+        b.owner.start.assert_not_called();b.owner.release.assert_not_called();b.owner.close.assert_not_called()
 
     def test_refused_recovery_never_replaces_child_or_releases_owner(self):
-        for action in ('core_restart','quit'):
+        for action in ('core_restart',):
             with self.subTest(action=action):
                 b=self.backend();b.owner.recover_dead.side_effect=ValueError('MANAGED_RECOVERY_ORIGINAL_OWNER_REQUIRED')
                 with self.assertRaisesRegex(ValueError,'ORIGINAL_OWNER_REQUIRED'):b.execute(action,(),{})

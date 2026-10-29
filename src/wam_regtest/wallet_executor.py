@@ -228,7 +228,12 @@ class ManagedWalletBackend:
                 if p is not None and p.poll() is None:
                     if owner._faulted:owner.recover_stop()
                     else:owner.shutdown()
-                elif p is not None:owner.recover_dead(authorized=True)
+                elif p is not None:
+                    if action=='quit':
+                        raise WalletExecutorError('MANAGED_DEAD_OWNER_RECOVERY_REQUIRED')
+                    # recover_dead performs the single attested restart itself.
+                    owner.recover_dead(authorized=True)
+                    return None
                 if action=='quit':owner.release();owner.close()
                 else:owner.start()
             return None

@@ -169,10 +169,28 @@ class Driver:
                     if not w.grab().save(str(self.screenshot)):raise ValueError('Q05_GUI_SCREENSHOT_DENIED')
                 w.start_operation('lock');self.stage='locked_for_crash'
             elif self.stage=='locked_for_crash' and self.idle() and w.session.locked:
-                from .supervisor_client import control
-                # HMAC status is queried off the UI thread via the normal
-                # control-only channel in a separate bounded test client.
+                # Establish a Core-durable chain checkpoint before the positive
+                # crash case. A SIGKILL of a never-flushed chain can genuinely
+                # regress to genesis; that separate FAIL is retained and must
+                # never be hidden by lowering the supervisor's height floor.
                 self.record['original_profile']=b.owner.profile['profile_id']
+                if b.owner.process is not self.original or self.original.poll() is not None:
+                    raise ValueError('Q05_GUI_CRASH_ORIGINAL_OWNER_DENIED')
+                w._control('core_restart');self.stage='durable_restart'
+            elif self.stage=='durable_restart' and self.idle():
+                if self.original.poll() is None or b.owner.process is self.original:
+                    raise ValueError('Q05_GUI_DURABLE_RESTART_DENIED')
+                self.original=b.owner.process
+                w._control('open',PASSWORD);self.stage='durable_verified'
+            elif self.stage=='durable_verified' and self.idle():
+                snap=w._snapshot
+                if snap is None or any(getattr(snap,k)!=getattr(self.snapshot,k) for k in
+                        ('height','tip','receive_code','history_sha256','reservation_sha256','confirmed_atoms')):
+                    raise ValueError('Q05_GUI_DURABLE_CHECKPOINT_CHANGED')
+                self.record['observations'].append({'core_clean_checkpoint_reopen_verified':True,
+                    'height':snap.height,'tip':snap.tip,'same_wallet_history_reservations':True})
+                w.start_operation('lock');self.stage='durable_locked'
+            elif self.stage=='durable_locked' and self.idle() and w.session.locked:
                 if b.owner.process is not self.original or self.original.poll() is not None:
                     raise ValueError('Q05_GUI_CRASH_ORIGINAL_OWNER_DENIED')
                 self.original.kill();self.original.wait(timeout=10)
@@ -189,7 +207,7 @@ class Driver:
                 if b.submissions!=1:raise ValueError('Q05_GUI_UNCERTAIN_REPLAY')
                 self.record['observations'].append({'same_owner_core_crash_recovered':True,
                     'same_wallet_tip_history_reservations':True,'original_popen_reaped':self.original.poll() is not None,
-                    'automatic_wallet_replay':False})
+                    'automatic_wallet_replay':False,'crash_scope':'after-clean-Core-checkpoint'})
                 self.record['status']='PASS';self.stage='quitting';w.request_quit()
         except Exception as error:
             code=error.args[0] if len(error.args)==1 and type(error.args[0]) is str else 'Q05_GUI_SCENARIO_DENIED'
@@ -215,7 +233,13 @@ def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
         'official_signed_release':adapter.official_signed,'wsp_source_commit':PINNED_WSP_COMMIT,
         'synthetic_rpc':False,'frozen':False,'physical_acceptance':False,'mainnet_allowed':False,
         'test_root_witness':test_witness,'profile_root':str(root),'observations':[]}
-    backends=[];window_holder=[]
+    backends=[];window_holder=[];published=False
+    def publish():
+        nonlocal published
+        if published:return
+        record['timestamp_utc']=datetime.now(timezone.utc).isoformat()
+        with receipt.open('x') as out:json.dump(record,out,indent=2);out.write('\n')
+        published=True
     try:
         adapter.prepare_trust(core,linux_manifest,linux_witness,test_witness=test_witness)
         node,cli,_=verified_core_paths(core)
@@ -228,6 +252,16 @@ def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
             window_holder.append(window)
             window._qualification_driver=Driver(window,backends,record,max_seconds,
                 receipt.with_name(receipt.stem+'-window.png'),failure_receipt)
+            # Cocoa native termination can finish without unwinding app.exec.
+            # Publish only after the owner positively exited, before Qt leaves.
+            def quitting():
+                executor=window.session.executor
+                safe=executor.closed and executor.join(0) and executor.state.core_alive is False
+                record['owner_shutdown_verified']=safe
+                if not safe:record.update(status='FAIL',failure_code='Q05_GUI_ORIGINAL_OWNER_STILL_ACTIVE')
+                publish()
+            from PySide6.QtWidgets import QApplication
+            QApplication.instance().aboutToQuit.connect(quitting)
         from .managed_gui import launch_managed
         launch_managed(root,core,source,authorized=True,create=True,_backend_factory=factory,_window_hook=hook)
         if not window_holder[0].session.executor.closed:raise ValueError('Q05_GUI_ORIGINAL_OWNER_STILL_ACTIVE')
@@ -240,6 +274,5 @@ def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
         if safe:adapter.teardown()
         else:record['original_owner_retained']=True
         # Profiles and all failed ciphertext/runtime remain untouched.
-        record['timestamp_utc']=datetime.now(timezone.utc).isoformat()
-        with receipt.open('x') as out:json.dump(record,out,indent=2);out.write('\n')
+        publish()
     return record
