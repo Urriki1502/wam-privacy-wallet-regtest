@@ -142,6 +142,7 @@ def require_supplement(item,base,binary,scenario,options):
             or item.get('recovery_completed') is not True
             or item.get('automatic_wallet_transaction_replay') is not False
             or item.get('wallet_broadcast_calls_total')!=(1 if 'uncertain' in options else 0)
+            or not any(o.get('live_session_runtime_retained_on_checkpoint_failure') is True for o in observations)
             or not any(o.get('explicit_pending_commit_completed') is True for o in observations)
             or not any(o.get('reopened_same_wallet_live_resync') is True for o in observations)):
         raise ValueError('Q05_FINAL_FROZEN_SUPPLEMENT_DENIED')

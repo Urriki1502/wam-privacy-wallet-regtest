@@ -128,6 +128,7 @@ class QualificationContracts(unittest.TestCase):
             'automatic_wallet_transaction_replay':False,'wallet_broadcast_calls_total':1,
             'source_provenance':{'frozen_executable_sha256':sha256(binary.read_bytes()).hexdigest()},
             'observations':[{'explicit_pending_commit_completed':True},
+                            {'live_session_runtime_retained_on_checkpoint_failure':True},
                             {'reopened_same_wallet_live_resync':True}]}
         require(good,base,binary,'checkpoint',['uncertain'])
         for changes in ({'wallet_broadcast_calls_total':0},{'wallet_broadcast_calls_total':2},
