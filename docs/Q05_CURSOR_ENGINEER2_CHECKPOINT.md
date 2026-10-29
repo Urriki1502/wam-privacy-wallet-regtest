@@ -30,9 +30,17 @@ code and empty history. `crash_fail_closed` still denies a replacement
 supervisor `start`. No PID adoption, file deletion or transaction replay.
 
 Local: 115 `test_q05*.py` PASS. This host has no genuine Core binary.
+Source `9e1766e14145d00f998615a07a7b9722bb814033`. Queued push workflows, not
+yet proof:
+
+- macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808378718
+- Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808378513
+- Windows smoke https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808378464
+- Windows funded receive (skip-fail-closed, does not run the new scenario)
+  https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808378632
 
 ## Next
 
-Read this HEAD's empty owned-session jobs on macOS, Linux and Windows. A
-datadir-lock failure must be fixed without deleting chain data or allowing a
-foreign start. Canonical cases stay PENDING.
+Read the empty owned-session job on those macOS, Linux and Windows smoke runs
+for `same_owner_crash_recovery`. A datadir-lock failure must be fixed without
+deleting chain data or allowing a foreign start. Canonical cases stay PENDING.
