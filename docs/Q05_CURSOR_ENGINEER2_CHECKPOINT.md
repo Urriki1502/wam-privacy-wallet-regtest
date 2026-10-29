@@ -1,23 +1,24 @@
-# Engineer 2 checkpoint — graceful stop and history identity
+# Engineer 2 checkpoint — crash history fingerprint
 
-Source HEAD: `b05289783a06d47d8b259f4acecc99eadda8a560`.
-Flush parent: `37a2bf18871e710c71d17e71e50a19f2cc8732fe`.
+Source HEAD: `f16e7b7879685f800858cf54014bf89f8d5938a3`.
+Parents: native page `64278ed8b4dccf17750d8bd5ce762c97cac1eb26`, graceful
+reopen `b05289783a06d47d8b259f4acecc99eadda8a560`, flush
+`37a2bf18871e710c71d17e71e50a19f2cc8732fe`.
 Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 stays independent
 (`feature/issue45-q05-managed-core-stage-a-20261027` at `b3046f82`).
 Canonical ledger: 37 Q05 cases PENDING, `accepted=false`. No merge.
 
 ## This change
 
-After the owned wallet locks, the original Popen is stopped and that handle
-must be reaped before a new supervisor starts on the same datadir. A reused
-numeric PID is not a second daemon. Reopen must match the pre-shutdown
-history fingerprint, counts, confirmed atoms, height and tip. The quoted
-`gettxoutsetinfo none "<tip>" true` flush is unchanged. Schema stays
-`q05-owned-session-native/v6`.
+Empty and funded same-owner crash recovery must restore the pre-crash
+history sha256, tip and exact height. Confirmations are inside the
+fingerprint, so a flushed tip taller than the wallet snapshot is refused
+before `process.kill()`. The quoted `gettxoutsetinfo none "<tip>" true`
+flush, the reaped-handle reopen, and the native history page render stay
+in place. Schema stays `q05-owned-session-native/v6`.
 
-Local `unittest discover -s tests -p 'test_q05*.py'`: 118 PASS.
-`test_q02_contracts`: 19 PASS, 1 skipped. No genuine Core on this host.
-Not a native PASS.
+Local `PYTHONPATH=src unittest discover -s tests -p 'test_q05*.py'`: 118 PASS.
+No genuine Core on this host. Not a native PASS.
 
 ## Retained flush proof
 
@@ -92,10 +93,14 @@ reopen. `frozen_build` remains NOT EXECUTED. macOS has not finished.
 
 ## Next
 
-macOS `b052897` run 40811222044 is still the missing graceful-stop receipt.
-Windows and Linux above do not stand in for it. This commit keeps the quoted
-flush and the reaped-handle reopen, then renders the current session snapshot
-on the native history page. Funded jobs pass `--confirm-gui-lifecycle` and
-require `native_gui_history_matches` with `gui_history_count >= 2`. No
-broadcast, mine, datadir deletion or second supervisor. `frozen_build` stays
-`NOT EXECUTED`. Q05 remains unaccepted.
+`f16e7b7` CI is the crash-fingerprint proof. It also carries the unproven
+`64278ed` native history page (`native_gui_history_matches`). Read
+`history_identity_unchanged` on both empty and funded crash observations,
+and `native_gui_history_matches` where the GUI runs. A fingerprint, tip or
+height mismatch is a real FAIL. Do not treat `37a2bf1` or `b052897` receipts
+as proof of this check.
+
+macOS `b052897` run 40811222044 was still in progress for
+`graceful_shutdown`. Windows and Linux `b052897` receipts do not stand in
+for that macOS job. `frozen_build` stays `NOT EXECUTED`. Q05 remains
+unaccepted.
