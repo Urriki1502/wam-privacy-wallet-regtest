@@ -3,8 +3,10 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import FrozenInstanceError
 import threading
 import unittest
+from unittest.mock import Mock
 
 from wam_regtest.wallet_executor import WalletExecutor,WalletExecutorError,FrozenDict
+from wam_regtest.wallet_executor import ManagedWalletBackend
 
 
 class Backend:
@@ -88,3 +90,31 @@ class ExecutorContracts(unittest.TestCase):
         with self.assertRaisesRegex(WalletExecutorError,'STATE_UNVERIFIED'):executor.request('snapshot')
         self.assertTrue(executor.state.faulted);self.assertIsNone(executor.state.core_alive)
         self.assertFalse(executor.closed);created[0].bad_state=False;executor.request('core_status')
+
+
+class ExplicitRecoveryContracts(unittest.TestCase):
+    def backend(self):
+        b=ManagedWalletBackend(None,None,None)
+        b.owner=Mock();b.owner.process.poll.return_value=9
+        b.session=Mock()
+        return b
+
+    def test_exited_original_child_requires_explicit_authorization_before_restart(self):
+        b=self.backend();b.execute('core_restart',(),{})
+        b.session.lock.assert_called_once_with()
+        b.owner.recover_dead.assert_called_once_with(authorized=True)
+        b.owner.start.assert_called_once_with()
+        b.owner.shutdown.assert_not_called()
+
+    def test_quit_recovers_dead_child_before_releasing_original_owner(self):
+        b=self.backend();b.execute('quit',(),{})
+        self.assertEqual([c[0] for c in b.owner.method_calls],
+            ['process.poll','recover_dead','release','close'])
+        b.owner.recover_dead.assert_called_once_with(authorized=True)
+
+    def test_refused_recovery_never_replaces_child_or_releases_owner(self):
+        for action in ('core_restart','quit'):
+            with self.subTest(action=action):
+                b=self.backend();b.owner.recover_dead.side_effect=ValueError('MANAGED_RECOVERY_ORIGINAL_OWNER_REQUIRED')
+                with self.assertRaisesRegex(ValueError,'ORIGINAL_OWNER_REQUIRED'):b.execute(action,(),{})
+                b.owner.start.assert_not_called();b.owner.release.assert_not_called();b.owner.close.assert_not_called()

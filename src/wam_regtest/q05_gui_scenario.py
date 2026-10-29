@@ -53,18 +53,25 @@ class LabBackend(ManagedWalletBackend):
 
 
 class Driver:
-    def __init__(self,window,backends,record,timeout,screenshot):
+    def __init__(self,window,backends,record,timeout,screenshot,failure_receipt):
         from PySide6.QtCore import QTimer
         self.window=window;self.backends=backends;self.record=record;self.stage='password'
         self.deadline=time.monotonic()+timeout;self.screenshot=screenshot;self.snapshot=None
         self.events=[];self.errors=[];self.ticks=0;self.original=None
+        self.failure_receipt=failure_receipt
         window.background_available=True
         window.operation_completed.connect(lambda a,r:self.events.append((a,r)))
         window.operation_failed.connect(self.errors.append)
         self.timer=QTimer(window);self.timer.setInterval(10);self.timer.timeout.connect(self.tick);self.timer.start()
     def fail(self,code):
         self.record.update(status='FAIL',failure_stage=self.stage,failure_code=code)
-        self.stage='failed';self.window.request_quit()
+        self.stage='failed'
+        # Publish before cleanup: a refused shutdown must retain both the live
+        # owner and the original failure, even if Qt cannot safely exit.
+        self.record['failure_timestamp_utc']=datetime.now(timezone.utc).isoformat()
+        with self.failure_receipt.open('x') as out:
+            json.dump(self.record,out,indent=2);out.write('\n')
+        self.window.request_quit()
     def idle(self):return self.window._worker is None and not self.window.session.executor.busy
     def approve(self,kind):
         from PySide6.QtCore import QTimer
@@ -197,6 +204,9 @@ def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
             or not receipt.is_absolute() or receipt.exists() or receipt.is_symlink()
             or type(max_seconds) is not int or not 60<=max_seconds<=600):
         raise ValueError('Q05_GUI_DISPOSABLE_SCOPE_DENIED')
+    failure_receipt=receipt.with_name(receipt.stem+'-failure.json')
+    if failure_receipt.exists() or failure_receipt.is_symlink():
+        raise ValueError('Q05_GUI_DISPOSABLE_SCOPE_DENIED')
     project=Path(__file__).resolve().parents[2];proof=verify_source(project)
     adapter=detect_adapter();adapter.enforce_host();_pinned_source(source)
     record={'schema':'q05-executor-gui-native/v1','status':'FAIL','source_provenance':proof,
@@ -217,7 +227,7 @@ def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
         def hook(window):
             window_holder.append(window)
             window._qualification_driver=Driver(window,backends,record,max_seconds,
-                receipt.with_name(receipt.stem+'-window.png'))
+                receipt.with_name(receipt.stem+'-window.png'),failure_receipt)
         from .managed_gui import launch_managed
         launch_managed(root,core,source,authorized=True,create=True,_backend_factory=factory,_window_hook=hook)
         if not window_holder[0].session.executor.closed:raise ValueError('Q05_GUI_ORIGINAL_OWNER_STILL_ACTIVE')

@@ -5,6 +5,7 @@ import os
 import importlib.util
 import time
 import unittest
+from unittest.mock import patch
 
 os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
 HAVE_QT=importlib.util.find_spec('PySide6') is not None
@@ -96,3 +97,11 @@ class ManagedGuiContracts(unittest.TestCase):
         window._history_page(250);self.wait(lambda:window._worker is None)
         self.assertTrue(any(a=='snapshot' for a,_ in created[0].calls))
         self.assertEqual({t for _,t in created[0].calls},{created[0].thread})
+
+    def test_authenticated_external_release_closes_qt_after_owner_has_exited(self):
+        executor,window,_=self.fixture();executor.request('core_status')
+        with patch.object(type(self.app),'quit') as quit_app:
+            window._poll_owner();quit_app.assert_not_called()
+            executor.request('quit');self.assertTrue(executor.join())
+            self.assertFalse(window._quit_completed)
+            window._poll_owner();quit_app.assert_called_once_with()

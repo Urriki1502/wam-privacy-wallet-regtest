@@ -99,7 +99,7 @@ class ManagedWalletWindow(OperationalWalletWindow):
     def _poll_owner(self):
         self._update_controls()
         if self._worker is not None or self.session.executor.busy or self._approval_open:return
-        if self._quit_completed:
+        if self._quit_completed or self.session.executor.closed:
             if self.session.executor.closed and self.session.executor.join(0):
                 self._executor_poll.stop()
                 from PySide6.QtWidgets import QApplication
