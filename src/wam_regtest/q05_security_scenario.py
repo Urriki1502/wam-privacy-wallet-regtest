@@ -13,6 +13,7 @@ import re
 import socket
 import subprocess
 import sys
+import threading
 
 from .core import verified_core_paths, _read_cli, CoreSmokeError
 from .core_process import CoreBindingError
@@ -61,7 +62,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
         'core_sha256':{p.name:sha256(p.read_bytes()).hexdigest() for p in (node,cli)},
         'wsp_source_commit':PINNED_WSP_COMMIT,'frozen':frozen,'synthetic_rpc':False,
         'mainnet_allowed':False,'profile_root':str(a.root),'observations':[]}
-    owner=None;original=None
+    owner=None;original=None;control_thread=None;control_errors=[]
     try:
         if a.lease_contender:
             try:
@@ -78,6 +79,28 @@ def main(argv=None, *, core=None, source=None, frozen=False):
             config=(owner.directory/'wam.conf').read_bytes()
             datadir=(owner.directory.stat().st_dev,owner.directory.stat().st_ino)
             if not before['core_process_owned']:raise ValueError('Q05_SECURITY_OWNER_DENIED')
+            def serve():
+                try:owner.serve()
+                except OSError:
+                    if not owner._release_requested:control_errors.append('CONTROL_LISTENER_FAILED')
+            control_thread=threading.Thread(target=serve,name='Q05-qualification-control',daemon=True)
+            control_thread.start()
+            from .supervisor_client import control
+            for _ in range(2):
+                state=control(a.root,timeout=10)
+                if not state['core_process_owned'] or owner.process is not original:
+                    raise ValueError('Q05_AUTHENTICATED_RECONNECT_DENIED')
+            events={p.name:sha256(p.read_bytes()).hexdigest() for p in a.root.glob('supervisor.event.*')}
+            from .supervisor_protocol import PROTOCOL
+            with socket.create_connection(('127.0.0.1',owner.profile['control_port']),timeout=3) as conn:
+                with conn.makefile('rb') as reader:hello=json.loads(reader.readline(513))
+                bad={'protocol':PROTOCOL,'op':'shutdown','nonce':'a'*32,
+                     'challenge':hello['challenge'],'proof':'0'*64}
+                conn.sendall(json.dumps(bad).encode('ascii')+b'\n')
+                if conn.recv(1)!=b'':raise ValueError('Q05_UNAUTHENTICATED_CONTROL_REPLIED')
+            if (events!={p.name:sha256(p.read_bytes()).hexdigest() for p in a.root.glob('supervisor.event.*')}
+                    or original.poll() is not None):
+                raise ValueError('Q05_UNAUTHENTICATED_CONTROL_MUTATED_OWNER')
             # Same executable/source, no -c or editable replacement in frozen mode.
             child_receipt=a.receipt.with_name(a.receipt.stem+'-contender.json')
             args=[sys.executable]
@@ -102,6 +125,8 @@ def main(argv=None, *, core=None, source=None, frozen=False):
                                                    'core_started':False}]):
                 raise ValueError('Q05_CONTENDER_RECEIPT_DENIED')
             record['observations'].append({'cross_process_competing_owner_refused':True,
+                'authenticated_control_reconnect_same_original_owner':True,
+                'wrong_hmac_shutdown_refused_without_journal_mutation':True,
                 'receipt_sha256':sha256(child_receipt.read_bytes()).hexdigest()})
             # A different live loopback socket cannot impersonate original Core.
             with socket.socket() as server:
@@ -149,6 +174,10 @@ def main(argv=None, *, core=None, source=None, frozen=False):
         if owner is not None and safe:
             try:owner.close()
             except (OSError,ValueError,RuntimeError):safe=False
+        if control_thread is not None and safe:
+            control_thread.join(4)
+            if control_thread.is_alive() or control_errors:
+                safe=False;record['status']='FAIL';record['control_exit_unverified']=True
         record['owner_shutdown_verified']=safe
         if safe:adapter.teardown()
         record['timestamp_utc']=datetime.now(timezone.utc).isoformat()

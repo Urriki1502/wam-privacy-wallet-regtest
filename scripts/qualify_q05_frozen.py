@@ -104,6 +104,8 @@ def require_supplement(item,base,binary,scenario,options):
     observations=item.get('observations',[])
     if scenario=='security':
         if (len(observations)!=3 or observations[0].get('cross_process_competing_owner_refused') is not True
+                or observations[0].get('authenticated_control_reconnect_same_original_owner') is not True
+                or observations[0].get('wrong_hmac_shutdown_refused_without_journal_mutation') is not True
                 or observations[1].get('credential_bytes_sent')!=0
                 or observations[2].get('explicit_original_backend_quit_verified') is not True):
             raise ValueError('Q05_FINAL_FROZEN_SUPPLEMENT_DENIED')

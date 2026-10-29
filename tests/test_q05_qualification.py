@@ -87,7 +87,9 @@ class QualificationContracts(unittest.TestCase):
         good={**base,'status':'PASS','owner_shutdown_verified':True,'frozen':True,
             'synthetic_rpc':False,'mainnet_allowed':False,
             'source_provenance':{'frozen_executable_sha256':sha256(binary.read_bytes()).hexdigest()},
-            'observations':[{'cross_process_competing_owner_refused':True},
+            'observations':[{'cross_process_competing_owner_refused':True,
+                'authenticated_control_reconnect_same_original_owner':True,
+                'wrong_hmac_shutdown_refused_without_journal_mutation':True},
                 {'credential_bytes_sent':0},{'explicit_original_backend_quit_verified':True}]}
         require(good,base,binary,'security',[])
         for changes in ({'owner_shutdown_verified':False},{'source_sha':'foreign'},
