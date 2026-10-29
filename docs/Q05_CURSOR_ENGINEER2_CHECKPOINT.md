@@ -44,15 +44,22 @@ prove the later flush.
 - Windows smoke https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964943
 - Windows funded https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964946
 
-`ca7bb85` Windows smoke `40809932341` succeeded for the empty owned session
-(`crash_fail_closed`, `same_owner_crash_recovery`, `concurrent_owner_refused`,
-`same_owner_reattach`). That job does not assert `wrong_core_refused`.
+`ca7bb85` Windows smoke `40809932341` succeeded. Its job asserts
+`crash_fail_closed`, `same_owner_crash_recovery`, `concurrent_owner_refused`,
+`same_owner_reattach` and `wrong_core_refused`.
+
+`37a2bf1` Windows smoke also succeeded:
+https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596382
+Empty receipt `status=PASS`, `gui_status=PASS`. Crash fail-closed, empty
+same-owner crash recovery, dirty runtime, interrupted publication, wrong-core
+refusal, reattach and concurrent-owner refusal are PASS. `frozen_build` is
+`NOT EXECUTED`. `native_gui` PASS is the offscreen empty session, not a
+frozen package.
 
 ## Still open on this SHA
 
 macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596567
 Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596535
-Windows smoke https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596382
 
 ## Next
 
