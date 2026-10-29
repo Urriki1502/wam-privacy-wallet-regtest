@@ -21,6 +21,45 @@ from .wsp_live import PINNED_WSP_COMMIT,_pinned_source,public_regtest_mining_add
 
 PASSWORD=b'public-q05-gui-disposable-only'
 
+# Qualification-only fixed categories. Never persist exception text, RPC
+# stderr, paths or credentials in a receipt or change the public GUI errors.
+_FUNDING_CODES=frozenset(('WALLET_MANAGED_OWNER_UNVERIFIED',
+    'WSP_LIVE_RPC_AUTHENTICATION_DENIED','WSP_LIVE_RPC_UNAVAILABLE',
+    'WSP_LIVE_RPC_IDENTITY_DENIED','WSP_LIVE_RPC_DENIED',
+    'WSP_LIVE_CHAIN_DENIED','WSP_LIVE_GENESIS_DENIED','WSP_LIVE_PEERS_DENIED',
+    'WSP_LIVE_VERSION_DENIED','WSP_PUBLIC_FIXTURE_HEIGHT_DENIED',
+    'WSP_LIVE_FUNDING_BLOCK_DENIED','WSP_LIVE_PUBLIC_FUNDING_DENIED',
+    'WSP_LIVE_FUNDING_AMOUNT_DENIED','WSP_LIVE_PAYMENT_BROADCAST_DENIED',
+    'WSP_LIVE_PAYMENT_CONFIRM_DENIED'))
+_FUNDING_CLI_CODES=frozenset(('CORE_RPC_TIMEOUT_UNCERTAIN','CORE_RPC_SCOPE_FAULTED',
+    'CORE_RPC_AUTHENTICATION_DENIED','CORE_RPC_UNAVAILABLE',
+    'CORE_RPC_PROCESS_IDENTITY_DENIED','CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE',
+    'CORE_LOCAL_NETWORK_POLICY_DENIED','CORE_RPC_MUTATION_CONSENT_REQUIRED',
+    'CORE_LOCAL_RPC_PARAMS_DENIED','CORE_LOCAL_RPC_METHOD_DENIED',
+    'CORE_RPC_REPLY_DENIED','CORE_RPC_REPLY_BOUNDS_DENIED','CORE_RPC_DENIED',
+    'CORE_RPC_PROCESS_DENIED'))
+
+
+def _funding_code(error):
+    from .wallet_session import WalletSessionError
+    from .wsp_live import RealWspScanError
+    args=error.args if type(error) in (WalletSessionError,RealWspScanError) else ()
+    code=args[0] if len(args)==1 and type(args[0]) is str else None
+    return code if code in _FUNDING_CODES else 'Q05_FIXTURE_FUNDING_DENIED'
+
+
+def _funding_failure(stage,error):
+    from .core import CoreSmokeError
+    result={'stage':stage,'code':_funding_code(error)}
+    # The CLI wrapper deliberately collapses several failures into RPC_DENIED.
+    # Its exact typed context remains available locally; copy only finite codes.
+    cause=error.__context__
+    if type(cause) is CoreSmokeError:
+        args=cause.args
+        code=args[0] if len(args)==1 and type(args[0]) is str else None
+        if code in _FUNDING_CLI_CODES:result['cli_code']=code
+    return result
+
 
 def _owned_dialog(window,kind):
     from PySide6.QtWidgets import QApplication
@@ -39,6 +78,7 @@ class LabBackend(ManagedWalletBackend):
         super().__init__(*args,**kwargs)
         self.lab=None;self.broadcast_entered=threading.Event();self.broadcast_release=threading.Event()
         self.submissions=0
+        self.funding_failure=None
     def execute(self,action,args,kwargs):
         if action=='broadcast':
             self.broadcast_entered.set()
@@ -48,11 +88,18 @@ class LabBackend(ManagedWalletBackend):
             from .managed_wallet_session import check_session
             from .wallet_session import WalletCoreCli
             from wam_sp.keystore import Keyring
-            check_session(self.session)
-            rpc=WalletCoreCli(self.owner.cli,self.owner.directory);rpc.attest()
+            rpc=None;stage='session';self.funding_failure=None
             try:
+                check_session(self.session)
+                stage='attestation'
+                rpc=WalletCoreCli(self.owner.cli,self.owner.directory);rpc.attest()
+                stage='generation'
                 rpc._call('generatetoaddress',['101',self.mining_address])
+                stage='payment'
                 txid,atoms,height=_public_fixture_payment(rpc,self.session.ring.accounts()[0],self.mining_address)
+            except Exception as error:
+                self.funding_failure=_funding_failure(stage,error)
+                raise
             finally:
                 if getattr(rpc,'_transport',None) is not None:rpc._transport.close()
             recipient=Keyring()
@@ -83,6 +130,8 @@ class Driver:
         self.timer=QTimer(window);self.timer.setInterval(10);self.timer.timeout.connect(self.tick);self.timer.start()
     def fail(self,code):
         self.record.update(status='FAIL',failure_stage=self.stage,failure_code=code)
+        if self.backends and self.backends[0].funding_failure is not None:
+            self.record['fixture_funding_failure']=dict(self.backends[0].funding_failure)
         self.stage='failed'
         # Publish before cleanup: a refused shutdown must retain both the live
         # owner and the original failure, even if Qt cannot safely exit.

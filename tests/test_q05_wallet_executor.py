@@ -4,6 +4,9 @@ from dataclasses import FrozenInstanceError
 import threading
 import unittest
 from unittest.mock import Mock
+from unittest.mock import patch
+from types import SimpleNamespace
+from pathlib import Path
 
 from wam_regtest.wallet_executor import WalletExecutor,WalletExecutorError,FrozenDict
 from wam_regtest.wallet_executor import ManagedWalletBackend
@@ -119,3 +122,31 @@ class ExplicitRecoveryContracts(unittest.TestCase):
                 b=self.backend();b.owner.recover_dead.side_effect=ValueError('MANAGED_RECOVERY_ORIGINAL_OWNER_REQUIRED')
                 with self.assertRaisesRegex(ValueError,'ORIGINAL_OWNER_REQUIRED'):b.execute(action,(),{})
                 b.owner.start.assert_not_called();b.owner.release.assert_not_called();b.owner.close.assert_not_called()
+
+    def test_quarantined_wallet_rpc_uses_authenticated_original_owner_stop(self):
+        b=self.backend();b.owner.process.poll.return_value=None
+        b.owner._faulted=False;b.owner.directory=Path.cwd()
+        with patch('wam_regtest.rpc_scope.identity',return_value=SimpleNamespace(faulted=True)):
+            b.execute('quit',(),{})
+        b.session.lock.assert_called_once_with()
+        b.owner.recover_stop.assert_called_once_with()
+        b.owner.shutdown.assert_not_called();b.owner.start.assert_not_called()
+        b.owner.release.assert_called_once_with();b.owner.close.assert_called_once_with()
+
+    def test_quarantined_rpc_failed_reattest_retains_owner_without_retry(self):
+        b=self.backend();b.owner.process.poll.return_value=None
+        b.owner._faulted=False;b.owner.directory=Path.cwd()
+        b.owner.recover_stop.side_effect=ValueError('CORE_RPC_PROCESS_IDENTITY_DENIED')
+        with patch('wam_regtest.rpc_scope.identity',return_value=SimpleNamespace(faulted=True)):
+            with self.assertRaisesRegex(ValueError,'PROCESS_IDENTITY_DENIED'):
+                b.execute('quit',(),{})
+        b.owner.shutdown.assert_not_called();b.owner.start.assert_not_called()
+        b.owner.release.assert_not_called();b.owner.close.assert_not_called()
+        b.owner.process.kill.assert_not_called();b.owner.process.terminate.assert_not_called()
+
+    def test_healthy_wallet_rpc_keeps_normal_shutdown(self):
+        b=self.backend();b.owner.process.poll.return_value=None
+        b.owner._faulted=False;b.owner.directory=Path.cwd()
+        with patch('wam_regtest.rpc_scope.identity',return_value=SimpleNamespace(faulted=False)):
+            b.execute('quit',(),{})
+        b.owner.shutdown.assert_called_once_with();b.owner.recover_stop.assert_not_called()

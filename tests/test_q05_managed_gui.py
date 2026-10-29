@@ -4,6 +4,8 @@ import threading
 import os
 import importlib.util
 import time
+import tempfile
+import json
 import unittest
 from unittest.mock import patch
 
@@ -21,14 +23,19 @@ class Backend:
     def __init__(self):
         self.thread=threading.get_ident();self.calls=[];self.locked=True;self.alive=True
         self.entered=threading.Event();self.release=threading.Event()
+        self.fail_network=self.fail_quit=False;self.funding_failure=None
     def public_state(self):return dict(locked=self.locked,faulted=False,core_alive=self.alive)
     def execute(self,action,args,kwargs):
         self.calls.append((action,threading.get_ident()))
         if action in ('open','unlock'):self.locked=False
         if action=='lock':self.locked=True;return None
-        if action=='quit':self.locked=True;self.alive=False;return None
+        if action=='quit':
+            if self.fail_quit:raise ValueError('MANAGED_SHUTDOWN_UNCERTAIN')
+            self.locked=True;self.alive=False;return None
         if action=='network':
-            self.entered.set();self.release.wait(3);return {'network':'regtest'}
+            self.entered.set();self.release.wait(3)
+            if self.fail_network:raise ValueError('FIXTURE_NETWORK_REFUSED')
+            return {'network':'regtest'}
         return WalletReadSnapshot('regtest',0,'a'*64,'',0,0,(),'b'*64,
             signer_allowed=True,broadcast_allowed=True,history_count=0,receive_count=0)
 
@@ -55,7 +62,7 @@ class ManagedGuiContracts(unittest.TestCase):
         proxy=ManagedWalletProxy(executor,root,root/'core',root/'wsp')
         window=ManagedWalletWindow(proxy);window.background_available=True;window.show()
         def close():
-            if created:created[0].release.set()
+            if created:created[0].release.set();created[0].fail_quit=False
             window._executor_poll.stop();window._theme_timer.stop();window._sync_timer.stop()
             self.wait(lambda:window._worker is None and not executor.busy)
             if not executor.closed:executor.request('quit')
@@ -141,3 +148,31 @@ class ManagedGuiContracts(unittest.TestCase):
         with patch.object(type(self.app),'quit') as quit_app:
             self.assertTrue(window.close());self.assertFalse(window.isVisible())
             quit_app.assert_not_called();self.assertFalse(window._close_requested)
+
+    def test_failed_funding_driver_publishes_fail_then_closes_verified_owner(self):
+        from wam_regtest.q05_gui_scenario import Driver
+        executor,window,created=self.fixture();window.open_wallet(b'public-disposable-password')
+        self.wait(lambda:window._worker is None and not window.session.locked)
+        backend=created[0];backend.fail_network=True;backend.release.set()
+        with tempfile.TemporaryDirectory() as temp:
+            receipt=Path(temp)/'failure.json';record={'observations':[]}
+            driver=Driver(window,created,record,60,None,receipt);driver.stage='funding'
+            self.addCleanup(driver.timer.stop)
+            with patch.object(type(self.app),'quit'):
+                window.start_operation('network')
+                self.wait(lambda:executor.closed and executor.join(0))
+            self.assertEqual(json.loads(receipt.read_text())['failure_stage'],'funding')
+            self.assertEqual(record['status'],'FAIL');self.assertEqual(driver.stage,'failed')
+            self.assertFalse(backend.alive)
+            self.assertEqual([a for a,_ in backend.calls].count('quit'),1)
+
+    def test_failed_shutdown_retains_owner_and_does_not_automatically_retry(self):
+        executor,window,created=self.fixture();executor.request('core_status')
+        backend=created[0];backend.fail_quit=True
+        with patch.object(type(self.app),'quit') as quit_app:
+            window.request_quit();self.wait(lambda:window._worker is None and not executor.busy)
+            for _ in range(3):window._poll_owner();self.app.processEvents()
+            quit_app.assert_not_called()
+        self.assertFalse(executor.closed);self.assertFalse(executor.join(0))
+        self.assertTrue(backend.alive);self.assertFalse(window._quit_requested)
+        self.assertEqual([a for a,_ in backend.calls].count('quit'),1)

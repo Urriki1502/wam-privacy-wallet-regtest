@@ -226,7 +226,13 @@ class ManagedWalletBackend:
             if owner is not None:
                 p=owner.process
                 if p is not None and p.poll() is None:
-                    if owner._faulted:owner.recover_stop()
+                    # Wallet CLI/HTTP failures quarantine the shared scope
+                    # independently of the supervisor's status latch. Explicit
+                    # quit must reattest through the ORIGINAL owner's existing
+                    # recovery path, never retry a write or clear the grant.
+                    from .rpc_scope import identity
+                    scope=identity(owner.directory)
+                    if owner._faulted or scope is not None and scope.faulted:owner.recover_stop()
                     else:owner.shutdown()
                 elif p is not None:
                     if action=='quit':

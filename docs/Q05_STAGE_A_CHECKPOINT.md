@@ -1,3 +1,36 @@
+# Full-access local continuation — 29 October 2026
+
+The preceding restricted-session report below is retained as history. This
+session acquired the official engineering lease after the prior holder released
+it. Live main is `4bc6f658e4c00e0a8c5d3c9da7d79aab0a54dfae`; Draft #138 remains
+at `93c5c68666c7760fa84735eb0ca96f0ef6246dc8`. Both downloaded macOS job logs
+confirm funding failure after approximately ten seconds, but do not identify
+the underlying RPC cause. Existing quarantine-stop correction and diagnostic
+allowlists reviewed; no generation deadline or custody policy changed.
+
+`verified_core_paths()` revalidated BOTH official staged binaries: wamd
+`7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068`, CLI
+`81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82`.
+WSP remains clean/pinned at `ac55f13423620252bdbf848c7e8a280c3b84721e`.
+Fresh targeted regression: 106 PASS, zero FAIL/SKIP, Python 3.12.15 with offscreen
+Qt. New logs/receipts are outside the qualification source tree at
+`../q05-local-evidence-20261029-session/`. Native Cocoa replay follows the local
+reviewed commit; no native result is claimed at this checkpoint. All 37 ledger
+cases and G0–G7 stay PENDING, accepted=false. No push/merge/dispatch/handoff.
+
+---
+
+# Local continuation — funding/shutdown diagnosis (29 October 2026)
+
+Current local branch is `local/q05-development`, HEAD `93c5c686`, with an
+uncommitted focused correction. See `Q05_LOCAL_FUNDING_DIAGNOSIS_20261029.md`
+for the proven quarantined-scope shutdown-routing defect, qualification-only
+funding diagnostics, 106 passing source/offscreen tests and retained FAILs.
+The initiating macOS CI funding cause remains UNKNOWN; the generation timeout
+is a hypothesis. Native/frozen replay is NOT EXECUTED: sandbox loopback bind is
+denied and no verified Core is staged here. No acceptance/ledger promotion,
+push, merge or CI dispatch. Official owner-held engineering lease is untouched.
+
 # Latest resume checkpoint — packaged managed GUI (29 October 2026)
 
 Continue SAME PR138 / feature/issue45-q05-managed-core-stage-a-20261027.
