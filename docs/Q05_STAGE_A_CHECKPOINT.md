@@ -1,3 +1,46 @@
+# Local native Cocoa PASS — 29 October 2026, 16:23 UTC
+
+Reviewed local runtime commit: `00a67fe69ed77727c676ac94019aad0b190a854b`.
+Official signed v0.1.11 Core and pinned WSP verified as recorded below.
+Python 3.12.15 / PySide6 6.12.0 / native Cocoa on macOS ARM64. The complete
+`scripts/probe_q05_executor_gui.py` lifecycle passed with six observations:
+fresh empty managed wallet; real funding and BIP352 receive; prepare/sign/
+broadcast/confirm exactly once; deferred close during broadcast; reopen same
+Core; clean Core checkpoint at height 103; original-Popen crash after that
+checkpoint and explicit same-owner recovery with unchanged wallet/tip/history/
+reservations; verified final owner/Core shutdown. Probe exited 0.
+
+Receipt: `../q05-local-evidence-20261029-session/native-00a67fe-attempt1.json`,
+SHA256 `4dabf48962f5231fddddad5e10d0f1665d4f960ad8361c2bcc18cdf786874fe9`.
+Command, console log, window PNG, interpreter/OS and evidence digest companion
+are retained beside it. Profile preserved untouched at
+`/private/tmp/wam-fusion-core-c782717c0539c5eb`; final scoped lsof showed no
+open holder. Core debug log records heights 101/102/103 and two graceful
+shutdown completions. Original CI logs are copied beside the new evidence.
+
+The initiating macOS CI funding cause remains UNKNOWN: no local failure was
+reproduced; 101 generated blocks took approximately five seconds here. The CI
+ten-second timeout remains a hypothesis. The quarantined-scope shutdown defect
+is proven by deterministic regression, not by a new native failure. No timeout,
+permission, identity or recovery threshold was relaxed to obtain this PASS.
+
+This is supplemental SOURCE native evidence, NOT frozen/physical acceptance.
+Required Python 3.12.10 final macOS frozen and changed-source Windows/Linux,
+interrupted-publication/negative case matrix, independent/operator and owner
+integration/exact-main gates remain unresolved. Canonical Q05 is unchanged:
+37 PENDING, G0–G7 PENDING, accepted=false, handoff NO. Q04 G6/G7 remain BLOCKED.
+Next: qualify the corrected runtime on declared 3.12.10 macOS native/final frozen
+and changed-source Windows/Linux when separately authorized; reconcile all 37
+case predicates without borrowing historical unrelated passes. No push, merge,
+Actions dispatch, Q06, mainnet or production release.
+
+The earlier PID11811 lease holder disappeared without this agent signaling it;
+only then did the standard script acquire this session's lease (PID13056).
+No lock file was deleted, replaced or bypassed. This documentation-only follow-up
+does not change any Python bytes qualified at `00a67fe`.
+
+---
+
 # Full-access local continuation — 29 October 2026
 
 The preceding restricted-session report below is retained as history. This
