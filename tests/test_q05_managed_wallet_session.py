@@ -106,6 +106,13 @@ class ManagedSessionContracts(unittest.TestCase):
         session.scanner.close.assert_not_called();session._managed_lease.__exit__.assert_not_called()
         self.assertTrue(path.exists())
 
+    def test_a_new_core_instance_requires_explicit_session_reopen(self):
+        session=SimpleNamespace(_managed_thread=threading.get_ident(),_managed_lease=object(),
+            _managed_owner=SimpleNamespace(process=object()),_managed_process=object(),faulted=False)
+        with patch.object(module,'_owned'):
+            with self.assertRaisesRegex(WalletSessionError,'OWNER_UNVERIFIED'):module.check_session(session)
+        self.assertTrue(session.faulted)
+
     def test_scanner_close_failure_still_closes_keys_and_lease_preserving_runtime(self):
         path=self.runtime();guard=module.RuntimeGuard(path);session=self.session(guard)
         ring=session.ring;lease=session._managed_lease

@@ -91,15 +91,19 @@ class _ReadWorker(QThread):
     ready = Signal(object)
     denied = Signal(str)
 
-    def __init__(self, core_dir: Path, datadir: Path, source: Path, session=None):
+    def __init__(self, core_dir: Path, datadir: Path, source: Path, session=None,
+                 history_offset=0):
         super().__init__()
         self._core_dir, self._datadir, self._source = core_dir, datadir, source
         self.session = session
+        self._history_offset = history_offset
 
     def run(self):
         try:
-            result = (self.session.snapshot() if self.session is not None else
-                      read_real_wallet_snapshot(self._core_dir, self._datadir, self._source))
+            result = (self.session.snapshot(history_offset=self._history_offset)
+                      if self.session is not None else
+                      read_real_wallet_snapshot(self._core_dir, self._datadir, self._source,
+                                                history_offset=self._history_offset))
             self.ready.emit(result)
         except Exception as error:
             # Never forward external RPC messages, paths or private data.
@@ -118,6 +122,7 @@ class RegtestWalletWindow(QMainWindow):
         self._core_dir, self._datadir, self._source = core_dir, datadir, source
         self._worker = None
         self._snapshot = None
+        self._history_offset = 0
         self.setWindowTitle("WAM Privacy Wallet · Real REGTEST")
         self.setWindowIcon(QIcon(str(brand_image())))
         self.setMinimumSize(820,600)
@@ -126,7 +131,7 @@ class RegtestWalletWindow(QMainWindow):
         shell=QHBoxLayout(base);shell.setContentsMargins(0,0,0,0);shell.setSpacing(0)
         sidebar=QFrame();sidebar.setObjectName('FusionSidebar');sidebar.setFixedWidth(214)
         side=QVBoxLayout(sidebar);side.setContentsMargins(18,26,18,20);side.setSpacing(20)
-        brand=QHBoxLayout();mark=QLabel();mark.setPixmap(QPixmap(str(brand_image())).scaled(44,44,Qt.AspectRatioMode.KeepAspectRatio,Qt.TransformationMode.SmoothTransformation));mark.setFixedSize(44,44);brand.addWidget(mark)
+        brand=QHBoxLayout();mark=QLabel();dpr=max(1.0,float(self.devicePixelRatioF()));logo=QPixmap(str(brand_image()));logo=logo.scaled(int(44*dpr),int(44*dpr),Qt.AspectRatioMode.KeepAspectRatio,Qt.TransformationMode.SmoothTransformation);logo.setDevicePixelRatio(dpr);mark.setPixmap(logo);mark.setFixedSize(44,44);brand.addWidget(mark)
         title=QVBoxLayout();title.addWidget(label('WAM','BrandTitle'));title.addWidget(label('FUSION 2.0','FusionKicker'));brand.addLayout(title);brand.addStretch();side.addLayout(brand)
         side.addWidget(label('WALLET WORKSPACE','FusionKicker'))
         self.navigation=QListWidget();self.navigation.setIconSize(__import__('PySide6.QtCore',fromlist=['QSize']).QSize(22,22))
@@ -144,7 +149,7 @@ class RegtestWalletWindow(QMainWindow):
         self.stack=QStackedWidget();col.addWidget(self.stack,1)
         self.dashboard=FusionOverview();self.balance_text=self.dashboard.balance_value;self.utxo_text=self.dashboard.utxo_details;self.stack.addWidget(self.dashboard)
         self.receive_page=ReceivePage();self.receive_code=self.receive_page.receive_code;self.stack.addWidget(self.receive_page)
-        self.history_page=HistoryPage();self.history_table=self.history_page.table;self.stack.addWidget(self.history_page)
+        self.history_page=HistoryPage();self.history_table=self.history_page.table;self.history_page.page_requested.connect(self._history_page);self.stack.addWidget(self.history_page)
         self.status=label('Not synced · live Core verification required','StatusText');col.addWidget(self.status);shell.addWidget(workspace,1)
         self.navigation.currentRowChanged.connect(self.stack.setCurrentIndex)
         self.navigation.currentRowChanged.connect(lambda i:self.workspace_title.setText(('Overview','Receive','History','Send','Security','Settings')[i] if 0<=i<6 else 'Privacy wallet'))
@@ -195,7 +200,8 @@ class RegtestWalletWindow(QMainWindow):
             return
         self.refresh_button.setEnabled(False)
         self.status.setText("Verifying WAM Core REGTEST and WSP-1 SQLite…")
-        worker = _ReadWorker(self._core_dir, self._datadir, self._source, self.session)
+        worker = _ReadWorker(self._core_dir, self._datadir, self._source, self.session,
+                             history_offset=self._history_offset)
         self._worker = worker
         worker.ready.connect(self.apply_snapshot)
         worker.denied.connect(self._sync_failed)
@@ -253,6 +259,12 @@ class RegtestWalletWindow(QMainWindow):
     def _open_transaction(self,txid):
         self.navigation.setCurrentRow(2)
         self.history_page.select_txid(txid)
+
+    def _history_page(self,offset):
+        if type(offset) is not int or offset<0 or self._worker is not None:
+            return
+        self._history_offset=offset
+        self.request_sync()
 
     def closeEvent(self, event):
         if self._worker is not None:

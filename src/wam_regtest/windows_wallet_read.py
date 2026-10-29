@@ -9,6 +9,7 @@ from hashlib import sha256
 import re
 from pathlib import Path
 
+from .history_pages import GUI_HISTORY_LIMIT,sql_history_pages
 from .wallet_read import WalletReadSnapshot, HistoryRow
 from .wsp_live import _pinned_source, PINNED_WSP_COMMIT, REGTEST_GENESIS
 from .windows_wsp_regtest import WindowsWspCoreRpc
@@ -22,7 +23,8 @@ class WindowsWalletReadError(ValueError):
 
 def read_native_windows_wallet(core: Path, cli: Path, datadir: Path, port: int,
                                environment: dict, wsp_source: Path,
-                               expected_core_sha256: str) -> WalletReadSnapshot:
+                               expected_core_sha256: str, *,
+                               history_offset: int = 0) -> WalletReadSnapshot:
     """A fresh real scanner validates the chain tip before serving a balance."""
     if (type(core) is not type(Path()) or type(cli) is not type(Path())
             or type(datadir) is not type(Path()) or type(wsp_source) is not type(Path())
@@ -65,19 +67,21 @@ def read_native_windows_wallet(core: Path, cli: Path, datadir: Path, port: int,
                 if type(n) is not int or not 0 < n <= 22_000_000 * 100_000_000:
                     raise WindowsWalletReadError("WIN_READ_AMOUNT_DENIED")
                 amounts.append(n)
-            history = []
-            for row in scanner.store.db.execute(
-                "SELECT txid,height,credit,debit FROM history "
-                "ORDER BY height DESC,txid LIMIT 100"
-            ):
-                txid, block, credit, debit = row
-                if (type(txid) is not str or not _HASH.fullmatch(txid)
-                        or type(block) is not int or not 1 <= block <= tip_height
-                        or type(credit) is not int or type(debit) is not int
-                        or not 0 <= credit <= 22_000_000 * 100_000_000
-                        or not 0 <= debit <= 22_000_000 * 100_000_000):
-                    raise WindowsWalletReadError("WIN_READ_HISTORY_DENIED")
-                history.append(HistoryRow(txid, block, tip_height-block+1, credit, debit))
+            if type(history_offset) is not int or history_offset<0:
+                raise WindowsWalletReadError("WIN_READ_HISTORY_DENIED")
+            with scanner.store.transaction():
+                history_count,raw=sql_history_pages(
+                    scanner.store.db,tip_height,
+                    "SELECT txid,height,credit,debit FROM history "
+                    "ORDER BY height DESC,txid LIMIT ? OFFSET ?",
+                    error=WindowsWalletReadError,code="WIN_READ_HISTORY_DENIED",
+                    window=GUI_HISTORY_LIMIT,skip=history_offset)
+                receive_count=scanner.store.db.execute(
+                    "SELECT count(*) FROM history WHERE credit>0").fetchone()[0]
+            if type(receive_count) is not int or receive_count<0 or receive_count>history_count:
+                raise WindowsWalletReadError("WIN_READ_HISTORY_DENIED")
+            history=tuple(HistoryRow(txid,block,conf,credit,debit)
+                          for txid,block,credit,debit,conf in raw)
             if rpc.call("getblockcount") != tip_height or rpc.call("getbestblockhash") != tip_hash:
                 raise WindowsWalletReadError("WIN_READ_CHAIN_CHANGED_DENIED")
             if rpc._call("getconnectioncount", []) != 0:
@@ -85,11 +89,15 @@ def read_native_windows_wallet(core: Path, cli: Path, datadir: Path, port: int,
             return WalletReadSnapshot(
                 chain="regtest", height=tip_height, tip=tip_hash,
                 receive_code=code, confirmed_atoms=sum(amounts),
-                confirmed_utxos=len(coins), history=tuple(history),
+                confirmed_utxos=len(coins), history=history,
                 core_sha256=expected_core_sha256,
                 synthetic_rpc=False, demo_account_only=True,
                 signer_allowed=False, broadcast_allowed=False,
                 mainnet_allowed=False,
+                history_count=history_count,
+                history_complete=history_offset==0 and history_count<=GUI_HISTORY_LIMIT,
+                receive_count=receive_count,
+                history_offset=history_offset,
             )
         finally:
             scanner.close()

@@ -112,7 +112,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         self.network_button=action('Verify node privacy','security');pl.addWidget(self.network_button);self.network_text=label('Remote/proxy routes and fallback are unavailable. Zero peers must be verified; there is no anonymity guarantee.');pl.addWidget(self.network_text);layout.addWidget(privacy)
         sync,sl=panel('Synchronization & test blocks','Background sync every 30 seconds. Manual sync re-verifies the live chain.')
         self.settings_sync=action('Sync verified chain','sync');self.settings_sync.clicked.connect(self.request_sync);sl.addWidget(self.settings_sync)
-        self.mine_button=action('Mine one REGTEST block','core');sl.addWidget(self.mine_button);sl.addWidget(label('Mining confirms disposable test transactions only. The test chain is removed when this developer session closes.','FusionGold'));layout.addWidget(sync);layout.addStretch();self.stack.addWidget(settings)
+        self.mine_button=action('Mine one REGTEST block','core');sl.addWidget(self.mine_button);self.mine_notice=label('Mining confirms disposable test transactions only. The test chain is removed when this developer session closes.','FusionGold');sl.addWidget(self.mine_notice);layout.addWidget(sync);layout.addStretch();self.stack.addWidget(settings)
         self.mine_button.clicked.connect(lambda:self.start_operation('mine'));self.network_button.clicked.connect(lambda:self.start_operation('network'))
         self.appearance.setItemText(0,'Auto · '+{'win32':'Windows','darwin':'macOS','linux':'Linux desktop'}.get(sys.platform,'system'))
         self.dashboard.go_send.clicked.connect(lambda:self.navigation.setCurrentRow(3));self.dashboard.open_security.clicked.connect(lambda:self.navigation.setCurrentRow(4))

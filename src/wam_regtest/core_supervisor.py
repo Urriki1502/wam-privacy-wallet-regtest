@@ -407,9 +407,11 @@ class CoreSupervisor:
             raise ManagedCoreError('MANAGED_LIVE_OWNER_CLOSE_DENIED')
         self._release_requested=True
 
-    def handle(self, raw, challenge):
-        message = decode_frame(raw)
-        op = self.guard.verify(raw, challenge)
+    def control_operation(self,op):
+        # In-process finite control plane. Authentication remains in handle();
+        # a managed wallet executor may serialize these same operations.
+        if op not in ('status','start','shutdown','recover-stop','recover-dead','release'):
+            raise ManagedCoreError('MANAGED_CONTROL_OPERATION_DENIED')
         if op == 'start':
             self.start()
         elif op == 'shutdown':
@@ -420,14 +422,22 @@ class CoreSupervisor:
             self.recover_dead(authorized=True)
         elif op == 'release':
             self.release()
-        status = self.status()
+        return self.status()
+
+    def handle(self, raw, challenge):
+        message = decode_frame(raw)
+        op = self.guard.verify(raw, challenge)
+        bridge=getattr(self,'_control_bridge',None)
+        status=dict(bridge(op)) if bridge is not None else self.control_operation(op)
         return {**status, 'nonce': message['nonce'],
                 'proof': self.guard.sign_status(message['nonce'], status)}
 
     def serve(self):
         while not self._release_requested:
+            listener=self.listener
+            if listener is None:return
             try:
-                conn, _ = self.listener.accept()
+                conn, _ = listener.accept()
             except socket.timeout:
                 continue
             with conn:

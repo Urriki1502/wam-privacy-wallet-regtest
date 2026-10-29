@@ -2,6 +2,10 @@
 INPUT_ERRORS=frozenset(('WALLET_INPUT_AMOUNT_INVALID','WALLET_INPUT_FEE_INVALID',
                         'WALLET_INPUT_RECIPIENT_INVALID','WALLET_INPUT_FUNDS_UNAVAILABLE'))
 _MESSAGES={
+ 'WALLET_EXECUTOR_OPERATION_STILL_PENDING':'The operation is still running. Wait for completion; signing or broadcast will not be repeated automatically.',
+ 'WALLET_EXECUTOR_BUSY_OR_CLOSED':'A wallet operation is in progress or the session is closed. Wait for completion or explicitly reopen the wallet.',
+ 'WALLET_MANAGED_RUNTIME_PRESERVED':'Wallet keys are closed and recovery data is preserved. Authenticated recovery is required before reopening; do not remove files.',
+ 'WALLET_MANAGED_OPEN_DENIED':'The wallet could not be authenticated or opened safely. Check the passphrase and current recovery state; existing data is preserved.',
  'WALLET_CORE_REAUTHENTICATION_REQUIRED':'Explicit approval to reauthenticate the original REGTEST Core is required after wallet passphrase and custody verification. No automatic retry or external node adoption is allowed.',
 
  'WALLET_CORE_AUTHENTICATION_DENIED':'Local Core authentication failed. Balances are hidden and sensitive operations are stopped. Verify the authorized local credentials, then explicitly reauthenticate. Wallet state and reservations are retained.',
@@ -40,10 +44,12 @@ def error_text(code,*,fallback='WALLET_OPERATION_DENIED_STATE_RETAINED'):
 def operation_error(action,error):
     from .wallet_session import WalletSessionError
     from .vault import VaultError
+    from .wallet_executor import WalletExecutorError
     # Do not call str(error): an external exception may contain private data
     # or implement a hostile formatter. Exact single-argument categories only.
-    args=error.args if type(error) in (ValueError,WalletSessionError,VaultError) else ()
+    args=error.args if type(error) in (ValueError,WalletSessionError,VaultError,WalletExecutorError) else ()
     code=args[0] if len(args)==1 and type(args[0]) is str else None
+    if type(error) is WalletExecutorError and code in _MESSAGES:return code
     if action=='prepare' and type(error) is ValueError:
         if code in ('INVALID_ADDRESS','INVALID_ENCODING','INVALID_PADDING','WRONG_NETWORK_OR_ADDRESS',
                     'INVALID_VERSION_OR_CHECKSUM','INVALID_ADDRESS_LENGTH','INVALID_PUBLIC_KEY'):

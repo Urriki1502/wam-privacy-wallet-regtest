@@ -68,6 +68,8 @@ def check_session(session):
         if threading.get_ident()!=session._managed_thread or session._managed_lease is None:
             raise ValueError('WALLET_MANAGED_OWNER_THREAD_REQUIRED')
         _owned(session._managed_owner)
+        if session._managed_owner.process is not session._managed_process:
+            raise ValueError('WALLET_MANAGED_CORE_INSTANCE_CHANGED')
         session._managed_runtime_guard.check()
         if directory_identity(session.vault.directory)!=session._managed_target_identity:
             raise ValueError('WALLET_MANAGED_CONTAINER_CHANGED')
@@ -123,7 +125,8 @@ def open_owned(cls,owner,source,password,*,authorized=False,keychain=None,create
         guard=RuntimeGuard(runtime)
         session=cls(owner.core,owner.directory,source,ring,scanner,vault,password,mining_address,
                     core_cli=owner.cli,core_receipt=owner.receipt)
-        session._managed_owner=owner;session._managed_thread=threading.get_ident()
+        session._managed_owner=owner;session._managed_process=owner.process
+        session._managed_thread=threading.get_ident()
         session._managed_lease=lease;session._managed_runtime_guard=guard
         session._managed_target_identity=directory_identity(folder);session._managed_opening=True
         session._save()
