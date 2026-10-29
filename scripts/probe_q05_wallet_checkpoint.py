@@ -126,6 +126,7 @@ def main():
     parser.add_argument('--recover-after-interruption',action='store_true')
     parser.add_argument('--interrupt-recovery-reference',action='store_true')
     parser.add_argument('--complete-pending-recovery',action='store_true')
+    parser.add_argument('--owned-session',action='store_true')
     a=parser.parse_args();source=Path(__file__).resolve().parents[1]
     if (not a.confirm_disposable_regtest or platform.system()!='Darwin'
             or platform.machine()!='arm64' or a.root.exists() or a.root.is_symlink()
@@ -140,6 +141,7 @@ def main():
     node,cli,intake=verified_core_paths(a.core_dir);_pinned_source(a.wsp_source)
     record={'schema':'q05-wallet-checkpoint-native/v1','status':'FAIL',
         'wallet_fixture':'PUBLIC_FIXTURE_FUNDED' if a.fund_disposable_wallet else 'EMPTY',
+        'owned_session_api':a.owned_session,
         'qualification_scope':('EXPLICIT_PENDING_RECOVERY_COMPLETION' if a.complete_pending_recovery else
             'INCOMPLETE_RECOVERY_REFERENCE_SAFE_REFUSAL' if a.interrupt_recovery_reference else
             'EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY' if a.recover_after_interruption else
@@ -156,7 +158,7 @@ def main():
             'src/wam_regtest/core_supervisor.py','src/wam_regtest/supervisor_journal.py',
             'src/wam_regtest/supervisor_identity.py','src/wam_regtest/supervisor_store.py',
             'src/wam_regtest/supervisor_protocol.py','src/wam_regtest/managed_wallet_checkpoint.py',
-            'src/wam_regtest/wallet_recovery.py','src/wam_regtest/history_pages.py',
+            'src/wam_regtest/wallet_recovery.py','src/wam_regtest/managed_wallet_session.py','src/wam_regtest/history_pages.py',
             'src/wam_regtest/probe_source.py',
             'src/wam_regtest/vault.py','src/wam_regtest/wallet_session.py',
             'src/wam_regtest/rpc_scope.py','src/wam_regtest/json_rpc.py',
@@ -191,10 +193,16 @@ def main():
         if result.returncode:raise ValueError('Q05_DISPOSABLE_KEYCHAIN_DENIED')
         stage='CREATE'
         password=b'public-disposable-q05-native-only'
-        initial=checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain,create=True)
+        if a.owned_session:
+            session=WalletSession.open_owned(owner,a.wsp_source,password,authorized=True,
+                keychain=keychain,create=True)
+            session.snapshot();session.lock();session=None
+            initial=checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
+        else:
+            initial=checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain,create=True)
         if (initial['height']!=0 or initial['confirmed_atoms']!=0 or initial['history_count']!=0
                 or initial['signer_allowed'] or initial['broadcast_allowed']
-                or initial['checkpoint'][0]!=1):raise ValueError('Q05_EMPTY_CHECKPOINT_DENIED')
+                or initial['checkpoint'][0]!=(2 if a.owned_session else 1)):raise ValueError('Q05_EMPTY_CHECKPOINT_DENIED')
         first=a.root/'chain'/'wallet-vault'/'snapshot-000000001.enc'
         first_digest=sha256(first.read_bytes()).hexdigest()
         record['wallet_id']=initial['wallet_id']
@@ -249,10 +257,13 @@ def main():
             from wam_sp.keystore import Keyring
             from wam_sp.psbt import PSBT
             from wam_sp.wallet import Wallet
-            vault=CheckpointVault(owner.directory/'wallet-vault',native_anchor,a.wsp_source)
-            ring,scanner=vault.restore(owner.directory/'wallet-runtime.sqlite',password)
-            session=WalletSession(a.core_dir,owner.directory,a.wsp_source,ring,scanner,vault,
-                password,None,core_cli=owner.cli,core_receipt=owner.receipt)
+            if a.owned_session:
+                session=WalletSession.open_owned(owner,a.wsp_source,password,authorized=True,keychain=keychain)
+            else:
+                vault=CheckpointVault(owner.directory/'wallet-vault',native_anchor,a.wsp_source)
+                ring,scanner=vault.restore(owner.directory/'wallet-runtime.sqlite',password)
+                session=WalletSession(a.core_dir,owner.directory,a.wsp_source,ring,scanner,vault,
+                    password,None,core_cli=owner.cli,core_receipt=owner.receipt)
             recipient=Keyring()
             try:code=recipient.accounts()[0].payment_code()
             finally:recipient.close()
@@ -358,6 +369,22 @@ def main():
                         'original_orphan_runtime_reference_preserved':True,
                         'reservation_sha256':initial['reservation_sha256'],
                         'native_anchored_generation':initial['checkpoint']})
+        if a.owned_session and (not a.interrupt_recovery_reference or a.complete_pending_recovery):
+            stage='RECOVERY_AWARE_OWNED_SESSION'
+            from wam_regtest.managed_wallet_checkpoint import _snapshot
+            session=WalletSession.open_owned(owner,a.wsp_source,password,authorized=True,keychain=keychain)
+            observed=_snapshot(session.ring,session.scanner,session._rpc(),session.vault)
+            if any(observed[k]!=initial[k] for k in ('wallet_id','payment_code','history_sha256',
+                    'reservation_sha256','reserved_atoms')):
+                raise ValueError('Q05_OWNED_SESSION_RECOVERY_CONTINUITY_DENIED')
+            selected=session.vault.directory.name
+            session.lock();session=None
+            if owner.process.poll() is not None or not owner.status()['core_process_owned']:
+                raise ValueError('Q05_WALLET_CLOSE_STOPPED_OR_LOST_CORE')
+            initial=checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
+            record['observations'].append({'owned_session_selected_container':selected,
+                'native_lease_and_original_owner_checked':True,'uncertainty_preserved':True,
+                'wallet_close_kept_original_core_running':True,'owned_plaintext_runtime_removed':True})
         if (not a.interrupt_recovery_reference or a.complete_pending_recovery) and (not a.interrupt_publication or a.recover_after_interruption):
             stage='CORE_OWNER_REOPEN'
             owner.shutdown();owner.close()

@@ -95,6 +95,12 @@ class WalletCoreCli(LiveCoreReadOnlyCli):
 
 
 class WalletSession:
+    @classmethod
+    def open_owned(cls,owner,source,password,*,authorized=False,keychain=None,create=False,mining_address=None):
+        from .managed_wallet_session import open_owned
+        return open_owned(cls,owner,source,password,authorized=authorized,keychain=keychain,
+                          create=create,mining_address=mining_address)
+
     def __init__(self, core_dir, datadir, source, ring, scanner, vault, password, mining_address,
                  *, core_cli=None, core_receipt=None):
         self.core_dir, self.datadir, self.source = core_dir, datadir, source
@@ -222,6 +228,9 @@ class WalletSession:
     def _rpc(self):
         if self.locked or self.faulted:
             raise WalletSessionError("WALLET_LOCKED_OR_FAULTED")
+        if getattr(self,'_managed_owner',None) is not None:
+            from .managed_wallet_session import check_session
+            check_session(self)
         if self.vault.anchor.read()!=self.vault._expected:
             self.faulted=True
             raise WalletSessionError("WALLET_STALE_SESSION_DENIED")
@@ -262,6 +271,9 @@ class WalletSession:
 
     def _save(self):
         try:
+            if getattr(self,'_managed_owner',None) is not None:
+                from .managed_wallet_session import check_session
+                check_session(self)
             self.vault.save(self.ring, self.scanner, self._password)
         except Exception:
             self.faulted = True
@@ -427,6 +439,9 @@ class WalletSession:
 
     def lock(self):
         with self._lock:
+            if getattr(self,'_managed_owner',None) is not None:
+                from .managed_wallet_session import close_session
+                return close_session(self)
             self._close_rpc()
             if self._disclosure_gate is not None:
                 self._disclosure_gate.close()
@@ -443,6 +458,8 @@ class WalletSession:
 
     def unlock(self, password, reauthenticate_core=False):
         with self._lock:
+            if getattr(self,'_managed_owner',None) is not None:
+                raise WalletSessionError('WALLET_MANAGED_REOPEN_REQUIRED')
             if not self.locked:
                 raise WalletSessionError("WALLET_ALREADY_UNLOCKED")
             if self._core_reauthentication_required and reauthenticate_core is not True:
@@ -462,6 +479,8 @@ class WalletSession:
                 raise WalletSessionError("WALLET_RECOVERY_LIVE_SYNC_DENIED") from None
 
     def recover_backup(self, directory, name, password, reauthenticate_core=False):
+        if getattr(self,'_managed_owner',None) is not None:
+            raise WalletSessionError('WALLET_MANAGED_EXPLICIT_RECOVERY_REQUIRED')
         storage=custody.storage()
         read,publish=storage.read,storage.publish
         with self._lock:
