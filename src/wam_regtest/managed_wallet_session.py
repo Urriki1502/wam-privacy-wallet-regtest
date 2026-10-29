@@ -120,6 +120,8 @@ def open_owned(cls,owner,source,password,*,authorized=False,keychain=None,create
                 create_managed_runtime(runtime)
             scanner=Scanner(runtime,ring.accounts())
         else:
+            from .managed_wallet_checkpoint import require_checkpoint_namespace
+            require_checkpoint_namespace(folder,anchor.read())
             ring,scanner=vault.restore(runtime,password,private_windows_runtime=sys.platform=='win32')
         _snapshot(ring,scanner,rpc,vault)
         guard=RuntimeGuard(runtime)

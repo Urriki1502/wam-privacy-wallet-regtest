@@ -12,6 +12,7 @@ import re
 import secrets
 import sys
 import subprocess
+import stat
 
 from . import custody
 from .history_pages import HISTORY_OFFSET_MAX,HISTORY_PAGE_LIMIT,complete_history
@@ -98,6 +99,31 @@ def _runtime(owner,name='wallet-runtime.sqlite'):
             for suffix in ('','-journal','-wal','-shm')):
         raise ManagedWalletError('MANAGED_WALLET_EXISTING_RUNTIME_DENIED')
     return path
+
+
+def require_checkpoint_namespace(directory,record):
+    """Deny orphan/stage/unknown vault residue BEFORE restoring plaintext.
+
+    Only the current native anchor selects authority. Explicit recovery may
+    read its authenticated source in a separate container; ordinary open must
+    never restore then discover a conflicting next-generation publication.
+    """
+    if (type(record) not in (tuple,list) or len(record)!=2 or type(record[0]) is not int
+            or not 1<=record[0]<10**9 or type(record[1]) is not str
+            or not re.fullmatch('[0-9a-f]{64}',record[1])):
+        raise ManagedWalletError('MANAGED_WALLET_ANCHOR_UNVERIFIED')
+    current=False
+    for path in directory.iterdir():
+        info=path.lstat()
+        if (not stat.S_ISREG(info.st_mode) or info.st_nlink!=1
+                or getattr(info,'st_file_attributes',0)&0x400):
+            raise ManagedWalletError('MANAGED_WALLET_CHECKPOINT_AMBIGUOUS')
+        if path.name=='.vault.lock':continue
+        match=re.fullmatch(r'snapshot-([0-9]{9})\.enc',path.name)
+        if match is None or not 1<=int(match[1])<=record[0]:
+            raise ManagedWalletError('MANAGED_WALLET_CHECKPOINT_AMBIGUOUS')
+        current=current or int(match[1])==record[0]
+    if not current:raise ManagedWalletError('MANAGED_WALLET_CHECKPOINT_AMBIGUOUS')
 
 
 def _require_matching_tip(scanner,rpc):
@@ -238,6 +264,7 @@ def checkpoint(owner,source,password,*,authorized=False,keychain=None,create=Fal
                     create_managed_runtime(runtime)
                 scanner=Scanner(runtime,ring.accounts())
             else:
+                require_checkpoint_namespace(folder,anchor.read())
                 ring,scanner=vault.restore(runtime,password,private_windows_runtime=sys.platform=='win32')
             before=vault._expected
             result=_snapshot(ring,scanner,rpc,vault)
