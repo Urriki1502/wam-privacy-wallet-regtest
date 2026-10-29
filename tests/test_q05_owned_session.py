@@ -107,6 +107,16 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertNotIn('CoreSupervisor(',reattach)
         self.assertNotIn('.kill(',reattach)
         self.assertNotIn('owner.start',reattach)
+        funded=harness.split('def _funded_same_owner_crash_recovery',1)[1].split('\ndef ',1)[0]
+        self.assertIn('owner.recover_dead(authorized=True)',funded)
+        self.assertIn('process.kill()',funded)
+        self.assertIn('create=False',funded)
+        self.assertIn('seen.count(sent)!=1',funded)
+        self.assertIn('pre_height>owner._height_snapshot',funded)
+        self.assertNotIn('os.kill',funded)
+        self.assertNotIn('.unlink(',funded)
+        self.assertNotIn('rmtree',funded)
+        self.assertNotIn('broadcast(',funded)
 
     def test_host_adapter_matches_this_os_and_refuses_foreign_linux_manifest_pin(self):
         from wam_regtest.q05_owned_lifecycle import (

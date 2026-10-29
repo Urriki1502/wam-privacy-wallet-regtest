@@ -1,46 +1,41 @@
-# Engineer 2 checkpoint — same-owner wallet reattach
+# Engineer 2 checkpoint — funded same-owner crash recovery
 
 Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 stays independent
 (`feature/issue45-q05-managed-core-stage-a-20261027` at `b3046f82`).
 Canonical ledger: 37 Q05 cases PENDING, `accepted=false`. No merge.
 
-## Proof source
+## This change
 
-`a7c3f81ce5891cd123e7aab0c121cf70e9d24f4a`. This note is docs-only and is not
-that proof SHA. After the live lease refusal, the harness opens the same
-wallet on the original Popen before shutdown. History fingerprint, balance
-and pid must match. No second daemon. Receipt schema `q05-owned-session-native/v4`.
-Local `test_q05*.py`: 116 PASS. This host has no genuine Core binary.
+Parent `a7c3f81ce5891cd123e7aab0c121cf70e9d24f4a` reattaches the wallet on the
+same live Core after the lease refusal. This commit, on that parent, kills the
+original Popen only on the funded path after a confirmed spend and calls
+`recover_dead(authorized=True)` on that owner. The restored snapshot must keep
+one copy of the broadcast txid, history, receive count, confirmed atoms and
+height. The reference, `wam.conf` and datadir stay. The spend is not broadcast
+again. Lease refusal and same-owner reattach then run on the recovered Core.
+Empty crash recovery is unchanged. Receipt schema is `q05-owned-session-native/v5`.
 
-Queued, not yet proof:
+Local `test_q05*.py`: 116 PASS. `test_q02_contracts.py`: 19 PASS, 1 skipped.
+This host has no genuine Core binary. This commit is not a native PASS.
 
-- macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964924
-- Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964955
-- Windows smoke https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964943
-- Windows funded https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964946
+## Parents already observed
 
-## Already recorded, other SHAs
+`9e1766e` empty `same_owner_crash_recovery` succeeded in the owned-session jobs
+of macOS `40808378718`, Linux `40808378513` and Windows smoke `40808378464`.
+Windows funded `40808378632` succeeded without that scenario.
 
-`5b5e4c1` macOS `40807061511` PASS, including the Q02 E2E that failed on
-`f6672a7`. Linux `40807061493` PASS, including developer-core.
-https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40807061493
+`792701e` Windows smoke `40808542596` and Windows funded `40808542569` succeeded
+with `concurrent_owner_refused`. macOS `40808542544` was queued and Linux
+`40808542678` was in progress. Those runs do not include this funded crash.
 
-`9e1766e` same-owner crash recovery. Empty owned-session jobs SUCCESS:
-macOS `40808378718` (E2E job also SUCCESS; bundled app and Q04 were still
-running), Linux `40808378513` (owned-session, native, Qt, headless, Q04
-SUCCESS; developer-core and frozen still running), Windows smoke
-`40808378464` full SUCCESS.
-https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808378464
+`a7c3f81` same-owner reattach is the parent of this commit. Do not treat a
+`792701e` receipt as proof of reattach or of funded crash recovery.
 
-`792701e` concurrent-owner lease refusal. Windows funded `40808542569` full
-SUCCESS, including `concurrent_owner_refused`. macOS `40808542544` and Linux
-`40808542678` and Windows smoke `40808542596` were still running. That SHA
-does not include reattach.
-https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808542569
+`5b5e4c1` Linux `40807061493` and macOS `40807061511` completed SUCCESS.
 
 ## Next
 
-Read `same_owner_reattach` on the four `a7c3f81` owned-session jobs, including
-funded Windows. A history or anchor mismatch must be fixed without a second
-daemon, file deletion, or PID adoption. Do not treat `792701e` or `9e1766e`
-as this SHA. Q05 remains unaccepted.
+Read this commit's funded receipts for `funded_same_owner_crash_recovery` on
+macOS, Linux and Windows, together with `same_owner_reattach`. A datadir lock
+or `MANAGED_RECOVERY_HEIGHT_REGRESSED` must be fixed without deleting chain
+data, adopting a PID, or replaying the spend. Q05 remains unaccepted.

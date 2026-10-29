@@ -321,11 +321,14 @@ jobs:
           assert proof['status']=='PASS'
           assert proof['synthetic_rpc'] is False
           assert proof['fixture_funding'] is True
+          assert proof['scenarios']['sign_broadcast']=='PASS'
           assert proof['automatic_wallet_transaction_replay'] is False
           assert any(row.get('real_fixture_payment_txid') for row in proof['observations'])
           assert any(row.get('genuine_owned_broadcast') for row in proof['observations'])
           assert proof['scenarios']['concurrent_owner_refused']=='PASS'
           assert proof['scenarios']['same_owner_reattach']=='PASS'
+          assert proof['scenarios']['funded_same_owner_crash_recovery']=='PASS'
+          assert any(row.get('funded_same_owner_crash_recovery') for row in proof['observations'])
           assert any(row.get('restored_same_payment_code') for row in proof['observations'])
           print('Q05_OWNED_SESSION_FUNDED_REAL_CORE_PASS')
           PY

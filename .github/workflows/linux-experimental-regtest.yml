@@ -403,6 +403,7 @@ jobs:
           assert proof['scenarios']['sign_broadcast']=='PASS'
           assert proof['scenarios']['concurrent_owner_refused']=='PASS'
           assert proof['scenarios']['same_owner_reattach']=='PASS'
+          assert proof['scenarios']['funded_same_owner_crash_recovery']=='PASS'
           assert proof['automatic_wallet_transaction_replay'] is False
           print('Q05_LINUX_OWNED_SESSION_FUNDED_PASS')
           PY

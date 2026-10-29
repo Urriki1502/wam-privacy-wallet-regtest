@@ -26,7 +26,7 @@ from wam_regtest.wsp_live import PINNED_WSP_COMMIT,_pinned_source
 
 APPROVED_LINUX_MANIFEST='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806'
 PASSWORD=b'public-disposable-q05-native-only'
-SCHEMA='q05-owned-session-native/v4'
+SCHEMA='q05-owned-session-native/v5'
 
 
 class OwnedLifecycleError(ValueError):
@@ -286,11 +286,12 @@ def _base_record(head,adapter,intake,funded):
             'owned_session_create':'NOT EXECUTED',
             'encrypted_checkpoint':'NOT EXECUTED',
             'wallet_restore':'NOT EXECUTED',
+            'concurrent_owner_refused':'NOT EXECUTED',
             'real_bip352_receiving':'NOT EXECUTED',
             'sign_broadcast':'NOT EXECUTED',
             'crash_fail_closed':'NOT EXECUTED',
             'same_owner_crash_recovery':'NOT EXECUTED',
-            'concurrent_owner_refused':'NOT EXECUTED',
+            'funded_same_owner_crash_recovery':'NOT EXECUTED',
             'same_owner_reattach':'NOT EXECUTED',
             'dirty_runtime_fail_closed':'NOT EXECUTED',
             'wrong_core_refused':'NOT EXECUTED',
@@ -399,6 +400,10 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
             record['observations'].append({'genuine_owned_broadcast':True,
                 'broadcast_txid':sent,'history_count':paid.history_count,
                 'receive_count':paid.receive_count,'confirmed_atoms':paid.confirmed_atoms})
+            stage='FUNDED_SAME_OWNER_CRASH_RECOVERY'
+            owner,session=_funded_same_owner_crash_recovery(
+                owner,session,source,code=code,digest=digest,sent=sent,paid=paid,
+                keychain=keychain,record=record)
         if gui:
             stage='NATIVE_GUI'
             _gui_lifecycle(session,record,adapter)
@@ -603,6 +608,84 @@ def _same_owner_crash_recovery(adapter,core,source,root,record):
         stop_owned(owner,record)
 
 
+def _funded_same_owner_crash_recovery(owner,session,source,*,code,digest,sent,paid,
+                                      keychain,record):
+    """Restart this funded original Popen and reopen the same wallet.
+
+    The datadir, wallet reference and config stay in place. The confirmed
+    spend is not broadcast again. A replacement supervisor is not created.
+    """
+    pre_count=paid.history_count
+    pre_receive=paid.receive_count
+    pre_atoms=paid.confirmed_atoms
+    pre_height=paid.height
+    if (type(sent) is not str or len(sent)!=64 or type(pre_count) is not int
+            or pre_count<2 or type(pre_receive) is not int or pre_receive<1
+            or type(pre_atoms) is not int or type(pre_height) is not int):
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_BASELINE_DENIED')
+    datadir=owner.directory.resolve()
+    original_pid=assert_live_original(owner)
+    reference=owner.root/'supervisor.wallet'
+    reference_bytes=reference.read_bytes()
+    config=owner.directory/'wam.conf'
+    config_bytes=config.read_bytes()
+    vault=owner.directory/'wallet-vault'
+    if not vault.is_dir() or vault.is_symlink():
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_VAULT_DENIED')
+    # Recovery must not accept a chain shorter than the confirmed spend.
+    if pre_height>owner._height_snapshot:
+        owner._height_snapshot=pre_height
+    session.lock()
+    process=owner.process
+    if type(process) is not subprocess.Popen or process.pid!=original_pid:
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_ORIGINAL_POPEN_DENIED')
+    process.kill()
+    process.wait(timeout=30)
+    if process.poll() is None:
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_ORIGINAL_STILL_LIVE')
+    if reference.read_bytes()!=reference_bytes or config.read_bytes()!=config_bytes:
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_EVIDENCE_MUTATED')
+    owner.recover_dead(authorized=True)
+    recovered_pid=assert_live_original(owner)
+    if (recovered_pid==original_pid or owner.directory.resolve()!=datadir
+            or reference.read_bytes()!=reference_bytes
+            or config.read_bytes()!=config_bytes or not vault.is_dir()):
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_IDENTITY_DENIED')
+    restored_session=WalletSession.open_owned(
+        owner,source,PASSWORD,authorized=True,create=False,keychain=keychain)
+    try:
+        restored=restored_session.snapshot()
+        seen=tuple(row.txid for row in restored.history)
+        if (restored.receive_code!=code or restored.core_sha256!=digest
+                or sent not in seen or seen.count(sent)!=1
+                or restored.history_count!=pre_count
+                or restored.receive_count!=pre_receive
+                or restored.confirmed_atoms!=pre_atoms
+                or restored.height<pre_height
+                or restored.mainnet_allowed or restored.chain!='regtest'):
+            raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_CONTINUITY_DENIED')
+    except Exception:
+        try:
+            restored_session.lock()
+        except (OSError,ValueError,RuntimeError):
+            record['wallet_lock_blocked']=True
+        raise
+    record['scenarios']['funded_same_owner_crash_recovery']='PASS'
+    record['observations'].append({
+        'funded_same_owner_crash_recovery':True,
+        'original_core_pid':original_pid,
+        'recovered_core_pid':recovered_pid,
+        'broadcast_txid':sent,
+        'history_count':pre_count,
+        'confirmed_atoms':pre_atoms,
+        'datadir_unchanged':True,
+        'wallet_reference_preserved':True,
+        'automatic_pid_adoption':False,
+        'automatic_wallet_transaction_replay':False,
+    })
+    return owner,restored_session
+
+
 def _fail_closed_crash(adapter,core,source,root,record):
     owner=None
     try:
@@ -696,7 +779,8 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
         required=['authentic_core_startup','owned_session_create','encrypted_checkpoint',
                   'wallet_restore','concurrent_owner_refused','same_owner_reattach']
         if funded:
-            required.extend(['real_bip352_receiving','sign_broadcast'])
+            required.extend(['real_bip352_receiving','sign_broadcast',
+                             'funded_same_owner_crash_recovery'])
         if fail_closed:
             required.extend(['crash_fail_closed','same_owner_crash_recovery',
                              'dirty_runtime_fail_closed',
