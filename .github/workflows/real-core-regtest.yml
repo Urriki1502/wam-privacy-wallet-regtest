@@ -309,6 +309,7 @@ jobs:
       - name: Q05 funded owned-session BIP352 + sign/broadcast on real signed Core
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          QT_QPA_PLATFORM: offscreen
         run: |
           set -euo pipefail
           python scripts/probe_q05_owned_session.py \
@@ -318,6 +319,7 @@ jobs:
             --receipt q05-owned-session-funded.json \
             --confirm-disposable-regtest \
             --fund-disposable-wallet \
+            --confirm-gui-lifecycle \
             --skip-fail-closed
           python - <<'PY'
           import json
@@ -334,8 +336,10 @@ jobs:
           assert proof['scenarios']['same_owner_reattach']=='PASS'
           assert proof['scenarios']['funded_same_owner_crash_recovery']=='PASS'
           assert proof['scenarios']['graceful_shutdown']=='PASS'
+          assert proof['scenarios']['native_gui']=='PASS'
           assert any(row.get('funded_same_owner_crash_recovery') for row in proof['observations'])
           assert any(row.get('graceful_shutdown') and row.get('original_popen_reaped') is True and row.get('second_daemon') is False for row in proof['observations'])
+          assert any(row.get('native_gui_history_matches') is True and row.get('gui_history_count',0)>=2 and row.get('automatic_wallet_transaction_replay') is False for row in proof['observations'])
           assert any(row.get('restored_same_payment_code') and row.get('history_identity_unchanged') is True for row in proof['observations'])
           print('Q05_OWNED_SESSION_FUNDED_REAL_CORE_PASS')
           PY

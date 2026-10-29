@@ -102,6 +102,7 @@ jobs:
     env:
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
+      QT_QPA_PLATFORM: offscreen
     steps:
       - uses: actions/checkout@v4
         with:
@@ -126,7 +127,7 @@ jobs:
       - name: Install wallet and pinned WSP
         shell: pwsh
         run: |
-          python -m pip install --disable-pip-version-check -e . -e ./wsp-upstream
+          python -m pip install --disable-pip-version-check -e ".[gui]" -e ./wsp-upstream
           python -m pip check
       - name: Stage official signed Windows Core
         shell: pwsh
@@ -138,9 +139,9 @@ jobs:
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          python scripts/probe_q05_owned_session.py --core-dir (Resolve-Path core) --wsp-source (Resolve-Path wsp-upstream) --root "$env:RUNNER_TEMP\q05-owned-funded" --receipt q05-owned-session-funded.json --confirm-disposable-regtest --fund-disposable-wallet --skip-fail-closed
+          python scripts/probe_q05_owned_session.py --core-dir (Resolve-Path core) --wsp-source (Resolve-Path wsp-upstream) --root "$env:RUNNER_TEMP\q05-owned-funded" --receipt q05-owned-session-funded.json --confirm-disposable-regtest --fund-disposable-wallet --confirm-gui-lifecycle --skip-fail-closed
           if ($LASTEXITCODE -ne 0) { throw "WIN_Q05_FUNDED_OWNED_DENIED" }
-          python -c "import json; from pathlib import Path; p=json.loads(Path('q05-owned-session-funded.json').read_text()); assert p['status']=='PASS' and p['fixture_funding'] is True and p['mainnet_allowed'] is False and p['scenarios']['sign_broadcast']=='PASS' and p['scenarios']['concurrent_owner_refused']=='PASS' and p['scenarios']['same_owner_reattach']=='PASS' and p['scenarios']['graceful_shutdown']=='PASS' and p['scenarios']['funded_same_owner_crash_recovery']=='PASS' and any(row.get('history_identity_unchanged') for row in p['observations']) and p['automatic_wallet_transaction_replay'] is False; print('Q05_WINDOWS_OWNED_SESSION_FUNDED_PASS')"
+          python -c "import json; from pathlib import Path; p=json.loads(Path('q05-owned-session-funded.json').read_text()); assert p['status']=='PASS' and p['fixture_funding'] is True and p['mainnet_allowed'] is False and p['scenarios']['sign_broadcast']=='PASS' and p['scenarios']['concurrent_owner_refused']=='PASS' and p['scenarios']['same_owner_reattach']=='PASS' and p['scenarios']['graceful_shutdown']=='PASS' and p['scenarios']['funded_same_owner_crash_recovery']=='PASS' and p['scenarios']['native_gui']=='PASS' and any(row.get('history_identity_unchanged') for row in p['observations']) and any(row.get('native_gui_history_matches') is True and row.get('gui_history_count',0)>=2 and row.get('automatic_wallet_transaction_replay') is False for row in p['observations']) and p['automatic_wallet_transaction_replay'] is False; print('Q05_WINDOWS_OWNED_SESSION_FUNDED_PASS')"
       - name: Upload Q05 Windows funded owned-session receipts
         if: always()
         uses: actions/upload-artifact@v4

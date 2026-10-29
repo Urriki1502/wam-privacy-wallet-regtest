@@ -92,6 +92,10 @@ reopen. `frozen_build` remains NOT EXECUTED. macOS has not finished.
 
 ## Next
 
-Read the macOS `b052897` owned-session receipt for `graceful_shutdown` and
-`history_identity_unchanged`. Do not treat Windows or Linux as that proof.
-`frozen_build` is still NOT EXECUTED. Q05 remains unaccepted.
+macOS `b052897` run 40811222044 is still the missing graceful-stop receipt.
+Windows and Linux above do not stand in for it. This commit keeps the quoted
+flush and the reaped-handle reopen, then renders the current session snapshot
+on the native history page. Funded jobs pass `--confirm-gui-lifecycle` and
+require `native_gui_history_matches` with `gui_history_count >= 2`. No
+broadcast, mine, datadir deletion or second supervisor. `frozen_build` stays
+`NOT EXECUTED`. Q05 remains unaccepted.

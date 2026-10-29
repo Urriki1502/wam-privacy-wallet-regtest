@@ -313,14 +313,39 @@ def _gui_lifecycle(session,record,adapter):
         record['gui_mode']='unavailable'
         record['scenarios']['native_gui']='NOT EXECUTED'
         return
+    # One read of the caller's current session. Display that page only.
+    # Do not broadcast, mine, close, or take another wallet lock.
+    snap=session.snapshot()
     app=qt_application()
     window=OperationalWalletWindow(session)
+    window._sync_timer.stop()
+    window._theme_timer.stop()
     window.show()
+    window.apply_snapshot(snap)
     app.processEvents()
+    page=window.history_page
+    shown=tuple(row.txid for row in page.rows)
+    expected=tuple(row.txid for row in snap.history)
+    if (session.locked or session.faulted or shown!=expected
+            or page._total!=snap.history_count or page._offset!=snap.history_offset
+            or (snap.history_complete and (page.older.isEnabled() or page.newer.isEnabled()))):
+        raise OwnedLifecycleError('Q05_GUI_HISTORY_DENIED')
+    if expected:
+        window.navigation.setCurrentRow(2)
+        page.select_txid(expected[0])
+        if page.detail_id.text()!=expected[0]:
+            raise OwnedLifecycleError('Q05_GUI_HISTORY_DENIED')
     # closeEvent locks the owned session; leave the window open for later lock().
     record['gui_status']='PASS'
     record['gui_mode']=os.environ.get('QT_QPA_PLATFORM') or adapter.gui_mode
     record['scenarios']['native_gui']='PASS'
+    record['observations'].append({
+        'native_gui_history_matches':True,
+        'gui_history_count':snap.history_count,
+        'gui_history_rows':len(shown),
+        'gui_history_complete':bool(snap.history_complete),
+        'automatic_wallet_transaction_replay':False,
+    })
 
 
 def _profile_name():
