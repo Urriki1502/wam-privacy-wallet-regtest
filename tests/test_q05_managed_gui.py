@@ -134,3 +134,10 @@ class ManagedGuiContracts(unittest.TestCase):
                 dialog.hide();self.assertIsNone(_owned_dialog(window,QInputDialog))
         finally:
             dialog.hide();foreign.hide();dialog.deleteLater();foreign.deleteLater()
+
+    def test_closed_owner_window_accepts_final_qt_cleanup_without_quit_recursion(self):
+        executor,window,_=self.fixture();executor.request('quit');self.assertTrue(executor.join())
+        window._executor_poll.stop()
+        with patch.object(type(self.app),'quit') as quit_app:
+            self.assertTrue(window.close());self.assertFalse(window.isVisible())
+            quit_app.assert_not_called();self.assertFalse(window._close_requested)

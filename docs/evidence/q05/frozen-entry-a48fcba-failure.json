@@ -1,0 +1,43 @@
+{
+  "schema": "q05-executor-gui-native/v1",
+  "status": "FAIL",
+  "source_provenance": {
+    "candidate_source_sha": "a48fcba445f314c93b71b61ac3716197f73a858d",
+    "checkout_sha": "a48fcba445f314c93b71b61ac3716197f73a858d",
+    "build_source_inventory_sha256": "93c63318da403ec7ace8fc976f728ea8bbd5316c69690185fc7c762463785dda",
+    "bundled_source_stamp_sha256": "3a3818c06155528f0fdd663a8d29e4f1a2390078f8bf828deff82311e1452fdc",
+    "frozen_executable_sha256": "33a4152b31de5450fd05d72b9c096887058420a2dcf1412f33efe09aabb4822a",
+    "outer_artifact_manifest_required": true,
+    "same_uid_host_tamper_proof": false
+  },
+  "source_sha": "a48fcba445f314c93b71b61ac3716197f73a858d",
+  "checkout_sha": "a48fcba445f314c93b71b61ac3716197f73a858d",
+  "platform": "macos-arm64",
+  "core_version": "v0.1.11",
+  "core_trust": "official-signed-v0.1.11",
+  "official_signed_release": true,
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "synthetic_rpc": false,
+  "frozen": true,
+  "physical_acceptance": false,
+  "mainnet_allowed": false,
+  "test_root_witness": false,
+  "profile_root": "/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/wam-q05-final-gui-ysaq0871/wam-fusion-core-3066b2538eab4981",
+  "observations": [],
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "qt_platform": "cocoa",
+  "window_device_pixel_ratio": 2.0,
+  "failure_stage": "opened",
+  "failure_code": "WALLET_OPERATION_DENIED_STATE_RETAINED",
+  "failure_timestamp_utc": "2026-10-29T11:23:59.771816+00:00",
+  "diagnostic_scope": "Local direct frozen entry only; CPython3.12.15 differs from declared Q01 Mac3.12.10. Not final qualification.",
+  "diagnosis": {
+    "profile_created_but_empty": true,
+    "no_core_process_observed_after_exit": true,
+    "path_alias_refused": "Direct native validate_directory(/var/...) => MACOS_PRIVATE_DIRECTORY_OPEN_DENIED; same inode canonical /private/var/... validates. Custody unchanged.",
+    "process_outcome": "SIGSEGV 11 during Qt cleanup after FAIL; final closed window must accept close rather than queue another quit."
+  }
+}

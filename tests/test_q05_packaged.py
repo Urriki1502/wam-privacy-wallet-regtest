@@ -44,12 +44,14 @@ class PackagedManagedContracts(unittest.TestCase):
     def stamp(self):
         return dict(schema='wam-build-source/v1',source_head_sha='a'*40,checkout_sha='b'*40,
             native_source_inventory_sha256='c'*64,tracked_source_matches_head=True,
-            source_unchanged_across_build=True)
+            source_unchanged_across_build=True,literal_python_files_verified=10,
+            raw_python_tree_sha256='d'*64)
 
     def test_frozen_stamp_requires_exact_fields_and_native_runtime(self):
         self.assertEqual(validate(self.stamp()),self.stamp())
         for field in ('source_head_sha','checkout_sha','native_source_inventory_sha256',
-                      'tracked_source_matches_head','source_unchanged_across_build'):
+                      'tracked_source_matches_head','source_unchanged_across_build',
+                      'literal_python_files_verified','raw_python_tree_sha256'):
             value=self.stamp();value[field]=False
             with self.assertRaises(ValueError):validate(value)
         with self.assertRaisesRegex(ValueError,'FROZEN_RUNTIME_REQUIRED'):read()

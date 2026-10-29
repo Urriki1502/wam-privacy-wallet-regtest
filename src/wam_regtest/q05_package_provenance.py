@@ -17,8 +17,14 @@ NAME='Q05_BUILD_SOURCE.json'
 
 def stage(snapshot,destination):
     from .build_provenance import public_receipt
+    from .probe_source import verify_source
+    proof=verify_source(Path.cwd())
+    if proof['checkout_sha']!=snapshot['checkout_sha']:
+        raise ValueError('Q05_FROZEN_SOURCE_STAMP_DENIED')
     value=public_receipt(snapshot,source_head=os.environ.get('WAM_SOURCE_HEAD'),
         dispatch=os.environ.get('GITHUB_EVENT_NAME')=='workflow_dispatch')
+    value['literal_python_files_verified']=proof['literal_python_files_verified']
+    value['raw_python_tree_sha256']=proof['raw_python_tree_sha256']
     with destination.open('x') as out:json.dump(value,out,sort_keys=True);out.write('\n')
     return value
 
@@ -30,7 +36,11 @@ def validate(value):
             or type(value.get('native_source_inventory_sha256')) is not str
             or not re.fullmatch('[0-9a-f]{64}',value['native_source_inventory_sha256'])
             or value.get('tracked_source_matches_head') is not True
-            or value.get('source_unchanged_across_build') is not True):
+            or value.get('source_unchanged_across_build') is not True
+            or type(value.get('literal_python_files_verified')) is not int
+            or not 1<=value['literal_python_files_verified']<=4096
+            or type(value.get('raw_python_tree_sha256')) is not str
+            or not re.fullmatch('[0-9a-f]{64}',value['raw_python_tree_sha256'])):
         raise ValueError('Q05_FROZEN_SOURCE_STAMP_DENIED')
     return value
 

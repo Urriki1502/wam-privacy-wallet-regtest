@@ -34,7 +34,9 @@ def main():
     if not binary.is_file() or binary.is_symlink() or receipt.exists() or receipt.is_symlink():
         raise ValueError('Q05_FINAL_FROZEN_SCOPE_DENIED')
     source=os.environ.get('WAM_SOURCE_HEAD') or subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
-    parent=Path(tempfile.mkdtemp(prefix='wam-q05-final-gui-')).absolute()
+    # Canonicalize only our freshly created test parent BEFORE wallet creation.
+    # macOS tempfile's /var alias must not be passed to no-follow custody.
+    parent=Path(tempfile.mkdtemp(prefix='wam-q05-final-gui-')).resolve(strict=True)
     root=parent/('wam-fusion-core-'+secrets.token_hex(8))
     args=[str(binary),'--ci-q05-managed-wallet','--root',str(root),'--receipt',str(receipt),
         '--confirm-disposable-regtest']

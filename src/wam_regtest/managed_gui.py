@@ -117,6 +117,8 @@ class ManagedWalletWindow(OperationalWalletWindow):
         elif self._close_requested:self._control('lock')
 
     def closeEvent(self,event):
+        if self.session.executor.closed:
+            event.accept();return
         event.ignore()
         self._close_requested=True
         self.status.setText('Locking wallet safely · managed Core stays running')

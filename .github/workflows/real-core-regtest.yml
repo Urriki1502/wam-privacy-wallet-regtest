@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 2
           persist-credentials: false
       - name: Checkout immutable WSP-1 upstream source
         uses: actions/checkout@v4
@@ -234,6 +235,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 2
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
@@ -268,6 +270,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 2
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
@@ -303,6 +306,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 2
           persist-credentials: false
       - name: Immutable upstream WSP-1 source
         uses: actions/checkout@v4
