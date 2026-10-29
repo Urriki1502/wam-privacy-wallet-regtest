@@ -59,9 +59,68 @@ def main():
         subprocess.run(args,env=env,cwd=parent,check=True,timeout=420)
         require_receipt(json.loads(receipt.read_text()),binary,source)
         print('Q05_FINAL_FROZEN_MANAGED_GUI_LIFECYCLE_PASS')
+        base=json.loads(receipt.read_text())
+        # Run the actual bundled code for custody/fault cases too. Each case
+        # gets a NEW profile; all failed profiles/receipts stay on disk.
+        completion=['--owned-session','--fund-disposable-wallet',
+            '--interrupt-publication','--recover-after-interruption',
+            '--interrupt-recovery-reference','--complete-pending-recovery']
+        cases=[('security','security',[]),
+            ('signed-completion','checkpoint',[*completion,'--reservation','signed']),
+            ('uncertain-completion','checkpoint',[*completion,'--reservation','uncertain'])]
+        cases += [('negative-'+mode,'checkpoint',['--negative',mode]) for mode in
+                  ('missing','corrupt','orphan','sidecar','divergent-reference','wrong-wsp')]
+        commands=[]
+        for name,scenario,options in cases:
+            target=parent/('wam-fusion-core-'+secrets.token_hex(8))
+            result=receipt.with_name(receipt.stem+'-'+name+'.json')
+            if result.exists() or result.is_symlink():raise ValueError('Q05_FINAL_FROZEN_SCOPE_DENIED')
+            command=[str(binary),'--ci-q05-managed-wallet','--scenario',scenario,
+                '--root',str(target),'--receipt',str(result),'--confirm-disposable-regtest',*options]
+            if witness is not None:
+                command+=['--linux-developer-manifest',
+                    'e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
+                    '--linux-root-witness',str(witness.root/'anchor.sock'),'--qualification-test-witness']
+            commands.append(command)
+            subprocess.run(command,env=env,cwd=parent,check=True,timeout=420)
+            item=json.loads(result.read_text())
+            require_supplement(item,base,binary,scenario,options)
+            print('Q05_FINAL_FROZEN_'+name.upper().replace('-','_')+'_PASS',flush=True)
+        with receipt.with_name(receipt.stem+'-commands.json').open('x') as out:
+            json.dump({'gui':args,'supplements':commands},out,indent=2);out.write('\n')
     finally:
         if witness is not None:witness.tearDownClass()
         # Intentionally retain the entire managed profile, no rmtree/temp context.
+
+
+def require_supplement(item,base,binary,scenario,options):
+    if (item.get('status')!='PASS' or item.get('owner_shutdown_verified') is not True
+            or item.get('frozen') is not True or item.get('synthetic_rpc') is not False
+            or item.get('mainnet_allowed') is not False
+            or any(item.get(k)!=base.get(k) for k in
+                   ('source_sha','checkout_sha','core_sha256','wsp_source_commit','platform','core_trust'))
+            or item.get('source_provenance',{}).get('frozen_executable_sha256')!=sha256(binary.read_bytes()).hexdigest()):
+        raise ValueError('Q05_FINAL_FROZEN_SUPPLEMENT_DENIED')
+    observations=item.get('observations',[])
+    if scenario=='security':
+        if (len(observations)!=3 or observations[0].get('cross_process_competing_owner_refused') is not True
+                or observations[1].get('credential_bytes_sent')!=0
+                or observations[2].get('explicit_original_backend_quit_verified') is not True):
+            raise ValueError('Q05_FINAL_FROZEN_SUPPLEMENT_DENIED')
+    elif '--negative' in options:
+        mode=options[options.index('--negative')+1]
+        if (item.get('qualification_scope')!='NEGATIVE_'+mode.upper()
+                or not any(o.get('negative_checkpoint')==mode and
+                    o.get('native_anchor_unchanged') is True and
+                    o.get('original_and_hostile_bytes_preserved') is True for o in observations)):
+            raise ValueError('Q05_FINAL_FROZEN_SUPPLEMENT_DENIED')
+    elif (item.get('qualification_scope')!='EXPLICIT_PENDING_RECOVERY_COMPLETION'
+            or item.get('recovery_completed') is not True
+            or item.get('automatic_wallet_transaction_replay') is not False
+            or item.get('wallet_broadcast_calls_total')!=(1 if 'uncertain' in options else 0)
+            or not any(o.get('explicit_pending_commit_completed') is True for o in observations)
+            or not any(o.get('reopened_same_wallet_live_resync') is True for o in observations)):
+        raise ValueError('Q05_FINAL_FROZEN_SUPPLEMENT_DENIED')
 
 
 if __name__=='__main__':main()
