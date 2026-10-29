@@ -437,9 +437,10 @@ jobs:
           assert r['status']=='PASS' and r['owner_shutdown_verified'] is True
           assert r['source_sha']==os.environ['WAM_SOURCE_HEAD']
           assert r['synthetic_rpc'] is False and r['frozen'] is False
-          assert r['mainnet_allowed'] is False and len(r['observations'])==6
+          assert r['mainnet_allowed'] is False and len(r['observations'])==7
           assert r['observations'][-1]['same_wallet_tip_history_reservations'] is True
-          assert r['observations'][-1]['crash_scope']=='after-clean-Core-checkpoint'
+          assert r['observations'][-1]['crash_scope']=='after-owned-Core-flush-without-clean-shutdown'
+          assert r['observations'][-2]['owned_Core_flush_before_cold_crash'] is True
       - name: Preserve native evidence including FAIL receipts
         if: always()
         uses: actions/upload-artifact@v4

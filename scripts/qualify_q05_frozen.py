@@ -23,7 +23,9 @@ def require_receipt(record,executable,source):
             or record.get('wsp_source_commit')!='ac55f13423620252bdbf848c7e8a280c3b84721e'
             or record.get('source_provenance',{}).get('frozen_executable_sha256')!=sha256(executable.read_bytes()).hexdigest()
             or record.get('qt_platform')!={'Darwin':'cocoa','Windows':'windows','Linux':'xcb'}.get(platform.system())
-            or len(record.get('observations',[]))!=6
+            or len(record.get('observations',[]))!=7
+            or record['observations'][-2].get('owned_Core_flush_before_cold_crash') is not True
+            or record['observations'][-1].get('crash_scope')!='after-owned-Core-flush-without-clean-shutdown'
             or record['observations'][-1].get('automatic_wallet_replay') is not False):
         raise ValueError('Q05_FINAL_FROZEN_RECEIPT_DENIED')
 

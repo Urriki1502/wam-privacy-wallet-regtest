@@ -260,10 +260,23 @@ class Driver:
                     raise ValueError('Q05_GUI_DURABLE_CHECKPOINT_CHANGED')
                 self.record['observations'].append({'core_clean_checkpoint_reopen_verified':True,
                     'height':snap.height,'tip':snap.tip,'same_wallet_history_reservations':True})
+                # Advance AFTER the clean restart. The next SIGKILL must prove
+                # durability of newly anchored work without another clean stop.
+                w.start_operation('mine');self.stage='cold_checkpoint'
+            elif self.stage=='cold_checkpoint' and self.idle():
+                snap=w._snapshot
+                if (snap is None or snap.height!=self.snapshot.height+1
+                        or b.submissions!=1 or not any(r.txid==self.sent for r in snap.history)):
+                    raise ValueError('Q05_GUI_COLD_CHECKPOINT_DENIED')
+                self.snapshot=snap
+                self.record['observations'].append({'owned_Core_flush_before_cold_crash':True,
+                    'new_block_after_clean_restart':True,'height':snap.height,'tip':snap.tip,
+                    'no_clean_shutdown_of_this_Core_before_SIGKILL':True})
                 w.start_operation('lock');self.stage='durable_locked'
             elif self.stage=='durable_locked' and self.idle() and w.session.locked:
                 if b.owner.process is not self.original or self.original.poll() is not None:
                     raise ValueError('Q05_GUI_CRASH_ORIGINAL_OWNER_DENIED')
+                b.owner.binding._assert_image()
                 self.original.kill();self.original.wait(timeout=10)
                 w._control('core_restart');self.stage='core_restarted'
             elif self.stage=='core_restarted' and self.idle():
@@ -278,7 +291,8 @@ class Driver:
                 if b.submissions!=1:raise ValueError('Q05_GUI_UNCERTAIN_REPLAY')
                 self.record['observations'].append({'same_owner_core_crash_recovered':True,
                     'same_wallet_tip_history_reservations':True,'original_popen_reaped':self.original.poll() is not None,
-                    'automatic_wallet_replay':False,'crash_scope':'after-clean-Core-checkpoint'})
+                    'automatic_wallet_replay':False,
+                    'crash_scope':'after-owned-Core-flush-without-clean-shutdown'})
                 self.record['status']='PASS';self.stage='quitting';w.request_quit()
         except Exception as error:
             code=error.args[0] if len(error.args)==1 and type(error.args[0]) is str else 'Q05_GUI_SCENARIO_DENIED'
