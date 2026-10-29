@@ -810,7 +810,8 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
             _fail_closed_crash(adapter,core_dir,wsp_source,crashed,record)
             recovered=base/_profile_name();create_directory(recovered)
             _same_owner_crash_recovery(adapter,core_dir,wsp_source,recovered,record)
-            _wrong_core_refused(core_dir,base/_profile_name(),record)
+            wrong=base/_profile_name();create_directory(wrong)
+            _wrong_core_refused(core_dir,wrong,record)
         required=['authentic_core_startup','owned_session_create','encrypted_checkpoint',
                   'wallet_restore','concurrent_owner_refused','same_owner_reattach']
         if funded:

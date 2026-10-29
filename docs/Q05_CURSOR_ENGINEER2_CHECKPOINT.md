@@ -19,8 +19,11 @@ still raises `MANAGED_RECOVERY_HEIGHT_REGRESSED`. Before the kill, one
 miner-address block is generated and the floor stays at the confirmed spend
 height. No second supervisor, PID adoption, datadir deletion or spend replay.
 
-Parent `cbb5361` still refuses a missing Core directory and an untrusted
-mainnet receipt before `start`. That behavior is unchanged.
+Parent `cbb5361` refuses a missing Core directory and an untrusted mainnet
+receipt before `start`. Its Windows empty job `40809458244` then failed
+`FileNotFoundError` in `FAIL_CLOSED` because the tampered-core parent
+directory was never created. The harness now creates that private profile
+before the refusal. The qualified receipt is still not mutated.
 
 ## Retained parent evidence
 

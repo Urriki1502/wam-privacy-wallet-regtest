@@ -106,6 +106,7 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('untrusted_core_directory_refused',wrong)
         self.assertIn('Q05_WRONG_CORE_MUTATED_REAL_RECEIPT',wrong)
         self.assertNotIn('.start(',wrong)
+        self.assertIn('wrong=base/_profile_name();create_directory(wrong)',harness)
         self.assertNotIn('Popen',wrong)
         self.assertNotIn('.kill(',wrong)
         reattach=harness.split("stage='SAME_OWNER_REATTACH'",1)[1].split("stage='CORE_REOPEN'",1)[0]
