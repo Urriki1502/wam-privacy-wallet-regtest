@@ -1,69 +1,63 @@
-# Engineer 2 checkpoint — funded crash recovery on signed Windows
+# Engineer 2 checkpoint — graceful stop and history identity
 
-Source HEAD: `37a2bf18871e710c71d17e71e50a19f2cc8732fe`.
+Source HEAD: `b05289783a06d47d8b259f4acecc99eadda8a560`.
+Flush parent: `37a2bf18871e710c71d17e71e50a19f2cc8732fe`.
 Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 stays independent
 (`feature/issue45-q05-managed-core-stage-a-20261027` at `b3046f82`).
 Canonical ledger: 37 Q05 cases PENDING, `accepted=false`. No merge.
 
-## This SHA, Windows funded
+## This change
 
-`gettxoutsetinfo none "<tip>" true` runs before `process.kill()`. Core v28
-`ForceFlushStateToDisk` runs before the tip read. `use_index` false with a
-named block is rejected, so the quoted tip uses `use_index` true. The recovery
-floor stays at that flushed height. No second supervisor, PID adoption,
-datadir deletion or spend replay.
+After the owned wallet locks, the original Popen is stopped and that handle
+must be reaped before a new supervisor starts on the same datadir. A reused
+numeric PID is not a second daemon. Reopen must match the pre-shutdown
+history fingerprint, counts, confirmed atoms, height and tip. The quoted
+`gettxoutsetinfo none "<tip>" true` flush is unchanged. Schema stays
+`q05-owned-session-native/v6`.
 
-Signed Windows Core funded receipt PASS:
+Local `unittest discover -s tests -p 'test_q05*.py'`: 118 PASS.
+`test_q02_contracts`: 19 PASS, 1 skipped. No genuine Core on this host.
+Not a native PASS.
+
+## Retained flush proof
+
+`37a2bf1` signed Windows funded PASS:
 https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596391
-`funded_same_owner_crash_recovery`, `sign_broadcast`, `concurrent_owner_refused`,
-`same_owner_reattach` and `wallet_restore` are PASS. Original pid 3288,
-recovered pid 4404, `automatic_wallet_transaction_replay` false,
-`pid_adoption` false, `core_trust` official-signed-v0.1.11. This is one OS
-receipt, not canonical Q05 acceptance.
+`funded_same_owner_crash_recovery` PASS. Original pid 3288, recovered pid
+4404. Windows smoke PASS:
+https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596382
+Empty fail-closed, crash recovery, wrong-core refusal, reattach and
+concurrent-owner refusal PASS. `frozen_build` remains NOT EXECUTED.
+Those receipts do not include `graceful_shutdown`.
+
+macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596567
+and Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596535
+were still the open flush proof when this commit was cut.
 
 ## Retained failures
 
-`4d27f1b` Windows funded failed `CORE_RPC_DENIED` at
-`FUNDED_SAME_OWNER_CRASH_RECOVERY` (bare tip, `use_index` false):
+`4d27f1b` Windows funded `CORE_RPC_DENIED` (bare tip, `use_index` false):
 https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810343337
 
-`ca7bb85` Windows funded failed `MANAGED_RECOVERY_HEIGHT_REGRESSED` after one
-extra miner block and the same-Popen wait:
+`ca7bb85` Windows funded `MANAGED_RECOVERY_HEIGHT_REGRESSED`:
 https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40809932361
 
-`5770930` failed the same height code:
+`5770930` same height code:
 https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40809138451
 
-## Trigger SHA `a7c3f81` reattach
+## Trigger SHA `792701e`
 
-All four workflows for same-owner reattach completed success. They do not
-prove the later flush.
+All four live-lease workflows completed success. They prove
+`concurrent_owner_refused` on that SHA, not this reopen check.
 
-- macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964924
-- Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964955
-- Windows smoke https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964943
-- Windows funded https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964946
-
-`ca7bb85` Windows smoke `40809932341` succeeded. Its job asserts
-`crash_fail_closed`, `same_owner_crash_recovery`, `concurrent_owner_refused`,
-`same_owner_reattach` and `wrong_core_refused`.
-
-`37a2bf1` Windows smoke also succeeded:
-https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596382
-Empty receipt `status=PASS`, `gui_status=PASS`. Crash fail-closed, empty
-same-owner crash recovery, dirty runtime, interrupted publication, wrong-core
-refusal, reattach and concurrent-owner refusal are PASS. `frozen_build` is
-`NOT EXECUTED`. `native_gui` PASS is the offscreen empty session, not a
-frozen package.
-
-## Still open on this SHA
-
-macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596567
-Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596535
+- macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808542544
+- Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808542678
+- Windows smoke https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808542596
+- Windows funded https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808542569
 
 ## Next
 
-Read macOS and Linux funded receipts for `funded_same_owner_crash_recovery`
-on `37a2bf1`. A flush RPC rejection or a tip that stays below the floor is a
-real FAIL. Do not push another flush variant while those runs are the proof.
-Q05 remains unaccepted.
+Read this commit's receipts for `graceful_shutdown` and
+`history_identity_unchanged` on Windows, macOS and Linux. A reaped-handle
+miss or a history fingerprint mismatch is a real FAIL. Q05 remains
+unaccepted.
