@@ -608,6 +608,34 @@ def _same_owner_crash_recovery(adapter,core,source,root,record):
         stop_owned(owner,record)
 
 
+def _durable_regtest_tip(owner,minimum_height):
+    """Flush the owned regtest tip before an explicit kill.
+
+    A mined tip can still be only in memory. ``gettxoutsetinfo`` with
+    use_index false writes that chainstate. The read does not spend, delete
+    chain data, or adopt a PID.
+    """
+    assert_live_original(owner)
+    if type(minimum_height) is not int or not 1<=minimum_height<=1000000:
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_CHAIN_NOT_DURABLE')
+    cli=str(owner.cli)
+    datadir=f'-datadir={owner.directory}'
+    tip=_read_cli([cli,datadir,'getbestblockhash'],timeout=30)
+    count=_read_cli([cli,datadir,'getblockcount'],timeout=30)
+    if (type(tip) is not str or len(tip)!=64 or type(count) is not int
+            or count<minimum_height):
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_CHAIN_NOT_DURABLE')
+    stats=_read_cli(
+        [cli,datadir,'gettxoutsetinfo','none',tip,'false'],timeout=120)
+    if (type(stats) is not dict or stats.get('bestblock')!=tip
+            or stats.get('height')!=count or count<minimum_height):
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_CHAIN_NOT_DURABLE')
+    assert_live_original(owner)
+    if count>owner._height_snapshot:
+        owner._height_snapshot=count
+    return count
+
+
 def _funded_same_owner_crash_recovery(owner,session,source,*,code,digest,sent,paid,
                                       keychain,record):
     """Restart this funded original Popen and reopen the same wallet.
@@ -635,17 +663,11 @@ def _funded_same_owner_crash_recovery(owner,session,source,*,code,digest,sent,pa
     # Recovery must not accept a chain shorter than the confirmed spend.
     if pre_height>owner._height_snapshot:
         owner._height_snapshot=pre_height
-    # A following block forces the confirmed tip out of the last dirty
-    # write. The recovery floor stays at the confirmed height so loss of
-    # only this sacrificial block is not a shorter wallet chain.
-    floor=owner._height_snapshot
-    from wam_regtest.wsp_live import public_regtest_mining_address
-    flush=_read_cli(
-        [str(owner.cli),f'-datadir={owner.directory}','generatetoaddress','1',
-         public_regtest_mining_address(source)],
-        timeout=120)
-    if type(flush) is not list or len(flush)!=1 or type(flush[0]) is not str:
-        raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_FLUSH_DENIED')
+    # ca7bb85 still restarted below the confirmed spend after one extra block.
+    # Flush this tip and keep that height as the recovery floor.
+    floor=_durable_regtest_tip(owner,pre_height)
+    if type(floor) is not int or floor<pre_height:
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_CHAIN_NOT_DURABLE')
     owner._height_snapshot=floor
     session.lock()
     process=owner.process

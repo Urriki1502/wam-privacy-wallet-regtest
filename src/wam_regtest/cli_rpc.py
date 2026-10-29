@@ -16,7 +16,7 @@ class CliRpcError(ValueError):
 
 READS=frozenset(('getblockchaininfo','getblockcount','getbestblockhash',
     'getblockhash','getblock','getconnectioncount','getnetworkinfo',
-    'getrawmempool','gettxout','listwallets','waitfornewblock'))
+    'getrawmempool','gettxout','gettxoutsetinfo','listwallets','waitfornewblock'))
 WRITES=frozenset(('testmempoolaccept','sendrawtransaction','generatetoaddress',
     'invalidateblock','reconsiderblock','createwallet','getnewaddress','stop'))
 HASH=re.compile(r'[0-9a-f]{64}\Z')
@@ -55,6 +55,11 @@ def validate(args):
     elif method in ('invalidateblock','reconsiderblock'):valid=len(params)==1 and bool(HASH.fullmatch(params[0]))
     elif method=='gettxout':
         valid=len(params)==3 and bool(HASH.fullmatch(params[0])) and _uint(params[1],2**32-1) and params[2]=='true'
+    elif method=='gettxoutsetinfo':
+        # hash_type none and use_index false is the chainstate flush. The
+        # coinstats index path is rejected because it does not have to write.
+        valid=(len(params)==3 and params[0]=='none' and bool(HASH.fullmatch(params[1]))
+               and params[2]=='false')
     elif method=='sendrawtransaction':valid=len(params)==1 and _raw(params[0])
     elif method=='testmempoolaccept' and len(params)==1 and len(params[0])<=800010:
         try:
@@ -98,6 +103,12 @@ def decode(raw,method,params):
         elif method in ('getblockchaininfo','getnetworkinfo','createwallet','waitfornewblock'):
             good=type(value) is dict
         elif method=='gettxout':good=value is None or type(value) is dict
+        elif method=='gettxoutsetinfo':
+            good=(type(value) is dict and type(value.get('height')) is int
+                  and 0<=value['height']<=1000000
+                  and type(value.get('bestblock')) is str
+                  and bool(HASH.fullmatch(value['bestblock']))
+                  and value['bestblock']==params[1])
         elif method=='getblock':good=type(value) is dict and value.get('hash')==params[0] and type(value.get('tx')) is list
         elif method in ('getrawmempool','generatetoaddress'):
             good=type(value) is list and len(value)<=100000 and all(type(v) is str and HASH.fullmatch(v) for v in value)

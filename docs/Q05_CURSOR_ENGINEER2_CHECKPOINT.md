@@ -1,25 +1,27 @@
-# Engineer 2 checkpoint — funded crash height reload
+# Engineer 2 checkpoint — flush the confirmed tip before kill
 
-Source HEAD: `ca7bb859b19e5b70f6cba64a2c93bf86d1e5b689`.
-The height-reload parent is `f3dc3c0c89e77c3405fbf22c2c85e53e636c6e36`.
+Parent `ca7bb859b19e5b70f6cba64a2c93bf86d1e5b689`.
 Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 stays independent
 (`feature/issue45-q05-managed-core-stage-a-20261027` at `b3046f82`).
 Canonical ledger: 37 Q05 cases PENDING, `accepted=false`. No merge.
 
 ## Failure being repaired
 
-`5770930` Windows funded owned-session failed
-`MANAGED_RECOVERY_HEIGHT_REGRESSED` at `FUNDED_SAME_OWNER_CRASH_RECOVERY`.
+`ca7bb85` Windows funded owned-session still failed
+`MANAGED_RECOVERY_HEIGHT_REGRESSED` at `FUNDED_SAME_OWNER_CRASH_RECOVERY`
+after the sacrificial miner block and the same-Popen height wait.
 Sign/broadcast had passed. Run
-https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40809138451
-artifact `q05-owned-session-funded-windows-x64-5770930f7d34dbde1b99c9022f3d2cf4bbe6b2bf`.
+https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40809932361
+Receipt: `failure_code=MANAGED_RECOVERY_HEIGHT_REGRESSED`.
 
-The same-owner restart treated the first short `getblockchaininfo` as a final
-shorter chain. Recovery boot now stays on that Popen until the attested tip
-loads or the start deadline expires. A chain that remains below the floor
-still raises `MANAGED_RECOVERY_HEIGHT_REGRESSED`. Before the kill, one
-miner-address block is generated and the floor stays at the confirmed spend
-height. No second supervisor, PID adoption, datadir deletion or spend replay.
+The earlier `5770930` receipt is
+https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40809138451
+with the same code. One extra `generatetoaddress` did not leave the confirmed
+tip on disk. This commit flushes that tip with owned `gettxoutsetinfo none
+<tip> false` before `process.kill()`, and the recovery floor stays at that
+flushed height. The same-Popen wait from `f3dc3c0` remains. No second
+supervisor, PID adoption, datadir deletion or spend replay. The index form of
+`gettxoutsetinfo` stays denied.
 
 Parent `cbb5361` refuses a missing Core directory and an untrusted mainnet
 receipt before `start`. Its Windows empty job `40809458244` then failed
@@ -38,5 +40,7 @@ None of those receipts prove this funded-crash repair.
 
 ## Next
 
-Read this commit's funded receipt for `funded_same_owner_crash_recovery` on
-Windows, then macOS and Linux. Q05 remains unaccepted.
+Read this commit's Windows funded receipt for
+`funded_same_owner_crash_recovery`. If Core rejects `gettxoutsetinfo`, keep
+the height floor and fix the flush call. Do not delete chain data. Q05
+remains unaccepted.
