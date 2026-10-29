@@ -296,6 +296,9 @@ jobs:
           assert proof['scenarios']['same_owner_reattach']=='PASS'
           assert any(row.get('concurrent_owner_refused') for row in proof['observations'])
           assert proof['scenarios']['dirty_runtime_fail_closed']=='PASS'
+          assert proof['scenarios']['wrong_core_refused']=='PASS'
+          assert proof['schema']=='q05-owned-session-native/v6'
+          assert any(row.get('untrusted_core_directory_refused') and row.get('mainnet_receipt_refused') and row.get('process_started') is False and row.get('real_core_receipt_unchanged') for row in proof['observations'])
           assert any(row.get('original_popen_owned') for row in proof['observations'])
           assert any(row.get('wallet_lock_left_core_running') for row in proof['observations'])
           assert any(row.get('restored_same_payment_code') for row in proof['observations'])

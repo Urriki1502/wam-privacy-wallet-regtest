@@ -26,7 +26,7 @@ from wam_regtest.wsp_live import PINNED_WSP_COMMIT,_pinned_source
 
 APPROVED_LINUX_MANIFEST='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806'
 PASSWORD=b'public-disposable-q05-native-only'
-SCHEMA='q05-owned-session-native/v5'
+SCHEMA='q05-owned-session-native/v6'
 
 
 class OwnedLifecycleError(ValueError):
@@ -720,15 +720,38 @@ def _fail_closed_crash(adapter,core,source,root,record):
         stop_owned(owner,record)
 
 
-def _wrong_core_refused(core,root,record):
-    foreign=root/'missing-core'
+def _refuse_untrusted_core(root,core):
+    """Constructor must fail before start. No Popen and no adopted PID."""
     try:
-        CoreSupervisor(root/'unused-wrong-core',foreign,authorized=True)
+        CoreSupervisor(root,core,authorized=True)
     except (ManagedCoreError,OSError,ValueError,RuntimeError):
-        record['scenarios']['wrong_core_refused']='PASS'
-        record['observations'].append({'wrong_core_directory_refused':True})
         return
     raise OwnedLifecycleError('Q05_WRONG_CORE_SHOULD_DENY')
+
+
+def _wrong_core_refused(core,root,record):
+    receipt=core/'receipt.json'
+    before=receipt.read_bytes() if receipt.is_file() else None
+    _refuse_untrusted_core(root/'unused-missing-core',root/'missing-core')
+    tampered=root/'tampered-core'
+    tampered.mkdir(mode=0o700)
+    (tampered/'receipt.json').write_text(
+        json.dumps({'platform':'untrusted','signed_archive_verified':False,
+                    'mainnet_allowed':True,'wamd_sha256':'0'*64,
+                    'wam_cli_sha256':'0'*64}),encoding='ascii')
+    for name in ('wamd','wam-cli','wamd.exe','wam-cli.exe'):
+        (tampered/name).write_bytes(b'not-a-wam-core')
+    _refuse_untrusted_core(root/'unused-tampered-core',tampered)
+    if receipt.is_file() and receipt.read_bytes()!=before:
+        raise OwnedLifecycleError('Q05_WRONG_CORE_MUTATED_REAL_RECEIPT')
+    record['scenarios']['wrong_core_refused']='PASS'
+    record['observations'].append({
+        'wrong_core_directory_refused':True,
+        'untrusted_core_directory_refused':True,
+        'mainnet_receipt_refused':True,
+        'process_started':False,
+        'real_core_receipt_unchanged':True,
+    })
 
 
 def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,

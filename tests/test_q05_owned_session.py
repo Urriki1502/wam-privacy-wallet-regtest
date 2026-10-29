@@ -100,6 +100,14 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('concurrent_owner_refused',harness)
         self.assertIn('second_process_started',harness)
         self.assertNotIn('rival.start',harness)
+        wrong=harness.split('def _wrong_core_refused',1)[1].split('\ndef ',1)[0]
+        self.assertIn('mainnet_allowed',wrong)
+        self.assertIn('not-a-wam-core',wrong)
+        self.assertIn('untrusted_core_directory_refused',wrong)
+        self.assertIn('Q05_WRONG_CORE_MUTATED_REAL_RECEIPT',wrong)
+        self.assertNotIn('.start(',wrong)
+        self.assertNotIn('Popen',wrong)
+        self.assertNotIn('.kill(',wrong)
         reattach=harness.split("stage='SAME_OWNER_REATTACH'",1)[1].split("stage='CORE_REOPEN'",1)[0]
         self.assertIn('create=False',reattach)
         self.assertIn('Q05_SAME_OWNER_REATTACH_DENIED',reattach)
@@ -117,6 +125,29 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertNotIn('.unlink(',funded)
         self.assertNotIn('rmtree',funded)
         self.assertNotIn('broadcast(',funded)
+
+    def test_untrusted_core_directory_is_refused_before_start(self):
+        import tempfile
+        from wam_regtest.q05_owned_lifecycle import _wrong_core_refused
+        with tempfile.TemporaryDirectory() as raw:
+            base=Path(raw)
+            core=base/'real-core'
+            core.mkdir()
+            receipt=core/'receipt.json'
+            receipt.write_text('{"mainnet_allowed":false}\n',encoding='ascii')
+            before=receipt.read_bytes()
+            profile=base/'profile'
+            profile.mkdir()
+            record={'scenarios':{},'observations':[]}
+            _wrong_core_refused(core,profile,record)
+            self.assertEqual(record['scenarios']['wrong_core_refused'],'PASS')
+            row=record['observations'][-1]
+            self.assertTrue(row['untrusted_core_directory_refused'])
+            self.assertTrue(row['mainnet_receipt_refused'])
+            self.assertFalse(row['process_started'])
+            self.assertTrue(row['real_core_receipt_unchanged'])
+            self.assertEqual(receipt.read_bytes(),before)
+            self.assertTrue((profile/'tampered-core'/'receipt.json').is_file())
 
     def test_host_adapter_matches_this_os_and_refuses_foreign_linux_manifest_pin(self):
         from wam_regtest.q05_owned_lifecycle import (
