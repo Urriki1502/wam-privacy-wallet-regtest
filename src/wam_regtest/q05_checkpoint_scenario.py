@@ -137,33 +137,44 @@ def negative_checkpoint(owner,source,password,keychain,initial,mode):
             'fault_model':'constructed native residue; genuine Core and anchor; not physical power loss'}
 
 
-def interrupted_publication(owner,source,password,keychain,initial):
-    """Real durable ciphertext, controlled cut before native anchor advance.
-
-    Safety refusal evidence ONLY. Preserve the ambiguous runtime/orphan; never
-    call this successful interrupted-write recovery or physical power loss.
-    """
+def interrupted_publication(owner,source,password,keychain,initial,*,live=False):
+    """Real fsynced ciphertext cut before anchor, retaining unknown runtime."""
     from wam_regtest import custody
     from wam_regtest.vault import CheckpointVault
-    anchor=custody.anchor(initial['wallet_id'],keychain)
-    before=anchor.read();folder=owner.directory/'wallet-vault'
-    reference=(owner.root/'supervisor.wallet').read_bytes()
-    files={p.name:sha256(p.read_bytes()).hexdigest() for p in folder.glob('snapshot-*.enc')}
-    store=custody.storage();publish=store.publish;published={}
-    next_name=CheckpointVault._filename(before[0]+1)
-    def cut(directory,name,blob):
-        publish(directory,name,blob)  # Existing native fsync/create-only publication.
-        if directory==folder and name==next_name:
-            published['sha256']=sha256(blob).hexdigest()
-            raise AfterPublicationCut('Q05_TEST_CUT_AFTER_DURABLE_PUBLICATION')
+    from wam_regtest.wallet_session import WalletSession,WalletSessionError
+    anchor=custody.anchor(initial['wallet_id'],keychain);session=None;closed_preserved=False
+    if live:
+        session=WalletSession.open_owned(owner,source,password,authorized=True,keychain=keychain)
     try:
-        with patch.object(store,'publish',cut):
-            checkpoint(owner,source,password,authorized=True,keychain=keychain)
-        raise ValueError('Q05_PUBLICATION_CUT_NOT_EXERCISED')
-    except ManagedWalletError as error:
-        if (error.args!=('MANAGED_WALLET_CHECKPOINT_DENIED',)
-                or type(error.__context__) is not AfterPublicationCut or not published):raise
-    if (anchor.read()!=before or (owner.root/'supervisor.wallet').read_bytes()!=reference
+        before=anchor.read();folder=owner.directory/'wallet-vault'
+        initial['checkpoint']=list(before)
+        reference=(owner.root/'supervisor.wallet').read_bytes()
+        files={p.name:sha256(p.read_bytes()).hexdigest() for p in folder.glob('snapshot-*.enc')}
+        store=custody.storage();publish=store.publish;published={}
+        next_name=CheckpointVault._filename(before[0]+1)
+        def cut(directory,name,blob):
+            publish(directory,name,blob)
+            if directory==folder and name==next_name:
+                published['sha256']=sha256(blob).hexdigest()
+                raise AfterPublicationCut('Q05_TEST_CUT_AFTER_DURABLE_PUBLICATION')
+        try:
+            with patch.object(store,'publish',cut):
+                if live:session._save()
+                else:checkpoint(owner,source,password,authorized=True,keychain=keychain)
+            raise ValueError('Q05_PUBLICATION_CUT_NOT_EXERCISED')
+        except (ManagedWalletError,WalletSessionError) as error:
+            expected='WALLET_ANCHORED_SAVE_FAILED' if live else 'MANAGED_WALLET_CHECKPOINT_DENIED'
+            if (error.args!=(expected,) or type(error.__context__) is not AfterPublicationCut
+                    or not published):raise
+    finally:
+        if session is not None:
+            try:session.lock()
+            except WalletSessionError as error:
+                if (error.args!=('WALLET_MANAGED_RUNTIME_PRESERVED',) or not session.locked
+                        or session._password is not None):raise
+                closed_preserved=True
+    if (live and not closed_preserved or anchor.read()!=before
+            or (owner.root/'supervisor.wallet').read_bytes()!=reference
             or any(sha256((folder/name).read_bytes()).hexdigest()!=digest for name,digest in files.items())
             or sha256(store.read(folder,next_name)).hexdigest()!=published['sha256']
             or not (owner.directory/'wallet-runtime.sqlite').exists()):
@@ -179,6 +190,7 @@ def interrupted_publication(owner,source,password,keychain,initial):
     return {'cut_after_real_durable_publication_before_anchor':True,
             'unchanged_native_anchor':list(before),'original_ciphertexts_reference_preserved':True,
             'orphan_ciphertext_sha256':published['sha256'],'runtime_preserved':True,
+            'live_session_runtime_retained_on_checkpoint_failure':closed_preserved,
             'next_open_refused_before_keys_or_balance':True,
             'prior_anchored_reservation_sha256':initial['reservation_sha256'],
             'recovery_completed':False,'physical_power_loss_test':False}
@@ -435,7 +447,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
         if a.interrupt_publication:
             stage='INTERRUPTED_PUBLICATION_SAFE_REFUSAL'
             record['observations'].append(interrupted_publication(owner,a.wsp_source,
-                password,keychain,initial))
+                password,keychain,initial,live=a.owned_session))
             record['recovery_completed']=False
             if a.recover_after_interruption:
                 stage='EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY'
