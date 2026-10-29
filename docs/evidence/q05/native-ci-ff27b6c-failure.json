@@ -1,0 +1,37 @@
+{
+  "source_sha": "ff27b6c03e22defa9bbd841bff4ad8fac8a6662b",
+  "status": "FAIL",
+  "qualification": false,
+  "jobs": [
+    {
+      "run_id": 40862530518,
+      "job_id": 123409077907,
+      "failure": "Candidate source ff27b6c missing in shallow merge checkout; fatal not a tree object before Core."
+    },
+    {
+      "run_id": 40862530503,
+      "job_id": 123409077795,
+      "failure": "BUILD_SOURCE_DIRTY before environment install; new job omitted existing Windows core.autocrlf=false policy. No source-normalization bypass."
+    },
+    {
+      "run_id": 40862530514,
+      "job_id": 123409078255,
+      "failure": "Historical artifact from run38697805476 no longer available; no Core execution."
+    }
+  ],
+  "repairs": [
+    "Fetch depth 2 retains merge and candidate parents.",
+    "Apply existing no-CRLF checkout configuration to both Windows sources.",
+    "Select exact-byte-identical existing Cursor Core artifact after independent full archive/member SHA verification. No Core or trust pin change."
+  ],
+  "replacement_artifact": {
+    "id": 12871099444,
+    "run_id": 40812329224,
+    "name": "linux-developer-core-952e8756e46345f798b5fa2dbef8ced418d6e718",
+    "archive_sha256": "3a47371f077ccaa45895362d7b5fedb40feba8097239ef0d92775bb5e20bc8fc",
+    "manifest_sha256": "e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806",
+    "wamd_sha256": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+    "wam_cli_sha256": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+    "official_signed": false
+  }
+}

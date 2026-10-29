@@ -111,8 +111,8 @@ jobs:
       - name: Fetch previously qualified immutable developer Core artifact
         uses: actions/download-artifact@v4
         with:
-          name: linux-developer-core-576082d227ccd9eb139686ded431c69c07399237
-          run-id: 38697805476
+          name: linux-developer-core-952e8756e46345f798b5fa2dbef8ced418d6e718
+          run-id: 40812329224
           github-token: ${{ github.token }}
           path: qualified-linux-core
       - name: Native headless dependency closure and actual wallet executable
@@ -165,8 +165,8 @@ jobs:
       - name: Fetch previously qualified immutable developer Core artifact
         uses: actions/download-artifact@v4
         with:
-          name: linux-developer-core-576082d227ccd9eb139686ded431c69c07399237
-          run-id: 38697805476
+          name: linux-developer-core-952e8756e46345f798b5fa2dbef8ced418d6e718
+          run-id: 40812329224
           github-token: ${{ github.token }}
           path: qualified-linux-core
       - name: Native xcb Qt over actual Core and independent root witness
@@ -232,8 +232,8 @@ jobs:
         run: python scripts/q01_dependency_negatives.py
       - uses: actions/download-artifact@v4
         with:
-          name: linux-developer-core-576082d227ccd9eb139686ded431c69c07399237
-          run-id: 38697805476
+          name: linux-developer-core-952e8756e46345f798b5fa2dbef8ced418d6e718
+          run-id: 40812329224
           github-token: ${{ github.token }}
           path: qualified-linux-core
       - name: Native dependencies and pinned source closure
@@ -300,8 +300,8 @@ jobs:
       - name: Fetch previously qualified immutable developer Core artifact
         uses: actions/download-artifact@v4
         with:
-          name: linux-developer-core-576082d227ccd9eb139686ded431c69c07399237
-          run-id: 38697805476
+          name: linux-developer-core-952e8756e46345f798b5fa2dbef8ced418d6e718
+          run-id: 40812329224
           github-token: ${{ github.token }}
           path: qualified-linux-core
       - name: Q04 genuine Core miner coexistence and read-only attachment
@@ -340,8 +340,8 @@ jobs:
       - name: Fetch previously qualified immutable developer Core artifact
         uses: actions/download-artifact@v4
         with:
-          name: linux-developer-core-576082d227ccd9eb139686ded431c69c07399237
-          run-id: 38697805476
+          name: linux-developer-core-952e8756e46345f798b5fa2dbef8ced418d6e718
+          run-id: 40812329224
           github-token: ${{ github.token }}
           path: qualified-linux-core
       - name: Q04 RPC contention handling on genuine Core
@@ -422,6 +422,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 2
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
@@ -438,8 +439,8 @@ jobs:
       - name: Fetch immutable qualified developer Core (not official signed Linux)
         uses: actions/download-artifact@v4
         with:
-          name: linux-developer-core-576082d227ccd9eb139686ded431c69c07399237
-          run-id: 38697805476
+          name: linux-developer-core-952e8756e46345f798b5fa2dbef8ced418d6e718
+          run-id: 40812329224
           github-token: ${{ github.token }}
           path: qualified-linux-core
       - name: Install native ACL and Qt runtime
