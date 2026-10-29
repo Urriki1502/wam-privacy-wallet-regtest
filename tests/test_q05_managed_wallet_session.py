@@ -94,6 +94,23 @@ class ManagedSessionContracts(unittest.TestCase):
         lease.__exit__.assert_called_once()
         session._managed_owner.shutdown.assert_not_called()
 
+    def test_failed_checkpoint_closes_keys_but_preserves_unanchored_runtime(self):
+        path=self.runtime();guard=module.RuntimeGuard(path)
+        session=self.session(guard);session.faulted=False
+        session.vault=Mock();session.vault.save.side_effect=OSError('publication-cut')
+        session.scanner.store.tip.return_value=(0,'a'*64)
+        with patch.object(module,'check_session'), \
+                patch('wam_regtest.managed_wallet_checkpoint.durable_core_checkpoint'):
+            with self.assertRaisesRegex(WalletSessionError,'ANCHORED_SAVE_FAILED'):
+                WalletSession._save(session)
+        ring,scanner,lease=session.ring,session.scanner,session._managed_lease
+        with self.assertRaisesRegex(WalletSessionError,'RUNTIME_PRESERVED'):
+            module.close_session(session)
+        self.assertEqual(path.read_bytes(),b'owned-test-runtime')
+        ring.close.assert_called_once();scanner.close.assert_called_once()
+        lease.__exit__.assert_called_once();self.assertIsNone(session.ring)
+        self.assertIsNone(session._password);session._managed_owner.shutdown.assert_not_called()
+
     def session(self,guard):
         return SimpleNamespace(_managed_thread=threading.get_ident(),locked=False,
             _managed_owner=Mock(),ring=Mock(),scanner=Mock(),_managed_runtime_guard=guard,

@@ -284,6 +284,10 @@ class WalletSession:
             self.vault.save(self.ring, self.scanner, self._password)
         except Exception:
             self.faulted = True
+            if getattr(self,'_managed_owner',None) is not None:
+                # A failed publication may follow irreversible reservation
+                # changes. Closing keys must never delete that unknown runtime.
+                self._managed_checkpoint_uncertain=True
             raise WalletSessionError("WALLET_ANCHORED_SAVE_FAILED") from None
 
     def snapshot(self, history_offset=0):

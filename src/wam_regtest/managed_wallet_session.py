@@ -160,6 +160,8 @@ def close_session(session):
             keys.callback(session.scanner.close)
             keys.callback(session._close_rpc)
             if session._disclosure_gate is not None:keys.callback(session._disclosure_gate.close)
+        if getattr(session,'_managed_checkpoint_uncertain',False):
+            raise ValueError('WALLET_MANAGED_UNANCHORED_RUNTIME')
         session._managed_runtime_guard.remove_owned()
     except (OSError,ValueError,RuntimeError):
         raise WalletSessionError('WALLET_MANAGED_RUNTIME_PRESERVED') from None
