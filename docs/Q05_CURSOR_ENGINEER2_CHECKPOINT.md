@@ -67,14 +67,31 @@ All four live-lease workflows completed success. They prove
 - Windows smoke https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808542596
 - Windows funded https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808542569
 
+## `b052897` owned-session receipts
+
+These are the Q05 owned-session jobs, not whole-workflow acceptance.
+`graceful_shutdown` PASS and `history_identity_unchanged` on the funded
+reopen. `frozen_build` remains NOT EXECUTED. macOS has not finished.
+
+- Windows funded PASS
+  https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222194
+  Original crash pid 5676, recovered pid 4072, reopened pid 7196.
+  Txid `eeed0f04b703a00cec6c8268f81f72bf25684ffea10564edcb05ed4b38ad1bf9`.
+  Restored height 103. History sha256
+  `8a228641cd5ad8fed6b0d5c681b7d70d3eae3a5a7e7ad7d8ea2bce7e153d2452`.
+- Windows smoke PASS
+  https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222061
+  Empty fail-closed, crash recovery, wrong-core refusal, reattach,
+  graceful shutdown and offscreen GUI PASS.
+- Linux Q05 job PASS
+  https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222487
+  Empty and funded receipts PASS on reviewed developer Core
+  (`official_signed_release` false). Other Linux jobs were still open.
+- macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222044
+  was still queued when this note was written.
+
 ## Next
 
-`b052897` CI is the graceful-stop proof. Windows funded
-https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222194
-Windows smoke
-https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222061
-Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222487
-macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222044
-Read `graceful_shutdown` and `history_identity_unchanged`. A reaped-handle
-miss or a history fingerprint mismatch is a real FAIL. Do not treat the
-`37a2bf1` flush receipts as proof of this reopen. Q05 remains unaccepted.
+Read the macOS `b052897` owned-session receipt for `graceful_shutdown` and
+`history_identity_unchanged`. Do not treat Windows or Linux as that proof.
+`frozen_build` is still NOT EXECUTED. Q05 remains unaccepted.
