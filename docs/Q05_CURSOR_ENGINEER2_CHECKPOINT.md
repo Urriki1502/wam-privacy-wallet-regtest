@@ -17,11 +17,17 @@ Receipt: `failure_code=MANAGED_RECOVERY_HEIGHT_REGRESSED`.
 The earlier `5770930` receipt is
 https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40809138451
 with the same code. One extra `generatetoaddress` did not leave the confirmed
-tip on disk. This commit flushes that tip with owned `gettxoutsetinfo none
-<tip> false` before `process.kill()`, and the recovery floor stays at that
-flushed height. The same-Popen wait from `f3dc3c0` remains. No second
-supervisor, PID adoption, datadir deletion or spend replay. The index form of
-`gettxoutsetinfo` stays denied.
+tip on disk. `4d27f1b` calls `gettxoutsetinfo none <bare tip> false`. Core v28
+rejects that pair (`use_index` false with a named block) and its CLI
+JSON-parses `hash_or_height`, so a bare hash never reaches RPC. This commit
+passes a quoted tip and `use_index` true. `ForceFlushStateToDisk` still runs
+before the tip read. The recovery floor stays at that height. The same-Popen
+wait from `f3dc3c0` remains. No second supervisor, PID adoption, datadir
+deletion or spend replay.
+
+Local `unittest discover -s tests -p 'test_q05*.py'`: 118 PASS.
+`test_q02_contracts.py`: 19 PASS, 1 skipped. This host has no genuine Core
+binary. Canonical cases stay PENDING.
 
 Parent `cbb5361` refuses a missing Core directory and an untrusted mainnet
 receipt before `start`. Its Windows empty job `40809458244` then failed
@@ -41,6 +47,6 @@ None of those receipts prove this funded-crash repair.
 ## Next
 
 Read this commit's Windows funded receipt for
-`funded_same_owner_crash_recovery`. If Core rejects `gettxoutsetinfo`, keep
-the height floor and fix the flush call. Do not delete chain data. Q05
-remains unaccepted.
+`funded_same_owner_crash_recovery`. If the flush RPC is rejected, keep the
+height floor and fix the call. Do not delete chain data. Q05 remains
+unaccepted.

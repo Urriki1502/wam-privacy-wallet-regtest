@@ -611,9 +611,10 @@ def _same_owner_crash_recovery(adapter,core,source,root,record):
 def _durable_regtest_tip(owner,minimum_height):
     """Flush the owned regtest tip before an explicit kill.
 
-    A mined tip can still be only in memory. ``gettxoutsetinfo`` with
-    use_index false writes that chainstate. The read does not spend, delete
-    chain data, or adopt a PID.
+    A mined tip can still be only in memory. ``gettxoutsetinfo`` force-flushes
+    that chainstate before it reads the tip. Core v28 rejects use_index false
+    when a block is named, and its CLI JSON-parses the hash. The read does not
+    spend, delete chain data, or adopt a PID.
     """
     assert_live_original(owner)
     if type(minimum_height) is not int or not 1<=minimum_height<=1000000:
@@ -626,7 +627,7 @@ def _durable_regtest_tip(owner,minimum_height):
             or count<minimum_height):
         raise OwnedLifecycleError('Q05_FUNDED_CRASH_CHAIN_NOT_DURABLE')
     stats=_read_cli(
-        [cli,datadir,'gettxoutsetinfo','none',tip,'false'],timeout=120)
+        [cli,datadir,'gettxoutsetinfo','none',json.dumps(tip),'true'],timeout=120)
     if (type(stats) is not dict or stats.get('bestblock')!=tip
             or stats.get('height')!=count or count<minimum_height):
         raise OwnedLifecycleError('Q05_FUNDED_CRASH_CHAIN_NOT_DURABLE')

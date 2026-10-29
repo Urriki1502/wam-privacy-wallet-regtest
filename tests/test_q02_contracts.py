@@ -29,16 +29,19 @@ class Q02Contracts(unittest.TestCase):
         self.assertEqual(validate(['-rpcwallet=test','getnewaddress']),('getnewaddress',[]))
         self.assertEqual(validate(['getblockhash','0']),('getblockhash',['0']))
         tip='ab'*32
-        self.assertEqual(validate(['gettxoutsetinfo','none',tip,'false']),
-                         ('gettxoutsetinfo',['none',tip,'false']))
+        quoted='"'+tip+'"'
+        self.assertEqual(validate(['gettxoutsetinfo','none',quoted,'true']),
+                         ('gettxoutsetinfo',['none',quoted,'true']))
         for args in (['gettxoutsetinfo'],['gettxoutsetinfo','none',tip,'true'],
-                     ['gettxoutsetinfo','hash_serialized_2',tip,'false'],
+                     ['gettxoutsetinfo','none',quoted,'false'],
+                     ['gettxoutsetinfo','none',tip,'false'],
+                     ['gettxoutsetinfo','"'+tip+'"','true'],
                      ['gettxoutsetinfo','none',tip]):
             with self.subTest(args=args),self.assertRaises(CliRpcError):validate(args)
         stats=('{"height":103,"bestblock":"'+tip+'","total_amount":50.0}').encode()
-        self.assertEqual(decode(stats,'gettxoutsetinfo',['none',tip,'false'])['height'],103)
+        self.assertEqual(decode(stats,'gettxoutsetinfo',['none',quoted,'true'])['height'],103)
         with self.assertRaises(CliRpcError):
-            decode(b'{"height":103,"bestblock":"'+b'cd'*32+b'"}','gettxoutsetinfo',['none',tip,'false'])
+            decode(b'{"height":103,"bestblock":"'+b'cd'*32+b'"}','gettxoutsetinfo',['none',quoted,'true'])
 
     def test_bare_hash_and_address_are_strings_not_json_numbers(self):
         self.assertEqual(decode(b'0'*64,'getblockhash',['0']),'0'*64)

@@ -124,6 +124,13 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('pre_height>owner._height_snapshot',funded)
         self.assertIn('owner._height_snapshot=floor',funded)
         self.assertIn('_durable_regtest_tip(owner,pre_height)',funded)
+        self.assertLess(funded.index('_durable_regtest_tip(owner,pre_height)'),
+                        funded.index('process.kill()'))
+        durable=harness.split('def _durable_regtest_tip',1)[1].split('\ndef ',1)[0]
+        self.assertIn('json.dumps(tip)',durable)
+        self.assertIn("'true'",durable)
+        self.assertNotIn("'false'",durable)
+        self.assertNotIn('generatetoaddress',durable)
         self.assertNotIn('generatetoaddress',funded)
         self.assertNotIn('os.kill',funded)
         self.assertNotIn('.unlink(',funded)
