@@ -2,6 +2,7 @@
 from pathlib import Path
 from types import SimpleNamespace
 import threading
+import sys
 import unittest
 from unittest.mock import MagicMock,Mock,patch
 
@@ -15,7 +16,22 @@ class ManagedSessionContracts(unittest.TestCase):
     owner=fixture.SupervisorLifecycleUnit.owner
 
     def runtime(self):
-        path=self.root/'wallet-runtime.sqlite';path.write_bytes(b'owned-test-runtime');path.chmod(0o600)
+        if sys.platform=='linux':
+            # Core is mocked in this fixture. Keep real Linux filesystem
+            # custody, without pretending a Core/root-witness E2E is configured.
+            from wam_regtest import linux_private_storage
+            self.stack.enter_context(patch.object(module.custody,'storage',return_value=linux_private_storage))
+        path=self.root/'wallet-runtime.sqlite'
+        if sys.platform=='win32':
+            # File-only fixture must provide the protected native DACL required
+            # by RuntimeGuard. chmod is not a Windows DACL provisioner.
+            from wam_regtest import windows_private_storage as native
+            with native.directory_guard(self.root),native.security_attributes() as attributes:
+                handle=native.create(str(path),0xc0020000,1,attributes,1,0x00200080,None)
+                if handle in (None,native.INVALID):raise ValueError('TEST_PRIVATE_RUNTIME_CREATE_DENIED')
+                try:native._metadata(handle);native.verify_security(handle)
+                finally:native.close(handle)
+        path.write_bytes(b'owned-test-runtime');path.chmod(0o600)
         return path
 
     def test_consent_and_foreign_owner_before_keys_or_runtime(self):
@@ -58,6 +74,22 @@ class ManagedSessionContracts(unittest.TestCase):
         sidecar=path.with_name(path.name+'-wal');sidecar.write_bytes(b'unknown-sidecar')
         with self.assertRaises(ValueError):guard.remove_owned()
         self.assertEqual(sidecar.read_bytes(),b'unknown-sidecar');self.assertTrue(path.exists())
+
+    def test_runtime_permission_drift_is_refused_without_repair(self):
+        path=self.runtime()
+        if sys.platform=='win32':
+            from wam_regtest import windows_private_storage as native
+            path=self.root/'unprotected-runtime.sqlite'
+            descriptor='O:'+native.owner_sid()+'D:(A;;FA;;;'+native.owner_sid()+')'
+            with native.directory_guard(self.root),native.security_attributes(descriptor=descriptor) as attributes:
+                handle=native.create(str(path),0xc0020000,1,attributes,1,0x00200080,None)
+                if handle in (None,native.INVALID):raise ValueError('TEST_UNPROTECTED_CREATE_DENIED')
+                native.close(handle)
+            path.write_bytes(b'preserve-unprotected-runtime')
+        else:path.chmod(0o644)
+        before=path.read_bytes()
+        with self.assertRaises(ValueError):module.RuntimeGuard(path)
+        self.assertEqual(path.read_bytes(),before)
 
     def test_known_fresh_runtime_can_close_without_stopping_core(self):
         path=self.runtime();guard=module.RuntimeGuard(path)

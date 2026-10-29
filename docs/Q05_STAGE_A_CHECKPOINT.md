@@ -1,3 +1,49 @@
+# Windows native runtime fixture and remaining product gap
+
+bbcc604 Windows job 123204954760/run 40799817985 had five actual unit-fixture
+errors WIN_CUSTODY_OWNER_DENIED. Default write_bytes/chmod did not establish
+native owner SID/protected DACL. New unit files now use existing native
+security_attributes + CREATE_NEW, with unchanged strict RuntimeGuard checks;
+new permission-drift test must refuse and preserve bytes. Old FAIL retained in
+evidence/q05/windows-runtime-fixture-bbcc604-failure.json and full external log.
+
+This does NOT qualify actual Windows managed SQLite creation: native create-only
+runtime provisioning still needs integration/real signed-Core proof. Never repair
+or adopt existing SQLite. Nine session file/negative contracts PASS locally;
+Windows/Linux exact-head source results and integrated native E2E remain separate.
+Runtime source remains identical to native-qualified 736d877 (test/docs only).
+
+---
+
+# bbcc604 CI dispositions before requalification
+
+Mac Q04 coexistence job 123206507318/run 40799817983 failed BEFORE scenario at
+pip build dependencies: DNS resolution of files.pythonhosted.org failed while
+fetching setuptools-84.2.1 metadata. Scenario unexecuted, not PASS. Retain
+summary evidence/q05/macos-build-dns-bbcc604-failure.json and full external log;
+next exact-HEAD job must qualify normally, no assertion or custody relaxation.
+
+Native-file test fixtures now explicitly use real Linux filesystem primitives
+inside mocked-Core file tests; Windows fixture uses create-new protected DACL
+instead of chmod-as-DACL. Added runtime permission-drift refusal/preservation.
+Nine affected session contracts and 13 ledger contracts PASS locally. Product
+runtime is unchanged from native 736d877. Actual Windows managed SQLite native
+provisioning and Linux witnessed managed wallet E2E remain unqualified; source
+file guards are not proof of those integrated cases. No unsafe permission repair.
+
+---
+
+# Linux mocked-Core fixture correction after bbcc604 CI FAIL
+
+Q05 Linux contracts run 40799817984/job 123204954975 correctly refused missing
+explicit Core/root-witness policy in five file-only RuntimeGuard tests. Fixture
+now injects real linux_private_storage solely for file tests; actual native
+private-directory/inode/sidecar checks remain and product custody/policy are
+unchanged. This does not qualify a Linux Core/witness wallet. Preserve failure
+summary evidence/q05/linux-runtime-fixture-bbcc604-failure.json; recheck new HEAD.
+
+---
+
 # P0 recovery COMMIT and recovery-aware session — 29 October 2026
 
 Same Draft #138, branch feature/issue45-q05-managed-core-stage-a-20261027.

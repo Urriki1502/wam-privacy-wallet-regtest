@@ -1,0 +1,12 @@
+{
+  "schema": "q05-ci-failure/v1",
+  "status": "FAIL",
+  "source_sha": "bbcc604b7bdbe23075415149b2cfce18acff57dd",
+  "job_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40799817985/job/123204954760",
+  "signature": "WIN_CUSTODY_OWNER_DENIED in RuntimeGuard native verify_security",
+  "tests_run": 143,
+  "errors": 5,
+  "cause": "File-only fixtures used Python write_bytes/chmod rather than create-new native owner SID/protected DACL. Strict runtime guard correctly refused before intended close/sidecar tests.",
+  "fix": "Provision only new unit-test files using existing native security_attributes/CreateFileW; keep exact owner/DACL/metadata assertions and add explicit unprotected-permission refusal. Product runtime and checks unchanged.",
+  "remaining_product_gap": "Actual managed Windows SQLite runtime creation must independently establish native owner/protected DACL before use; not qualified by these file-only tests. Never repair/adopt a previously existing runtime."
+}

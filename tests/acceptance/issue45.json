@@ -17744,7 +17744,11 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "Q05_ENGINEER_AND_WINDOWS_NATIVE_RUNNER",
+            "missing_evidence": "Actual managed Windows SQLite runtime creation must independently establish native owner/protected DACL before use; not qualified by these file-only tests. Never repair/adopt a previously existing runtime.",
+            "next_action": "Implement/review native create-only provisioning for fresh managed SQLite paths and run genuine signed Windows Core owned-session recovery; preserve all unknown files and strict native custody."
+          }
         },
         {
           "id": "Q05-INTERRUPTED-RECOVERY-WINDOWS",
@@ -18125,6 +18129,31 @@
           "failure": "Two imported SQLite pagination tests leaked mkstemp descriptors. Windows cleanup os.remove correctly refused with WinError 32. Both errors occurred in addCleanup lambdas, not history/custody assertions.",
           "scope": "CI test cleanup errors; canonical Q05 cases remain unqualified.",
           "next_action": "Close exactly the newly returned test descriptor before SQLite opens it. Preserve writer blocking, transaction snapshot and inconsistent-page assertions; no skip or exception suppression. Recheck exact new HEAD."
+        },
+        {
+          "status": "FAIL",
+          "source_sha": "bbcc604b7bdbe23075415149b2cfce18acff57dd",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40799817984/job/123204954975",
+          "receipt_path": "docs/evidence/q05/linux-runtime-fixture-bbcc604-failure.json",
+          "failure": "Mocked-Core runtime file tests called production custody.storage() without a genuine Core/witness policy. Production correctly refused; this contracts-only job has no Core E2E.",
+          "next_action": "Inject real linux_private_storage only in runtime file fixture, keeping native directory/inode/sidecar checks. Product custody/Linux policy unchanged. Recheck exact-HEAD contracts; no product trust relaxation."
+        },
+        {
+          "status": "FAIL",
+          "source_sha": "bbcc604b7bdbe23075415149b2cfce18acff57dd",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40799817983/job/123206507318",
+          "receipt_path": "docs/evidence/q05/macos-build-dns-bbcc604-failure.json",
+          "failure": "NameResolutionError files.pythonhosted.org, build dependency setuptools-84.2.1 metadata",
+          "scope": "pip build dependency installation before Q04 scenario",
+          "next_action": "Retain FAIL; requires successful exact-new-HEAD Q04 job. No runtime/infrastructure blanket PASS, assertion relaxation, or manual complete-matrix redispatch."
+        },
+        {
+          "status": "FAIL",
+          "source_sha": "bbcc604b7bdbe23075415149b2cfce18acff57dd",
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40799817985/job/123204954760",
+          "receipt_path": "docs/evidence/q05/windows-runtime-fixture-bbcc604-failure.json",
+          "failure": "File-only fixtures used Python write_bytes/chmod rather than create-new native owner SID/protected DACL. Strict runtime guard correctly refused before intended close/sidecar tests.",
+          "next_action": "Provision only new unit-test files using existing native security_attributes/CreateFileW; keep exact owner/DACL/metadata assertions and add explicit unprotected-permission refusal. Product runtime and checks unchanged. Recheck exact-HEAD source/native file contracts; no integrated Windows wallet PASS."
         }
       ]
     },
