@@ -1,7 +1,26 @@
 # Engineer 2 checkpoint — cross-platform real-Core owned-session CI
 
-Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 remains independent.
-Canonical ledger: 37 Q05 PENDING, `accepted=false`. No second PR, no merge.
+Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 remains independent
+(`feature/issue45-q05-managed-core-stage-a-20261027`). Canonical ledger: 37 Q05
+PENDING, `accepted=false`. No second PR, no merge.
+
+## Evidence at `f6672a7d9219f4432f272f324ed2fd9ced0b89fb`
+
+Push workflows:
+
+- Windows receive `40805865221` SUCCESS, including funded owned-session.
+- Windows smoke `40805865225` SUCCESS, including owned-session.
+- macOS `40805865241` owned-session SUCCESS. Job `real-wamd` FAIL:
+  Q02 case `UNAVAILABLE`, `CORE_LOCAL_NETWORK_POLICY_DENIED` then
+  `CORE_RPC_SCOPE_FAULTED`, then `Q02_NODE_START_TIMEOUT`. The start loop
+  treated a pre-ready quarantine as warmup and never re-attested the same Popen.
+- Linux `40805865248` owned-session, native Qt, headless and Q04 SUCCESS.
+  developer-core and frozen were still running at inspection.
+
+Fix on top of that SHA: `recover_unready_owned_scope` re-attests the same
+Popen only while that owned scope has never completed a verified RPC. A ready,
+exited, or foreign process stays faulted. Profile failure still quarantines
+ordinary `_read_cli` calls; restoring the file does not clear the scope.
 
 ## This milestone
 

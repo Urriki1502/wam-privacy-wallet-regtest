@@ -79,6 +79,22 @@ def _expect(codes,action):
     raise Q02ProbeError('Q02_REQUIRED_REFUSAL_MISSING')
 
 
+def recover_unready_owned_scope(directory,process):
+    """Re-attest this Popen only before its first verified RPC.
+
+    A torn private-config read during bootstrap quarantines the owned scope.
+    The creator may attest that same process again. A scope that already
+    completed a verified call stays faulted. No other PID is adopted, no
+    config is rewritten, and an exited process is left untouched.
+    """
+    if process is None or process.poll() is not None:return False
+    context=identity(directory)
+    if context is None or context.ready or context.binding.process is not process:
+        return False
+    reauthenticate_owned(directory,authorized=True)
+    return True
+
+
 def _windows_cookie_metadata(directory):
     """Owned-fixture diagnostics ONLY: booleans/ACL numbers, never SID or auth."""
     if sys.platform!='win32':return
@@ -191,6 +207,12 @@ class _Node:
                     'CORE_LOCAL_RPC_COMMAND_DENIED','CORE_RPC_DENIED')
                 if code in allowed and code not in refusals:
                     refusals.add(code);print('Q02_BOOT_FIXED_REFUSAL='+code,flush=True)
+                # Policy/credential races quarantine before RPC exists. Attest
+                # the same Popen again. Do not clear a post-ready fault.
+                if code in ('CORE_LOCAL_NETWORK_POLICY_DENIED','CORE_RPC_SCOPE_FAULTED',
+                            'CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE'):
+                    try:recover_unready_owned_scope(self.directory,self.proc)
+                    except (CliRpcError,OSError,ValueError,RuntimeError):pass
                 time.sleep(.1)
         # Diagnose only credential metadata on this owned fixture; never print
         # cookie/config contents, SID, datadir, process arguments or node logs.

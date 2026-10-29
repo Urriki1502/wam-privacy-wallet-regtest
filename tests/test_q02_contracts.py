@@ -128,6 +128,24 @@ class Q02Contracts(unittest.TestCase):
                     _read_cli([binary,'-datadir='+directory,'getblockcount'])
             profile.assert_not_called();route.assert_not_called()
 
+    def test_preready_scope_reattest_refuses_ready_exited_and_foreign_process(self):
+        from wam_regtest.q02_probe import recover_unready_owned_scope
+        directory=Path('/source-contract-private-chain').resolve()
+        process=SimpleNamespace(poll=lambda:None)
+        ready=SimpleNamespace(ready=True,binding=SimpleNamespace(process=process))
+        exited=SimpleNamespace(poll=lambda:0)
+        foreign=SimpleNamespace(poll=lambda:None)
+        unready=SimpleNamespace(ready=False,binding=SimpleNamespace(process=process))
+        with patch('wam_regtest.q02_probe.reauthenticate_owned') as reauth:
+            with patch('wam_regtest.q02_probe.identity',return_value=ready):
+                self.assertFalse(recover_unready_owned_scope(directory,process))
+            with patch('wam_regtest.q02_probe.identity',return_value=unready):
+                self.assertFalse(recover_unready_owned_scope(directory,exited))
+                self.assertFalse(recover_unready_owned_scope(directory,foreign))
+                self.assertFalse(recover_unready_owned_scope(directory,None))
+                self.assertTrue(recover_unready_owned_scope(directory,process))
+            reauth.assert_called_once_with(directory,authorized=True)
+
     def test_profile_failure_revokes_scope_before_transport_and_file_restore_cannot_revive_it(self):
         import threading
         from wam_regtest.core import _read_cli
