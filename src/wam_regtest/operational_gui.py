@@ -180,7 +180,16 @@ class OperationalWalletWindow(RegtestWalletWindow):
         worker.finished.connect(self._worker_finished)
         worker.finished.connect(worker.deleteLater)
         self._update_controls()
-        worker.start()
+        # Privileged vault/sign/broadcast stay on the GUI owner thread.
+        QTimer.singleShot(0,lambda:self._run_owner_operation(worker))
+
+    def _run_owner_operation(self,worker):
+        if worker is not self._worker:
+            return
+        try:
+            worker.run()
+        finally:
+            worker.finished.emit()
 
     def _worker_finished(self):
         super()._worker_finished()

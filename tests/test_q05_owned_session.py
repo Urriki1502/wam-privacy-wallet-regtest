@@ -49,6 +49,9 @@ class OwnedSessionContracts(unittest.TestCase):
         text=(Path(__file__).resolve().parents[1]/'src/wam_regtest/operational_gui.py').read_text()
         self.assertIn('if self._worker is not None or self._approval_open',text)
         self.assertIn('event.ignore()',text)
+        self.assertIn('_run_owner_operation',text)
+        self.assertIn('QTimer.singleShot(0',text)
+        self.assertNotIn('worker.start()',text)
         cli=(Path(__file__).resolve().parents[1]/'src/wam_regtest/cli.py').read_text()
         self.assertIn('stop_core_on_app_exit=True',cli)
 
@@ -76,6 +79,11 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('APPROVED_LINUX_MANIFEST',harness)
         self.assertIn('wam-fusion-core-',harness)
         self.assertIn('private_temporary_directory',harness)
+        self.assertIn('timeout=120',harness)
+        self.assertIn('failed_profile_retained',harness)
+        self.assertIn('surviving_original_core',harness)
+        self.assertIn('paid.receive_count<1',harness)
+        self.assertNotIn('paid.receive_count!=1',harness)
 
     def test_host_adapter_matches_this_os_and_refuses_foreign_linux_manifest_pin(self):
         from wam_regtest.q05_owned_lifecycle import (

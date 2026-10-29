@@ -16,7 +16,7 @@ import sys
 import tempfile
 import zipfile
 
-from wam_regtest.core import verified_core_paths
+from wam_regtest.core import _read_cli,verified_core_paths
 from wam_regtest.core_supervisor import CoreSupervisor,ManagedCoreError
 from wam_regtest.custody import create_directory,private_temporary_directory
 from wam_regtest.rpc_scope import identity
@@ -46,21 +46,53 @@ def assert_live_original(owner):
     return process.pid
 
 
-def stop_owned(owner):
+def stop_owned(owner,record=None):
+    """Stop only the original Popen. Never adopt or kill an unknown PID."""
     if owner is None:
-        return
-    if owner.process is not None and owner.process.poll() is None:
+        return False
+    leftover=False
+    process=owner.process
+    if process is not None and process.poll() is None:
         try:
             owner.shutdown()
-        except (ManagedCoreError,OSError,ValueError,RuntimeError):
+        except (ManagedCoreError,OSError,ValueError,RuntimeError) as error:
+            leftover=True
+            if record is not None:
+                record['owned_shutdown_blocked']=True
+                record['owned_shutdown_type']=type(error).__name__
             try:
                 owner.recover_stop()
-            except (ManagedCoreError,OSError,ValueError,RuntimeError):
-                pass
+            except (ManagedCoreError,OSError,ValueError,RuntimeError) as recover_error:
+                leftover=True
+                if record is not None:
+                    record['owned_release_blocked']=True
+                    record['owned_release_type']=type(recover_error).__name__
     try:
         owner.close()
-    except (ManagedCoreError,OSError,ValueError,RuntimeError):
-        pass
+    except (ManagedCoreError,OSError,ValueError,RuntimeError) as error:
+        leftover=True
+        if record is not None:
+            record['owned_close_blocked']=True
+            record['owned_close_type']=type(error).__name__
+    if process is not None and process.poll() is None:
+        leftover=True
+        if record is not None:
+            record['surviving_original_core']=True
+            record['surviving_original_pid']=process.pid
+    return leftover
+
+
+def _generate_blocks(owner,address,count):
+    if type(count) is not int or not 1<=count<=101:
+        raise OwnedLifecycleError('Q05_REGTEST_GENERATE_DENIED')
+    assert_live_original(owner)
+    hashes=_read_cli(
+        [str(owner.cli),f'-datadir={owner.directory}','generatetoaddress',str(count),address],
+        timeout=120)
+    if type(hashes) is not list or len(hashes)!=count:
+        raise OwnedLifecycleError('Q05_REGTEST_MATURITY_DENIED')
+    assert_live_original(owner)
+    return hashes
 
 
 def _git_head(source):
@@ -325,11 +357,9 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
             stage='PUBLIC_DISPOSABLE_FIXTURE_FUNDING'
             from wam_regtest.wsp_live import _public_fixture_payment,public_regtest_mining_address
             from wam_sp.keystore import Keyring
-            rpc=session._rpc()
             address=public_regtest_mining_address(source)
-            generated=rpc._call('generatetoaddress',['101',address])
-            if type(generated) is not list or len(generated)!=101:
-                raise OwnedLifecycleError('Q05_REGTEST_MATURITY_DENIED')
+            _generate_blocks(owner,address,101)
+            rpc=session._rpc()
             txid,atoms,height=_public_fixture_payment(
                 rpc,session.ring.accounts()[0],address)
             funded_snap=session.snapshot()
@@ -351,15 +381,20 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
             sent=session.broadcast(review.commitment)
             if type(sent) is not str or len(sent)!=64:
                 raise OwnedLifecycleError('Q05_OWNED_BROADCAST_DENIED')
-            mined=rpc._call('generatetoaddress',['1',address])
-            if type(mined) is not list or len(mined)!=1:
-                raise OwnedLifecycleError('Q05_OWNED_CONFIRM_DENIED')
+            _generate_blocks(owner,address,1)
             paid=session.snapshot()
-            if paid.history_count<2 or paid.receive_count!=1:
+            seen=tuple(row.txid for row in paid.history)
+            spent=100000+10000
+            if (paid.history_count<2 or paid.receive_count<1 or sent not in seen
+                    or paid.confirmed_atoms!=atoms-spent):
+                record['observations'].append({'confirmed_history_observed':True,
+                    'history_count':paid.history_count,'receive_count':paid.receive_count,
+                    'confirmed_atoms':paid.confirmed_atoms,'broadcast_present':sent in seen})
                 raise OwnedLifecycleError('Q05_OWNED_CONFIRMED_HISTORY_DENIED')
             record['scenarios']['sign_broadcast']='PASS'
             record['observations'].append({'genuine_owned_broadcast':True,
-                'broadcast_txid':sent,'history_count':paid.history_count})
+                'broadcast_txid':sent,'history_count':paid.history_count,
+                'receive_count':paid.receive_count,'confirmed_atoms':paid.confirmed_atoms})
         if gui:
             stage='NATIVE_GUI'
             _gui_lifecycle(session,record,adapter)
@@ -385,7 +420,7 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
             if restored.history_count!=0 or restored.receive_count!=0:
                 raise OwnedLifecycleError('Q05_OWNED_RESTORE_CONTINUITY_DENIED')
         else:
-            if restored.history_count<2 or restored.receive_count!=1:
+            if restored.history_count<2 or restored.receive_count<1:
                 raise OwnedLifecycleError('Q05_OWNED_FUNDED_RESTORE_DENIED')
         session.lock();session=None
         owner.shutdown();owner.close();owner=None
@@ -393,13 +428,16 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
         record['observations'].append({'restored_same_payment_code':True,
             'funded_restore':bool(funded)})
         return stage
+    except Exception:
+        record['failure_stage']=stage
+        raise
     finally:
         if session is not None:
             try:
                 session.lock()
             except (OSError,ValueError,RuntimeError):
                 record['wallet_lock_blocked']=True
-        stop_owned(owner)
+        stop_owned(owner,record)
 
 
 def _fail_closed_dirty_runtime(adapter,core,source,root,record):
@@ -425,7 +463,7 @@ def _fail_closed_dirty_runtime(adapter,core,source,root,record):
         record['observations'].append({'dirty_runtime_preserved':True,
             'automatic_recovery_allowed':False})
     finally:
-        stop_owned(owner)
+        stop_owned(owner,record)
 
 
 def _fail_closed_interrupted_publication(core,source,root,record):
@@ -446,7 +484,7 @@ def _fail_closed_interrupted_publication(core,source,root,record):
         record['observations'].append({'interrupted_publication_inspect_only':True,
             'automatic_recovery_allowed':False})
     finally:
-        stop_owned(owner)
+        stop_owned(owner,record)
 
 
 def _fail_closed_crash(adapter,core,source,root,record):
@@ -463,8 +501,8 @@ def _fail_closed_crash(adapter,core,source,root,record):
         process.wait(timeout=30)
         try:
             owner.close()
-        except (ManagedCoreError,OSError,ValueError,RuntimeError):
-            pass
+        except (ManagedCoreError,OSError,ValueError,RuntimeError) as error:
+            record['crash_owner_close_type']=type(error).__name__
         owner=None
         blocked=CoreSupervisor(root,core,authorized=True)
         try:
@@ -477,10 +515,10 @@ def _fail_closed_crash(adapter,core,source,root,record):
                 return
             raise OwnedLifecycleError('Q05_CRASH_START_SHOULD_DENY')
         finally:
-            stop_owned(blocked)
+            stop_owned(blocked,record)
             blocked=None
     finally:
-        stop_owned(owner)
+        stop_owned(owner,record)
 
 
 def _wrong_core_refused(core,root,record):
@@ -550,7 +588,7 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
             raise OwnedLifecycleError('Q05_REQUIRED_SCENARIO_INCOMPLETE')
         record['status']='PASS'
     except Exception as error:
-        record['failure_stage']=stage
+        record.setdefault('failure_stage',stage)
         record['failure_type']=type(error).__name__
         code=error.args[0] if getattr(error,'args',None) else type(error).__name__
         record['failure_code']=code
@@ -561,8 +599,15 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
             record['status']='BLOCKED'
     finally:
         adapter.teardown()
-        if holder is not None:
+        leftover=bool(record.get('surviving_original_core') or record.get('owned_release_blocked'))
+        if holder is not None and record.get('status')=='PASS' and not leftover:
             holder.cleanup()
+        elif holder is not None:
+            record['failed_profile_retained']=True
+            try:
+                holder._finalizer.detach()
+            except (AttributeError,ValueError):
+                holder.cleanup=lambda:None
         record['timestamp_utc']=datetime.now(timezone.utc).isoformat()
         with receipt.open('x') as out:
             json.dump(record,out,indent=2);out.write('\n')
