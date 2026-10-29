@@ -30,9 +30,21 @@ Empty fail-closed, crash recovery, wrong-core refusal, reattach and
 concurrent-owner refusal PASS. `frozen_build` remains NOT EXECUTED.
 Those receipts do not include `graceful_shutdown`.
 
-macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596567
-and Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596535
-were still the open flush proof when this commit was cut.
+`37a2bf1` Q05 owned-session jobs, not the whole workflows:
+
+- macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596567
+  job `Q05 owned-session genuine signed Core START→RESTORE` SUCCESS.
+  Funded receipt PASS. Original pid 4810, recovered pid 5349, txid
+  `dd6689e5027bb637f8cee2b6634fec37407a01ae7413a1ff360aa32075610d35`.
+  Empty receipt PASS, including crash recovery and offscreen GUI.
+- Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596535
+  job `Q05 owned-session qualified Linux developer Core START→RESTORE` SUCCESS.
+  Funded receipt PASS. Original pid 4701, recovered pid 5089, txid
+  `385bdb071dd42e3a172b485d489f147a493d1e7839304376b2e43238f25d8260`.
+  Empty receipt PASS. `official_signed_release` is false on that developer Core.
+
+Those receipts do not prove `b052897`. The macOS and Linux workflows still
+had unrelated frozen and Q04 jobs open when the Q05 jobs finished.
 
 ## Retained failures
 
@@ -57,7 +69,12 @@ All four live-lease workflows completed success. They prove
 
 ## Next
 
-Read this commit's receipts for `graceful_shutdown` and
-`history_identity_unchanged` on Windows, macOS and Linux. A reaped-handle
-miss or a history fingerprint mismatch is a real FAIL. Q05 remains
-unaccepted.
+`b052897` CI is the graceful-stop proof. Windows funded
+https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222194
+Windows smoke
+https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222061
+Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222487
+macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40811222044
+Read `graceful_shutdown` and `history_identity_unchanged`. A reaped-handle
+miss or a history fingerprint mismatch is a real FAIL. Do not treat the
+`37a2bf1` flush receipts as proof of this reopen. Q05 remains unaccepted.
