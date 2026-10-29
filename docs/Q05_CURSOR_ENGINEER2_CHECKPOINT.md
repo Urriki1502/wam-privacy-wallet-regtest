@@ -1,52 +1,62 @@
-# Engineer 2 checkpoint — flush the confirmed tip before kill
+# Engineer 2 checkpoint — funded crash recovery on signed Windows
 
-Parent `ca7bb859b19e5b70f6cba64a2c93bf86d1e5b689`.
+Source HEAD: `37a2bf18871e710c71d17e71e50a19f2cc8732fe`.
 Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 stays independent
 (`feature/issue45-q05-managed-core-stage-a-20261027` at `b3046f82`).
 Canonical ledger: 37 Q05 cases PENDING, `accepted=false`. No merge.
 
-## Failure being repaired
+## This SHA, Windows funded
 
-`ca7bb85` Windows funded owned-session still failed
-`MANAGED_RECOVERY_HEIGHT_REGRESSED` at `FUNDED_SAME_OWNER_CRASH_RECOVERY`
-after the sacrificial miner block and the same-Popen height wait.
-Sign/broadcast had passed. Run
+`gettxoutsetinfo none "<tip>" true` runs before `process.kill()`. Core v28
+`ForceFlushStateToDisk` runs before the tip read. `use_index` false with a
+named block is rejected, so the quoted tip uses `use_index` true. The recovery
+floor stays at that flushed height. No second supervisor, PID adoption,
+datadir deletion or spend replay.
+
+Signed Windows Core funded receipt PASS:
+https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596391
+`funded_same_owner_crash_recovery`, `sign_broadcast`, `concurrent_owner_refused`,
+`same_owner_reattach` and `wallet_restore` are PASS. Original pid 3288,
+recovered pid 4404, `automatic_wallet_transaction_replay` false,
+`pid_adoption` false, `core_trust` official-signed-v0.1.11. This is one OS
+receipt, not canonical Q05 acceptance.
+
+## Retained failures
+
+`4d27f1b` Windows funded failed `CORE_RPC_DENIED` at
+`FUNDED_SAME_OWNER_CRASH_RECOVERY` (bare tip, `use_index` false):
+https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810343337
+
+`ca7bb85` Windows funded failed `MANAGED_RECOVERY_HEIGHT_REGRESSED` after one
+extra miner block and the same-Popen wait:
 https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40809932361
-Receipt: `failure_code=MANAGED_RECOVERY_HEIGHT_REGRESSED`.
 
-The earlier `5770930` receipt is
+`5770930` failed the same height code:
 https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40809138451
-with the same code. One extra `generatetoaddress` did not leave the confirmed
-tip on disk. `4d27f1b` calls `gettxoutsetinfo none <bare tip> false`. Core v28
-rejects that pair (`use_index` false with a named block) and its CLI
-JSON-parses `hash_or_height`, so a bare hash never reaches RPC. This commit
-passes a quoted tip and `use_index` true. `ForceFlushStateToDisk` still runs
-before the tip read. The recovery floor stays at that height. The same-Popen
-wait from `f3dc3c0` remains. No second supervisor, PID adoption, datadir
-deletion or spend replay.
 
-Local `unittest discover -s tests -p 'test_q05*.py'`: 118 PASS.
-`test_q02_contracts.py`: 19 PASS, 1 skipped. This host has no genuine Core
-binary. Canonical cases stay PENDING.
+## Trigger SHA `a7c3f81` reattach
 
-Parent `cbb5361` refuses a missing Core directory and an untrusted mainnet
-receipt before `start`. Its Windows empty job `40809458244` then failed
-`FileNotFoundError` in `FAIL_CLOSED` because the tampered-core parent
-directory was never created. The harness now creates that private profile
-before the refusal. The qualified receipt is still not mutated.
+All four workflows for same-owner reattach completed success. They do not
+prove the later flush.
 
-## Retained parent evidence
+- macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964924
+- Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964955
+- Windows smoke https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964943
+- Windows funded https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964946
 
-`9e1766e` empty crash recovery succeeded on macOS `40808378718`, Linux
-`40808378513` and Windows smoke `40808378464`. `792701e` Windows smoke
-`40808542596` and Windows funded `40808542569` succeeded with
-`concurrent_owner_refused`. `a7c3f81` added same-owner reattach.
-`5b5e4c1` Linux `40807061493` and macOS `40807061511` completed SUCCESS.
-None of those receipts prove this funded-crash repair.
+`ca7bb85` Windows smoke `40809932341` succeeded for the empty owned session
+(`crash_fail_closed`, `same_owner_crash_recovery`, `concurrent_owner_refused`,
+`same_owner_reattach`). That job does not assert `wrong_core_refused`.
+
+## Still open on this SHA
+
+macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596567
+Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596535
+Windows smoke https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40810596382
 
 ## Next
 
-Read this commit's Windows funded receipt for
-`funded_same_owner_crash_recovery`. If the flush RPC is rejected, keep the
-height floor and fix the call. Do not delete chain data. Q05 remains
-unaccepted.
+Read macOS and Linux funded receipts for `funded_same_owner_crash_recovery`
+on `37a2bf1`. A flush RPC rejection or a tip that stays below the floor is a
+real FAIL. Do not push another flush variant while those runs are the proof.
+Q05 remains unaccepted.
