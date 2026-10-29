@@ -51,13 +51,23 @@ class QualificationContracts(unittest.TestCase):
             source.assert_not_called()
         self.assertEqual(canary.read_bytes(),b'public-fixture')
 
-    @unittest.skipUnless(sys.platform=='darwin','Actual macOS private fixture writer')
     def test_public_reference_fixture_never_uses_encrypted_envelope_writer_or_overwrites(self):
-        path=self.directory/'reference.bin'
+        if sys.platform=='win32':
+            from wam_regtest.windows_private_storage import create_private_directory
+            create_private_directory(self.root)
+        else:self.root.mkdir(mode=0o700)
+        if sys.platform=='linux':
+            # File-only native test; actual Linux probes still require the
+            # approved Core/witness policy before custody.storage() is exposed.
+            from wam_regtest import linux_private_storage
+            policy=patch('wam_regtest.custody.storage',return_value=linux_private_storage)
+            policy.start();self.addCleanup(policy.stop)
+        path=self.root/'reference.bin'
         checkpoint._fixture_bytes(path,b'public-reference')
         self.assertEqual(path.read_bytes(),b'public-reference')
-        self.assertEqual(path.stat().st_mode&0o777,0o600)
-        with self.assertRaises(FileExistsError):checkpoint._fixture_bytes(path,b'replacement')
+        if sys.platform!='win32':self.assertEqual(path.stat().st_mode&0o777,0o600)
+        with self.assertRaises((FileExistsError,ValueError)):
+            checkpoint._fixture_bytes(path,b'replacement')
         self.assertEqual(path.read_bytes(),b'public-reference')
 
     def test_frozen_scenarios_pass_only_bundled_resources_and_explicit_flags(self):
