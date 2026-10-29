@@ -372,6 +372,7 @@ jobs:
               raise SystemExit('Q05_LINUX_OWNED_SESSION_BLOCKED_PREREQUISITE')
           assert proof['scenarios']['crash_fail_closed']=='PASS'
           assert proof['scenarios']['same_owner_crash_recovery']=='PASS'
+          assert proof['scenarios']['concurrent_owner_refused']=='PASS'
           assert proof['pid_adoption'] is False
           print('Q05_LINUX_OWNED_SESSION_EMPTY_PASS')
           PY
@@ -399,6 +400,7 @@ jobs:
               raise SystemExit('Q05_LINUX_FUNDED_OWNED_SESSION_BLOCKED_PREREQUISITE')
           assert proof['fixture_funding'] is True
           assert proof['scenarios']['sign_broadcast']=='PASS'
+          assert proof['scenarios']['concurrent_owner_refused']=='PASS'
           assert proof['automatic_wallet_transaction_replay'] is False
           print('Q05_LINUX_OWNED_SESSION_FUNDED_PASS')
           PY

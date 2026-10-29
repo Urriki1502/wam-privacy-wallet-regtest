@@ -95,6 +95,11 @@ class OwnedSessionContracts(unittest.TestCase):
         denial=harness.split('def _fail_closed_crash',1)[1].split('\ndef ',1)[0]
         self.assertNotIn('recover_dead',denial)
         self.assertIn('Q05_CRASH_START_SHOULD_DENY',denial)
+        self.assertIn('CONCURRENT_OWNER_WHILE_CORE_LIVE',harness)
+        self.assertIn('SUPERVISOR_STORAGE_LEASE_BUSY',harness)
+        self.assertIn('concurrent_owner_refused',harness)
+        self.assertIn('second_process_started',harness)
+        self.assertNotIn('rival.start',harness)
 
     def test_host_adapter_matches_this_os_and_refuses_foreign_linux_manifest_pin(self):
         from wam_regtest.q05_owned_lifecycle import (

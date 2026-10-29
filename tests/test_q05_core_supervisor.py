@@ -78,6 +78,22 @@ class SupervisorLifecycleUnit(unittest.TestCase):
         self.assertEqual(read_exact(self.root, 'supervisor.profile'), before)
         self.assertEqual(owner.status()['state'], 'stopped')
 
+    def test_live_owner_lease_blocks_second_supervisor_without_new_process(self):
+        from wam_regtest.supervisor_store import SupervisorStorageError
+        owner = self.owner()
+        self.runtime(owner)
+        pid = owner.process.pid
+        profile = read_exact(self.root, 'supervisor.profile')
+        chain = owner.directory
+        with self.assertRaises(SupervisorStorageError) as caught:
+            CoreSupervisor(self.root, self.core, authorized=True)
+        self.assertEqual(caught.exception.args, ('SUPERVISOR_STORAGE_LEASE_BUSY',))
+        self.assertEqual(owner.process.pid, pid)
+        self.assertIsNone(owner.process.poll())
+        self.assertEqual(read_exact(self.root, 'supervisor.profile'), profile)
+        self.assertEqual(owner.directory, chain)
+        self.assertFalse(owner._faulted)
+
     def test_partial_namespace_is_never_repaired(self):
         (self.root / 'unknown').write_bytes(b'preserve')
         with self.assertRaises(ManagedCoreError):

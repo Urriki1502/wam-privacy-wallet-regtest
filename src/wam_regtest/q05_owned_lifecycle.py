@@ -18,6 +18,7 @@ import zipfile
 
 from wam_regtest.core import _read_cli,verified_core_paths
 from wam_regtest.core_supervisor import CoreSupervisor,ManagedCoreError
+from wam_regtest.supervisor_store import SupervisorStorageError
 from wam_regtest.custody import create_directory,private_temporary_directory
 from wam_regtest.rpc_scope import identity
 from wam_regtest.wallet_session import WalletSession,WalletSessionError
@@ -406,6 +407,30 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
             raise OwnedLifecycleError('Q05_WALLET_LOCK_STOPPED_CORE')
         assert_live_original(owner)
         record['observations'].append({'wallet_lock_left_core_running':True,'core_pid':pid})
+        stage='CONCURRENT_OWNER_WHILE_CORE_LIVE'
+        rival=None
+        try:
+            try:
+                rival=CoreSupervisor(root,core,authorized=True)
+            except SupervisorStorageError as error:
+                if error.args!=('SUPERVISOR_STORAGE_LEASE_BUSY',):
+                    raise OwnedLifecycleError('Q05_CONCURRENT_OWNER_WRONG_DENIAL') from error
+            else:
+                raise OwnedLifecycleError('Q05_CONCURRENT_OWNER_SHOULD_DENY')
+        finally:
+            if rival is not None and rival.process is None:
+                try:
+                    rival.close()
+                except (ManagedCoreError,OSError,ValueError,RuntimeError):
+                    record['concurrent_owner_close_blocked']=True
+        if (owner.process is None or owner.process.poll() is not None
+                or owner.process.pid!=pid or type(owner.process) is not subprocess.Popen):
+            raise OwnedLifecycleError('Q05_CONCURRENT_OWNER_DISTURBED_ORIGINAL')
+        assert_live_original(owner)
+        record['scenarios']['concurrent_owner_refused']='PASS'
+        record['observations'].append({'concurrent_owner_refused':True,
+            'second_process_started':False,'original_core_pid':pid,
+            'automatic_pid_adoption':False})
         stage='CORE_REOPEN'
         owner.shutdown();owner.close()
         owner=CoreSupervisor(root,core,authorized=True)
@@ -644,7 +669,7 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
             _same_owner_crash_recovery(adapter,core_dir,wsp_source,recovered,record)
             _wrong_core_refused(core_dir,base/_profile_name(),record)
         required=['authentic_core_startup','owned_session_create','encrypted_checkpoint',
-                  'wallet_restore']
+                  'wallet_restore','concurrent_owner_refused']
         if funded:
             required.extend(['real_bip352_receiving','sign_broadcast'])
         if fail_closed:
