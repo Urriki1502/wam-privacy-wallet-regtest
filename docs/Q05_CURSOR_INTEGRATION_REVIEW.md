@@ -1,3 +1,26 @@
+# Combined integration update — 29 October 2026
+
+The owner transferred integration/qualification to Codex in
+[PR #138 comment 6488299410](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/138#issuecomment-6488299410).
+Latest reviewed Cursor head: `87721cda50682ee55feec32829ccf94a87459ade`;
+last code-bearing source `952e8756e46345f798b5fa2dbef8ced418d6e718`.
+
+| Source group | Combined disposition |
+| --- | --- |
+| history_pages, snapshot/read/window pagination, disclosure lookup | Selectively imported; complete transactional fingerprints, bounded display windows, exact SQL disclosure; no truncated-history claim. |
+| reservation_fingerprint | Imported into managed checkpoint/session, retained irreversible reservations. |
+| GUI/history/HiDPI helpers | Imported compatible pagination and DPR presentation; managed operations now use persistent serialized executor, not Cursor main-thread timers or temporary live-session QThreads. |
+| open_owned/recovery/custody | Codex active_location/COMMIT/anchor-floor implementation retained. No import of Cursor hardcoded original-vault opener or weaker directory metadata checks. |
+| platform adapters / Windows signed staging | Reviewed extraction into q05_platforms; Linux test witness explicit, not production authority; create-new staging, no repair. |
+| native CI | Adapted existing platform workflows to new actual managed GUI executor probe; previous four Cursor green runs are historical scope only. |
+| old q05_owned_lifecycle driver | Excluded: GUI bypasses lifetime owner-thread; interrupted-publication dummy file cannot prove genuine encrypted-publication failure. |
+
+Native Cocoa proof on combined source 873f6ac is supplemental, with failure history
+retained. All-OS native/frozen, real publication fault matrix and physical/independent
+review remain open. This internal review is not independent G7 signoff.
+
+---
+
 # Engineer 1 selective integration review — 29 October 2026
 
 Reviewed remote `cursor/q05-history-pagination-9c81` at

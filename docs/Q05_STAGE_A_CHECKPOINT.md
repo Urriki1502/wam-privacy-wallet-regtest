@@ -1,3 +1,55 @@
+# Resume checkpoint — serialized managed GUI integration (29 October 2026)
+
+Sole integration/qualification owner: Codex, per owner directive recorded in
+[PR #138 comment 6488299410](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/138#issuecomment-6488299410).
+Same branch/PR; base main `4bc6f658e4c00e0a8c5d3c9da7d79aab0a54dfae`.
+Runtime commits: `dac836d` Windows create-new SQLite; `5c25bc8` serialized GUI;
+`e1cf082` explicit original-child recovery; `50d2279` single restart/no implicit
+quit replacement; `873f6ac` positive owner-closed receipt before Cocoa quit.
+
+Verified local full suite at 873f6ac: **424 run, 391 PASS, 33 SKIP, zero failures**;
+163 Q05 contracts PASS separately. Skips do not qualify their native scopes.
+Source native Cocoa signed-Core GUI receipt: `evidence/q05/gui-executor-873f6ac.json`.
+Six observations, one real wallet submission: empty normal password onboarding,
+BIP352 receive, Prepare/Sign/Broadcast/confirm, deferred close while sending,
+reopen with same Core, clean Core checkpoint reopen, then same-owner SIGKILL
+recovery preserving tip/wallet/history/reservations; positive owner shutdown.
+Fixture funding and simulated approval clicks are qualification-only.
+
+Retain failures: 5c25bc8 interrupted/no final receipt; e1cf082 real cold SIGKILL
+restarted Core at genesis after height 103 (MANAGED_RECOVERY_HEIGHT_REGRESSED);
+50d2279 Cocoa exit had no final receipt and is INCOMPLETE, never PASS.
+The positive 873f6ac crash is specifically AFTER a clean Core checkpoint.
+A never-flushed Core crash remains fail-closed and is not qualified as transparent
+recovery. No lowering of height floor, PID adoption, replay or datadir replacement.
+
+Latest Cursor reviewed: `87721cda50682ee55feec32829ccf94a87459ade`
+(code tested there `952e8756e46345f798b5fa2dbef8ced418d6e718`). Imported compatible
+history/session/read/UI pagination and reservation fingerprints; original Codex
+COMMIT-container selection, anchor floor, runtime guard, owner-thread lease and
+explicit completion remain authoritative. Platform adapters are qualification-only.
+Do not import the old direct-session GUI driver or dummy interrupted-publication
+claim. Existing native Cursor receipts do not qualify this combined branch.
+
+Three managed GUI native jobs added to EXISTING Mac/Windows/Linux workflows,
+using signed Mac/Windows Core and reviewed Linux manifest with explicit TEST root
+witness. Require receipt PASS and source SHA, including on windowed exit code 0.
+Await their exact combined-source results; baseline b3046f8 SIX workflows succeeded.
+
+**Next unit:** diagnose exact combined native job receipts, then final packaged
+managed onboarding/lifecycle (Mac app/DMG, Windows executable, Linux desktop and
+applicable headless), actual encrypted-publication fault matrix and case-level
+reconciliation. Packaged entries still launch the historical disposable demo;
+this is NOT integrated packaged Q05 proof. Windows native SQLite and Linux witnessed
+real wallet remain unqualified until new jobs execute. Full supervisor-process
+crash with live Core remains refused; no foreign-process adoption design claimed.
+All 37 canonical cases stay PENDING, G0–G7 PENDING, Q05 ACTIVE/accepted=false;
+Q04 G6/G7 BLOCKED; Q06 QUEUED. Handoff NO; merge readiness NO.
+
+Historical checkpoints below are retained and superseded where stated.
+
+---
+
 # Windows native runtime fixture and remaining product gap
 
 bbcc604 Windows job 123204954760/run 40799817985 had five actual unit-fixture

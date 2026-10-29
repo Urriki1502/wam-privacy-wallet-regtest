@@ -17338,6 +17338,15 @@
               "receipt_path": "docs/evidence/q05/native-preflight-0620564.json",
               "receipt_sha256": "f1c62da77ce888afecb44d9140e57ae5ae72ff9f68569604805d5d658b430479",
               "scope": "Local signed-Core start/status/disconnect/stop/normal owner release/reopen with pre-spawn binary verification. Source only, no wallet/scanner or frozen qualification."
+            },
+            {
+              "status": "PASS",
+              "source_sha": "873f6ac2555f61f4b5823207bfa2c05105556d0f",
+              "checkout_sha": "873f6ac2555f61f4b5823207bfa2c05105556d0f",
+              "timestamp_utc": "2026-10-29T11:01:35.252377+00:00",
+              "receipt_path": "docs/evidence/q05/gui-executor-873f6ac.json",
+              "receipt_sha256": "4fd0d7557bcd011c3699325226eb7b79da73bffaac5482e433c207aea27089f0",
+              "scope": "Source native Cocoa combined executor only; one real submission; crash AFTER clean Core checkpoint. Not final packaged/physical qualification."
             }
           ]
         },
@@ -17380,7 +17389,18 @@
             "receipt_path": "docs/evidence/q05/native-ipc-release-c8b8128.json",
             "receipt_sha256": "122e43741df49cf059ca0bd33a5141f92d62594a422e74f6348dccdf4121bd85",
             "scope": "Signed CLI stop, positively reaped genuine owned Core and authenticated owner release, same profile/config/datadir on reopen. No full wallet or packaged claim."
-          }
+          },
+          "local_requalification_history": [
+            {
+              "status": "PASS",
+              "source_sha": "873f6ac2555f61f4b5823207bfa2c05105556d0f",
+              "checkout_sha": "873f6ac2555f61f4b5823207bfa2c05105556d0f",
+              "timestamp_utc": "2026-10-29T11:01:35.252377+00:00",
+              "receipt_path": "docs/evidence/q05/gui-executor-873f6ac.json",
+              "receipt_sha256": "4fd0d7557bcd011c3699325226eb7b79da73bffaac5482e433c207aea27089f0",
+              "scope": "Source native Cocoa combined executor only; one real submission; crash AFTER clean Core checkpoint. Not final packaged/physical qualification."
+            }
+          ]
         },
         {
           "id": "Q05-CRASH-RECOVER-MACOS",
@@ -17425,6 +17445,26 @@
               "receipt_path": "docs/evidence/q05/native-core-crash-7c03988.json",
               "receipt_sha256": "e1b970fe8a409db0d946e3d10495cf8e67b82198c31d75054b54c16f529bc8b1",
               "scope": "Actual Core crash and retained-original-Popen explicit recovery after fixing prior-cycle PID-reuse authorization. Same original profile/config/datadir and no height regression; not supervisor-process crash/live orphan reattachment or wallet recovery."
+            },
+            {
+              "status": "PASS",
+              "source_sha": "873f6ac2555f61f4b5823207bfa2c05105556d0f",
+              "checkout_sha": "873f6ac2555f61f4b5823207bfa2c05105556d0f",
+              "timestamp_utc": "2026-10-29T11:01:35.252377+00:00",
+              "receipt_path": "docs/evidence/q05/gui-executor-873f6ac.json",
+              "receipt_sha256": "4fd0d7557bcd011c3699325226eb7b79da73bffaac5482e433c207aea27089f0",
+              "scope": "Source native Cocoa combined executor only; one real submission; crash AFTER clean Core checkpoint. Not final packaged/physical qualification."
+            }
+          ],
+          "failure_history": [
+            {
+              "status": "FAIL",
+              "source_sha": "e1cf0829d783324e0b3516c363c8826e8a3493bb",
+              "checkout_sha": "e1cf0829d783324e0b3516c363c8826e8a3493bb",
+              "timestamp_utc": "2026-10-29T10:58:11.613598+00:00",
+              "receipt_path": "docs/evidence/q05/gui-executor-e1cf082-failure.json",
+              "receipt_sha256": "0ae0f1ecc170531d4463ce84953efc6842881a4bda79c9ac84601f2c4c20cd5e",
+              "failure": "Cold SIGKILL before Core chain flush: restart at genesis refused by MANAGED_RECOVERY_HEIGHT_REGRESSED; no transparent recovery claimed."
             }
           ]
         },
@@ -17524,6 +17564,15 @@
               "timestamp_utc": "2026-10-29T01:18:54.708127+00:00",
               "scope": "EXPLICIT_PENDING_RECOVERY_COMPLETION; original-owner local API only; not packaged GUI or all-OS qualification.",
               "recovery_completed": true
+            },
+            {
+              "status": "PASS",
+              "source_sha": "873f6ac2555f61f4b5823207bfa2c05105556d0f",
+              "checkout_sha": "873f6ac2555f61f4b5823207bfa2c05105556d0f",
+              "timestamp_utc": "2026-10-29T11:01:35.252377+00:00",
+              "receipt_path": "docs/evidence/q05/gui-executor-873f6ac.json",
+              "receipt_sha256": "4fd0d7557bcd011c3699325226eb7b79da73bffaac5482e433c207aea27089f0",
+              "scope": "Source native Cocoa combined executor only; one real submission; crash AFTER clean Core checkpoint. Not final packaged/physical qualification."
             }
           ]
         },
