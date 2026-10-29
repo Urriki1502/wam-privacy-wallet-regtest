@@ -1,6 +1,7 @@
-# Engineer 2 checkpoint — owned history paging
+# Engineer 2 checkpoint — reservation receipts on 724a2cf
 
-Parent tip: `724a2cf87cda10eb3a3f4f2e63b79506a68063e2` (reservation identity).
+Code under test for paging: `952e8756e46345f798b5fa2dbef8ced418d6e718`.
+Reservation identity: `724a2cf87cda10eb3a3f4f2e63b79506a68063e2`.
 Crash fingerprint `f16e7b7879685f800858cf54014bf89f8d5938a3` checked out as
 `3e04e45b60a937e41bce1f29d8aa044312dc03d7`. Native page
 `64278ed8b4dccf17750d8bd5ce762c97cac1eb26`.
@@ -26,14 +27,43 @@ host. Not a native PASS.
 
 Owned snapshots fingerprint `reservations` with the same canonical digest
 as the native checkpoint. Reattach, graceful restore, and empty or funded
-same-owner crash recovery call `_require_same_reservation`. A missing
-fingerprint refuses. Local `test_q05*.py` on that parent was recorded as
-119 PASS. Its CI is still the reservation proof:
+same-owner crash recovery call `_require_same_reservation`. These are the
+Q05 owned-session jobs, not whole-workflow acceptance. Every listed crash,
+reattach, and restore observation has `reservation_identity_unchanged`
+true. Empty wallets have reservation count 0 and sha256
+`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` on all
+three OS. Funded wallets have count 1. `frozen_build` stays `NOT EXECUTED`.
+`3e04e45` history receipts do not prove this check. `952e875` paging CI
+does not prove it either.
 
-- Windows funded https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40812185764
-- Windows smoke https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40812185782
-- Linux https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40812185723
-- macOS https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40812185737
+- Windows funded PASS
+  https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40812185764
+  Signed Core. Crash pid 5708, recovered pid 2724, reopened pid 2040.
+  Height 103. Txid `38860c311dae443fb418f6466cfd88fad2b1c0c4218b0c622f2a5ce5bd22f0bf`.
+  History sha256 `debf7a7f46040694afdb799adbb980985dd1206539d55cd6ea0ab65dedab2273`.
+  Reservation sha256 `b8f05fd523d4f00c13a0f9bc631938041e5a7e42372d176af7c51f473e7073fc`.
+- Windows empty PASS
+  https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40812185782
+  Signed Core. Crash pid 7848, recovered pid 6164, height 0.
+  The smoke workflow still had Q04 jobs open.
+- Linux Q05 job PASS
+  https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40812185723
+  Reviewed developer Core, `official_signed_release` false.
+  Funded crash pid 4854, recovered pid 5243, height 103.
+  Txid `ddd97cc8bb0e260d4d8e7a4151b154ed74463bb8919f1f13c7731de59d37ea85`.
+  History sha256 `10b679a90e227a4f5005532d68f3c872a91371f957552e2486cd34125994f471`.
+  Reservation sha256 `d49b956a63d165c89577f2e2d693b69141503070b718bf13d4ee12eab54ee4ce`.
+  Empty crash pid 4460, recovered pid 4612, height 0.
+  developer-core, Q04, and frozen-wallet jobs were still open. Those frozen
+  jobs are not Q05 `frozen_build`.
+- macOS Q05 job PASS
+  https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40812185737
+  Signed Core. Funded crash pid 2174, recovered pid 2623, height 103.
+  Txid `d3cfe4672cb26e90668d1fa3d846f6ccc4eae2c7d40bb30f273ff8bb407fc071`.
+  History sha256 `eb2004e347dff91f67e0742c7bc20d07a09c471c7796a14186c329d3fdb09fd1`.
+  Reservation sha256 `0b2a370a73eb2f84cc4fe95cf96e8ea5eaa920ab933f6282629174270ebe65f3`.
+  Empty crash pid 2072, recovered pid 2111, height 0.
+  The receive/balance job was still open.
 
 ## `3e04e45` crash-fingerprint receipts
 
@@ -90,9 +120,11 @@ https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/4080913845
 
 ## Next
 
-Read `724a2cf` for `reservation_identity_unchanged` on reattach, crash
-recovery, and graceful restore. `Q05_RESERVATION_IDENTITY_DENIED` or
-`WALLET_RESERVATION_INCONSISTENT` is a real FAIL. `3e04e45` history
-receipts do not prove that check. This paging commit needs its own CI.
-`gui_history_paged` is false on the current two-row funded page.
-`frozen_build` stays `NOT EXECUTED`. Q05 remains unaccepted.
+`724a2cf` Q05 jobs passed reservation identity on Windows, Linux, and
+macOS. Do not treat the still-open Q04, frozen-package, or receive jobs
+on those workflows as this proof. `952e875` CI is the paging proof and
+was still running when this note was written. Funded Core pages are
+complete at two rows, so `gui_history_paged` stays false there. A paging
+FAIL is real. `frozen_build` stays `NOT EXECUTED`. The frozen executable
+still has `q04-external-miner` and no owned-session mode. Q05 remains
+unaccepted. No merge.
