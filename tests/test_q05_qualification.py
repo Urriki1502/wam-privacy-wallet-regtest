@@ -36,6 +36,10 @@ class QualificationContracts(unittest.TestCase):
                     checkpoint.main([*self.args,'--confirm-disposable-regtest',*flags])
                 source.assert_not_called()
 
+    def test_crash_window_inventory_includes_stage_link_and_multiple_orphans(self):
+        self.assertTrue({'stage','stage-linked','multiple-orphans','anchored-hardlink',
+                         'symlink','permission'}<=set(checkpoint.NEGATIVE_MODES))
+
     def test_security_contender_cannot_create_a_missing_profile(self):
         with patch.object(security,'verify_source') as source:
             with self.assertRaisesRegex(ValueError,'DISPOSABLE_SCOPE_DENIED'):
@@ -69,6 +73,21 @@ class QualificationContracts(unittest.TestCase):
         with self.assertRaises((FileExistsError,ValueError)):
             checkpoint._fixture_bytes(path,b'replacement')
         self.assertEqual(path.read_bytes(),b'public-reference')
+
+    def test_unsafe_permission_fixture_is_actually_rejected_by_native_storage(self):
+        if sys.platform=='win32':
+            from wam_regtest.windows_private_storage import create_private_directory
+            create_private_directory(self.root)
+        else:self.root.mkdir(mode=0o700)
+        if sys.platform=='linux':
+            from wam_regtest import linux_private_storage
+            policy=patch('wam_regtest.custody.storage',return_value=linux_private_storage)
+            policy.start();self.addCleanup(policy.stop)
+        from wam_regtest import custody
+        path=self.root/'snapshot-000000001.enc';raw=b'WAMSP02\0'+bytes(64)
+        checkpoint._fixture_bytes(path,raw,public_read=True)
+        with self.assertRaises(ValueError):custody.storage().read(self.root,path.name)
+        self.assertEqual(path.read_bytes(),raw)
 
     def test_frozen_scenarios_pass_only_bundled_resources_and_explicit_flags(self):
         args=['--root',str(self.root),'--receipt',str(self.directory/'receipt.json'),

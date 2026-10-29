@@ -432,7 +432,7 @@ jobs:
           matrix=json.loads((evidence/'matrix.json').read_text())
           assert matrix['status']=='PASS' and matrix['last_owner_shutdown_verified'] is True
           assert matrix['source_provenance']['candidate_source_sha']==os.environ['WAM_SOURCE_HEAD']
-          assert len(matrix['completed'])==11
+          assert len(matrix['completed'])==17
           r=json.loads((evidence/'gui.json').read_text())
           assert r['status']=='PASS' and r['owner_shutdown_verified'] is True
           assert r['source_sha']==os.environ['WAM_SOURCE_HEAD']

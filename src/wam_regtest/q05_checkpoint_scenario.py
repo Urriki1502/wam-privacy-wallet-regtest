@@ -30,15 +30,20 @@ from wam_regtest.wsp_live import PINNED_WSP_COMMIT,_pinned_source
 class AfterPublicationCut(ValueError):pass
 class BeforeRecoveryCommitCut(ValueError):pass
 
+NEGATIVE_MODES=('missing','corrupt','orphan','sidecar','divergent-reference','wrong-wsp',
+    'stage','stage-linked','multiple-orphans','anchored-hardlink','symlink','permission')
 
-def _fixture_bytes(path,raw):
+
+def _fixture_bytes(path,raw,*,public_read=False):
     """Create-only private PUBLIC fixture bytes, not an encrypted-vault writer."""
     from . import custody
     custody.storage().validate_directory(path.parent)
     if sys.platform=='win32':
         import ctypes
         from . import windows_private_storage as native
-        with native.directory_guard(path.parent),native.security_attributes() as attributes:
+        descriptor=('O:'+native.owner_sid()+'D:P(A;;FA;;;'+native.owner_sid()+')(A;;FR;;;WD)'
+                    if public_read else None)
+        with native.directory_guard(path.parent),native.security_attributes(descriptor=descriptor) as attributes:
             handle=native.create(str(path),0xc0000000,0,attributes,1,0x200080,None)
             if handle in (None,native.INVALID):raise ValueError('Q05_FIXTURE_CREATE_DENIED')
             try:
@@ -46,11 +51,12 @@ def _fixture_bytes(path,raw):
                 if (not native.write(handle,buffer,len(raw),ctypes.byref(count),None)
                         or count.value!=len(raw) or not native.flush(handle)):
                     raise ValueError('Q05_FIXTURE_WRITE_DENIED')
-                native.verify_security(handle)
+                if not public_read:native.verify_security(handle)
             finally:native.close(handle)
     else:
         fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
         try:
+            os.fchmod(fd,0o644 if public_read else 0o600)
             offset=0
             while offset<len(raw):
                 count=os.write(fd,raw[offset:])
@@ -81,10 +87,32 @@ def negative_checkpoint(owner,source,password,keychain,initial,mode):
     elif mode=='sidecar':
         _fixture_bytes(owner.directory/'wallet-runtime.sqlite-wal',b'public-unknown-sidecar')
     elif mode=='divergent-reference':reference.write_bytes(b'{"network":"mainnet"}')
+    elif mode=='stage':
+        _fixture_bytes(folder/('.stage-'+os.urandom(16).hex()),current.read_bytes()[:128])
+    elif mode=='stage-linked':
+        future=folder/CheckpointVault._filename(before[0]+1)
+        store.publish(folder,future.name,current.read_bytes())
+        os.link(future,folder/('.stage-'+os.urandom(16).hex()))
+    elif mode=='multiple-orphans':
+        for offset in (1,2):store.publish(folder,CheckpointVault._filename(before[0]+offset),current.read_bytes())
+    elif mode=='anchored-hardlink':os.link(current,folder/('.stage-'+os.urandom(16).hex()))
+    elif mode=='symlink':
+        alias=folder/CheckpointVault._filename(before[0]+1)
+        if sys.platform=='win32':
+            # Unprivileged native directory reparse point; no developer-mode
+            # file-symlink permission or skipped hostile-path claim required.
+            tool=Path(os.environ['SystemRoot'])/'System32/cmd.exe'
+            subprocess.run([str(tool),'/c','mklink','/J',str(alias),str(folder)],
+                check=True,timeout=10,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        else:alias.symlink_to(current)
+    elif mode=='permission':
+        raw=current.read_bytes();current.rename(evidence/('private-'+current.name))
+        _fixture_bytes(current,raw,public_read=True)
     elif mode!='wrong-wsp':raise ValueError('Q05_NEGATIVE_FIXTURE_MODE_DENIED')
     retained={p:sha256(p.read_bytes()).hexdigest() for p in
               [*folder.iterdir(),*evidence.iterdir(),reference,
                owner.directory/'wallet-runtime.sqlite-wal'] if p.is_file()}
+    names={p.name for p in folder.iterdir()}
     expected=('MANAGED_WALLET_EXISTING_RUNTIME_DENIED' if mode=='sidecar' else
               'MANAGED_WALLET_REFERENCE_UNVERIFIED' if mode=='divergent-reference' else
               'MANAGED_WALLET_CHECKPOINT_DENIED')
@@ -100,11 +128,13 @@ def negative_checkpoint(owner,source,password,keychain,initial,mode):
         elif type(error) is not ManagedWalletError or error.args!=(expected,):raise
     else:raise ValueError('Q05_NEGATIVE_CHECKPOINT_ACCEPTED')
     if (anchor.read()!=before or (owner.directory/'wallet-runtime.sqlite').exists()
+            or names!={p.name for p in folder.iterdir()}
             or any(sha256(p.read_bytes()).hexdigest()!=digest for p,digest in retained.items())):
         raise ValueError('Q05_NEGATIVE_CHECKPOINT_STATE_MUTATED')
     return {'negative_checkpoint':mode,'refused_before_wallet_use':True,
             'native_anchor_unchanged':True,'original_and_hostile_bytes_preserved':True,
-            'plaintext_runtime_created':False,'automatic_recovery':False}
+            'plaintext_runtime_created':False,'automatic_recovery':False,
+            'fault_model':'constructed native residue; genuine Core and anchor; not physical power loss'}
 
 
 def interrupted_publication(owner,source,password,keychain,initial):
@@ -208,8 +238,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
     parser.add_argument('--interrupt-recovery-reference',action='store_true')
     parser.add_argument('--complete-pending-recovery',action='store_true')
     parser.add_argument('--owned-session',action='store_true')
-    parser.add_argument('--negative',choices=('none','missing','corrupt','orphan','sidecar',
-        'divergent-reference','wrong-wsp'),default='none')
+    parser.add_argument('--negative',choices=('none',*NEGATIVE_MODES),default='none')
     parser.add_argument('--linux-developer-manifest')
     parser.add_argument('--linux-root-witness',type=Path)
     parser.add_argument('--qualification-test-witness',action='store_true')

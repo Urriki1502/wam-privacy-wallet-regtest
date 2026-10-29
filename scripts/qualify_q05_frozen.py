@@ -13,6 +13,7 @@ import secrets
 import subprocess
 import sys
 import tempfile
+from wam_regtest.q05_checkpoint_scenario import NEGATIVE_MODES
 
 
 def require_receipt(record,executable,source):
@@ -77,7 +78,7 @@ def main():
         cases += [('signed-completion','checkpoint',[*completion,'--reservation','signed']),
             ('uncertain-completion','checkpoint',[*completion,'--reservation','uncertain'])]
         cases += [('negative-'+mode,'checkpoint',['--negative',mode]) for mode in
-                  ('missing','corrupt','orphan','sidecar','divergent-reference','wrong-wsp')]
+                  NEGATIVE_MODES]
         commands=[]
         for name,scenario,options in cases:
             target=parent/('wam-fusion-core-'+secrets.token_hex(8))

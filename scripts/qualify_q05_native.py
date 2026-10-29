@@ -15,6 +15,7 @@ import tempfile
 
 from wam_regtest.probe_source import verify_source
 from wam_regtest.q05_platforms import detect_adapter
+from wam_regtest.q05_checkpoint_scenario import NEGATIVE_MODES
 
 
 def main():
@@ -50,7 +51,7 @@ def main():
         ('signed-completion','probe_q05_wallet_checkpoint.py',[*completion,'--reservation','signed']),
         ('uncertain-completion','probe_q05_wallet_checkpoint.py',[*completion,'--reservation','uncertain'])]
     cases += [('negative-'+mode,'probe_q05_wallet_checkpoint.py',['--negative',mode]) for mode in
-              ('missing','corrupt','orphan','sidecar','divergent-reference','wrong-wsp')]
+              NEGATIVE_MODES]
     if sys.platform=='darwin':cases.append(('authenticated-control','probe_q05_macos_lifecycle.py',[]))
     parent=Path(tempfile.mkdtemp(prefix='wam-q05-native-matrix-')).resolve(strict=True)
     safe=True
