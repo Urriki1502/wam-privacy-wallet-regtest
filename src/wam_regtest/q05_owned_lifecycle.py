@@ -321,6 +321,8 @@ def _base_record(head,adapter,intake,funded):
 
 def _gui_lifecycle(session,record,adapter):
     try:
+        from time import monotonic,sleep
+        from wam_regtest.history_pages import GUI_HISTORY_LIMIT
         from wam_regtest.operational_gui import OperationalWalletWindow
         from wam_regtest.desktop import qt_application
     except ImportError:
@@ -328,8 +330,8 @@ def _gui_lifecycle(session,record,adapter):
         record['gui_mode']='unavailable'
         record['scenarios']['native_gui']='NOT EXECUTED'
         return
-    # One read of the caller's current session. Display that page only.
-    # Do not broadcast, mine, close, or take another wallet lock.
+    # Display the caller's current page. An incomplete page may read the same
+    # session at the next offset. No broadcast, mine, or wallet lock.
     snap=session.snapshot()
     app=qt_application()
     window=OperationalWalletWindow(session)
@@ -345,6 +347,34 @@ def _gui_lifecycle(session,record,adapter):
             or page._total!=snap.history_count or page._offset!=snap.history_offset
             or (snap.history_complete and (page.older.isEnabled() or page.newer.isEnabled()))):
         raise OwnedLifecycleError('Q05_GUI_HISTORY_DENIED')
+    paged=False
+    if not snap.history_complete:
+        if (page._offset!=0 or len(shown)!=GUI_HISTORY_LIMIT
+                or not page.older.isEnabled() or page.newer.isEnabled()):
+            raise OwnedLifecycleError('Q05_GUI_HISTORY_DENIED')
+        def idle():
+            deadline=monotonic()+30
+            while window._worker is not None:
+                app.processEvents()
+                if monotonic()>deadline:
+                    raise OwnedLifecycleError('Q05_GUI_HISTORY_DENIED')
+                sleep(0.01)
+        page.older.click()
+        idle()
+        older=tuple(row.txid for row in page.rows)
+        step=page._offset+len(older)
+        if (window._history_offset!=GUI_HISTORY_LIMIT or not older or set(older)&set(shown)
+                or page._offset!=GUI_HISTORY_LIMIT or page._total!=snap.history_count
+                or not page.newer.isEnabled()
+                or page.older.isEnabled()!=(step<page._total)
+                or window._worker is not None):
+            raise OwnedLifecycleError('Q05_GUI_HISTORY_DENIED')
+        page.newer.click()
+        idle()
+        if (tuple(row.txid for row in page.rows)!=shown or page._offset!=0
+                or window._history_offset!=0 or window._worker is not None):
+            raise OwnedLifecycleError('Q05_GUI_HISTORY_DENIED')
+        paged=True
     if expected:
         window.navigation.setCurrentRow(2)
         page.select_txid(expected[0])
@@ -359,6 +389,7 @@ def _gui_lifecycle(session,record,adapter):
         'gui_history_count':snap.history_count,
         'gui_history_rows':len(shown),
         'gui_history_complete':bool(snap.history_complete),
+        'gui_history_paged':paged,
         'automatic_wallet_transaction_replay':False,
     })
 

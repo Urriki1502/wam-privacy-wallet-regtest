@@ -36,6 +36,59 @@ class FusionV2Widgets(unittest.TestCase):
   snap=replace(fixture(),history=(HistoryRow('b'*64,104,2,0,1),),receive_count=12)
   page.render_snapshot(snap)
   self.assertIn('12 confirmed',page.received.text())
+ def test_operational_window_pages_the_same_session_without_a_privileged_call(self):
+  from time import monotonic,sleep
+  from wam_regtest.history_pages import GUI_HISTORY_LIMIT
+  from wam_regtest.operational_gui import OperationalWalletWindow
+  limit=GUI_HISTORY_LIMIT
+  def row(i):
+   return HistoryRow(f'{i:064x}',100,2,1,0)
+  newest=tuple(row(i) for i in range(limit,0,-1))
+  older=tuple(row(i) for i in range(limit+3,limit,-1))
+  base=fixture()
+  def page(rows,offset,complete):
+   return replace(base,history=rows,history_count=limit+3,history_complete=complete,
+                  history_offset=offset,receive_count=limit+3,signer_allowed=True,
+                  broadcast_allowed=True,height=400,confirmed_atoms=limit+3,confirmed_utxos=1)
+  pages={0:page(newest,0,False),limit:page(older,limit,False)}
+  class Session:
+   locked=False;faulted=False
+   core_dir=Path('/tmp/wam-q05-page-core');datadir=Path('/tmp/wam-q05-page-data');source=Path('/tmp/wam-q05-page-wsp')
+   def __init__(self):self.calls=[]
+   def snapshot(self,history_offset=0):
+    self.calls.append(history_offset)
+    return pages[history_offset]
+   def prepare(self,*_a,**_k):raise AssertionError('prepare')
+   def sign(self,*_a,**_k):raise AssertionError('sign')
+   def broadcast(self,*_a,**_k):raise AssertionError('broadcast')
+   def mine(self,*_a,**_k):raise AssertionError('mine')
+   def lock(self,*_a,**_k):raise AssertionError('lock')
+  session=Session()
+  window=OperationalWalletWindow(session);self.addCleanup(window.deleteLater)
+  window._sync_timer.stop();window._theme_timer.stop()
+  window.apply_snapshot(pages[0]);self.app.processEvents()
+  history=window.history_page
+  self.assertTrue(history.older.isEnabled());self.assertFalse(history.newer.isEnabled())
+  self.assertEqual(tuple(row.txid for row in history.rows),tuple(row.txid for row in newest))
+  def idle():
+   deadline=monotonic()+10
+   while window._worker is not None:
+    self.app.processEvents()
+    if monotonic()>deadline:self.fail('history read worker did not finish')
+    sleep(0.01)
+  history.older.click();idle()
+  self.assertEqual(session.calls,[limit])
+  self.assertEqual(tuple(item.txid for item in history.rows),tuple(item.txid for item in older))
+  self.assertEqual(history._offset,limit);self.assertTrue(history.newer.isEnabled());self.assertFalse(history.older.isEnabled())
+  history.newer.click();idle()
+  self.assertEqual(session.calls,[limit,0])
+  self.assertEqual(tuple(item.txid for item in history.rows),tuple(item.txid for item in newest))
+  self.assertEqual(window._history_offset,0);self.assertIsNone(window._worker)
+  complete=replace(pages[0],history=newest[:2],history_count=2,history_complete=True,history_offset=0,receive_count=2)
+  before=list(session.calls)
+  window.apply_snapshot(complete);history.older.click();self.app.processEvents()
+  self.assertFalse(history.older.isEnabled());self.assertEqual(session.calls,before)
+  self.assertEqual(tuple(item.txid for item in history.rows),tuple(item.txid for item in newest[:2]))
  def test_older_history_control_emits_offset_without_signing(self):
   from wam_regtest.history_pages import GUI_HISTORY_LIMIT
   page=HistoryPage();self.addCleanup(page.deleteLater)
