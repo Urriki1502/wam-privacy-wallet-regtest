@@ -610,6 +610,11 @@ def _same_owner_crash_recovery(adapter,core,source,root,record):
         snap=session.snapshot()
         code=snap.receive_code
         height=snap.height
+        history_sha=snap.history_sha256
+        tip=snap.tip
+        if (type(history_sha) is not str or len(history_sha)!=64
+                or type(tip) is not str or len(tip)!=64 or type(height) is not int):
+            raise OwnedLifecycleError('Q05_CRASH_RECOVERY_BASELINE_DENIED')
         reference=owner.root/'supervisor.wallet'
         reference_bytes=reference.read_bytes()
         vault=owner.directory/'wallet-vault'
@@ -637,7 +642,8 @@ def _same_owner_crash_recovery(adapter,core,source,root,record):
                                          create=False,keychain=keychain)
         restored=session.snapshot()
         if (restored.receive_code!=code or restored.history_count!=0
-                or restored.receive_count!=0 or restored.height<height
+                or restored.receive_count!=0 or restored.height!=height
+                or restored.history_sha256!=history_sha or restored.tip!=tip
                 or restored.mainnet_allowed or restored.chain!='regtest'):
             raise OwnedLifecycleError('Q05_CRASH_RECOVERY_CONTINUITY_DENIED')
         session.lock();session=None
@@ -647,6 +653,10 @@ def _same_owner_crash_recovery(adapter,core,source,root,record):
             'same_owner_crash_recovery':True,
             'original_core_pid':original_pid,
             'recovered_core_pid':recovered_pid,
+            'history_sha256':history_sha,
+            'tip':tip,
+            'height':height,
+            'history_identity_unchanged':True,
             'datadir_unchanged':True,
             'wallet_reference_preserved':True,
             'automatic_pid_adoption':False,
@@ -701,9 +711,13 @@ def _funded_same_owner_crash_recovery(owner,session,source,*,code,digest,sent,pa
     pre_receive=paid.receive_count
     pre_atoms=paid.confirmed_atoms
     pre_height=paid.height
+    pre_digest=paid.history_sha256
+    pre_tip=paid.tip
     if (type(sent) is not str or len(sent)!=64 or type(pre_count) is not int
             or pre_count<2 or type(pre_receive) is not int or pre_receive<1
-            or type(pre_atoms) is not int or type(pre_height) is not int):
+            or type(pre_atoms) is not int or type(pre_height) is not int
+            or type(pre_digest) is not str or len(pre_digest)!=64
+            or type(pre_tip) is not str or len(pre_tip)!=64):
         raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_BASELINE_DENIED')
     datadir=owner.directory.resolve()
     original_pid=assert_live_original(owner)
@@ -720,7 +734,9 @@ def _funded_same_owner_crash_recovery(owner,session,source,*,code,digest,sent,pa
     # ca7bb85 still restarted below the confirmed spend after one extra block.
     # Flush this tip and keep that height as the recovery floor.
     floor=_durable_regtest_tip(owner,pre_height)
-    if type(floor) is not int or floor<pre_height:
+    # The fingerprint includes confirmations, so a taller tip is a different
+    # history. Refuse before kill instead of recovering onto that tip.
+    if type(floor) is not int or floor!=pre_height:
         raise OwnedLifecycleError('Q05_FUNDED_CRASH_CHAIN_NOT_DURABLE')
     owner._height_snapshot=floor
     session.lock()
@@ -749,7 +765,9 @@ def _funded_same_owner_crash_recovery(owner,session,source,*,code,digest,sent,pa
                 or restored.history_count!=pre_count
                 or restored.receive_count!=pre_receive
                 or restored.confirmed_atoms!=pre_atoms
-                or restored.height<pre_height
+                or restored.history_sha256!=pre_digest
+                or restored.tip!=pre_tip
+                or restored.height!=pre_height
                 or restored.mainnet_allowed or restored.chain!='regtest'):
             raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_CONTINUITY_DENIED')
     except Exception:
@@ -765,7 +783,11 @@ def _funded_same_owner_crash_recovery(owner,session,source,*,code,digest,sent,pa
         'recovered_core_pid':recovered_pid,
         'broadcast_txid':sent,
         'history_count':pre_count,
+        'history_sha256':pre_digest,
+        'tip':pre_tip,
+        'height':pre_height,
         'confirmed_atoms':pre_atoms,
+        'history_identity_unchanged':True,
         'datadir_unchanged':True,
         'wallet_reference_preserved':True,
         'automatic_pid_adoption':False,
