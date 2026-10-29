@@ -279,6 +279,8 @@ class WalletSession:
             if getattr(self,'_managed_owner',None) is not None:
                 from .managed_wallet_session import check_session
                 check_session(self)
+                from .managed_wallet_checkpoint import durable_core_checkpoint
+                durable_core_checkpoint(self._managed_owner,*self.scanner.store.tip())
             self.vault.save(self.ring, self.scanner, self._password)
         except Exception:
             self.faulted = True

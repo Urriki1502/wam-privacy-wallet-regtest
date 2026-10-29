@@ -126,6 +126,32 @@ def require_checkpoint_namespace(directory,record):
     if not current:raise ManagedWalletError('MANAGED_WALLET_CHECKPOINT_AMBIGUOUS')
 
 
+def durable_core_checkpoint(owner,height,tip):
+    """Flush the owned Core chain BEFORE anchoring the wallet at that tip.
+
+    Pinned Core's gettxoutsetinfo calls ForceFlushStateToDisk. It is a finite,
+    mutation-consented CLI operation, never an external/read-only HTTP method.
+    Cache only for the identical original Popen AND tip: unchanged refreshes
+    add no CLI spawn. A new Core or tip must establish durability again.
+    """
+    if (type(height) is not int or not 0<=height<=1000000 or type(tip) is not str
+            or re.fullmatch('[0-9a-f]{64}',tip) is None):
+        raise ManagedWalletError('MANAGED_CORE_CHECKPOINT_INPUT_DENIED')
+    _owned(owner)
+    key=(owner.process,height,tip)
+    if getattr(owner,'_durable_core_checkpoint',None)==key:return
+    from .core import _read_cli
+    result=_read_cli([str(owner.cli),f'-datadir={owner.directory}','gettxoutsetinfo','none'])
+    if (type(result) is not dict or type(result.get('height')) is not int
+            or result['height']!=height or result.get('bestblock')!=tip):
+        raise ManagedWalletError('MANAGED_CORE_CHECKPOINT_TIP_CHANGED')
+    _owned(owner)
+    if (owner.process is not key[0] or owner.read.call('getblockcount')!=height
+            or owner.read.call('getbestblockhash')!=tip):
+        raise ManagedWalletError('MANAGED_CORE_CHECKPOINT_TIP_CHANGED')
+    owner._durable_core_checkpoint=key
+
+
 def _require_matching_tip(scanner,rpc):
     height,tip=scanner.store.tip()
     if (height,tip)!=(rpc.call('getblockcount'),rpc.call('getbestblockhash')):
@@ -268,6 +294,7 @@ def checkpoint(owner,source,password,*,authorized=False,keychain=None,create=Fal
                 ring,scanner=vault.restore(runtime,password,private_windows_runtime=sys.platform=='win32')
             before=vault._expected
             result=_snapshot(ring,scanner,rpc,vault)
+            durable_core_checkpoint(owner,result['height'],result['tip'])
             # Publish an authenticated checkpoint before deleting plaintext.
             # Resync may reconcile legitimate chain movement, never broadcast.
             vault.save(ring,scanner,password)

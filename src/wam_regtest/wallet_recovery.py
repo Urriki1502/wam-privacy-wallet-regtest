@@ -15,7 +15,7 @@ import sys
 from . import custody
 from .managed_wallet_checkpoint import (
     ManagedWalletError,_canonical,_inputs,_read_reference,_runtime,_snapshot,
-    _owned,_close_owned_runtime,
+    _owned,_close_owned_runtime,durable_core_checkpoint,
 )
 from .supervisor_identity import directory_identity
 from .supervisor_protocol import _distinct
@@ -152,6 +152,7 @@ def recover_checkpoint(owner,source,password,*,authorized=False,keychain=None):
             new=CheckpointVault(target,anchor,source)
             ring,scanner=new.restore(runtime,password,private_windows_runtime=sys.platform=='win32')
             result=_snapshot(ring,scanner,rpc,new)
+            durable_core_checkpoint(owner,result['height'],result['tip'])
             new.save(ring,scanner,password)  # Existing create-only publication + native CAS.
             actual=anchor.read()
             if (actual!=new._expected or actual[0]!=current[0]+1
