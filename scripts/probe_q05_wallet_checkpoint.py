@@ -125,12 +125,14 @@ def main():
     parser.add_argument('--interrupt-publication',action='store_true')
     parser.add_argument('--recover-after-interruption',action='store_true')
     parser.add_argument('--interrupt-recovery-reference',action='store_true')
+    parser.add_argument('--complete-pending-recovery',action='store_true')
     a=parser.parse_args();source=Path(__file__).resolve().parents[1]
     if (not a.confirm_disposable_regtest or platform.system()!='Darwin'
             or platform.machine()!='arm64' or a.root.exists() or a.root.is_symlink()
             or a.receipt.exists() or a.reservation!='none' and not a.fund_disposable_wallet
             or a.recover_after_interruption and not a.interrupt_publication
             or a.interrupt_recovery_reference and not a.recover_after_interruption
+            or a.complete_pending_recovery and not a.interrupt_recovery_reference
             or subprocess.check_output(['git','status','--porcelain'],cwd=source)):
         raise SystemExit('Q05_WALLET_PROBE_SCOPE_DENIED')
     provenance=verify_source(source)
@@ -138,7 +140,8 @@ def main():
     node,cli,intake=verified_core_paths(a.core_dir);_pinned_source(a.wsp_source)
     record={'schema':'q05-wallet-checkpoint-native/v1','status':'FAIL',
         'wallet_fixture':'PUBLIC_FIXTURE_FUNDED' if a.fund_disposable_wallet else 'EMPTY',
-        'qualification_scope':('INCOMPLETE_RECOVERY_REFERENCE_SAFE_REFUSAL' if a.interrupt_recovery_reference else
+        'qualification_scope':('EXPLICIT_PENDING_RECOVERY_COMPLETION' if a.complete_pending_recovery else
+            'INCOMPLETE_RECOVERY_REFERENCE_SAFE_REFUSAL' if a.interrupt_recovery_reference else
             'EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY' if a.recover_after_interruption else
             'INTERRUPTED_PUBLICATION_SAFE_REFUSAL' if a.interrupt_publication else 'CLEAN_OWNER_REOPEN'),
         'source_sha':head,'checkout_sha':head,'source_provenance':provenance,
@@ -306,6 +309,40 @@ def main():
                     stage='INCOMPLETE_RECOVERY_REFERENCE_SAFE_REFUSAL'
                     record['observations'].append(interrupted_recovery_reference(owner,a.wsp_source,
                         password,keychain,initial,preserved))
+                    if a.complete_pending_recovery:
+                        stage='EXPLICIT_PENDING_RECOVERY_COMPLETION'
+                        from wam_regtest.wallet_recovery import complete_recovery,_records
+                        from wam_regtest import custody
+                        rows,_=_records(owner,initial['wallet_id']);action=rows[-1]['action']
+                        anchor=custody.anchor(initial['wallet_id'],keychain);before=anchor.read()
+                        reference=(owner.root/'supervisor.recovery.000001').read_bytes()
+                        try:
+                            complete_recovery(owner,a.wsp_source,b'wrong-public-test-password',
+                                authorized=True,keychain=keychain,action=action)
+                            raise ValueError('Q05_COMPLETION_WRONG_PASSWORD_ACCEPTED')
+                        except ManagedWalletError:
+                            pass
+                        if (anchor.read()!=before or
+                                (owner.root/'supervisor.recovery.000001').read_bytes()!=reference):
+                            raise ValueError('Q05_COMPLETION_WRONG_PASSWORD_MUTATED_STATE')
+                        recovered=complete_recovery(owner,a.wsp_source,password,authorized=True,
+                            keychain=keychain,action=action)
+                        reference=(owner.root/'supervisor.recovery.000002').read_bytes()
+                        repeated=complete_recovery(owner,a.wsp_source,password,authorized=True,
+                            keychain=keychain,action=action)
+                        if (recovered['completion_already_committed'] is not False
+                                or repeated['completion_already_committed'] is not True
+                                or anchor.read()!=before or recovered['checkpoint']!=list(before)
+                                or (owner.root/'supervisor.recovery.000002').read_bytes()!=reference
+                                or any(recovered[k]!=initial[k] for k in ('wallet_id','payment_code',
+                                    'history_sha256','reservation_sha256','reserved_atoms'))
+                                or any(sha256(p.read_bytes()).hexdigest()!=digest for p,digest in preserved.items())):
+                            raise ValueError('Q05_PENDING_COMPLETION_NOT_AUTHENTIC_OR_IDEMPOTENT')
+                        initial=recovered;record['recovery_completed']=True
+                        record['observations'].append({'explicit_pending_commit_completed':True,
+                            'wrong_password_preserved_pending_reference':True,'native_anchor_unchanged':list(before),
+                            'same_wallet_history_and_uncertainty_preserved':True,
+                            'authenticated_retry_idempotent':True,'original_unknown_bytes_preserved':True})
                 else:
                     recovered=recover_checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
                     if (recovered['wallet_id']!=initial['wallet_id']
@@ -321,7 +358,7 @@ def main():
                         'original_orphan_runtime_reference_preserved':True,
                         'reservation_sha256':initial['reservation_sha256'],
                         'native_anchored_generation':initial['checkpoint']})
-        if not a.interrupt_recovery_reference and (not a.interrupt_publication or a.recover_after_interruption):
+        if (not a.interrupt_recovery_reference or a.complete_pending_recovery) and (not a.interrupt_publication or a.recover_after_interruption):
             stage='CORE_OWNER_REOPEN'
             owner.shutdown();owner.close()
             owner=CoreSupervisor(a.root,a.core_dir,authorized=True);owner.start(timeout=30)

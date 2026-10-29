@@ -171,3 +171,70 @@ def recover_checkpoint(owner,source,password,*,authorized=False,keychain=None):
         if scanner is not None:scanner.close()
         if ring is not None:ring.close()
         if rpc is not None and getattr(rpc,'_transport',None) is not None:rpc._transport.close()
+
+
+def complete_recovery(owner,source,password,*,action,authorized=False,keychain=None):
+    """Explicitly finish ONLY an already native-anchored recovery transaction.
+
+    No anchor write/save, orphan promotion or automatic completion. A repeated
+    COMMIT is observational/idempotent only while that exact anchor is current.
+    Unknown runtimes or target residue refuse; no failed bytes are removed.
+    """
+    _inputs(owner,source,password,authorized)
+    if type(action) is not str or not re.fullmatch('[0-9a-f]{16}',action):
+        raise ManagedWalletError('MANAGED_RECOVERY_ACTION_REQUIRED')
+    from .vault import CheckpointVault
+    from .wallet_session import WalletCoreCli
+    wallet_id=_read_reference(owner)
+    rows,_=_records(owner,wallet_id)
+    if not rows or rows[-1]['action']!=action:
+        raise ManagedWalletError('MANAGED_RECOVERY_ACTION_MISMATCH')
+    last=rows[-1];committed=last['state']=='COMMIT'
+    if not committed and len(rows)>=MAX_EVENTS:
+        raise ManagedWalletError('MANAGED_RECOVERY_CAPACITY')
+    target=owner.directory/('wallet-recovery-'+action)
+    runtime=_runtime(owner,'wallet-runtime-recovery-'+action+'.sqlite')
+    anchor=custody.anchor(wallet_id,keychain)
+    ring=scanner=rpc=None
+    try:
+        with anchor.lease():
+            actual=anchor.read()
+            if (type(actual) not in (tuple,list) or not _record(list(actual))
+                    or actual[0]!=last['source_anchor'][0]+1
+                    or committed and list(actual)!=last['target_anchor']):
+                raise ManagedWalletError('MANAGED_RECOVERY_ANCHOR_DIVERGED')
+            def verify_target():
+                if _canonical(directory_identity(target))!=_canonical(last['target_identity']):
+                    raise ManagedWalletError('MANAGED_RECOVERY_CONTAINER_CHANGED')
+                # A complete transaction has exactly the copied source and
+                # newly anchored target. Any stage/future/unknown name denies.
+                expected={CheckpointVault._filename(last['source_anchor'][0]),
+                          CheckpointVault._filename(actual[0])}
+                names={p.name for p in target.iterdir()}
+                if not expected<=names or names-expected-{'.vault.lock'}:
+                    raise ManagedWalletError('MANAGED_RECOVERY_TARGET_AMBIGUOUS')
+            verify_target()
+            vault=CheckpointVault(target,anchor,source)
+            vault._load_payload(password,last['source_anchor'])
+            vault._load_payload(password,actual)
+            rpc=WalletCoreCli(owner.cli,owner.directory);rpc.attest()
+            ring,scanner=vault.restore(runtime,password)
+            result=_snapshot(ring,scanner,rpc,vault)
+            _close_owned_runtime(ring,scanner,runtime);ring=scanner=None
+            verify_target();_owned(owner)
+            if anchor.read()!=actual or vault._expected!=actual or _records(owner,wallet_id)[0]!=rows:
+                raise ManagedWalletError('MANAGED_RECOVERY_COMPLETION_CHANGED')
+            if not committed:
+                _append(owner,wallet_id,action=action,state='COMMIT',
+                        target_identity=last['target_identity'],source_anchor=last['source_anchor'],
+                        target_anchor=actual)
+            active_location(owner,wallet_id)  # Do not return success on divergent publication.
+            result.update(checkpoint=list(actual),explicit_recovery_completion=True,
+                          completion_already_committed=committed,anchor_advanced=False)
+            return result
+    except (OSError,ValueError,RuntimeError):
+        raise ManagedWalletError('MANAGED_RECOVERY_COMPLETION_DENIED') from None
+    finally:
+        if scanner is not None:scanner.close()
+        if ring is not None:ring.close()
+        if rpc is not None and getattr(rpc,'_transport',None) is not None:rpc._transport.close()
