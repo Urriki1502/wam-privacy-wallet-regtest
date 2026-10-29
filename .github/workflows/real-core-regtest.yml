@@ -355,6 +355,8 @@ jobs:
             package-output/SHA256SUMS.json
             package-output/BUILD_SOURCE_RECEIPT.json
             package-output/q04-frozen-evidence.json
+            package-output/q05-frozen-evidence*.json
+            package-output/q05-frozen-evidence*.png
             package-output/cocoa-evidence/
             package-output/INDEPENDENT-WALLET-SECURITY.json
             package-output/RELEASE_CANDIDATE_MANIFEST.json
@@ -410,6 +412,7 @@ jobs:
           if ! command -v gpg >/dev/null; then brew install gnupg; fi
           python -m wam_regtest.release --platform macos-arm64 --destination core
       - name: Real managed wallet create receive sign broadcast confirm close reopen durable crash
+        timeout-minutes: 8
         env:
           QT_QPA_PLATFORM: cocoa
         run: |

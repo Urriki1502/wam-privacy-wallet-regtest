@@ -22,6 +22,17 @@ from .wsp_live import PINNED_WSP_COMMIT,_pinned_source,public_regtest_mining_add
 PASSWORD=b'public-q05-gui-disposable-only'
 
 
+def _owned_dialog(window,kind):
+    from PySide6.QtWidgets import QApplication
+    active=QApplication.activeModalWidget()
+    if type(active) is kind and active.parentWidget() is window:return active
+    # Native Cocoa focus can lag the Qt dialog's visibility. Only this test
+    # window's single visible exact-type child is eligible for simulated input.
+    visible=[d for d in window.findChildren(kind) if type(d) is kind
+        and d.parentWidget() is window and d.isVisible()]
+    return visible[0] if len(visible)==1 else None
+
+
 class LabBackend(ManagedWalletBackend):
     """Only extra actions are public fixture funding/mining on the SAME owner."""
     def __init__(self,*args,**kwargs):
@@ -53,6 +64,13 @@ class LabBackend(ManagedWalletBackend):
 
 
 class Driver:
+    @property
+    def stage(self):return self._stage
+    @stage.setter
+    def stage(self,value):
+        self._stage=value
+        print('Q05_GUI_STAGE='+value,flush=True)
+
     def __init__(self,window,backends,record,timeout,screenshot,failure_receipt):
         from PySide6.QtCore import QTimer
         self.window=window;self.backends=backends;self.record=record;self.stage='password'
@@ -71,6 +89,10 @@ class Driver:
         self.record['failure_timestamp_utc']=datetime.now(timezone.utc).isoformat()
         with self.failure_receipt.open('x') as out:
             json.dump(self.record,out,indent=2);out.write('\n')
+        print('Q05_GUI_SCENARIO_FAIL:'+code,flush=True)
+        from PySide6.QtWidgets import QInputDialog
+        dialog=_owned_dialog(self.window,QInputDialog)
+        if dialog is not None:dialog.reject()
         self.window.request_quit()
     def idle(self):return self.window._worker is None and not self.window.session.executor.busy
     def approve(self,kind):
@@ -79,7 +101,7 @@ class Driver:
         from .fusion_pages import PaymentApproval
         self.timer.stop();problems=[]
         def click():
-            dialog=QApplication.activeModalWidget()
+            dialog=_owned_dialog(self.window,PaymentApproval)
             if type(dialog) is not PaymentApproval:
                 problems.append('Q05_APPROVAL_DIALOG_MISSING')
                 if dialog is not None:dialog.reject()
@@ -99,7 +121,7 @@ class Driver:
             if self.errors:raise ValueError(self.errors[-1])
             w=self.window
             if self.stage=='password':
-                dialog=QApplication.activeModalWidget()
+                dialog=_owned_dialog(w,QInputDialog)
                 if type(dialog) is QInputDialog:
                     dialog.setTextValue(PASSWORD.decode());dialog.accept();self.stage='opened'
                 return
@@ -148,7 +170,7 @@ class Driver:
                 self.sent=txid;w.reopen();self.timer.stop()
                 from PySide6.QtCore import QTimer
                 def password():
-                    dialog=QApplication.activeModalWidget()
+                    dialog=_owned_dialog(w,QInputDialog)
                     if type(dialog) is QInputDialog:dialog.setTextValue(PASSWORD.decode());dialog.accept()
                 QTimer.singleShot(20,password);w.unlock_wallet();self.timer.start();self.stage='reopened'
             elif self.stage=='reopened' and self.idle() and not w.session.locked:
@@ -216,7 +238,7 @@ class Driver:
 
 
 def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
-                 linux_witness=None,test_witness=False,max_seconds=300):
+                 linux_witness=None,test_witness=False,max_seconds=300,_frozen=False):
     if (confirmed is not True or not root.is_absolute() or root.exists() or root.is_symlink()
             or not re.fullmatch('wam-fusion-core-[0-9a-f]{16}',root.name)
             or not receipt.is_absolute() or receipt.exists() or receipt.is_symlink()
@@ -225,13 +247,18 @@ def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
     failure_receipt=receipt.with_name(receipt.stem+'-failure.json')
     if failure_receipt.exists() or failure_receipt.is_symlink():
         raise ValueError('Q05_GUI_DISPOSABLE_SCOPE_DENIED')
-    project=Path(__file__).resolve().parents[2];proof=verify_source(project)
+    if type(_frozen) is not bool:raise ValueError('Q05_FROZEN_RUNTIME_REQUIRED')
+    if _frozen:
+        from .q05_package_provenance import read
+        proof=read()
+    else:
+        project=Path(__file__).resolve().parents[2];proof=verify_source(project)
     adapter=detect_adapter();adapter.enforce_host();_pinned_source(source)
     record={'schema':'q05-executor-gui-native/v1','status':'FAIL','source_provenance':proof,
         'source_sha':proof['candidate_source_sha'],'checkout_sha':proof['checkout_sha'],
         'platform':adapter.platform_id,'core_version':'v0.1.11','core_trust':adapter.core_trust,
         'official_signed_release':adapter.official_signed,'wsp_source_commit':PINNED_WSP_COMMIT,
-        'synthetic_rpc':False,'frozen':False,'physical_acceptance':False,'mainnet_allowed':False,
+        'synthetic_rpc':False,'frozen':_frozen,'physical_acceptance':False,'mainnet_allowed':False,
         'test_root_witness':test_witness,'profile_root':str(root),'observations':[]}
     backends=[];window_holder=[];published=False
     def publish():
@@ -250,6 +277,9 @@ def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
             backends.append(b);return b
         def hook(window):
             window_holder.append(window)
+            from PySide6.QtGui import QGuiApplication
+            record['qt_platform']=QGuiApplication.platformName()
+            record['window_device_pixel_ratio']=window.devicePixelRatioF()
             window._qualification_driver=Driver(window,backends,record,max_seconds,
                 receipt.with_name(receipt.stem+'-window.png'),failure_receipt)
             # Cocoa native termination can finish without unwinding app.exec.

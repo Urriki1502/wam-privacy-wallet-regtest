@@ -39,6 +39,9 @@ class ManagedWalletWindow(OperationalWalletWindow):
         # Mining stays an explicit test/advanced tool, never normal onboarding.
         self.mine_button.hide()
         self.mine_notice.hide()
+        menu=self.menuBar().addMenu('Managed Core')
+        menu.addAction('Verify and restart owned Core',self.request_core_restart)
+        menu.addAction('Stop managed Core and quit',self.request_quit)
         self._executor_poll=QTimer(self);self._executor_poll.setInterval(100)
         self._executor_poll.timeout.connect(self._poll_owner);self._executor_poll.start()
 
@@ -77,10 +80,14 @@ class ManagedWalletWindow(OperationalWalletWindow):
             self.apply_snapshot(result);self.status.setText('Managed wallet ready · REGTEST')
         elif action=='lock' and self._close_requested:
             self._close_requested=False
+            self.review=None;self.signed=False;self._submitted_txid=None
             self._clear_balance()
             if self.background_available:self.hide()
             else:self.showMinimized()  # Keep a reachable window if no tray exists.
         elif action=='quit':self._quit_completed=True
+        elif action=='core_restart':
+            self.review=None;self.signed=False;self._submitted_txid=None
+            self._clear_balance();self.status.setText('Owned Core restarted · wallet locked · unlock to verify')
         elif action=='recovery_status':
             self._after_control=lambda:self._approve_recovery(result['pending_action'])
         elif action in ('recover','complete_recovery'):
@@ -128,6 +135,20 @@ class ManagedWalletWindow(OperationalWalletWindow):
         if self._worker is not None or self.session.executor.busy:return
         self._control('recovery_status')
 
+    def request_core_restart(self):
+        if self._worker is not None or self.session.executor.busy or self._approval_open:return False
+        self._approval_open=True
+        try:
+            answer=QMessageBox.question(self,'Verify original managed Core',
+                'Lock the wallet and explicitly restart only this owned REGTEST Core?\n'
+                'The original profile and datadir must verify. Unknown/orphan processes '
+                'are refused; no transaction will be retried.',
+                QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+        finally:self._approval_open=False
+        if answer!=QMessageBox.StandardButton.Yes:return False
+        return self._control('core_restart')
+
     def _approve_recovery(self,action):
         self._approval_open=True
         try:
@@ -166,7 +187,7 @@ def launch_managed(root,core,source,*,authorized=False,create=False,keychain=Non
     if ok:window.open_wallet(password.encode(),create=create)
     else:window.request_quit()
     password=''
-    result=app.exec()
+    result=app.exec() if not executor.closed else 0
     # A normal Qt quit must have positive owner shutdown. An unexpected event
     # loop exit retains the non-daemon owner thread; never kill guessed PIDs.
     if not executor.closed:raise ValueError('MANAGED_OWNER_STILL_ACTIVE')

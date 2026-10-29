@@ -109,3 +109,28 @@ class ManagedGuiContracts(unittest.TestCase):
             self.assertFalse(window._quit_completed)
             window._poll_owner();quit_app.assert_called_once_with()
             self.assertEqual(observed,[(True,False)])
+
+    def test_core_restart_requires_explicit_operator_consent(self):
+        from PySide6.QtWidgets import QMessageBox
+        executor,window,created=self.fixture();executor.request('core_status')
+        before=list(created[0].calls)
+        with patch.object(QMessageBox,'question',return_value=QMessageBox.StandardButton.No):
+            self.assertFalse(window.request_core_restart())
+        self.assertEqual(created[0].calls,before)
+        with patch.object(QMessageBox,'question',return_value=QMessageBox.StandardButton.Yes):
+            self.assertTrue(window.request_core_restart())
+        self.wait(lambda:window._worker is None and not executor.busy)
+        self.assertEqual(created[0].calls[-1],('core_restart',created[0].thread))
+
+    def test_qualification_dialog_fallback_never_selects_a_foreign_window(self):
+        from PySide6.QtWidgets import QApplication,QInputDialog
+        from wam_regtest.q05_gui_scenario import _owned_dialog
+        _,window,_=self.fixture()
+        dialog=QInputDialog(window);foreign=QInputDialog()
+        try:
+            dialog.show();foreign.show();self.app.processEvents()
+            with patch.object(QApplication,'activeModalWidget',return_value=foreign):
+                self.assertIs(_owned_dialog(window,QInputDialog),dialog)
+                dialog.hide();self.assertIsNone(_owned_dialog(window,QInputDialog))
+        finally:
+            dialog.hide();foreign.hide();dialog.deleteLater();foreign.deleteLater()

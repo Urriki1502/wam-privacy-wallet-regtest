@@ -67,8 +67,9 @@ def main() -> int:
         from wam_regtest.core import smoke_real_core
         # Hidden CI mode: actual signed Core + genuine BIP352 + Qt screen.
         cocoa_mode = sys.argv[1:] == ["--ci-real-core-wallet-cocoa"]
+        q05_mode = sys.argv[1:2] == ["--ci-q05-managed-wallet"]
         q04_mode = sys.argv[1:] == ["--ci-q04-external-miner"]
-        ci_mode = sys.argv[1:] == ["--ci-real-core-gui"] or cocoa_mode or q04_mode
+        ci_mode = sys.argv[1:] == ["--ci-real-core-gui"] or cocoa_mode or q04_mode or q05_mode
         if cocoa_mode and os.environ.get("QT_QPA_PLATFORM") != "cocoa":
             raise BundleLaunchError("WAM_BUNDLE_COCOA_PLATFORM_REQUIRED")
         self_test = sys.argv[1:] == ["--check-bundle"]
@@ -77,6 +78,12 @@ def main() -> int:
         if self_test:
             print("MACOS_ARM64_SELF_CONTAINED_CORE_WSP_BUNDLE_PASS")
             return 0
+        if q05_mode:
+            from wam_regtest.q05_packaged import run
+            return run(core_dir,source,sys.argv[2:])
+        if not sys.argv[1:]:
+            from wam_regtest.managed_onboarding import launch
+            return launch(core_dir,source)
         if q04_mode:
             try:
                 evidence = run_q04_scenario(core_dir, report_path=Path("q04-frozen-evidence.json"),
@@ -88,35 +95,6 @@ def main() -> int:
             print("MACOS_ARM64_PACKAGED_Q04_EXTERNAL_MINER_PASS")
             return 0
 
-        # Finder launch runs the EXACT same signed actual Core E2E code that
-        # GitHub tests. No synthetic RPC and no fallback to a sample snapshot.
-        if not ci_mode:
-            from PySide6.QtCore import QTimer, Qt
-            from PySide6.QtWidgets import QApplication, QSplashScreen
-            from PySide6.QtGui import QPixmap, QColor, QPainter
-            from wam_regtest.desktop import qt_application
-            from wam_regtest.branding import brand_image
-            app = qt_application()
-            pixmap = QPixmap(620, 300)
-            pixmap.fill(QColor("#10100F"))
-            painter = QPainter(pixmap)
-            painter.drawPixmap(260,20,QPixmap(str(brand_image())).scaled(100,100,
-                Qt.AspectRatioMode.KeepAspectRatio,Qt.TransformationMode.SmoothTransformation))
-            painter.end()
-            splash = QSplashScreen(pixmap)
-            splash.showMessage(
-                "WAM Privacy Wallet · REGTEST\n\n"
-                "Verifying official WAM Core v0.1.11 and preparing a fresh "
-                "test-only BIP352 payment.\n"
-                "NO MAINNET · NO REAL FUNDS · DISPOSABLE TEST KEYS",
-                Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignBottom,
-                QColor("#F1C55A"),
-            )
-            splash.show()
-            app.processEvents()
-            # The existing desktop launcher enters the GUI event loop after
-            # it finishes the actual mining/payment. Close the splash then.
-            QTimer.singleShot(500, splash.close)
         result = smoke_real_core(
             core_dir, explicit_consent=True, wsp_source=source,
             wsp_payment_e2e=True,
