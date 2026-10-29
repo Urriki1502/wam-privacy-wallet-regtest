@@ -31,6 +31,11 @@ def _identity(info):
         'st_nlink','st_size','st_mtime_ns','st_ctime_ns'))
 
 
+def _directory_stability(info):
+    """Inode, owner and mode. Child creation changes nlink and timestamps only."""
+    return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid)
+
+
 def _no_acl(fd):
     # Deny both access and inheritable POSIX ACLs. Inspection errors are never
     # interpreted as absent ACLs, including unsupported filesystems.
@@ -48,7 +53,7 @@ def _validate_directory_fd(fd):
             or os.get_inheritable(fd)):
         raise LinuxStorageError('LINUX_PRIVATE_DIRECTORY_METADATA_DENIED')
     _no_acl(fd)
-    if _identity(before)!=_identity(os.fstat(fd)):
+    if _directory_stability(before)!=_directory_stability(os.fstat(fd)):
         raise LinuxStorageError('LINUX_PRIVATE_DIRECTORY_CHANGED')
 
 

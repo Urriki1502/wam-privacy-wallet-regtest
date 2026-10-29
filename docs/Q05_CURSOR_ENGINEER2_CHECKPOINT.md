@@ -1,58 +1,34 @@
-# Engineer 2 checkpoint — cross-platform real-Core owned-session CI
+# Engineer 2 checkpoint — Q02 owned-startup datadir reads
 
-Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 remains independent
-(`feature/issue45-q05-managed-core-stage-a-20261027`). Canonical ledger: 37 Q05
-PENDING, `accepted=false`. No second PR, no merge.
+Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 stays independent
+(`feature/issue45-q05-managed-core-stage-a-20261027` at `b3046f82`).
+Canonical ledger: 37 Q05 cases PENDING, `accepted=false`. No merge.
 
-## Evidence at `f6672a7d9219f4432f272f324ed2fd9ced0b89fb`
+## Evidence on `f6672a7d9219f4432f272f324ed2fd9ced0b89fb`
 
-Push workflows:
-
-- Windows receive `40805865221` SUCCESS, including funded owned-session.
+- macOS `40805865241` FAILURE. `q05-owned-session` PASS. E2E failed in Q02
+  `UNAVAILABLE`: `CORE_LOCAL_NETWORK_POLICY_DENIED`, latched
+  `CORE_RPC_SCOPE_FAULTED`, `Q02_NODE_START_TIMEOUT`. Same E2E job PASS on
+  `fd8376a` (`40802778826`).
 - Windows smoke `40805865225` SUCCESS, including owned-session.
-- macOS `40805865241` owned-session SUCCESS. Job `real-wamd` FAIL:
-  Q02 case `UNAVAILABLE`, `CORE_LOCAL_NETWORK_POLICY_DENIED` then
-  `CORE_RPC_SCOPE_FAULTED`, then `Q02_NODE_START_TIMEOUT`. The start loop
-  treated a pre-ready quarantine as warmup and never re-attested the same Popen.
-- Linux `40805865248` owned-session, native Qt, headless and Q04 SUCCESS.
-  developer-core and frozen were still running at inspection.
+- Windows WSP `40805865221` SUCCESS, including funded owned-session.
+- Linux `40805865248`: Q05 owned-session, native contracts, Qt, headless, Q04,
+  and both frozen wallet jobs SUCCESS. `developer-core` was still running when
+  `18774a7` was pushed.
 
-Fix on top of that SHA: `recover_unready_owned_scope` re-attests the same
-Popen only while that owned scope has never completed a verified RPC. A ready,
-exited, or foreign process stays faulted. Profile failure still quarantines
-ordinary `_read_cli` calls; restoring the file does not clear the scope.
+## Two startup fixes
 
-## This milestone
+`18774a757dc871863c8c69da8c01842f55b1d69a` re-attests the same Popen only before
+the first verified RPC. A ready, exited, or foreign process stays faulted.
+Ordinary profile failure still quarantines `_read_cli`.
 
-Shared harness `src/wam_regtest/q05_owned_lifecycle.py` plus CLI
-`scripts/probe_q05_owned_session.py`.
+This commit stops macOS and Linux directory checks from treating child creation
+(link count and timestamps) as directory replacement. Inode, owner and mode
+still refuse. File envelope identity still includes mtime and size. Continuous
+datadir updates during startup no longer fail every bootstrap read that the
+re-attest path has to retry.
 
-Adapters: macOS Keychain, Windows Credential Manager, Linux approved manifest
-`e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806` + NativeRootWitness.
+## Next
 
-Jobs:
-
-- macOS `real-core-regtest.yml` / `q05-owned-session`
-- Windows `windows-x64-real-core-regtest.yml` / `q05-owned-session`
-- Windows `windows-x64-wsp-real-receive.yml` / `q05-owned-session-funded`
-- Linux `linux-experimental-regtest.yml` / `q05-owned-session`
-
-`q05-linux-supervisor-contracts.yml` stays contracts-only.
-
-## Dispatch (owner-local gh if cloud 403)
-
-```bash
-gh workflow run real-core-regtest.yml --repo Urriki1502/wam-privacy-wallet-regtest --ref cursor/q05-history-pagination-9c81
-gh workflow run windows-x64-real-core-regtest.yml --repo Urriki1502/wam-privacy-wallet-regtest --ref cursor/q05-history-pagination-9c81
-gh workflow run windows-x64-wsp-real-receive.yml --repo Urriki1502/wam-privacy-wallet-regtest --ref cursor/q05-history-pagination-9c81
-gh workflow run linux-experimental-regtest.yml --repo Urriki1502/wam-privacy-wallet-regtest --ref cursor/q05-history-pagination-9c81
-```
-
-Inspect `head_sha` against the pushed commit. Do not reuse old receipts.
-
-Owner macOS dispatch `40788571264` ran `85d5c5c` (not this SHA). Job
-`q05-owned-session` FAIL: `SupervisorStorageError` at stage KEYCHAIN because
-`--root ${RUNNER_TEMP}/q05-owned-empty` is not `wam-fusion-core-[0-9a-f]{16}`
-and GitHub macOS temp carries inherited ACLs. Harness now allocates
-`private_temporary_directory` + a correctly named profile. Re-dispatch this
-HEAD.
+Read macOS `real-core-regtest` on this commit for Q02 `UNAVAILABLE`, and Linux
+`developer-core` on `f6672a7` / `18774a7` if that job fails. Q05 remains unaccepted.

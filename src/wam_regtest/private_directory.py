@@ -66,9 +66,13 @@ def _require_absent_acl(fd: int) -> None:
         raise MacosPrivateDirectoryError("MACOS_PRIVATE_DIRECTORY_ACL_DENIED")
 
 
-def _identity(info) -> tuple[int, ...]:
-    return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid,
-            info.st_nlink, info.st_mtime_ns, info.st_ctime_ns)
+def _directory_stability(info) -> tuple[int, ...]:
+    """Inode, owner and mode of an already-open directory descriptor.
+
+    Creating a child updates link count and timestamps. That is not a new
+    inode, owner or mode, so owned Core startup must not look like replacement.
+    """
+    return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid)
 
 
 def validate_macos_private_directory(fd: int) -> None:
@@ -89,7 +93,7 @@ def validate_macos_private_directory(fd: int) -> None:
                 or os.get_inheritable(fd)):
             raise MacosPrivateDirectoryError("MACOS_PRIVATE_DIRECTORY_METADATA_DENIED")
         _require_absent_acl(fd)
-        if _identity(before) != _identity(os.fstat(fd)):
+        if _directory_stability(before) != _directory_stability(os.fstat(fd)):
             raise MacosPrivateDirectoryError("MACOS_PRIVATE_DIRECTORY_CHANGED")
     except MacosPrivateDirectoryError:
         raise

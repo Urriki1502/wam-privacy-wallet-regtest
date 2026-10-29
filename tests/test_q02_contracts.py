@@ -198,6 +198,22 @@ class Q02Contracts(unittest.TestCase):
         self.assertIn('register(proc,core,data,authorized_disposable_mutation=True)',text)
         self.assertIn('unregister(data)',text)
 
+    def test_directory_stability_ignores_child_creation_and_keeps_owner_mode(self):
+        from wam_regtest.private_directory import _directory_stability as mac
+        from wam_regtest.linux_private_storage import _directory_stability as lin
+        from wam_regtest.linux_private_storage import _identity
+        base=dict(st_dev=1,st_ino=2,st_mode=0o40700,st_uid=3,st_gid=4,
+                  st_nlink=2,st_size=0,st_mtime_ns=5,st_ctime_ns=6)
+        original=SimpleNamespace(**base)
+        child=SimpleNamespace(**{**base,'st_nlink':3,'st_mtime_ns':9,'st_ctime_ns':10})
+        for stability in (mac,lin):
+            self.assertEqual(stability(original),stability(child))
+            self.assertNotEqual(stability(original),stability(SimpleNamespace(**{**base,'st_mode':0o40750})))
+            self.assertNotEqual(stability(original),stability(SimpleNamespace(**{**base,'st_ino':99})))
+            self.assertNotEqual(stability(original),stability(SimpleNamespace(**{**base,'st_uid':8})))
+        changed=SimpleNamespace(**{**base,'st_mtime_ns':11})
+        self.assertNotEqual(_identity(original),_identity(changed))
+
     @unittest.skipUnless(sys.platform=='darwin','macOS temp ACL regression only')
     def test_private_temporary_directory_avoids_inherited_system_temp_acl(self):
         from wam_regtest.custody import private_temporary_directory

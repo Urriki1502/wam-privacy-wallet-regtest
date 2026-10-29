@@ -2,9 +2,11 @@
 import os
 from pathlib import Path
 import platform
+import stat
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 from wam_regtest import linux_private_storage as store
@@ -97,6 +99,37 @@ class LinuxCustodyContracts(unittest.TestCase):
             store.require_trusted_anchor_for_spending()
         from wam_regtest import custody
         with self.assertRaises(ValueError):custody.storage()
+
+
+class LinuxDirectoryStability(unittest.TestCase):
+    @unittest.skipUnless(sys.platform=='linux' and platform.machine()=='x86_64','native Linux custody only')
+    def test_child_metadata_is_not_replacement_and_mode_change_is(self):
+        temporary=tempfile.TemporaryDirectory(prefix='wam-linux-dir-stability-')
+        self.addCleanup(temporary.cleanup)
+        root=Path(temporary.name).resolve()
+        root.chmod(0o700)
+        child=root/'churn'
+        store.create_private_directory(child)
+        fd=os.open(child,os.O_RDONLY|os.O_DIRECTORY|os.O_CLOEXEC)
+        self.addCleanup(os.close,fd)
+        real=os.fstat
+        state={'n':0,'mode':None}
+        def fstat(target):
+            info=real(target)
+            state['n']+=1
+            mode=info.st_mode if state['mode'] is None or state['n']==1 else state['mode']
+            return SimpleNamespace(st_dev=info.st_dev,st_ino=info.st_ino,st_mode=mode,
+                st_uid=info.st_uid,st_gid=info.st_gid,
+                st_nlink=info.st_nlink+(0 if state['n']==1 else 1),
+                st_size=info.st_size,
+                st_mtime_ns=info.st_mtime_ns+(0 if state['n']==1 else 1),
+                st_ctime_ns=info.st_ctime_ns+(0 if state['n']==1 else 1))
+        with patch('wam_regtest.linux_private_storage.os.fstat',fstat):
+            store._validate_directory_fd(fd)
+            state['n']=0
+            state['mode']=stat.S_IFDIR|0o750
+            with self.assertRaisesRegex(store.LinuxStorageError,'LINUX_PRIVATE_DIRECTORY_CHANGED'):
+                store._validate_directory_fd(fd)
 
 
 class ForeignLinuxCustody(unittest.TestCase):
