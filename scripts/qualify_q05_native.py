@@ -84,7 +84,9 @@ def main():
     finally:
         # A failed live owner must retain its witness and profile, not lose its
         # authority as a side effect of test cleanup. Never sweep test roots.
-        if safe:adapter.teardown()
+        if safe and record['status']=='PASS':adapter.teardown()
+        elif getattr(adapter,'_witness',None) is not None:
+            record['retained_qualification_witness_root']=str(adapter._witness.root)
         record['last_owner_shutdown_verified']=safe
         record['timestamp_utc']=datetime.now(timezone.utc).isoformat()
         with (a.output_dir/'matrix.json').open('x') as out:json.dump(record,out,indent=2);out.write('\n')

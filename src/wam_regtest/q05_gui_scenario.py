@@ -351,7 +351,9 @@ def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
         record.setdefault('failure_code','Q05_GUI_SCENARIO_DENIED')
     finally:
         safe=not window_holder or window_holder[0].session.executor.closed
-        if safe:adapter.teardown()
+        if safe and record['status']=='PASS':adapter.teardown()
+        elif getattr(adapter,'_witness',None) is not None:
+            record['retained_qualification_witness_root']=str(adapter._witness.root)
         else:record['original_owner_retained']=True
         # Profiles and all failed ciphertext/runtime remain untouched.
         publish()

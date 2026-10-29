@@ -533,7 +533,9 @@ def main(argv=None, *, core=None, source=None, frozen=False):
             except (OSError,ValueError,RuntimeError):record['owner_close_blocked']=True
         safe=owner is None or owner.process is None or owner.process.poll() is not None
         record['owner_shutdown_verified']=safe and not record.get('owner_close_blocked',False)
-        if safe:adapter.teardown()
+        if safe and record['status']=='PASS':adapter.teardown()
+        elif getattr(adapter,'_witness',None) is not None:
+            record['retained_qualification_witness_root']=str(adapter._witness.root)
         record['timestamp_utc']=datetime.now(timezone.utc).isoformat()
         with a.receipt.open('x') as out:json.dump(record,out,indent=2);out.write('\n')
     print(json.dumps({'status':record['status'],'source_sha':head,

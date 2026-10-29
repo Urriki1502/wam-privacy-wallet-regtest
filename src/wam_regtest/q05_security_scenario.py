@@ -172,14 +172,16 @@ def main(argv=None, *, core=None, source=None, frozen=False):
             except (OSError,ValueError,RuntimeError):record['original_owner_retained']=True
         safe=owner is None or owner.process is None or owner.process.poll() is not None
         if owner is not None and safe:
-            try:owner.close()
+            try:owner.release();owner.close()
             except (OSError,ValueError,RuntimeError):safe=False
         if control_thread is not None and safe:
             control_thread.join(4)
             if control_thread.is_alive() or control_errors:
                 safe=False;record['status']='FAIL';record['control_exit_unverified']=True
         record['owner_shutdown_verified']=safe
-        if safe:adapter.teardown()
+        if safe and record['status']=='PASS':adapter.teardown()
+        elif getattr(adapter,'_witness',None) is not None:
+            record['retained_qualification_witness_root']=str(adapter._witness.root)
         record['timestamp_utc']=datetime.now(timezone.utc).isoformat()
         with a.receipt.open('x') as out:json.dump(record,out,indent=2);out.write('\n')
     print(json.dumps({'status':record['status'],'source_sha':record['source_sha']}))

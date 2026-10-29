@@ -43,7 +43,7 @@ def main():
     env={k:v for k,v in os.environ.items() if k not in ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV')
         and not k.startswith(('DYLD_','QT_','QML_'))}
     env['QT_QPA_PLATFORM']={'Darwin':'cocoa','Windows':'windows','Linux':'xcb'}[platform.system()]
-    witness=None
+    witness=None;safe=False
     if sys.platform=='win32':
         system=Path(os.environ['SystemRoot']);env['PATH']=str(system/'System32')+os.pathsep+str(system)
         env['QT_SCALE_FACTOR']='1.25'  # Logical scaling, not physical operator acceptance.
@@ -58,6 +58,7 @@ def main():
                 '--linux-root-witness',str(witness.root/'anchor.sock'),'--qualification-test-witness']
         subprocess.run(args,env=env,cwd=parent,check=True,timeout=420)
         require_receipt(json.loads(receipt.read_text()),binary,source)
+        safe=True
         print('Q05_FINAL_FROZEN_MANAGED_GUI_LIFECYCLE_PASS')
         base=json.loads(receipt.read_text())
         # Run the actual bundled code for custody/fault cases too. Each case
@@ -82,14 +83,25 @@ def main():
                     'e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
                     '--linux-root-witness',str(witness.root/'anchor.sock'),'--qualification-test-witness']
             commands.append(command)
+            safe=False
             subprocess.run(command,env=env,cwd=parent,check=True,timeout=420)
             item=json.loads(result.read_text())
             require_supplement(item,base,binary,scenario,options)
+            safe=True
             print('Q05_FINAL_FROZEN_'+name.upper().replace('-','_')+'_PASS',flush=True)
         with receipt.with_name(receipt.stem+'-commands.json').open('x') as out:
             json.dump({'gui':args,'supplements':commands},out,indent=2);out.write('\n')
     finally:
-        if witness is not None:witness.tearDownClass()
+        if witness is not None:
+            if safe:witness.tearDownClass()
+            else:
+                # The failed wallet's native anchor is evidence too. Preserve
+                # the exact fixture service/state; never delete it on failure.
+                retained=receipt.with_name(receipt.stem+'-retained-witness.json')
+                with retained.open('x') as out:
+                    json.dump({'status':'BLOCKED','actor':'QUALIFICATION_HOST_OPERATOR',
+                        'witness_root':str(witness.root),'service':str(witness.service),
+                        'action':'Preserve original failed profile and witness; review verified original owner before process action.'},out)
         # Intentionally retain the entire managed profile, no rmtree/temp context.
 
 
