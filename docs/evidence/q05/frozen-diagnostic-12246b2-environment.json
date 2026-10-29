@@ -1,0 +1,12 @@
+{
+  "source_sha": "12246b2eba4cfe14fd43f83e40e7722b02276226",
+  "python": "3.12.15 (main, Sep 30 2026, 22:04:19) [Clang 21.0.0 (clang-2100.3.34.2)]",
+  "qualification": false,
+  "scope": "Direct frozen entry diagnostic only; CPython3.12.15 differs from declared Q01 Mac3.12.10. Final all-OS CI qualification required.",
+  "dependencies": {
+    "PySide6": "6.12.0",
+    "PyInstaller": "6.22.3",
+    "cryptography": "50.0.0",
+    "coincurve": "21.0.0"
+  }
+}

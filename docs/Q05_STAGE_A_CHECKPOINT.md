@@ -1,3 +1,70 @@
+# Latest resume checkpoint — packaged managed GUI (29 October 2026)
+
+Continue SAME PR138 / feature/issue45-q05-managed-core-stage-a-20261027.
+Source commits `a48fcba445f314c93b71b61ac3716197f73a858d` and
+`12246b2eba4cfe14fd43f83e40e7722b02276226`; do not restart historical analysis.
+Codex remains sole integration/verification owner; no Q06 or merge authority.
+
+## Completed since previous checkpoint
+
+- Native Windows job123411012864/run40863103871 and Linux job123411012660/
+  run40863103909 PASS on candidate8692b70 / literal merge checkoutdd5bc191.
+  Actual managed Qt create/fund/receive/prepare/sign/broadcast/confirm/close/reopen,
+  clean-checkpoint Core crash/recovery, same history/reservations and shutdown.
+  Windows native create-only protected SQLite executes with signed v0.1.11;
+  Linux reviewed Core manifest e77a574... and explicit test witness only.
+  Exact sanitized receipts: evidence/q05/gui-native-{windows,linux}-8692b70.json.
+- Existing Linux headless/native Qt/Q04 coexistence/contention and both historical
+  frozen jobs also PASS on8692b70. They do not qualify the NEW packaged Q05 code.
+- Native macOS Q05 job123411012919/run40863103886 remained running beyond the
+  driver deadline at last observation; no available log/receipt yet. Root cause
+  UNKNOWN. Do not call it infrastructure-only or borrow local Cocoa PASS.
+  Next native step has an8-minute bound plus stage/FAIL output and always-upload.
+- Normal packaged entries now select persistent existing/new managed profiles;
+  no implicit fixture funding. Core restart menu requires explicit consent.
+  Immutable serialized executor / native lease, authenticated COMMIT selection,
+  original Popen and all Q01–Q04 boundaries retained. Closed wallet clears review.
+- Explicit final-executable Q05 GUI test wired into existing Mac/Windows/Linux
+  desktop builders, separately from Q04. Build stamp requires literal candidate/
+  checkout Python equality and outer unchanged-source/final artifact manifests.
+  No source/Core override and no in-app Linux witness provisioning.
+- Local full regression on a48fcba:432 run /399 PASS /33 SKIP /zero failures.
+  After final cleanup/source-stamp guard fixes:172 Q05 tests PASS at12246b2.
+- Direct frozen diagnostic built/run at12246b2: actual Cocoa + signed original
+  Core + pinned WSP lifecycle PASS (six observations, one submission, positive
+  owner/Core shutdown). Receipt and environment companion retained. Local
+  CPython3.12.15 differs from Q01 Mac3.12.10: **NOT final Q01/frozen acceptance**.
+- First frozen diagnostic a48fcba FAIL retained. /var alias correctly refused by
+  no-follow custody before Core; Qt shutdown SIGSEGV followed. Fix canonicalizes
+  ONLY the just-created test parent, never an existing wallet; closed-owner window
+  accepts Qt cleanup. New negative same-artifact probe: alias still refused,
+  FAIL receipt preserved, exit2, positive owner close, no Core and no SIGSEGV.
+
+## Next exact actions
+
+1. Fetch remote PR138 HEAD; verify clean tree, usage and acquire official lease.
+2. Inspect exact new-HEAD native/frozen jobs. First obtain old macOS job123411012919
+   full log/FAIL artifacts after it ends, preserve them and diagnose actual stage.
+   Do not speculate or repeat the already successful Win/Linux source research.
+3. Fix only demonstrated failures, run affected tests, batch before pushing.
+   Final Mac app/DMG on declared3.12.10, Windows executable and Linux desktop
+   must run NEW Q05 frozen probe. Headless managed-lifecycle qualification remains
+   unimplemented/applicable scope unresolved; legacy headless Q04 is insufficient.
+4. Complete actual encrypted-publication interruption/explicit-completion matrix
+   on all OS, wrong/divergent inputs and cross-process owner cases; reconcile all37
+   predicates with exact evidence. No case promotion based on diagnostics alone.
+5. Normal profile picker/operator flow and125% Windows layout need final review.
+   Positive crash scope remains AFTER a clean Core checkpoint; pre-flush loss is
+   fail-closed and unresolved as transparent recovery. Supervisor-process crash with
+   live Core still refuses adoption. Preserve profiles, failures and ambiguous data.
+
+Canonical state unchanged: Q05 ACTIVE/accepted=false,0PASS/0FAIL/37PENDING/
+0BLOCKED/0STALE, G0–G7 PENDING. Q04 G6/G7 BLOCKED; Q06 QUEUED.
+Handoff NO; merge readiness NO. Physical and independent gates remain unresolved.
+This checkpoint stops for allowance conservation, not technical completion.
+
+---
+
 # Resume checkpoint — serialized managed GUI integration (29 October 2026)
 
 Sole integration/qualification owner: Codex, per owner directive recorded in
