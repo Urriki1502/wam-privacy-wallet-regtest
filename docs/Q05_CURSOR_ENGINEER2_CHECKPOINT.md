@@ -1,6 +1,8 @@
 # Engineer 2 checkpoint — Q02 startup reads on signed macOS Core
 
-Branch `cursor/q05-history-pagination-9c81` at `5b5e4c160ee21cfef2e75c52b5262c77d889ce1b`.
+Branch `cursor/q05-history-pagination-9c81`. Startup code fix
+`5b5e4c160ee21cfef2e75c52b5262c77d889ce1b`. This note is docs-only and is not
+that proof SHA.
 Codex Draft #138 stays independent
 (`feature/issue45-q05-managed-core-stage-a-20261027` at `b3046f82`).
 Canonical ledger: 37 Q05 cases PENDING, `accepted=false`. No merge.
