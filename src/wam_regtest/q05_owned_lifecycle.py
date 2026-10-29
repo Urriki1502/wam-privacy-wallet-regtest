@@ -293,6 +293,7 @@ def _base_record(head,adapter,intake,funded):
             'same_owner_crash_recovery':'NOT EXECUTED',
             'funded_same_owner_crash_recovery':'NOT EXECUTED',
             'same_owner_reattach':'NOT EXECUTED',
+            'graceful_shutdown':'NOT EXECUTED',
             'dirty_runtime_fail_closed':'NOT EXECUTED',
             'wrong_core_refused':'NOT EXECUTED',
             'interrupted_publication_fail_closed':'NOT EXECUTED',
@@ -462,26 +463,53 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
         })
         session.lock();session=None
         stage='CORE_REOPEN'
-        owner.shutdown();owner.close()
+        stopped=owner.process
+        stopped_pid=assert_live_original(owner)
+        datadir=owner.directory.resolve()
+        if type(stopped) is not subprocess.Popen or stopped.pid!=stopped_pid:
+            raise OwnedLifecycleError('Q05_GRACEFUL_SHUTDOWN_ORIGINAL_DENIED')
+        owner.shutdown()
+        # The retained Popen handle is the proof of exit. A later numeric PID
+        # may be reused by this owner's new child; that is not a second daemon.
+        if stopped.poll() is None or owner.process is not None:
+            raise OwnedLifecycleError('Q05_GRACEFUL_SHUTDOWN_ORIGINAL_STILL_LIVE')
+        owner.close()
         owner=CoreSupervisor(root,core,authorized=True)
         owner.start(timeout=90)
-        assert_live_original(owner)
+        reopened_pid=assert_live_original(owner)
+        if (owner.directory.resolve()!=datadir or owner.process is stopped
+                or owner.process.poll() is not None):
+            raise OwnedLifecycleError('Q05_GRACEFUL_REOPEN_DENIED')
+        record['scenarios']['graceful_shutdown']='PASS'
+        record['observations'].append({
+            'graceful_shutdown':True,
+            'stopped_original_pid':stopped_pid,
+            'reopened_core_pid':reopened_pid,
+            'original_popen_reaped':True,
+            'second_daemon':False,
+            'datadir_unchanged':True,
+            'automatic_pid_adoption':False,
+        })
         stage='RESTORE_OWNED_SESSION'
         session=WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
                                          create=False,keychain=keychain)
         restored=session.snapshot()
-        if restored.receive_code!=code or restored.core_sha256!=digest:
+        if (restored.receive_code!=code or restored.core_sha256!=digest
+                or restored.receive_code!=again.receive_code
+                or restored.history_sha256!=again.history_sha256
+                or restored.history_count!=again.history_count
+                or restored.receive_count!=again.receive_count
+                or restored.confirmed_atoms!=again.confirmed_atoms
+                or restored.height!=again.height or restored.tip!=again.tip
+                or restored.chain!='regtest' or restored.mainnet_allowed):
             raise OwnedLifecycleError('Q05_OWNED_RESTORE_CONTINUITY_DENIED')
-        if not funded:
-            if restored.history_count!=0 or restored.receive_count!=0:
-                raise OwnedLifecycleError('Q05_OWNED_RESTORE_CONTINUITY_DENIED')
-        else:
-            if restored.history_count<2 or restored.receive_count<1:
-                raise OwnedLifecycleError('Q05_OWNED_FUNDED_RESTORE_DENIED')
         session.lock();session=None
         owner.shutdown();owner.close();owner=None
         record['scenarios']['wallet_restore']='PASS'
         record['observations'].append({'restored_same_payment_code':True,
+            'restored_history_sha256':restored.history_sha256,
+            'restored_height':restored.height,
+            'history_identity_unchanged':True,
             'funded_restore':bool(funded)})
         return stage
     except Exception:
@@ -836,7 +864,8 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
             wrong=base/_profile_name();create_directory(wrong)
             _wrong_core_refused(core_dir,wrong,record)
         required=['authentic_core_startup','owned_session_create','encrypted_checkpoint',
-                  'wallet_restore','concurrent_owner_refused','same_owner_reattach']
+                  'graceful_shutdown','wallet_restore','concurrent_owner_refused',
+                  'same_owner_reattach']
         if funded:
             required.extend(['real_bip352_receiving','sign_broadcast',
                              'funded_same_owner_crash_recovery'])

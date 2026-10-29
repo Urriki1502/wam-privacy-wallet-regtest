@@ -377,6 +377,9 @@ jobs:
           assert any(row.get('untrusted_core_directory_refused') and row.get('process_started') is False and row.get('real_core_receipt_unchanged') for row in proof['observations'])
           assert proof['scenarios']['concurrent_owner_refused']=='PASS'
           assert proof['scenarios']['same_owner_reattach']=='PASS'
+          assert proof['scenarios']['graceful_shutdown']=='PASS'
+          assert any(row.get('graceful_shutdown') and row.get('original_popen_reaped') is True and row.get('second_daemon') is False for row in proof['observations'])
+          assert any(row.get('history_identity_unchanged') for row in proof['observations'])
           assert proof['pid_adoption'] is False
           print('Q05_LINUX_OWNED_SESSION_EMPTY_PASS')
           PY
@@ -407,6 +410,8 @@ jobs:
           assert proof['scenarios']['concurrent_owner_refused']=='PASS'
           assert proof['scenarios']['same_owner_reattach']=='PASS'
           assert proof['scenarios']['funded_same_owner_crash_recovery']=='PASS'
+          assert proof['scenarios']['graceful_shutdown']=='PASS'
+          assert any(row.get('history_identity_unchanged') for row in proof['observations'])
           assert proof['automatic_wallet_transaction_replay'] is False
           print('Q05_LINUX_OWNED_SESSION_FUNDED_PASS')
           PY

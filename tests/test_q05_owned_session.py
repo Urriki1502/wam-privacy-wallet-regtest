@@ -116,6 +116,22 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertNotIn('CoreSupervisor(',reattach)
         self.assertNotIn('.kill(',reattach)
         self.assertNotIn('owner.start',reattach)
+        reopen=harness.split("stage='CORE_REOPEN'",1)[1].split("stage='RESTORE_OWNED_SESSION'",1)[0]
+        self.assertIn('owner.shutdown()',reopen)
+        self.assertIn('stopped.poll() is None',reopen)
+        self.assertIn('Q05_GRACEFUL_SHUTDOWN_ORIGINAL_STILL_LIVE',reopen)
+        self.assertIn('owner.process is stopped',reopen)
+        self.assertIn('original_popen_reaped',reopen)
+        self.assertNotIn('.kill(',reopen)
+        self.assertNotIn('os.kill',reopen)
+        self.assertNotIn('rmtree',reopen)
+        restore=harness.split("stage='RESTORE_OWNED_SESSION'",1)[1].split(
+            "record['scenarios']['wallet_restore']",1)[0]
+        self.assertIn('restored.history_sha256!=again.history_sha256',restore)
+        self.assertIn('restored.height!=again.height',restore)
+        self.assertIn('restored.tip!=again.tip',restore)
+        self.assertIn('restored.confirmed_atoms!=again.confirmed_atoms',restore)
+        self.assertNotIn('Q05_OWNED_FUNDED_RESTORE_DENIED',restore)
         funded=harness.split('def _funded_same_owner_crash_recovery',1)[1].split('\ndef ',1)[0]
         self.assertIn('owner.recover_dead(authorized=True)',funded)
         self.assertIn('process.kill()',funded)
