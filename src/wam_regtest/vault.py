@@ -195,11 +195,14 @@ class CheckpointVault:
         except (ValueError, TypeError, KeyError):
             raise VaultError("VAULT_AUTHENTICATION_DENIED") from None
 
-    def restore(self, runtime_path, password):
+    def restore(self, runtime_path, password, *, private_windows_runtime=False):
         """Return NOT-current scanner. Caller must sync to real attested Core.
 
         No balance or signing may rely solely on restored checkpoint state.
         """
+        if (type(private_windows_runtime) is not bool
+                or private_windows_runtime and sys.platform!='win32'):
+            raise VaultError('VAULT_PRIVATE_WINDOWS_RUNTIME_SCOPE_DENIED')
         from wam_sp.keystore import Keyring
         from wam_sp.scanner import Scanner
         from wam_sp.file_lock import exclusive_file_lock
@@ -217,6 +220,11 @@ class CheckpointVault:
                     raise VaultError("VAULT_ANCHOR_MISSING_DENIED")
                 payload = self._load_payload(password, record)
                 ring = Keyring.restore(base64.b64decode(payload["keys"], validate=True), password)
+                if private_windows_runtime:
+                    from .windows_private_storage import create_managed_runtime
+                    # Only after authentication and under the existing lease.
+                    # CREATE_NEW failure never authorizes deleting an old file.
+                    create_managed_runtime(runtime_path)
                 runtime_created = True
                 scanner = Scanner(runtime_path, ring.accounts())
                 scanner.restore(base64.b64decode(payload["checkpoint"], validate=True), password)

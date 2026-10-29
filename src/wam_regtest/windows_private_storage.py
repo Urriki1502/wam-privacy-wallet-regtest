@@ -178,6 +178,24 @@ def create_private_directory(path):
         validate_directory(path)
 
 
+def create_managed_runtime(path):
+    """Create ONLY a fresh managed SQLite file with native owner/protected DACL.
+
+    No existing-file repair/adoption, chmod emulation or encrypted format change.
+    Failure after creation preserves the ambiguous file for explicit review.
+    """
+    require_native();path=_path(path)
+    if not re.fullmatch(r'wallet-runtime(?:-recovery-[0-9a-f]{16})?\.sqlite',path.name):
+        _deny('WIN_MANAGED_RUNTIME_NAME_DENIED')
+    with directory_guard(path.parent),security_attributes() as attributes:
+        handle=create(str(path),0xc0020000,1,attributes,1,0x00200080,None)  # CREATE_NEW
+        if handle in (None,INVALID):_deny('WIN_MANAGED_RUNTIME_CREATE_DENIED')
+        try:
+            _metadata(handle);verify_security(handle)
+            if not flush(handle):_deny('WIN_MANAGED_RUNTIME_FLUSH_DENIED')
+        finally:close(handle)
+
+
 def _name(name):
     if (type(name) is not str or not re.fullmatch(r'[a-z0-9-]{1,80}\.enc',name)
             or re.fullmatch(r'(con|prn|aux|nul|com[0-9]|lpt[0-9])\.enc',name)):

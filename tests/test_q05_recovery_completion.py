@@ -5,6 +5,7 @@ These tests are not native cryptography or actual Core qualification.
 from contextlib import nullcontext
 from pathlib import Path
 import unittest
+import sys
 from unittest.mock import Mock,patch
 
 import test_q05_recovery_reference as references
@@ -26,7 +27,8 @@ class RecoveryCompletionContracts(unittest.TestCase):
             (path/f'snapshot-{generation:09d}.enc').write_bytes(b'fixture-only')
         anchor=Mock();anchor.read.return_value=(2,'c'*64);anchor.lease.side_effect=lambda:nullcontext()
         vault=Mock();vault._expected=(2,'c'*64)
-        def restore(runtime,password):
+        def restore(runtime,password,**options):
+            self.assertEqual(options.get('private_windows_runtime'),sys.platform=='win32')
             runtime.write_bytes(b'owned-fixture-runtime')
             return Mock(),Mock()
         vault.restore.side_effect=restore

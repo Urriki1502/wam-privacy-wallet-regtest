@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import re
 import secrets
+import sys
 import subprocess
 
 from . import custody
@@ -215,9 +216,12 @@ def checkpoint(owner,source,password,*,authorized=False,keychain=None,create=Fal
             vault=CheckpointVault(folder,anchor,source)
             if create:
                 ring=Keyring();ring.backup(password)
+                if sys.platform=='win32':
+                    from .windows_private_storage import create_managed_runtime
+                    create_managed_runtime(runtime)
                 scanner=Scanner(runtime,ring.accounts())
             else:
-                ring,scanner=vault.restore(runtime,password)
+                ring,scanner=vault.restore(runtime,password,private_windows_runtime=sys.platform=='win32')
             before=vault._expected
             result=_snapshot(ring,scanner,rpc,vault)
             # Publish an authenticated checkpoint before deleting plaintext.

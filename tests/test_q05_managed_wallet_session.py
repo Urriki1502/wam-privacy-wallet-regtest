@@ -26,11 +26,7 @@ class ManagedSessionContracts(unittest.TestCase):
             # File-only fixture must provide the protected native DACL required
             # by RuntimeGuard. chmod is not a Windows DACL provisioner.
             from wam_regtest import windows_private_storage as native
-            with native.directory_guard(self.root),native.security_attributes() as attributes:
-                handle=native.create(str(path),0xc0020000,1,attributes,1,0x00200080,None)
-                if handle in (None,native.INVALID):raise ValueError('TEST_PRIVATE_RUNTIME_CREATE_DENIED')
-                try:native._metadata(handle);native.verify_security(handle)
-                finally:native.close(handle)
+            native.create_managed_runtime(path)
         path.write_bytes(b'owned-test-runtime');path.chmod(0o600)
         return path
 
@@ -65,9 +61,9 @@ class ManagedSessionContracts(unittest.TestCase):
         except PermissionError:
             guard.close()
         else:path.write_bytes(b'unknown-replacement')
+        before=path.read_bytes()
         with self.assertRaises(ValueError):guard.remove_owned()
-        if path.exists() and path.read_bytes()==b'unknown-replacement':
-            self.assertEqual(path.read_bytes(),b'unknown-replacement')
+        self.assertEqual(path.read_bytes(),before)
 
     def test_runtime_sidecar_is_never_swept(self):
         path=self.runtime();guard=module.RuntimeGuard(path);self.addCleanup(guard.close)
@@ -116,3 +112,27 @@ class ManagedSessionContracts(unittest.TestCase):
         session.scanner.close.side_effect=ValueError('uncertain-close')
         with self.assertRaises(WalletSessionError):module.close_session(session)
         ring.close.assert_called_once();lease.__exit__.assert_called_once();self.assertTrue(path.exists())
+
+    def test_native_runtime_creation_never_repairs_or_adopts_an_existing_file(self):
+        path=self.runtime();before=path.read_bytes()
+        from wam_regtest.windows_private_storage import create_managed_runtime
+        with self.assertRaises(ValueError):create_managed_runtime(path)
+        self.assertEqual(path.read_bytes(),before)
+
+    def test_guarded_native_runtime_remains_writable_by_sqlite(self):
+        import sqlite3
+        path=self.runtime();path.write_bytes(b'')  # Only this test's known new file.
+        guard=module.RuntimeGuard(path);self.addCleanup(guard.close)
+        with sqlite3.connect(path) as db:
+            db.execute('CREATE TABLE test(value INTEGER)')
+            db.execute('INSERT INTO test VALUES(42)')
+            self.assertEqual(db.execute('SELECT value FROM test').fetchone(),(42,))
+            guard.check()
+        db.close();guard.remove_owned();self.assertFalse(path.exists())
+
+    def test_restore_native_runtime_flag_is_strict_before_access(self):
+        from wam_regtest.vault import CheckpointVault,VaultError
+        for invalid in (1,'true',None):
+            with self.assertRaisesRegex(VaultError,'PRIVATE_WINDOWS_RUNTIME_SCOPE'):
+                CheckpointVault.restore(object(),self.root/'unused.sqlite',b'public-test-password',
+                    private_windows_runtime=invalid)

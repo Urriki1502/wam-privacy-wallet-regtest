@@ -10,6 +10,7 @@ import hmac
 import json
 import re
 import secrets
+import sys
 
 from . import custody
 from .managed_wallet_checkpoint import (
@@ -149,7 +150,7 @@ def recover_checkpoint(owner,source,password,*,authorized=False,keychain=None):
             _append(owner,wallet_id,action=action,state='BEGIN',target_identity=identity,source_anchor=current)
             old.backup(target,CheckpointVault._filename(current[0]))
             new=CheckpointVault(target,anchor,source)
-            ring,scanner=new.restore(runtime,password)
+            ring,scanner=new.restore(runtime,password,private_windows_runtime=sys.platform=='win32')
             result=_snapshot(ring,scanner,rpc,new)
             new.save(ring,scanner,password)  # Existing create-only publication + native CAS.
             actual=anchor.read()
@@ -218,7 +219,7 @@ def complete_recovery(owner,source,password,*,action,authorized=False,keychain=N
             vault._load_payload(password,last['source_anchor'])
             vault._load_payload(password,actual)
             rpc=WalletCoreCli(owner.cli,owner.directory);rpc.attest()
-            ring,scanner=vault.restore(runtime,password)
+            ring,scanner=vault.restore(runtime,password,private_windows_runtime=sys.platform=='win32')
             result=_snapshot(ring,scanner,rpc,vault)
             _close_owned_runtime(ring,scanner,runtime);ring=scanner=None
             verify_target();_owned(owner)

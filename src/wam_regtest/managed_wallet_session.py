@@ -112,9 +112,13 @@ def open_owned(cls,owner,source,password,*,authorized=False,keychain=None,create
         from wam_sp.keystore import Keyring
         from wam_sp.scanner import Scanner
         if create:
-            ring=Keyring();ring.backup(password);scanner=Scanner(runtime,ring.accounts())
+            ring=Keyring();ring.backup(password)
+            if sys.platform=='win32':
+                from .windows_private_storage import create_managed_runtime
+                create_managed_runtime(runtime)
+            scanner=Scanner(runtime,ring.accounts())
         else:
-            ring,scanner=vault.restore(runtime,password)
+            ring,scanner=vault.restore(runtime,password,private_windows_runtime=sys.platform=='win32')
         _snapshot(ring,scanner,rpc,vault)
         guard=RuntimeGuard(runtime)
         session=cls(owner.core,owner.directory,source,ring,scanner,vault,password,mining_address,
