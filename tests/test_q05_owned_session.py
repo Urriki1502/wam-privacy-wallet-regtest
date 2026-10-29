@@ -100,6 +100,13 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('concurrent_owner_refused',harness)
         self.assertIn('second_process_started',harness)
         self.assertNotIn('rival.start',harness)
+        reattach=harness.split("stage='SAME_OWNER_REATTACH'",1)[1].split("stage='CORE_REOPEN'",1)[0]
+        self.assertIn('create=False',reattach)
+        self.assertIn('Q05_SAME_OWNER_REATTACH_DENIED',reattach)
+        self.assertIn('again.history_sha256!=held.history_sha256',reattach)
+        self.assertNotIn('CoreSupervisor(',reattach)
+        self.assertNotIn('.kill(',reattach)
+        self.assertNotIn('owner.start',reattach)
 
     def test_host_adapter_matches_this_os_and_refuses_foreign_linux_manifest_pin(self):
         from wam_regtest.q05_owned_lifecycle import (

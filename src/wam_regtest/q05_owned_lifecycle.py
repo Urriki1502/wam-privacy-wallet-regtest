@@ -26,7 +26,7 @@ from wam_regtest.wsp_live import PINNED_WSP_COMMIT,_pinned_source
 
 APPROVED_LINUX_MANIFEST='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806'
 PASSWORD=b'public-disposable-q05-native-only'
-SCHEMA='q05-owned-session-native/v3'
+SCHEMA='q05-owned-session-native/v4'
 
 
 class OwnedLifecycleError(ValueError):
@@ -290,6 +290,8 @@ def _base_record(head,adapter,intake,funded):
             'sign_broadcast':'NOT EXECUTED',
             'crash_fail_closed':'NOT EXECUTED',
             'same_owner_crash_recovery':'NOT EXECUTED',
+            'concurrent_owner_refused':'NOT EXECUTED',
+            'same_owner_reattach':'NOT EXECUTED',
             'dirty_runtime_fail_closed':'NOT EXECUTED',
             'wrong_core_refused':'NOT EXECUTED',
             'interrupted_publication_fail_closed':'NOT EXECUTED',
@@ -402,6 +404,7 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
             _gui_lifecycle(session,record,adapter)
         stage='LOCK_WITHOUT_CORE_SHUTDOWN'
         pid=assert_live_original(owner)
+        held=session.snapshot()
         session.lock();session=None
         if owner.process is None or owner.process.poll() is not None or owner.process.pid!=pid:
             raise OwnedLifecycleError('Q05_WALLET_LOCK_STOPPED_CORE')
@@ -431,6 +434,28 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
         record['observations'].append({'concurrent_owner_refused':True,
             'second_process_started':False,'original_core_pid':pid,
             'automatic_pid_adoption':False})
+        stage='SAME_OWNER_REATTACH'
+        session=WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
+                                         create=False,keychain=keychain)
+        again=session.snapshot()
+        if (owner.process is None or type(owner.process) is not subprocess.Popen
+                or owner.process.pid!=pid or owner.process.poll() is not None
+                or again.receive_code!=held.receive_code
+                or again.history_count!=held.history_count
+                or again.receive_count!=held.receive_count
+                or again.history_sha256!=held.history_sha256
+                or again.confirmed_atoms!=held.confirmed_atoms
+                or again.core_sha256!=held.core_sha256
+                or again.chain!='regtest' or again.mainnet_allowed):
+            raise OwnedLifecycleError('Q05_SAME_OWNER_REATTACH_DENIED')
+        assert_live_original(owner)
+        record['scenarios']['same_owner_reattach']='PASS'
+        record['observations'].append({
+            'same_owner_reattach':True,'second_daemon':False,
+            'original_core_pid':pid,'history_count':again.history_count,
+            'history_sha256':again.history_sha256,
+        })
+        session.lock();session=None
         stage='CORE_REOPEN'
         owner.shutdown();owner.close()
         owner=CoreSupervisor(root,core,authorized=True)
@@ -669,7 +694,7 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
             _same_owner_crash_recovery(adapter,core_dir,wsp_source,recovered,record)
             _wrong_core_refused(core_dir,base/_profile_name(),record)
         required=['authentic_core_startup','owned_session_create','encrypted_checkpoint',
-                  'wallet_restore','concurrent_owner_refused']
+                  'wallet_restore','concurrent_owner_refused','same_owner_reattach']
         if funded:
             required.extend(['real_bip352_receiving','sign_broadcast'])
         if fail_closed:

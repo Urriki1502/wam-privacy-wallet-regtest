@@ -288,7 +288,7 @@ jobs:
         run: |
           python scripts/probe_q05_owned_session.py --core-dir (Resolve-Path core) --wsp-source (Resolve-Path wsp-upstream) --root "$env:RUNNER_TEMP\q05-owned-empty" --receipt q05-owned-session-empty.json --confirm-disposable-regtest --confirm-gui-lifecycle
           if ($LASTEXITCODE -ne 0) { throw "WIN_Q05_EMPTY_OWNED_DENIED" }
-          python -c "import json; from pathlib import Path; p=json.loads(Path('q05-owned-session-empty.json').read_text()); assert p['status']=='PASS' and p['platform']=='windows-x64' and p['mainnet_allowed'] is False and p['pid_adoption'] is False and p['scenarios']['crash_fail_closed']=='PASS' and p['scenarios']['same_owner_crash_recovery']=='PASS' and p['scenarios']['concurrent_owner_refused']=='PASS'; print('Q05_WINDOWS_OWNED_SESSION_EMPTY_PASS')"
+          python -c "import json; from pathlib import Path; p=json.loads(Path('q05-owned-session-empty.json').read_text()); assert p['status']=='PASS' and p['platform']=='windows-x64' and p['mainnet_allowed'] is False and p['pid_adoption'] is False and p['scenarios']['crash_fail_closed']=='PASS' and p['scenarios']['same_owner_crash_recovery']=='PASS' and p['scenarios']['concurrent_owner_refused']=='PASS' and p['scenarios']['same_owner_reattach']=='PASS'; print('Q05_WINDOWS_OWNED_SESSION_EMPTY_PASS')"
       - name: Upload Q05 Windows owned-session receipts
         if: always()
         uses: actions/upload-artifact@v4

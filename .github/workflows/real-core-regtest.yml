@@ -293,6 +293,7 @@ jobs:
           assert proof['scenarios']['crash_fail_closed']=='PASS'
           assert proof['scenarios']['same_owner_crash_recovery']=='PASS'
           assert proof['scenarios']['concurrent_owner_refused']=='PASS'
+          assert proof['scenarios']['same_owner_reattach']=='PASS'
           assert any(row.get('concurrent_owner_refused') for row in proof['observations'])
           assert proof['scenarios']['dirty_runtime_fail_closed']=='PASS'
           assert any(row.get('original_popen_owned') for row in proof['observations'])
@@ -324,6 +325,7 @@ jobs:
           assert any(row.get('real_fixture_payment_txid') for row in proof['observations'])
           assert any(row.get('genuine_owned_broadcast') for row in proof['observations'])
           assert proof['scenarios']['concurrent_owner_refused']=='PASS'
+          assert proof['scenarios']['same_owner_reattach']=='PASS'
           assert any(row.get('restored_same_payment_code') for row in proof['observations'])
           print('Q05_OWNED_SESSION_FUNDED_REAL_CORE_PASS')
           PY
