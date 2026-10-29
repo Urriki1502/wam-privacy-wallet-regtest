@@ -635,6 +635,18 @@ def _funded_same_owner_crash_recovery(owner,session,source,*,code,digest,sent,pa
     # Recovery must not accept a chain shorter than the confirmed spend.
     if pre_height>owner._height_snapshot:
         owner._height_snapshot=pre_height
+    # A following block forces the confirmed tip out of the last dirty
+    # write. The recovery floor stays at the confirmed height so loss of
+    # only this sacrificial block is not a shorter wallet chain.
+    floor=owner._height_snapshot
+    from wam_regtest.wsp_live import public_regtest_mining_address
+    flush=_read_cli(
+        [str(owner.cli),f'-datadir={owner.directory}','generatetoaddress','1',
+         public_regtest_mining_address(source)],
+        timeout=120)
+    if type(flush) is not list or len(flush)!=1 or type(flush[0]) is not str:
+        raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_FLUSH_DENIED')
+    owner._height_snapshot=floor
     session.lock()
     process=owner.process
     if type(process) is not subprocess.Popen or process.pid!=original_pid:

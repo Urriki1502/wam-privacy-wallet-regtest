@@ -1,40 +1,37 @@
-# Engineer 2 checkpoint — untrusted Core directory refusal
+# Engineer 2 checkpoint — funded crash height reload
 
 Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 stays independent
 (`feature/issue45-q05-managed-core-stage-a-20261027` at `b3046f82`).
 Canonical ledger: 37 Q05 cases PENDING, `accepted=false`. No merge.
 
-## This change
+## Failure being repaired
 
-Parent `5770930f7d34dbde1b99c9022f3d2cf4bbe6b2bf` recovers funded history after
-an explicit kill of the original Popen. This commit keeps that path and
-strengthens `wrong_core_refused`: a missing directory and a separate directory
-whose receipt sets `mainnet_allowed` true, with non-Core bytes named `wamd` /
-`wam-cli` / `wamd.exe` / `wam-cli.exe`, must fail in `CoreSupervisor` before
-`start`. The qualified Core `receipt.json` is not modified. No PID adoption.
-Receipt schema is `q05-owned-session-native/v6`.
+`5770930` Windows funded owned-session failed
+`MANAGED_RECOVERY_HEIGHT_REGRESSED` at `FUNDED_SAME_OWNER_CRASH_RECOVERY`.
+Sign/broadcast had passed. Run
+https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40809138451
+artifact `q05-owned-session-funded-windows-x64-5770930f7d34dbde1b99c9022f3d2cf4bbe6b2bf`.
 
-Local `unittest discover -s tests -p 'test_q05*.py'`: 117 PASS. This host has
-no genuine Core binary. Do not mark `Q05-WRONG-CORE-REFUSAL` PASS from the
-unit test.
+The same-owner restart treated the first short `getblockchaininfo` as a final
+shorter chain. Recovery boot now stays on that Popen until the attested tip
+loads or the start deadline expires. A chain that remains below the floor
+still raises `MANAGED_RECOVERY_HEIGHT_REGRESSED`. Before the kill, one
+miner-address block is generated and the floor stays at the confirmed spend
+height. No second supervisor, PID adoption, datadir deletion or spend replay.
 
-## Parent evidence, not this commit
+Parent `cbb5361` still refuses a missing Core directory and an untrusted
+mainnet receipt before `start`. That behavior is unchanged.
 
-`5770930` funded crash recovery CI was queued or in progress when this change
-started. `a7c3f81` Windows funded reattach workflow succeeded:
-https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40808964946
-macOS `40808964924`, Windows smoke `40808964943` and Linux `40808964955` were
-still running. Those receipts are schema v4/v5, not v6.
+## Retained parent evidence
 
-`792701e` Windows smoke `40808542596` and Windows funded `40808542569`
-succeeded with `concurrent_owner_refused`. macOS `40808542544` and Linux
-`40808542678` still had non-owned-session jobs open after their Q05
-owned-session jobs had passed.
+`9e1766e` empty crash recovery succeeded on macOS `40808378718`, Linux
+`40808378513` and Windows smoke `40808378464`. `792701e` Windows smoke
+`40808542596` and Windows funded `40808542569` succeeded with
+`concurrent_owner_refused`. `a7c3f81` added same-owner reattach.
+`5b5e4c1` Linux `40807061493` and macOS `40807061511` completed SUCCESS.
+None of those receipts prove this funded-crash repair.
 
 ## Next
 
-Read this commit's empty owned-session receipts for `wrong_core_refused` with
-`untrusted_core_directory_refused`, `process_started` false and
-`real_core_receipt_unchanged` on macOS, Windows smoke and Linux. Read
-`5770930` funded receipts for `funded_same_owner_crash_recovery` before
-changing that path. Q05 remains unaccepted.
+Read this commit's funded receipt for `funded_same_owner_crash_recovery` on
+Windows, then macOS and Linux. Q05 remains unaccepted.

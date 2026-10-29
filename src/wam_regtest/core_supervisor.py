@@ -226,6 +226,7 @@ class CoreSupervisor:
                      authorized_disposable_mutation=True)
             self._registered = True
             deadline = time.monotonic() + timeout
+            short_height=False
             while time.monotonic() < deadline:
                 self.binding._assert_image()
                 try:
@@ -242,13 +243,23 @@ class CoreSupervisor:
                     # ordinary reads still use the unchanged Q03 HTTP client.
                     _read_cli([str(self.cli),f'-datadir={self.directory}',
                                'getblockchaininfo'],timeout=min(5,max(.1,deadline-time.monotonic())))
+                    if self.read is not None:
+                        self.read.close()
                     self.read = ManagedReadRpc(self.core, self.directory,
                         authorized_readonly=True, binding=self.binding)
                     info=self.read.call('getblockchaininfo')
-                    if (type(info.get('blocks')) is not int
-                            or info['blocks']<self._minimum_recovery_height):
+                    blocks=info.get('blocks')
+                    if type(blocks) is not int:
                         raise ManagedCoreError('MANAGED_RECOVERY_HEIGHT_REGRESSED')
-                    self._height_snapshot=info['blocks']
+                    if blocks<self._minimum_recovery_height:
+                        # The recovered child can answer before its block
+                        # index reaches the attested tip. Wait on this same
+                        # Popen. A chain that stays shorter still fails closed.
+                        short_height=True
+                        self.read.close();self.read=None
+                        time.sleep(.1)
+                        continue
+                    self._height_snapshot=blocks
                     self.journal.append('RUNNING',self.process.pid)
                     self.state = 'ready'
                     return
@@ -260,6 +271,8 @@ class CoreSupervisor:
                     if error.args not in (('CORE_RPC_WARMUP',),('CORE_RPC_UNAVAILABLE',)):
                         raise
                     time.sleep(.1)
+            if short_height:
+                raise ManagedCoreError('MANAGED_RECOVERY_HEIGHT_REGRESSED')
             raise ManagedCoreError('MANAGED_START_TIMEOUT')
         except BaseException as error:
             # Keep the Popen, lease and datadir. Never kill an unverified child

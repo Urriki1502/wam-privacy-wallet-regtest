@@ -121,6 +121,8 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('create=False',funded)
         self.assertIn('seen.count(sent)!=1',funded)
         self.assertIn('pre_height>owner._height_snapshot',funded)
+        self.assertIn('owner._height_snapshot=floor',funded)
+        self.assertIn('generatetoaddress',funded)
         self.assertNotIn('os.kill',funded)
         self.assertNotIn('.unlink(',funded)
         self.assertNotIn('rmtree',funded)

@@ -3,7 +3,7 @@ import subprocess
 import sys
 from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock,patch
+from unittest.mock import MagicMock,Mock,patch
 
 import test_q05_core_supervisor as fixture
 from wam_regtest import core_supervisor as module
@@ -59,6 +59,35 @@ class DeadRecoveryContracts(unittest.TestCase):
             owner.close();other=self.owner()
             with self.assertRaises(module.ManagedCoreError):other.recover_dead(authorized=True)
             start.assert_not_called()
+
+    def test_recovery_boot_waits_until_the_same_child_reaches_the_attested_tip(self):
+        owner=self.owner()
+        owner.journal.append('STARTING')
+        owner.journal.append('RUNNING',4242)
+        owner.journal.append('RECOVERING',4242)
+        owner._minimum_recovery_height=101
+        owner._faulted=False
+        child=Mock();child.pid=5151;child.poll.return_value=None
+        self.addCleanup(lambda: child.poll.return_value if child.poll.return_value==0 else setattr(child.poll,'return_value',0))
+        binding=Mock();binding.process=child
+        binding.assert_socket=Mock();binding._assert_image=Mock()
+        rpc=Mock();rpc.call.side_effect=(
+            {'blocks':0,'initialblockdownload':True},
+            {'blocks':101,'initialblockdownload':False})
+        with patch.object(module.subprocess,'Popen',return_value=child) as popen, \
+             patch.object(module,'OwnedCoreBinding',return_value=binding), \
+             patch.object(module,'register'), \
+             patch.object(module.socket,'create_connection',return_value=MagicMock()), \
+             patch.object(module,'_read_cli'), \
+             patch.object(module,'ManagedReadRpc',return_value=rpc), \
+             patch.object(module.time,'sleep'):
+            owner.start(timeout=90,_recovering=True)
+        popen.assert_called_once()
+        self.assertIs(owner.process,child)
+        self.assertEqual(owner.state,'ready')
+        self.assertEqual(owner._height_snapshot,101)
+        self.assertEqual(rpc.call.call_count,2)
+        self.assertEqual(owner.journal.state,'RUNNING')
 
     def test_recovery_boot_failure_is_dirty_and_never_auto_retried(self):
         owner=self.owner();child=self.exited_child(owner)
