@@ -191,6 +191,14 @@ class HistoryPaginationContracts(unittest.TestCase):
         self.assertEqual(first['reservation_sha256'],second['reservation_sha256'])
         self.assertEqual(first['reservation_states'],['signed','uncertain'])
         self.assertEqual(first['reservation_count'],2)
+        digest=sha256()
+        for row in reservations:
+            digest.update(module._canonical(list(row))+b'\n')
+        count,observed,states=module.reservation_fingerprint(reservations)
+        self.assertEqual(observed,digest.hexdigest())
+        self.assertEqual(count,2)
+        self.assertEqual(states,['signed','uncertain'])
+        self.assertEqual(first['reservation_sha256'],observed)
 
     def test_signed_and_uncertain_reservations_are_not_dropped(self):
         reservations=(('a'*64,0,'t1','signed',9),('b'*64,1,'t2','uncertain',8),

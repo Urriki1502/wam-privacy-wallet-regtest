@@ -27,6 +27,7 @@ _MESSAGES={
  'WALLET_LOCKED_OR_FAULTED':'Wallet is locked or faulted. Balances are hidden and sensitive operations are unavailable; reservations remain protected.',
  'WALLET_SYNC_UNVERIFIED':'Live REGTEST synchronization could not be verified. Balances are hidden. Verify the local node and use Sync again; do not reset custody.',
  'WALLET_HISTORY_INCONSISTENT':'Confirmed history pages do not form one complete snapshot. Balances are hidden. Do not treat a truncated list as the wallet; verify the local node and latest checkpoint.',
+ 'WALLET_RESERVATION_INCONSISTENT':'Input reservations do not form one complete snapshot. Balances are hidden. Signed and uncertain locks stay in place; do not release them or treat a partial list as the wallet.',
  'WALLET_HISTORY_INCOMPLETE':'Confirmed history exceeds the readable WSP page range. Balances are hidden. Do not silently omit older records.',
  'WALLET_OWNED_OPEN_DENIED':'Could not open the managed REGTEST wallet on the original Core owner. Reservations and encrypted checkpoints are retained; do not adopt another process or delete unknown runtime files.',
  'WALLET_EXISTING_RUNTIME_DENIED':'An existing wallet runtime or sidecar is present. Automatic recovery is refused. Reconcile the orphaned SQLite and ciphertext with the native anchor; do not delete unknown files.',

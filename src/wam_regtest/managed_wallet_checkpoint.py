@@ -148,6 +148,26 @@ class _HistoryDenied(ManagedWalletError):
         super().__init__('MANAGED_WALLET_'+code)
 
 
+def reservation_fingerprint(rows):
+    """Hash reservation rows in caller order. Never drop a signed or uncertain row."""
+    digest=sha256();count=0;states=set()
+    for row in rows:
+        try:
+            materialized=list(row)
+            if len(materialized)!=5:
+                raise ValueError
+            digest.update(_canonical(materialized)+b'\n')
+            states.add(materialized[3])
+        except (TypeError,ValueError,IndexError):
+            raise ManagedWalletError('MANAGED_WALLET_RESERVATION_INCONSISTENT') from None
+        count+=1
+    try:
+        ordered=sorted(states)
+    except TypeError:
+        raise ManagedWalletError('MANAGED_WALLET_RESERVATION_INCONSISTENT') from None
+    return count,digest.hexdigest(),ordered
+
+
 def _fingerprint_history(wallet,height,*,collect=False):
     """Hash every history row in the caller's SQLite transaction; never truncate."""
     declared=wallet.db.execute('SELECT count(*) FROM history').fetchone()[0]
@@ -165,11 +185,8 @@ def _locked_observation(ring,scanner,rpc,vault,wallet):
         if (locked_height,locked_tip)!=(height,tip):
             raise ManagedWalletError('MANAGED_WALLET_CHAIN_CHANGED')
         history_count,history_sha256=_fingerprint_history(wallet,height)
-        reservations=sha256();reservation_count=0;states=set()
-        for row in wallet.db.execute(
-                'SELECT txid,vout,token,state,created FROM reservations ORDER BY txid,vout'):
-            reservations.update(_canonical(list(row))+b'\n')
-            reservation_count+=1;states.add(row[3])
+        reservation_count,reservation_sha256,states=reservation_fingerprint(wallet.db.execute(
+            'SELECT txid,vout,token,state,created FROM reservations ORDER BY txid,vout'))
         # balance() would BEGIN IMMEDIATE again; stay on this snapshot.
         balance=wallet._balance(1)
     _require_matching_tip(scanner,rpc)
@@ -177,8 +194,8 @@ def _locked_observation(ring,scanner,rpc,vault,wallet):
             'payment_code':ring.accounts()[-1].payment_code(),
             'confirmed_atoms':balance['confirmed_atoms'],'reserved_atoms':balance['reserved_atoms'],
             'available_atoms':balance['available_atoms'],
-            'reservation_count':reservation_count,'reservation_states':sorted(states),
-            'reservation_sha256':reservations.hexdigest(),
+            'reservation_count':reservation_count,'reservation_states':states,
+            'reservation_sha256':reservation_sha256,
             'history_count':history_count,'history_sha256':history_sha256,
             'checkpoint':list(vault._expected or ()),
             'wallet_locked':True,'signer_allowed':False,'broadcast_allowed':False,

@@ -33,6 +33,21 @@ class OwnedLifecycleError(ValueError):
     pass
 
 
+def _require_same_reservation(before,after):
+    """Refuse a dropped or rewritten signed/uncertain reservation set."""
+    count=getattr(before,'reservation_count',None)
+    digest=getattr(before,'reservation_sha256',None)
+    states=getattr(before,'reservation_states',None)
+    if (type(count) is not int or count<0
+            or type(digest) is not str or len(digest)!=64
+            or type(states) is not tuple
+            or any(type(item) is not str for item in states)
+            or after.reservation_count!=count
+            or after.reservation_sha256!=digest
+            or after.reservation_states!=states):
+        raise OwnedLifecycleError('Q05_RESERVATION_IDENTITY_DENIED')
+
+
 def assert_live_original(owner):
     process=owner.process
     scope=identity(owner.directory)
@@ -479,12 +494,16 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
                 or again.core_sha256!=held.core_sha256
                 or again.chain!='regtest' or again.mainnet_allowed):
             raise OwnedLifecycleError('Q05_SAME_OWNER_REATTACH_DENIED')
+        _require_same_reservation(held,again)
         assert_live_original(owner)
         record['scenarios']['same_owner_reattach']='PASS'
         record['observations'].append({
             'same_owner_reattach':True,'second_daemon':False,
             'original_core_pid':pid,'history_count':again.history_count,
             'history_sha256':again.history_sha256,
+            'reservation_count':again.reservation_count,
+            'reservation_sha256':again.reservation_sha256,
+            'reservation_identity_unchanged':True,
         })
         session.lock();session=None
         stage='CORE_REOPEN'
@@ -528,6 +547,7 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
                 or restored.height!=again.height or restored.tip!=again.tip
                 or restored.chain!='regtest' or restored.mainnet_allowed):
             raise OwnedLifecycleError('Q05_OWNED_RESTORE_CONTINUITY_DENIED')
+        _require_same_reservation(again,restored)
         session.lock();session=None
         owner.shutdown();owner.close();owner=None
         record['scenarios']['wallet_restore']='PASS'
@@ -535,6 +555,9 @@ def _positive_lifecycle(adapter,core,source,root,funded,record,gui):
             'restored_history_sha256':restored.history_sha256,
             'restored_height':restored.height,
             'history_identity_unchanged':True,
+            'reservation_count':restored.reservation_count,
+            'reservation_sha256':restored.reservation_sha256,
+            'reservation_identity_unchanged':True,
             'funded_restore':bool(funded)})
         return stage
     except Exception:
@@ -646,6 +669,7 @@ def _same_owner_crash_recovery(adapter,core,source,root,record):
                 or restored.history_sha256!=history_sha or restored.tip!=tip
                 or restored.mainnet_allowed or restored.chain!='regtest'):
             raise OwnedLifecycleError('Q05_CRASH_RECOVERY_CONTINUITY_DENIED')
+        _require_same_reservation(snap,restored)
         session.lock();session=None
         owner.shutdown();owner.close();owner=None
         record['scenarios']['same_owner_crash_recovery']='PASS'
@@ -657,6 +681,9 @@ def _same_owner_crash_recovery(adapter,core,source,root,record):
             'tip':tip,
             'height':height,
             'history_identity_unchanged':True,
+            'reservation_count':restored.reservation_count,
+            'reservation_sha256':restored.reservation_sha256,
+            'reservation_identity_unchanged':True,
             'datadir_unchanged':True,
             'wallet_reference_preserved':True,
             'automatic_pid_adoption':False,
@@ -770,6 +797,7 @@ def _funded_same_owner_crash_recovery(owner,session,source,*,code,digest,sent,pa
                 or restored.height!=pre_height
                 or restored.mainnet_allowed or restored.chain!='regtest'):
             raise OwnedLifecycleError('Q05_FUNDED_CRASH_RECOVERY_CONTINUITY_DENIED')
+        _require_same_reservation(paid,restored)
     except Exception:
         try:
             restored_session.lock()
@@ -788,6 +816,9 @@ def _funded_same_owner_crash_recovery(owner,session,source,*,code,digest,sent,pa
         'height':pre_height,
         'confirmed_atoms':pre_atoms,
         'history_identity_unchanged':True,
+        'reservation_count':restored.reservation_count,
+        'reservation_sha256':restored.reservation_sha256,
+        'reservation_identity_unchanged':True,
         'datadir_unchanged':True,
         'wallet_reference_preserved':True,
         'automatic_pid_adoption':False,

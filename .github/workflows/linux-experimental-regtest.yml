@@ -380,6 +380,7 @@ jobs:
           assert proof['scenarios']['graceful_shutdown']=='PASS'
           assert any(row.get('graceful_shutdown') and row.get('original_popen_reaped') is True and row.get('second_daemon') is False for row in proof['observations'])
           assert any(row.get('history_identity_unchanged') for row in proof['observations'])
+          assert any(row.get('reservation_identity_unchanged') is True for row in proof['observations'])
           assert proof['pid_adoption'] is False
           print('Q05_LINUX_OWNED_SESSION_EMPTY_PASS')
           PY
@@ -415,6 +416,7 @@ jobs:
           assert proof['scenarios']['graceful_shutdown']=='PASS'
           assert proof['scenarios']['native_gui']=='PASS'
           assert any(row.get('history_identity_unchanged') for row in proof['observations'])
+          assert any(row.get('reservation_identity_unchanged') is True for row in proof['observations'])
           assert proof['automatic_wallet_transaction_replay'] is False
           assert any(row.get('native_gui_history_matches') is True and row.get('gui_history_count',0)>=2 and row.get('automatic_wallet_transaction_replay') is False for row in proof['observations'])
           print('Q05_LINUX_OWNED_SESSION_FUNDED_PASS')

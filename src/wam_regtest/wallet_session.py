@@ -383,6 +383,16 @@ class WalletSession:
                     count,digest,rows=complete_history(
                         page,declared,tip[0],keep_tail=GUI_HISTORY_LIMIT,
                         skip_newest=history_offset,error=_SessionHistoryDenied)
+                    from wam_regtest.managed_wallet_checkpoint import (
+                        ManagedWalletError,reservation_fingerprint)
+                    import sqlite3
+                    try:
+                        reservation_count,reservation_sha256,reservation_states=(
+                            reservation_fingerprint(wallet.db.execute(
+                                'SELECT txid,vout,token,state,created '
+                                'FROM reservations ORDER BY txid,vout')))
+                    except (ManagedWalletError,sqlite3.Error):
+                        raise WalletSessionError('WALLET_RESERVATION_INCONSISTENT') from None
             except _SessionHistoryDenied as error:
                 raise WalletSessionError(error.args[0]) from None
             if (self.scanner.store.tip()!=tip
@@ -398,6 +408,9 @@ class WalletSession:
                 history_count=count,history_sha256=digest,
                 history_complete=history_offset==0 and count<=GUI_HISTORY_LIMIT,
                 receive_count=receive_count,history_offset=history_offset,
+                reservation_count=reservation_count,
+                reservation_sha256=reservation_sha256,
+                reservation_states=tuple(reservation_states),
             )
 
     def prepare(self, code, atoms, fee):

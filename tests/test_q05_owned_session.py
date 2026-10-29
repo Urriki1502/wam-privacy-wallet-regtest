@@ -91,6 +91,7 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('restored.history_sha256!=history_sha',recovery)
         self.assertIn('restored.tip!=tip',recovery)
         self.assertIn('restored.height!=height',recovery)
+        self.assertIn('_require_same_reservation(snap,restored)',recovery)
         self.assertNotIn('restored.height<height',recovery)
         self.assertNotIn('os.kill',recovery)
         self.assertNotIn('.unlink(',recovery)
@@ -117,6 +118,7 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('create=False',reattach)
         self.assertIn('Q05_SAME_OWNER_REATTACH_DENIED',reattach)
         self.assertIn('again.history_sha256!=held.history_sha256',reattach)
+        self.assertIn('_require_same_reservation(held,again)',reattach)
         self.assertNotIn('CoreSupervisor(',reattach)
         self.assertNotIn('.kill(',reattach)
         self.assertNotIn('owner.start',reattach)
@@ -135,6 +137,7 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('restored.height!=again.height',restore)
         self.assertIn('restored.tip!=again.tip',restore)
         self.assertIn('restored.confirmed_atoms!=again.confirmed_atoms',restore)
+        self.assertIn('_require_same_reservation(again,restored)',restore)
         self.assertNotIn('Q05_OWNED_FUNDED_RESTORE_DENIED',restore)
         funded=harness.split('def _funded_same_owner_crash_recovery',1)[1].split('\ndef ',1)[0]
         self.assertIn('owner.recover_dead(authorized=True)',funded)
@@ -144,6 +147,7 @@ class OwnedSessionContracts(unittest.TestCase):
         self.assertIn('restored.history_sha256!=pre_digest',funded)
         self.assertIn('restored.tip!=pre_tip',funded)
         self.assertIn('restored.height!=pre_height',funded)
+        self.assertIn('_require_same_reservation(paid,restored)',funded)
         self.assertNotIn('restored.height<pre_height',funded)
         self.assertIn('floor!=pre_height',funded)
         self.assertNotIn('floor<pre_height',funded)
@@ -206,6 +210,27 @@ class OwnedSessionContracts(unittest.TestCase):
                 LinuxX64Adapter().prepare_trust(Path('/unused'),manifest='0'*64)
         self.assertEqual(APPROVED_LINUX_MANIFEST,
                          'e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806')
+
+    def test_reopen_refuses_a_dropped_reservation_fingerprint(self):
+        from types import SimpleNamespace
+        from wam_regtest.q05_owned_lifecycle import (
+            OwnedLifecycleError,_require_same_reservation)
+        from wam_regtest.wallet_read import WalletReadSnapshot
+        before=SimpleNamespace(reservation_count=2,reservation_sha256='ab'*32,
+                               reservation_states=('signed','uncertain'))
+        dropped=SimpleNamespace(reservation_count=1,reservation_sha256='cd'*32,
+                                reservation_states=('signed',))
+        with self.assertRaisesRegex(OwnedLifecycleError,'Q05_RESERVATION_IDENTITY_DENIED'):
+            _require_same_reservation(before,dropped)
+        missing=SimpleNamespace(reservation_count=None,reservation_sha256=None,
+                                reservation_states=None)
+        with self.assertRaisesRegex(OwnedLifecycleError,'Q05_RESERVATION_IDENTITY_DENIED'):
+            _require_same_reservation(missing,missing)
+        _require_same_reservation(before,before)
+        unread=WalletReadSnapshot('regtest',1,'a'*64,'code',0,0,(),'b'*64)
+        self.assertIsNone(unread.reservation_count)
+        self.assertIsNone(unread.reservation_sha256)
+        self.assertIsNone(unread.reservation_states)
 
     def test_control_protocol_still_has_no_wallet_password_ops(self):
         from wam_regtest.supervisor_protocol import CONTROL_COMMANDS,READ_COMMANDS

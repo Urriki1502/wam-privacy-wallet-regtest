@@ -55,6 +55,9 @@ class WalletReadSnapshot:
     history_complete: bool = True
     receive_count: int | None = None
     history_offset: int = 0
+    reservation_count: int | None = None
+    reservation_sha256: str | None = None
+    reservation_states: tuple[str, ...] | None = None
 
 
 def read_real_wallet_snapshot(
