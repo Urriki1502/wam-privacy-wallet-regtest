@@ -1,5 +1,7 @@
 # Engineer 2 checkpoint — funded crash height reload
 
+Source HEAD: `ca7bb859b19e5b70f6cba64a2c93bf86d1e5b689`.
+The height-reload parent is `f3dc3c0c89e77c3405fbf22c2c85e53e636c6e36`.
 Branch `cursor/q05-history-pagination-9c81`. Codex Draft #138 stays independent
 (`feature/issue45-q05-managed-core-stage-a-20261027` at `b3046f82`).
 Canonical ledger: 37 Q05 cases PENDING, `accepted=false`. No merge.
