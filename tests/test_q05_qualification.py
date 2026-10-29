@@ -51,6 +51,15 @@ class QualificationContracts(unittest.TestCase):
             source.assert_not_called()
         self.assertEqual(canary.read_bytes(),b'public-fixture')
 
+    @unittest.skipUnless(sys.platform=='darwin','Actual macOS private fixture writer')
+    def test_public_reference_fixture_never_uses_encrypted_envelope_writer_or_overwrites(self):
+        path=self.directory/'reference.bin'
+        checkpoint._fixture_bytes(path,b'public-reference')
+        self.assertEqual(path.read_bytes(),b'public-reference')
+        self.assertEqual(path.stat().st_mode&0o777,0o600)
+        with self.assertRaises(FileExistsError):checkpoint._fixture_bytes(path,b'replacement')
+        self.assertEqual(path.read_bytes(),b'public-reference')
+
     def test_frozen_scenarios_pass_only_bundled_resources_and_explicit_flags(self):
         args=['--root',str(self.root),'--receipt',str(self.directory/'receipt.json'),
               '--confirm-disposable-regtest']

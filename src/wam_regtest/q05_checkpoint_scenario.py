@@ -14,6 +14,7 @@ import platform
 import subprocess
 import re
 import sys
+import os
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -30,6 +31,35 @@ class AfterPublicationCut(ValueError):pass
 class BeforeRecoveryCommitCut(ValueError):pass
 
 
+def _fixture_bytes(path,raw):
+    """Create-only private PUBLIC fixture bytes, not an encrypted-vault writer."""
+    from . import custody
+    custody.storage().validate_directory(path.parent)
+    if sys.platform=='win32':
+        import ctypes
+        from . import windows_private_storage as native
+        with native.directory_guard(path.parent),native.security_attributes() as attributes:
+            handle=native.create(str(path),0xc0000000,0,attributes,1,0x200080,None)
+            if handle in (None,native.INVALID):raise ValueError('Q05_FIXTURE_CREATE_DENIED')
+            try:
+                buffer=ctypes.create_string_buffer(raw);count=native.w.DWORD()
+                if (not native.write(handle,buffer,len(raw),ctypes.byref(count),None)
+                        or count.value!=len(raw) or not native.flush(handle)):
+                    raise ValueError('Q05_FIXTURE_WRITE_DENIED')
+                native.verify_security(handle)
+            finally:native.close(handle)
+    else:
+        fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+        try:
+            offset=0
+            while offset<len(raw):
+                count=os.write(fd,raw[offset:])
+                if count<=0:raise ValueError('Q05_FIXTURE_WRITE_DENIED')
+                offset+=count
+            os.fsync(fd)
+        finally:os.close(fd)
+
+
 def negative_checkpoint(owner,source,password,keychain,initial,mode):
     """Corrupt ONLY this fresh fixture; retain original bytes outside the vault."""
     from . import custody
@@ -40,7 +70,8 @@ def negative_checkpoint(owner,source,password,keychain,initial,mode):
     reference=owner.root/'supervisor.wallet'
     evidence=owner.root/'qualification-evidence';custody.create_directory(evidence)
     store=custody.storage()
-    for path in (current,reference):store.publish(evidence,path.name,path.read_bytes())
+    store.publish(evidence,current.name,current.read_bytes())
+    _fixture_bytes(evidence/'reference.bin',reference.read_bytes())
     anchor=custody.anchor(initial['wallet_id'],keychain);before=anchor.read()
     if mode=='missing':current.rename(evidence/('missing-'+current.name))
     elif mode=='corrupt':
@@ -48,7 +79,7 @@ def negative_checkpoint(owner,source,password,keychain,initial,mode):
     elif mode=='orphan':
         store.publish(folder,CheckpointVault._filename(before[0]+1),current.read_bytes())
     elif mode=='sidecar':
-        store.publish(owner.directory,'wallet-runtime.sqlite-wal',b'public-unknown-sidecar')
+        _fixture_bytes(owner.directory/'wallet-runtime.sqlite-wal',b'public-unknown-sidecar')
     elif mode=='divergent-reference':reference.write_bytes(b'{"network":"mainnet"}')
     elif mode!='wrong-wsp':raise ValueError('Q05_NEGATIVE_FIXTURE_MODE_DENIED')
     retained={p:sha256(p.read_bytes()).hexdigest() for p in
