@@ -25,7 +25,7 @@ from wam_regtest.wsp_live import PINNED_WSP_COMMIT,_pinned_source
 
 APPROVED_LINUX_MANIFEST='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806'
 PASSWORD=b'public-disposable-q05-native-only'
-SCHEMA='q05-owned-session-native/v2'
+SCHEMA='q05-owned-session-native/v3'
 
 
 class OwnedLifecycleError(ValueError):
@@ -288,6 +288,7 @@ def _base_record(head,adapter,intake,funded):
             'real_bip352_receiving':'NOT EXECUTED',
             'sign_broadcast':'NOT EXECUTED',
             'crash_fail_closed':'NOT EXECUTED',
+            'same_owner_crash_recovery':'NOT EXECUTED',
             'dirty_runtime_fail_closed':'NOT EXECUTED',
             'wrong_core_refused':'NOT EXECUTED',
             'interrupted_publication_fail_closed':'NOT EXECUTED',
@@ -487,6 +488,71 @@ def _fail_closed_interrupted_publication(core,source,root,record):
         stop_owned(owner,record)
 
 
+def _same_owner_crash_recovery(adapter,core,source,root,record):
+    """Restart the exited original Popen. Never adopt a PID or delete evidence."""
+    owner=session=None
+    try:
+        owner=CoreSupervisor(root,core,authorized=True)
+        owner.start(timeout=90)
+        original_pid=assert_live_original(owner)
+        datadir=owner.directory.resolve()
+        keychain=adapter.make_anchor(root)
+        session=WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
+                                         create=True,keychain=keychain)
+        snap=session.snapshot()
+        code=snap.receive_code
+        height=snap.height
+        reference=owner.root/'supervisor.wallet'
+        reference_bytes=reference.read_bytes()
+        vault=owner.directory/'wallet-vault'
+        config=owner.directory/'wam.conf'
+        config_bytes=config.read_bytes()
+        if not vault.is_dir() or vault.is_symlink() or snap.history_count!=0:
+            raise OwnedLifecycleError('Q05_CRASH_RECOVERY_VAULT_DENIED')
+        session.lock();session=None
+        process=owner.process
+        if type(process) is not subprocess.Popen or process.pid!=original_pid:
+            raise OwnedLifecycleError('Q05_CRASH_RECOVERY_ORIGINAL_POPEN_DENIED')
+        process.kill()
+        process.wait(timeout=30)
+        if process.poll() is None:
+            raise OwnedLifecycleError('Q05_CRASH_RECOVERY_ORIGINAL_STILL_LIVE')
+        if reference.read_bytes()!=reference_bytes or config.read_bytes()!=config_bytes:
+            raise OwnedLifecycleError('Q05_CRASH_RECOVERY_EVIDENCE_MUTATED')
+        owner.recover_dead(authorized=True)
+        recovered_pid=assert_live_original(owner)
+        if (recovered_pid==original_pid or owner.directory.resolve()!=datadir
+                or reference.read_bytes()!=reference_bytes
+                or config.read_bytes()!=config_bytes or not vault.is_dir()):
+            raise OwnedLifecycleError('Q05_CRASH_RECOVERY_IDENTITY_DENIED')
+        session=WalletSession.open_owned(owner,source,PASSWORD,authorized=True,
+                                         create=False,keychain=keychain)
+        restored=session.snapshot()
+        if (restored.receive_code!=code or restored.history_count!=0
+                or restored.receive_count!=0 or restored.height<height
+                or restored.mainnet_allowed or restored.chain!='regtest'):
+            raise OwnedLifecycleError('Q05_CRASH_RECOVERY_CONTINUITY_DENIED')
+        session.lock();session=None
+        owner.shutdown();owner.close();owner=None
+        record['scenarios']['same_owner_crash_recovery']='PASS'
+        record['observations'].append({
+            'same_owner_crash_recovery':True,
+            'original_core_pid':original_pid,
+            'recovered_core_pid':recovered_pid,
+            'datadir_unchanged':True,
+            'wallet_reference_preserved':True,
+            'automatic_pid_adoption':False,
+            'automatic_wallet_transaction_replay':False,
+        })
+    finally:
+        if session is not None:
+            try:
+                session.lock()
+            except (OSError,ValueError,RuntimeError):
+                record['wallet_lock_blocked']=True
+        stop_owned(owner,record)
+
+
 def _fail_closed_crash(adapter,core,source,root,record):
     owner=None
     try:
@@ -574,13 +640,16 @@ def run_owned_lifecycle(*,core_dir,wsp_source,root,receipt,confirm,funded,
             _fail_closed_interrupted_publication(core_dir,wsp_source,interrupted,record)
             crashed=base/_profile_name();create_directory(crashed)
             _fail_closed_crash(adapter,core_dir,wsp_source,crashed,record)
+            recovered=base/_profile_name();create_directory(recovered)
+            _same_owner_crash_recovery(adapter,core_dir,wsp_source,recovered,record)
             _wrong_core_refused(core_dir,base/_profile_name(),record)
         required=['authentic_core_startup','owned_session_create','encrypted_checkpoint',
                   'wallet_restore']
         if funded:
             required.extend(['real_bip352_receiving','sign_broadcast'])
         if fail_closed:
-            required.extend(['crash_fail_closed','dirty_runtime_fail_closed',
+            required.extend(['crash_fail_closed','same_owner_crash_recovery',
+                             'dirty_runtime_fail_closed',
                              'interrupted_publication_fail_closed','wrong_core_refused'])
         if gui:
             required.append('native_gui')

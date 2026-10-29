@@ -291,6 +291,7 @@ jobs:
           assert proof['platform']=='macos-arm64'
           assert proof['wsp_source_commit']=='ac55f13423620252bdbf848c7e8a280c3b84721e'
           assert proof['scenarios']['crash_fail_closed']=='PASS'
+          assert proof['scenarios']['same_owner_crash_recovery']=='PASS'
           assert proof['scenarios']['dirty_runtime_fail_closed']=='PASS'
           assert any(row.get('original_popen_owned') for row in proof['observations'])
           assert any(row.get('wallet_lock_left_core_running') for row in proof['observations'])
