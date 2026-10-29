@@ -137,7 +137,7 @@ def negative_checkpoint(owner,source,password,keychain,initial,mode):
             'fault_model':'constructed native residue; genuine Core and anchor; not physical power loss'}
 
 
-def interrupted_publication(owner,source,password,keychain,initial,*,live=False):
+def interrupted_publication(owner,source,password,keychain,initial,*,live=False,transition='none'):
     """Real fsynced ciphertext cut before anchor, retaining unknown runtime."""
     from wam_regtest import custody
     from wam_regtest.vault import CheckpointVault
@@ -146,6 +146,15 @@ def interrupted_publication(owner,source,password,keychain,initial,*,live=False)
     if live:
         session=WalletSession.open_owned(owner,source,password,authorized=True,keychain=keychain)
     try:
+        if transition!='none':
+            from wam_sp.keystore import Keyring
+            recipient=Keyring()
+            try:code=recipient.accounts()[0].payment_code()
+            finally:recipient.close()
+            review=session.prepare(code,100000,10000)
+            if transition=='uncertain':session.sign(review.commitment)
+            from .managed_wallet_checkpoint import _snapshot
+            initial.update(_snapshot(session.ring,session.scanner,session._rpc(),session.vault))
         before=anchor.read();folder=owner.directory/'wallet-vault'
         initial['checkpoint']=list(before)
         reference=(owner.root/'supervisor.wallet').read_bytes()
@@ -159,13 +168,18 @@ def interrupted_publication(owner,source,password,keychain,initial,*,live=False)
                 raise AfterPublicationCut('Q05_TEST_CUT_AFTER_DURABLE_PUBLICATION')
         try:
             with patch.object(store,'publish',cut):
-                if live:session._save()
+                if transition=='signed':session.sign(review.commitment)
+                elif transition=='uncertain':session.broadcast(review.commitment)
+                elif live:session._save()
                 else:checkpoint(owner,source,password,authorized=True,keychain=keychain)
             raise ValueError('Q05_PUBLICATION_CUT_NOT_EXERCISED')
         except (ManagedWalletError,WalletSessionError) as error:
             expected='WALLET_ANCHORED_SAVE_FAILED' if live else 'MANAGED_WALLET_CHECKPOINT_DENIED'
             if (error.args!=(expected,) or type(error.__context__) is not AfterPublicationCut
                     or not published):raise
+            if transition!='none':
+                states=[row[0] for row in session.scanner.store.db.execute('SELECT state FROM reservations')]
+                if states!=[transition]:raise ValueError('Q05_TRANSITION_CUT_NOT_EXERCISED')
     finally:
         if session is not None:
             try:session.lock()
@@ -191,6 +205,8 @@ def interrupted_publication(owner,source,password,keychain,initial,*,live=False)
             'unchanged_native_anchor':list(before),'original_ciphertexts_reference_preserved':True,
             'orphan_ciphertext_sha256':published['sha256'],'runtime_preserved':True,
             'live_session_runtime_retained_on_checkpoint_failure':closed_preserved,
+            'unanchored_transition_state':transition,
+            'prior_anchored_reservation_states':initial['reservation_states'],
             'next_open_refused_before_keys_or_balance':True,
             'prior_anchored_reservation_sha256':initial['reservation_sha256'],
             'recovery_completed':False,'physical_power_loss_test':False}
@@ -250,6 +266,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
     parser.add_argument('--interrupt-recovery-reference',action='store_true')
     parser.add_argument('--complete-pending-recovery',action='store_true')
     parser.add_argument('--owned-session',action='store_true')
+    parser.add_argument('--transition-cut',choices=('none','signed','uncertain'),default='none')
     parser.add_argument('--negative',choices=('none',*NEGATIVE_MODES),default='none')
     parser.add_argument('--linux-developer-manifest')
     parser.add_argument('--linux-root-witness',type=Path)
@@ -264,7 +281,10 @@ def main(argv=None, *, core=None, source=None, frozen=False):
             or a.recover_after_interruption and not a.interrupt_publication
             or a.interrupt_recovery_reference and not a.recover_after_interruption
             or a.complete_pending_recovery and not a.interrupt_recovery_reference
-            or a.negative!='none' and (a.fund_disposable_wallet or a.interrupt_publication)):
+            or a.negative!='none' and (a.fund_disposable_wallet or a.interrupt_publication)
+            or a.transition_cut!='none' and (not a.owned_session or not a.fund_disposable_wallet
+                or not a.interrupt_publication or not a.recover_after_interruption
+                or a.interrupt_recovery_reference or a.reservation!='none')):
         raise SystemExit('Q05_WALLET_PROBE_SCOPE_DENIED')
     if frozen:
         from .q05_package_provenance import read
@@ -280,7 +300,8 @@ def main(argv=None, *, core=None, source=None, frozen=False):
     record={'schema':'q05-wallet-checkpoint-native/v1','status':'FAIL',
         'wallet_fixture':'PUBLIC_FIXTURE_FUNDED' if a.fund_disposable_wallet else 'EMPTY',
         'owned_session_api':a.owned_session,
-        'qualification_scope':('NEGATIVE_'+a.negative.upper() if a.negative!='none' else
+        'qualification_scope':('DIVERGENT_RESERVATION_SAFE_REFUSAL' if a.transition_cut!='none' else
+            'NEGATIVE_'+a.negative.upper() if a.negative!='none' else
             'EXPLICIT_PENDING_RECOVERY_COMPLETION' if a.complete_pending_recovery else
             'INCOMPLETE_RECOVERY_REFERENCE_SAFE_REFUSAL' if a.interrupt_recovery_reference else
             'EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY' if a.recover_after_interruption else
@@ -304,7 +325,8 @@ def main(argv=None, *, core=None, source=None, frozen=False):
             'src/wam_regtest/cli_rpc.py','scripts/probe_q05_wallet_checkpoint.py',
             'src/wam_regtest/q05_checkpoint_scenario.py')},
         'synthetic_rpc':False,'funding_or_mining':a.fund_disposable_wallet,
-        'wallet_signing':a.reservation!='none','wallet_broadcast_requested':a.reservation=='uncertain',
+        'wallet_signing':a.reservation!='none' or a.transition_cut!='none',
+        'wallet_broadcast_requested':a.reservation=='uncertain' or a.transition_cut=='uncertain',
         'public_fixture_signature_and_broadcast':a.fund_disposable_wallet,
         'physical_device_acceptance':False,'mainnet_allowed':False,'observations':[]}
     owner=None;session=None;stage='KEYCHAIN';send_calls=[];submitted_txid=None
@@ -447,7 +469,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
         if a.interrupt_publication:
             stage='INTERRUPTED_PUBLICATION_SAFE_REFUSAL'
             record['observations'].append(interrupted_publication(owner,a.wsp_source,
-                password,keychain,initial,live=a.owned_session))
+                password,keychain,initial,live=a.owned_session,transition=a.transition_cut))
             record['recovery_completed']=False
             if a.recover_after_interruption:
                 stage='EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY'
@@ -457,7 +479,26 @@ def main(argv=None, *, core=None, source=None, frozen=False):
                 original.extend(p for suffix in ('','-journal','-wal','-shm')
                     if (p:=owner.directory/('wallet-runtime.sqlite'+suffix)).exists())
                 preserved={p:sha256(p.read_bytes()).hexdigest() for p in original}
-                if a.interrupt_recovery_reference:
+                if a.transition_cut!='none':
+                    stage='DIVERGENT_RESERVATION_RECOVERY_REFUSAL'
+                    before=initial['checkpoint'];records=list(owner.root.glob('supervisor.recovery.*'))
+                    try:
+                        unsafe=recover_checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
+                    except ManagedWalletError as error:
+                        if (error.args!=('MANAGED_RECOVERY_DENIED',) or type(error.__context__) is not ManagedWalletError
+                                or error.__context__.args!=('MANAGED_RECOVERY_UNANCHORED_STATE_DIVERGED',)):
+                            raise
+                    else:
+                        record['unsafe_recovered_reservation_states']=unsafe['reservation_states']
+                        raise ValueError('Q05_IRREVERSIBLE_RECOVERY_ACCEPTED')
+                    from . import custody
+                    if (list(custody.anchor(initial['wallet_id'],keychain).read())!=before
+                            or list(owner.root.glob('supervisor.recovery.*'))!=records
+                            or any(sha256(p.read_bytes()).hexdigest()!=digest for p,digest in preserved.items())):
+                        raise ValueError('Q05_DIVERGENT_RECOVERY_MUTATED_STATE')
+                    record['observations'].append({'divergent_unanchored_reservation_refused':a.transition_cut,
+                        'no_recovery_reference_or_anchor_advance':True,'original_unknown_bytes_preserved':True})
+                elif a.interrupt_recovery_reference:
                     stage='INCOMPLETE_RECOVERY_REFERENCE_SAFE_REFUSAL'
                     record['observations'].append(interrupted_recovery_reference(owner,a.wsp_source,
                         password,keychain,initial,preserved))
@@ -510,7 +551,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
                         'original_orphan_runtime_reference_preserved':True,
                         'reservation_sha256':initial['reservation_sha256'],
                         'native_anchored_generation':initial['checkpoint']})
-        if a.negative=='none' and a.owned_session and (not a.interrupt_recovery_reference or a.complete_pending_recovery):
+        if a.transition_cut=='none' and a.negative=='none' and a.owned_session and (not a.interrupt_recovery_reference or a.complete_pending_recovery):
             stage='RECOVERY_AWARE_OWNED_SESSION'
             from wam_regtest.managed_wallet_checkpoint import _snapshot
             session=WalletSession.open_owned(owner,a.wsp_source,password,authorized=True,keychain=keychain)
@@ -526,7 +567,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
             record['observations'].append({'owned_session_selected_container':selected,
                 'native_lease_and_original_owner_checked':True,'uncertainty_preserved':True,
                 'wallet_close_kept_original_core_running':True,'owned_plaintext_runtime_removed':True})
-        if a.negative=='none' and (not a.interrupt_recovery_reference or a.complete_pending_recovery) and (not a.interrupt_publication or a.recover_after_interruption):
+        if a.transition_cut=='none' and a.negative=='none' and (not a.interrupt_recovery_reference or a.complete_pending_recovery) and (not a.interrupt_publication or a.recover_after_interruption):
             stage='CORE_OWNER_REOPEN'
             owner.shutdown();owner.close()
             owner=CoreSupervisor(a.root,a.core_dir,authorized=True);owner.start(timeout=30)
@@ -558,6 +599,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
         record['status']='PASS'
     except Exception as error:
         record['failure_stage']=stage;record['failure_type']=type(error).__name__
+        if error.args==('Q05_IRREVERSIBLE_RECOVERY_ACCEPTED',):record['failure_code']=error.args[0]
         context=error.__context__
         if context is not None:record['inner_failure_type']=type(context).__name__
         if session is not None:
