@@ -1,3 +1,61 @@
+# P0 recovery COMMIT and recovery-aware session — 29 October 2026
+
+Same Draft #138, branch feature/issue45-q05-managed-core-stage-a-20261027.
+Baseline 5c072c1 completed all SIX workflows SUCCESS; no unchanged baseline rerun.
+Runtime 91e86e95d8713bea436d22bff8104c6ef24559f2 adds explicit pending-COMMIT
+completion. Runtime 736d877ea34af87051294500eb7c127a32442948 adds recovery-aware
+owned sessions. 233 sequential targeted local tests PASS (143 Q05 + 90 prior
+transport/custody/session/ledger contracts). No parallel workspace jobs.
+
+complete_recovery requires explicit exact action, authenticated last BEGIN or
+exact same COMMIT, current native source-generation+1 anchor, target native
+volume/file/birth identity and exact source/current authenticated ciphertexts.
+Unexpected target names/stage/runtime/sidecars refuse. Existing restore/live-sync
+checks WSP state; keys/runtime close before COMMIT. NO vault.save/anchor advance,
+filename-based promotion, automatic completion or uncertain replay. Exact retry
+is observational/idempotent only while the same committed anchor is current;
+later legitimate generations refuse completion retry rather than guessing.
+
+Owned session uses immutable reference + committed container + anchor floor.
+Creation refuses recovery residue; original Popen/profile/journal/native scope
+are freshly checked before RPC/save. The SAME native anchor lease stays held on
+the owner thread through close, with nested signing leases on that same object.
+Wrong thread refuses. Runtime fd is pinned; inode/private parent/sidecars are
+checked before deleting only this fresh session runtime. Changed/unknown bytes
+are preserved. Close errors still close keys and release lease, never stop Core.
+No claim of protection against a compromised same-user process racing pathname
+operations; native custody/OS trust boundaries remain as previously documented.
+
+Genuine official signed macOS ARM64 Core v0.1.11 + pinned WSP/native vault:
+- 91e86e9: 8 observations PASS, actual uncertain transaction, cut after native
+  anchor before COMMIT, wrong-password refusal, explicit completion with unchanged
+  anchor, authenticated idempotent retry and same wallet after Core/owner reopen.
+- 736d877: 9 observations PASS, actual owned-session create/Prepare/Sign/Broadcast,
+  preserved irreversible uncertainty, recovery-aware committed target reopen,
+  wallet close leaves original Core alive, clean owner/Core reopen continuity.
+Receipts: evidence/q05/pending-completion-91e86e9.json and
+owned-completion-736d877.json. Exactly ONE actual wallet submission per probe,
+NO recovery replay. Fresh disposable profiles/receipts; all historical FAILs kept.
+These are controlled faults/local APIs, not physical power loss or packaged GUI.
+
+GUI integration remains incomplete: current OperationWorker and ReadWorker run
+session calls on newly created QThreads. Directly importing Cursor's launcher
+would violate new lifetime native-lease owner-thread custody. Next safe unit is a
+serial persistent owner-thread executor and lifecycle bridge; marshal GUI actions
+there, lock on window close and preserve the in-process Core owner across close/
+reopen. Do NOT remove thread checks or silently stop Core on GUI window close.
+Cursor harness unconditional profile cleanup/suppressed stop errors remain unsafe
+and were not imported; Cursor branch/checkpoint untouched. Current original-owner
+crash/live orphan still fails closed; no foreign PID adoption or control-IPC keys.
+
+Canonical 0 PASS / 0 FAIL / 37 PENDING / 0 BLOCKED / 0 STALE; G0-G7 PENDING,
+accepted=false. Q04 G6/G7 BLOCKED. Handoff NO, merge readiness NO. Inspect new
+exact-HEAD CI before next changes; Windows/Linux source/native contracts are not
+proof of actual integrated Q05 native/frozen packages. All-OS packaged, remaining
+fault windows, actual reboot, clean-device and independent review remain open.
+
+---
+
 # Windows test cleanup correction after exact-HEAD 12fdb4a FAIL
 
 Run 40790259691 / job 123173445836 ran all 127 Q05 tests but failed two cleanup

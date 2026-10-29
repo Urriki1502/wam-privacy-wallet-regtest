@@ -195,3 +195,19 @@ Open custody boundaries: pending COMMIT completion; interrupted publication at
 all stage/link windows; real post-reboot v2; cross-process orphan ownership;
 clean-device recovery; native/frozen GUI on all OS; physical and independent G7.
 Q05 stays 37 PENDING and accepted=false. Q04 G6/G7 remain BLOCKED.
+
+
+## P0 pending completion and owned-session integration (736d877)
+
+Explicit completion authenticates the selected recovery action and exact native
+anchor ciphertext before COMMIT; no anchor writes or orphan promotion. Eight
+new completion contracts cover publication cuts/idempotence/mismatch/refusal.
+Eight owned-session contracts cover consent/residue/pending references, runtime
+replacement/sidecar preservation, wrong-thread refusal and cleanup-failure keys/
+lease release. Genuine signed-Core probe also exercises actual owned wallet
+signature, uncertain submission, recovery and clean reopen with one submission.
+Lifetime wallet anchor lease requires a single owner thread. Existing disposable
+GUI one-off workers cannot safely use this API directly. Serial worker/lifecycle
+bridge must be reviewed and tested before managed GUI import. Native file guard
+checks do not protect a compromised same-user/OS racing the final path unlink;
+no independent antirollback or physical/packaged acceptance is claimed.

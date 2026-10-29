@@ -17514,6 +17514,16 @@
               "receipt_path": "docs/evidence/q05/q05-uncertain-reservation-3436ab7.json",
               "receipt_sha256": "e1303f6ceef4d6ebd3ac64e778a520130b7805160b1afd68a49cb46170a72131",
               "scope": "Source-only genuine disposable wallet broadcast accepted by signed Core before explicit caller-result loss; uncertain reservation and balance/history/identity preserved through live checkpoint resync and clean owner/Core reopen. Exactly one wallet submission, no automatic replay. Not true TCP-loss, physical crash, normal packaged GUI or three-platform qualification."
+            },
+            {
+              "status": "PASS",
+              "source_sha": "736d877ea34af87051294500eb7c127a32442948",
+              "checkout_sha": "736d877ea34af87051294500eb7c127a32442948",
+              "receipt_path": "docs/evidence/q05/owned-completion-736d877.json",
+              "receipt_sha256": "b73808b0548849c43938972830a3b2e60b190390a9d667c2ba0b903aaa902478",
+              "timestamp_utc": "2026-10-29T01:18:54.708127+00:00",
+              "scope": "EXPLICIT_PENDING_RECOVERY_COMPLETION; original-owner local API only; not packaged GUI or all-OS qualification.",
+              "recovery_completed": true
             }
           ]
         },
@@ -17536,8 +17546,8 @@
           "acceptance_evidence": [],
           "blocker": {
             "actor": "Q05_ENGINEER_AND_NATIVE_RUNNERS",
-            "missing_evidence": "Original-owner local recovery prototype succeeds for controlled publication cut with previously anchored uncertainty; pending recovery reference completion, other crash windows and all-OS integrated native/frozen qualification remain unqualified.",
-            "next_action": "Test the combined recovery/pagination source; design explicit pending-reference completion and integrate owned session with authenticated recovery target before normal GUI acceptance."
+            "missing_evidence": "Explicit pending COMMIT completion and recovery-aware owned-session now have scoped genuine signed macOS evidence; other stage/link/process-crash boundaries, all-OS and packaged managed GUI remain unqualified.",
+            "next_action": "Inspect exact-HEAD CI, then integrate a serial owner-thread GUI executor without dropping native lease/thread checks; expand fault/native/frozen coverage."
           },
           "local_negative_evidence": {
             "status": "PASS",
@@ -17566,6 +17576,26 @@
               "receipt_path": "docs/evidence/q05/combined-recovery-cf74d67.json",
               "receipt_sha256": "73499e3ac55d6ab66336bbf9b72fa2647d9d7be84cc36a074c24f48c7f6eafb3",
               "scope": "EXPLICIT_SAME_OWNER_CHECKPOINT_RECOVERY; combined checkpoint pagination; seven actual native observations, one wallet submission and no replay. Source-only; not integrated/frozen acceptance.",
+              "recovery_completed": true
+            },
+            {
+              "status": "PASS",
+              "source_sha": "91e86e95d8713bea436d22bff8104c6ef24559f2",
+              "checkout_sha": "91e86e95d8713bea436d22bff8104c6ef24559f2",
+              "receipt_path": "docs/evidence/q05/pending-completion-91e86e9.json",
+              "receipt_sha256": "f81dbcb4ab71ae4901fb3b173ab6b7f2d699f94b70f916e1f9412cadbad733fe",
+              "timestamp_utc": "2026-10-29T01:14:19.443844+00:00",
+              "scope": "EXPLICIT_PENDING_RECOVERY_COMPLETION; original-owner local API only; not packaged GUI or all-OS qualification.",
+              "recovery_completed": true
+            },
+            {
+              "status": "PASS",
+              "source_sha": "736d877ea34af87051294500eb7c127a32442948",
+              "checkout_sha": "736d877ea34af87051294500eb7c127a32442948",
+              "receipt_path": "docs/evidence/q05/owned-completion-736d877.json",
+              "receipt_sha256": "b73808b0548849c43938972830a3b2e60b190390a9d667c2ba0b903aaa902478",
+              "timestamp_utc": "2026-10-29T01:18:54.708127+00:00",
+              "scope": "EXPLICIT_PENDING_RECOVERY_COMPLETION; original-owner local API only; not packaged GUI or all-OS qualification.",
               "recovery_completed": true
             }
           ],

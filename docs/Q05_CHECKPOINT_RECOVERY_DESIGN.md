@@ -68,3 +68,17 @@ reference/envelope; native directory replacement; unknown SQLite sidecars;
 pending-reference reopen and no extra submission. Then all three OS source and
 final packaged tests. No normal GUI/spending integration may turn these missing
 cases into PASS. Canonical ledger remains authoritative and unqualified.
+
+
+## Explicit pending completion (91e86e9)
+
+complete_recovery adds a separately consented exact-action operation. BEGIN
+opens remain denied normally. Authenticate source copy and current native target
+(source generation + 1), strict target file set and native identity. Restore to
+a fresh owned runtime and live-sync without save/CAS; close it before COMMIT.
+Recheck owner, reference chain, native identity and unchanged anchor. Exact
+COMMIT retry is observational only while the identical native anchor is current.
+Wrong password/target/action, missing/old/ahead anchor, residue and concurrent
+changes refuse. No anchor reset, orphan adoption or removal of unknown runtime.
+Native positive/negative receipt is pending-completion-91e86e9.json; the earlier
+feab99e safe-refusal receipt remains historical evidence, not a positive claim.
