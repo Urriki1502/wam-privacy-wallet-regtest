@@ -388,7 +388,7 @@ jobs:
   q05-managed-gui:
     name: Q05 serialized owned GUI / signed Core / Cocoa
     runs-on: macos-15
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
       PYTHONUNBUFFERED: '1'
       PYTHONDONTWRITEBYTECODE: '1'
@@ -416,20 +416,24 @@ jobs:
           if ! command -v gpg >/dev/null; then brew install gnupg; fi
           python -m wam_regtest.release --platform macos-arm64 --destination core
       - name: Real managed wallet create receive sign broadcast confirm close reopen durable crash
-        timeout-minutes: 8
+        timeout-minutes: 18
         env:
           QT_QPA_PLATFORM: cocoa
         run: |
-          python scripts/probe_q05_executor_gui.py \
+          python scripts/qualify_q05_native.py \
             --core-dir "${GITHUB_WORKSPACE}/core" --wsp-source "${GITHUB_WORKSPACE}/wsp-upstream" \
-            --root "${RUNNER_TEMP}/wam-fusion-core-05ac000000000001" \
-            --receipt "${GITHUB_WORKSPACE}/q05-gui-native.json" --confirm-disposable-regtest
+            --output-dir "${RUNNER_TEMP}/q05-native-matrix" --confirm-disposable-regtest
       - name: Require actual combined-source GUI receipt
         shell: python
         run: |
           import json,os
           from pathlib import Path
-          r=json.loads(Path('q05-gui-native.json').read_text())
+          evidence=Path(os.environ['RUNNER_TEMP'])/'q05-native-matrix'
+          matrix=json.loads((evidence/'matrix.json').read_text())
+          assert matrix['status']=='PASS' and matrix['last_owner_shutdown_verified'] is True
+          assert matrix['source_provenance']['candidate_source_sha']==os.environ['WAM_SOURCE_HEAD']
+          assert len(matrix['completed'])==11
+          r=json.loads((evidence/'gui.json').read_text())
           assert r['status']=='PASS' and r['owner_shutdown_verified'] is True
           assert r['source_sha']==os.environ['WAM_SOURCE_HEAD']
           assert r['synthetic_rpc'] is False and r['frozen'] is False
@@ -445,5 +449,6 @@ jobs:
             q05-gui-native*.json
             q05-gui-native*.png
             q05-install.json
+            ${{ runner.temp }}/q05-native-matrix/
           if-no-files-found: warn
           retention-days: 14

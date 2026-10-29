@@ -420,7 +420,7 @@ jobs:
   q05-managed-gui:
     name: Q05 serialized owned GUI / reviewed Core / test root witness
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
       PYTHONUNBUFFERED: '1'
       PYTHONDONTWRITEBYTECODE: '1'
@@ -455,15 +455,14 @@ jobs:
           sudo apt-get install -y acl libevent-dev libsqlite3-dev binutils xvfb xauth libegl1 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxcb-xkb1 libxcb-shape0 libdbus-1-3 fonts-noto-core
           chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
       - name: Real witnessed managed wallet with explicit qualification-only witness
-        timeout-minutes: 8
+        timeout-minutes: 18
         env:
           QT_QPA_PLATFORM: xcb
         run: |
-          xvfb-run -a python scripts/probe_q05_executor_gui.py \
+          xvfb-run -a python scripts/qualify_q05_native.py \
             --core-dir "${GITHUB_WORKSPACE}/qualified-linux-core/linux-core" \
             --wsp-source "${GITHUB_WORKSPACE}/wsp-upstream" \
-            --root "${RUNNER_TEMP}/wam-fusion-core-05ac000000000003" \
-            --receipt "${GITHUB_WORKSPACE}/q05-gui-native.json" --confirm-disposable-regtest \
+            --output-dir "${RUNNER_TEMP}/q05-native-matrix" --confirm-disposable-regtest \
             --linux-developer-manifest e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806 \
             --test-root-witness
       - name: Require actual combined-source GUI receipt
@@ -471,7 +470,12 @@ jobs:
         run: |
           import json,os
           from pathlib import Path
-          r=json.loads(Path('q05-gui-native.json').read_text())
+          evidence=Path(os.environ['RUNNER_TEMP'])/'q05-native-matrix'
+          matrix=json.loads((evidence/'matrix.json').read_text())
+          assert matrix['status']=='PASS' and matrix['last_owner_shutdown_verified'] is True
+          assert matrix['source_provenance']['candidate_source_sha']==os.environ['WAM_SOURCE_HEAD']
+          assert len(matrix['completed'])==10
+          r=json.loads((evidence/'gui.json').read_text())
           assert r['status']=='PASS' and r['owner_shutdown_verified'] is True
           assert r['source_sha']==os.environ['WAM_SOURCE_HEAD']
           assert r['synthetic_rpc'] is False and r['frozen'] is False
@@ -487,5 +491,6 @@ jobs:
             q05-gui-native*.json
             q05-gui-native*.png
             q05-install.json
+            ${{ runner.temp }}/q05-native-matrix/
           if-no-files-found: warn
           retention-days: 14

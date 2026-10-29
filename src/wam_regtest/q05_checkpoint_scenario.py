@@ -508,4 +508,3 @@ def main(argv=None, *, core=None, source=None, frozen=False):
     print(json.dumps({'status':record['status'],'source_sha':head,
         'observations':len(record['observations'])}))
     return 0 if record['status']=='PASS' and record['owner_shutdown_verified'] else 2
-

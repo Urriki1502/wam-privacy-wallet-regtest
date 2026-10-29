@@ -26,6 +26,7 @@ def main():
     p.add_argument('--linux-developer-manifest')
     p.add_argument('--linux-root-witness',type=Path)
     p.add_argument('--test-root-witness',action='store_true')
+    p.add_argument('--stage-official-windows-core',action='store_true')
     a=p.parse_args();project=Path(__file__).resolve().parents[1]
     if (not a.confirm_disposable_regtest or not a.output_dir.is_absolute()
             or a.output_dir.exists() or a.output_dir.is_symlink()
@@ -35,6 +36,9 @@ def main():
     a.output_dir.mkdir(mode=0o700)
     record={'source_provenance':proof,'platform':adapter.platform_id,'status':'FAIL',
             'python_version':sys.version.split()[0],'commands':[],'completed':[]}
+    if a.stage_official_windows_core:
+        from wam_regtest.q05_platforms import stage_windows_core
+        stage_windows_core(a.core_dir)
     adapter.prepare_trust(a.core_dir,a.linux_developer_manifest,a.linux_root_witness,
                           test_witness=a.test_root_witness)
     witness=a.linux_root_witness
