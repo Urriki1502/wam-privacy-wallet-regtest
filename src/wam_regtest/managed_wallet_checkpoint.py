@@ -278,6 +278,9 @@ def checkpoint(owner,source,password,*,authorized=False,keychain=None,create=Fal
         anchor=custody.anchor(wallet_id,keychain)
         with anchor.lease():
             require_anchor_floor(anchor.read(),floor)
+            if not create:
+                from .wallet_recovery import require_recovery_source_equivalence
+                require_recovery_source_equivalence(owner,source,password,anchor)
             if create:
                 if anchor.read() is not None:
                     raise ManagedWalletError('MANAGED_WALLET_ANCHOR_EXISTS')

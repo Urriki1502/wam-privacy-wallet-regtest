@@ -35,6 +35,9 @@ class RecoveryCompletionContracts(unittest.TestCase):
         factory=Mock(return_value=vault)
         factory._filename.side_effect=lambda generation:f'snapshot-{generation:09d}.enc'
         self.stack.enter_context(patch.object(module,'_owned'))
+        # This suite isolates reference completion with mocked vault payloads.
+        # Real sealed source/runtime equivalence has its own regression suite.
+        self.stack.enter_context(patch.object(module,'require_recovery_source_equivalence'))
         self.stack.enter_context(patch('wam_regtest.managed_wallet_checkpoint._owned'))
         self.stack.enter_context(patch('wam_regtest.managed_wallet_checkpoint._pinned_source'))
         self.stack.enter_context(patch.object(module.custody,'anchor',return_value=anchor))

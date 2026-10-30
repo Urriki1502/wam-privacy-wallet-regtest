@@ -11,6 +11,10 @@ import json
 import re
 import secrets
 import sys
+import base64
+import os
+import sqlite3
+import time
 
 from . import custody
 from .managed_wallet_checkpoint import (
@@ -24,6 +28,145 @@ from .supervisor_store import create_once,read_exact
 SCHEMA='wam-native-wallet-recovery-reference/v1'
 MAX_EVENTS=100000
 PREFIX='supervisor.recovery.'
+
+
+def _logical_checkpoint(payload,password,identity=None):
+    """Authenticate bounded WSP state in memory; never instantiate its keys."""
+    from wam_sp.keystore import unseal
+    from wam_sp.state import decode_checkpoint
+    raw=unseal(base64.b64decode(payload['checkpoint'],validate=True),password,b'checkpoint')
+    if identity is None:
+        data=json.loads(raw,object_pairs_hook=_distinct)
+        identity=data['identity']  # Native-anchored payload is authoritative.
+    data=decode_checkpoint(raw,identity)
+    if data.get('schema')!=3:raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AMBIGUOUS')
+    keys=json.loads(unseal(base64.b64decode(payload['keys'],validate=True),password,b'keys'),
+                    object_pairs_hook=_distinct)
+    return data,sha256(_canonical(keys)).digest()
+
+
+def _table_rows(tables):
+    # Ignore SQLite's physical row order, never row values or duplicate rows.
+    return {name:sorted(_canonical(row) for row in rows) for name,rows in tables.items()}
+
+
+def _require_runtime_matches_anchor(path,expected):
+    """Read-only native-pinned SQL; no journal recovery, migration or removal."""
+    from .managed_wallet_session import RuntimeGuard
+    from wam_sp.store import SCHEMA,TABLES
+    if any(path.with_name(path.name+s).exists() or path.with_name(path.name+s).is_symlink()
+           for s in ('-journal','-wal','-shm')):
+        raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AMBIGUOUS')
+    guard=RuntimeGuard(path);db=memory=None
+    try:
+        before=os.fstat(guard.fd)
+        if not 1<=before.st_size<=1024**3:
+            raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AMBIGUOUS')
+        db=sqlite3.connect(path.as_uri()+'?mode=ro&immutable=1',uri=True,timeout=5)
+        # Some supported Python builds omit extension loading entirely.
+        # Where the API exists, explicitly keep it disabled.
+        if hasattr(db,'enable_load_extension'):db.enable_load_extension(False)
+        db.execute('PRAGMA query_only=ON')
+        db.execute('PRAGMA trusted_schema=OFF');db.setlimit(sqlite3.SQLITE_LIMIT_LENGTH,32*1024*1024)
+        deadline=time.monotonic()+5
+        db.set_progress_handler(lambda: int(time.monotonic()>deadline),1000)
+        memory=sqlite3.connect(':memory:');memory.executescript(SCHEMA)
+        sql="SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name"
+        if db.execute(sql).fetchall()!=memory.execute(sql).fetchall():
+            raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AMBIGUOUS')
+        actual={};total=0
+        db.execute('BEGIN')
+        meta=dict(db.execute('SELECT key,value FROM meta'))
+        if (db.execute('PRAGMA user_version').fetchone()[0]!=3
+                or meta.get('identity')!=expected['identity'] or meta.get('profile')!='WSP-1'):
+            raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AMBIGUOUS')
+        for table in TABLES:
+            rows=[]
+            for row in db.execute('SELECT * FROM '+table+' LIMIT 200001'):
+                encoded=_canonical(list(row));total+=len(encoded)
+                if len(rows)>=200000 or total>32*1024*1024:
+                    raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AMBIGUOUS')
+                rows.append(encoded)
+            actual[table]=sorted(rows)
+        if actual!=_table_rows(expected['tables']):
+            raise ManagedWalletError('MANAGED_RECOVERY_UNANCHORED_STATE_DIVERGED')
+        guard.check();after=os.fstat(guard.fd)
+        if (any(getattr(before,k)!=getattr(after,k) for k in ('st_size','st_mtime_ns','st_ctime_ns'))
+                or any(path.with_name(path.name+s).exists() or path.with_name(path.name+s).is_symlink()
+                       for s in ('-journal','-wal','-shm'))):
+            raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AMBIGUOUS')
+    finally:
+        if db is not None:db.close()
+        if memory is not None:memory.close()
+        guard.close()
+
+
+def _require_no_divergent_source(owner,vault,current,password,payload,*,runtime=None):
+    """Unknown bytes may only RESTRICT recovery, never authorize restoration.
+
+    A future publication can contain a new irreversible sign/broadcast intent.
+    Copying only the older anchor must not turn that reservation into a draft.
+    Refuse any differing logical state; do not merge/promote/delete an orphan.
+    """
+    expected,keys=_logical_checkpoint(payload,password)
+    deadline=time.monotonic()+15;future_count=0
+    for path in vault.directory.iterdir():
+        if time.monotonic()>deadline:
+            raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AUDIT_BUDGET')
+        if path.name=='.vault.lock':continue
+        match=re.fullmatch(r'snapshot-([0-9]{9})\.enc',path.name)
+        if match is None or int(match[1])==0:
+            raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AMBIGUOUS')
+        generation=int(match[1])
+        if generation<=current[0]:continue
+        future_count+=1
+        if future_count>64:raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AUDIT_BUDGET')
+        raw=custody.storage().read(vault.directory,path.name)
+        future=vault._load_payload(password,(generation,sha256(raw).hexdigest()))
+        data,future_keys=_logical_checkpoint(future,password,expected['identity'])
+        if (not hmac.compare_digest(keys,future_keys)
+                or _table_rows(data['tables'])!=_table_rows(expected['tables'])):
+            raise ManagedWalletError('MANAGED_RECOVERY_UNANCHORED_STATE_DIVERGED')
+    # The unknown runtime is not a source of keys or balances. Its only use is
+    # a read-only equality check that can deny, never broaden, recovery.
+    if runtime is None:
+        _, name, _=active_location(owner,vault.anchor.wallet_id)
+        runtime=owner.directory/name
+    if runtime.exists() or runtime.is_symlink():_require_runtime_matches_anchor(runtime,expected)
+    elif any(runtime.with_name(runtime.name+s).exists() or runtime.with_name(runtime.name+s).is_symlink()
+             for s in ('-journal','-wal','-shm')):
+        raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AMBIGUOUS')
+
+
+def require_recovery_source_equivalence(owner,source,password,anchor):
+    """Audit retained source evidence, including legacy COMMITs, read-only.
+
+    A prior version's completed recovery must not hide a stricter source intent.
+    This cannot authorize an old snapshot: active native anchor/floor checks
+    still select the only restorable target. Unknown evidence only denies use.
+    """
+    try:
+        _audit_recovery_sources(owner,source,password,anchor)
+    except (sqlite3.Error,TypeError,KeyError,RecursionError):
+        raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AMBIGUOUS') from None
+
+
+def _audit_recovery_sources(owner,source,password,anchor):
+    from .vault import CheckpointVault
+    rows,_=_records(owner,anchor.wallet_id)
+    folder=owner.directory/'wallet-vault';runtime=owner.directory/'wallet-runtime.sqlite'
+    if sum(row['state']=='BEGIN' for row in rows)>64:
+        raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AUDIT_BUDGET')
+    deadline=time.monotonic()+15
+    for row in rows:
+        if time.monotonic()>deadline:raise ManagedWalletError('MANAGED_RECOVERY_SOURCE_AUDIT_BUDGET')
+        if row['state']=='BEGIN':
+            old=CheckpointVault(folder,anchor,source)
+            payload=old._load_payload(password,row['source_anchor'])
+            _require_no_divergent_source(owner,old,row['source_anchor'],password,payload,runtime=runtime)
+        else:
+            folder=owner.directory/('wallet-recovery-'+row['action'])
+            runtime=owner.directory/('wallet-runtime-recovery-'+row['action']+'.sqlite')
 
 
 def has_recovery_records(owner):
@@ -136,11 +279,13 @@ def recover_checkpoint(owner,source,password,*,authorized=False,keychain=None):
     ring=scanner=rpc=None
     try:
         with anchor.lease():
+            require_recovery_source_equivalence(owner,source,password,anchor)
             current=anchor.read();require_anchor_floor(current,floor)
             if current is None or current[0]>=10**9-1:
                 raise ManagedWalletError('MANAGED_RECOVERY_ANCHOR_REQUIRED')
             old=CheckpointVault(original,anchor,source)
-            old._load_payload(password,current)  # Authenticate before reference mutation.
+            payload=old._load_payload(password,current)
+            _require_no_divergent_source(owner,old,current,password,payload)
             rpc=WalletCoreCli(owner.cli,owner.directory);rpc.attest()
             action=secrets.token_hex(8)
             target=owner.directory/('wallet-recovery-'+action)
@@ -167,7 +312,7 @@ def recover_checkpoint(owner,source,password,*,authorized=False,keychain=None):
             result['checkpoint']=list(actual)
             result['explicit_checkpoint_recovery']=True
             return result
-    except (OSError,ValueError,RuntimeError):
+    except (OSError,ValueError,RuntimeError,sqlite3.Error,TypeError,KeyError,RecursionError):
         raise ManagedWalletError('MANAGED_RECOVERY_DENIED') from None
     finally:
         if scanner is not None:scanner.close()
@@ -200,6 +345,7 @@ def complete_recovery(owner,source,password,*,action,authorized=False,keychain=N
     ring=scanner=rpc=None
     try:
         with anchor.lease():
+            require_recovery_source_equivalence(owner,source,password,anchor)
             actual=anchor.read()
             if (type(actual) not in (tuple,list) or not _record(list(actual))
                     or actual[0]!=last['source_anchor'][0]+1
@@ -234,7 +380,7 @@ def complete_recovery(owner,source,password,*,action,authorized=False,keychain=N
             result.update(checkpoint=list(actual),explicit_recovery_completion=True,
                           completion_already_committed=committed,anchor_advanced=False)
             return result
-    except (OSError,ValueError,RuntimeError):
+    except (OSError,ValueError,RuntimeError,sqlite3.Error,TypeError,KeyError,RecursionError):
         raise ManagedWalletError('MANAGED_RECOVERY_COMPLETION_DENIED') from None
     finally:
         if scanner is not None:scanner.close()

@@ -106,6 +106,9 @@ def open_owned(cls,owner,source,password,*,authorized=False,keychain=None,create
         anchor=custody.anchor(wallet_id,keychain)
         context=anchor.lease();context.__enter__();lease=context
         require_anchor_floor(anchor.read(),floor);_owned(owner)
+        if not create:
+            from .wallet_recovery import require_recovery_source_equivalence
+            require_recovery_source_equivalence(owner,source,password,anchor)
         if create:
             if anchor.read() is not None:raise ValueError('WALLET_MANAGED_ANCHOR_EXISTS')
             custody.create_directory(folder)
