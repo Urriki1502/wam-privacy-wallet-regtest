@@ -50,6 +50,10 @@ def main():
     cases=[('gui','probe_q05_executor_gui.py',[]),('security','probe_q05_security.py',[]),
         ('signed-completion','probe_q05_wallet_checkpoint.py',[*completion,'--reservation','signed']),
         ('uncertain-completion','probe_q05_wallet_checkpoint.py',[*completion,'--reservation','uncertain'])]
+    divergence=['--owned-session','--fund-disposable-wallet','--interrupt-publication',
+        '--recover-after-interruption']
+    cases += [(state+'-divergent-cut','probe_q05_wallet_checkpoint.py',
+               [*divergence,'--transition-cut',state]) for state in ('signed','uncertain')]
     cases += [('negative-'+mode,'probe_q05_wallet_checkpoint.py',['--negative',mode]) for mode in
               NEGATIVE_MODES]
     if sys.platform=='darwin':cases.append(('authenticated-control','probe_q05_macos_lifecycle.py',[]))

@@ -136,3 +136,32 @@ class QualificationContracts(unittest.TestCase):
                         {'qualification_scope':'CLEAN_OWNER_REOPEN'}):
             with self.subTest(changes=changes),self.assertRaises(ValueError):
                 require({**good,**changes},base,binary,'checkpoint',['uncertain'])
+
+    def test_frozen_divergence_requires_exact_transition_no_replay_and_preserved_anchor(self):
+        require=runpy.run_path(str(ROOT/'scripts/qualify_q05_frozen.py'))['require_supplement']
+        binary=self.directory/'bootloader';binary.write_bytes(b'public-test-bootloader')
+        base={k:'public-fixture' for k in
+              ('source_sha','checkout_sha','core_sha256','wsp_source_commit','platform','core_trust')}
+        for state in ('signed','uncertain'):
+            observed=[{'unanchored_transition_state':state,
+                       'live_session_runtime_retained_on_checkpoint_failure':True},
+                      {'divergent_unanchored_reservation_refused':state,
+                       'no_recovery_reference_or_anchor_advance':True,
+                       'original_unknown_bytes_preserved':True}]
+            good={**base,'status':'PASS','owner_shutdown_verified':True,'frozen':True,
+                'synthetic_rpc':False,'mainnet_allowed':False,'recovery_completed':False,
+                'qualification_scope':'DIVERGENT_RESERVATION_SAFE_REFUSAL',
+                'automatic_wallet_transaction_replay':False,'wallet_broadcast_calls_total':0,
+                'source_provenance':{'frozen_executable_sha256':sha256(binary.read_bytes()).hexdigest()},
+                'observations':observed}
+            options=['--transition-cut',state]
+            require(good,base,binary,'checkpoint',options)
+            changes=[{'wallet_broadcast_calls_total':1},{'recovery_completed':True},
+                     {'automatic_wallet_transaction_replay':True},{'observations':[]},
+                     {'qualification_scope':'EXPLICIT_PENDING_RECOVERY_COMPLETION'}]
+            for field in ('divergent_unanchored_reservation_refused',
+                          'no_recovery_reference_or_anchor_advance','original_unknown_bytes_preserved'):
+                changes.append({'observations':[observed[0],{**observed[1],field:False}]})
+            for change in changes:
+                with self.subTest(state=state,change=change),self.assertRaises(ValueError):
+                    require({**good,**change},base,binary,'checkpoint',options)

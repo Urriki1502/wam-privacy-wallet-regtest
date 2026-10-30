@@ -79,6 +79,10 @@ def main():
         cases=[] if a.headless else [('security','security',[])]
         cases += [('signed-completion','checkpoint',[*completion,'--reservation','signed']),
             ('uncertain-completion','checkpoint',[*completion,'--reservation','uncertain'])]
+        divergence=['--owned-session','--fund-disposable-wallet','--interrupt-publication',
+            '--recover-after-interruption']
+        cases += [(state+'-divergent-cut','checkpoint',[*divergence,'--transition-cut',state])
+                  for state in ('signed','uncertain')]
         cases += [('negative-'+mode,'checkpoint',['--negative',mode]) for mode in
                   NEGATIVE_MODES]
         commands=[]
@@ -130,6 +134,20 @@ def require_supplement(item,base,binary,scenario,options):
                 or observations[0].get('wrong_hmac_shutdown_refused_without_journal_mutation') is not True
                 or observations[1].get('credential_bytes_sent')!=0
                 or observations[2].get('explicit_original_backend_quit_verified') is not True):
+            raise ValueError('Q05_FINAL_FROZEN_SUPPLEMENT_DENIED')
+    elif '--transition-cut' in options:
+        state=options[options.index('--transition-cut')+1]
+        if (state not in ('signed','uncertain')
+                or item.get('qualification_scope')!='DIVERGENT_RESERVATION_SAFE_REFUSAL'
+                or item.get('recovery_completed') is not False
+                or item.get('automatic_wallet_transaction_replay') is not False
+                or item.get('wallet_broadcast_calls_total')!=0
+                or not any(o.get('unanchored_transition_state')==state
+                    and o.get('live_session_runtime_retained_on_checkpoint_failure') is True
+                    for o in observations)
+                or not any(o.get('divergent_unanchored_reservation_refused')==state
+                    and o.get('no_recovery_reference_or_anchor_advance') is True
+                    and o.get('original_unknown_bytes_preserved') is True for o in observations)):
             raise ValueError('Q05_FINAL_FROZEN_SUPPLEMENT_DENIED')
     elif '--negative' in options:
         mode=options[options.index('--negative')+1]
