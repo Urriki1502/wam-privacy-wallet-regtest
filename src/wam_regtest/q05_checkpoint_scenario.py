@@ -630,7 +630,17 @@ def main(argv=None, *, core=None, source=None, frozen=False):
         record['failure_stage']=stage;record['failure_type']=type(error).__name__
         if error.args==('Q05_IRREVERSIBLE_RECOVERY_ACCEPTED',):record['failure_code']=error.args[0]
         context=error.__context__
-        if context is not None:record['inner_failure_type']=type(context).__name__
+        if context is not None:
+            record['inner_failure_type']=type(context).__name__
+            # Test-only finite diagnostic: Linux root witness exposes fixed
+            # public refusal codes, never private errors or socket payloads.
+            # A missing code remains unknown; do not reinterpret it as PASS.
+            if sys.platform=='linux':
+                from .linux_anchor_witness import LinuxWitnessError
+                if type(context) is LinuxWitnessError and len(context.args)==1:
+                    code=context.args[0]
+                    if type(code) is str and re.fullmatch(r'ROOT_WITNESS_[A-Z_]{2,64}',code):
+                        record['inner_failure_code']=code
         if session is not None:
             try:session.lock()
             except (OSError,ValueError,RuntimeError):record['wallet_lock_blocked']=True
