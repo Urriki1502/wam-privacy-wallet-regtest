@@ -72,8 +72,10 @@ class FundingContracts(unittest.TestCase):
             def execute(argv,method,params,**kwargs):
                 methods.append(method)
                 if method=='generatetoaddress':
-                    self.assertEqual(kwargs['timeout'],10)
+                    self.assertEqual(params[0],'101')
+                    self.assertEqual(kwargs['timeout'],90)
                     raise CliRpcError('CORE_RPC_TIMEOUT_UNCERTAIN')
+                self.assertEqual(kwargs['timeout'],10)
                 return {'getblockchaininfo':{'chain':'regtest','blocks':0},
                     'getblockhash':REGTEST_GENESIS,
                     'getconnectioncount':0,
