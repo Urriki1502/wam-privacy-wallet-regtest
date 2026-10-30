@@ -71,7 +71,10 @@ jobs:
           import os,subprocess
           base=os.environ.get('BASE_SHA')
           changed=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines() if base else []
-          inputs={'.github/workflows/linux-experimental-regtest.yml','scripts/build_linux_developer_core.sh','src/wam_regtest/linux_developer_core.py','src/wam_regtest/linux_core_probe.py','src/wam_regtest/core.py','tests/test_linux_developer_core.py'}
+          # Rebuild upstream only when the Linux Core build/probe inputs changed.
+          # Q05 wallet/workflow changes still run native and frozen Core E2E with
+          # the independently reviewed immutable Linux Core artifact.
+          inputs={'scripts/build_linux_developer_core.sh','src/wam_regtest/linux_developer_core.py','src/wam_regtest/linux_core_probe.py','tests/test_linux_developer_core.py'}
           with open(os.environ['GITHUB_OUTPUT'],'a') as out:out.write('core_changed='+str(not base or bool(inputs.intersection(changed))).lower()+'\n')
           PY
       - name: Preserve Q01 source-install receipt (not Q acceptance)
@@ -371,7 +374,7 @@ jobs:
           retention-days: 14
   developer-core:
     needs: native-contracts
-    if: needs.native-contracts.outputs.core_changed == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.native-contracts.outputs.core_changed == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
