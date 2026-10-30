@@ -5,7 +5,8 @@ import runpy
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock,patch
+from types import SimpleNamespace
 
 from wam_regtest import q05_checkpoint_scenario as checkpoint
 from wam_regtest import q05_security_scenario as security
@@ -165,3 +166,53 @@ class QualificationContracts(unittest.TestCase):
             for change in changes:
                 with self.subTest(state=state,change=change),self.assertRaises(ValueError):
                     require({**good,**change},base,binary,'checkpoint',options)
+
+    def test_live_publication_cut_observes_only_original_session_anchor_lease(self):
+        from wam_regtest.wallet_session import WalletSessionError
+        self.root.mkdir(mode=0o700)
+        folder=self.root/'wallet-vault';folder.mkdir(mode=0o700)
+        (folder/'snapshot-000000001.enc').write_bytes(b'public-original-ciphertext')
+        (self.root/'supervisor.wallet').write_bytes(b'public-reference')
+        (self.root/'wallet-runtime.sqlite').write_bytes(b'public-retained-runtime')
+        owner=SimpleNamespace(directory=self.root,root=self.root)
+        anchor=Mock();anchor.read.return_value=(1,'b'*64)
+        session=Mock();session.vault.anchor=anchor
+        def publish(directory,name,blob):(directory/name).write_bytes(blob)
+        store=SimpleNamespace(publish=publish,read=lambda directory,name:(directory/name).read_bytes())
+        def save():
+            try:store.publish(folder,'snapshot-000000002.enc',b'public-future-ciphertext')
+            except checkpoint.AfterPublicationCut as error:
+                raise WalletSessionError('WALLET_ANCHORED_SAVE_FAILED') from error
+        def lock():
+            session.locked=True;session._password=None
+            raise WalletSessionError('WALLET_MANAGED_RUNTIME_PRESERVED')
+        session._save.side_effect=save;session.lock.side_effect=lock
+        initial={'wallet_id':'a'*32,'reservation_states':['signed'],'reservation_sha256':'c'*64}
+        with patch('wam_regtest.custody.anchor') as foreign_anchor,\
+                patch('wam_regtest.custody.storage',return_value=store),\
+                patch('wam_regtest.wallet_session.WalletSession.open_owned',return_value=session),\
+                patch.object(checkpoint,'checkpoint',side_effect=checkpoint.ManagedWalletError('MANAGED_WALLET_EXISTING_RUNTIME_DENIED')):
+            result=checkpoint.interrupted_publication(owner,self.directory,b'public-password',None,initial,live=True)
+            foreign_anchor.assert_not_called()
+        self.assertTrue(result['live_session_runtime_retained_on_checkpoint_failure'])
+        self.assertEqual(initial['checkpoint'],[1,'b'*64])
+        anchor.advance.assert_not_called();anchor._advance_unlocked.assert_not_called()
+        self.assertEqual((self.root/'wallet-runtime.sqlite').read_bytes(),b'public-retained-runtime')
+
+    def test_checkpoint_funding_failure_retains_only_typed_finite_cause_and_closes_transport(self):
+        from wam_regtest.core import CoreSmokeError
+        from wam_regtest.wsp_live import RealWspScanError
+        for cause,expected in ((CoreSmokeError('CORE_RPC_TIMEOUT_UNCERTAIN'),'CORE_RPC_TIMEOUT_UNCERTAIN'),
+                (CoreSmokeError('rpcpassword=private-canary'),None),
+                (ValueError('CORE_RPC_TIMEOUT_UNCERTAIN'),None)):
+            rpc=Mock();record={}
+            def fail(*args):
+                try:raise cause
+                except Exception as inner:raise RealWspScanError('RPC_DENIED') from inner
+            rpc._call.side_effect=fail
+            with self.assertRaises(RealWspScanError),patch('wam_regtest.wsp_live._public_fixture_payment') as payment:
+                checkpoint.fund_checkpoint_fixture(rpc,'public-code','public-address',record)
+            self.assertEqual(record,{'fixture_funding_failure':{'stage':'generation',
+                **({'cli_code':expected} if expected else {})}})
+            rpc._transport.close.assert_called_once();payment.assert_not_called()
+            rpc._call.assert_called_once_with('generatetoaddress',['101','public-address'])

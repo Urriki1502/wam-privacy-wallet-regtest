@@ -30,6 +30,34 @@ from wam_regtest.wsp_live import PINNED_WSP_COMMIT,_pinned_source
 class AfterPublicationCut(ValueError):pass
 class BeforeRecoveryCommitCut(ValueError):pass
 
+
+def fund_checkpoint_fixture(rpc,payment_code,address,record):
+    """Retain finite funding diagnostics without credentials or error text."""
+    from .core import CoreSmokeError
+    from .wsp_live import _public_fixture_payment
+    stage='attestation'
+    try:
+        rpc.attest();stage='generation'
+        rpc._call('generatetoaddress',['101',address]);stage='payment'
+        return _public_fixture_payment(rpc,SimpleNamespace(payment_code=lambda:payment_code),address)
+    except Exception as error:
+        detail={'stage':stage}
+        cause=error.__context__
+        if type(cause) is CoreSmokeError and len(cause.args)==1 and type(cause.args[0]) is str:
+            code=cause.args[0]
+            if code in ('CORE_RPC_TIMEOUT_UNCERTAIN','CORE_RPC_SCOPE_FAULTED',
+                    'CORE_RPC_AUTHENTICATION_DENIED','CORE_RPC_UNAVAILABLE',
+                    'CORE_RPC_PROCESS_IDENTITY_DENIED','CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE',
+                    'CORE_LOCAL_NETWORK_POLICY_DENIED','CORE_RPC_MUTATION_CONSENT_REQUIRED',
+                    'CORE_LOCAL_RPC_PARAMS_DENIED','CORE_LOCAL_RPC_METHOD_DENIED',
+                    'CORE_RPC_REPLY_DENIED','CORE_RPC_REPLY_BOUNDS_DENIED','CORE_RPC_DENIED',
+                    'CORE_RPC_PROCESS_DENIED'):
+                detail['cli_code']=code
+        record['fixture_funding_failure']=detail
+        raise
+    finally:
+        if getattr(rpc,'_transport',None) is not None:rpc._transport.close()
+
 NEGATIVE_MODES=('missing','corrupt','orphan','sidecar','divergent-reference','wrong-wsp',
     'stage','stage-linked','multiple-orphans','anchored-hardlink','symlink','permission')
 
@@ -142,9 +170,13 @@ def interrupted_publication(owner,source,password,keychain,initial,*,live=False,
     from wam_regtest import custody
     from wam_regtest.vault import CheckpointVault
     from wam_regtest.wallet_session import WalletSession,WalletSessionError
-    anchor=custody.anchor(initial['wallet_id'],keychain);session=None;closed_preserved=False
+    session=None;closed_preserved=False
     if live:
         session=WalletSession.open_owned(owner,source,password,authorized=True,keychain=keychain)
+    # The live session owns the native lease for its entire lifetime. A new
+    # anchor object must contend (especially with Linux's root witness), even
+    # on the same thread. Observe through the exact original session anchor.
+    anchor=session.vault.anchor if session is not None else custody.anchor(initial['wallet_id'],keychain)
     try:
         if transition!='none':
             from wam_sp.keystore import Keyring
@@ -401,13 +433,10 @@ def main(argv=None, *, core=None, source=None, frozen=False):
         if a.fund_disposable_wallet:
             stage='PUBLIC_DISPOSABLE_FIXTURE_FUNDING'
             from wam_regtest.wallet_session import WalletCoreCli
-            from wam_regtest.wsp_live import _public_fixture_payment,public_regtest_mining_address
-            rpc=WalletCoreCli(owner.cli,owner.directory);rpc.attest()
+            from wam_regtest.wsp_live import public_regtest_mining_address
+            rpc=WalletCoreCli(owner.cli,owner.directory)
             address=public_regtest_mining_address(a.wsp_source)
-            rpc._call('generatetoaddress',['101',address])
-            txid,atoms,height=_public_fixture_payment(rpc,
-                SimpleNamespace(payment_code=lambda:initial['payment_code']),address)
-            if getattr(rpc,'_transport',None) is not None:rpc._transport.close()
+            txid,atoms,height=fund_checkpoint_fixture(rpc,initial['payment_code'],address,record)
             initial=checkpoint(owner,a.wsp_source,password,authorized=True,keychain=keychain)
             if (initial['confirmed_atoms']!=atoms or initial['height']!=height
                     or initial['history_count']!=1):raise ValueError('Q05_FUNDED_SCAN_DENIED')

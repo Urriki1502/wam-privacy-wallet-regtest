@@ -1,0 +1,124 @@
+{
+  "schema": "q05-wallet-checkpoint-native/v1",
+  "status": "FAIL",
+  "wallet_fixture": "PUBLIC_FIXTURE_FUNDED",
+  "owned_session_api": true,
+  "qualification_scope": "EXPLICIT_PENDING_RECOVERY_COMPLETION",
+  "source_sha": "6ad30b12058afd1d5ad84e4ee219a9cb7c550a3d",
+  "checkout_sha": "ef7aa3c5fa21fc79253fc680997b013f570f301c",
+  "source_provenance": {
+    "candidate_source_sha": "6ad30b12058afd1d5ad84e4ee219a9cb7c550a3d",
+    "checkout_sha": "ef7aa3c5fa21fc79253fc680997b013f570f301c",
+    "ci_artifacts_allowed": true,
+    "literal_python_files_verified": 174,
+    "python_crlf_normalized": false,
+    "raw_python_tree_sha256": "f7355cdf79d663e00381407b5938d8bb96298efb8984d3c5c973eefe9499e72a"
+  },
+  "platform": "linux-x86_64",
+  "frozen": false,
+  "core_trust": "qualified-developer-core-reviewed-manifest",
+  "official_signed_release": false,
+  "core_version": "v0.1.11",
+  "core_sha256": {
+    "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+    "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652"
+  },
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_executed": true,
+  "python_version": "3.12.15",
+  "command": [
+    "--core-dir",
+    "/home/runner/work/wam-privacy-wallet-regtest/wam-privacy-wallet-regtest/qualified-linux-core/linux-core",
+    "--root",
+    "/tmp/wam-q05-native-matrix-vq9owfgr/wam-fusion-core-d7ffc950b1c9c761",
+    "--receipt",
+    "/home/runner/work/_temp/q05-native-matrix/signed-completion.json",
+    "--confirm-disposable-regtest",
+    "--owned-session",
+    "--fund-disposable-wallet",
+    "--interrupt-publication",
+    "--recover-after-interruption",
+    "--interrupt-recovery-reference",
+    "--complete-pending-recovery",
+    "--reservation",
+    "signed",
+    "--wsp-source",
+    "/home/runner/work/wam-privacy-wallet-regtest/wam-privacy-wallet-regtest/wsp-upstream",
+    "--linux-root-witness",
+    "/tmp/wam-root-witness-96247e60ffb36b55/anchor.sock",
+    "--linux-developer-manifest",
+    "e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806",
+    "--qualification-test-witness"
+  ],
+  "dependencies": {
+    "coincurve": "21.0.0",
+    "cryptography": "50.0.0"
+  },
+  "adapter_sha256": "36993d04a0ba1783d3d7b211334c3caa39eb38e3105c1dfd3c82530e7a8a5356",
+  "source_files": {
+    "src/wam_regtest/core_supervisor.py": "2cf76ea3de5f9f3c10fd3cac6d765be75af3ab5437798c7ee20bec3b2aed6844",
+    "src/wam_regtest/supervisor_journal.py": "89b93aa621cc45b0301257566247870c618ee61957745b56be0a4cf55a9b3016",
+    "src/wam_regtest/supervisor_identity.py": "26bdb733ddabaa1593aef91ccba7a29cd22283428d2a2b343d3cae8d8b2e7f55",
+    "src/wam_regtest/supervisor_store.py": "2507cc523e041b1757a0bf55e1049acf482721154a707d6b02a7f9c946784979",
+    "src/wam_regtest/supervisor_protocol.py": "7f91a2fc43c7e9fe3eaf62d01a638f2b470adf1a24a0b97ff36f8089b9a6c022",
+    "src/wam_regtest/managed_wallet_checkpoint.py": "36993d04a0ba1783d3d7b211334c3caa39eb38e3105c1dfd3c82530e7a8a5356",
+    "src/wam_regtest/wallet_recovery.py": "c4c6a1f34e7abde5496d8292f2c5bf07dfefdf5e1548912370eac711091f23fe",
+    "src/wam_regtest/managed_wallet_session.py": "bf021664d5d04075f4d30b2af0e9b769607f7a666aab524a7eae55f9f4c13389",
+    "src/wam_regtest/history_pages.py": "b18804085d0fd93ab41f77bc1d7e61b1db13cc96f0153f7a76a2404bc2fc8525",
+    "src/wam_regtest/probe_source.py": "86f38001f0ffe05702edb1804a80f3b6b457fbdb872391bc4e9ff999999f7a3a",
+    "src/wam_regtest/vault.py": "d62d20fb51f852d5310c0b388576c612595c50def30e6ff3dea3da50d1fdfb71",
+    "src/wam_regtest/wallet_session.py": "84d1b251d6e7d7ee12a65263b8653ef6b257071fd6aa96a2dfccfb32886bb31b",
+    "src/wam_regtest/rpc_scope.py": "7e252560b0cc40321f7bb5bf25fbd66709dcbb176c2f1a5661115eca844c0438",
+    "src/wam_regtest/json_rpc.py": "e02a6ee1b463779470c0cb91cd829b75822682dc23ba379571d433aaeee1618f",
+    "src/wam_regtest/cli_rpc.py": "345fa2acab914f4dc3ee7d95f02562332d9e18e48a527c2e8e3a615a6ad89d03",
+    "scripts/probe_q05_wallet_checkpoint.py": "169a571ead749437eae8b260557e7496524f66199271ebe57076a3861621c8aa",
+    "src/wam_regtest/q05_checkpoint_scenario.py": "fa782a56102e49b91530f566e051c21f12ab6854f19095f8b1a5c11d53978343"
+  },
+  "synthetic_rpc": false,
+  "funding_or_mining": true,
+  "wallet_signing": true,
+  "wallet_broadcast_requested": false,
+  "public_fixture_signature_and_broadcast": true,
+  "physical_device_acceptance": false,
+  "mainnet_allowed": false,
+  "observations": [
+    {
+      "created_empty_anchored_generation": [
+        2,
+        "4933425fc41163068e462034d7ec33beb1aa14a43aa64ea5c897b5f2c0574ed1"
+      ],
+      "height": 0,
+      "confirmed_atoms": 0,
+      "history_count": 0,
+      "plaintext_runtime_removed": true
+    },
+    {
+      "wrong_password_refused": true,
+      "native_anchor_reference_ciphertext_preserved": true
+    },
+    {
+      "real_fixture_payment_txid": "9ef91599b88c463d0cc848f77c1faff487535f3594bd7a136d07b373504a2c26",
+      "height": 102,
+      "confirmed_atoms": 4749990000,
+      "history_count": 1,
+      "history_sha256": "561524889a4c661f564701bbd14663fd6ca422f69ffb0bb5b0b8f182f4b8865d",
+      "wallet_signing_or_broadcast": false
+    },
+    {
+      "genuine_wallet_signature": true,
+      "reservation_state": "signed",
+      "reservation_sha256": "67eb41d8851827950c4187711b6392b6745727b7d196a2740d0dda7897c172df",
+      "irreversible_draft_release_refused": true,
+      "actual_wallet_broadcast_calls": 0,
+      "core_acceptance_before_caller_loss": false
+    }
+  ],
+  "lifecycle_schema": "wam-managed-lifecycle/v2",
+  "directory_identity_sha256": "6721545c4b75e5d173ebf574f6a42253e925dbc822bb73322578f5ab8a531e20",
+  "wallet_id": "8db2b528d231104fd2d41ba1c06ca7ac",
+  "payment_code_sha256": "2ce92b47711bdabcd4e0d2a8861ae154f892f8a5018d73059f0517a539322d41",
+  "failure_stage": "INTERRUPTED_PUBLICATION_SAFE_REFUSAL",
+  "failure_type": "LinuxWitnessError",
+  "owner_shutdown_verified": true,
+  "timestamp_utc": "2026-10-30T01:34:14.633920+00:00"
+}
