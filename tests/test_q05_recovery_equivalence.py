@@ -3,6 +3,7 @@
 These tests prove refusal before restoration, not native qualification.
 """
 import base64
+from contextlib import closing
 from copy import deepcopy
 from hashlib import sha256
 import json
@@ -82,8 +83,12 @@ class RecoveryEquivalenceContracts(unittest.TestCase):
         return module._require_no_divergent_source(owner,self.vault,(1,'b'*64),PASSWORD,self.payload)
 
     def preserved(self,owner):
+        # supervisor.lock is held as an exclusive native lease. Windows
+        # intentionally disallows reopening it; it is not wallet state.
+        # Continue hashing every other persisted file without weakening custody.
+        lease=owner.root/'supervisor.lock'
         return {p.relative_to(owner.root).as_posix():sha256(p.read_bytes()).hexdigest()
-                for p in owner.root.rglob('*') if p.is_file()}
+                for p in owner.root.rglob('*') if p.is_file() and p!=lease}
 
     def test_equivalent_runtime_and_reencrypted_orphan_allow_readonly_comparison(self):
         owner,anchor=self.setup_source();self.database();self.orphan()
@@ -114,7 +119,7 @@ class RecoveryEquivalenceContracts(unittest.TestCase):
         owner,_=self.setup_source();self.database()
         for state in ('signed','uncertain'):
             with self.subTest(state=state):
-                with sqlite3.connect(self.runtime) as db:
+                with closing(sqlite3.connect(self.runtime)) as db, db:
                     db.execute('UPDATE reservations SET state=?',(state,))
                 before=self.preserved(owner)
                 with self.assertRaisesRegex(module.ManagedWalletError,'UNANCHORED_STATE_DIVERGED'):
@@ -163,11 +168,11 @@ class RecoveryEquivalenceContracts(unittest.TestCase):
         owner,_=self.setup_source();self.database()
         for sql in ("UPDATE meta SET value='foreign' WHERE key='identity'",
                     'PRAGMA user_version=2','CREATE TABLE unknown(x)'):
-            with sqlite3.connect(self.runtime) as db:db.execute(sql)
+            with closing(sqlite3.connect(self.runtime)) as db, db:db.execute(sql)
             before=self.preserved(owner)
             with self.assertRaises(module.ManagedWalletError):self.check(owner)
             self.assertEqual(before,self.preserved(owner))
-            with sqlite3.connect(self.runtime) as db:
+            with closing(sqlite3.connect(self.runtime)) as db, db:
                 db.execute('UPDATE meta SET value=? WHERE key=\'identity\'',(self.data['identity'],))
                 db.execute('PRAGMA user_version=3')
         self.runtime.write_bytes(b'corrupt-public-fixture')
