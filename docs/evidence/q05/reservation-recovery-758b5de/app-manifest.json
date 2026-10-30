@@ -1,0 +1,2265 @@
+{
+  "Contents/Frameworks/Crypto/Cipher/_ARC4.abi3.so": {
+    "sha256": "9aa703e519d969f9e6066966f51c695371430da4854d1d1a309a3f390de850a1",
+    "size": 50336,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_Salsa20.abi3.so": {
+    "sha256": "836412d9f33735598782fc264a2e42a9a78959c5fd63fa84cabc85b314aba55c",
+    "size": 50720,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_chacha20.abi3.so": {
+    "sha256": "094e54bb117f98b5fc1a2ca31a0c8a0f00591bf885f743f33c18f95df90a5bd5",
+    "size": 50800,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_pkcs1_decode.abi3.so": {
+    "sha256": "e65bf27351367ad854892cb43c6006cd384797d9982b6d6ea213a6b9aff7530a",
+    "size": 50368,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_aes.abi3.so": {
+    "sha256": "fbc026d0b4ee30081f430234c893d0594d9e7cab6d8ecade39a08d69398569a1",
+    "size": 67360,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_arc2.abi3.so": {
+    "sha256": "b40453437a64f7ebb44e99a783c595e3fb16db8c8f0ce79d7ecedcdf1808ccf0",
+    "size": 50672,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_blowfish.abi3.so": {
+    "sha256": "d1d45634d5dd297289bf7dea37e6197d445ede1f32e4422af3f4830e30dacda9",
+    "size": 50720,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_cast.abi3.so": {
+    "sha256": "a2ed44221bda6df0fde3482a2303f51f921714317b6bd4c24cd788e1a792aaf1",
+    "size": 51088,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_cbc.abi3.so": {
+    "sha256": "aaf034756d27d9627b88e3a93a6c3b2d87fcb1ea947b12525e57a8eaea93ab48",
+    "size": 50688,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_cfb.abi3.so": {
+    "sha256": "520bbb4ecb5f6c31fa4c48a83fb5149f68b46800c50bb6c6bfaf79b97b90f1f0",
+    "size": 50928,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_ctr.abi3.so": {
+    "sha256": "0daa99759c4324cb9409a58080f3c53835af2fb3f020d186b65a2c57083fbb0a",
+    "size": 50944,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_des.abi3.so": {
+    "sha256": "03fa8bfda91651b410a3e055285f813530113e8bab436d1e17ed527800969002",
+    "size": 84144,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_des3.abi3.so": {
+    "sha256": "27058207c2fe656126bd6bd9538e21c66a0234e979d5e300a57a0efb12ea57e3",
+    "size": 84160,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_ecb.abi3.so": {
+    "sha256": "eb1b015cf5702534aaaf18712125a07ce1bf579060afd4c0662084afc7e8aa2c",
+    "size": 17456,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_eksblowfish.abi3.so": {
+    "sha256": "a13e9b9fe5c3de2024e175760c32cd766a6116bf7b92b69cf6f7760e8b92cd15",
+    "size": 50928,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_ocb.abi3.so": {
+    "sha256": "46c40f0bcfa0e589dcc6d2b3dd9aa20276df529718b25ba7cf34ca12c424ff96",
+    "size": 51152,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Cipher/_raw_ofb.abi3.so": {
+    "sha256": "40b1e5da6612a98278cd5720a7b12d07091035312adc9f45ad813d59aba0f689",
+    "size": 50640,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_BLAKE2b.abi3.so": {
+    "sha256": "3548870ab71e9686d250868861d8166932d56f8bbff7ed5d813896542ca043de",
+    "size": 51040,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_BLAKE2s.abi3.so": {
+    "sha256": "b683f938418f4c63c7c158815ea9d4e0ed646df7dadfb2e0fcf82a51fa4f5bfb",
+    "size": 51040,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_MD2.abi3.so": {
+    "sha256": "9747aeac81e11957a56ace064abb3c3c8a69b096508a9f8729ef339b510410d1",
+    "size": 50944,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_MD4.abi3.so": {
+    "sha256": "8414b1a10e17f9d011599f1b6e93ddc065cb7f0912a8555961000aa74cda09e9",
+    "size": 50960,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_MD5.abi3.so": {
+    "sha256": "8e521e5a7320c1a1728095995cc080d9c7c5b8fdd3ef564dd7f1f4a0473606a4",
+    "size": 51664,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_RIPEMD160.abi3.so": {
+    "sha256": "228a8a0e74ddcdcd64eb31e83bc691b9bdb3bbf7023b1dce688c5d54a8bdb154",
+    "size": 51056,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_SHA1.abi3.so": {
+    "sha256": "3792e5387c26eec7996122be70b579fc2be38d5be1ae0d763909a023d940712d",
+    "size": 51664,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_SHA224.abi3.so": {
+    "sha256": "b17c18efd23565807c7c68dfb7b3e941249298644459060ccaf434f941da517a",
+    "size": 51680,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_SHA256.abi3.so": {
+    "sha256": "c56ffc8c9a817390f9ddfc852ade9f9b6b6ea92e0a44d1e28167ceb07bdea3bd",
+    "size": 51680,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_SHA384.abi3.so": {
+    "sha256": "732521713ac9eaf4062309a5458cb39773289edebfc944d38d505da7dbe422d7",
+    "size": 51680,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_SHA512.abi3.so": {
+    "sha256": "ceffce6ea620fa7bcfcb26e07b9d05d851448afe5f0fbed371be0f589362f95b",
+    "size": 51696,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_ghash_portable.abi3.so": {
+    "sha256": "b7de728c255a70d893efa6b88c5435bcf5eb3e6437b52c7280df1f64b89725a6",
+    "size": 50544,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_keccak.abi3.so": {
+    "sha256": "a428cc96d8745406076ea43ee200b9497a4cb35f3f38e09236ca50c61387ae5d",
+    "size": 51616,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Hash/_poly1305.abi3.so": {
+    "sha256": "43e9504fd632de067673b6afb0e274ab4f7026c0d668486c9d834fa2a89394cb",
+    "size": 51264,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Math/_modexp.abi3.so": {
+    "sha256": "8f9f0f8e811593925ba30f5baf8f5cc468bc1947266846542b96e701253312f4",
+    "size": 73952,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Protocol/_scrypt.abi3.so": {
+    "sha256": "134d8d2b488e34d79e152e89b202ea4210b35a102a7508f50ac8a75a106a8f52",
+    "size": 50320,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/PublicKey/_curve25519.abi3.so": {
+    "sha256": "7f6512564d6b1b1e920cc69c400a1b88e4a3a067dde6ef1adc11cc210a59554b",
+    "size": 52384,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/PublicKey/_curve448.abi3.so": {
+    "sha256": "2f0a9509b631b87008d22ef4050bf73b7904fada633eca0cbea2531ba1aa566a",
+    "size": 74848,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/PublicKey/_ec_ws.abi3.so": {
+    "sha256": "96ef8e37b7fc56a73cb517302730ec5885de00ea8c6720ae2c5e20a34e5de371",
+    "size": 734768,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/PublicKey/_ed25519.abi3.so": {
+    "sha256": "5ee418f726610b15f2375513631b0fcafed678fc353cbbcca67614d17dfe5634",
+    "size": 53104,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/PublicKey/_ed448.abi3.so": {
+    "sha256": "b293fd13c84a3313b098332515a44c7e38b87cfe7f98eee789bfade3db914cf2",
+    "size": 75456,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Util/_cpuid_c.abi3.so": {
+    "sha256": "53f177dbffdd117be7c665051c4c9b233eb1026ccab4dabb76cb1d210e1bdd54",
+    "size": 17216,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Crypto/Util/_strxor.abi3.so": {
+    "sha256": "260008836024ec532f7e60ecad1158d5be82a3c94d519c51554acd9903ecf454",
+    "size": 17184,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/.dylibs": {
+    "symlink": "__dot__dylibs"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libXau.6.dylib": {
+    "sha256": "ea831bbc27099dc97a02753a290d3d42b1eff8a2a802ef46028dc33a3bef16f9",
+    "size": 51776,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libavif.16.3.0.dylib": {
+    "sha256": "8598e8211fe0d8a5390cfd6d24319e5cd919e086465f8a562cead3f737f6fd53",
+    "size": 2947888,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libbrotlicommon.1.1.0.dylib": {
+    "sha256": "acda10e62f857caee8ff274016ea6600a035bc4b8786746faf89948d8a19d335",
+    "size": 182128,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libbrotlidec.1.1.0.dylib": {
+    "sha256": "b66f4e887fd808a9160a6e08a4bd99c0d6030b90f54d6f960bbd2e997658881c",
+    "size": 86048,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libfreetype.6.dylib": {
+    "sha256": "7b7f84f5415065e1a5e334287de5952bc31bdaf83c9f892b48046897d46d8ca0",
+    "size": 1119344,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libharfbuzz.0.dylib": {
+    "sha256": "0f2a308b1e41a696ae0285d7582daea10b79a825c05f0ba8b1c3c7c415fa8b89",
+    "size": 1769600,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libjpeg.62.4.0.dylib": {
+    "sha256": "d38ceb11c73cb72588b051c1a23b99f6b79526b9487ee4810085d47f3ca70d02",
+    "size": 631872,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/liblcms2.2.dylib": {
+    "sha256": "96b47e89007e40774ff22e1f33f9b3e4d5830587c0524d2eb6c977642154ccc6",
+    "size": 503728,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/liblzma.5.dylib": {
+    "sha256": "ff07f00ac7e5d069eb15b59335261ed9a41915edd1f3c0524a5e047f0ee214fc",
+    "size": 305344,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libopenjp2.2.5.4.dylib": {
+    "sha256": "1e1de3314b4074ee711fbbf1a2c41e47060e4be99b6dec998d85c2146060986f",
+    "size": 644656,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libpng16.16.dylib": {
+    "sha256": "f4e7214ef3252c6d6f51454be1522fd3cad2aa553b74bbf6d7c1737b38126e34",
+    "size": 324432,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libsharpyuv.0.dylib": {
+    "sha256": "e2af5aa9e74df68b92544ee8021d6e9669c8326ac611e8bb6df2b7c438e8df60",
+    "size": 67872,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libtiff.6.dylib": {
+    "sha256": "bd10bbc46f5d1c1a19674cdb5ecaf67b35a8b617efe6b0e527a1f16b82c3fbc8",
+    "size": 748064,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libwebp.7.dylib": {
+    "sha256": "81d1343e1f45c1171d459c3c1da920775f254b9612c1f23f112e50da09d51946",
+    "size": 494848,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libwebpdemux.2.dylib": {
+    "sha256": "357563392340c43a5e16901ab521393cabf07ea015b29267104c908a3f36cb1d",
+    "size": 51632,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libwebpmux.3.dylib": {
+    "sha256": "171a0cb3decad432b9aa8844ad794ecdc7994f4a9b6c90d4c65963b3ca48bbde",
+    "size": 87872,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libxcb.1.1.0.dylib": {
+    "sha256": "854f9dd817a603a9477d78a9f70b25c87c1aa3f8b149e5fd432fd4d55c90707e",
+    "size": 258176,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/__dot__dylibs/libz.1.3.1.zlib-ng.dylib": {
+    "sha256": "3ba19576f97d86d0d04b2e7af9d3d826332d132196a4ee74f73ff76880a7e4be",
+    "size": 158048,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/_avif.cpython-312-darwin.so": {
+    "sha256": "50cf2b25a05d26ffa2534b4e3c7b6188abd49e2bfc8d31bc83e8312a5f373daf",
+    "size": 55696,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/_imaging.cpython-312-darwin.so": {
+    "sha256": "7eea23d4b5417c85088b2fc40b12d8be6698bc0302aded04220227476d6171d9",
+    "size": 550992,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/_imagingcms.cpython-312-darwin.so": {
+    "sha256": "4088d8c34db775b48b9817d1787f1d219439132fbb2e617ed9355a84012015f2",
+    "size": 80064,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/_imagingft.cpython-312-darwin.so": {
+    "sha256": "b426ba881669eb7f39d0b3e8f7dc65f9d2c38e6df6458f60fe9ceaf5826ac91a",
+    "size": 99216,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/_imagingmath.cpython-312-darwin.so": {
+    "sha256": "6e4867f91112110d396fcb5f0fcab1546a0ed9521d9d72077f44482faf6053fc",
+    "size": 55696,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/_imagingtk.cpython-312-darwin.so": {
+    "sha256": "2bc5da169e00767519bd72db7c2df944316e73416157c2b6c8f74982dc360e8b",
+    "size": 52544,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PIL/_webp.cpython-312-darwin.so": {
+    "sha256": "4b36659c5e1351350ea72d764e6e321a24bc41759b64e64067fc40964a2d44a4",
+    "size": 57952,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtCore.framework/QtCore": {
+    "symlink": "Versions/Current/QtCore"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtCore.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtCore.framework/Versions/A/QtCore": {
+    "sha256": "bd76911ad6d44d70630c7e50a8e5d525bea1a174c50e781731a2fcc5b9338e37",
+    "size": 6148336,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtCore.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "4628ea4f3801c3b59d36d6ac00987a8476c568a25adc9fe170f67c72262dd7f7",
+    "size": 810,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtCore.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "d1ff0d851603d4ae2a591ff6ffb226ad6ef36e11613f31da7edba936bcbb5b9d",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtCore.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtDBus.framework/QtDBus": {
+    "symlink": "Versions/Current/QtDBus"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtDBus.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtDBus.framework/Versions/A/QtDBus": {
+    "sha256": "2603022f12b66b05d120453dc7e1d1183eb26dccf8101e9214696076df0f847a",
+    "size": 680144,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtDBus.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "598b31cbb9b1c16eb910ed1c63178b1d6484c78f59cd71b4373add0b9f4f79eb",
+    "size": 810,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtDBus.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "4a1a67bdbdbf880bf7b0e30b5fc7dfa3e5ef5526153f08e3ec964870a5930f7a",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtDBus.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtGui.framework/QtGui": {
+    "symlink": "Versions/Current/QtGui"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtGui.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtGui.framework/Versions/A/QtGui": {
+    "sha256": "a0f9d1207f42e021069523dd5c200ce7acf849fc4118105dcb0ffddbb2b25e09",
+    "size": 8578032,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtGui.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "48662e83d61e1ec30f07d84d7462960e73369dc353c1d2c22504a884b2141528",
+    "size": 808,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtGui.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "7a74db41848d1992c3d5ac907978eb3719ee970891392124d825d01e53ab3906",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtGui.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtNetwork.framework/QtNetwork": {
+    "symlink": "Versions/Current/QtNetwork"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtNetwork.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtNetwork.framework/Versions/A/QtNetwork": {
+    "sha256": "b66485bca9d719706e8add0e53ed9861217db72e33a3d70af0683deb53ff228a",
+    "size": 1678000,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtNetwork.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "d619ce391107014fdb6f0c9deb6b89c95cf43d90255852ca34ce14bb82e2b75b",
+    "size": 816,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtNetwork.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "3632b4d3bc143bdcccb19c6a696e38d52f67b1186e02daa9af55459924766a12",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtNetwork.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtOpenGL.framework/QtOpenGL": {
+    "symlink": "Versions/Current/QtOpenGL"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtOpenGL.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtOpenGL.framework/Versions/A/QtOpenGL": {
+    "sha256": "275223cc6d6f7da54b9459a66b260f7f818b4ab3a1cc1fbaff42f3f9424354a9",
+    "size": 604320,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtOpenGL.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "f445158839da9a5bea061413c886b7efda435e99027a0c921eb28245a6d5fbba",
+    "size": 814,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtOpenGL.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "a355e5a0b16fdf80c63f90d7cab597d69cd6b58eaa329b4e8d920803de52245a",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtOpenGL.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtPdf.framework/QtPdf": {
+    "symlink": "Versions/Current/QtPdf"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtPdf.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtPdf.framework/Versions/A/QtPdf": {
+    "sha256": "321b3af3e7f7b61de52d510d1a712c95823a140fca616267673ff61cb0cb4533",
+    "size": 7160304,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtPdf.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "9aaefccc358606aff5095bf0aaf31f81c5f43c7f3b4e209cf87d2b57d4e39cdc",
+    "size": 810,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtPdf.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "8c105e7f668b9a29600d973aca6c15aad417bebb5d2213990c7fa19a8f6b72d6",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtPdf.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQml.framework/QtQml": {
+    "symlink": "Versions/Current/QtQml"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQml.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQml.framework/Versions/A/QtQml": {
+    "sha256": "6462bf134da9f692f49da7bde685e2cb9b95d734ae6140c9a0639fd8be3875fa",
+    "size": 4742832,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQml.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "da1c907b0ef21cc089acd21a350b6d46103ccfa97678451114bceb45e9dbbf6c",
+    "size": 808,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQml.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "243ef7372d2542a411b9326d8d599eab5afe1cad6fd553cc62e504761ee89e69",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQml.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework/QtQmlMeta": {
+    "symlink": "Versions/Current/QtQmlMeta"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework/Versions/A/QtQmlMeta": {
+    "sha256": "0fbd987378399b3739132008e0ba76e710d7adc6799cac3996e079a184977781",
+    "size": 175936,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "4ada306e89a92920b4c29f2e748926445a4ac355ea77a89e647315a804161b83",
+    "size": 816,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "d03ca51d1a889573585a712e41eaf60c0b02bd4264bda5a22994de06744d6001",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlModels.framework/QtQmlModels": {
+    "symlink": "Versions/Current/QtQmlModels"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlModels.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlModels.framework/Versions/A/QtQmlModels": {
+    "sha256": "7921280461ccf894ceb7cba197fa066ce4df06e264e3026d89a30fb244456bfb",
+    "size": 978400,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlModels.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "533bbf8a31a42d8ed2144b0353be84da26c63121d2862ac3b872975c230c7422",
+    "size": 820,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlModels.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "a9d7fca76aadec4a942ba921fe382255157a401c6f59eb247bd88676355c7804",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlModels.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlWorkerScript.framework/QtQmlWorkerScript": {
+    "symlink": "Versions/Current/QtQmlWorkerScript"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlWorkerScript.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlWorkerScript.framework/Versions/A/QtQmlWorkerScript": {
+    "sha256": "d0a10c78d5df0c1a19d91ff8d3f1a763a3bca19600fef48b4d2a371a93a686dc",
+    "size": 103536,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlWorkerScript.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "f21778d7e3512cf115fbe8937dceb244b10a8e32672797b76f3a61398238ef4b",
+    "size": 832,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlWorkerScript.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "a2fb286a0f1b150e6e24ee96fc3f0536b160558ef4099b0a47f1795f73dee70e",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQmlWorkerScript.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework/QtQuick": {
+    "symlink": "Versions/Current/QtQuick"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework/Versions/A/QtQuick": {
+    "sha256": "8537ecbf1e0f7478c0b354ce0c4062cda39b98650e8423e36cc9acf5ecad2a9c",
+    "size": 6102256,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "04d7babc0746dc0d63c3453a1b9e2a70468a24d738a7f53447c45f75d2ac37ae",
+    "size": 812,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "dfdc6c4af3089b737c24cf04595978fcf9116a5926b5921662b66c580f7b94c7",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtSvg.framework/QtSvg": {
+    "symlink": "Versions/Current/QtSvg"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtSvg.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtSvg.framework/Versions/A/QtSvg": {
+    "sha256": "6e30da26fbfcefdc818e4b0fdcd33a4049dc640d2a0e17d811c712f19cece521",
+    "size": 556064,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtSvg.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "9ced66dc295d327cdf37f3386bb6bbfb6f47164313cb8f4d58302e519beeb58a",
+    "size": 808,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtSvg.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "3cd64c051c037b3124a8ed7d2a7582f3518946e877b1b16bd8d26cb311c7349d",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtSvg.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboard.framework/QtVirtualKeyboard": {
+    "symlink": "Versions/Current/QtVirtualKeyboard"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboard.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboard.framework/Versions/A/QtVirtualKeyboard": {
+    "sha256": "804dd3472bc4c863bc7b015239b6b195b7a08516970efaa3b044d3d1fb4a4e94",
+    "size": 409840,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboard.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "86572bdcac38d93b891a386a771844b602bd9b4766942f4df759ec56cd9c74c2",
+    "size": 832,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboard.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "eacccd7c34bbd184f921ca78878bb7138d14bd5f495818b0122be995ea04dd95",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboard.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboardQml.framework/QtVirtualKeyboardQml": {
+    "symlink": "Versions/Current/QtVirtualKeyboardQml"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboardQml.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboardQml.framework/Versions/A/QtVirtualKeyboardQml": {
+    "sha256": "ce49fc6575d29239c12d575ff7112dd294c16382aa6d1a20e2184bd7b278b4a5",
+    "size": 142672,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboardQml.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "8d1922bd492fa70596ffde881c996e118588a763772c8dd91c65fdd76a72c77e",
+    "size": 838,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboardQml.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "13a4381c709f921ed48053d4fe7c65bd696a9a2ea6c72e970c8d0f7c438b8c84",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtVirtualKeyboardQml.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtWidgets.framework/QtWidgets": {
+    "symlink": "Versions/Current/QtWidgets"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtWidgets.framework/Resources": {
+    "symlink": "Versions/Current/Resources"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtWidgets.framework/Versions/A/QtWidgets": {
+    "sha256": "6f58cfb1633188d59173824a469a684447038aaf758cd1f9bb2a249e34458bd8",
+    "size": 6054912,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtWidgets.framework/Versions/A/Resources/Info.plist": {
+    "sha256": "662256e19237be95e330fba9af1efc2f3d4507298f436557568bf461d91c7539",
+    "size": 816,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtWidgets.framework/Versions/A/_CodeSignature/CodeResources": {
+    "sha256": "64e2dfc31b5147569a97eb0b802ec6b1e008310a0fae2f690e30b87b0bc3e6ed",
+    "size": 2442,
+    "mode": "0o600"
+  },
+  "Contents/Frameworks/PySide6/Qt/lib/QtWidgets.framework/Versions/Current": {
+    "symlink": "A"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/generic/libqtuiotouchplugin.dylib": {
+    "sha256": "3c9f8652f34ef4c5077706cfe5f104f9fb1a9c049874be6661cc3c8bd954a304",
+    "size": 109680,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/iconengines/libqsvgicon.dylib": {
+    "sha256": "8892b686f89f208639188cc1bf16ceb7e9a76f28fb5bf52f31b310f6991bf3b8",
+    "size": 92256,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqgif.dylib": {
+    "sha256": "26c20f1037ccb4aaba91bb085ccf1e78ab9c767696635c9fb52ab4e706cad7bd",
+    "size": 72208,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqicns.dylib": {
+    "sha256": "e0b058078f8a119628b4204d49140098a99eee23d2b23c415d618c1aa5512188",
+    "size": 75360,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqico.dylib": {
+    "sha256": "45ec134f301273ce093818e135f78765d75fd2abce2cdb0e6d51df82f935f8b7",
+    "size": 74224,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqjpeg.dylib": {
+    "sha256": "65f180c81e7f7751fafa1a7d29d8b98549d704acfef76604896785d4852b2ad5",
+    "size": 524192,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqmacheif.dylib": {
+    "sha256": "0e15d041ad99e1cc7c9c8562bc242e1c0bc88691e7e8208ea735d301a66f47cc",
+    "size": 76496,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqmacjp2.dylib": {
+    "sha256": "c52299646197efcc570bb6dcab4678e7ac79b4c80cdc6a350a669c12c40843b0",
+    "size": 76496,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqpdf.dylib": {
+    "sha256": "69ac86700951066a03dfbf4c23c0a4ce75b3048262806e59131dfbaf3bbd3299",
+    "size": 74224,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqsvg.dylib": {
+    "sha256": "71b48184f61f095d2936fce9e0b3801c3606bc782cbb0c0bfd36566b93bfd29c",
+    "size": 73776,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqtga.dylib": {
+    "sha256": "776c6ad8374456e1f935ecace02bcdafed206383714b6b34ffc946c5a705fe4e",
+    "size": 71728,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqtiff.dylib": {
+    "sha256": "de1f3598ac05108ad1ebc6270abbf50d947cdaf93a53d2fca5e5afbe5a4d2dc8",
+    "size": 901152,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqwbmp.dylib": {
+    "sha256": "330c2a17ae131ab9208603662f19dd9c333fb4192ee7bb937ff35aacba42ad0d",
+    "size": 72224,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/imageformats/libqwebp.dylib": {
+    "sha256": "c82c4971e375b16b456538b77dfb9f94bea6f433c03c0729ae9f9a41f98c68fd",
+    "size": 511248,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/networkinformation/libqapplenetworkinformation.dylib": {
+    "sha256": "e887769d472446d69b181bcb4266a0918830285013736aa0e7d1d6fa0de4d7ec",
+    "size": 73792,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/platforminputcontexts/libqtvirtualkeyboardplugin.dylib": {
+    "sha256": "9cd77003b1c8c93229d38928f6cfdd73be591bf0d600c2b18b6423e94fb38248",
+    "size": 71600,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/platforms/libqcocoa.dylib": {
+    "sha256": "eb35ea0bcf38f55d83ba067427d0f63b688f0b13458497e2a9503985bddd0273",
+    "size": 966336,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/platforms/libqminimal.dylib": {
+    "sha256": "cd352eeda837893de46a165f61f943da88cf2601ef2663633d99c9f6c2ee4c9d",
+    "size": 85104,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/platforms/libqoffscreen.dylib": {
+    "sha256": "1d3bf9271f6f961f8e6a1d335b457984c973ee72289eb8a93e1548173cc7a983",
+    "size": 137168,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/styles/libqmacstyle.dylib": {
+    "sha256": "8f2d26086ae4749f6e7b912a7c8a7de7232af4afb977f90eec68e1a4d6a85a38",
+    "size": 230288,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/tls/libqcertonlybackend.dylib": {
+    "sha256": "d91ee685a1584327a61ccff814dc549e2971cc76f8518b4fa36c57af53d2ea7e",
+    "size": 111040,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/tls/libqopensslbackend.dylib": {
+    "sha256": "0ec3ea5df1344a4f910410cb3ad52b749d52d8cf7fc7ddb1efe4868435b8a3ac",
+    "size": 306208,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/plugins/tls/libqsecuretransportbackend.dylib": {
+    "sha256": "de337036f3ac691292e34a2f30a5c8f999102ea326459c92e15685295d84cfdd",
+    "size": 232576,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/Qt/translations": {
+    "symlink": "../../../Resources/PySide6/Qt/translations"
+  },
+  "Contents/Frameworks/PySide6/QtCore.abi3.so": {
+    "sha256": "f15f4b6e5fb7e943403933f216d4e2fac69c0796c86bab085f1e11a636c57f25",
+    "size": 6126848,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/QtDBus.abi3.so": {
+    "sha256": "cebe469a340633489224eedcfbb7e1bd33ecba6ad2221a1f9e6ba934396c3a2c",
+    "size": 530544,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/QtGui.abi3.so": {
+    "sha256": "fb5facf0658610d0aa5a283fac8c9c9db238909a1facac570249e04e0d84c4b4",
+    "size": 6705312,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/QtNetwork.abi3.so": {
+    "sha256": "6cef6ab26328c8e25393c788ffd4f4802d82574eea7d58023d2992e12b903eb4",
+    "size": 1852960,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/QtWidgets.abi3.so": {
+    "sha256": "744c502c2b703b735d75d0c7a4d19a56469beb542948f83e3fb75549058ce1b9",
+    "size": 9070912,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/PySide6/libpyside6.abi3.6.12.dylib": {
+    "sha256": "18dfc5682c8a3844cf44d4a90d2642db55101eaca46d40dcd8aecdcbf8961298",
+    "size": 384960,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/Q05_BUILD_SOURCE.json": {
+    "symlink": "../Resources/Q05_BUILD_SOURCE.json"
+  },
+  "Contents/Frameworks/QtCore": {
+    "symlink": "PySide6/Qt/lib/QtCore.framework/Versions/A/QtCore"
+  },
+  "Contents/Frameworks/QtDBus": {
+    "symlink": "PySide6/Qt/lib/QtDBus.framework/Versions/A/QtDBus"
+  },
+  "Contents/Frameworks/QtGui": {
+    "symlink": "PySide6/Qt/lib/QtGui.framework/Versions/A/QtGui"
+  },
+  "Contents/Frameworks/QtNetwork": {
+    "symlink": "PySide6/Qt/lib/QtNetwork.framework/Versions/A/QtNetwork"
+  },
+  "Contents/Frameworks/QtOpenGL": {
+    "symlink": "PySide6/Qt/lib/QtOpenGL.framework/Versions/A/QtOpenGL"
+  },
+  "Contents/Frameworks/QtPdf": {
+    "symlink": "PySide6/Qt/lib/QtPdf.framework/Versions/A/QtPdf"
+  },
+  "Contents/Frameworks/QtQml": {
+    "symlink": "PySide6/Qt/lib/QtQml.framework/Versions/A/QtQml"
+  },
+  "Contents/Frameworks/QtQmlMeta": {
+    "symlink": "PySide6/Qt/lib/QtQmlMeta.framework/Versions/A/QtQmlMeta"
+  },
+  "Contents/Frameworks/QtQmlModels": {
+    "symlink": "PySide6/Qt/lib/QtQmlModels.framework/Versions/A/QtQmlModels"
+  },
+  "Contents/Frameworks/QtQmlWorkerScript": {
+    "symlink": "PySide6/Qt/lib/QtQmlWorkerScript.framework/Versions/A/QtQmlWorkerScript"
+  },
+  "Contents/Frameworks/QtQuick": {
+    "symlink": "PySide6/Qt/lib/QtQuick.framework/Versions/A/QtQuick"
+  },
+  "Contents/Frameworks/QtSvg": {
+    "symlink": "PySide6/Qt/lib/QtSvg.framework/Versions/A/QtSvg"
+  },
+  "Contents/Frameworks/QtVirtualKeyboard": {
+    "symlink": "PySide6/Qt/lib/QtVirtualKeyboard.framework/Versions/A/QtVirtualKeyboard"
+  },
+  "Contents/Frameworks/QtVirtualKeyboardQml": {
+    "symlink": "PySide6/Qt/lib/QtVirtualKeyboardQml.framework/Versions/A/QtVirtualKeyboardQml"
+  },
+  "Contents/Frameworks/QtWidgets": {
+    "symlink": "PySide6/Qt/lib/QtWidgets.framework/Versions/A/QtWidgets"
+  },
+  "Contents/Frameworks/_cffi_backend.cpython-312-darwin.so": {
+    "sha256": "1ee5b47df891612f60d335a48fc5e2b939a81ad144008acd4d811cfd21a6fedc",
+    "size": 228320,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/base_library.zip": {
+    "symlink": "../Resources/base_library.zip"
+  },
+  "Contents/Frameworks/branding": {
+    "symlink": "../Resources/branding"
+  },
+  "Contents/Frameworks/coincurve/_cffi_backend.cpython-312-darwin.so": {
+    "sha256": "e07e8b1de8e6e8591ae8fc6374e150c37f66a7f2cb91af09acb2dee2c41d8526",
+    "size": 211536,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/coincurve/_libsecp256k1.cpython-312-darwin.so": {
+    "sha256": "3f0f548e1165bf27bea717a67287da5cbebdd92a04e8c3bc97e3db997d19c833",
+    "size": 1453200,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/coincurve-21.0.0.dist-info": {
+    "symlink": "../Resources/coincurve-21.0.0.dist-info"
+  },
+  "Contents/Frameworks/core/receipt.json": {
+    "symlink": "../../Resources/core/receipt.json"
+  },
+  "Contents/Frameworks/core/wam-cli": {
+    "sha256": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+    "size": 511736,
+    "mode": "0o700"
+  },
+  "Contents/Frameworks/core/wamd": {
+    "sha256": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "size": 12256680,
+    "mode": "0o700"
+  },
+  "Contents/Frameworks/cryptography/hazmat/bindings/_rust.abi3.so": {
+    "sha256": "6f117e7fa3cc8dff8297a137666cbf982f518c23b0a94b1ccf24e186f8d2b26e",
+    "size": 11724000,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/cryptography-50.0.0.dist-info": {
+    "symlink": "../Resources/cryptography-50.0.0.dist-info"
+  },
+  "Contents/Frameworks/libXau.6.dylib": {
+    "symlink": "PIL/.dylibs/libXau.6.dylib"
+  },
+  "Contents/Frameworks/libavif.16.3.0.dylib": {
+    "symlink": "PIL/.dylibs/libavif.16.3.0.dylib"
+  },
+  "Contents/Frameworks/libbrotlicommon.1.1.0.dylib": {
+    "symlink": "PIL/.dylibs/libbrotlicommon.1.1.0.dylib"
+  },
+  "Contents/Frameworks/libbrotlidec.1.1.0.dylib": {
+    "symlink": "PIL/.dylibs/libbrotlidec.1.1.0.dylib"
+  },
+  "Contents/Frameworks/libcrypto.3.dylib": {
+    "sha256": "6947c6ae1327fd75fca2049e1d243803e9f0dccf25b872d01366bb08717a2e1a",
+    "size": 4846032,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/libfreetype.6.dylib": {
+    "symlink": "PIL/.dylibs/libfreetype.6.dylib"
+  },
+  "Contents/Frameworks/libharfbuzz.0.dylib": {
+    "symlink": "PIL/.dylibs/libharfbuzz.0.dylib"
+  },
+  "Contents/Frameworks/libjpeg.62.4.0.dylib": {
+    "symlink": "PIL/.dylibs/libjpeg.62.4.0.dylib"
+  },
+  "Contents/Frameworks/liblcms2.2.dylib": {
+    "symlink": "PIL/.dylibs/liblcms2.2.dylib"
+  },
+  "Contents/Frameworks/liblzma.5.dylib": {
+    "symlink": "PIL/.dylibs/liblzma.5.dylib"
+  },
+  "Contents/Frameworks/libopenjp2.2.5.4.dylib": {
+    "symlink": "PIL/.dylibs/libopenjp2.2.5.4.dylib"
+  },
+  "Contents/Frameworks/libpng16.16.dylib": {
+    "symlink": "PIL/.dylibs/libpng16.16.dylib"
+  },
+  "Contents/Frameworks/libpyside6.abi3.6.12.dylib": {
+    "symlink": "PySide6/libpyside6.abi3.6.12.dylib"
+  },
+  "Contents/Frameworks/libpython3.12.dylib": {
+    "sha256": "5a77aeb17b7416acc66ae952051f8f08f552abae985b6c4d865f72319cec6b3a",
+    "size": 6582384,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/libsharpyuv.0.dylib": {
+    "symlink": "PIL/.dylibs/libsharpyuv.0.dylib"
+  },
+  "Contents/Frameworks/libshiboken6.abi3.6.12.dylib": {
+    "symlink": "shiboken6/libshiboken6.abi3.6.12.dylib"
+  },
+  "Contents/Frameworks/libssl.3.dylib": {
+    "sha256": "d243a41d78e4740c507b41eeee5736fee6b534c05241f83f2e64cd8cbe7a0de1",
+    "size": 885088,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/libtiff.6.dylib": {
+    "symlink": "PIL/.dylibs/libtiff.6.dylib"
+  },
+  "Contents/Frameworks/libwebp.7.dylib": {
+    "symlink": "PIL/.dylibs/libwebp.7.dylib"
+  },
+  "Contents/Frameworks/libwebpdemux.2.dylib": {
+    "symlink": "PIL/.dylibs/libwebpdemux.2.dylib"
+  },
+  "Contents/Frameworks/libwebpmux.3.dylib": {
+    "symlink": "PIL/.dylibs/libwebpmux.3.dylib"
+  },
+  "Contents/Frameworks/libxcb.1.1.0.dylib": {
+    "symlink": "PIL/.dylibs/libxcb.1.1.0.dylib"
+  },
+  "Contents/Frameworks/libz.1.3.1.zlib-ng.dylib": {
+    "symlink": "PIL/.dylibs/libz.1.3.1.zlib-ng.dylib"
+  },
+  "Contents/Frameworks/python3.12": {
+    "symlink": "python3__dot__12"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_asyncio.cpython-312-darwin.so": {
+    "sha256": "823d024984b6c89bc2ff79cad61cab14eb6bd16ec30edd433a9f5aa3495f60f4",
+    "size": 106816,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_bisect.cpython-312-darwin.so": {
+    "sha256": "eab72b0110cd2458bc43679fa13fb360c9ed4f944bc72a17f6864cce53a41b60",
+    "size": 53936,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_blake2.cpython-312-darwin.so": {
+    "sha256": "8cc830ad104970b866c41b68fd8677a46adf0e0c029e46e031f202604975cb1e",
+    "size": 75408,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_bz2.cpython-312-darwin.so": {
+    "sha256": "69d8026b7ec92620afe71d30ba5229ed643b5eac34a43a58057cea97dd963f76",
+    "size": 56688,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_codecs_cn.cpython-312-darwin.so": {
+    "sha256": "2c6ff52b05b270fd7c66bebde27e11c2bb79a5bf93c78adcdb97a87657b3e0d5",
+    "size": 168768,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_codecs_hk.cpython-312-darwin.so": {
+    "sha256": "f7d36ba36bef98712bb9562c8c4ab857563ac35c284d404ec60f2c2e6302b652",
+    "size": 168240,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_codecs_iso2022.cpython-312-darwin.so": {
+    "sha256": "6eb7574a1326f3451adec89f06a8150c01b29d9a4be442793cffc78afe2c8638",
+    "size": 57184,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_codecs_jp.cpython-312-darwin.so": {
+    "sha256": "da4b71763852120e26098f4b1c7d54b53f07a3cd1bc1b322f8ffa6214b4999f8",
+    "size": 284784,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_codecs_kr.cpython-312-darwin.so": {
+    "sha256": "0d3f30285ece79f2e61f6ee788158b5ba73b9f87d59361362f77cbab9ccf646a",
+    "size": 152208,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_codecs_tw.cpython-312-darwin.so": {
+    "sha256": "596d6eab38aaa1d63a8653295701bc11a0ba51983174ebf7132e6f6aac9ccc2e",
+    "size": 151376,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_contextvars.cpython-312-darwin.so": {
+    "sha256": "763b2331483c96304b74d16275f96fe3c8d6f3187042e4b707a4a433501bb271",
+    "size": 51040,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_csv.cpython-312-darwin.so": {
+    "sha256": "983a8ef98a48a8fa06a4552685387b41fbf2d6ffd62e89d9ce2bd38efa980333",
+    "size": 76560,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_ctypes.cpython-312-darwin.so": {
+    "sha256": "fa4ca1bac50fc0f5c21eaeffe17554e646c86f63cae46925d0d6889d05f29b55",
+    "size": 157536,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_datetime.cpython-312-darwin.so": {
+    "sha256": "3a19d66fcb4793d0cbff316867ca2721b0c10b225837c393908ecbfd0a435663",
+    "size": 142304,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_decimal.cpython-312-darwin.so": {
+    "sha256": "7861e58464d7dfc09456f8a8ed47677481a4c6819ab77ef553a6843299bb3cf3",
+    "size": 388576,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_elementtree.cpython-312-darwin.so": {
+    "sha256": "e9910cea2c9ed8fd4bae9d708d65fbc620dde9e43111a43978e7ccbf77df2933",
+    "size": 107056,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_hashlib.cpython-312-darwin.so": {
+    "sha256": "f5a3a17cb7b223b5843afcc29715388db1ac4e89f698b60fb0e4540a620d54f4",
+    "size": 85328,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_heapq.cpython-312-darwin.so": {
+    "sha256": "619d44cf06b028fe9d8a1196689bcf0f372e4b951344e29f43864effe2176a10",
+    "size": 53072,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_json.cpython-312-darwin.so": {
+    "sha256": "ce8048f6ba9117f76ef6a0f32bd20a1296358994bc018b7a1686271506786676",
+    "size": 74656,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_lzma.cpython-312-darwin.so": {
+    "sha256": "7f98ca05987b9fcc576b784fb6f73f11ff17e688b5f3d1de0cf3260c3a022a9a",
+    "size": 77360,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_md5.cpython-312-darwin.so": {
+    "sha256": "c76e959468b1ad88c19e44361aa8fd3338e723b85e1779d6e4f751c86635ede4",
+    "size": 56256,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_multibytecodec.cpython-312-darwin.so": {
+    "sha256": "9c76751699bd3da896520c64433ab9194fc4dabc8853818d5de57ea51cbebf17",
+    "size": 81920,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_multiprocessing.cpython-312-darwin.so": {
+    "sha256": "8a1f93481a775017fd599a0079e888848eb5af1fb221844ebe75959c52540fd0",
+    "size": 57664,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_opcode.cpython-312-darwin.so": {
+    "sha256": "5d26bab6d576a3e70404a4d150eef7bd8903031e961aec59e8d285391d4840de",
+    "size": 51664,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_pickle.cpython-312-darwin.so": {
+    "sha256": "87abc64dd29ee5095f8581154fdec17620bbf7ae43b35deda6fa5e2754b56ee5",
+    "size": 157168,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_posixshmem.cpython-312-darwin.so": {
+    "sha256": "ce3d87c9ed1f0f06c2107157ffe3e4977ae23c80ead09689e61466f203bda737",
+    "size": 52272,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_posixsubprocess.cpython-312-darwin.so": {
+    "sha256": "4aef8a8f93252a1401c3d4e868367230ae0aba0c15def0d466e86d9512e6a722",
+    "size": 55056,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_queue.cpython-312-darwin.so": {
+    "sha256": "3805573be185f7c1be5b76f6b664a75c89df4ca6b0a8576a80bf099e9a7172ce",
+    "size": 55824,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_random.cpython-312-darwin.so": {
+    "sha256": "aedfcf6345272fed7881b242b1adb748688255c2198b446e7bbe89101133fe26",
+    "size": 54992,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_scproxy.cpython-312-darwin.so": {
+    "sha256": "a19a6273c06938b8ecee1a6fefc4a7aabccbfe61c02a303c1ba4d88e4e0b3d29",
+    "size": 53696,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_sha1.cpython-312-darwin.so": {
+    "sha256": "8e6b13ee40226e6bfb7149010973025aca230b9a3eb750d537084513cd8465da",
+    "size": 56336,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_sha2.cpython-312-darwin.so": {
+    "sha256": "57356455f9aacf7d9bcbcc99354d20666cb8cfb6f9985eeb83284d5ccf8ed5b6",
+    "size": 94912,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_sha3.cpython-312-darwin.so": {
+    "sha256": "345842da11f1f2b0243193dbcb9d0a56a900e2b152af67100cb9fbb5a482c652",
+    "size": 61392,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_socket.cpython-312-darwin.so": {
+    "sha256": "2eefef7b20491a6897ef3b42ee80a9b3e74e2c6c4260ecc1cb03529f6db18c20",
+    "size": 120960,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_sqlite3.cpython-312-darwin.so": {
+    "sha256": "2b1818b65e7391b92e01415deda22ba6eaa5beda993a7e746b17028682d937a4",
+    "size": 156000,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_ssl.cpython-312-darwin.so": {
+    "sha256": "ed768ae685a979e0ddf93b2cf535b08649690e88877902c1462f9924ba417121",
+    "size": 209568,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_statistics.cpython-312-darwin.so": {
+    "sha256": "581751d305c1039af9575ad56d7218f05fb6ce87ef05b696544f023786a98bbe",
+    "size": 51120,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_struct.cpython-312-darwin.so": {
+    "sha256": "47cceb9865cc4e66a00641046fbf070342dbb22781279a6c9cabe915d874d4cb",
+    "size": 83872,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/_uuid.cpython-312-darwin.so": {
+    "sha256": "0084105eba0badc416c45c2a9bbd35bd7198cfce5fad48255b22da07cc6a336b",
+    "size": 50960,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/array.cpython-312-darwin.so": {
+    "sha256": "e0b97947712620d55bc80c76712969233c63fd15d504729a4d15f2f784404038",
+    "size": 102576,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/binascii.cpython-312-darwin.so": {
+    "sha256": "2ecfb185e4da7ee9029a67d8050cf9ab0acc91f54333f069179e65db8c32e298",
+    "size": 56272,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/fcntl.cpython-312-darwin.so": {
+    "sha256": "7f7689f16202458d5e4224d2918afe796767c41e1ce3228f1f4afcf1636b4630",
+    "size": 53072,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/grp.cpython-312-darwin.so": {
+    "sha256": "328f20d802f72823060c1e443aa5636940213da8490a48a98e48757080db909e",
+    "size": 53680,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/math.cpython-312-darwin.so": {
+    "sha256": "5610b6c43c1203e5c7db31d1f80f591e4f0187f46efd0aa37a8551fd9c9b018d",
+    "size": 99712,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/mmap.cpython-312-darwin.so": {
+    "sha256": "46317942b8695a630b126b2bea1ac14a12604df21152aceb377a4ce88cdcb1d3",
+    "size": 57696,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/pyexpat.cpython-312-darwin.so": {
+    "sha256": "0124e0acff3ea46c154572e35d6ef4c0d84f54e7f6d02793c1407a83adcf3830",
+    "size": 248816,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/readline.cpython-312-darwin.so": {
+    "sha256": "d17417fbb4cc1443e9251f6a23e2902c3ffa585088632e750d237eed0ed2510c",
+    "size": 62960,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/resource.cpython-312-darwin.so": {
+    "sha256": "03ff5afab5fea9b7660866fc1c3498fc114db5aaa7b4353b8839a1c229bcc980",
+    "size": 53424,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/select.cpython-312-darwin.so": {
+    "sha256": "b171954a79d6f047200d9a0a6f5bfc0c821ef98acd59e71558aa6d90774d3162",
+    "size": 76576,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/syslog.cpython-312-darwin.so": {
+    "sha256": "77b33223a3618edab4711bdf86f1f19cff15bc3e48c1d37239f65743ca41f6fc",
+    "size": 53456,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/termios.cpython-312-darwin.so": {
+    "sha256": "1249d693aaf53d970cab4905f9f340b4e0dbc206d4e0abfe255cd3a30f45324d",
+    "size": 55008,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/unicodedata.cpython-312-darwin.so": {
+    "sha256": "3f817e792251ae05f290dbbfa7e532c93916c0dddcb1cd3706b793410f278402",
+    "size": 1158384,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/xxsubtype.cpython-312-darwin.so": {
+    "sha256": "451597caa143cd8403377e2237e9c27e056a81bf5578818988e829de8b90ee4c",
+    "size": 52368,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/python3__dot__12/lib-dynload/zlib.cpython-312-darwin.so": {
+    "sha256": "17f10e5268bb9abd41e21cc25b2257d525f321b77414057f1cb72a955b2cea1a",
+    "size": 78384,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/setuptools": {
+    "symlink": "../Resources/setuptools"
+  },
+  "Contents/Frameworks/shiboken6/Shiboken.abi3.so": {
+    "sha256": "448ddee824447de0eba374a3b9805948700b9a45ecb17040960f402dcfd1ea1a",
+    "size": 58000,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/shiboken6/libshiboken6.abi3.6.12.dylib": {
+    "sha256": "daa222c262abb8209ed12a6808cf612081116012aee668c5a2662649a5031e84",
+    "size": 501536,
+    "mode": "0o755"
+  },
+  "Contents/Frameworks/wsp-source": {
+    "symlink": "../Resources/wsp-source"
+  },
+  "Contents/Info.plist": {
+    "sha256": "ec468e4808cdbee0c3f71168e78dbc07845530c6b069265ccb15ac6eec39339a",
+    "size": 784,
+    "mode": "0o600"
+  },
+  "Contents/MacOS/WAM Privacy Wallet REGTEST": {
+    "sha256": "a2fedc7f63996145addb3f999c3c6d3d9ebe06924e1d835c2e4f5e46ddacab4e",
+    "size": 5799280,
+    "mode": "0o755"
+  },
+  "Contents/Resources/Crypto": {
+    "symlink": "../Frameworks/Crypto"
+  },
+  "Contents/Resources/PIL": {
+    "symlink": "../Frameworks/PIL"
+  },
+  "Contents/Resources/PySide6/Qt/lib": {
+    "symlink": "../../../Frameworks/PySide6/Qt/lib"
+  },
+  "Contents/Resources/PySide6/Qt/plugins": {
+    "symlink": "../../../Frameworks/PySide6/Qt/plugins"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_ar.qm": {
+    "sha256": "b11333c520ccd8e375cde20985df402d586a1a95e0796313bbeb9f717d4db22e",
+    "size": 104,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_bg.qm": {
+    "sha256": "1e22ee126ec9f76031d880285a907b3a0c4510392319ff700dcdee964abbb1ad",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_ca.qm": {
+    "sha256": "17ab2623c7f6e8def44b3dbcb517544185817d65f1298ddb10ef71136f232bdc",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_cs.qm": {
+    "sha256": "c585918fb1d4821a054ea40bdcf279f275ca76c88a5793f433dac6a611ac7e8f",
+    "size": 95,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_da.qm": {
+    "sha256": "f6773c672acb73fdef6e092060d69d1e5dfee840012bac912d1e92de28714386",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_de.qm": {
+    "sha256": "0401c316aa3b50a172eb44a4ff1ec384924073beec7c928ef888ec48e4612688",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_en.qm": {
+    "sha256": "494ac9a2b2cb2fdeced353f4a9f898ed8dcf616e9bc667438c62681e3f7f79cf",
+    "size": 33,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_es.qm": {
+    "sha256": "648ed4519bc45d7a4779479a7626ea16cf9aa23e93a0b178546cc47bea0591ab",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_fa.qm": {
+    "sha256": "3f4c989c6b2990d80cc6299408214b31698923b52f154483b3371875de91f88e",
+    "size": 84,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_fi.qm": {
+    "sha256": "342d01c7eeb234e431d0506821c4cd03c0433115d8d63fee3357be2331858879",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_fr.qm": {
+    "sha256": "c896a38892a92346b033793d56440993236b23e47e06f3974afdb0552f628387",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_gd.qm": {
+    "sha256": "49df855a004a17950338af3146466f6df4d5852410bd0b58ea80e0d0203a9d24",
+    "size": 70,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_gl.qm": {
+    "sha256": "204a01ac7deb6b5bae193afecbd1e50d18c73bf7d94badeb2bbfdf6123c4ed93",
+    "size": 323590,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_he.qm": {
+    "sha256": "36f01fff2f25e116d4b7af78097b7e49520fd5b7fb6fb120e40be228c05c045f",
+    "size": 57,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_ar.qm": {
+    "sha256": "222088c9752d1cc3bab985ef2dc77e5ae78578dce18a61ec15b39f02e588163d",
+    "size": 8743,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_bg.qm": {
+    "sha256": "cbcdd1e0bbae332d80ddb0a286056f17c824fa28d353d7fdf12fc97d9f6fe054",
+    "size": 10599,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_ca.qm": {
+    "sha256": "fe40962c814a9f489e18d033e4aaabe435232c9bcf760830c6165af507cca80e",
+    "size": 7435,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_cs.qm": {
+    "sha256": "4ac56fc63e400943bab13f1d4c418502138908e1d488c24aee6131d3d17552aa",
+    "size": 15297,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_da.qm": {
+    "sha256": "6bb092552a398687119f6d52145f04bf8373977446d8f00c0dcbd56b96829f0f",
+    "size": 4795,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_de.qm": {
+    "sha256": "037bc99abf98571ae9375c2513536c15b571d66406c36c1de447b547ff539c07",
+    "size": 7569,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_en.qm": {
+    "sha256": "494ac9a2b2cb2fdeced353f4a9f898ed8dcf616e9bc667438c62681e3f7f79cf",
+    "size": 33,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_es.qm": {
+    "sha256": "fd16b279f8cf69077f75e94d90c9c07a2afff3948a579e3789f5ffb5e5f4202d",
+    "size": 10704,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_fr.qm": {
+    "sha256": "875ee2dcdc64e3dea888d84048e382d3921a175f12847de2e6b1cb12ad9add50",
+    "size": 3573,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_gl.qm": {
+    "sha256": "7399a248609974773f60866c87b78ea7dfbc4f750313d692f7886cd763883c9f",
+    "size": 10891,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_hr.qm": {
+    "sha256": "8c8cc3c5b1ab2b074f82937001b896603420ef75592b3b78172177360dd7ea61",
+    "size": 5170,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_hu.qm": {
+    "sha256": "7be32e015119c969453abb6e8f3fb377963a69fafb10c27b796737b5eb283eaf",
+    "size": 7255,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_it.qm": {
+    "sha256": "316fe8d0815e2b4b396895beb38ef1a40431915b5e054df80f4c0cd556f26e4b",
+    "size": 10612,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_ja.qm": {
+    "sha256": "ae603b2c0d434d40cde433ffcba65f9ee27978a9e19316007be7fe782a5b8b47",
+    "size": 7917,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_ka.qm": {
+    "sha256": "159c74f94b384b5ee6afdf38b6cfc4806bc99ecf73be02d4a7021d4ceba7ec7e",
+    "size": 7091,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_kk.qm": {
+    "sha256": "de92b7bc46998da4becb07f810e7947f0e22d5f7bf152b8bd7be90375027dfa0",
+    "size": 6971,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_ko.qm": {
+    "sha256": "f11c64694e8e34e1d2c46c1a1d15d6ba9f2db7b61de4fdf54eca5ab977c3e052",
+    "size": 5708,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_nl.qm": {
+    "sha256": "44a8a0daf775d14352180052d13f623814d7bdf98e2c5c80144b7bf74214e3b0",
+    "size": 5087,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_nn.qm": {
+    "sha256": "4c8a7213942078e4f72f5babd26c41b77ace70189714a58b5504a7d5ad0193dc",
+    "size": 6934,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_pl.qm": {
+    "sha256": "cc6cb4d8c54086224672f2e49e623c8cb7c0c1cd65b8d5ecd42fc9ba3a6065bd",
+    "size": 9673,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_pt_BR.qm": {
+    "sha256": "b4015c5d519b4fe93c00bf734d1742e4f0094d89862664d548eb64a46a2feae7",
+    "size": 16030,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_ru.qm": {
+    "sha256": "557b644e6da5f1ec720ef93965617087e4d1f40b2494cc5aa524cf3796108de7",
+    "size": 7288,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_sk.qm": {
+    "sha256": "f41e33e1d790bd0d3eb180f1f875bc191fe74773628f25c2cad95e1402e66867",
+    "size": 10388,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_sl.qm": {
+    "sha256": "2ec955e662407ebcd8dcdae5aaa21e4108e0b5b0aee0e9db712c27072943535f",
+    "size": 10363,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_sv.qm": {
+    "sha256": "95bdb03dbaa6dbdfda46c249e9ccce9a353f71ddb8b112961e8b005b2c60b13c",
+    "size": 6934,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_tr.qm": {
+    "sha256": "81da2f88cd624097581f2d29b10311796bcd9ab289e65883346d276110542d28",
+    "size": 6723,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_uk.qm": {
+    "sha256": "497cfc473684692ee44d7a3795e8fb2270c57069fd9eb98a615dd29ab9be8a7c",
+    "size": 9750,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_zh_CN.qm": {
+    "sha256": "e256d1f6034a5a5521c62f129f91731216e474f71e1d9caea3d3dcb11b670deb",
+    "size": 5115,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_help_zh_TW.qm": {
+    "sha256": "40112812abb43853d678cc6d97729f21f21b3a7321c827fc9d18f6c936447d1e",
+    "size": 5160,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_hr.qm": {
+    "sha256": "fc9e4146f33be3d09b234be01e56235d3037d8d82d64f0700b4d4a6e253a61a7",
+    "size": 102,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_hu.qm": {
+    "sha256": "c2fa649f167cdb801d1cc0cb69c1d93594fd5bf8c0b7e79b969935da5c3e19aa",
+    "size": 84,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_it.qm": {
+    "sha256": "9e7a18bc20ebeec54baaaf41c918a74534511271f796dffffd0f9b9ec31c68d3",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_ja.qm": {
+    "sha256": "0f5fe50452947d1ee9755249d860354bff6977279b4c496a5bc77e5b89dd745e",
+    "size": 84,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_ka.qm": {
+    "sha256": "00b67c6dfc255079b5b98a5640f82519c96b2520a028682fba4078b39d743eaa",
+    "size": 94,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_kk.qm": {
+    "sha256": "23f7ccad75b8b2d70eb0ed0fc910dacc667e9ff65ed1e328c65263ad2d172cda",
+    "size": 86,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_ko.qm": {
+    "sha256": "1d254b535e1cb35cbcad8210b15b89f4488159826bf35b4504696263dd102fa3",
+    "size": 84,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_lg.qm": {
+    "sha256": "6ba668501f4c040c66da1bdc022362da3c8cf663da6aa484cbdb599028da98ed",
+    "size": 57,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_lt.qm": {
+    "sha256": "47eb5f97467df769261421d54a5bea1131c9fb9b6388791d38bb6574335b64bf",
+    "size": 165383,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_lv.qm": {
+    "sha256": "addeca285282338294f24ca50d37d08a5f68d3785d0a94af86dd4ec8f2a3b449",
+    "size": 63,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_nl.qm": {
+    "sha256": "39e870cbd25c0f97fa9b1828d5ea1ed9849857a2e26c5321b3f13c76be8f0548",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_nn.qm": {
+    "sha256": "4e544e23f75eafe1553dc896973db23b5795cd243786d5c653cc0f36a46ca74f",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_pl.qm": {
+    "sha256": "e6890afa0caf0f6db0248e4c94f6016b8ec8bc266f1e0e9b8f01e8ea912cf968",
+    "size": 99,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_pt_BR.qm": {
+    "sha256": "0e24c58e35271853f8cdfb3f0f7b0741b5a9a588e43cdec62ae85a3842771e0a",
+    "size": 106,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_pt_PT.qm": {
+    "sha256": "2c1e7bbf5168a64b43752dd4c547601c0bde6d610f8671fa3e3af38597e84783",
+    "size": 70334,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_ru.qm": {
+    "sha256": "1b388e2d6d1bd405603e794e498c6d7ec5f5a5ad819243546f6399181da36758",
+    "size": 102,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_sk.qm": {
+    "sha256": "840c3b01c89df976fc1d2e5bfc6fc84b65666b8a3ceb4cbf5aa0c22af3d2a383",
+    "size": 95,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_sl.qm": {
+    "sha256": "c44e0313a9414cc0e490b65b0c036fa11bca959353b228886547bc2c8492034f",
+    "size": 228428,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_sv.qm": {
+    "sha256": "daaae448e0814b469ac3d7a91096fde15491600a6b8bc6c01508425fb5e8b3ec",
+    "size": 91,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_tr.qm": {
+    "sha256": "59e8a0c411be3b0802a68561b090f182099d6b75c4fe46f398e55f11528e11b9",
+    "size": 84,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_uk.qm": {
+    "sha256": "053ec1f677c4dba48c6a97eb28f4fc78c1511324d1843d7f4cec2c7c00a66145",
+    "size": 102,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_zh_CN.qm": {
+    "sha256": "c0e29d32c9540a7e78643b74214e633c56f6ab11f018e516629f2c11b1fb09fc",
+    "size": 99,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qt_zh_TW.qm": {
+    "sha256": "24e226954491689549a1a1990db3b8cb78888008d8163b2fd2442b772b6d1b5f",
+    "size": 99,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_ar.qm": {
+    "sha256": "e03fe68d83201543698fd7fe267dd5dfc5bfd195147e74ff2f19ac3491401263",
+    "size": 160017,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_bg.qm": {
+    "sha256": "e448ac9e3f16c29eb27af3012efe21052daa78fabfb34cd6dff2f69ee3bd3cdb",
+    "size": 165337,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_ca.qm": {
+    "sha256": "5298532fc52ffbc4e2c549f277151a61e741921c834286f7c04d3753677b6b04",
+    "size": 269007,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_cs.qm": {
+    "sha256": "03028b42df5479270371e4c3bdc7df2f56cbbe6dda956a2864ac6f6415861fe8",
+    "size": 174701,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_da.qm": {
+    "sha256": "7d1e5ca3310b54d104c19bf2abd402b38e584e87039a70e153c4a9af74b25c22",
+    "size": 181387,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_de.qm": {
+    "sha256": "a1483bae0385c380edad72b818ce7c2f54ba617ba4c709b2a34a76886d5b5f3d",
+    "size": 224345,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_en.qm": {
+    "sha256": "494ac9a2b2cb2fdeced353f4a9f898ed8dcf616e9bc667438c62681e3f7f79cf",
+    "size": 33,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_es.qm": {
+    "sha256": "4ffda56ba3bb5414ab0482d1dde64a6f226e3488f6b7f3f11a150e01f53fa4c8",
+    "size": 165170,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_fa.qm": {
+    "sha256": "f78e59b5bdd586181a999034ba418868ed17fe9c05707fb65e523f70e92253d2",
+    "size": 148156,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_fi.qm": {
+    "sha256": "e47fe13713e184d07fa4495dde0c589b0e8f562e91574a3558a9363443a4fa72",
+    "size": 179941,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_fr.qm": {
+    "sha256": "314243a55c32679ad473fdfe48dc7d66e973ad0fc8bf2164480c58dddb50c1a7",
+    "size": 159463,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_gd.qm": {
+    "sha256": "63b439dd44139aa3aed54c2ebe03fa9bc77f22c14ed8fba8eff2608445bb233d",
+    "size": 189580,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_he.qm": {
+    "sha256": "e1ebca16afe8994356f81ca007fbdb9ddf865842010fe908923d873b687cad3f",
+    "size": 138690,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_hr.qm": {
+    "sha256": "bb9eec9a9a652c1340dc75eb2e749be50df00f885b3d6900dfc76799c45b244d",
+    "size": 149711,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_hu.qm": {
+    "sha256": "98463295539d769c8645a0b7fb95ad38454cfd0b14f36af485513f036ddbbbc6",
+    "size": 205885,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_it.qm": {
+    "sha256": "7808ed542a7833c4bd94ec8bdfbbca00bb4f2fe15979b9121ce3249323687300",
+    "size": 161166,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_ja.qm": {
+    "sha256": "2b9581c69b975f59be505b127cd3c19d403ef3d12e0e8386fb97238223e9c1df",
+    "size": 129913,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_ka.qm": {
+    "sha256": "e55e4b72fa620bebee5297ca59dfe2f49894a1e544f2b7485b1cfd8829289d6f",
+    "size": 201105,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_kk.qm": {
+    "sha256": "8bab72c453e87489d76cc7efffc57e947cbfa239dee4d6fa113f7b7b8cbd5b86",
+    "size": 259281,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_ko.qm": {
+    "sha256": "0179ed1b136e1cb3f583351eaa2c545ba3d83a6ee3f82c32505926a1a5f5f183",
+    "size": 156799,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_lg.qm": {
+    "sha256": "31c0cc4ce13b1d74fe0c19ed0b47638fb31e20c93ee08092533e884007aebfb5",
+    "size": 315764,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_lv.qm": {
+    "sha256": "846e047573ae40c83671c3ba7f73e27efc24b98c82701da0df9973e574178bb2",
+    "size": 153608,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_nl.qm": {
+    "sha256": "f61513bcdbb6ad800585f9437a95d018aab17fa12ee414aa31462ff279d8240e",
+    "size": 202861,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_nn.qm": {
+    "sha256": "f9f2fb7c60e7fcb38bbd3c1314ef122145594265e20b0659ff00004baab13ac7",
+    "size": 196411,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_pl.qm": {
+    "sha256": "3cf6b5c14d5eb0cf81e9af2066e66b3aa579a6b9b3c323ed670761f6254a8c54",
+    "size": 162962,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_pt_BR.qm": {
+    "sha256": "3475d61604b938d459949801a906dbd34a8ca824ade94120015d676e208da859",
+    "size": 290955,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_ru.qm": {
+    "sha256": "3da6605668f9178d11a838c4515478084dcfb4f9cf22f99d7a92b492db9c224b",
+    "size": 203767,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_sk.qm": {
+    "sha256": "d586ae2c314074cf398417fdecb40709d5478dfeb0a67c2fe60d509ee9b59ed7",
+    "size": 125763,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_sv.qm": {
+    "sha256": "5a2178dd2c03cc4516697f1fb0049649c9ed53f5cde6b937786733dae06aeda8",
+    "size": 249963,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_tr.qm": {
+    "sha256": "353fdfd7165659a49212e7a25bf91c0a71588e52c836f7496640f26782414634",
+    "size": 248720,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_uk.qm": {
+    "sha256": "51b8ff55b37dc5907d637a8ddda12fbe816852b0244c74eb4f0fb84867a786e0",
+    "size": 158274,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_zh_CN.qm": {
+    "sha256": "0481a9b92a6f0578400e960a7d5ee70217a6a450eaf7f98b7d32b8dbd0d58616",
+    "size": 147222,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/Qt/translations/qtbase_zh_TW.qm": {
+    "sha256": "21012b2b427f8d09d31ce9cae582ca27955b478ca3dc2ec18a3068d808638c6a",
+    "size": 126185,
+    "mode": "0o600"
+  },
+  "Contents/Resources/PySide6/QtCore.abi3.so": {
+    "symlink": "../../Frameworks/PySide6/QtCore.abi3.so"
+  },
+  "Contents/Resources/PySide6/QtDBus.abi3.so": {
+    "symlink": "../../Frameworks/PySide6/QtDBus.abi3.so"
+  },
+  "Contents/Resources/PySide6/QtGui.abi3.so": {
+    "symlink": "../../Frameworks/PySide6/QtGui.abi3.so"
+  },
+  "Contents/Resources/PySide6/QtNetwork.abi3.so": {
+    "symlink": "../../Frameworks/PySide6/QtNetwork.abi3.so"
+  },
+  "Contents/Resources/PySide6/QtWidgets.abi3.so": {
+    "symlink": "../../Frameworks/PySide6/QtWidgets.abi3.so"
+  },
+  "Contents/Resources/PySide6/libpyside6.abi3.6.12.dylib": {
+    "symlink": "../../Frameworks/PySide6/libpyside6.abi3.6.12.dylib"
+  },
+  "Contents/Resources/Q05_BUILD_SOURCE.json": {
+    "sha256": "9fdb72108d3aa43e5c8977cd22f1c84894150a34dd90110699dd15ae846f6ef1",
+    "size": 570,
+    "mode": "0o600"
+  },
+  "Contents/Resources/QtCore": {
+    "symlink": "PySide6/Qt/lib/QtCore.framework/Versions/A/QtCore"
+  },
+  "Contents/Resources/QtDBus": {
+    "symlink": "PySide6/Qt/lib/QtDBus.framework/Versions/A/QtDBus"
+  },
+  "Contents/Resources/QtGui": {
+    "symlink": "PySide6/Qt/lib/QtGui.framework/Versions/A/QtGui"
+  },
+  "Contents/Resources/QtNetwork": {
+    "symlink": "PySide6/Qt/lib/QtNetwork.framework/Versions/A/QtNetwork"
+  },
+  "Contents/Resources/QtOpenGL": {
+    "symlink": "PySide6/Qt/lib/QtOpenGL.framework/Versions/A/QtOpenGL"
+  },
+  "Contents/Resources/QtPdf": {
+    "symlink": "PySide6/Qt/lib/QtPdf.framework/Versions/A/QtPdf"
+  },
+  "Contents/Resources/QtQml": {
+    "symlink": "PySide6/Qt/lib/QtQml.framework/Versions/A/QtQml"
+  },
+  "Contents/Resources/QtQmlMeta": {
+    "symlink": "PySide6/Qt/lib/QtQmlMeta.framework/Versions/A/QtQmlMeta"
+  },
+  "Contents/Resources/QtQmlModels": {
+    "symlink": "PySide6/Qt/lib/QtQmlModels.framework/Versions/A/QtQmlModels"
+  },
+  "Contents/Resources/QtQmlWorkerScript": {
+    "symlink": "PySide6/Qt/lib/QtQmlWorkerScript.framework/Versions/A/QtQmlWorkerScript"
+  },
+  "Contents/Resources/QtQuick": {
+    "symlink": "PySide6/Qt/lib/QtQuick.framework/Versions/A/QtQuick"
+  },
+  "Contents/Resources/QtSvg": {
+    "symlink": "PySide6/Qt/lib/QtSvg.framework/Versions/A/QtSvg"
+  },
+  "Contents/Resources/QtVirtualKeyboard": {
+    "symlink": "PySide6/Qt/lib/QtVirtualKeyboard.framework/Versions/A/QtVirtualKeyboard"
+  },
+  "Contents/Resources/QtVirtualKeyboardQml": {
+    "symlink": "PySide6/Qt/lib/QtVirtualKeyboardQml.framework/Versions/A/QtVirtualKeyboardQml"
+  },
+  "Contents/Resources/QtWidgets": {
+    "symlink": "PySide6/Qt/lib/QtWidgets.framework/Versions/A/QtWidgets"
+  },
+  "Contents/Resources/_cffi_backend.cpython-312-darwin.so": {
+    "symlink": "../Frameworks/_cffi_backend.cpython-312-darwin.so"
+  },
+  "Contents/Resources/base_library.zip": {
+    "sha256": "d3569b24cdf9de234cda08de1732fa87a77ed6b8ef21268a24c7299eed44c36c",
+    "size": 1333717,
+    "mode": "0o600"
+  },
+  "Contents/Resources/branding/wam-coin-original.png": {
+    "sha256": "1b189fb54969e6229a984f27ade4524bf4c327bb447d6da9fdbef3a8c2c30989",
+    "size": 293478,
+    "mode": "0o600"
+  },
+  "Contents/Resources/coincurve": {
+    "symlink": "../Frameworks/coincurve"
+  },
+  "Contents/Resources/coincurve-21.0.0.dist-info/INSTALLER": {
+    "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+    "size": 4,
+    "mode": "0o600"
+  },
+  "Contents/Resources/coincurve-21.0.0.dist-info/METADATA": {
+    "sha256": "5ea4f63a5042b5c684acf95808ad327e5fa3bd235d6eacfafba02ee896b78923",
+    "size": 3970,
+    "mode": "0o600"
+  },
+  "Contents/Resources/coincurve-21.0.0.dist-info/RECORD": {
+    "sha256": "8d4257361d6ec4912221b3ecf451e63a5320a8c0b928c6ba72d692cdea8acd3e",
+    "size": 2089,
+    "mode": "0o600"
+  },
+  "Contents/Resources/coincurve-21.0.0.dist-info/REQUESTED": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0,
+    "mode": "0o600"
+  },
+  "Contents/Resources/coincurve-21.0.0.dist-info/WHEEL": {
+    "sha256": "ce363b9a83826191c7059dedbdf3123462ed595221860fe849931a04d26fc42a",
+    "size": 132,
+    "mode": "0o600"
+  },
+  "Contents/Resources/coincurve-21.0.0.dist-info/licenses/LICENSE-APACHE": {
+    "sha256": "cebfb5eab4eff50df87c3c5e7eb11a634d0fa32bb4b6380800f82fae606599ae",
+    "size": 9748,
+    "mode": "0o600"
+  },
+  "Contents/Resources/coincurve-21.0.0.dist-info/licenses/LICENSE-MIT": {
+    "sha256": "d502748a33db7ade1318e37f0b5f219f478330ed74a673e387756e53fb516715",
+    "size": 1065,
+    "mode": "0o600"
+  },
+  "Contents/Resources/coincurve-21.0.0.dist-info/licenses/LICENSE-cffi": {
+    "sha256": "04b80f5b077bbed68808cfebadeb5e3523f2a8c9a96495c587bd96df1eac2a33",
+    "size": 1294,
+    "mode": "0o600"
+  },
+  "Contents/Resources/coincurve-21.0.0.dist-info/licenses/NOTICE": {
+    "sha256": "837aeffd05b5fa469939392e4edf9012b5c83c94e7a91417be7e78b48772fd5b",
+    "size": 455,
+    "mode": "0o600"
+  },
+  "Contents/Resources/core/receipt.json": {
+    "sha256": "31f048ff38cf6e6b93e5ceed58cb928a13e3c6c48178b18d0cd5b05b74e26d5f",
+    "size": 586,
+    "mode": "0o600"
+  },
+  "Contents/Resources/core/wam-cli": {
+    "symlink": "../../Frameworks/core/wam-cli"
+  },
+  "Contents/Resources/core/wamd": {
+    "symlink": "../../Frameworks/core/wamd"
+  },
+  "Contents/Resources/cryptography": {
+    "symlink": "../Frameworks/cryptography"
+  },
+  "Contents/Resources/cryptography-50.0.0.dist-info/INSTALLER": {
+    "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+    "size": 4,
+    "mode": "0o600"
+  },
+  "Contents/Resources/cryptography-50.0.0.dist-info/METADATA": {
+    "sha256": "d4e345f82cb783877d73261f00303577cdf20d13229176c2d03a0a5603cb3ab5",
+    "size": 4343,
+    "mode": "0o600"
+  },
+  "Contents/Resources/cryptography-50.0.0.dist-info/RECORD": {
+    "sha256": "c170bc5f53c6be1967fd17a98a55ede3009d0bc0441960180e4ce7c6c1651935",
+    "size": 17965,
+    "mode": "0o600"
+  },
+  "Contents/Resources/cryptography-50.0.0.dist-info/REQUESTED": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0,
+    "mode": "0o600"
+  },
+  "Contents/Resources/cryptography-50.0.0.dist-info/WHEEL": {
+    "sha256": "96f985b465650f71b86992fc892c82e72b15557fbb9855563b0c8a6b1fa6d712",
+    "size": 104,
+    "mode": "0o600"
+  },
+  "Contents/Resources/cryptography-50.0.0.dist-info/licenses/LICENSE": {
+    "sha256": "3e0c7c091a948b82533ba98fd7cbb40432d6f1a9acbf85f5922d2f99a93ae6bb",
+    "size": 197,
+    "mode": "0o600"
+  },
+  "Contents/Resources/cryptography-50.0.0.dist-info/licenses/LICENSE.APACHE": {
+    "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe",
+    "size": 11360,
+    "mode": "0o600"
+  },
+  "Contents/Resources/cryptography-50.0.0.dist-info/licenses/LICENSE.BSD": {
+    "sha256": "602c4c7482de6479dd2e9793cda275e5e63d773dacd1eca689232ab7008fb4fb",
+    "size": 1532,
+    "mode": "0o600"
+  },
+  "Contents/Resources/cryptography-50.0.0.dist-info/sboms/cryptography-rust.cyclonedx.json": {
+    "sha256": "54081fdbdef1be6a999e97892f4511ee90c6919837c3c69ae17dcca918a4cdff",
+    "size": 45993,
+    "mode": "0o600"
+  },
+  "Contents/Resources/cryptography-50.0.0.dist-info/sboms/sbom.json": {
+    "sha256": "32a6df133510099efa1dbb350e4870bcd6ea0d83f99277c70fc81c19fe45d0b8",
+    "size": 1205,
+    "mode": "0o600"
+  },
+  "Contents/Resources/libXau.6.dylib": {
+    "symlink": "PIL/.dylibs/libXau.6.dylib"
+  },
+  "Contents/Resources/libavif.16.3.0.dylib": {
+    "symlink": "PIL/.dylibs/libavif.16.3.0.dylib"
+  },
+  "Contents/Resources/libbrotlicommon.1.1.0.dylib": {
+    "symlink": "PIL/.dylibs/libbrotlicommon.1.1.0.dylib"
+  },
+  "Contents/Resources/libbrotlidec.1.1.0.dylib": {
+    "symlink": "PIL/.dylibs/libbrotlidec.1.1.0.dylib"
+  },
+  "Contents/Resources/libcrypto.3.dylib": {
+    "symlink": "../Frameworks/libcrypto.3.dylib"
+  },
+  "Contents/Resources/libfreetype.6.dylib": {
+    "symlink": "PIL/.dylibs/libfreetype.6.dylib"
+  },
+  "Contents/Resources/libharfbuzz.0.dylib": {
+    "symlink": "PIL/.dylibs/libharfbuzz.0.dylib"
+  },
+  "Contents/Resources/libjpeg.62.4.0.dylib": {
+    "symlink": "PIL/.dylibs/libjpeg.62.4.0.dylib"
+  },
+  "Contents/Resources/liblcms2.2.dylib": {
+    "symlink": "PIL/.dylibs/liblcms2.2.dylib"
+  },
+  "Contents/Resources/liblzma.5.dylib": {
+    "symlink": "PIL/.dylibs/liblzma.5.dylib"
+  },
+  "Contents/Resources/libopenjp2.2.5.4.dylib": {
+    "symlink": "PIL/.dylibs/libopenjp2.2.5.4.dylib"
+  },
+  "Contents/Resources/libpng16.16.dylib": {
+    "symlink": "PIL/.dylibs/libpng16.16.dylib"
+  },
+  "Contents/Resources/libpyside6.abi3.6.12.dylib": {
+    "symlink": "PySide6/libpyside6.abi3.6.12.dylib"
+  },
+  "Contents/Resources/libpython3.12.dylib": {
+    "symlink": "../Frameworks/libpython3.12.dylib"
+  },
+  "Contents/Resources/libsharpyuv.0.dylib": {
+    "symlink": "PIL/.dylibs/libsharpyuv.0.dylib"
+  },
+  "Contents/Resources/libshiboken6.abi3.6.12.dylib": {
+    "symlink": "shiboken6/libshiboken6.abi3.6.12.dylib"
+  },
+  "Contents/Resources/libssl.3.dylib": {
+    "symlink": "../Frameworks/libssl.3.dylib"
+  },
+  "Contents/Resources/libtiff.6.dylib": {
+    "symlink": "PIL/.dylibs/libtiff.6.dylib"
+  },
+  "Contents/Resources/libwebp.7.dylib": {
+    "symlink": "PIL/.dylibs/libwebp.7.dylib"
+  },
+  "Contents/Resources/libwebpdemux.2.dylib": {
+    "symlink": "PIL/.dylibs/libwebpdemux.2.dylib"
+  },
+  "Contents/Resources/libwebpmux.3.dylib": {
+    "symlink": "PIL/.dylibs/libwebpmux.3.dylib"
+  },
+  "Contents/Resources/libxcb.1.1.0.dylib": {
+    "symlink": "PIL/.dylibs/libxcb.1.1.0.dylib"
+  },
+  "Contents/Resources/libz.1.3.1.zlib-ng.dylib": {
+    "symlink": "PIL/.dylibs/libz.1.3.1.zlib-ng.dylib"
+  },
+  "Contents/Resources/python3.12": {
+    "symlink": "../Frameworks/python3.12"
+  },
+  "Contents/Resources/setuptools/_vendor/jaraco/text/Lorem ipsum.txt": {
+    "sha256": "37fedcffbf73c4eb9f058f47677cb33203a436ff9390e4d38a8e01c9dad28e0b",
+    "size": 1335,
+    "mode": "0o600"
+  },
+  "Contents/Resources/shiboken6": {
+    "symlink": "../Frameworks/shiboken6"
+  },
+  "Contents/Resources/wam-wallet.icns": {
+    "sha256": "dc8c4de2aeac66e062ac530b2a462e639646e02b3cfe5a7ba6f8c4bd8f571fb7",
+    "size": 2485979,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/SOURCE_SHA256.json": {
+    "sha256": "90a94e96335cfde53cbb177950d86ace0ddf14bb88433fbbe7c8e3e83004eec9",
+    "size": 3139,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/__init__.py": {
+    "sha256": "27ad88ce7ff767e4cad6feef198638dd85bd95bcd10ea2b36c3c642508b2337d",
+    "size": 397,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/adapters/__init__.py": {
+    "sha256": "836cd9d24e502e73c2e68e24f444a33286aa0490eb78d1d3b1f8594f938c4c36",
+    "size": 143,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/adapters/descriptor.py": {
+    "sha256": "64ed19c0eb8d350ac857d6e8bf607c0da4a25e056a1a110eae50c627ac2fc3cd",
+    "size": 5073,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/adapters/dleq.py": {
+    "sha256": "c7b1875f1bce03b046914e949dfa58797d8f8f1e963fa428eccbe303b09be7c6",
+    "size": 2670,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/adapters/pay.py": {
+    "sha256": "aa5a0748f5bf459e02a6898a3448b7ffc0f08cc50cfbf1e098f20fb2aa0065ed",
+    "size": 5414,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/adapters/psbt_document.py": {
+    "sha256": "5991865c6d95768ef545fb79c42e64738c71c4ef8f2562d4fc114b08a73db271",
+    "size": 7884,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/adapters/sdk.py": {
+    "sha256": "a404e18c2c4f395012cb750649f8a944c3774bd67f0b3abd0e6e8937c8fb36e1",
+    "size": 1223,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/adapters/sp_psbt.py": {
+    "sha256": "d214413e8b89b526a0037a8cffe92984441526a3da2cb6515ea416b3c34b2d06",
+    "size": 8993,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/adapters/watchtower.py": {
+    "sha256": "76afcb02a57e612acd44dbfdaf51325a6bf7160557408fab29f66d110b104dc2",
+    "size": 1281,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/api.py": {
+    "sha256": "9feec2f5e72d705bf793a233470cd1cbdf12abc12e688e85747fdd008f2999c5",
+    "size": 4317,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/backup.py": {
+    "sha256": "590757229da1a386331e27a62a647368eb980e6757d64558250f972bb11fdabb",
+    "size": 5725,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/chain.py": {
+    "sha256": "805e9af335b76c37e9467c7418eeb07a32077bfb9bab9a06c9e62b49f1b74dc5",
+    "size": 3587,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/codec.py": {
+    "sha256": "55ae210fc26bdfe99dacb799927f29a86b550a6e2f81c597c0efdf0d5946011c",
+    "size": 2350,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/conformance.py": {
+    "sha256": "b1fe6b592ede89fd47ce3870b8c17e0f7be0fbeaa5ba0f29a2788145a946c216",
+    "size": 1656,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/core.py": {
+    "sha256": "8c985786a9a6fb0e6439ba2baa9f6213da0fbc103816e891796a848489c143ab",
+    "size": 10414,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/crypto.py": {
+    "sha256": "c9968d899a0844b4215389efe72799501fd0093cf355899c6d3338386ed1242c",
+    "size": 1099,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/descriptors.py": {
+    "sha256": "aa89e55cc95b70f0a5f60a6e2d4736323d1e4a9d260ac64112e61a63f9ae7c02",
+    "size": 1823,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/errors.py": {
+    "sha256": "3f968d0a9093aa80fb646cf4fed52cab661fc0f3af68b0a54af81133fee3cb22",
+    "size": 764,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/file_lock.py": {
+    "sha256": "5dae7c4bd6214cec6e36e50d8dc12ba43ebe0e6c9e9448279685168a520b77a0",
+    "size": 3339,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/hd.py": {
+    "sha256": "15804196ec5a75751b2202df02547d1eedb28286597b86416bae25cfd83a49b8",
+    "size": 2143,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/keystore.py": {
+    "sha256": "3b0cd170f1c427597c4793a6f153d7912412939a68e3f402aac909a4ac7e1364",
+    "size": 10736,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/limits.py": {
+    "sha256": "a920e1e4ed6a54d86a420dfd8c5de27d20998a90c0276649063acc0d17229f6f",
+    "size": 1260,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/offline_signer.py": {
+    "sha256": "5fcb76f8383bb784567df3abf62f46f295c011f00bae0add8ad2e00661db8019",
+    "size": 2330,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/privacy.py": {
+    "sha256": "148808ab7136c1eede133ffa7783b77fe3cf72b39ae5c44f2ef0b40f1516bc57",
+    "size": 1288,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/profile.py": {
+    "sha256": "e9ac44fe047ad38c5fdd776eaf643779f5222ec653c3800a5e2455f1c1c71f40",
+    "size": 500,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/psbt.py": {
+    "sha256": "4253a8e16fc166798b0f4f88e105496a7132838e340fc8228e5bd28a25cf3a9b",
+    "size": 20667,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/rpc.py": {
+    "sha256": "c20b934add8d77e79d5e0c5f56b1c33954c9da933ba572119c740d1846a82a10",
+    "size": 6438,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/scanner.py": {
+    "sha256": "ecbd215c5d1585764207429a3bb09c98d6f199c56c8d46299b35c876494be871",
+    "size": 22155,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/state.py": {
+    "sha256": "a24035bccdbf85bafed58caaa65f6eeea5919f149c06286bbcd0bac7b2906f3a",
+    "size": 1388,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/store.py": {
+    "sha256": "b5071cdbff8e7d0b4f75aa730b56e43e140558f370c0cdd81e86fe0cd8ac306c",
+    "size": 17745,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/transaction.py": {
+    "sha256": "bbbb8efab0d630bb07d53dc710c5de27ddcd7d846dddee40375e238f2204d6b4",
+    "size": 2886,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/wallet.py": {
+    "sha256": "6a848920ca3404921bc198a1c50754b383224bc408d6aa4690d4237b4ed09e00",
+    "size": 17326,
+    "mode": "0o600"
+  },
+  "Contents/Resources/wsp-source/src/wam_sp/watcher.py": {
+    "sha256": "4ff1ad1ef20b8d3f0b148e414a8e066d37223807d93f94d42d3fa1c0c0a66dd3",
+    "size": 5847,
+    "mode": "0o600"
+  },
+  "Contents/_CodeSignature/CodeResources": {
+    "sha256": "9c74a5f27ee62992baba81e347a39f3b592cb8ee4ec685e2b8a313ec1167e1c2",
+    "size": 104903,
+    "mode": "0o600"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "schema": "q05-wallet-checkpoint-native/v1",
+  "status": "PASS",
+  "wallet_fixture": "EMPTY",
+  "owned_session_api": false,
+  "qualification_scope": "NEGATIVE_SYMLINK",
+  "source_sha": "758b5deefe0f0e1df23c22dc80c56b6c155b7002",
+  "checkout_sha": "758b5deefe0f0e1df23c22dc80c56b6c155b7002",
+  "source_provenance": {
+    "candidate_source_sha": "758b5deefe0f0e1df23c22dc80c56b6c155b7002",
+    "checkout_sha": "758b5deefe0f0e1df23c22dc80c56b6c155b7002",
+    "build_source_inventory_sha256": "fabfba0e98afc5ec0d603befc47ffc896e016ec59db7e2791c5465f65568953c",
+    "bundled_source_stamp_sha256": "9fdb72108d3aa43e5c8977cd22f1c84894150a34dd90110699dd15ae846f6ef1",
+    "frozen_executable_sha256": "a2fedc7f63996145addb3f999c3c6d3d9ebe06924e1d835c2e4f5e46ddacab4e",
+    "outer_artifact_manifest_required": true,
+    "same_uid_host_tamper_proof": false
+  },
+  "platform": "macos-arm64",
+  "frozen": true,
+  "core_trust": "official-signed-v0.1.11",
+  "official_signed_release": true,
+  "core_version": "v0.1.11",
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_executed": true,
+  "python_version": "3.12.10",
+  "command": [
+    "--ci-q05-managed-wallet",
+    "--scenario",
+    "checkpoint",
+    "--root",
+    "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/wam-q05-final-gui-xo8k6c1f/wam-fusion-core-75c226ce82310dc9",
+    "--receipt",
+    "/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/final-frozen-758b5de-negative-symlink.json",
+    "--confirm-disposable-regtest",
+    "--negative",
+    "symlink"
+  ],
+  "dependencies": {
+    "coincurve": "21.0.0",
+    "cryptography": "50.0.0"
+  },
+  "adapter_sha256": null,
+  "source_files": {},
+  "synthetic_rpc": false,
+  "funding_or_mining": false,
+  "wallet_signing": false,
+  "wallet_broadcast_requested": false,
+  "public_fixture_signature_and_broadcast": false,
+  "physical_device_acceptance": false,
+  "mainnet_allowed": false,
+  "observations": [
+    {
+      "created_empty_anchored_generation": [
+        1,
+        "ae3b2ba3ee496658b64d9504b8ba2d9a10c7d8eadbe4683b003ce94717892ab7"
+      ],
+      "height": 0,
+      "confirmed_atoms": 0,
+      "history_count": 0,
+      "plaintext_runtime_removed": true
+    },
+    {
+      "wrong_password_refused": true,
+      "native_anchor_reference_ciphertext_preserved": true
+    },
+    {
+      "negative_checkpoint": "symlink",
+      "refused_before_wallet_use": true,
+      "native_anchor_unchanged": true,
+      "original_and_hostile_bytes_preserved": true,
+      "plaintext_runtime_created": false,
+      "automatic_recovery": false,
+      "fault_model": "constructed native residue; genuine Core and anchor; not physical power loss"
+    }
+  ],
+  "lifecycle_schema": "wam-managed-lifecycle/v2",
+  "directory_identity_sha256": "1cee77fc0df798351afa0d3979ee39d588eb5d2abedf6cc5a8b57a9fac50b706",
+  "wallet_id": "1cc41e4edf379ebb39e0eeb14d58d40a",
+  "payment_code_sha256": "27adae7c0fa09cde2a22da021a7dfd596f528a68bc163932456989866ec1f997",
+  "wallet_broadcast_calls_total": 0,
+  "automatic_wallet_transaction_replay": false,
+  "owner_shutdown_verified": true,
+  "timestamp_utc": "2026-10-30T00:59:41.580750+00:00"
+}
