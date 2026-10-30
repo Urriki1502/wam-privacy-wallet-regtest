@@ -98,20 +98,27 @@ class LinuxRootWitnessAnchor:
             yield;return
         fd=_root_directory(self.endpoint.parent);connection=None
         try:
-            if stat.S_IMODE(os.fstat(fd).st_mode)!=0o755:
-                raise LinuxWitnessError('ROOT_WITNESS_ENDPOINT_PARENT_MODE_DENIED')
-            info=os.stat(self.endpoint.name,dir_fd=fd,follow_symlinks=False)
-            if (not stat.S_ISSOCK(info.st_mode) or info.st_uid!=os.geteuid()
-                    or stat.S_IMODE(info.st_mode)!=0o600 or info.st_nlink!=1):
-                raise LinuxWitnessError('ROOT_WITNESS_SOCKET_CUSTODY_DENIED')
-            connection=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
-            connection.settimeout(30);connection.connect(str(self.endpoint))
-            if _peer(connection)[1]!=0:raise LinuxWitnessError('ROOT_WITNESS_ROOT_PEER_REQUIRED')
-            _send(connection,{'op':'lease','wallet_id':self.wallet_id})
-            reply=_receive(connection)
-            if reply!={'ok':True,'protocol':PROTOCOL}:
-                raise LinuxWitnessError('ROOT_WITNESS_SESSION_BUSY_OR_DENIED')
-            self._local.pid=os.getpid();self._local.connection=connection
+            # Normalize only witness acquisition errors. An application
+            # exception raised through yield (including an injected crash
+            # cut) must propagate unchanged after the native lease releases.
+            try:
+                if stat.S_IMODE(os.fstat(fd).st_mode)!=0o755:
+                    raise LinuxWitnessError('ROOT_WITNESS_ENDPOINT_PARENT_MODE_DENIED')
+                info=os.stat(self.endpoint.name,dir_fd=fd,follow_symlinks=False)
+                if (not stat.S_ISSOCK(info.st_mode) or info.st_uid!=os.geteuid()
+                        or stat.S_IMODE(info.st_mode)!=0o600 or info.st_nlink!=1):
+                    raise LinuxWitnessError('ROOT_WITNESS_SOCKET_CUSTODY_DENIED')
+                connection=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+                connection.settimeout(30);connection.connect(str(self.endpoint))
+                if _peer(connection)[1]!=0:raise LinuxWitnessError('ROOT_WITNESS_ROOT_PEER_REQUIRED')
+                _send(connection,{'op':'lease','wallet_id':self.wallet_id})
+                reply=_receive(connection)
+                if reply!={'ok':True,'protocol':PROTOCOL}:
+                    raise LinuxWitnessError('ROOT_WITNESS_SESSION_BUSY_OR_DENIED')
+                self._local.pid=os.getpid();self._local.connection=connection
+            except LinuxWitnessError:raise
+            except (OSError,ValueError):
+                raise LinuxWitnessError('ROOT_WITNESS_UNAVAILABLE_OR_DENIED') from None
             try:
                 yield
                 # Prove the root-held lease survived through the sensitive body.
@@ -122,8 +129,6 @@ class LinuxRootWitnessAnchor:
                     if self._request({'op':'release'}) is not True:
                         raise LinuxWitnessError('ROOT_WITNESS_RELEASE_DENIED')
                 finally:self._local.pid=None;self._local.connection=None
-        except LinuxWitnessError:raise
-        except (OSError,ValueError):raise LinuxWitnessError('ROOT_WITNESS_UNAVAILABLE_OR_DENIED') from None
         finally:
             if connection is not None:connection.close()
             os.close(fd)
