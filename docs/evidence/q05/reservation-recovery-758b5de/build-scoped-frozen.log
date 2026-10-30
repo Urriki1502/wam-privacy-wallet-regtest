@@ -1,0 +1,150 @@
+BUILD_SOURCE_CAPTURE_PASS
+BUILD_SOURCE_CAPTURE_PASS
+BUNDLED_PINNED_WSP_SOURCE_PASS file_count=33
+MACOS_APP_STAGE=PYINSTALLER_START
+30 INFO: PyInstaller: 6.22.3, contrib hooks: 2026.9
+30 INFO: Python: 3.12.10
+39 INFO: Platform: macOS-27.0.1-arm64-arm-64bit
+39 INFO: Python environment: /Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env
+39 INFO: wrote /Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/WAM Privacy Wallet REGTEST.spec
+41 INFO: Removing temporary files and cleaning cache in /Users/dinhdang/Library/Application Support/pyinstaller
+1596 INFO: Module search paths (PYTHONPATH):
+['/Users/dinhdang/Developer/WAM-Fusion/q05-completion-20261029-01/python31210/lib/python312.zip',
+ '/Users/dinhdang/Developer/WAM-Fusion/q05-completion-20261029-01/python31210/lib/python3.12',
+ '/Users/dinhdang/Developer/WAM-Fusion/q05-completion-20261029-01/python31210/lib/python3.12/lib-dynload',
+ '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages',
+ '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/src',
+ '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/wsp-upstream/src',
+ '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/src']
+1696 INFO: Appending 'datas' from .spec
+1697 INFO: checking Analysis
+1697 INFO: Building Analysis because Analysis-00.toc is non existent
+1697 INFO: Looking for Python shared library...
+1700 INFO: Using Python shared library: /Users/dinhdang/Developer/WAM-Fusion/q05-completion-20261029-01/python31210/lib/libpython3.12.dylib
+1700 INFO: Running Analysis Analysis-00.toc
+1700 INFO: Target bytecode optimization level: 0
+1700 INFO: Initializing module dependency graph...
+1701 INFO: Initializing module graph hook caches...
+1706 INFO: Analyzing modules for base_library.zip ...
+2088 INFO: Processing standard module hook 'hook-encodings.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+2349 INFO: Processing standard module hook 'hook-math.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+2961 INFO: Processing standard module hook 'hook-pickle.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+3496 INFO: Processing standard module hook 'hook-heapq.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+3749 INFO: Caching module dependency graph...
+3770 INFO: Analyzing /Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/src/wam_regtest/package_entry.py
+3808 INFO: Processing standard module hook 'hook-platform.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+3825 INFO: Processing standard module hook 'hook-xml.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+3873 INFO: Processing standard module hook 'hook-_ctypes.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+3911 INFO: Processing standard module hook 'hook-Crypto.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/_pyinstaller_hooks_contrib/stdhooks'
+4144 INFO: Processing standard module hook 'hook-pycparser.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/_pyinstaller_hooks_contrib/stdhooks'
+4248 INFO: Processing standard module hook 'hook-setuptools.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+4248 INFO: SetuptoolsInfo: initializing cached setuptools info...
+4423 INFO: Processing pre-safe-import-module hook 'hook-distutils.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/pre_safe_import_module'
+4471 INFO: Processing standard module hook 'hook-sysconfig.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+4478 INFO: Processing standard module hook 'hook-_osx_support.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+4481 INFO: Processing pre-safe-import-module hook 'hook-jaraco.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/pre_safe_import_module'
+4481 INFO: Setuptools: 'jaraco' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.jaraco'!
+4487 INFO: Processing pre-safe-import-module hook 'hook-more_itertools.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/pre_safe_import_module'
+4487 INFO: Setuptools: 'more_itertools' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.more_itertools'!
+4562 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/pre_safe_import_module'
+4569 INFO: Processing pre-safe-import-module hook 'hook-packaging.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/pre_safe_import_module'
+4713 INFO: Processing standard module hook 'hook-setuptools._vendor.jaraco.text.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+4714 INFO: Processing pre-safe-import-module hook 'hook-importlib_resources.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/pre_safe_import_module'
+4876 INFO: Processing pre-safe-import-module hook 'hook-backports.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/pre_safe_import_module'
+4876 INFO: Setuptools: 'backports' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.backports'!
+5180 INFO: Processing pre-safe-import-module hook 'hook-tomli.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/pre_safe_import_module'
+5180 INFO: Setuptools: 'tomli' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.tomli'!
+5466 INFO: Processing pre-safe-import-module hook 'hook-wheel.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/pre_safe_import_module'
+5770 INFO: Processing standard module hook 'hook-webbrowser.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+5830 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+6154 INFO: Processing standard module hook 'hook-sqlite3.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+6269 INFO: Processing standard module hook 'hook-cryptography.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/_pyinstaller_hooks_contrib/stdhooks'
+6563 INFO: hook-cryptography: cryptography does not seem to be using dynamically linked OpenSSL.
+6760 INFO: Processing standard module hook 'hook-PySide6.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+8311 INFO: Processing standard module hook 'hook-shiboken6.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+8409 INFO: Processing standard module hook 'hook-PySide6.QtNetwork.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+12729 INFO: Processing standard module hook 'hook-PySide6.QtCore.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+13292 INFO: Processing standard module hook 'hook-PySide6.QtWidgets.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+13816 INFO: Processing standard module hook 'hook-PySide6.QtGui.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+14095 INFO: Processing standard module hook 'hook-PIL.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+14157 INFO: Processing standard module hook 'hook-PIL.Image.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+14311 INFO: Processing standard module hook 'hook-xml.etree.cElementTree.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+14409 INFO: Processing standard module hook 'hook-PIL.ImageFilter.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+14837 INFO: Processing standard module hook 'hook-difflib.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+15258 INFO: Analyzing hidden import 'coincurve._cffi_backend'
+15258 INFO: Analyzing hidden import 'wam_regtest.__main__'
+15283 INFO: Analyzing hidden import 'wam_regtest.linux_core_probe'
+15287 INFO: Analyzing hidden import 'wam_regtest.linux_package_entry'
+15290 INFO: Analyzing hidden import 'wam_regtest.package_entry'
+15294 INFO: Analyzing hidden import 'wam_regtest.package_manifest'
+15296 INFO: Analyzing hidden import 'wam_regtest.q04_miner_loop'
+15298 INFO: Analyzing hidden import 'wam_regtest.q_gate'
+15304 INFO: Analyzing hidden import 'wam_regtest.release_candidate'
+15307 INFO: Analyzing hidden import 'wam_regtest.supervisor_cli'
+15308 INFO: Analyzing hidden import 'wam_regtest.windows_package_entry'
+15313 INFO: Analyzing hidden import 'wam_sp.adapters.pay'
+15316 INFO: Analyzing hidden import 'wam_sp.adapters.psbt_document'
+15325 INFO: Analyzing hidden import 'wam_sp.adapters.sdk'
+15326 INFO: Analyzing hidden import 'wam_sp.adapters.watchtower'
+15327 INFO: Analyzing hidden import 'wam_sp.conformance'
+15328 INFO: Analyzing hidden import 'wam_sp.offline_signer'
+15330 INFO: Analyzing hidden import 'wam_sp.privacy'
+15331 INFO: Analyzing hidden import 'wam_sp.rpc'
+15346 INFO: Processing module hooks (post-graph stage)...
+15379 WARNING: Hidden import "pycparser.lextab" not found!
+15379 WARNING: Hidden import "pycparser.yacctab" not found!
+15568 INFO: Processing standard module hook 'hook-PIL.SpiderImagePlugin.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+15660 INFO: Processing standard module hook 'hook-PySide6.QtDBus.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+15747 INFO: Performing binary vs. data reclassification (222 entries)
+15824 INFO: Looking for ctypes DLLs
+15865 INFO: Analyzing run-time hooks ...
+15868 INFO: Including run-time hook 'pyi_rth_inspect.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/rthooks'
+15870 INFO: Including run-time hook 'pyi_rth_pyside6.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/rthooks'
+15871 INFO: Processing pre-find-module-path hook 'hook-_pyi_rth_utils.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/pre_find_module_path'
+15871 INFO: Processing standard module hook 'hook-_pyi_rth_utils.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks'
+15883 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/rthooks'
+15884 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/rthooks'
+15885 INFO: Including run-time hook 'pyi_rth_cryptography_openssl.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/_pyinstaller_hooks_contrib/rthooks'
+15885 INFO: Including run-time hook 'pyi_rth_setuptools.py' from '/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/hooks/rthooks'
+15893 INFO: Creating base_library.zip...
+15904 INFO: Looking for dynamic libraries
+16339 INFO: Warnings written to /Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/build/WAM Privacy Wallet REGTEST/warn-WAM Privacy Wallet REGTEST.txt
+16361 INFO: Graph cross-reference written to /Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/build/WAM Privacy Wallet REGTEST/xref-WAM Privacy Wallet REGTEST.html
+16542 INFO: checking PYZ
+16543 INFO: Building PYZ because PYZ-00.toc is non existent
+16543 INFO: Building PYZ (ZlibArchive) /Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/build/WAM Privacy Wallet REGTEST/PYZ-00.pyz
+16930 INFO: Building PYZ (ZlibArchive) /Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/build/WAM Privacy Wallet REGTEST/PYZ-00.pyz completed successfully.
+16937 INFO: EXE target arch: arm64
+16937 INFO: Code signing identity: None
+16938 INFO: checking PKG
+16938 INFO: Building PKG because PKG-00.toc is non existent
+16938 INFO: Building PKG (CArchive) WAM Privacy Wallet REGTEST.pkg
+16949 INFO: Building PKG (CArchive) WAM Privacy Wallet REGTEST.pkg completed successfully.
+16949 INFO: Bootloader /Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-env/lib/python3.12/site-packages/PyInstaller/bootloader/Darwin-64bit/runw
+16949 INFO: checking EXE
+16950 INFO: Building EXE because EXE-00.toc is non existent
+16950 INFO: Building EXE from EXE-00.toc
+16950 INFO: Copying bootloader EXE to /Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/build/WAM Privacy Wallet REGTEST/WAM Privacy Wallet REGTEST
+16950 INFO: Converting EXE to target arch (arm64)
+17026 INFO: Removing signature(s) from EXE
+17042 INFO: Modifying Mach-O image UUID(s) in EXE
+17048 INFO: Appending PKG archive to EXE
+17049 INFO: Fixing EXE headers for code signing
+17052 INFO: Re-signing the EXE
+17074 INFO: Building EXE from EXE-00.toc completed successfully.
+17078 INFO: checking COLLECT
+17078 INFO: Building COLLECT because COLLECT-00.toc is non existent
+17078 INFO: Building COLLECT COLLECT-00.toc
+22539 INFO: Building COLLECT COLLECT-00.toc completed successfully.
+22546 INFO: checking BUNDLE
+22546 INFO: Building BUNDLE because BUNDLE-00.toc is non existent
+22546 INFO: Building BUNDLE BUNDLE-00.toc
+24394 INFO: Signing the BUNDLE...
+24511 INFO: Building BUNDLE BUNDLE-00.toc completed successfully.
+24516 INFO: Build complete! The results are available in: /Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/dist
+MACOS_APP_STAGE=PYINSTALLER_COMPLETED
+MACOS_APP_STAGE=UNMODIFIED_SIGNED_CORE_SHA256_PASS
+dist/WAM Privacy Wallet REGTEST.app: replacing existing signature
+MACOS_APP_STAGE=OUTER_APP_SIGNED_CORE_HASH_STILL_PASS
+BUILD_SOURCE_VERIFY_PASS
+BUILD_SOURCE_VERIFY_PASS
