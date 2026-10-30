@@ -12,6 +12,7 @@ import sys
 import time
 
 from wam_regtest.core import verified_core_paths
+from wam_regtest.probe_source import verify_source
 from wam_regtest.custody import create_directory
 from wam_regtest.supervisor_client import control
 from wam_regtest.supervisor_store import read_exact
@@ -30,12 +31,13 @@ def main():
             or args.root.is_symlink() or args.receipt.exists()):
         raise SystemExit('Q05_NATIVE_PROBE_SCOPE_DENIED')
     source = Path(__file__).resolve().parents[1]
-    head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
-    if subprocess.check_output(['git', 'status', '--porcelain'], cwd=source):
-        raise SystemExit('Q05_NATIVE_PROBE_CLEAN_SOURCE_REQUIRED')
+    # Use the existing exact literal-source attestation shared by Q05 probes.
+    # CI may create untracked receipts; modified or added Python code still denies.
+    proof = verify_source(source)
+    head = proof['candidate_source_sha']
     node, cli, intake = verified_core_paths(args.core_dir)
     receipt = dict(schema='q05-stage-a-native-lifecycle/v1', source_sha=head,
-        checkout_sha=head, platform='macos-arm64', core_version='v0.1.11',
+        checkout_sha=proof['checkout_sha'], platform='macos-arm64', core_version='v0.1.11',
         python_version=platform.python_version(),
         command=['python3.12','scripts/probe_q05_macos_lifecycle.py',
                  '--core-dir','<verified signed Core>','--root','<new isolated profile>',
