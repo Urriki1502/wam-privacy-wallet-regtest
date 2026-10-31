@@ -169,3 +169,56 @@ def open_seed_container(folder, source, password, *, keychain=None):
                 raise
     except Exception:
         raise Bip39SeedCustodyError("Q06_SEED_REOPEN_DENIED") from None
+
+
+def _owned_password(owner, source, password, authorized):
+    """Q05's exact Core/process/source attestation before any seed action."""
+    from .managed_wallet_checkpoint import _inputs
+    _inputs(owner, source, password, authorized)
+    try:
+        decoded = password.decode("utf-8")
+    except (UnicodeError, AttributeError):
+        raise Bip39SeedCustodyError("Q06_SEED_PASSWORD_DENIED") from None
+    _password(decoded)
+    return decoded
+
+
+def create_owned_seed_container(owner, source, password, phrase, *,
+                                authorized=False, keychain=None):
+    """Owned-Core Stage B1 entry, not GUI activation or signing.
+
+    Requires a genuine Q05 CoreSupervisor original-process binding and
+    immutable pinned WSP before opening a separate native BIP39 container.
+    """
+    decoded = _owned_password(owner, source, password, authorized)
+    folder, public = create_seed_container(
+        owner.directory, source, decoded, phrase,
+        authorized_disposable=True, keychain=keychain,
+    )
+    from .managed_wallet_checkpoint import _owned
+    # A concurrent Core change faults this operation but never removes an
+    # already-published native ciphertext or its monotonic anchor.
+    try:
+        _owned(owner)
+    except (OSError, ValueError, RuntimeError):
+        raise Bip39SeedCustodyError("Q06_SEED_ORIGINAL_OWNER_CHANGED") from None
+    return folder, public
+
+
+def open_owned_seed_container(owner, folder, source, password, *,
+                              authorized=False, keychain=None):
+    """Reopen only the exact currently owned Core's BIP39 container."""
+    decoded = _owned_password(owner, source, password, authorized)
+    if type(folder) is not type(Path()) or folder.parent != owner.directory:
+        raise Bip39SeedCustodyError("Q06_SEED_FOREIGN_OWNER_DENIED")
+    if any((owner.directory / name).exists() or (owner.directory / name).is_symlink()
+           for name in ("wallet-vault", "supervisor.wallet")):
+        raise Bip39SeedCustodyError("Q06_SEED_Q05_PROFILE_CONFLICT")
+    keys = open_seed_container(folder, source, decoded, keychain=keychain)
+    try:
+        from .managed_wallet_checkpoint import _owned
+        _owned(owner)
+        return keys
+    except Exception:
+        keys.close()
+        raise Bip39SeedCustodyError("Q06_SEED_ORIGINAL_OWNER_CHANGED") from None
