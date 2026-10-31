@@ -79,8 +79,9 @@ def qualify(core,source):
             if (reopened["mnemonic_once"] or reopened["receive_code"]!=opened["receive_code"]):
                 raise ValueError("Q06_OWNER_ENCRYPTED_REOPEN_IDENTITY_DENIED")
             first.request("lock")
-            window._poll.stop();window.hide();window.close()
-            window=None
+            window._poll.stop();window.hide()
+            # Do not call closeEvent while the executor is still owning Core;
+            # the Qt close path intentionally queues its own quit command.
             first.request("quit")
             if not first.join(15) or not first.closed:
                 raise ValueError("Q06_OWNER_ORIGINAL_CORE_SHUTDOWN_DENIED")
