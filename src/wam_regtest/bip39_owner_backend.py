@@ -125,13 +125,17 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         if (owner.directory / ("bip39-12-scan-" + seed_id)).exists():
             raise Q06ReadOnlyError("Q06_GUI_ANCHORED_SCANNER_REQUIRES_RECONCILIATION")
         rpc=WalletCoreCli(owner.cli,owner.directory)
+        fixture_record={}
+        funding_phase="PREFLIGHT"
         try:
             rpc.attest()  # exact signed Core v0.1.11, chain and zero peers
             if rpc.call("getblockcount") != 0:
                 raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_FRESH_CHAIN_ONLY")
             address=public_regtest_mining_address(self.source)
+            funding_phase="FIXTURE"
             txid, atoms, height = fund_checkpoint_fixture(
-                rpc, self._public["receive_code"], address, {})
+                rpc, self._public["receive_code"], address, fixture_record)
+            funding_phase="POSTCHECK"
             _owned(owner)
             if (type(txid) is not str or not re.fullmatch("[0-9a-f]{64}",txid)
                     or type(atoms) is not int or atoms<=0
@@ -145,7 +149,18 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         except Q06ReadOnlyError:
             raise
         except Exception:
-            # Once a real Core write may have happened, never retry silently.
+            # Only fixed, non-secret stage categories are emitted. A Core write
+            # may have completed: preserve the original fail-closed no-retry rule.
+            if funding_phase=="FIXTURE":
+                detail=fixture_record.get("fixture_funding_failure")
+                observed=detail.get("stage") if type(detail) is dict else None
+                failure_stage={"attestation":"FIXTURE_ATTESTATION",
+                               "generation":"GENERATION",
+                               "payment":"PAYMENT"}.get(observed,"FIXTURE_UNCLASSIFIED")
+            else:
+                failure_stage=funding_phase if funding_phase in ("PREFLIGHT","POSTCHECK") else "UNCLASSIFIED"
+            if sys.platform=="darwin":
+                print("MACOS_Q06_FUNDING_FAILURE_STAGE="+failure_stage,flush=True)
             raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_UNCERTAIN") from None
         finally:
             if getattr(rpc,"_transport",None) is not None:rpc._transport.close()
