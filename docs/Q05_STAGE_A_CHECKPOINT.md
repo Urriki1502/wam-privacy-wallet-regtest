@@ -1,44 +1,70 @@
-# Q05 — Current engineering checkpoint (owner-review preparation)
+# Q05 — Current engineering checkpoint
 
-**Status as of 31 October 2026:** Source technical receipts reconciled for Draft PR #138. This note replaces the superseded 1,028-line rolling chronology; the original remains at
-https://github.com/Urriki1502/wam-privacy-wallet-regtest/blob/4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5/docs/Q05_STAGE_A_CHECKPOINT.md
+**Checked:** 31 October 2026  
+**PR:** [#138](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/138) — OPEN / DRAFT  
+**Runtime source qualified:** `4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5`  
+**Last checked GitHub HEAD (before this documentation update):** `5e60f1b04555f74060ae81c7ced24fe75b5e500a`  
+**Canonical case ledger:** `tests/acceptance/issue45.json`
 
-**Qualified runtime candidate SHA:** `4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5`
-**Branch:** `feature/issue45-q05-managed-core-stage-a-20261027`
-**Canonical case-level source:** `tests/acceptance/issue45.json`.
-**Ledger:** 32 technical cases PASS (evidence from native/frozen 3-OS CI), 4 external cases BLOCKED, 1 owner merge/integration case PENDING. `accepted=false`; engineering handoff NO; `main` unchanged.
+## Current Q05 acceptance
 
-## Actual native/frozen qualification
+| Measure | Status |
+| --- | --- |
+| Case-level coverage | **32 PASS / 4 BLOCKED / 1 PENDING** (37 total) |
+| Engineering execution | ACTIVE |
+| Gates | **G0–G5 PASS; G6–G7 BLOCKED** |
+| Full acceptance | **NO (`accepted=false`)** |
+| Owner merge authorization | PENDING, not granted |
+| Merge / postmerge exact-main | Not merged / not performed |
+| Engineering handoff / Q06 | NO / QUEUED |
+| Release and mainnet | Not authorized |
 
-| OS | Workflow (all SUCCESS at source SHA) | Native | Final frozen | Core trust |
-|---|---|---|---|---|
-| macOS ARM64 | https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41086424222 | PASS | PASS | official signed v0.1.11 |
-| Windows x64 | https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41086424220 | PASS | PASS | official signed v0.1.11 |
-| Linux x86_64 | https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41086424586 | PASS | PASS desktop/headless | reviewed developer Core, **not** signed |
+These 32 PASS results are scoped **technical** case records, not full Q05 or production acceptance.
 
-Other successful workflows at this candidate: 41086424280 (Linux supervisor contracts), 41086424207 (WSP 28 vectors), 41086424328 (Windows WSP/Qt), 41086424389 (signed Windows Core smoke). The Linux developer-Core **rebuild job was conditionally SKIPPED** because wallet-only changes do not change reviewed build inputs; this is not a fresh upstream-source qualification. Upstream source availability (HTTP 404) remains a future rebuild dependency.
+## Native and final frozen proof
 
-GitHub Actions frozen receipts bind `source_sha=4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5` while their `checkout_sha=44d3f344d0c762b916ef329522ea40ff48462627` is the generated PR test merge tree. Source inventory, Core digests, WSP pin and final executable SHA are included in the signed/Core native/frozen receipts. Do not replace real evidence with generic green CI claims.
+| OS | Native | Frozen app | Core trust | Source-bound CI |
+| --- | --- | --- | --- | --- |
+| macOS ARM64 | PASS | PASS (.app/.dmg) | Official signed v0.1.11 | [41086424222](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41086424222) |
+| Windows x64 | PASS | PASS | Official signed v0.1.11 | [41086424220](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41086424220) |
+| Linux x86_64 | PASS | PASS (desktop/headless) | Reviewed developer Core, **unsigned** | [41086424586](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41086424586) |
 
-## Critical security boundaries (retain)
+The original receipts are bound to runtime source `4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5`, test merge checkout `44d3f344d0c762b916ef329522ea40ff48462627`, WSP source pin `ac55f13423620252bdbf848c7e8a280c3b84721e`, Core digests and final-executable SHA-256. A successful run on a different source or checkout is **not** interchangeable evidence.
 
-- Manage only the authenticated owner/original `Popen`, never adopt a foreign Core or shutdown an external miner.
-- Keep encrypted vault generation CAS, platform-native anchor, persistent datadir identity and fail-closed lease/supervisor lock.
-- Keep signed/uncertain reservation history, no silent recovery, no replay, no orphan/sidecar auto-adoption.
-- Preserve cross-platform security negative tests and native/frozen qualification, even when names resemble duplicates.
-- Core-crash injection in these receipts follows an explicit Core flush; **not** physical power-loss qualification or takeover after supervisor process death.
-- macOS 101-block disposable funding uses 90s deadline, other RPCs retain ordinary deadline; uncertain timed-out mutation never retried automatically.
-- Linux native witness preserves application exceptions while still verifying native lease acquisition, ping/release and root peer.
-- Windows Q05 recovery-equivalence fixtures do not reread exclusive `supervisor.lock` and close SQLite connections before cleanup.
+**Latest checked HEAD `5e60f1b04555f74060ae81c7ced24fe75b5e500a`: 7/7 workflows SUCCESS, 21 PASS jobs and one conditionally SKIPPED Linux developer-Core rebuild** (wallet-only inputs did not require a new Core build). This SKIP is not fresh Core compilation or an officially signed Linux release.
 
-## Open decisions and external acceptance
+- [macOS managed GUI/Core/frozen](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41149902367)
+- [Windows signed Core/Q04](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41149902366)
+- [Windows credential/SQLite/Q05](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41149902391)
+- [Windows Qt/WSP](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41149902392)
+- [Linux native/frozen/Q04](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41149902414)
+- [Linux supervisor contracts](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41149902478)
+- [WSP-1 28 canonical vectors](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41149902412)
 
-1. **Owner merge:** Separate review/authorization required. No automatic merge, no Q06.
-2. **Exact-main checks:** Postmerge run/receipts required; PR SUCCESS is not exact-main proof.
-3. **Clean-machine physical:** macOS, Windows (including 125% DPI/no-flicker), Linux independent native operator receipts not yet collected.
-4. **Independent architecture/security:** Separate reviewer approval not granted by AI-generated reports.
-5. **Release/mainnet:** Remains explicitly denied until every mandatory gate is complete.
+## Qualified technical scope and limits
 
-## Cleanup and historical record
+Persistent managed wallet onboarding; serialized native owner-thread Core/GUI operation; protected platform storage; real REGTEST funding and BIP352 receive; prepare/sign/broadcast/confirm; durable history, pagination and irreversible reservation fingerprints; authenticated `BEGIN/COMMIT` recovery and positive original-owner shutdown; security-negative and final-frozen package qualification.
 
-The superseded status chronology was consolidated into this snapshot rather than preserved as 1,028 lines of repeated future instructions. All existing `docs/evidence/q05/**` FAIL/PASS receipts remain in PR #138; no evidence deletions. Earlier chronology is immutable in Git at the link above. **No runtime/security code, negative tests, or Core trust boundaries are removed** in this housekeeping step. Further deletions require an actual redundancy proof and risk assessment.
+Preserve exact `active_location`/native anchor floor, original `Popen`, single owner authority and verified Core/WSP identities. No external-miner shutdown, orphan/sidecar auto-adoption, generic privileged IPC, replay of uncertain submissions, wallet/datadir replacement or silent key regeneration.
+
+**Crash limitation:** positive recovery evidence follows **clean Core flush**; preflush power loss is not transparent-recovery PASS. Supervisor-process death with a live Core remains fail-closed, not an adopted/recovered Core. Historical failure receipts are preserved.
+
+## Remaining five cases
+
+| Case | State | Required evidence |
+| --- | --- | --- |
+| `Q05-PHYSICAL-MACOS` | BLOCKED | Clean native macOS operator run: custody, frozen wallet and state |
+| `Q05-PHYSICAL-WINDOWS` | BLOCKED | Clean Windows x64 operator run, 125% DPI/no flicker and wallet lifecycle |
+| `Q05-PHYSICAL-LINUX` | BLOCKED | Clean Linux x86_64 operator run and native/frozen custody |
+| `Q05-INDEPENDENT` | BLOCKED | Source-specific independent architecture/security review and signoff |
+| `Q05-MERGE-AUTH` | PENDING | Explicit owner merge decision, then exact-main postmerge CI/receipts |
+
+Q04 external G6/G7 remains separately blocked. Linux Core upstream HTTP 404 is a future rebuild dependency, not a reason to relabel already qualified immutable Core artifacts.
+
+## Next approved work boundary
+
+Review the final source/security diff; obtain physical clean-device evidence and independent review; request explicit separate owner merge authorization. If authorized, merge and qualify the actual main SHA before reconsidering full acceptance/handoff. **No automatic merge, Q06 activation, extra speculative features or mainnet release.**
+
+## Source-of-truth rule
+
+This file and `tests/acceptance/issue45.json` are the current Q05 checkpoint. Other dated `docs/Q05_*.md` reports are archived **historical diagnostics**, not live STOP instructions or up-to-date PENDING counts. Preserve historical FAIL/INCOMPLETE receipt artifacts and Git commit history.
