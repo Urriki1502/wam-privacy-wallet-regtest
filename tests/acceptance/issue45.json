@@ -2,7 +2,7 @@
   "schema": "wam-issue45-sequential-q-ledger/v1",
   "authoritative_spec": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
   "owner_protocol": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6379544993",
-  "active_q": "Q05",
+  "active_q": "Q06",
   "execution_order": [
     "Q01",
     "Q02",
@@ -17113,14 +17113,14 @@
     {
       "id": "Q05",
       "requirement": "Managed Core persistent: close/reopen, crash, reattach, no new datadir or dropped history",
-      "processing": "ACTIVE",
-      "status": "PENDING",
+      "processing": "ENGINEERING_DONE",
+      "status": "BLOCKED",
       "accepted": false,
       "coverage_identified": true,
       "coverage_total": 37,
       "base_main_sha": "ea1aef3b41c738e1a16a2042b503c6c6d119e042",
       "candidate_pr": 138,
-      "candidate_head_sha": "4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5",
+      "candidate_head_sha": "a74eebc58a79613d826ed862189667dc6aefc3b1",
       "cases": [
         {
           "id": "Q05-COVERAGE",
@@ -19363,12 +19363,12 @@
             "G7"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "acceptance_evidence": [],
           "blocker": {
-            "actor": "REPOSITORY_OWNER",
-            "missing_evidence": "Separate owner merge authorization, merged main SHA and exact-main postmerge verification",
-            "next_action": "Owner review after source/security diff and exact-head evidence, then authorize merge separately; run postmerge CI"
+            "actor": "POSTMERGE_CI_OPERATOR_AND_INDEPENDENT_REVIEWER",
+            "missing_evidence": "Owner-approved PR #138 has merged on main; exact-merge-SHA macOS/Windows/Linux actual-Core native+final-frozen workflow and artifact receipts have not been verified. Independent G7 also remains blocked.",
+            "next_action": "Execute/locate exact-main jobs with head_sha a0ec5799de3e59e93689c744672168b76bf571be; inspect evidence and reconcile separately. Do not count PR-head success as main."
           }
         }
       ],
@@ -19414,8 +19414,8 @@
           "not_applicable_reason": null
         }
       },
-      "owner_merge_authorization": null,
-      "post_merge_main_sha": null,
+      "owner_merge_authorization": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/138",
+      "post_merge_main_sha": "a0ec5799de3e59e93689c744672168b76bf571be",
       "historical_evidence": [
         {
           "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6368327724",
@@ -19426,8 +19426,8 @@
           "note": "Historical unmerged scoped Q05/A06 3OS native/frozen receipts and Windows125% visual clipping FAIL; retained as review leads, not current Q05 PASS or completed frozen acceptance."
         }
       ],
-      "engineering_status": "TECHNICAL_CASE_EVIDENCE_RECONCILED_PR_CI_QUALIFIED_MERGE_PENDING",
-      "scope_note": "2026-10-31: PR #138 Q05 ACTIVE, 32 scoped technical PASS / 4 external BLOCKED (physical macOS/Windows/Linux and independent reviewer) / 1 owner merge PENDING. Gates G0–G5 PASS; G6–G7 BLOCKED. Full accepted=false; Q06 QUEUED; no engineering handoff, merge approval, exact-main postmerge CI, release or mainnet authorization. Runtime source 4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5; PR test merge checkout 44d3f344d0c762b916ef329522ea40ff48462627; signed Core v0.1.11 used on macOS/Windows; reviewed non-signed developer Core on Linux. Exact PR HEAD 5e60f1b04555f74060ae81c7ced24fe75b5e500a: 7 workflows SUCCESS, 21 jobs PASS, 1 developer-Core rebuild conditionally SKIPPED. Native/frozen three-OS source-bound receipts and historical FAIL/INCOMPLETE proofs preserved. Positive crash recovery follows clean Core flush only; no preflush power-loss claim or cross-process adoption. Human clean-device, genuinely independent architecture/security review, explicit owner authorization and exact-main verification remain outstanding.",
+      "engineering_status": "INTEGRATED_PENDING_EXTERNAL",
+      "scope_note": "2026-10-31: Owner-approved #138 merged as a0ec5799de3e59e93689c744672168b76bf571be (actual main tip); PR HEAD a74eebc58a79613d826ed862189667dc6aefc3b1, qualified runtime 4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5. 32 existing source/native/frozen PASS; 4 external physical/independent BLOCKED; Q05-MERGE-AUTH now BLOCKED only on missing exact-main CI/independent completion, not lack of merge authorization. Q-GATE v2 owner-directed Q06 engineering focus; postmerge PENDING explicitly recorded, NOT PASS or waiver of verification. G0–G5 PASS; G6/G7 BLOCKED; accepted=false. Linux Core reviewed unsigned; no preflush crash auto-recovery guarantee; preserved historical FAIL including macOS reopen retry.",
       "failure_history": [
         {
           "source_sha": "d6a3acfdd80076d20aaca01e0eaab653255ddcbb",
@@ -19475,20 +19475,535 @@
           "next_action": "Provision only new unit-test files using existing native security_attributes/CreateFileW; keep exact owner/DACL/metadata assertions and add explicit unprotected-permission refusal. Product runtime and checks unchanged. Recheck exact-HEAD source/native file contracts; no integrated Windows wallet PASS."
         }
       ],
-      "qualified_runtime_source_sha": "4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5"
+      "qualified_runtime_source_sha": "4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5",
+      "owner_merge_decision_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/138#issuecomment-6538261053",
+      "postmerge_qualification": {
+        "status": "PENDING",
+        "merged_main_sha": "a0ec5799de3e59e93689c744672168b76bf571be",
+        "premerge_head_sha": "a74eebc58a79613d826ed862189667dc6aefc3b1",
+        "qualified_runtime_source_sha": "4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5",
+        "owner_merge_decision_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/138#issuecomment-6538261053",
+        "main_ref_verified": true,
+        "main_ref_verified_method": "GitHub compare merge commit versus main: identical, 0 ahead, 0 behind",
+        "exact_main_runs": [],
+        "premerge_pr_runs": [
+          41159582420,
+          41159582445,
+          41159582429,
+          41159582451,
+          41159582408,
+          41159582456,
+          41159582442
+        ],
+        "pending_exact_main_runs": [
+          {
+            "platform": "macos-arm64",
+            "status": "PENDING",
+            "required": "Signed Core/WSP final frozen, managed-GUI + crash/recovery on actual main SHA"
+          },
+          {
+            "platform": "windows-x64",
+            "status": "PENDING",
+            "required": "Signed Core native/frozen and credential/SQLite qualification on actual main SHA"
+          },
+          {
+            "platform": "linux-x86_64",
+            "status": "PENDING",
+            "required": "Reviewed developer Core native/frozen desktop/headless and native witness on actual main SHA"
+          }
+        ],
+        "postmerge_exception_applied": true,
+        "waiver_applied": false,
+        "owner_exception_source": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755",
+        "exception_scope": "Temporary engineering-focus handoff only, no full Q05 acceptance; exact-main executable checks are outstanding and MUST be completed; any genuine Q05 regression STOP Q06.",
+        "inability": "Available connector's commit-workflow query filters pull_request only; observed PR-head CI cannot prove push/main qualification. No CI outcome fabricated."
+      },
+      "engineering_handoff": {
+        "engineering_status": "INTEGRATED_PENDING_EXTERNAL",
+        "owner_authorized_handoff": true,
+        "owner_decision_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755",
+        "merged_pr": 138,
+        "merged_main_sha": "a0ec5799de3e59e93689c744672168b76bf571be",
+        "qualified_runtime_source_sha": "4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5",
+        "next_q": "Q06",
+        "postmerge_status": "PENDING",
+        "postmerge_pass_runs": [],
+        "postmerge_missing": "Actual-head CI on a0ec5799de3e59e93689c744672168b76bf571be (macOS, Windows, Linux); physical G6; genuinely independent G7",
+        "unresolved_case_ids": [
+          "Q05-INDEPENDENT",
+          "Q05-MERGE-AUTH",
+          "Q05-PHYSICAL-LINUX",
+          "Q05-PHYSICAL-MACOS",
+          "Q05-PHYSICAL-WINDOWS"
+        ],
+        "scope": "Q-GATE v2 engineering focus ONLY. Owner has directed Q05→Q06; exact-main CI unavailable to connector and is tracked PENDING, NOT PASS/waived. Q05 accepted=false, G6/G7 BLOCKED, no mainnet. Later real Q05 failure or critical security issue stops Q06."
+      }
     },
     {
       "id": "Q06",
       "requirement": "New 12-word BIP39 Create→Receive→Sign→Broadcast→Reopen→Restore same identity",
-      "processing": "QUEUED",
+      "processing": "ACTIVE",
       "status": "PENDING",
       "accepted": false,
-      "coverage_identified": false,
-      "coverage_total": null,
-      "base_main_sha": null,
+      "coverage_identified": true,
+      "coverage_total": 24,
+      "base_main_sha": "a0ec5799de3e59e93689c744672168b76bf571be",
       "candidate_pr": null,
       "candidate_head_sha": null,
-      "cases": [],
+      "cases": [
+        {
+          "id": "Q06-BIP39-12-WORDLIST",
+          "requirement": "Generate/import exactly 12 valid BIP39 English words from 128-bit entropy with official checksum/wordlist; do not confuse with 24-word Q07",
+          "acceptance_predicate": "Generate/import exactly 12 valid BIP39 English words from 128-bit entropy with official checksum/wordlist; do not confuse with 24-word Q07",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-BIP39-NFKD-SEED",
+          "requirement": "Derive exact 64-byte BIP39 seed via NFKD and PBKDF2-HMAC-SHA512; published vectors; no truncation to 32 bytes",
+          "acceptance_predicate": "Derive exact 64-byte BIP39 seed via NFKD and PBKDF2-HMAC-SHA512; published vectors; no truncation to 32 bytes",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-BIP32-WSP-ROOT",
+          "requirement": "Derive pinned WSP BIP32/BIP352 account and stable BIP352 receive identity from all 64 seed bytes",
+          "acceptance_predicate": "Derive pinned WSP BIP32/BIP352 account and stable BIP352 receive identity from all 64 seed bytes",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-NATIVE-CUSTODY",
+          "requirement": "Encrypted mnemonic/seed retention, explicit authentication, native OS owner/anchor, no plaintext logs or best-effort secret leaks",
+          "acceptance_predicate": "Encrypted mnemonic/seed retention, explicit authentication, native OS owner/anchor, no plaintext logs or best-effort secret leaks",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-ONBOARDING-GUI",
+          "requirement": "New wallet 12-word user-facing create and backup acknowledgement is integrated with normal managed GUI and hardened REGTEST owner",
+          "acceptance_predicate": "New wallet 12-word user-facing create and backup acknowledgement is integrated with normal managed GUI and hardened REGTEST owner",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G0",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-RESTORE-BOUNDARY",
+          "requirement": "Clean-profile restore from authenticated 12-word mnemonic preserves identity without importing foreign native anchor or bypassing rollback floor",
+          "acceptance_predicate": "Clean-profile restore from authenticated 12-word mnemonic preserves identity without importing foreign native anchor or bypassing rollback floor",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "SOURCE",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-NEGATIVE-WORDCOUNT-CHECKSUM",
+          "requirement": "Reject non-12 words, unknown word, bad checksum, malformed Unicode, non-string or oversized inputs without changing wallet state",
+          "acceptance_predicate": "Reject non-12 words, unknown word, bad checksum, malformed Unicode, non-string or oversized inputs without changing wallet state",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "NEGATIVE_INJECTION",
+          "gates": [
+            "G0",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-NEGATIVE-CHAIN-PROFILE",
+          "requirement": "Reject mainnet/wrong genesis, wrong Core/WSP profile, unexpected metadata and absent explicit disposable REGTEST consent",
+          "acceptance_predicate": "Reject mainnet/wrong genesis, wrong Core/WSP profile, unexpected metadata and absent explicit disposable REGTEST consent",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "NEGATIVE_INJECTION",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-NEGATIVE-IDENTITY-ROLLBACK",
+          "requirement": "Never overwrite/replace anchored existing state, accept duplicate/foreign profile or silently resurrect stale/ambiguous backup",
+          "acceptance_predicate": "Never overwrite/replace anchored existing state, accept duplicate/foreign profile or silently resurrect stale/ambiguous backup",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "NEGATIVE_INJECTION",
+          "gates": [
+            "G1",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-NEGATIVE-TX-REPLAY",
+          "requirement": "After bad mnemonic, crash or ambiguous signed/broadcast state, no automatic replay or key disclosure",
+          "acceptance_predicate": "After bad mnemonic, crash or ambiguous signed/broadcast state, no automatic replay or key disclosure",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "NEGATIVE_INJECTION",
+          "gates": [
+            "G3",
+            "G4"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-MACOS-CREATE-E2E",
+          "requirement": "Genuine signed Core 12-word create→fund BIP352→prepare/sign/broadcast/confirm→lock/reopen on macOS",
+          "acceptance_predicate": "Genuine signed Core 12-word create→fund BIP352→prepare/sign/broadcast/confirm→lock/reopen on macOS",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G3"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-MACOS-RESTORE-E2E",
+          "requirement": "Fresh macOS owned REGTEST profile 12-word restore reproduces same receive key, funds and history, never adopts old anchor",
+          "acceptance_predicate": "Fresh macOS owned REGTEST profile 12-word restore reproduces same receive key, funds and history, never adopts old anchor",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "macos-arm64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G3"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-WINDOWS-CREATE-E2E",
+          "requirement": "Genuine signed Core 12-word create→receive→sign/broadcast/confirm→reopen with native Windows custody",
+          "acceptance_predicate": "Genuine signed Core 12-word create→receive→sign/broadcast/confirm→reopen with native Windows custody",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G3"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-WINDOWS-RESTORE-E2E",
+          "requirement": "Fresh Windows protected profile restore preserves same BIP352 identity/history with no flash/foreign owner",
+          "acceptance_predicate": "Fresh Windows protected profile restore preserves same BIP352 identity/history with no flash/foreign owner",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "windows-x64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G3"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-LINUX-CREATE-E2E",
+          "requirement": "Reviewed developer Core 12-word create→receive→send/confirm→reopen under approved root witness",
+          "acceptance_predicate": "Reviewed developer Core 12-word create→receive→send/confirm→reopen under approved root witness",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G3"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-LINUX-RESTORE-E2E",
+          "requirement": "Fresh Linux profile restore same identity after approved manifest/root witness, no orphan adoption",
+          "acceptance_predicate": "Fresh Linux profile restore same identity after approved manifest/root witness, no orphan adoption",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "CORE_E2E",
+          "gates": [
+            "G2",
+            "G3"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-FROZEN-MACOS",
+          "requirement": "Final .app/.dmg executable performs 12-word creation, BIP352 send/reopen and restore with genuine signed Core",
+          "acceptance_predicate": "Final .app/.dmg executable performs 12-word creation, BIP352 send/reopen and restore with genuine signed Core",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "macos-arm64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-FROZEN-WINDOWS",
+          "requirement": "Final signed-Core Windows x64 executable performs end-to-end 12-word creation and restore",
+          "acceptance_predicate": "Final signed-Core Windows x64 executable performs end-to-end 12-word creation and restore",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "windows-x64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-FROZEN-LINUX",
+          "requirement": "Final Linux desktop and headless executable tests 12-word wallet with reviewed unsigned Core and witness",
+          "acceptance_predicate": "Final Linux desktop and headless executable tests 12-word wallet with reviewed unsigned Core and witness",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "FROZEN",
+          "gates": [
+            "G3",
+            "G5"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-PHYSICAL-MACOS",
+          "requirement": "Human operator validates installed macOS app clean device including seed backup and identity restore",
+          "acceptance_predicate": "Human operator validates installed macOS app clean device including seed backup and identity restore",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "macos-arm64",
+          "layer": "PHYSICAL",
+          "gates": [
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-PHYSICAL-WINDOWS",
+          "requirement": "Human clean Windows install including 125% DPI/no-flicker and secure 12-word lifecycle",
+          "acceptance_predicate": "Human clean Windows install including 125% DPI/no-flicker and secure 12-word lifecycle",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "windows-x64",
+          "layer": "PHYSICAL",
+          "gates": [
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-PHYSICAL-LINUX",
+          "requirement": "Human clean Linux install with independent provisioned witness and 12-word lifecycle",
+          "acceptance_predicate": "Human clean Linux install with independent provisioned witness and 12-word lifecycle",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "linux-x86_64",
+          "layer": "PHYSICAL",
+          "gates": [
+            "G6"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-INDEPENDENT",
+          "requirement": "Independent mnemonic security, custody/antirollback and WSP derivation review of exact source",
+          "acceptance_predicate": "Independent mnemonic security, custody/antirollback and WSP derivation review of exact source",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "DEV_REVIEWED",
+          "gates": [
+            "G7"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        },
+        {
+          "id": "Q06-MERGE-AUTH",
+          "requirement": "Separate owner authorization, merge into main, exact-main validation and artifact provenance",
+          "acceptance_predicate": "Separate owner authorization, merge into main, exact-main validation and artifact provenance",
+          "requirement_refs": [
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
+            "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
+          ],
+          "platform": "shared",
+          "layer": "MAIN",
+          "gates": [
+            "G5",
+            "G7"
+          ],
+          "mandatory": true,
+          "status": "PENDING",
+          "acceptance_evidence": [],
+          "blocker": null
+        }
+      ],
       "gates": {
         "G0": {
           "applicable": true,
@@ -19533,7 +20048,15 @@
       },
       "owner_merge_authorization": null,
       "post_merge_main_sha": null,
-      "historical_evidence": []
+      "historical_evidence": [
+        {
+          "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/43",
+          "status": "HISTORICAL_UNMERGED_DRAFT",
+          "note": "Stacked BIP39 engine and vectors are leads for narrow review only, NOT Q06 acceptance or prior-pass import."
+        }
+      ],
+      "engineering_status": "ACTIVE_SOURCE_DISCOVERY",
+      "scope_note": "Owner-directed Q06 12-word BIP39 engineering focus only. All 24 cases PENDING; no Q06 tests/receipt adopted. PR #43 is historical stacked draft review material, not merged or qualified. Begin with pinned wordlist/derivation and managed wallet integration; no mainnet, no 24-word Q07, no real funds. Prior Q05 exact-main outstanding recorded and non-waived."
     },
     {
       "id": "Q07",
