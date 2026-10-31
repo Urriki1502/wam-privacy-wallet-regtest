@@ -98,6 +98,47 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             "signer_allowed": False, "broadcast_allowed": False, "mainnet_allowed": False,
         }
 
+    def _fund_q06(self):
+        """Explicit once-only signed-Core REGTEST receive fixture.
+
+        Reuse Q05's *existing* public-transaction fixture to pay THIS
+        BIP39-derived silent receive code; NEVER use Q05 Keyring or signer.
+        This is not a generic mining RPC command or a product Send feature.
+        """
+        if self._secret is None or self._public is None or self._seed_folder is None:
+            raise Q06ReadOnlyError("Q06_GUI_LOCKED")
+        from .managed_wallet_checkpoint import _owned
+        from .wallet_session import WalletCoreCli
+        from .wsp_live import public_regtest_mining_address
+        from .q05_checkpoint_scenario import fund_checkpoint_fixture
+        owner=self._core()
+        _owned(owner)
+        rpc=WalletCoreCli(owner.cli,owner.directory)
+        try:
+            rpc.attest()  # exact signed Core v0.1.11, chain and zero peers
+            if rpc.call("getblockcount") != 0:
+                raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_FRESH_CHAIN_ONLY")
+            address=public_regtest_mining_address(self.source)
+            txid, atoms, height = fund_checkpoint_fixture(
+                rpc, self._public["receive_code"], address, {})
+            _owned(owner)
+            if (type(txid) is not str or not re.fullmatch("[0-9a-f]{64}",txid)
+                    or type(atoms) is not int or atoms<=0
+                    or type(height) is not int or height<102
+                    or rpc.call("getblockcount")!=height):
+                raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_UNVERIFIED")
+            return {"status":"Q06_REGTEST_PUBLIC_BIP39_RECEIVE_FUNDED",
+                    "txid":txid,"atoms":atoms,"height":height,
+                    "signer_allowed":False,"broadcast_allowed":False,
+                    "mainnet_allowed":False}
+        except Q06ReadOnlyError:
+            raise
+        except Exception:
+            # Once a real Core write may have happened, never retry silently.
+            raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_UNCERTAIN") from None
+        finally:
+            if getattr(rpc,"_transport",None) is not None:rpc._transport.close()
+
     def _scan_q06(self):
         if self._seed_folder is None or self._secret is None:
             raise Q06ReadOnlyError("Q06_GUI_LOCKED")
@@ -192,6 +233,9 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         if action == "snapshot":
             if args or kwargs:raise Q06ReadOnlyError("Q06_GUI_SYNC_ARGUMENTS_DENIED")
             return self._scan_q06()
+        if action == "mine":
+            if args or kwargs:raise Q06ReadOnlyError("Q06_GUI_FUND_ARGUMENTS_DENIED")
+            return self._fund_q06()
         if action == "lock":
             if args or kwargs:raise Q06ReadOnlyError("Q06_GUI_LOCK_ARGUMENTS_DENIED")
             self._lock_q06();return None
