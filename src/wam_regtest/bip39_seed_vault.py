@@ -46,6 +46,16 @@ def _folder(folder):
     return match.group(1)
 
 
+def _exact_namespace(folder, expected):
+    """An orphan/stage/unrecognized sidecar must never be silently adopted."""
+    try:
+        names = {member.name for member in folder.iterdir()}
+    except (OSError, ValueError):
+        raise Bip39SeedCustodyError("Q06_SEED_NAMESPACE_DENIED") from None
+    if names != expected:
+        raise Bip39SeedCustodyError("Q06_SEED_NAMESPACE_DENIED")
+
+
 def _native(folder, source, keychain=None):
     """Never accept a synthetic anchor/storage through the public API."""
     _pinned_source(source)
@@ -108,6 +118,7 @@ def create_seed_container(parent, source, password, phrase, *,
             with anchor.lease():
                 if anchor.read() is not None:
                     raise Bip39SeedCustodyError("Q06_SEED_ANCHOR_EXISTS")
+                _exact_namespace(folder, set())
                 from wam_sp.keystore import seal
                 payload = {
                     "format": FORMAT, "wallet_id": ident,
@@ -143,6 +154,7 @@ def open_seed_container(folder, source, password, *, keychain=None, owner_bindin
         ident, storage, anchor = _native(folder, source, keychain)
         with anchor.lease():
             record = _record(anchor.read())
+            _exact_namespace(folder, {FILE})
             ciphertext = storage.read(folder, FILE)
             if sha256(ciphertext).hexdigest() != record[1]:
                 raise Bip39SeedCustodyError("Q06_SEED_DIGEST_DENIED")
