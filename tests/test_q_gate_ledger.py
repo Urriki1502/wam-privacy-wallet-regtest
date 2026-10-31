@@ -64,7 +64,8 @@ class SequentialQGateContracts(unittest.TestCase):
             ['Q04-INDEPENDENT','Q04-PHYSICAL-SOLO-MINER'])
         self.assertEqual(self.ledger['active_q'],'Q06')
         self.assertEqual(q04['processing'],'ENGINEERING_DONE')
-        self.assertEqual(self.ledger['questions'][4]['processing'],'ACTIVE')
+        self.assertEqual(self.ledger['questions'][4]['processing'],'ENGINEERING_DONE')
+        self.assertEqual(self.ledger['questions'][5]['processing'],'ACTIVE')
         self.assertEqual({k:q04['gates'][k]['status'] for k in ('G6','G7')},
             {'G6':'BLOCKED','G7':'BLOCKED'})
 
