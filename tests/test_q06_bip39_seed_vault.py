@@ -6,6 +6,7 @@ native anti-rollback anchors are injected only at the test boundary.
 from contextlib import contextmanager
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -14,6 +15,7 @@ from mnemonic import Mnemonic
 from wam_regtest.bip39_seed_vault import (
     Bip39SeedCustodyError, _folder, _password, _record,
     create_seed_container, open_seed_container,
+    create_owned_seed_container, open_owned_seed_container,
 )
 
 SOURCE = Path(importlib.util.find_spec("wam_sp").origin).resolve().parents[2]
@@ -151,6 +153,57 @@ class Q06SeedContainerContracts(unittest.TestCase):
         self.assertEqual(self.storage.ciphertexts, {})
         self.assertEqual(self.anchors, {})
         self.assertTrue(conflict.is_dir())
+
+    def test_owner_binding_rejects_ciphertext_adoption_into_other_core(self):
+        first = "a" * 64
+        another = "b" * 64
+        folder, expected = create_seed_container(
+            self.parent, SOURCE, PASSWORD, PUBLIC_12, authorized_disposable=True,
+            owner_binding=first,
+        )
+        with open_seed_container(folder, SOURCE, PASSWORD, owner_binding=first) as keys:
+            self.assertEqual(keys.public_metadata(), expected)
+        for wrong in (None, another):
+            with self.assertRaises(Bip39SeedCustodyError):
+                open_seed_container(folder, SOURCE, PASSWORD, owner_binding=wrong)
+        with self.assertRaises(Bip39SeedCustodyError):
+            create_seed_container(
+                self.parent, SOURCE, PASSWORD, PUBLIC_12,
+                authorized_disposable=True, owner_binding="malformed",
+            )
+
+    def test_owned_core_boundary_denies_unverified_owner_and_foreign_path(self):
+        fake_owner = SimpleNamespace(directory=self.parent, root=self.parent, profile={})
+        # Without the real Q05 CoreSupervisor/process/journal, direct use must
+        # fail before any new native file/anchor publication.
+        with self.assertRaises(ValueError):
+            create_owned_seed_container(
+                fake_owner, SOURCE, PASSWORD.encode(), PUBLIC_12, authorized=True,
+            )
+        self.assertFalse(self.storage.ciphertexts)
+        # Contract-injected allowed owner verifies that the authenticated
+        # Core-owner binder is sent into the actual encrypted profile record.
+        binding = "c" * 64
+        with (patch("wam_regtest.bip39_seed_vault._owned_password", return_value=PASSWORD),
+              patch("wam_regtest.bip39_seed_vault._owner_binding", return_value=binding),
+              patch("wam_regtest.managed_wallet_checkpoint._owned")):
+            folder, original = create_owned_seed_container(
+                fake_owner, SOURCE, PASSWORD.encode(), PUBLIC_12, authorized=True,
+            )
+            with open_owned_seed_container(
+                fake_owner, folder, SOURCE, PASSWORD.encode(), authorized=True,
+            ) as keys:
+                self.assertEqual(keys.public_metadata(), original)
+            with self.assertRaises(Bip39SeedCustodyError):
+                open_owned_seed_container(
+                    fake_owner, self.parent.parent / folder.name, SOURCE,
+                    PASSWORD.encode(), authorized=True,
+                )
+            with patch("wam_regtest.bip39_seed_vault._owner_binding", return_value="d"*64):
+                with self.assertRaises(Bip39SeedCustodyError):
+                    open_owned_seed_container(
+                        fake_owner, folder, SOURCE, PASSWORD.encode(), authorized=True,
+                    )
 
     def test_invalid_password_folder_anchor_and_24_word_are_denied(self):
         for bad in ("short", "", True, None, "\ud800"):
