@@ -73,6 +73,26 @@ def qualify(core,source):
                     or not window.isVisible()):
                 raise ValueError("Q06_OWNER_QT_BINDING_DENIED")
             data["Q06_native_Qt_receive_bound"]=True
+            # One genuine signed-Core fixture payment addressed to the keys
+            # derived from THIS 12-word BIP39 profile. This must never be
+            # confused with Q05's previously green funded-wallet proof.
+            funded=first.request("mine",timeout=240)
+            funded_view=first.request("snapshot",timeout=240)
+            if (funded["status"]!="Q06_REGTEST_PUBLIC_BIP39_RECEIVE_FUNDED"
+                    or funded_view["confirmed_atoms"]!=funded["atoms"]
+                    or funded_view["available_atoms"]!=funded["atoms"]
+                    or funded_view["history_count_shown"]<1
+                    or funded_view["height"]!=funded["height"]
+                    or funded_view["signer_allowed"] is not False
+                    or funded_view["broadcast_allowed"] is not False):
+                raise ValueError("Q06_OWNER_ACTUAL_BIP39_FUNDED_RECEIVE_DENIED")
+            window._on_ready("snapshot",funded_view)
+            app.processEvents()
+            if str(funded["atoms"]) not in window.balance.text().replace(",",""):
+                raise ValueError("Q06_OWNER_FUNDED_QT_BALANCE_DENIED")
+            data["Q06_actual_onchain_BIP39_received_atoms"]=funded["atoms"]
+            data["Q06_actual_Core_confirmed_BIP39_txid_sha256"]=sha256(funded["txid"].encode()).hexdigest()
+            data["Q06_native_Qt_funded_balance_bound"]=True
             # Never touch a Q05 reference or create a signing grant.
             first.request("lock")
             reopened=first.request("open",password,"reopen","")
