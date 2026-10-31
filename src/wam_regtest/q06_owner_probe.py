@@ -45,9 +45,12 @@ def qualify(core,source):
         def new_executor():
             root=parent/("wam-fusion-core-"+secrets.token_hex(8))
             custody.create_directory(root)
-            keychain=adapter.make_anchor(root)
+            # Do NOT create the disposable Keychain before CoreSupervisor:
+            # a fresh owner requires an empty namespace other than its lock.
+            # Backend opens the original owner first, then creates this anchor.
             return WalletExecutor(
-                lambda:Bip39ReadOnlyBackend(root,core,source,keychain=keychain))
+                lambda:Bip39ReadOnlyBackend(
+                    root,core,source,_anchor_factory=adapter.make_anchor))
         first=new_executor()
         second=None
         window=None
