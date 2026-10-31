@@ -1,0 +1,47 @@
+{
+  "schema": "q06-bip39-12-public-vectors/v1",
+  "source": "trezor/python-mnemonic@d4b106cdec196202d44628026fcb8fedc8ea50c1/vectors.json",
+  "public_test_vectors_only": true,
+  "vectors": [
+    {
+      "entropy": "00000000000000000000000000000000",
+      "seed": "c55257c360c07c72029aebc1b53c05ed0362ada38ead3e3e9efa3708e53495531f09a6987599d18264c1e1c92f2cf141630c7a3c4ab7c81b2f001698e7463b04",
+      "receive_code": "wamrtsp1qqdl78wd59txtfaxsmrxlkw70fte5qa37aec2awetfm8wr2845t9r5qeyuxx2ahssmga53wjtektr3tf2d0xavq8ar0nahp27gq65wuu76cufnuq6"
+    },
+    {
+      "entropy": "7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f",
+      "seed": "2e8905819b8723fe2c1d161860e5ee1830318dbf49a83bd451cfb8440c28bd6fa457fe1296106559a3c80937a1c1069be3a3a5bd381ee6260e8d9739fce1f607",
+      "receive_code": "wamrtsp1qqgs3fxygsp0wwlke9f3zn0k4886ufv0tx8x6y2fdx4rnyg9zq6kyqqa733t0fpm8v6xtxe29hnr57t9w8y03gdthqpkerj0kux0d6gp3fswezf7u"
+    },
+    {
+      "entropy": "80808080808080808080808080808080",
+      "seed": "d71de856f81a8acc65e6fc851a38d4d7ec216fd0796d0a6827a3ad6ed5511a30fa280f12eb2e47ed2ac03b5c462a0358d18d69fe4f985ec81778c1b370b652a8",
+      "receive_code": "wamrtsp1qqvj069qnckq52734ylweqak9dnpeznxnv98wyhvzyk69fq7yaltgsqkrlvkkj9y2ht8vvnknu5jh5uyx6f7nepgmht8kj7pamup9wdehhcd3hlm4"
+    },
+    {
+      "entropy": "ffffffffffffffffffffffffffffffff",
+      "seed": "ac27495480225222079d7be181583751e86f571027b0497b5b5d11218e0a8a13332572917f0f8e5a589620c6f15b11c61dee327651a14c34e18231052e48c069",
+      "receive_code": "wamrtsp1qqf0smc6lfmas4l6mdfgpua0nf2mrnq6rt2yy7t8q3vh4hs2mpgchuq5ehxa9medh6h0ghg8rhv2yhcetwmmm3due3qrygm2s28r8ccz56g8dc2tq"
+    },
+    {
+      "entropy": "9e885d952ad362caeb4efe34a8e91bd2",
+      "seed": "274ddc525802f7c828d8ef7ddbcdc5304e87ac3535913611fbbfa986d0c9e5476c91689f9c8a54fd55bd38606aa6a8595ad213d4c9c9f9aca3fb217069a41028",
+      "receive_code": "wamrtsp1qqfgljwj0q4rj4e4fxpgshhywwlxrrj8lwuld0cdrx5v53x3jcsdszq3w4xtpvrw0yyetg453uwm52cgulewnjavnw54hrdqk86j7tg35hq2vlurj"
+    },
+    {
+      "entropy": "c0ba5a8e914111210f2bd131f3d5e08d",
+      "seed": "ea725895aaae8d4c1cf682c1bfd2d358d52ed9f0f0591131b559e2724bb234fca05aa9c02c57407e04ee9dc3b454aa63fbff483a8b11de949624b9f1831a9612",
+      "receive_code": "wamrtsp1qqfxtsuexqkts5f8ezxw9zm2p5uppdknp8rmmmf4wdzuayuw2naunsqmru6q08kxpmwnq7rqd0ha38jt37kuyds0gj7x2kypa977rx9vwystkghun"
+    },
+    {
+      "entropy": "23db8160a31d3e0dca3688ed941adbf3",
+      "seed": "deb5f45449e615feff5640f2e49f933ff51895de3b4381832b3139941c57b59205a42480c52175b6efcffaa58a2503887c1e8b363a707256bdd2b587b46541f5",
+      "receive_code": "wamrtsp1qq0wqm57cd943zqgu5dtk6zsfey9cymlxjas657h2kt4jn4t0hrvawqas4dntgr88sk54qvtzc38qqnkz394ku809x33duqzu36cjmc04my9j8x4z"
+    },
+    {
+      "entropy": "f30f8c1da665478f49b001d94c5fc452",
+      "seed": "2aaa9242daafcee6aa9d7269f17d4efe271e1b9a529178d7dc139cd18747090bf9d60295d0ce74309a78852a9caadf0af48aae1c6253839624076224374bc63f",
+      "receive_code": "wamrtsp1qq27vd79c0nc0whe7djhp2u7yjayvesf77qfxqwf78fsphv0am3f4qqegvkal4wn37fzuekayjgqvwqx7n0t8c3jcs8d0mlzn3rgc3rjhrc0ty472"
+    }
+  ]
+}
