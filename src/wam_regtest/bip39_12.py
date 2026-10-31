@@ -82,14 +82,36 @@ class Bip39Regtest12Keys:
             raise Bip39TwelveError("BIP39_12_KEYS_CLOSED")
         if type(account) is not int or not 0 <= account < 16:
             raise Bip39TwelveError("BIP39_12_ACCOUNT_DENIED")
+        if role not in ("scan", "spend"):
+            raise Bip39TwelveError("BIP39_12_ROLE_DENIED")
         from wam_sp.hd import silent_key
         return silent_key(bytes(self._seed), account, role, coin_type=1)
 
     def scan_account(self, account=0, *, birthday=1):
+        if type(birthday) is not int or not 1 <= birthday < 2**31:
+            raise Bip39TwelveError("BIP39_12_BIRTHDAY_DENIED")
         from wam_sp.keystore import ScanAccount
         from wam_sp.core import pub
         return ScanAccount(account, self._key(account, "scan"),
                            pub(self._key(account, "spend")), birthday)
+
+    def accounts(self):
+        """Pinned WSP scanner/signer read interface, account zero only.
+
+        No epoch rotation, labels, backup, or persistence until separate
+        native anchored wallet profile qualification. No implicit key export.
+        """
+        return (self.scan_account(0),)
+
+    def spend_secret(self, epoch):
+        """Pinned WSP Signer compatibility for the single BIP39 account.
+
+        This does not authorize a transaction: the Signer still enforces an
+        independently approved proposal/PSBT and fee. Runtime is not wired.
+        """
+        if type(epoch) is not int or epoch != 0:
+            raise Bip39TwelveError("BIP39_12_EPOCH_DENIED")
+        return self._key(0, "spend")
 
     def public_metadata(self, account=0):
         a = self.scan_account(account)
