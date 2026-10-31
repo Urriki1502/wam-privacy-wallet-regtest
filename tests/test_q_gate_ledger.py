@@ -92,25 +92,29 @@ class SequentialQGateContracts(unittest.TestCase):
             elif change=='gate-fail':q['gates']['G3']['status']='FAIL'
             with self.subTest(change=change),self.assertRaises(ValueError):validate(data)
 
-    def test_q05_scope_preserves_fail_history_without_promoting_local_success(self):
+    def test_q05_qualified_case_receipts_preserve_failure_history_and_external_blockers(self):
         q05=self.ledger['questions'][4]
         self.assertEqual(q05['processing'],'ACTIVE')
-        self.assertTrue(q05['coverage_identified'])
+        self.assertEqual(q05['candidate_pr'],138)
         self.assertEqual(q05['coverage_total'],37)
         self.assertEqual(len(q05['cases']),37)
-        self.assertEqual(sum(c['status']=='PENDING' for c in q05['cases']),37)
+        self.assertEqual(sum(c['status']=='PASS' for c in q05['cases']),32)
+        self.assertEqual(sum(c['status']=='BLOCKED' for c in q05['cases']),4)
+        self.assertEqual(sum(c['status']=='PENDING' for c in q05['cases']),1)
         self.assertEqual(q05['status'],'PENDING')
+        self.assertFalse(q05['accepted'])
+        self.assertIsNone(q05['owner_merge_authorization'])
         failed=next(c for c in q05['cases'] if c['id']=='Q05-MANAGED-START-MACOS')
         self.assertEqual(failed['failure_history'][0]['source_sha'],
             'a89848b22cae85d766310687fe968157f35657e8')
         self.assertEqual(failed['local_requalification']['status'],'PASS')
-        self.assertFalse(failed['acceptance_evidence'])
-        self.assertTrue(failed['blocker']['next_action'])
-        self.assertFalse(q05['accepted'])
-        self.assertEqual({c['platform'] for c in q05['cases']},
-            {'shared','macos-arm64','windows-x64','linux-x86_64'})
-        self.assertTrue(all(c['mandatory'] and not c['acceptance_evidence']
-            for c in q05['cases']))
+        self.assertTrue(failed['acceptance_evidence'])
+        self.assertTrue(all(c['mandatory'] and c['acceptance_evidence']
+            for c in q05['cases'] if c['status']=='PASS'))
+        self.assertTrue(all(c['layer'] in ('PHYSICAL','DEV_REVIEWED')
+            for c in q05['cases'] if c['status']=='BLOCKED'))
+        self.assertEqual(next(c['status'] for c in q05['cases'] if
+            c['id']=='Q05-MERGE-AUTH'),'PENDING')
         self.assertTrue(any('125%' in str(e) for e in q05['historical_evidence']))
         self.assertFalse(self.ledger['production_qualified'])
 
