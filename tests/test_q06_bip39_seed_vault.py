@@ -36,6 +36,7 @@ class FakeStorage:
         if k in self.ciphertexts:
             raise ValueError("FAKE_CREATE_ONLY_DENIED")
         self.ciphertexts[k] = ciphertext
+        (folder / name).write_bytes(ciphertext)  # fake publication namespace only
 
     def read(self, folder, name):
         return self.ciphertexts[(str(folder), name)]
@@ -142,6 +143,15 @@ class Q06SeedContainerContracts(unittest.TestCase):
                 self.create(fresh)
         self.assertIsNone(previous.read())
         self.assertEqual(len([x for x in self.storage.ciphertexts if x[0].startswith(str(fresh))]), 1)
+
+    def test_unexpected_residue_refuses_reopen_and_preserves_evidence(self):
+        folder, _ = self.create()
+        unexpected = folder / "unknown-sidecar.enc"
+        unexpected.write_bytes(b"untrusted source-only sidecar")
+        with self.assertRaisesRegex(Bip39SeedCustodyError, "Q06_SEED_REOPEN_DENIED"):
+            open_seed_container(folder, SOURCE, PASSWORD)
+        self.assertTrue(unexpected.exists())
+        self.assertIsNotNone(self.anchors[_folder(folder)].read())
 
     def test_existing_q05_profile_and_bad_consent_fail_before_publication(self):
         with self.assertRaises(Bip39SeedCustodyError):
