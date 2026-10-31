@@ -27,6 +27,38 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         self.backend=Bip39ReadOnlyBackend(self.root,Path("/synthetic-core"),SOURCE)
         self.backend._core=lambda:self.owner
 
+    def test_disposable_native_anchor_created_only_after_core_supervisor(self):
+        # Regression for the macOS frozen failure: the old Q06 runner
+        # precreated a .keychain-db under a fresh CoreSupervisor root, whose
+        # empty-namespace protection correctly rejected the new profile.
+        order=[]
+        anchor=self.root/"q06-disposable.keychain-db"
+        def init_owner():
+            order.append("core_supervisor")
+            return self.owner
+        def create_anchor(root):
+            self.assertEqual(root,self.root)
+            order.append("native_keychain")
+            return anchor
+        self.backend=Bip39ReadOnlyBackend(
+            self.root,Path("/synthetic-core"),SOURCE,
+            _anchor_factory=create_anchor)
+        self.backend._core=init_owner
+        def create_seed(owner,source,password,phrase,*,authorized,keychain):
+            self.assertTrue(authorized)
+            self.assertEqual(keychain,anchor)
+            order.append("sealed_seed")
+            return (self.root/("bip39-12-"+("a"*32)),
+                    {"profile":"q06","account_id":"test-account",
+                     "receive_code":"wamrtsp1public"})
+        with patch("wam_regtest.bip39_seed_vault.create_owned_seed_container",
+                   side_effect=create_seed):
+            result=self.backend.execute("open",(PASSWORD,"restore",PHRASE),{})
+        self.assertEqual(order,["core_supervisor","native_keychain","sealed_seed"])
+        self.assertEqual(result["status"],"Q06_REGTEST_READ_ONLY_OWNER_OPENED")
+        self.assertTrue(self.backend._anchor_ready)
+        self.backend.execute("lock",(),{})
+
     def test_gui_create_receipt_shows_exact_twelve_words_only_once(self):
         with (patch("wam_regtest.bip39_12.generate_phrase",return_value=PHRASE),
               patch("wam_regtest.bip39_seed_vault.create_owned_seed_container",
