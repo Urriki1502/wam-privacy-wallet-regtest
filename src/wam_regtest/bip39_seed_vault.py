@@ -70,7 +70,7 @@ def _record(value):
 
 
 def create_seed_container(parent, source, password, phrase, *,
-                          authorized_disposable=False, keychain=None):
+                          authorized_disposable=False, keychain=None, owner_binding=None):
     """Fresh create-only native container; preserves orphan on a failed CAS.
 
     Returns (folder, PUBLIC metadata). The mnemonic is never emitted in a
@@ -88,6 +88,10 @@ def create_seed_container(parent, source, password, phrase, *,
     if any((parent / name).exists() or (parent / name).is_symlink()
            for name in ("wallet-vault", "supervisor.wallet")):
         raise Bip39SeedCustodyError("Q06_SEED_Q05_PROFILE_CONFLICT")
+    if owner_binding is not None and (
+            type(owner_binding) is not str
+            or re.fullmatch(r"[0-9a-f]{64}", owner_binding) is None):
+        raise Bip39SeedCustodyError("Q06_SEED_OWNER_BINDING_DENIED")
     canonical = normalize_phrase(phrase)
     with Bip39Regtest12Keys(canonical, source=source, authorized_disposable=True) as keys:
         public = keys.public_metadata()
@@ -109,7 +113,8 @@ def create_seed_container(parent, source, password, phrase, *,
                     "format": FORMAT, "wallet_id": ident,
                     "generation": 1, "profile": PROFILE,
                     "chain": "regtest", "genesis": REGTEST_GENESIS,
-                    "phrase": canonical, "account_id": public["account_id"],
+                    "phrase": canonical, "owner_binding": owner_binding,
+                    "account_id": public["account_id"],
                     "receive_code": public["receive_code"],
                 }
                 raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
@@ -126,7 +131,7 @@ def create_seed_container(parent, source, password, phrase, *,
             raise Bip39SeedCustodyError("Q06_SEED_CREATE_DENIED") from None
 
 
-def open_seed_container(folder, source, password, *, keychain=None):
+def open_seed_container(folder, source, password, *, keychain=None, owner_binding=None):
     """Reopen only if independent native generation/digest and GCM match.
 
     Never reset a missing anchor, create a directory, write, recover an orphan
@@ -145,12 +150,13 @@ def open_seed_container(folder, source, password, *, keychain=None):
             payload = json.loads(unseal(ciphertext, secret, b"recovery"))
             if (type(payload) is not dict or set(payload) != {
                     "format", "wallet_id", "generation", "profile", "chain",
-                    "genesis", "phrase", "account_id", "receive_code"}
+                    "genesis", "phrase", "owner_binding", "account_id", "receive_code"}
                     or payload["format"] != FORMAT
                     or payload["wallet_id"] != ident
                     or type(payload["generation"]) is not int or payload["generation"] != 1
                     or payload["profile"] != PROFILE or payload["chain"] != "regtest"
                     or payload["genesis"] != REGTEST_GENESIS
+                    or payload["owner_binding"] != owner_binding
                     or type(payload["account_id"]) is not str
                     or type(payload["receive_code"]) is not str):
                 raise Bip39SeedCustodyError("Q06_SEED_PROFILE_DENIED")
@@ -169,6 +175,25 @@ def open_seed_container(folder, source, password, *, keychain=None):
                 raise
     except Exception:
         raise Bip39SeedCustodyError("Q06_SEED_REOPEN_DENIED") from None
+
+
+def _owner_binding(owner):
+    """Domain-separated HMAC of Q05's owned Core profile and private token.
+
+    Binding is not an encryption key. It prevents adopting an encrypted
+    BIP39 container into another original managed Core, even if the file and
+    same platform anchor are copied. Fresh mnemonic restore creates NEW
+    custody/owner binding, preserving the same BIP352 derivation only.
+    """
+    import hmac
+    from .managed_wallet_checkpoint import _canonical
+    from .supervisor_store import read_exact
+    from hashlib import sha256 as digest
+    token = read_exact(owner.root, "supervisor.token", length=32)
+    return hmac.digest(
+        token, b"wam-q06-bip39-12-owner/v1\\n" + digest(_canonical(owner.profile)).digest(),
+        "sha256",
+    ).hex()
 
 
 def _owned_password(owner, source, password, authorized):
@@ -194,6 +219,7 @@ def create_owned_seed_container(owner, source, password, phrase, *,
     folder, public = create_seed_container(
         owner.directory, source, decoded, phrase,
         authorized_disposable=True, keychain=keychain,
+        owner_binding=_owner_binding(owner),
     )
     from .managed_wallet_checkpoint import _owned
     # A concurrent Core change faults this operation but never removes an
@@ -214,7 +240,8 @@ def open_owned_seed_container(owner, folder, source, password, *,
     if any((owner.directory / name).exists() or (owner.directory / name).is_symlink()
            for name in ("wallet-vault", "supervisor.wallet")):
         raise Bip39SeedCustodyError("Q06_SEED_Q05_PROFILE_CONFLICT")
-    keys = open_seed_container(folder, source, decoded, keychain=keychain)
+    keys = open_seed_container(folder, source, decoded, keychain=keychain,
+                               owner_binding=_owner_binding(owner))
     try:
         from .managed_wallet_checkpoint import _owned
         _owned(owner)
