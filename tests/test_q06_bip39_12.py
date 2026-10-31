@@ -7,12 +7,13 @@ import unittest
 from hashlib import sha256
 from mnemonic import Mnemonic
 from mnemonic.mnemonic import b58encode
-from wam_sp.hd import ExtendedPrivate, HARDENED, silent_key
-from wam_sp.wallet import Signer
-
+# The application installs the immutable WSP import guard before any wam_sp
+# import. Preserve this native provenance boundary in standalone test runs.
 from wam_regtest.bip39_12 import (
     Bip39Regtest12Keys, Bip39TwelveError, generate_phrase, normalize_phrase, PROFILE,
 )
+from wam_sp.hd import ExtendedPrivate, HARDENED, silent_key
+from wam_sp.wallet import Signer
 
 WSP_ROOT = Path(importlib.util.find_spec("wam_sp").origin).resolve().parents[2]
 VECTORS = json.loads(
