@@ -1,3 +1,7 @@
+> **ARCHIVED INTERNAL SECURITY REVIEW — original evidence retained, current status updated 31 October 2026.** This dated document preserves historical diagnostic findings, original FAIL receipts and their contemporaneous assumptions. It is **not** the current Q05 acceptance ledger, not a live STOP instruction, and not a basis to re-run completed smoke tests. Current Q05: **32 technical PASS / 4 external BLOCKED / 1 owner PENDING**, G0–G5 PASS, G6–G7 BLOCKED, `accepted=false`; qualified runtime source `4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5`, PR #138 DRAFT. See [current checkpoint](Q05_STAGE_A_CHECKPOINT.md) and `tests/acceptance/issue45.json`. Any 0/37 PENDING or unfinished-CI wording below refers only to the original dated test observation.
+
+---
+
 # Q05 internal security checkpoint — 28 October 2026
 
 Scope: runtime source `7c03988f9ee382dbde47474cccc4fb7ded6ad8ac` in Draft
@@ -181,7 +185,7 @@ Local genuine signed Core/WSP/native vault tests at d8d58cb and combined cf74d67
 show anchored uncertain locks preserved and exactly one submission, no replay.
 These controlled exceptions are not power-loss or general malicious-orphan proof.
 
-Cursor 9eea948 history fingerprint alone was selectively adapted into checkpoint
+Supplemental source 9eea948 history fingerprint alone was selectively adapted into checkpoint
 observation. History, balances and reservation hashes share one SQLite snapshot;
 full declared counts, strict ordering/confirmations and offset ceiling fail closed.
 Its owned session/GUI/CI remains deferred for recovery-reference selection, native

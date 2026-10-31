@@ -1,3 +1,7 @@
+> **ARCHIVED LOCAL FUNDING DIAGNOSTIC — original evidence retained, current status updated 31 October 2026.** This dated document preserves historical diagnostic findings, original FAIL receipts and their contemporaneous assumptions. It is **not** the current Q05 acceptance ledger, not a live STOP instruction, and not a basis to re-run completed smoke tests. Current Q05: **32 technical PASS / 4 external BLOCKED / 1 owner PENDING**, G0–G5 PASS, G6–G7 BLOCKED, `accepted=false`; qualified runtime source `4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5`, PR #138 DRAFT. See [current checkpoint](Q05_STAGE_A_CHECKPOINT.md) and `tests/acceptance/issue45.json`. Any 0/37 PENDING or unfinished-CI wording below refers only to the original dated test observation.
+
+---
+
 # Q05 local funding diagnosis — 29 October 2026
 
 This is a local diagnostic report, not an acceptance ledger or a native receipt.
@@ -9,7 +13,7 @@ Local interpreter `.venv/bin/python`: CPython 3.12.15. Pinned WSP checkout
 `wsp-upstream` is clean at `ac55f13423620252bdbf848c7e8a280c3b84721e`.
 The declared final macOS frozen baseline remains CPython 3.12.10.
 
-Preflight found a clean tracked/untracked tree, no Antigravity plan file.
+Preflight found a clean tracked/untracked tree, no unrelated plan file.
 The official engineering lease was already exclusively held. Read-only `lsof`
 identified same-user Python PID 11811, this repository as cwd, Terminal
 `/dev/ttys001`, and fd 3 on `.git/wam-engineering.lock`. A nonblocking flock
