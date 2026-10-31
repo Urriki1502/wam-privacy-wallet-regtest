@@ -66,6 +66,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_q03*.py' -v
           python -m unittest discover -s tests -p 'test_q04*.py' -v
           python -m unittest discover -s tests -p 'test_q_gate_ledger.py' -v
+          python -m unittest discover -s tests -p 'test_q06_bip39*.py' -v
           python -m unittest discover -s tests -p 'test_linux*.py' -v
           python - <<'PY'
           import os,subprocess

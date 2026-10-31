@@ -69,7 +69,8 @@ def main() -> int:
         cocoa_mode = sys.argv[1:] == ["--ci-real-core-wallet-cocoa"]
         q05_mode = sys.argv[1:2] == ["--ci-q05-managed-wallet"]
         q04_mode = sys.argv[1:] == ["--ci-q04-external-miner"]
-        ci_mode = sys.argv[1:] == ["--ci-real-core-gui"] or cocoa_mode or q04_mode or q05_mode
+        q06_mode = sys.argv[1:] == ["--ci-q06-bip39-readonly"]
+        ci_mode = sys.argv[1:] == ["--ci-real-core-gui"] or cocoa_mode or q04_mode or q05_mode or q06_mode
         if cocoa_mode and os.environ.get("QT_QPA_PLATFORM") != "cocoa":
             raise BundleLaunchError("WAM_BUNDLE_COCOA_PLATFORM_REQUIRED")
         self_test = sys.argv[1:] == ["--check-bundle"]
@@ -81,6 +82,9 @@ def main() -> int:
         if q05_mode:
             from wam_regtest.q05_packaged import run
             return run(core_dir,source,sys.argv[2:])
+        if q06_mode:
+            from wam_regtest.q06_owner_probe import run
+            return run(core_dir,source)
         if not sys.argv[1:]:
             from wam_regtest.managed_onboarding import launch
             return launch(core_dir,source)

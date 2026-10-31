@@ -34,12 +34,26 @@ def launch(core,source):
             'use Stop managed Core and quit to exit.',
             QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)!=QMessageBox.StandardButton.Yes:return 0
-    action,ok=QInputDialog.getItem(None,'Managed REGTEST profile','Wallet profile',
-        ['Open existing wallet','Create new isolated wallet'],0,False)
+    entries=(
+        'Open existing managed wallet (Q05)',
+        'Create new managed wallet (Q05)',
+        'Create NEW BIP39 12-word wallet (Q06 · read-only)',
+        'Restore BIP39 12 words in NEW isolated profile (Q06 · read-only)',
+        'Open existing BIP39 12-word profile (Q06 · read-only)',
+    )
+    action,ok=QInputDialog.getItem(None,'Managed REGTEST profile',
+        'Choose the wallet engine (Q06 is read-only)',list(entries),0,False)
     if not ok:return 0
-    create=action=='Create new isolated wallet'
+    q06=action in entries[2:]
+    create=action in (entries[1], entries[2], entries[3])
     selected=QFileDialog.getExistingDirectory(None,
-        'Select parent folder for a NEW profile' if create else 'Select existing managed profile')
+        'Select an empty parent folder for a NEW isolated REGTEST profile'
+        if create else 'Select the exact existing managed REGTEST profile')
     if not selected:return 0
     root=selected_profile(Path(selected).absolute(),create)
+    if q06:
+        # Q06 does not use Q05 Keyring, GUI signing or backup format.
+        from .bip39_owner_gui import launch_bip39_trial
+        mode='create' if action==entries[2] else 'restore' if action==entries[3] else 'reopen'
+        return launch_bip39_trial(root,core,source,mode=mode,authorized=True)
     return launch_managed(root,core,source,authorized=True,create=create)
