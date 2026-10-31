@@ -23,7 +23,7 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         self.tmp=tempfile.TemporaryDirectory(prefix="q06-owner-unit-")
         self.addCleanup(self.tmp.cleanup)
         self.root=Path(self.tmp.name)
-        self.owner=SimpleNamespace(directory=self.root)
+        self.owner=SimpleNamespace(directory=self.root,root=self.root)
         self.backend=Bip39ReadOnlyBackend(self.root,Path("/synthetic-core"),SOURCE)
         self.backend._core=lambda:self.owner
 
@@ -50,7 +50,7 @@ class Q06OwnerBackendContracts(unittest.TestCase):
 
     def test_import_existing_mnemonic_requires_explicit_new_profile(self):
         with patch("wam_regtest.bip39_seed_vault.create_owned_seed_container",
-                   return_value=(self.root/"bip39-12-"+("f"*32),{
+                   return_value=(self.root/("bip39-12-"+("f"*32)),{
                        "profile":"q06","account_id":"new-profile-account",
                        "receive_code":"wamrtsp1newprofile"})) as create:
             result=self.backend.execute("open",(PASSWORD,"restore",PHRASE),{})
