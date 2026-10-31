@@ -37,7 +37,7 @@ class Q06Bip39TwelveSourceContracts(unittest.TestCase):
                 # Preserve PR #43's public BIP32 root-xprv and role-path proof.
                 # Never print xprv/seed on assertion failure.
                 root = ExtendedPrivate.master(bytes(original._seed))
-                payload = bytes.fromhex("0488ade4") + bytes(9) + root.chain_code + b"\\x00" + root.secret
+                payload = bytes.fromhex("0488ade4") + bytes(9) + root.chain_code + bytes(1) + root.secret
                 checksum = sha256(sha256(payload).digest()).digest()[:4]
                 self.assertTrue(b58encode(payload + checksum) == vector["xprv"], f"XPRV_VECTOR_{i}")
                 expected_scan = root.derive(
