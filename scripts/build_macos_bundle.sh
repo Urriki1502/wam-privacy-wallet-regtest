@@ -147,13 +147,16 @@ print("MACOS_APP_STAGE=FROZEN_Q04_EXTERNAL_MINER_PASS", flush=True)
 print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_START", flush=True)
 with tempfile.TemporaryDirectory(prefix='wam-q06-mac-frozen-') as clean:
     subprocess.run([str(Path(binary).resolve()), '--ci-q06-bip39-readonly'],
-                   cwd=clean, env=cocoa, timeout=240, check=True)
+                   cwd=clean, env=cocoa, timeout=420, check=True)
     report = Path(clean)/'q06-frozen-readonly-evidence.json'
     from json import loads
     data = loads(report.read_text())
     assert (data['status']=='Q06_NATIVE_BIP39_12_READONLY_OWNER_GUI_PASS'
             and data['Q06_BIP39_disposable_fresh_restore_same_receive'] is True
             and data['Q06_native_Qt_receive_bound'] is True
+            and data['Q06_native_Qt_funded_balance_bound'] is True
+            and type(data['Q06_actual_onchain_BIP39_received_atoms']) is int
+            and data['Q06_actual_onchain_BIP39_received_atoms'] > 0
             and data['Q06_original_core_clean_shutdown'] is True
             and data['Q06_Sign_or_Broadcast_executed'] is False)
     shutil.copyfile(report, 'package-output/q06-frozen-readonly-evidence.json')
