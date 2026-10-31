@@ -48,21 +48,25 @@ class Bip39TrialWindow(QWidget):
         box.addWidget(self.history)
         bar=QHBoxLayout()
         self.sync=QPushButton("Sync real Core (read-only)")
+        self.fund=QPushButton("Fund 1 test receive on fresh REGTEST")
         self.lock=QPushButton("Lock Q06")
         self.quit=QPushButton("Stop owned Core and quit")
-        bar.addWidget(self.sync);bar.addWidget(self.lock);bar.addWidget(self.quit)
+        bar.addWidget(self.sync);bar.addWidget(self.fund);bar.addWidget(self.lock);bar.addWidget(self.quit)
         box.addLayout(bar)
         self.sync.clicked.connect(lambda:self._command("snapshot"))
+        self.fund.clicked.connect(self._confirm_funding)
         self.lock.clicked.connect(lambda:self._command("lock"))
         self.quit.clicked.connect(self.request_quit)
         self._poll=QTimer(self);self._poll.timeout.connect(self._check_quit)
         self._poll.setInterval(100);self._poll.start()
         self._ready=False
+        self._test_funded=False
         self._set_actions()
 
     def _set_actions(self):
         busy=self._worker is not None or self.executor.busy
         self.sync.setEnabled(self._ready and not busy and not self._quit_requested)
+        self.fund.setEnabled(self._ready and not self._test_funded and not busy and not self._quit_requested)
         self.lock.setEnabled(self._ready and not busy and not self._quit_requested)
         self.quit.setEnabled(not busy and not self.executor.closed)
 
@@ -82,6 +86,23 @@ class Bip39TrialWindow(QWidget):
     def start(self, password, mode, phrase):
         self.status.setText("Verifying original Core, native custody and BIP39 profile…")
         self._command("open", password, mode, phrase)
+
+    def _confirm_funding(self):
+        if not self._ready or self._worker is not None or self.executor.busy:
+            return
+        answer=QMessageBox.question(
+            self, "One-time disposable WAM REGTEST receive",
+            "This runs the existing Q05 PUBLIC fixture on your NEW isolated "
+            "WAM REGTEST Core: generate 101 local blocks, send a public test "
+            "BIP352 payment to YOUR Q06 12-word address, then confirm it.\\n"
+            "This is irreversible on the test chain. Never use mainnet or "
+            "personal keys. Run only once on a fresh height-0 Core?",
+            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer==QMessageBox.StandardButton.Yes:
+            self.status.setText("Funding test-only receive on owned Core; do not retry if uncertain…")
+            self._command("mine")
 
     def _show_words_once(self, phrase):
         dlg=QDialog(self)
@@ -115,12 +136,16 @@ class Bip39TrialWindow(QWidget):
             self.tip.setText("Chain: not yet verified")
             self.status.setText("BIP39 12-word encrypted native seed opened — read-only")
             if result.get("mnemonic_once"):self._show_words_once(result["mnemonic_once"])
+        elif action=="mine":
+            self._test_funded=True
+            self.status.setText("Public REGTEST receive confirmed at block {} — click Sync real Core".format(result["height"]))
         elif action=="snapshot":
             self.receive.setText(result["receive_code"])
             self.balance.setText("Confirmed: {:,} atoms · available: {:,} atoms".format(
                 result["confirmed_atoms"],result["available_atoms"]))
             self.tip.setText("Owned REGTEST Core: height {} · tip {}".format(
                 result["height"],result["tip"]))
+            self._test_funded = result["height"] > 0
             rows=result["history"]
             self.history.setPlainText(
                 "\n".join("{}  height={}  atoms={}".format(
