@@ -1,0 +1,81 @@
+{
+  "schema": "q05-executor-gui-native/v1",
+  "status": "PASS",
+  "source_provenance": {
+    "candidate_source_sha": "758b5deefe0f0e1df23c22dc80c56b6c155b7002",
+    "checkout_sha": "758b5deefe0f0e1df23c22dc80c56b6c155b7002",
+    "build_source_inventory_sha256": "fabfba0e98afc5ec0d603befc47ffc896e016ec59db7e2791c5465f65568953c",
+    "bundled_source_stamp_sha256": "9fdb72108d3aa43e5c8977cd22f1c84894150a34dd90110699dd15ae846f6ef1",
+    "frozen_executable_sha256": "a2fedc7f63996145addb3f999c3c6d3d9ebe06924e1d835c2e4f5e46ddacab4e",
+    "outer_artifact_manifest_required": true,
+    "same_uid_host_tamper_proof": false
+  },
+  "source_sha": "758b5deefe0f0e1df23c22dc80c56b6c155b7002",
+  "checkout_sha": "758b5deefe0f0e1df23c22dc80c56b6c155b7002",
+  "platform": "macos-arm64",
+  "core_version": "v0.1.11",
+  "core_trust": "official-signed-v0.1.11",
+  "official_signed_release": true,
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "synthetic_rpc": false,
+  "frozen": true,
+  "physical_acceptance": false,
+  "mainnet_allowed": false,
+  "test_root_witness": false,
+  "profile_root": "/private/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/wam-q05-final-gui-xo8k6c1f/wam-fusion-core-d7fb1da116cfb94d",
+  "observations": [
+    {
+      "normal_managed_create": true,
+      "height": 0,
+      "original_core_pid": 69878,
+      "wallet_execution_thread": 6190411776
+    },
+    {
+      "real_bip352_received": true,
+      "fixture_txid": "7ed39d349be6bb0059751dc73443cf3e9ad758caad29e6557bfd1edff7bcdfbe",
+      "history_sha256": "ffd1563327dd0b65aef37c48c5da39e00d435d26a2afc910574f97aef32b0e6c"
+    },
+    {
+      "close_during_approved_broadcast_deferred": true,
+      "qt_timer_alive_during_operation": true
+    },
+    {
+      "real_gui_prepare_sign_broadcast_confirm": true,
+      "txid": "73d44678398264972b009737a270a98cdf29414f00d079b820333d2bbc83b629",
+      "history_sha256": "7b53686da36d77a2c0509acb417881aff3abceccd80fd56054385a6f2aeae3fd",
+      "reservation_sha256": "8dd0fd39c9ccfb36ba315d3045949b5eb67cc2ec18966d48b9c2c2901fb386aa",
+      "wallet_close_reopen_same_core": true,
+      "wallet_submissions": 1,
+      "simulated_test_operator_approval": true
+    },
+    {
+      "core_clean_checkpoint_reopen_verified": true,
+      "height": 103,
+      "tip": "2c358ef114f90a0c4f209b98ee00be60a85cf4813aa5f5440a61835e56129137",
+      "same_wallet_history_reservations": true
+    },
+    {
+      "owned_Core_flush_before_cold_crash": true,
+      "new_block_after_clean_restart": true,
+      "height": 104,
+      "tip": "b35b2c405b0a6a80cc15f4d60aa85f111473c60908ab7cebf747b640161eafd2",
+      "no_clean_shutdown_of_this_Core_before_SIGKILL": true
+    },
+    {
+      "same_owner_core_crash_recovered": true,
+      "same_wallet_tip_history_reservations": true,
+      "original_popen_reaped": true,
+      "automatic_wallet_replay": false,
+      "crash_scope": "after-owned-Core-flush-without-clean-shutdown"
+    }
+  ],
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "qt_platform": "cocoa",
+  "window_device_pixel_ratio": 2.0,
+  "original_profile": "9a132b778e9db5de50a4f8dbeb92e7b1",
+  "owner_shutdown_verified": true,
+  "timestamp_utc": "2026-10-30T00:58:08.266026+00:00"
+}

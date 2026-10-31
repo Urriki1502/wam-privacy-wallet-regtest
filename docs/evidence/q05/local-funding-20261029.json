@@ -1,0 +1,38 @@
+{
+  "schema": "q05-local-diagnostic/v1",
+  "timestamp_utc": "2026-10-29T16:10:19.250080+00:00",
+  "base_sha": "93c5c68666c7760fa84735eb0ca96f0ef6246dc8",
+  "branch": "local/q05-development",
+  "source_is_uncommitted_diff": true,
+  "python_version": "3.12.15",
+  "wsp_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "file_sha256": {
+    "src/wam_regtest/q05_gui_scenario.py": "15d836f6cfd144559880dbd701aded896507a23f380a61a2c9c3fb90029d7ea5",
+    "src/wam_regtest/wallet_executor.py": "74caa83fcfd334e4f613859b56da90aae0f270dacc68f7c33c42a07ba88f78b7",
+    "tests/test_q05_gui_funding.py": "a55565f659e044bc0680c525e5c1826f59694620cf5e1900c4ff04b0eb7b6389",
+    "tests/test_q05_managed_gui.py": "8a7ed06974545f4a31eae4be4d10830a01c8138aaddc39042fdf7afa99c3df9c",
+    "tests/test_q05_wallet_executor.py": "badd7be586b0e55ef953fc830539735282764f1335da2dbee5899c8dde1b7a88"
+  },
+  "regression": {
+    "run": 106,
+    "pass": 106,
+    "fail": 0,
+    "skip": 0,
+    "log": "docs/evidence/q05/local-funding-20261029-regression.txt",
+    "log_sha256": "24fdc8c79e190c071ef09de0a28591b2d4d4238253fb0fb5b99e136dfe3bbc23"
+  },
+  "native_gui": "NOT_EXECUTED",
+  "frozen": "NOT_EXECUTED",
+  "changed_source_windows_linux": "NOT_EXECUTED",
+  "native_blockers": [
+    "sandbox loopback bind denied PermissionError errno 1",
+    "no verified signed Core staged in checkout"
+  ],
+  "core_launched": false,
+  "ci_funding_cause": "UNKNOWN",
+  "generation_timeout_on_ci": "HYPOTHESIS",
+  "quarantined_scope_shutdown_routing_defect": "PROVEN_BY_SOURCE_FIXTURES",
+  "canonical_case_status_changed": false,
+  "engineering_handoff": false,
+  "full_q_accepted": false
+}

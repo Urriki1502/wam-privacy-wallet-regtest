@@ -31,6 +31,8 @@ def main():
     output=Path('windows-package-output');output.mkdir()
     with tempfile.TemporaryDirectory(prefix='wam-win-build-') as t:
         stage=Path(t);core=stage/'core';core.mkdir()
+        from wam_regtest.q05_package_provenance import stage as stage_q05
+        q05_source=stage/'Q05_BUILD_SOURCE.json';stage_q05(source_stamp,q05_source)
         for remote,name,limit in (
             ('/SIGNING-KEY.asc','SIGNING-KEY.asc',32768),
             ('/downloads/v0.1.11/SHA256SUMS','SHA256SUMS',131072),
@@ -63,7 +65,7 @@ def main():
             '--name','WAM-Privacy-Wallet-REGTEST','--icon',str(icon),'--paths','src',
             '--collect-submodules','wam_regtest','--collect-submodules','wam_sp',
             '--collect-all','coincurve','--hidden-import','_cffi_backend',
-            '--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
+            '--add-data',str(q05_source)+':.','--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
             '--add-data',str(brand_image())+':branding','src/wam_regtest/windows_package_entry.py'],env=build_environment,check=True)
     bundle=Path('dist/WAM-Privacy-Wallet-REGTEST').absolute()
     executable=bundle/'WAM-Privacy-Wallet-REGTEST.exe'
@@ -79,6 +81,9 @@ def main():
         digest=sha256(source_dll.read_bytes()).hexdigest()
         assert sha256(members[0].read_bytes()).hexdigest()==digest,'WIN_CPYTHON_SSL_BYTES_CHANGED'
         python_ssl[name]=digest
+    subprocess.run([sys.executable,'-I','scripts/qualify_q05_frozen.py',
+        '--executable',str(executable),'--output',str((output/'q05-frozen-evidence.json').absolute())],
+        check=True,timeout=1200)
     for name,digest in BINARY_SHA256.items():
         matches=[p for p in bundle.rglob(name) if p.is_file()]
         assert len(matches)==1 and not matches[0].is_symlink() and sha256(matches[0].read_bytes()).hexdigest()==digest

@@ -1,0 +1,73 @@
+{
+  "source_sha": "264faa2b2db6aa717312cd1a984c15e01d2cbd04",
+  "checkout_sha": "264faa2b2db6aa717312cd1a984c15e01d2cbd04",
+  "status": "PASS",
+  "platform": "macos-arm64",
+  "fault_model": "SIGKILL of freshly verified original owned Popen",
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "core_version": "v0.1.11",
+  "core_trust": "official-signed-v0.1.11",
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_executed": false,
+  "synthetic_rpc": false,
+  "frozen": false,
+  "mainnet_allowed": false,
+  "observations": [
+    {
+      "before_crash": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "syncing",
+        "height": 0,
+        "core_process_owned": true,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    },
+    {
+      "crash_detected": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "recovery-needed",
+        "height": null,
+        "core_process_owned": false,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    },
+    {
+      "same_owner_explicit_recovery": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "syncing",
+        "height": 0,
+        "core_process_owned": true,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    },
+    {
+      "clean_reopen": {
+        "protocol": "wam-fusion-managed-supervisor/v2",
+        "state": "stopped",
+        "height": null,
+        "core_process_owned": false,
+        "chain": "regtest",
+        "mainnet_allowed": false
+      }
+    }
+  ],
+  "source_files": {
+    "src/wam_regtest/core_supervisor.py": "35131caaddfd96343f18c5ad06c93f6a5e3939d84267f2e732dfd9bed95cebd8",
+    "src/wam_regtest/supervisor_journal.py": "89b93aa621cc45b0301257566247870c618ee61957745b56be0a4cf55a9b3016",
+    "src/wam_regtest/supervisor_identity.py": "26bdb733ddabaa1593aef91ccba7a29cd22283428d2a2b343d3cae8d8b2e7f55",
+    "src/wam_regtest/core_process.py": "50d9696f920705a69018416dccdcb4cb22fb7a13de201ef010c43cc21390026c",
+    "src/wam_regtest/rpc_scope.py": "7e252560b0cc40321f7bb5bf25fbd66709dcbb176c2f1a5661115eca844c0438",
+    "scripts/probe_q05_core_crash.py": "97eba1b78c9697a00f30e6d0de9bbc4a810ddb8850ff585d73813fdbf0e692ca"
+  },
+  "lifecycle_schema": "wam-managed-lifecycle/v2",
+  "original_core_pid": 2895,
+  "profile_sha256": "192721131e40d6c789b916c6a47c75b6626e0a129fccefd3bbf6f8a7099517b5",
+  "config_sha256": "c58a2ec582c1e9cfdc8bcbe33d30e5100040dada2f5e357d93089e84e0183163",
+  "timestamp_utc": "2026-10-28T11:44:55.833396+00:00"
+}

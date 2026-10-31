@@ -1,0 +1,133 @@
+{
+  "schema": "q05-wallet-checkpoint-native/v1",
+  "status": "FAIL",
+  "wallet_fixture": "PUBLIC_FIXTURE_FUNDED",
+  "owned_session_api": true,
+  "qualification_scope": "DIVERGENT_RESERVATION_SAFE_REFUSAL",
+  "source_sha": "01e364e255890a22d2bf4f2737b915d088eb649c",
+  "checkout_sha": "01e364e255890a22d2bf4f2737b915d088eb649c",
+  "source_provenance": {
+    "candidate_source_sha": "01e364e255890a22d2bf4f2737b915d088eb649c",
+    "checkout_sha": "01e364e255890a22d2bf4f2737b915d088eb649c",
+    "ci_artifacts_allowed": false,
+    "literal_python_files_verified": 173,
+    "python_crlf_normalized": false,
+    "raw_python_tree_sha256": "eb21f449a56cce119052051d4bb338dbf5cda29c7d87f3b643d02b42779746d2"
+  },
+  "platform": "macos-arm64",
+  "frozen": false,
+  "core_trust": "official-signed-v0.1.11",
+  "official_signed_release": true,
+  "core_version": "v0.1.11",
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_executed": true,
+  "python_version": "3.12.10",
+  "command": [
+    "--core-dir",
+    "/Users/dinhdang/Developer/WAM-Fusion/toolchain/core-v0.1.11-macos-arm64",
+    "--root",
+    "/private/tmp/wam-fusion-core-e63ff1ef1f026244",
+    "--receipt",
+    "/Users/dinhdang/Developer/WAM-Fusion/q05-completion-20261029-01/transition-signed-01e364e.json",
+    "--wsp-source",
+    "/Users/dinhdang/Developer/WAM-Fusion/wam-privacy-wallet-regtest/wsp-upstream",
+    "--owned-session",
+    "--fund-disposable-wallet",
+    "--interrupt-publication",
+    "--recover-after-interruption",
+    "--transition-cut",
+    "signed",
+    "--confirm-disposable-regtest"
+  ],
+  "dependencies": {
+    "coincurve": "21.0.0",
+    "cryptography": "50.0.0"
+  },
+  "adapter_sha256": "d10c03187e792e46f4ec9ac2e06355b4dd1ae7572556e61d8a03dc088fdea880",
+  "source_files": {
+    "src/wam_regtest/core_supervisor.py": "2cf76ea3de5f9f3c10fd3cac6d765be75af3ab5437798c7ee20bec3b2aed6844",
+    "src/wam_regtest/supervisor_journal.py": "89b93aa621cc45b0301257566247870c618ee61957745b56be0a4cf55a9b3016",
+    "src/wam_regtest/supervisor_identity.py": "26bdb733ddabaa1593aef91ccba7a29cd22283428d2a2b343d3cae8d8b2e7f55",
+    "src/wam_regtest/supervisor_store.py": "2507cc523e041b1757a0bf55e1049acf482721154a707d6b02a7f9c946784979",
+    "src/wam_regtest/supervisor_protocol.py": "7f91a2fc43c7e9fe3eaf62d01a638f2b470adf1a24a0b97ff36f8089b9a6c022",
+    "src/wam_regtest/managed_wallet_checkpoint.py": "d10c03187e792e46f4ec9ac2e06355b4dd1ae7572556e61d8a03dc088fdea880",
+    "src/wam_regtest/wallet_recovery.py": "72f5224af02bd37a4019ee29aadf73a715fec4f148a9bb19427e7c54ac6de608",
+    "src/wam_regtest/managed_wallet_session.py": "33829e9ed1fc9c0ca0f94d28c73ec2821b06a9542b5b73dd2ebc5a758842f0e7",
+    "src/wam_regtest/history_pages.py": "b18804085d0fd93ab41f77bc1d7e61b1db13cc96f0153f7a76a2404bc2fc8525",
+    "src/wam_regtest/probe_source.py": "86f38001f0ffe05702edb1804a80f3b6b457fbdb872391bc4e9ff999999f7a3a",
+    "src/wam_regtest/vault.py": "d62d20fb51f852d5310c0b388576c612595c50def30e6ff3dea3da50d1fdfb71",
+    "src/wam_regtest/wallet_session.py": "84d1b251d6e7d7ee12a65263b8653ef6b257071fd6aa96a2dfccfb32886bb31b",
+    "src/wam_regtest/rpc_scope.py": "7e252560b0cc40321f7bb5bf25fbd66709dcbb176c2f1a5661115eca844c0438",
+    "src/wam_regtest/json_rpc.py": "e02a6ee1b463779470c0cb91cd829b75822682dc23ba379571d433aaeee1618f",
+    "src/wam_regtest/cli_rpc.py": "345fa2acab914f4dc3ee7d95f02562332d9e18e48a527c2e8e3a615a6ad89d03",
+    "scripts/probe_q05_wallet_checkpoint.py": "169a571ead749437eae8b260557e7496524f66199271ebe57076a3861621c8aa",
+    "src/wam_regtest/q05_checkpoint_scenario.py": "fa782a56102e49b91530f566e051c21f12ab6854f19095f8b1a5c11d53978343"
+  },
+  "synthetic_rpc": false,
+  "funding_or_mining": true,
+  "wallet_signing": true,
+  "wallet_broadcast_requested": false,
+  "public_fixture_signature_and_broadcast": true,
+  "physical_device_acceptance": false,
+  "mainnet_allowed": false,
+  "observations": [
+    {
+      "created_empty_anchored_generation": [
+        2,
+        "86f299233b89e844f28c77bc0c078401eb8432aac93297ddb735eb19081f868a"
+      ],
+      "height": 0,
+      "confirmed_atoms": 0,
+      "history_count": 0,
+      "plaintext_runtime_removed": true
+    },
+    {
+      "wrong_password_refused": true,
+      "native_anchor_reference_ciphertext_preserved": true
+    },
+    {
+      "real_fixture_payment_txid": "3315fa1a459120d5faad4e502cb5fb25420fd403369eb57971b3cb26d5feefb5",
+      "height": 102,
+      "confirmed_atoms": 4749990000,
+      "history_count": 1,
+      "history_sha256": "56b91bf367260d594f738a254132c739101312c276a2e69c96ee52808b9a9cfc",
+      "wallet_signing_or_broadcast": false
+    },
+    {
+      "cut_after_real_durable_publication_before_anchor": true,
+      "unchanged_native_anchor": [
+        5,
+        "ce17ea3dbf7712201a9b96d2b6b91b1d2cef5093cea16b7c5cbea5a5735717ca"
+      ],
+      "original_ciphertexts_reference_preserved": true,
+      "orphan_ciphertext_sha256": "d48d58a62dd96575fda652604ce6b752bdfe92219c0ffda0f50379541383752e",
+      "runtime_preserved": true,
+      "live_session_runtime_retained_on_checkpoint_failure": true,
+      "unanchored_transition_state": "signed",
+      "prior_anchored_reservation_states": [
+        "draft"
+      ],
+      "next_open_refused_before_keys_or_balance": true,
+      "prior_anchored_reservation_sha256": "dc64410acd7edd1e2b484e0cd65fb73c92135a92f0a55a4e0d66378235a915ab",
+      "recovery_completed": false,
+      "physical_power_loss_test": false
+    }
+  ],
+  "lifecycle_schema": "wam-managed-lifecycle/v2",
+  "directory_identity_sha256": "dcf7d3d920afaa25dbb7fec361d3f2745f6a58121c0ef418e795ad25f46dce42",
+  "wallet_id": "f291162426a78ccaf277df4bb08e6904",
+  "payment_code_sha256": "888b4af53fa9ab39bbe3d8d34f6f6908ad4864a39288f75e29c2c47a3988f23c",
+  "recovery_completed": false,
+  "unsafe_recovered_reservation_states": [
+    "draft"
+  ],
+  "failure_stage": "DIVERGENT_RESERVATION_RECOVERY_REFUSAL",
+  "failure_type": "ValueError",
+  "failure_code": "Q05_IRREVERSIBLE_RECOVERY_ACCEPTED",
+  "owner_shutdown_verified": true,
+  "timestamp_utc": "2026-10-29T17:58:40.409609+00:00"
+}

@@ -38,11 +38,13 @@ def main():
     output=Path('linux-package-output');output.mkdir()
     with tempfile.TemporaryDirectory(prefix='wam-linux-package-') as temporary:
         stage=Path(temporary);wsp=stage/'wsp-source'
+        from wam_regtest.q05_package_provenance import stage as stage_q05
+        q05_source=stage/'Q05_BUILD_SOURCE.json';stage_q05(source_stamp,q05_source)
         stage_pinned_wsp(Path('wsp-upstream').absolute(),wsp)
         command=[sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--onedir','--noupx',
             '--name',name,'--paths','src','--collect-submodules','wam_regtest',
             '--collect-submodules','wam_sp','--collect-all','coincurve','--hidden-import','_cffi_backend',
-            '--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
+            '--add-data',str(q05_source)+':.','--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
             '--add-data',str(brand_image())+':branding']
         if not args.desktop:
             for module in ('PySide6','shiboken6','qrcode'):command+=['--exclude-module',module]
@@ -70,6 +72,10 @@ def main():
     assert record['frozen_runtime'] is True
     assert record['platform']=='linux-x86_64' and not record['official_signed_release']
     assert wallet['synthetic_rpc'] is False and wallet['mainnet_allowed'] is False
+    subprocess.run([sys.executable,'-I','scripts/qualify_q05_frozen.py',
+        '--executable',str(binary),'--output',str((output/'q05-frozen-evidence.json').absolute()),
+        *([] if args.desktop else ['--headless'])],
+        env=environment,check=True,timeout=1200)
     # Enumerate links without following arbitrary paths. PyInstaller uses
     # relative internal library links; custody/Core members stay regular files.
     members={};links={}

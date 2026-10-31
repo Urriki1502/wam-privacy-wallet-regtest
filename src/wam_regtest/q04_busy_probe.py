@@ -3,10 +3,46 @@ import base64
 from concurrent.futures import ThreadPoolExecutor
 import http.client
 import json
+import sys
+import threading
 import time
 
 from .external_core import ExternalAttachmentError
 from .rpc_contention import BackoffPolicy, ContentionAwareRpc, RpcContentionError, ReadCoalescer
+
+
+def _wait_for_saturation(sent, rejected, *, timeout=5):
+    """No elapsed-sleep guess: require all requests sent and a real Core 503."""
+    deadline=time.monotonic()+timeout
+    while not (all(event.is_set() for event in sent) and rejected.is_set()):
+        if time.monotonic()>=deadline:
+            raise RpcContentionError('Q04_BUSY_LOAD_NOT_SATURATED')
+        time.sleep(.01)
+
+
+def _wait_for_worker(log, offset, first, *, timeout=5):
+    """Fixture readiness only: prove dequeue before filling the bounded queue.
+
+    A rejection proves a full queue, not an occupied worker: the worker can
+    dequeue its first request immediately afterwards and free a slot. Core's
+    RPC method log is emitted inside that worker after dequeue. Never export
+    the log or use it as a substitute for native endpoint authentication.
+    """
+    deadline=time.monotonic()+timeout
+    while True:
+        if first.done():
+            first.result()  # Preserve a genuine load error.
+            raise RpcContentionError('Q04_BUSY_WORKER_NOT_OCCUPIED')
+        with log.open('rb') as source:
+            source.seek(offset)
+            raw=source.read(65537)
+        if len(raw)>65536:
+            raise RpcContentionError('Q04_BUSY_WORKER_LOG_LIMIT')
+        if b'ThreadRPCServer method=waitforblockheight ' in raw:
+            return
+        if time.monotonic()>=deadline:
+            raise RpcContentionError('Q04_BUSY_WORKER_NOT_OCCUPIED')
+        time.sleep(.01)
 
 
 def probe_busy(fixture, *, gui=False):
@@ -16,23 +52,41 @@ def probe_busy(fixture, *, gui=False):
     if fixture._core_process.poll() is not None:
         raise RpcContentionError('Q04_BUSY_FIXTURE_EXITED')
     auth=base64.b64encode((fixture._datadir/'regtest'/'.cookie').read_bytes()).decode('ascii')
-    def occupy():
-        conn=http.client.HTTPConnection('127.0.0.1',fixture._rpc_port,timeout=20)
+    sent=[threading.Event() for _ in range(6)]
+    rejected=threading.Event()
+    load_rejections=[]
+    def occupy(index):
+        conn=http.client.HTTPConnection('127.0.0.1',fixture._rpc_port,timeout=100)
         try:
             conn.request('POST','/',json.dumps({'jsonrpc':'1.0','id':1,
-                'method':'waitforblockheight','params':[1000000000,3000]}),
+                'method':'waitforblockheight','params':[1000000000,30000]}),
                 {'Authorization':'Basic '+auth,'Content-Type':'application/json'})
+            sent[index].set()
             response=conn.getresponse();body=response.read(65536)
             if response.status==200:
                 value=json.loads(body)
                 if value.get('error') is not None:raise RpcContentionError('Q04_BUSY_LONGPOLL_DENIED')
-            elif response.status!=503:raise RpcContentionError('Q04_BUSY_LOAD_DENIED')
+            elif response.status==503:
+                load_rejections.append(True);rejected.set()
+            else:raise RpcContentionError('Q04_BUSY_LOAD_DENIED')
         finally:conn.close()
-    calls=[];busy=[]
+    calls=[];busy=[];errors=[]
     def read(method,params):
         calls.append(time.monotonic())
         try:return fixture.fusion_read(method,params)
         except ExternalAttachmentError as error:
+            code=error.args[0] if len(error.args)==1 else ''
+            errors.append(code if code in (
+                'EXTERNAL_ATTACHMENT_RPC_NODE_BUSY','EXTERNAL_ATTACHMENT_RPC_UNREACHABLE',
+                'EXTERNAL_ATTACHMENT_RPC_FAILED','EXTERNAL_ATTACHMENT_RPC_AUTH_DENIED',
+                'EXTERNAL_ATTACHMENT_RPC_TRANSPORT_DENIED') else 'OTHER_FIXED_REFUSAL')
+            if code=='EXTERNAL_ATTACHMENT_RPC_UNREACHABLE':
+                cause=error.__context__
+                kind=type(cause).__name__ if type(cause) in (
+                    TimeoutError,ConnectionResetError,BrokenPipeError,ConnectionRefusedError,OSError) else 'OTHER'
+                print('Q04_TRANSPORT_DIAGNOSTIC '+json.dumps({'kind':kind,
+                    'elapsed_seconds':time.monotonic()-calls[-1],
+                    'attempt':len(calls),'attachment_503':len(busy)},sort_keys=True),file=sys.stderr)
             if error.args==('EXTERNAL_ATTACHMENT_RPC_NODE_BUSY',):busy.append(True)
             raise
     policy=BackoffPolicy(base_seconds=.1,max_seconds=.5,max_retries=3,jitter=.1)
@@ -47,15 +101,22 @@ def probe_busy(fixture, *, gui=False):
         # real attachment. No RPC result or busy exception is manufactured.
         rpc._read=read;rpc._policy=policy;rpc._coalescer=ReadCoalescer(1.0)
     else:rpc=ContentionAwareRpc(read,policy=policy,coalescer=ReadCoalescer(1.0))
+    log=fixture._datadir/'regtest'/'debug.log'
+    offset=log.stat().st_size
     with ThreadPoolExecutor(max_workers=6) as pool:
-        pending=[pool.submit(occupy) for _ in range(6)]
-        time.sleep(.5)
+        first=pool.submit(occupy,0)
+        _wait_for_worker(log,offset,first)
+        pending=[first]+[pool.submit(occupy,index) for index in range(1,6)]
+        _wait_for_saturation(sent,rejected)
         try:
             rpc.read('getblockcount',[])
             raise RpcContentionError('Q04_BUSY_NOT_OBSERVED')
         except RpcContentionError as error:
             if error.args!=('RPC_NODE_BUSY',):raise
         if len(busy)!=4 or len(calls)!=4:
+            print('Q04_BUSY_DIAGNOSTIC '+json.dumps({'attempts':len(calls),
+                'attachment_503':len(busy),'errors':errors[:12],
+                'load_503':len(load_rejections),'gui':gui},sort_keys=True),file=sys.stderr)
             raise RpcContentionError('Q04_BUSY_RETRY_UNPROVEN')
         intervals=[b-a for a,b in zip(calls,calls[1:])]
         for i,delay in enumerate(intervals):
@@ -75,7 +136,7 @@ def probe_busy(fixture, *, gui=False):
                     or window.status_label.text()!='Node busy · retrying after cooldown'
                     or window.height_label.text()!='Height: unverified'):
                 raise RpcContentionError('Q04_BUSY_GUI_COALESCE_UNPROVEN')
-        for future in pending:future.result(timeout=20)
+        for future in pending:future.result(timeout=100)
     rpc.reset()
     height=rpc.read('getblockcount',[])
     if window is not None:
@@ -100,6 +161,8 @@ def probe_busy(fixture, *, gui=False):
             raise RpcContentionError('Q04_BUSY_GUI_CLOSE_STOPPED_CORE')
     return {'gui_coalescing': 'PASS' if gui else 'NOT_APPLICABLE_NO_QT',
         'status':'Q04_GENUINE_BUSY_PATH_PASS','synthetic_busy':False,
+        'load_readiness':'WORKER_DEQUEUED_THEN_ALL_SIX_SENT_AND_GENUINE_CORE_503',
+        'load_http_503_count':len(load_rejections),'longpoll_timeout_ms':30000,
         'attachment_http_503_count':len(busy),'read_attempts':4,
         'retry_intervals_seconds':intervals,'coalesced_read_calls':0,
         'recovered_height':height,'write_boundary_attempts':1,'write_retried':False,

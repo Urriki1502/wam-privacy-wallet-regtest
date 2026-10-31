@@ -19,6 +19,9 @@ python -I -m wam_regtest.package_manifest \
   --source-root "$(pwd)/wsp-upstream" \
   --output "$SOURCE_STAGE/wsp-source"
 
+python -I -m wam_regtest.q05_package_provenance --stamp "$SOURCE_STAGE/wallet-source.json" \
+  --output "$SOURCE_STAGE/Q05_BUILD_SOURCE.json"
+
 echo "MACOS_APP_STAGE=PYINSTALLER_START"
 python -I -m PyInstaller --noconfirm --clean --onedir --windowed \
   --name "WAM Privacy Wallet REGTEST" \
@@ -26,8 +29,10 @@ python -I -m PyInstaller --noconfirm --clean --onedir --windowed \
   --icon "$(pwd)/assets/wam-wallet.icns" \
   --add-data "$(pwd)/assets/wam-coin-original.png:branding" \
   --paths "$(pwd)/src" \
+  --add-data "$SOURCE_STAGE/Q05_BUILD_SOURCE.json:." \
   --collect-submodules wam_regtest \
   --collect-submodules wam_sp \
+  --copy-metadata coincurve \
   --hidden-import coincurve._cffi_backend \
   --add-data "$(pwd)/core/wamd:core" \
   --add-data "$(pwd)/core/wam-cli:core" \
@@ -137,6 +142,8 @@ with tempfile.TemporaryDirectory(prefix='wam-q04-mac-frozen-') as clean:
     shutil.copyfile(Path(clean)/'q04-frozen-evidence.json', 'package-output/q04-frozen-evidence.json')
 print("MACOS_APP_STAGE=FROZEN_Q04_EXTERNAL_MINER_PASS", flush=True)
 PY
+python -I scripts/qualify_q05_frozen.py --executable "$BIN" \
+  --output "$(pwd)/package-output/q05-frozen-evidence.json"
 test -s real-regtest-gui-preview.png
 test -s real-regtest-wallet-preview.png
 test -s real-regtest-security-preview.png

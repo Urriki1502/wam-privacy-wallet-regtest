@@ -1,0 +1,12 @@
+{
+  "schema": "q05-ci-failure/v1",
+  "status": "FAIL",
+  "source_sha": "bbcc604b7bdbe23075415149b2cfce18acff57dd",
+  "job_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40799817984/job/123204954975",
+  "signature": "LINUX_EXPLICIT_CORE_AND_WITNESS_POLICY_REQUIRED",
+  "tests_run": 143,
+  "errors": 5,
+  "cause": "Mocked-Core runtime file tests called production custody.storage() without a genuine Core/witness policy. Production correctly refused; this contracts-only job has no Core E2E.",
+  "fix": "Inject real linux_private_storage only in runtime file fixture, keeping native directory/inode/sidecar checks. Product custody/Linux policy unchanged.",
+  "qualification": "New exact-head CI required; failure retained, not qualified Linux Core evidence."
+}

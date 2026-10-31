@@ -50,10 +50,18 @@ class WalletReadSnapshot:
     signer_allowed: bool = False
     broadcast_allowed: bool = False
     mainnet_allowed: bool = False
+    history_count: int | None = None
+    history_sha256: str | None = None
+    history_complete: bool = True
+    receive_count: int | None = None
+    history_offset: int = 0
+    reservation_count: int | None = None
+    reservation_sha256: str | None = None
+    reservation_states: tuple[str, ...] | None = None
 
 
 def read_real_wallet_snapshot(
-    core_dir: Path, datadir: Path, wsp_source_root: Path
+    core_dir: Path, datadir: Path, wsp_source_root: Path, *, history_offset: int = 0
 ) -> WalletReadSnapshot:
     """Scan the actual running Core, then show only fully current SQLite data."""
     if (sys.platform != "darwin" or platform.machine().lower() != "arm64"
@@ -70,6 +78,7 @@ def read_real_wallet_snapshot(
                 not (datadir / "wam.conf").is_file()):
             raise RealWalletReadError("WALLET_PRIVATE_DATADIR_DENIED")
         from .core import verified_core_paths
+        from .history_pages import GUI_HISTORY_LIMIT,sql_history_pages
         from .wsp_live import (
             _pinned_source, LiveCoreReadOnlyCli, REGTEST_GENESIS,
         )
@@ -106,21 +115,21 @@ def read_real_wallet_snapshot(
                 if type(v) is not int or not 0 < v <= 22_000_000 * 100_000_000:
                     raise RealWalletReadError("WALLET_AMOUNT_DENIED")
                 values.append(v)
-            history = []
-            for row in scanner.store.db.execute(
-                "SELECT txid,height,credit,debit FROM history "
-                "ORDER BY height DESC,txid LIMIT 100"
-            ):
-                txid, height, credit, debit = row
-                if (type(txid) is not str or not re.fullmatch(r"[0-9a-f]{64}", txid)
-                        or type(height) is not int or not 1 <= height <= tip_height
-                        or type(credit) is not int or type(debit) is not int
-                        or not 0 <= credit <= 22_000_000 * 100_000_000
-                        or not 0 <= debit <= 22_000_000 * 100_000_000):
-                    raise RealWalletReadError("WALLET_HISTORY_DENIED")
-                history.append(HistoryRow(
-                    txid, height, tip_height - height + 1, credit, debit,
-                ))
+            if type(history_offset) is not int or history_offset<0:
+                raise RealWalletReadError("WALLET_HISTORY_DENIED")
+            with scanner.store.transaction():
+                history_count,raw=sql_history_pages(
+                    scanner.store.db,tip_height,
+                    "SELECT txid,height,credit,debit FROM history "
+                    "ORDER BY height DESC,txid LIMIT ? OFFSET ?",
+                    error=RealWalletReadError,code="WALLET_HISTORY_DENIED",
+                    window=GUI_HISTORY_LIMIT,skip=history_offset)
+                receive_count=scanner.store.db.execute(
+                    "SELECT count(*) FROM history WHERE credit>0").fetchone()[0]
+            if type(receive_count) is not int or receive_count<0 or receive_count>history_count:
+                raise RealWalletReadError("WALLET_HISTORY_DENIED")
+            history=tuple(HistoryRow(txid,block,conf,credit,debit)
+                          for txid,block,credit,debit,conf in raw)
             # Final tip revalidation: refuse to show potentially stale balances.
             if (rpc.call("getblockcount") != tip_height or
                     rpc.call("getbestblockhash") != tip_hash):
@@ -132,8 +141,12 @@ def read_real_wallet_snapshot(
                 receive_code=code,
                 confirmed_atoms=sum(values),
                 confirmed_utxos=len(coins),
-                history=tuple(history),
+                history=history,
                 core_sha256=signed["wamd_sha256"],
+                history_count=history_count,
+                history_complete=history_offset==0 and history_count<=GUI_HISTORY_LIMIT,
+                receive_count=receive_count,
+                history_offset=history_offset,
             )
         finally:
             scanner.close()

@@ -1,0 +1,119 @@
+{
+  "schema": "q05-q04-repair-recheck/v1",
+  "source_sha": "ef700da7ff8fe0a917452502436557314e15b9c1",
+  "workflow_run_id": 40645229982,
+  "scope": "Q04 regression only; not integrated Q05 qualification",
+  "native_job_id": 122673024761,
+  "contention_job_id": 122673024573,
+  "frozen_headless_job_id": 122673024621,
+  "frozen_desktop_job_id": 122673024655,
+  "status": "PASS",
+  "retained_prior_failures": [
+    40615788565,
+    40617866635,
+    40643772393
+  ],
+  "assertions_relaxed": false,
+  "receipts": {
+    "122673024621": {
+      "changed_cookie_reconnect_denied_before_auth": true,
+      "contention_read_height": 3,
+      "core_sha256": {
+        "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+        "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+      },
+      "credential_fault_actor": "disposable_fixture_operator",
+      "execution": "FROZEN",
+      "genuine_busy": {
+        "attachment_http_503_count": 4,
+        "coalesced_read_calls": 0,
+        "fresh_socket_process_attestation_per_attempt": true,
+        "gui_coalescing": "NOT_APPLICABLE_NO_QT",
+        "load_http_503_count": 3,
+        "load_readiness": "WORKER_DEQUEUED_THEN_ALL_SIX_SENT_AND_GENUINE_CORE_503",
+        "longpoll_timeout_ms": 30000,
+        "read_attempts": 4,
+        "recovered_height": 4,
+        "retry_intervals_seconds": [
+          0.1071731299999783,
+          0.20992543200000569,
+          0.39334508700000015
+        ],
+        "status": "Q04_GENUINE_BUSY_PATH_PASS",
+        "synthetic_busy": false,
+        "write_boundary_attempts": 1,
+        "write_retried": false
+      },
+      "height_before": 0,
+      "miner_driver": "sustained-thread-with-separate-Core-CLI-processes",
+      "miner_heights": [
+        1,
+        2,
+        2,
+        3,
+        3
+      ],
+      "platform": "linux-x86_64",
+      "port_change_detected": true,
+      "reconnect_fresh_attachment": true,
+      "reconnect_height": 3,
+      "reconnect_real_tcp_reset_count": 1,
+      "restored_cookie_still_requires_new_authorization": true,
+      "status": "Q04_MINER_COEXISTENCE_PASS",
+      "synthetic_rpc": false,
+      "timestamp_utc": "2026-10-28T06:45:10Z",
+      "write_denied": true,
+      "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e"
+    },
+    "122673024655": {
+      "changed_cookie_reconnect_denied_before_auth": true,
+      "contention_read_height": 3,
+      "core_sha256": {
+        "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+        "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+      },
+      "credential_fault_actor": "disposable_fixture_operator",
+      "execution": "FROZEN",
+      "genuine_busy": {
+        "attachment_http_503_count": 4,
+        "coalesced_read_calls": 0,
+        "fresh_socket_process_attestation_per_attempt": true,
+        "gui_coalescing": "PASS",
+        "load_http_503_count": 3,
+        "load_readiness": "WORKER_DEQUEUED_THEN_ALL_SIX_SENT_AND_GENUINE_CORE_503",
+        "longpoll_timeout_ms": 30000,
+        "read_attempts": 4,
+        "recovered_height": 4,
+        "retry_intervals_seconds": [
+          0.10302307299980384,
+          0.18982184000014968,
+          0.3835737170002176
+        ],
+        "status": "Q04_GENUINE_BUSY_PATH_PASS",
+        "synthetic_busy": false,
+        "write_boundary_attempts": 1,
+        "write_retried": false
+      },
+      "height_before": 0,
+      "miner_driver": "sustained-thread-with-separate-Core-CLI-processes",
+      "miner_heights": [
+        1,
+        2,
+        2,
+        3,
+        3
+      ],
+      "platform": "linux-x86_64",
+      "port_change_detected": true,
+      "reconnect_fresh_attachment": true,
+      "reconnect_height": 3,
+      "reconnect_real_tcp_reset_count": 1,
+      "restored_cookie_still_requires_new_authorization": true,
+      "status": "Q04_MINER_COEXISTENCE_PASS",
+      "synthetic_rpc": false,
+      "timestamp_utc": "2026-10-28T06:45:18Z",
+      "write_denied": true,
+      "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e"
+    }
+  }
+}

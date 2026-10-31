@@ -1,0 +1,142 @@
+{
+  "schema": "q05-reservation-recovery-scoped-local-evidence/v1",
+  "status": "SCOPED_MACOS_SOURCE_AND_FROZEN_PASS",
+  "timestamp_utc": "2026-10-30T01:01:38.520616+00:00",
+  "source_sha": "758b5deefe0f0e1df23c22dc80c56b6c155b7002",
+  "checkout_sha": "758b5deefe0f0e1df23c22dc80c56b6c155b7002",
+  "local_branch": "local/q05-development",
+  "draft_pr": 138,
+  "live_pr_head_at_session_start": "93c5c68666c7760fa84735eb0ca96f0ef6246dc8",
+  "live_main_at_session_start": "4bc6f658e4c00e0a8c5d3c9da7d79aab0a54dfae",
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "core_trust": "official-signed-v0.1.11",
+  "core_version": "v0.1.11",
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "platform": "macos-arm64",
+  "python_version": "3.12.10",
+  "dependency_profile": "gui; original Q01 hash locks; independently hash-checked existing PyPI wheelhouse",
+  "unit_contract_tests": {
+    "q05": 225,
+    "general_contracts": 12,
+    "encrypted_storage": 3,
+    "status": "PASS",
+    "not_Core_acceptance": true
+  },
+  "native_primary_scenarios": 5,
+  "frozen_primary_scenarios": 18,
+  "frozen_subordinate_contender_receipts": 1,
+  "frozen_executable": "/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/frozen-source/dist/WAM Privacy Wallet REGTEST.app/Contents/MacOS/WAM Privacy Wallet REGTEST",
+  "frozen_executable_sha256": "a2fedc7f63996145addb3f999c3c6d3d9ebe06924e1d835c2e4f5e46ddacab4e",
+  "app_manifest_sha256": "493466d48526faf5967f9652cd2c02df0130c6d2adcb34ae337af58c5880868d",
+  "bundle_entries": 511,
+  "app_manifest_reverified_after_all_tests": true,
+  "full_distribution_DMG_or_ZIP_built": false,
+  "artifact_scope": "Actual newly built final .app executable using canonical builder lines 1-88; no prior artifact reuse, no publication or production signing.",
+  "fault_guarantee": "Signed/uncertain post-publication pre-anchor divergence refuses explicit recovery; native anchor/reference/unknown bytes preserved; zero wallet broadcast calls and no automatic replay.",
+  "positive_guarantee": "Equivalent source recovery and already-anchored signed/uncertain completion remain usable; exact retry does not advance anchor. Uncertain completion includes one genuinely submitted disposable transaction with caller-result loss.",
+  "original_failure_sha256": "e415643b3a759efbcb5a48f5e1b2288ec5d2f62f0fedbd56ca77d1ddb3591f8a",
+  "retained_failed_contract_logs": [
+    {
+      "path": "/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/recovery-contracts-01.log",
+      "sha256": "be6df3d477f4c9c7071ceae641cf2fc566a169914301566ce13b270ab23cdf0c",
+      "scope": "Retained local test-fixture/environment failure, not a native application receipt"
+    },
+    {
+      "path": "/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/recovery-contracts-02.log",
+      "sha256": "9c9e9f861ac9b389801c61daf3873b4edbd791bd3bde70119900c2058c4ed0bd",
+      "scope": "Retained local test-fixture/environment failure, not a native application receipt"
+    },
+    {
+      "path": "/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/q05-targeted-02.log",
+      "sha256": "1fa1c8e957de87a2015eddf4070caf85fbf4b3f1aead5fe92eefc95a55a134fd",
+      "scope": "Retained local test-fixture/environment failure, not a native application receipt"
+    },
+    {
+      "path": "/Users/dinhdang/Developer/WAM-Fusion/q05-recovery-20261030-01/pinned-recovery-01.log",
+      "sha256": "f34549d985c53b744ed2a3d355a15c041571c2b2ca427a3cad0631e358cce3c6",
+      "scope": "Retained local test-fixture/environment failure, not a native application receipt"
+    }
+  ],
+  "external_gates": [
+    {
+      "actor": "Owner / native Windows qualification host operator",
+      "action": "Provide actual Windows signed-Core/native Credential Manager/NTFS and final-executable qualification on this runtime source; current session forbids push and CI dispatch."
+    },
+    {
+      "actor": "Owner / native Linux qualification host operator",
+      "action": "Provide actual Linux reviewed developer-Core/root-witness and final-executable qualification on this runtime source; current session forbids push and CI dispatch."
+    },
+    {
+      "actor": "Authorized clean-device operators",
+      "action": "Perform required three-OS physical/clean-device lifecycle acceptance."
+    },
+    {
+      "actor": "Genuinely independent architecture/security reviewer",
+      "action": "Review source recovery restriction, legacy COMMIT audit, native custody and remaining Q05 scope."
+    },
+    {
+      "actor": "Owner",
+      "action": "Separately authorize integration only after required evidence; this session has no merge or engineering-handoff authority."
+    }
+  ],
+  "acceptance_ledger_unchanged": true,
+  "canonical_q05_cases": {
+    "PASS": 0,
+    "FAIL": 0,
+    "PENDING": 37,
+    "BLOCKED": 0,
+    "STALE": 0
+  },
+  "canonical_G0_G7": "PENDING",
+  "engineering_handoff": false,
+  "full_q_accepted": false,
+  "limitations": [
+    "Local supplemental engineering evidence; does not qualify all 37 canonical cases.",
+    "No exact-main postmerge evidence for this unpushed local source; prior CI does not qualify it.",
+    "Read-only unknown-state comparison can only deny recovery; no merge/adoption of runtime or orphan keys/state.",
+    "Divergent legitimate unanchored state also remains blocked; no automatic salvage or format/KDF migration.",
+    "Native private custody/anchor lease remain required; no claim against compromised same-user/OS or physical power loss.",
+    "V1 HOLD / MAINNET DENIED"
+  ],
+  "files_sha256": {
+    "equivalent-live-758b5de.json": "f337b54dea04724ec242a875ab6a79e3b17c6b218c912d8a9db48ef8a4bee50d",
+    "final-frozen-758b5de-negative-anchored-hardlink.json": "858fc3071d5cd0750d02873be234bbddf44563ba2eb353924452d250655c253e",
+    "final-frozen-758b5de-negative-corrupt.json": "fe300c2fff19d00f0f85e744178741da91115f059d439916ef2bb417ac4f4202",
+    "final-frozen-758b5de-negative-divergent-reference.json": "6946e7464c9931e70f42ed97ac864d39cfd07d7fb10408ba340fd755c0c8a8ea",
+    "final-frozen-758b5de-negative-missing.json": "1786af4bcfab597a35b5b8efa18db6eec513a9712a41f8c9ddb8140b7b03c266",
+    "final-frozen-758b5de-negative-multiple-orphans.json": "9c55ecb36a4feed0aab2a9616f759b03c417ffd44d29685d887e88dea958928c",
+    "final-frozen-758b5de-negative-orphan.json": "4b62ea5ad983d8874845391aae831d2ec749e0be884defb70ab52b3f6de24782",
+    "final-frozen-758b5de-negative-permission.json": "197df7ab64b9e8b6454fa1ef823a7a639f12397d667847aeac605e3482565866",
+    "final-frozen-758b5de-negative-sidecar.json": "06a2dd5b3403d83f63ab92b5286520117602f7c4c23b4b647f4b5e28a7315b4a",
+    "final-frozen-758b5de-negative-stage-linked.json": "048a24fd40d742ee10e5bc79edf611e070df572681fd54c737de8701da47eacc",
+    "final-frozen-758b5de-negative-stage.json": "dd545530206d587a27f3cd42d09f539765fecf41e1c08a8d0869ed347a0a11cd",
+    "final-frozen-758b5de-negative-symlink.json": "7f283604c418345595a94af7d975deb63ff17e8c9dd61c92d4ce86c80b84a0c1",
+    "final-frozen-758b5de-negative-wrong-wsp.json": "0d160432053e559b0f857520a3e5c117cbbff74075abf27b04d343d902a6039d",
+    "final-frozen-758b5de-security-contender.json": "ba6b9d0e188438231fd9886dc1559fbeed918a7ab1b3451b3655797b4f79c79e",
+    "final-frozen-758b5de-security.json": "a2e81e2c621d28048d5264361d6689c9e44e2ee9264d5c9ab1345c2e018f31d6",
+    "final-frozen-758b5de-signed-completion.json": "bc167d07f2a1e62640473105ef99131d17b393593867e842b91e99888f9f9f3e",
+    "final-frozen-758b5de-uncertain-completion.json": "3a9af97f296a0b3b097089416fbe4907323d01a6d696490d1ad05999bde7624f",
+    "final-frozen-758b5de.json": "4d7c3f2100cf2c2a039b2dc3177158f68e134caea4e19de142afc60d423df77b",
+    "frozen-signed-cut-758b5de.json": "bf36c0c99771d9a89552285ebaeb53547cd5a0c10635f2240788f4d47790d212",
+    "frozen-uncertain-cut-758b5de.json": "e92db92e348e478f3145f2a9431cd259bfac311a82533914e9ce7f509f1af7ad",
+    "signed-completion-758b5de.json": "890ec24d97cdd314c5868d7c292dbf9864455369a5f6bdb5cf4613b1215b6131",
+    "signed-cut-758b5de.json": "b4584f5de9bdd2cfb7ba2108132c16344722aa92a4620da790c8572428fbdac8",
+    "uncertain-completion-758b5de.json": "d6ae7d4c4074335bdafbd9d5d16b237788f2a2017ae02bbbc08d0b749459b12a",
+    "uncertain-cut-758b5de.json": "19347d4e58ec2cb0a666d726d708f2b4041f9ad5ce1e79323801bc2f6851e3f0",
+    "pinned-q05-targeted-01.log": "476e1eb26c6b6438aa674136da180b307a7904b8f9efa1fa2279353ffe2d633e",
+    "pinned-contracts.log": "62fb085fd14ff7077960c09026671ec37126b933b05ac9f37ac075dc620ee52e",
+    "pinned-encrypted-storage.log": "31217e510c0e50ac7927c1f9a60a5765b91ea0452037d5b2f6a0d3ae948521f7",
+    "frozen-environment.json": "284e0bbddc8eff4cfe7053f84dd776565edbf1f86d9cbda3245ac1eeb0ed9055",
+    "frozen-env-pip-report.json": "90d5a1de451043947c1c6824379bef050b25f977d892179b163091f4db9bdd94",
+    "q-gate-unchanged.json": "540cea3e91e994600df252e1262b709088b566e723ffb4938ea415548c5c8c91",
+    "build-scoped-frozen.sh": "7482b3b2ca81f190e77cf558a22a424be6199f62084091dbaa140c1bd7caa208",
+    "build-scoped-frozen.log": "2153c37b81c114749556788fcfe32e272d0aad4be840512f048b3325d82210d9",
+    "final-frozen-758b5de-commands.json": "e7816227d213d3894a15ebb19dd8bd05ae95c6024e9bd6ab566524842971b41b",
+    "app-manifest.json": "493466d48526faf5967f9652cd2c02df0130c6d2adcb34ae337af58c5880868d",
+    "BUILD_SOURCE_RECEIPT.json": "15c97c61311250254ad7eef7eecc20698b3db3818b7ab7ae4515bb126055d14b",
+    "original-signed-downgrade-01e364e-FAIL.json": "e415643b3a759efbcb5a48f5e1b2288ec5d2f62f0fedbd56ca77d1ddb3591f8a"
+  }
+}

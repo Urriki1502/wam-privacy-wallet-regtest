@@ -1,0 +1,10 @@
+{
+  "schema": "q05-ci-failure/v1",
+  "status": "FAIL",
+  "source_sha": "bbcc604b7bdbe23075415149b2cfce18acff57dd",
+  "job_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40799817983/job/123206507318",
+  "signature": "NameResolutionError files.pythonhosted.org, build dependency setuptools-84.2.1 metadata",
+  "failure_stage": "pip build dependency installation before Q04 scenario",
+  "runtime_test_executed": false,
+  "disposition": "Retain FAIL; requires successful exact-new-HEAD Q04 job. No runtime/infrastructure blanket PASS, assertion relaxation, or manual complete-matrix redispatch."
+}

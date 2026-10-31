@@ -1,0 +1,23 @@
+{
+  "source_sha": "50d227953a0dce0c367d4c152659ee287d4e4234",
+  "status": "INCOMPLETE",
+  "qualification": false,
+  "reason": "Native Cocoa process exited zero but no final receipt or failure receipt; not accepted as lifecycle PASS. Add positive owner-closed receipt publication before native Qt quit.",
+  "journal_states": [
+    "CLEAN",
+    "STARTING",
+    "RUNNING",
+    "STOPPING",
+    "CLEAN",
+    "STARTING",
+    "RUNNING",
+    "RECOVERING",
+    "STARTING",
+    "RUNNING",
+    "STOPPING",
+    "CLEAN"
+  ],
+  "final_journal_state": "CLEAN",
+  "profile_root": "/private/tmp/wam-fusion-core-c714d8436e81a259",
+  "final_receipt_missing": true
+}

@@ -18,7 +18,8 @@ READS=frozenset(('getblockchaininfo','getblockcount','getbestblockhash',
     'getblockhash','getblock','getconnectioncount','getnetworkinfo',
     'getrawmempool','gettxout','listwallets','waitfornewblock'))
 WRITES=frozenset(('testmempoolaccept','sendrawtransaction','generatetoaddress',
-    'invalidateblock','reconsiderblock','createwallet','getnewaddress','stop'))
+    'invalidateblock','reconsiderblock','createwallet','getnewaddress','stop',
+    'gettxoutsetinfo'))  # Core flush side effect: require owned mutation consent.
 HASH=re.compile(r'[0-9a-f]{64}\Z')
 LIMIT=8*1024*1024
 
@@ -45,6 +46,7 @@ def validate(args):
                   'getnetworkinfo','getrawmempool','listwallets','stop','getnewaddress'):
         valid=not params
     elif method=='createwallet':valid=params==['test']
+    elif method=='gettxoutsetinfo':valid=params==['none']
     elif method in ('getblockhash','waitfornewblock'):
         valid=len(params)==1 and _uint(params[0],1000000 if method=='getblockhash' else 30000)
     elif method=='getblock':
@@ -86,7 +88,10 @@ def decode(raw,method,params):
             if not 20<=len(text)<=120 or not re.fullmatch('wamrt1[023456789acdefghjklmnpqrstuvwxyz]+',text):raise ValueError
             return text
         if method=='stop':
-            if text!='WAM Core stopping':raise ValueError
+            # The pinned signed v0.1.11 macOS binary returns WAM Coin stopping.
+            # Keep the former literal for existing platform fixtures; never
+            # accept arbitrary text, generic success or a prefix match.
+            if text not in ('WAM Core stopping','WAM Coin stopping'):raise ValueError
             return text
         def nonfinite(_):raise ValueError
         value=json.loads(text,object_pairs_hook=_pairs,parse_constant=nonfinite)
@@ -95,6 +100,10 @@ def decode(raw,method,params):
         elif method in ('getblockchaininfo','getnetworkinfo','createwallet','waitfornewblock'):
             good=type(value) is dict
         elif method=='gettxout':good=value is None or type(value) is dict
+        elif method=='gettxoutsetinfo':
+            good=(type(value) is dict and type(value.get('height')) is int
+                  and 0<=value['height']<=1000000 and type(value.get('bestblock')) is str
+                  and HASH.fullmatch(value['bestblock']) is not None)
         elif method=='getblock':good=type(value) is dict and value.get('hash')==params[0] and type(value.get('tx')) is list
         elif method in ('getrawmempool','generatetoaddress'):
             good=type(value) is list and len(value)<=100000 and all(type(v) is str and HASH.fullmatch(v) for v in value)

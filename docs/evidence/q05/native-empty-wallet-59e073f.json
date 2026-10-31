@@ -1,0 +1,54 @@
+{
+  "schema": "q05-empty-wallet-checkpoint-native/v1",
+  "status": "PASS",
+  "source_sha": "59e073fc13458396227ca7d0a2d074aed2f3050f",
+  "checkout_sha": "59e073fc13458396227ca7d0a2d074aed2f3050f",
+  "platform": "macos-arm64",
+  "frozen": false,
+  "core_trust": "official-signed-v0.1.11",
+  "core_version": "v0.1.11",
+  "core_sha256": {
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+  },
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "wsp_executed": true,
+  "python_version": "3.12.15",
+  "dependencies": {
+    "coincurve": "21.0.0",
+    "cryptography": "50.0.0"
+  },
+  "adapter_sha256": "fa9791dcf471f925d156638a1f18b81b62f9b36f6f96df6f1954b191edb7e4c4",
+  "synthetic_rpc": false,
+  "funding_or_mining": false,
+  "signing_or_broadcast": false,
+  "physical_device_acceptance": false,
+  "mainnet_allowed": false,
+  "observations": [
+    {
+      "created_empty_anchored_generation": [
+        1,
+        "7f5c566a266b973650409f5a689bf4f42364aa5b7664a99cb1184a0af6348fd9"
+      ],
+      "height": 0,
+      "confirmed_atoms": 0,
+      "history_count": 0,
+      "plaintext_runtime_removed": true
+    },
+    {
+      "reopened_same_wallet_live_resync": true,
+      "anchored_generation": [
+        2,
+        "b3ebab07676325e90e694b64071b0d09ed98740ba15c178be351efa37236d8ad"
+      ],
+      "original_generation_preserved": true,
+      "height": 0,
+      "confirmed_atoms": 0,
+      "history_count": 0,
+      "plaintext_runtime_removed": true
+    }
+  ],
+  "wallet_id": "51ac112292aab43ca7bf891cc65c4919",
+  "payment_code_sha256": "2a0b20e77beb3fa68b3a2534c4ea2efc9cd9b53c9f5bb5902ab1532ada6c0d8c",
+  "timestamp_utc": "2026-10-28T06:51:19.235782+00:00"
+}

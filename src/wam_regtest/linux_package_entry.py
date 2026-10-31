@@ -25,6 +25,9 @@ def main():
             raise ValueError('LINUX_BUNDLE_NATIVE_CRYPTO_DENIED')
         args=sys.argv[1:]
         q04_mode = args and args[0] == 'q04-external-miner'
+        if args[:1]==['--ci-q05-managed-wallet']:
+            from wam_regtest.q05_packaged import run
+            return run(core,source,args[1:])
         if not args:
             # Desktop launch still requires independent manifest approval and
             # an already provisioned witness. Never auto-install root code.
@@ -43,8 +46,10 @@ def main():
                     'No mainnet, real funds or privileged service installation.',
                     QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No)!=QMessageBox.StandardButton.Yes:return 0
-            args=['--gui','--manifest-sha256',approved.strip(),'--anchor-socket',endpoint,
-                '--confirm-experimental-developer-regtest']
+            from wam_regtest.linux_runtime import configure
+            configure(core,approved.strip(),Path(endpoint),authorized=True)
+            from wam_regtest.managed_onboarding import launch
+            return launch(core,source)
         if any(a=='--core-dir' or a.startswith('--core-dir=') or a=='--wsp-source-root'
                 or a.startswith('--wsp-source-root=') for a in args):
             raise ValueError('LINUX_BUNDLE_EXTERNAL_RESOURCE_OVERRIDE_DENIED')
@@ -61,8 +66,9 @@ def main():
         from wam_regtest.linux_developer_core import LinuxCoreError
         from wam_regtest.q04_runner import Q04RunnerError
         from wam_regtest.q04_fixture import Q04FixtureError
+        from wam_regtest.rpc_contention import RpcContentionError
         reason='LINUX_FROZEN_UNCLASSIFIED'
-        if type(error) in (LinuxCoreError,Q04RunnerError,Q04FixtureError,ExternalAttachmentError):
+        if type(error) in (LinuxCoreError,Q04RunnerError,Q04FixtureError,ExternalAttachmentError,RpcContentionError):
             args=error.args
             if (len(args)==1 and type(args[0]) is str and len(args[0])<=110
                     and re.fullmatch(r'(?:LINUX|Q04|EXTERNAL_ATTACHMENT)_[A-Z0-9_]{4,100}',args[0])):

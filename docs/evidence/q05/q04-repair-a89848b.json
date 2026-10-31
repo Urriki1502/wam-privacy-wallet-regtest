@@ -1,0 +1,175 @@
+{
+  "repair_source_sha": "a89848b22cae85d766310687fe968157f35657e8",
+  "workflow_run_id": 40615131718,
+  "scope": "Q04 CI regression repair only; not integrated Q05 qualification",
+  "jobs": [
+    {
+      "id": 122575720302,
+      "name": "native-contracts",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615131718/job/122575720302"
+    },
+    {
+      "id": 122575896286,
+      "name": "headless-wallet",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615131718/job/122575896286"
+    },
+    {
+      "id": 122575896343,
+      "name": "native-qt-wallet",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615131718/job/122575896343"
+    },
+    {
+      "id": 122575898725,
+      "name": "developer-core",
+      "status": "completed",
+      "conclusion": "skipped",
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615131718/job/122575898725"
+    },
+    {
+      "id": 122576258488,
+      "name": "q04-miner-coexistence",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615131718/job/122576258488"
+    },
+    {
+      "id": 122576258508,
+      "name": "q04-contention",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615131718/job/122576258508"
+    },
+    {
+      "id": 122576343783,
+      "name": "frozen-wallet (headless)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615131718/job/122576343783"
+    },
+    {
+      "id": 122576343826,
+      "name": "frozen-wallet (desktop)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/40615131718/job/122576343826"
+    }
+  ],
+  "native_artifact": {
+    "id": 12784418762,
+    "sha256": "b1213564e6441ef8adb7f24c1f63b5e76ff1e41dc41a8b7bb0cdac75f79010ea"
+  },
+  "frozen": [
+    {
+      "job_id": 122576343826,
+      "receipt": {
+        "changed_cookie_reconnect_denied_before_auth": true,
+        "contention_read_height": 3,
+        "core_sha256": {
+          "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+          "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+        },
+        "credential_fault_actor": "disposable_fixture_operator",
+        "execution": "FROZEN",
+        "genuine_busy": {
+          "attachment_http_503_count": 4,
+          "coalesced_read_calls": 0,
+          "fresh_socket_process_attestation_per_attempt": true,
+          "gui_coalescing": "PASS",
+          "load_http_503_count": 3,
+          "load_readiness": "ALL_SIX_SENT_AND_GENUINE_CORE_503",
+          "longpoll_timeout_ms": 10000,
+          "read_attempts": 4,
+          "recovered_height": 4,
+          "retry_intervals_seconds": [
+            0.10198483299998884,
+            0.19586139599999797,
+            0.39073645299998816
+          ],
+          "status": "Q04_GENUINE_BUSY_PATH_PASS",
+          "synthetic_busy": false,
+          "write_boundary_attempts": 1,
+          "write_retried": false
+        },
+        "height_before": 0,
+        "miner_driver": "sustained-thread-with-separate-Core-CLI-processes",
+        "miner_heights": [
+          1,
+          2,
+          2,
+          3,
+          3
+        ],
+        "platform": "linux-x86_64",
+        "port_change_detected": true,
+        "reconnect_fresh_attachment": true,
+        "reconnect_height": 3,
+        "reconnect_real_tcp_reset_count": 1,
+        "restored_cookie_still_requires_new_authorization": true,
+        "status": "Q04_MINER_COEXISTENCE_PASS",
+        "synthetic_rpc": false,
+        "timestamp_utc": "2026-10-28T01:31:25Z",
+        "write_denied": true,
+        "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e"
+      }
+    },
+    {
+      "job_id": 122576343783,
+      "receipt": {
+        "changed_cookie_reconnect_denied_before_auth": true,
+        "contention_read_height": 3,
+        "core_sha256": {
+          "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652",
+          "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6"
+        },
+        "credential_fault_actor": "disposable_fixture_operator",
+        "execution": "FROZEN",
+        "genuine_busy": {
+          "attachment_http_503_count": 4,
+          "coalesced_read_calls": 0,
+          "fresh_socket_process_attestation_per_attempt": true,
+          "gui_coalescing": "NOT_APPLICABLE_NO_QT",
+          "load_http_503_count": 3,
+          "load_readiness": "ALL_SIX_SENT_AND_GENUINE_CORE_503",
+          "longpoll_timeout_ms": 10000,
+          "read_attempts": 4,
+          "recovered_height": 4,
+          "retry_intervals_seconds": [
+            0.10552861600000085,
+            0.20055586299999106,
+            0.36456060599999773
+          ],
+          "status": "Q04_GENUINE_BUSY_PATH_PASS",
+          "synthetic_busy": false,
+          "write_boundary_attempts": 1,
+          "write_retried": false
+        },
+        "height_before": 0,
+        "miner_driver": "sustained-thread-with-separate-Core-CLI-processes",
+        "miner_heights": [
+          1,
+          2,
+          2,
+          3,
+          3
+        ],
+        "platform": "linux-x86_64",
+        "port_change_detected": true,
+        "reconnect_fresh_attachment": true,
+        "reconnect_height": 3,
+        "reconnect_real_tcp_reset_count": 1,
+        "restored_cookie_still_requires_new_authorization": true,
+        "status": "Q04_MINER_COEXISTENCE_PASS",
+        "synthetic_rpc": false,
+        "timestamp_utc": "2026-10-28T01:31:29Z",
+        "write_denied": true,
+        "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e"
+      }
+    }
+  ]
+}

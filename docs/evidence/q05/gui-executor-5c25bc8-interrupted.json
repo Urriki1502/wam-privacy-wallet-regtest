@@ -1,0 +1,15 @@
+{
+  "schema": "q05-interrupted-probe-report/v1",
+  "source_sha": "5c25bc8599d6140ba970a041f9808b3dd4244079",
+  "status": "FAIL",
+  "qualification": false,
+  "failure_code": "MANAGED_RECOVERY_ORIGINAL_OWNER_REQUIRED",
+  "failure_basis": "Prior session checkpoint reports missing authorized=True in executor recover_dead; source inspection confirms call. Original final receipt was not emitted. This report does not recreate missing runtime observations.",
+  "resume_observation": "No probe/engineering lease/Core process found on resume; old /private/tmp profile absent. Cause of interruption and profile absence is unknown. No cleanup or adoption performed by this resumed session.",
+  "retained_screenshot_sha256": "a914d3e9a525f636b818e325151f631a396bf209cbdc4c8a39e4f064846ce76b",
+  "missing_evidence": [
+    "final native receipt",
+    "original disposable profile"
+  ],
+  "preserve_previous_failures": true
+}

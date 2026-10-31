@@ -1,0 +1,46 @@
+name: Q05 Linux native supervisor contracts (no Core E2E)
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/test_q05*.py'
+      - 'scripts/q01_environment.py'
+      - 'requirements/**'
+      - '.github/workflows/q05-linux-supervisor-contracts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  supervisor-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.15'
+      - name: Q01 clean hash-locked headless environment
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/q01_environment.py --profile headless --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
+      - name: Native supervisor storage, protocol and mocked-Core contracts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y acl
+          python -m unittest discover -s tests -p 'test_q05*.py' -v
+      - name: Preserve environment provenance (not Q05 Core acceptance)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q05-linux-supervisor-install-${{ github.event.pull_request.head.sha || github.sha }}
+          path: q01-install.json
+          if-no-files-found: error
+          retention-days: 14

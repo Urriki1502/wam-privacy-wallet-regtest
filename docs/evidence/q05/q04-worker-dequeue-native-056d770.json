@@ -1,0 +1,50 @@
+{
+  "changed_cookie_reconnect_denied_before_auth": true,
+  "contention_read_height": 3,
+  "core_sha256": {
+    "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+    "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+  },
+  "credential_fault_actor": "disposable_fixture_operator",
+  "execution": "SOURCE_NATIVE",
+  "genuine_busy": {
+    "attachment_http_503_count": 4,
+    "coalesced_read_calls": 0,
+    "fresh_socket_process_attestation_per_attempt": true,
+    "gui_coalescing": "NOT_APPLICABLE_NO_QT",
+    "load_http_503_count": 3,
+    "load_readiness": "WORKER_DEQUEUED_THEN_ALL_SIX_SENT_AND_GENUINE_CORE_503",
+    "longpoll_timeout_ms": 30000,
+    "read_attempts": 4,
+    "recovered_height": 4,
+    "retry_intervals_seconds": [
+      0.12327449998701923,
+      0.2274641249969136,
+      0.4133394170203246
+    ],
+    "status": "Q04_GENUINE_BUSY_PATH_PASS",
+    "synthetic_busy": false,
+    "write_boundary_attempts": 1,
+    "write_retried": false
+  },
+  "height_before": 0,
+  "miner_driver": "sustained-thread-with-separate-Core-CLI-processes",
+  "miner_heights": [
+    1,
+    2,
+    2,
+    3,
+    3
+  ],
+  "platform": "macos-arm64",
+  "port_change_detected": true,
+  "reconnect_fresh_attachment": true,
+  "reconnect_height": 3,
+  "reconnect_real_tcp_reset_count": 1,
+  "restored_cookie_still_requires_new_authorization": true,
+  "status": "Q04_MINER_COEXISTENCE_PASS",
+  "synthetic_rpc": false,
+  "timestamp_utc": "2026-10-28T06:38:04Z",
+  "write_denied": true,
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e"
+}

@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 2
           persist-credentials: false
       - name: Checkout immutable WSP-1 upstream source
         uses: actions/checkout@v4
@@ -234,6 +235,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 2
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
@@ -268,6 +270,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 2
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
@@ -303,6 +306,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 2
           persist-credentials: false
       - name: Immutable upstream WSP-1 source
         uses: actions/checkout@v4
@@ -355,6 +359,8 @@ jobs:
             package-output/SHA256SUMS.json
             package-output/BUILD_SOURCE_RECEIPT.json
             package-output/q04-frozen-evidence.json
+            package-output/q05-frozen-evidence*.json
+            package-output/q05-frozen-evidence*.png
             package-output/cocoa-evidence/
             package-output/INDEPENDENT-WALLET-SECURITY.json
             package-output/RELEASE_CANDIDATE_MANIFEST.json
@@ -376,5 +382,84 @@ jobs:
             q01-install.json
             q01-dependency-negatives.json
             q01-core-negatives.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Preserve Q05 frozen receipts including FAIL (no datadirs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q05-frozen-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: package-output/q05-frozen-evidence*.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  q05-managed-gui:
+    name: Q05 serialized owned GUI / signed Core / Cocoa
+    runs-on: macos-15
+    timeout-minutes: 35
+    env:
+      PYTHONUNBUFFERED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.10'
+          architecture: 'arm64'
+      - name: Q01 hash-locked GUI environment
+        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q05-gui-env" --receipt q05-install.json
+      - name: Authenticate official ARM64 Core
+        run: |
+          test "$(uname -m)" = arm64
+          if ! command -v gpg >/dev/null; then brew install gnupg; fi
+          python -m wam_regtest.release --platform macos-arm64 --destination core
+      - name: Real managed wallet create receive sign broadcast confirm close reopen durable crash
+        timeout-minutes: 18
+        env:
+          QT_QPA_PLATFORM: cocoa
+        run: |
+          python scripts/qualify_q05_native.py \
+            --core-dir "${GITHUB_WORKSPACE}/core" --wsp-source "${GITHUB_WORKSPACE}/wsp-upstream" \
+            --output-dir "${RUNNER_TEMP}/q05-native-matrix" --confirm-disposable-regtest
+      - name: Require actual combined-source GUI receipt
+        shell: python
+        run: |
+          import json,os
+          from pathlib import Path
+          evidence=Path(os.environ['RUNNER_TEMP'])/'q05-native-matrix'
+          matrix=json.loads((evidence/'matrix.json').read_text())
+          assert matrix['status']=='PASS' and matrix['last_owner_shutdown_verified'] is True
+          assert matrix['source_provenance']['candidate_source_sha']==os.environ['WAM_SOURCE_HEAD']
+          assert len(matrix['completed'])==19
+          assert {'signed-divergent-cut','uncertain-divergent-cut'}<=set(matrix['completed'])
+          r=json.loads((evidence/'gui.json').read_text())
+          assert r['status']=='PASS' and r['owner_shutdown_verified'] is True
+          assert r['source_sha']==os.environ['WAM_SOURCE_HEAD']
+          assert r['synthetic_rpc'] is False and r['frozen'] is False
+          assert r['mainnet_allowed'] is False and len(r['observations'])==7
+          assert r['observations'][-1]['same_wallet_tip_history_reservations'] is True
+          assert r['observations'][-1]['crash_scope']=='after-owned-Core-flush-without-clean-shutdown'
+          assert r['observations'][-2]['owned_Core_flush_before_cold_crash'] is True
+      - name: Preserve native evidence including FAIL receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q05-gui-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            q05-gui-native*.json
+            q05-gui-native*.png
+            q05-install.json
+            ${{ runner.temp }}/q05-native-matrix/
           if-no-files-found: warn
           retention-days: 14

@@ -344,7 +344,11 @@ class LiveCoreReadOnlyCli:
         try:
             return _read_cli(
                 [str(self._binary), f"-datadir={self._datadir}", method, *(str(a) for a in args)],
-                timeout=10,
+                # The single 101-block disposable REGTEST funding fixture
+                # can exceed 10s on macOS CI; existing Core smoke allows 90s.
+                # All other RPCs retain 10s. No retry after uncertain timeout.
+                timeout=90 if method == 'generatetoaddress' and len(args) == 2
+                       and str(args[0]) == '101' else 10,
             )
         except CoreSmokeError as error:
             self._genesis = None

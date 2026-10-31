@@ -1,0 +1,62 @@
+{
+  "schema": "q05-ci-failure-history/v1",
+  "status": "FAIL",
+  "source_sha": "6ad30b12058afd1d5ad84e4ee219a9cb7c550a3d",
+  "checkout_sha": "ef7aa3c5fa21fc79253fc680997b013f570f301c",
+  "pr": 138,
+  "failures": [
+    {
+      "workflow_run_id": 40986485605,
+      "job_id": 123838610312,
+      "artifact_id": 12947436865,
+      "artifact_sha256": "c608e3318b3b334341ed68689c86a4839b00a66d32cf633e807240421b9dde15",
+      "failure": "LinuxWitnessError at INTERRUPTED_PUBLICATION_SAFE_REFUSAL after real signed reservation",
+      "diagnosis": "Live session holds native root-witness lease; probe reads through a separate anchor object and correctly contends. Fix probe to observe exact session.vault.anchor; native lease enforcement unchanged."
+    },
+    {
+      "workflow_run_id": 40986485581,
+      "job_id": 123838610127,
+      "artifact_id": 12947012571,
+      "artifact_sha256": "c4f744e5350d77f5b026fa5b3b4ebbd325af2c805aa2bd513ca0ff5182cc7cc5",
+      "failure": "RealWspScanError / CoreSmokeError in PUBLIC_DISPOSABLE_FIXTURE_FUNDING before divergent cut",
+      "diagnosis": "Exact CLI cause not preserved by old receipt; add typed finite diagnostic and guaranteed transport close. No timeout increase, write retry, acceptance or safety relaxation."
+    },
+    {
+      "workflow_run_id": 40986485605,
+      "job_id": 123838750832,
+      "failure": "Pinned upstream source checkout 82a1487fd86f7021b1b9fc1524d267fca126f7d4 from wamcoin-core-dev/wam-coin returns repository not found, exit 128",
+      "blocker": {
+        "actor": "Upstream Core repository owner / repository access administrator",
+        "action": "Restore access to the exact pinned reviewed source or provide independently verifiable official relocation of the same commit. Do not upgrade Core, change trust/pins or suppress required job."
+      }
+    },
+    {
+      "workflow_run_id": 40986485605,
+      "job_id": 123839178490,
+      "failure": "Final frozen headless passed security/lifecycle then signed completion exited 2. Raw job log retained; original private fixture/profile was not accessed. Failure receipt was not uploaded by old success-only packaging step, so exact inner cause cannot be invented.",
+      "next_action": "Fix same original-session anchor observation; preserve Q05 frozen public receipts with always() on every OS; replay genuine final executable."
+    },
+    {
+      "workflow_run_id": 40986485605,
+      "job_id": 123839178574,
+      "failure": "Final frozen desktop passed security/lifecycle then signed completion exited 2. Raw job log retained; original private fixture/profile was not accessed. Failure receipt was not uploaded by old success-only packaging step, so exact inner cause cannot be invented.",
+      "next_action": "Fix same original-session anchor observation; preserve Q05 frozen public receipts with always() on every OS; replay genuine final executable."
+    }
+  ],
+  "receipts": [
+    {
+      "file": "linux-signed-completion-FAIL.json",
+      "sha256": "8297994d3d0d9e60c724c4ac6cb8c8d2a2f17c8cde02c36ff08147799c830cbd"
+    },
+    {
+      "file": "mac-signed-divergent-cut-FAIL.json",
+      "sha256": "a91343e5c4fd2fa016a76990553c5245114eaa4d457e2b6d0eedb255a6404ff2"
+    }
+  ],
+  "raw_fail_evidence_retained": "/Users/dinhdang/Developer/WAM-Fusion/q05-integration-20261030-01",
+  "historical_original_signed_downgrade": "docs/evidence/q05/reservation-recovery-758b5de/original-signed-downgrade-01e364e-FAIL.json",
+  "current_source_requalification": "PENDING corrected exact-source native/frozen runs; historical PASS does not qualify changed code",
+  "mainnet_allowed": false,
+  "engineering_handoff": false,
+  "full_q_accepted": false
+}

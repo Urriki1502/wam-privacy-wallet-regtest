@@ -1,0 +1,8 @@
+test_create_only_and_private_regular_file (test_encrypted_storage.NativeEncryptedStorageContracts.test_create_only_and_private_regular_file) ... ok
+test_security_probe_requires_real_payment_and_disposable_consent (test_encrypted_storage.NativeEncryptedStorageContracts.test_security_probe_requires_real_payment_and_disposable_consent) ... ok
+test_symlink_hardlink_and_public_directory_rejected (test_encrypted_storage.NativeEncryptedStorageContracts.test_symlink_hardlink_and_public_directory_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.004s
+
+OK
