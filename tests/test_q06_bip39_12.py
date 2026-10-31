@@ -4,7 +4,11 @@ import json
 from pathlib import Path
 import unittest
 
+from hashlib import sha256
 from mnemonic import Mnemonic
+from mnemonic.mnemonic import b58encode
+from wam_sp.hd import ExtendedPrivate, HARDENED, silent_key
+from wam_sp.wallet import Signer
 
 from wam_regtest.bip39_12 import (
     Bip39Regtest12Keys, Bip39TwelveError, generate_phrase, normalize_phrase, PROFILE,
@@ -30,6 +34,22 @@ class Q06Bip39TwelveSourceContracts(unittest.TestCase):
             with self.keys(phrase, passphrase="TREZOR") as original:
                 self.assertEqual(len(original._seed), 64, f"SEED_LENGTH_{i}")
                 self.assertEqual(bytes(original._seed).hex(), vector["seed"], f"SEED_VECTOR_{i}")
+                # Preserve PR #43's public BIP32 root-xprv and role-path proof.
+                # Never print xprv/seed on assertion failure.
+                root = ExtendedPrivate.master(bytes(original._seed))
+                payload = bytes.fromhex("0488ade4") + bytes(9) + root.chain_code + b"\\x00" + root.secret
+                checksum = sha256(sha256(payload).digest()).digest()[:4]
+                self.assertTrue(b58encode(payload + checksum) == vector["xprv"], f"XPRV_VECTOR_{i}")
+                expected_scan = root.derive(
+                    (352 | HARDENED, 1 | HARDENED, 0 | HARDENED, 1 | HARDENED, 0)
+                )
+                self.assertEqual(original.scan_account().scan_secret,
+                                 int.from_bytes(expected_scan.secret, "big"), f"SCAN_ROLE_{i}")
+                self.assertEqual(original.spend_secret(0),
+                                 silent_key(bytes(original._seed), 0, "spend", coin_type=1),
+                                 f"SPEND_ROLE_{i}")
+                self.assertEqual(original.accounts(), (original.scan_account(),))
+                self.assertEqual(Signer(original)._keyring, original)
                 self.assertEqual(
                     original.public_metadata()["receive_code"],
                     vector["receive_code"], f"WSP_RECEIVE_VECTOR_{i}",
@@ -85,9 +105,19 @@ class Q06Bip39TwelveSourceContracts(unittest.TestCase):
                 self.keys(twelve, passphrase=passphrase)
         with self.keys(twelve) as keys:
             self.assertEqual(repr(keys), "<Bip39Regtest12Keys redacted>")
+            self.assertFalse(hasattr(keys, "backup"))
+            self.assertFalse(hasattr(keys, "rotate"))
             for account in (-1, True, 16, None):
                 with self.assertRaises(Bip39TwelveError):
                     keys.scan_account(account)
+            for epoch in (-1, True, 1, None):
+                with self.assertRaises(Bip39TwelveError):
+                    keys.spend_secret(epoch)
+            for birthday in (0, True, 2**31, None):
+                with self.assertRaises(Bip39TwelveError):
+                    keys.scan_account(birthday=birthday)
+            with self.assertRaises(Bip39TwelveError):
+                keys._key(0, "unknown-role")
         keys = self.keys(twelve)
         keys.close()
         self.assertEqual(len(keys._seed), 64)
