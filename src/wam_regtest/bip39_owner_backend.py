@@ -24,8 +24,9 @@ class Q06ReadOnlyError(ValueError):
 class Bip39ReadOnlyBackend(ManagedWalletBackend):
     """All owned-Core and native-keychain calls execute on WalletExecutor thread."""
 
-    def __init__(self, root, core, source, *, keychain=None):
-        super().__init__(root, core, source, keychain=keychain)
+    def __init__(self, root, core, source, *, keychain=None, _anchor_factory=None):
+        super().__init__(root, core, source, keychain=keychain,
+                         _anchor_factory=_anchor_factory)
         self._seed_folder = None
         self._secret = None
         self._public = None
@@ -66,6 +67,13 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         if self._secret is not None:
             raise Q06ReadOnlyError("Q06_GUI_ALREADY_OPEN")
         owner = self._core()
+        # The ORIGINAL CoreSupervisor must initialize its fresh owner-only
+        # namespace before the disposable macOS Keychain file is created.
+        # Q05 uses the same deferred native-anchor boundary; precreating
+        # the keychain in root makes CoreSupervisor reject a nonempty root.
+        if self._anchor_factory is not None and not self._anchor_ready:
+            self.keychain = self._anchor_factory(self.root)
+            self._anchor_ready = True
         from .bip39_seed_vault import create_owned_seed_container, open_owned_seed_container
         from .bip39_12 import generate_phrase
         reveal = ""
