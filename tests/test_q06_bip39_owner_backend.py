@@ -64,6 +64,7 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         self.backend._secret=bytearray(PASSWORD)
         self.backend._public={"receive_code":"wamrtsp1public"}
         self.backend._seed_folder=self.root/("bip39-12-"+"a"*32)
+        self.owner.cli=self.root/"wam-cli"  # mocked CLI entry, no binary executed
         self.owner.read=Mock()
         self.owner.read.call.return_value=102
         cli=Mock()
