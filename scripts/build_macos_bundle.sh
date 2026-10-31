@@ -141,6 +141,23 @@ with tempfile.TemporaryDirectory(prefix='wam-q04-mac-frozen-') as clean:
                    cwd=clean, env=q04_env, timeout=600, check=True)
     shutil.copyfile(Path(clean)/'q04-frozen-evidence.json', 'package-output/q04-frozen-evidence.json')
 print("MACOS_APP_STAGE=FROZEN_Q04_EXTERNAL_MINER_PASS", flush=True)
+# Reuse this SAME signed-Core + frozen-app job for the actual Q06 create /
+# reopen / fresh BIP39 restore + native Cocoa receive view. No new CI job,
+# synthetic RPC, background miner or developer-managed node is introduced.
+print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_START", flush=True)
+with tempfile.TemporaryDirectory(prefix='wam-q06-mac-frozen-') as clean:
+    subprocess.run([str(Path(binary).resolve()), '--ci-q06-bip39-readonly'],
+                   cwd=clean, env=cocoa, timeout=240, check=True)
+    report = Path(clean)/'q06-frozen-readonly-evidence.json'
+    from json import loads
+    data = loads(report.read_text())
+    assert (data['status']=='Q06_NATIVE_BIP39_12_READONLY_OWNER_GUI_PASS'
+            and data['Q06_BIP39_disposable_fresh_restore_same_receive'] is True
+            and data['Q06_native_Qt_receive_bound'] is True
+            and data['Q06_original_core_clean_shutdown'] is True
+            and data['Q06_Sign_or_Broadcast_executed'] is False)
+    shutil.copyfile(report, 'package-output/q06-frozen-readonly-evidence.json')
+print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_PASS", flush=True)
 PY
 python -I scripts/qualify_q05_frozen.py --executable "$BIN" \
   --output "$(pwd)/package-output/q05-frozen-evidence.json"
