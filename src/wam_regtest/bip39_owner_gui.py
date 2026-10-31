@@ -73,7 +73,9 @@ class Bip39TrialWindow(QWidget):
     def _command(self, action, *args):
         if self._worker is not None or self.executor.busy or self.executor.closed:
             return False
-        worker=ControlWorker(self.executor, action, args, parent=self)
+        worker=ControlWorker(self.executor, action, args,
+                             kwargs={"timeout":240} if action in ("mine","snapshot") else None,
+                             parent=self)
         self._worker=worker
         worker.ready.connect(self._on_ready, Qt.ConnectionType.QueuedConnection)
         worker.denied.connect(self._on_denied, Qt.ConnectionType.QueuedConnection)
