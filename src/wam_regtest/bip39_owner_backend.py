@@ -113,6 +113,9 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         from .q05_checkpoint_scenario import fund_checkpoint_fixture
         owner=self._core()
         _owned(owner)
+        seed_id=self._seed_folder.name.removeprefix("bip39-12-")
+        if (owner.directory / ("bip39-12-scan-" + seed_id)).exists():
+            raise Q06ReadOnlyError("Q06_GUI_ANCHORED_SCANNER_REQUIRES_RECONCILIATION")
         rpc=WalletCoreCli(owner.cli,owner.directory)
         try:
             rpc.attest()  # exact signed Core v0.1.11, chain and zero peers
