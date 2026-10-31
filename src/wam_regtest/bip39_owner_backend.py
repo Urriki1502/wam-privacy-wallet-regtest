@@ -135,12 +135,15 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             funding_phase="FIXTURE"
             txid, atoms, height = fund_checkpoint_fixture(
                 rpc, self._public["receive_code"], address, fixture_record)
-            funding_phase="POSTCHECK"
+            funding_phase="POSTCHECK_OWNER"
             _owned(owner)
+            funding_phase="POSTCHECK_RESULT"
             if (type(txid) is not str or not re.fullmatch("[0-9a-f]{64}",txid)
                     or type(atoms) is not int or atoms<=0
-                    or type(height) is not int or height<102
-                    or rpc.call("getblockcount")!=height):
+                    or type(height) is not int or height<102):
+                raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_UNVERIFIED")
+            funding_phase="POSTCHECK_HEIGHT"
+            if rpc.call("getblockcount")!=height:
                 raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_UNVERIFIED")
             return {"status":"Q06_REGTEST_PUBLIC_BIP39_RECEIVE_FUNDED",
                     "txid":txid,"atoms":atoms,"height":height,
@@ -158,7 +161,8 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                                "generation":"GENERATION",
                                "payment":"PAYMENT"}.get(observed,"FIXTURE_UNCLASSIFIED")
             else:
-                failure_stage=funding_phase if funding_phase in ("PREFLIGHT","POSTCHECK") else "UNCLASSIFIED"
+                failure_stage=funding_phase if funding_phase in (
+                    "PREFLIGHT","POSTCHECK_OWNER","POSTCHECK_RESULT","POSTCHECK_HEIGHT") else "UNCLASSIFIED"
             if sys.platform=="darwin":
                 print("MACOS_Q06_FUNDING_FAILURE_STAGE="+failure_stage,flush=True)
             raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_UNCERTAIN") from None
