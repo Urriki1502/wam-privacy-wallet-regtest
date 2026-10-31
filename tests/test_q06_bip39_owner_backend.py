@@ -59,6 +59,33 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         self.assertTrue(self.backend._anchor_ready)
         self.backend.execute("lock",(),{})
 
+    def test_funding_postcheck_uses_owned_read_after_fixture_closes_cli(self):
+        from unittest.mock import Mock, call
+        self.backend._secret=bytearray(PASSWORD)
+        self.backend._public={"receive_code":"wamrtsp1public"}
+        self.backend._seed_folder=self.root/("bip39-12-"+"a"*32)
+        self.owner.read=Mock()
+        self.owner.read.call.return_value=102
+        cli=Mock()
+        cli.call.return_value=0  # fresh-chain precondition, BEFORE mining
+        cli._transport=Mock()
+        def funding(rpc, payment_code, address, record):
+            self.assertIs(rpc,cli)
+            self.assertEqual(payment_code,"wamrtsp1public")
+            rpc._transport.close()  # the real shared fixture closes its transport
+            return "a"*64, 150000, 102
+        with (patch("wam_regtest.managed_wallet_checkpoint._owned") as ownership,
+              patch("wam_regtest.wallet_session.WalletCoreCli",return_value=cli),
+              patch("wam_regtest.wsp_live.public_regtest_mining_address",return_value="wamrt1public"),
+              patch("wam_regtest.q05_checkpoint_scenario.fund_checkpoint_fixture",
+                    side_effect=funding)):
+            receipt=self.backend.execute("mine",(),{})
+        self.assertEqual(receipt["status"],"Q06_REGTEST_PUBLIC_BIP39_RECEIVE_FUNDED")
+        self.assertEqual(receipt["height"],102)
+        self.assertEqual(cli.call.call_args_list,[call("getblockcount")])
+        self.owner.read.call.assert_called_once_with("getblockcount")
+        self.assertEqual(ownership.call_count,2)
+
     def test_gui_create_receipt_shows_exact_twelve_words_only_once(self):
         with (patch("wam_regtest.bip39_12.generate_phrase",return_value=PHRASE),
               patch("wam_regtest.bip39_seed_vault.create_owned_seed_container",

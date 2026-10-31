@@ -143,7 +143,10 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                     or type(height) is not int or height<102):
                 raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_UNVERIFIED")
             funding_phase="POSTCHECK_HEIGHT"
-            if rpc.call("getblockcount")!=height:
+            # The fixture closes its WalletCoreCli HTTP transport after funding.
+            # Reusing that terminal session would reject a valid confirmed payment.
+            # The original CoreSupervisor read transport was just re-attested by _owned.
+            if owner.read.call("getblockcount")!=height:
                 raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_UNVERIFIED")
             return {"status":"Q06_REGTEST_PUBLIC_BIP39_RECEIVE_FUNDED",
                     "txid":txid,"atoms":atoms,"height":height,
