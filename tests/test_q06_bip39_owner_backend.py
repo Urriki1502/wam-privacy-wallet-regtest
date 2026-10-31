@@ -30,7 +30,7 @@ class Q06OwnerBackendContracts(unittest.TestCase):
     def test_gui_create_receipt_shows_exact_twelve_words_only_once(self):
         with (patch("wam_regtest.bip39_12.generate_phrase",return_value=PHRASE),
               patch("wam_regtest.bip39_seed_vault.create_owned_seed_container",
-                    return_value=(self.root/"bip39-12-"+"0"*32,{"profile":"q06",
+                    return_value=(self.root/("bip39-12-"+("0"*32)),{"profile":"q06",
                         "account_id":"public-identity","receive_code":"wamrtsp1public"}))):
             result=self.backend.execute("open",(PASSWORD,"create",""),{})
         self.assertEqual(result["mnemonic_once"],PHRASE)
