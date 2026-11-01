@@ -42,6 +42,7 @@ def qualify(core, source):
         "q06_bip39_spend_confirmed": False,
         "q06_bip39_same_owner_reopen_reserved": False,
         "q06_bip39_same_chain_seed_history_recovery": False,
+        "q06_post_reopen_txid_readonly_reconciliation": False,
         "q06_bip39_fresh_mnemonic_full_history_recovery": False,
     }
     def stage(message):
@@ -158,6 +159,18 @@ def qualify(core, source):
                 raise ValueError("Q06_SPEND_REOPEN_STATE_DENIED")
             data["q06_bip39_same_owner_reopen_reserved"] = True
             stage("REOPEN_ANCHORED_RESERVATION_PASS")
+            stage("POST_REOPEN_TXID_INSPECTION_START")
+            resolved=executor.request("inspect_confirmed",broadcast,timeout=240)
+            unknown=executor.request("inspect_confirmed","f"*64,timeout=240)
+            if (resolved["status"]!="Q06_CONFIRMED_IN_VERIFIED_HISTORY"
+                    or resolved["txid"]!=broadcast
+                    or resolved["write_attempted"] is not False
+                    or resolved["broadcast_allowed"] is not False
+                    or unknown["status"]!="Q06_TX_NOT_IN_SHOWN_CONFIRMED_HISTORY"
+                    or unknown["write_attempted"] is not False):
+                raise ValueError("Q06_POST_REOPEN_TXID_INSPECTION_DENIED")
+            data["q06_post_reopen_txid_readonly_reconciliation"]=True
+            stage("POST_REOPEN_TXID_INSPECTION_PASS")
             executor.request("quit", timeout=90)
             if not executor.join(15) or not executor.closed:
                 raise ValueError("Q06_SPEND_OWNED_SHUTDOWN_DENIED")
