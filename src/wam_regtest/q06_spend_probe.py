@@ -138,15 +138,29 @@ def qualify(core, source):
             app.processEvents()
             stage("FUSION_EVENT_DELIVERY_PASS")
             from .wallet_read import format_wam
+            # Fixed public one-token categories. Never log wallet values,
+            # seed, receive code, TXID, RPC response or arbitrary UI text.
             if window.navigation.count()!=6:
+                stage("FUSION_NAVIGATION_DENIED")
                 raise ValueError("Q06_FUSION_NAVIGATION_DENIED")
+            stage("FUSION_NAVIGATION_PASS")
+            if window._last_verified is None:
+                stage("FUSION_VERIFIED_SNAPSHOT_NOT_RENDERED")
+                raise ValueError("Q06_FUSION_VERIFIED_SNAPSHOT_NOT_RENDERED")
+            stage("FUSION_VERIFIED_SNAPSHOT_RENDERED")
             if (window.overview.balance_value.text()
                     !=format_wam(after["confirmed_atoms"],grouped=True)+" WAM"):
+                stage("FUSION_BALANCE_BINDING_DENIED")
                 raise ValueError("Q06_FUSION_AFTER_SEND_BALANCE_DENIED")
+            stage("FUSION_BALANCE_BINDING_PASS")
             if window.receive_page.code!=opened["receive_code"]:
+                stage("FUSION_RECEIVE_BINDING_DENIED")
                 raise ValueError("Q06_FUSION_AFTER_SEND_RECEIVE_DENIED")
+            stage("FUSION_RECEIVE_BINDING_PASS")
             if window.history_page.table.rowCount()<2:
+                stage("FUSION_HISTORY_BINDING_DENIED")
                 raise ValueError("Q06_FUSION_AFTER_SEND_HISTORY_DENIED")
+            stage("FUSION_HISTORY_BINDING_PASS")
             stage("FUSION_REAL_CORE_CONFIRMED_VIEW_PASS")
             if (not window.last_txid.isReadOnly()
                     or window.last_txid.text() != broadcast):
