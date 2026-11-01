@@ -93,6 +93,7 @@ class Q06OwnedSpendSession(WalletSession):
         self._q06_owner = owner
         self._q06_guard = guard
         self._q06_uncertain = False
+        self._q06_pending_confirm = None
 
     def _rpc(self):
         if self._q06_uncertain:
@@ -111,6 +112,49 @@ class Q06OwnedSpendSession(WalletSession):
             # Never discard this SQLite, recreate the Core, or unlock drafts.
             self._q06_uncertain = self.faulted = True
             raise WalletSessionError("Q06_SPEND_ANCHORED_SAVE_DENIED") from None
+
+    def broadcast(self, commitment):
+        """Retain the exact owned REGTEST txid for one explicitly approved block."""
+        txid = super().broadcast(commitment)
+        self._q06_pending_confirm = txid
+        return txid
+
+    def confirm_pending(self, txid):
+        """Mine ONE block only for this session's just-broadcast REGTEST tx.
+
+        Not a general miner. If Core write outcome is ambiguous, fail closed:
+        neither the GUI nor the backend may retry automatically.
+        """
+        import re
+        from .wsp_live import public_regtest_mining_address
+        with self._lock:
+            if (type(txid) is not str or re.fullmatch(r"[0-9a-f]{64}", txid) is None
+                    or self._q06_pending_confirm != txid
+                    or self._q06_uncertain or self.faulted):
+                raise Q06SpendSessionError("Q06_CONFIRM_EXACT_PENDING_TX_REQUIRED")
+            rpc = self._rpc()  # Original owner, attested Core and native guard.
+            try:
+                rpc.attest()
+                before = rpc.call("getblockcount")
+                if type(before) is not int or before < 0 or before >= 1_000_000:
+                    raise Q06SpendSessionError("Q06_CONFIRM_CHAIN_HEIGHT_DENIED")
+                rpc._call("generatetoaddress", ["1", public_regtest_mining_address(self.source)])
+                _owned(self._q06_owner)
+                after = rpc.call("getblockcount")
+                if after != before + 1:
+                    raise Q06SpendSessionError("Q06_CONFIRM_BLOCK_UNVERIFIED")
+                snapshot = self.snapshot()
+                if (snapshot.height != after
+                        or not any(row.txid == txid and row.confirmations > 0
+                                   for row in snapshot.history)):
+                    raise Q06SpendSessionError("Q06_CONFIRM_TX_UNVERIFIED")
+                self._q06_pending_confirm = None
+                return {"status": "Q06_REGTEST_EXACT_SEND_CONFIRMED",
+                        "height": after, "txid": txid,
+                        "mainnet_allowed": False}
+            except Exception:
+                self._q06_uncertain = self.faulted = True
+                raise Q06SpendSessionError("Q06_CONFIRM_UNCERTAIN_NO_RETRY") from None
 
     def lock(self):
         if self.locked:
