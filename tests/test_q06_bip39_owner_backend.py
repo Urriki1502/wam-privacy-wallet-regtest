@@ -133,6 +133,52 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         self.assertEqual(self.backend._seed_folder,folder)
         self.backend.execute("lock",(),{})
 
+    def test_native_spend_fault_reaches_executor_public_state(self):
+        from types import SimpleNamespace
+        self.backend._secret=bytearray(PASSWORD)
+        self.backend._spend_session=SimpleNamespace(
+            faulted=False, _q06_uncertain=False, locked=False,
+            _core_reauthentication_required=False)
+        self.assertEqual(self.backend.public_state()["faulted"],False)
+        self.assertEqual(self.backend.public_state()["locked"],False)
+        self.backend._spend_session._q06_uncertain=True
+        self.assertEqual(self.backend.public_state()["faulted"],True)
+        self.backend._spend_session._q06_uncertain=False
+        self.backend._spend_session.faulted=True
+        self.assertEqual(self.backend.public_state()["faulted"],True)
+        self.backend._spend_session.faulted=False
+        self.backend._spend_session.locked=True
+        self.assertEqual(self.backend.public_state()["locked"],True)
+        self.backend._spend_session._core_reauthentication_required=True
+        self.assertEqual(self.backend.public_state()["reauthentication_required"],True)
+
+    def test_read_only_post_reopen_txid_observation_never_mutates(self):
+        from unittest.mock import Mock
+        txid="a"*64
+        history=(SimpleNamespace(txid=txid,confirmations=1),)
+        session=Mock()
+        session.faulted=False
+        session._q06_uncertain=False
+        session.locked=False
+        session.snapshot.return_value=SimpleNamespace(history=history,height=108)
+        self.backend._spend_session=session
+        self.backend._secret=bytearray(PASSWORD)
+        seen=self.backend.execute("inspect_confirmed",(txid,),{})
+        self.assertEqual(seen["status"],"Q06_CONFIRMED_IN_VERIFIED_HISTORY")
+        self.assertFalse(seen["write_attempted"])
+        self.assertFalse(seen["signer_allowed"])
+        self.assertFalse(seen["broadcast_allowed"])
+        unknown=self.backend.execute("inspect_confirmed",("b"*64,),{})
+        self.assertEqual(unknown["status"],"Q06_TX_NOT_IN_SHOWN_CONFIRMED_HISTORY")
+        with self.assertRaises(Q06ReadOnlyError):
+            self.backend.execute("inspect_confirmed",("mainnet",),{})
+        session.faulted=True
+        with self.assertRaises(Q06ReadOnlyError):
+            self.backend.execute("inspect_confirmed",(txid,),{})
+        self.assertEqual(session.snapshot.call_count,2)
+        session.broadcast.assert_not_called()
+        session.confirm_pending.assert_not_called()
+
     def test_guard_refuses_q05_profile_ambiguous_seeds_and_wrong_modes(self):
         with self.assertRaises(Q06ReadOnlyError):
             self.backend.execute("open",(PASSWORD,"mainnet",""),{})
