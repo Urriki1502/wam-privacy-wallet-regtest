@@ -130,6 +130,13 @@ def qualify(core, source):
             window._on_ready("broadcast", broadcast)
             window._on_ready("snapshot", after)
             app.processEvents()
+            from .wallet_read import format_wam
+            if (window.navigation.count()!=6
+                    or window.overview.balance_value.text()
+                       !=format_wam(after["confirmed_atoms"],grouped=True)+" WAM"
+                    or window.receive_page.code!=opened["receive_code"]
+                    or window.history_page.table.rowCount()<2):
+                raise ValueError("Q06_FROZEN_FUSION_GUI_AFTER_SEND_DENIED")
             if (not window.last_txid.isReadOnly()
                     or window.last_txid.text() != broadcast):
                 raise ValueError("Q06_GUI_TXID_PERSISTENT_COPY_DENIED")
