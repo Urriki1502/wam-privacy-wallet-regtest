@@ -156,6 +156,37 @@ class Q06OwnedSpendSession(WalletSession):
                 self._q06_uncertain = self.faulted = True
                 raise Q06SpendSessionError("Q06_CONFIRM_UNCERTAIN_NO_RETRY") from None
 
+    def inspect_confirmed(self, txid):
+        """Bounded read-only lookup across ALL native-anchored local history.
+
+        A missing record does NOT mean broadcast failed. No RPC mutations,
+        key derivation, signing or reservation-state modification are allowed.
+        """
+        import re
+        with self._lock:
+            if (type(txid) is not str or re.fullmatch(r"[0-9a-f]{64}", txid) is None
+                    or self._q06_uncertain or self.faulted):
+                raise Q06SpendSessionError("Q06_INSPECT_EXACT_TXID_REQUIRED")
+            snapshot = self.snapshot()  # Full history integrity and Core tip.
+            with self.scanner.store.transaction():
+                rows = self.scanner.store.db.execute(
+                    "SELECT height FROM history WHERE txid=?", (txid,)).fetchall()
+            if (len(rows) > 1 or
+                    any(type(row[0]) is not int or row[0] < 0
+                        or row[0] > snapshot.height for row in rows)
+                    or self._rpc().call("getbestblockhash") != snapshot.tip):
+                raise Q06SpendSessionError("Q06_INSPECT_HISTORY_UNVERIFIED")
+            found = len(rows) == 1 and rows[0][0] > 0
+            return {
+                "status": ("Q06_CONFIRMED_IN_VERIFIED_HISTORY" if found
+                           else "Q06_TX_NOT_IN_CONFIRMED_HISTORY"),
+                "txid": txid, "height": snapshot.height,
+                "complete_anchored_history": True,
+                "write_attempted": False,
+                "signer_allowed": False, "broadcast_allowed": False,
+                "mainnet_allowed": False,
+            }
+
     def lock(self):
         if self.locked:
             return
