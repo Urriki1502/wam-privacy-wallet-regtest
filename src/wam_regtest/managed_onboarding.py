@@ -37,12 +37,12 @@ def launch(core,source):
     entries=(
         'Open existing managed wallet (Q05)',
         'Create new managed wallet (Q05)',
-        'Create NEW BIP39 12-word wallet (Q06 · read-only)',
-        'Restore BIP39 12 words in NEW isolated profile (Q06 · read-only)',
-        'Open existing BIP39 12-word profile (Q06 · read-only)',
+        'Create NEW BIP39 12-word REGTEST wallet (Q06)',
+        'Restore BIP39 12 words in NEW REGTEST profile (Q06)',
+        'Open existing BIP39 12-word REGTEST profile (Q06)',
     )
     action,ok=QInputDialog.getItem(None,'Managed REGTEST profile',
-        'Choose the wallet engine (Q06 is read-only)',list(entries),0,False)
+        'Choose wallet engine (Q06 Send requires native checkpoint activation)',list(entries),0,False)
     if not ok:return 0
     q06=action in entries[2:]
     create=action in (entries[1], entries[2], entries[3])

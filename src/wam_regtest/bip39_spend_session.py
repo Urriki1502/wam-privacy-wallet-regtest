@@ -160,6 +160,14 @@ def open_owned_spend_session(owner, seed_folder, source, password, *,
         keys = open_owned_seed_container(
             owner, seed_folder, source, password,
             authorized=authorized, keychain=keychain)
+        # Any leftover prior native runtime is ambiguous after a crash.
+        # Deny implicit replay/recovery rather than creating a parallel signer.
+        import re
+        if any(re.fullmatch(
+                r"wallet-runtime-recovery-[0-9a-f]{16}\.sqlite"
+                r"(?:-journal|-wal|-shm|\.scan\.lock)?", p.name)
+               for p in owner.directory.iterdir()):
+            raise Q06SpendSessionError("Q06_SPEND_PRIOR_RUNTIME_UNCERTAIN")
         name = "wallet-runtime-recovery-" + secrets.token_hex(8) + ".sqlite"
         target = _runtime(owner, name)
         if sys.platform == "win32":

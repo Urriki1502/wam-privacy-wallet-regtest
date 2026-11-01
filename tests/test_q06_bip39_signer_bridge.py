@@ -130,7 +130,7 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
         from contextlib import nullcontext
         from types import SimpleNamespace
         from unittest.mock import patch
-        from wam_regtest.wallet_session import WalletSession
+        from wam_regtest.wallet_session import WalletSession, WalletSessionError
         from wam_regtest.bip39_spend_session import Q06OwnedSpendSession
 
         # The per-fixture draft is explicitly released before calling the
@@ -192,7 +192,7 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
             session.sign(review.commitment)
             self.assertEqual(len(vault.saved), 2)
             self.assertEqual(set(x[1] for x in vault.saved[-1].values()), {"signed"})
-            with self.assertRaises(RuntimeError):
+            with self.assertRaises(WalletSessionError):
                 session.broadcast(review.commitment)
             # The source engine turns uncertain; Q06 journal adapter persisted
             # it BEFORE the RPC and cannot cancel it as an unsigned draft.
