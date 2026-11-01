@@ -364,6 +364,10 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             if args or kwargs:
                 raise Q06ReadOnlyError("Q06_GUI_ACTIVATE_ARGUMENTS_DENIED")
             return self._activate_q06()
+        if action == "confirm":
+            if kwargs or len(args) != 1 or self._spend_session is None:
+                raise Q06ReadOnlyError("Q06_GUI_CONFIRM_ARGUMENTS_DENIED")
+            return self._spend_session.confirm_pending(args[0])
         if action in ("prepare", "sign", "broadcast", "cancel"):
             if kwargs or self._spend_session is None:
                 raise Q06ReadOnlyError("Q06_GUI_SPEND_NOT_ACTIVE")
