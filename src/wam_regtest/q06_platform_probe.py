@@ -104,6 +104,9 @@ def qualify(core, source, root, receipt, *, confirmed=False,
             expected = "windows" if sys.platform == "win32" else "xcb"
             if app.platformName() != expected:
                 raise Q06PlatformQualificationError("Q06_PLATFORM_NATIVE_QT_DENIED")
+            from .managed_onboarding import assert_unified_welcome_qt
+            assert_unified_welcome_qt()
+            step("FROZEN_UNIFIED_WELCOME_PASS")
             window = Bip39FusionWindow(executor)
             window.show()
             show = dict(opened, mnemonic_once="")
