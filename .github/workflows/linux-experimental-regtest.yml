@@ -292,6 +292,15 @@ jobs:
           path: linux-package-output/q05-frozen-evidence*.json
           if-no-files-found: warn
           retention-days: 14
+      - name: Preserve Q06 frozen receipt including FAIL (no seed/datadirs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q06-frozen-linux-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: linux-package-output/q06-frozen-evidence*.json
+          if-no-files-found: warn
+          retention-days: 14
+          retention-days: 14
   q04-miner-coexistence:
     needs: headless-wallet
     runs-on: ubuntu-24.04
