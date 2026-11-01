@@ -75,6 +75,7 @@ def main():
                 or data.get("same_owner_reopened") is not True
                 or data.get("post_reopen_txid_verified") is not True
                 or data.get("fresh_chain_full_history_recovered") is not False
+                or data.get("fresh_profile_seed_identity_restored") is not True
                 or data.get("native_gui_checked") is not (not a.headless)
                 or data.get("frozen_executable_sha256")!=sha256(exe.read_bytes()).hexdigest()):
             raise ValueError("Q06_FINAL_FROZEN_E2E_DENIED")
