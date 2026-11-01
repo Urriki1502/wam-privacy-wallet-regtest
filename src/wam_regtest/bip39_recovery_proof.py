@@ -42,7 +42,7 @@ def verify_mnemonic_on_original_chain(owner, source, phrase, expected):
         # database or its irreversible native checkpoint.
         directory = owner.directory / ("q06-seed-proof-" + secrets.token_hex(16))
         custody.create_directory(directory)
-        target = directory / "wallet.sqlite"
+        target = directory / "wallet-runtime.sqlite"
         from wam_sp.scanner import Scanner
         from wam_sp.wallet import Wallet
         # Consistent with Q06 owned-spend: Windows must create the private
