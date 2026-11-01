@@ -111,8 +111,11 @@ def qualify(core, source):
             if not isinstance(broadcast, str) or len(broadcast) != 64:
                 raise ValueError("Q06_SPEND_TXID_DENIED")
             stage("BROADCAST_ANCHORED_PASS")
-            confirmed = executor.request("ci_confirm", timeout=120)
-            if confirmed["status"] != "Q06_REGTEST_CI_BLOCK_CONFIRMED":
+            # Exercise the same exact-tx confirmation action exposed by
+            # the human GUI, not a CI-only alternate mining path.
+            confirmed = executor.request("confirm", broadcast, timeout=120)
+            if (confirmed["status"] != "Q06_REGTEST_EXACT_SEND_CONFIRMED"
+                    or confirmed["txid"] != broadcast):
                 raise ValueError("Q06_SPEND_CONFIRM_DENIED")
             after = executor.request("snapshot", timeout=240)
             if (after["height"] != confirmed["height"]
