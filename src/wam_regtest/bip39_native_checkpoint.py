@@ -51,7 +51,7 @@ def _directory(owner, seed_folder):
     return seed_id, owner.directory / ("bip39-12-scan-" + seed_id)
 
 
-def _native(folder, seed_id, source, keychain=None):
+def _native(folder, seed_id, source, keychain=None, *, anchor_override=None):
     """Use actual Q05 private-file and native-anchor enforcement, not shims."""
     _pinned_source(source)
     storage = custody.storage()
@@ -59,6 +59,14 @@ def _native(folder, seed_id, source, keychain=None):
     storage.validate_directory(folder)
     anchor_id = sha256(b"wam-q06-scan-anchor/v1" + bytes.fromhex(seed_id)).hexdigest()[:32]
     anchor = custody.anchor(anchor_id, keychain)
+    if anchor_override is not None:
+        # Re-use precisely the already native-qualified anchor held by the
+        # owner thread during signing. A second anchor object on the same
+        # wallet is not re-entrant (macOS flock / Windows mutex / Linux witness).
+        if (type(anchor_override) is not type(anchor)
+                or anchor_override.wallet_id != anchor.wallet_id):
+            raise SeededNativeCheckpointError("Q06_NATIVE_ANCHOR_IDENTITY_DENIED")
+        anchor = anchor_override
     from .vault import CheckpointVault
     CheckpointVault(folder, anchor, source)  # native type/Keychain/Witness gate
     return storage, anchor
@@ -158,7 +166,7 @@ def publish_owned_candidate(owner, seed_folder, scanner, source, password, *,
 
 def read_owned_candidate(owner, seed_folder, source, password, *,
                          authorized=False, keychain=None,
-                         allow_descendant=False):
+                         allow_descendant=False, anchor_override=None):
     """Validate seed + original Core + checkpoint native CAS; return ciphertext.
 
     Does not create/overwrite any SQLite file. A later independent routine
@@ -172,7 +180,7 @@ def read_owned_candidate(owner, seed_folder, source, password, *,
                 owner, seed_folder, source, password,
                 authorized=authorized, keychain=keychain) as keys:
             binding = _owner_binding(owner)
-            storage, anchor = _native(directory, seed_id, source, keychain)
+            storage, anchor = _native(directory, seed_id, source, keychain, anchor_override=anchor_override)
             with anchor.lease():
                 record = _scanner_anchor_record(anchor.read())
                 _exact_namespace(directory, _checkpoint_names(record[0]))
@@ -242,7 +250,7 @@ def _require_confirmed_descendant(owner, anchored_tip, live_tip):
 
 
 def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
-                            authorized=False, keychain=None):
+                            authorized=False, keychain=None, anchor_override=None):
     """Publish N+1 at the exact original Core tip; never activate a signer."""
     import os
     import secrets
@@ -259,7 +267,8 @@ def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
     seed_id, directory = _directory(owner, seed_folder)
     old_cipher, receipt = read_owned_candidate(
         owner, seed_folder, source, password,
-        authorized=authorized, keychain=keychain, allow_descendant=True)
+        authorized=authorized, keychain=keychain, allow_descendant=True,
+        anchor_override=anchor_override)
     anchored_tip = (receipt["height"], receipt["tip"])
     tip = _owned_tip(owner)
     _require_confirmed_descendant(owner, anchored_tip, tip)
@@ -323,7 +332,8 @@ def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
             if _owned_tip(owner) != tip:
                 raise SeededNativeCheckpointError("Q06_SCANNER_TIP_CHANGED")
             phase = "NATIVE_ANCHOR"
-            storage, anchor = _native(directory, seed_id, source, keychain)
+            storage, anchor = _native(directory, seed_id, source, keychain,
+                                     anchor_override=anchor_override)
             with anchor.lease():
                 original = _scanner_anchor_record(anchor.read())
                 if original[0] != receipt["generation"]:
