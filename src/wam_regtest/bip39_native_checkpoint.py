@@ -272,6 +272,7 @@ def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
            for suffix in ("", "-wal", "-shm", "-journal", ".scan.lock")):
         raise SeededNativeCheckpointError("Q06_SCANNER_RUNTIME_COLLISION")
     old_scanner = guard = None
+    phase = "OPEN_NATIVE_SEED"
     try:
         with open_owned_seed_container(
                 owner, seed_folder, source, password,
@@ -281,8 +282,10 @@ def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
             if sys.platform == "win32":
                 from .windows_private_storage import create_managed_runtime
                 create_managed_runtime(scratch)
+            phase = "CREATE_PRIOR_SCANNER"
             old_scanner = Scanner(scratch, keys.accounts())
             guard = RuntimeGuard(scratch)
+            phase = "DECODE_PRIOR_CANDIDATE"
             decode_candidate(keys, old_scanner, old_cipher, clear,
                              owner_binding=_owner_binding(owner))
             def reservations(s):
@@ -292,6 +295,7 @@ def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
                 if len(r) != len({(v[0], v[1]) for v in r}):
                     raise SeededNativeCheckpointError("Q06_RESERVATION_DUPLICATE")
                 return {(v[0], v[1]): (v[2], v[3], v[4]) for v in r}
+            phase = "CHECK_RESERVATIONS"
             require_irreversible_preserved(
                 reservations(old_scanner), reservations(scanner))
             old_scanner.close()
@@ -306,14 +310,18 @@ def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
                                  or stat.S_IMODE(meta.st_mode) != 0o600))):
                     raise SeededNativeCheckpointError("Q06_SCANNER_LOCK_UNCERTAIN")
                 lock.unlink()
+            phase = "CLEAN_PRIOR_RUNTIME"
             guard.remove_owned()
             guard = None
+            phase = "ENCODE_LATEST"
             candidate = encode_candidate(
                 keys, scanner, clear, owner_binding=_owner_binding(owner),
                 trusted_tip=tip)
+            phase = "DURABLE_CORE"
             durable_core_checkpoint(owner, *tip)
             if _owned_tip(owner) != tip:
                 raise SeededNativeCheckpointError("Q06_SCANNER_TIP_CHANGED")
+            phase = "NATIVE_ANCHOR"
             storage, anchor = _native(directory, seed_id, source, keychain)
             with anchor.lease():
                 original = _scanner_anchor_record(anchor.read())
@@ -341,8 +349,10 @@ def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
                 cipher = seal(
                     json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("ascii"),
                     clear, b"recovery")
+                phase = "PUBLISH_NPLUS1"
                 storage.publish(directory, _checkpoint_filename(gen), cipher)
                 updated = (gen, sha256(cipher).hexdigest())
+                phase = "ADVANCE_NATIVE_CAS"
                 anchor._advance_unlocked(original, updated)
                 if anchor.read() != updated:
                     raise SeededNativeCheckpointError("Q06_SCANNER_ANCHOR_UNVERIFIED")
@@ -351,6 +361,9 @@ def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
                     "signer_allowed": False, "broadcast_allowed": False,
                     "mainnet_allowed": False}
     except Exception:
+        # Emit only fixed stage identifiers, never raw errors or secrets.
+        if os.environ.get("CI") == "true":
+            print("Q06_NPLUS1_DENIED_STAGE=" + phase, flush=True)
         raise SeededNativeCheckpointError("Q06_SCANNER_ADVANCE_DENIED") from None
     finally:
         if old_scanner is not None:
