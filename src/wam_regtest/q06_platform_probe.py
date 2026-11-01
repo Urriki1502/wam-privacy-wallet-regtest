@@ -211,8 +211,16 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         record["status"] = "Q06_NATIVE_FROZEN_REAL_CORE_PASS"
         record["failure_stage"] = None
         return record
-    except Exception:
-        # No exception repr, files, paths, mnemonic or RPC content in receipt.
+    except Exception as error:
+        # Fixed public diagnostic codes only; never format exception repr,
+        # native OS strings, RPC bodies, process arguments or seed words.
+        from .wallet_executor import WalletExecutorError
+        code = error.args[0] if (type(error) in (
+            Q06PlatformQualificationError, WalletExecutorError)
+            and len(error.args) == 1) else None
+        record["failure_code"] = (code if type(code) is str
+                                  and re.fullmatch(r"(?:Q06|WALLET|MANAGED|RPC|CORE)_[A-Z0-9_]{3,80}", code)
+                                  else "Q06_NATIVE_ENGINE_DENIED")
         return record
     finally:
         if window is not None:
