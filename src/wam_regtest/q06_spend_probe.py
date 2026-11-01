@@ -166,7 +166,7 @@ def qualify(core, source):
                     or resolved["txid"]!=broadcast
                     or resolved["write_attempted"] is not False
                     or resolved["broadcast_allowed"] is not False
-                    or unknown["status"]!="Q06_TX_NOT_IN_SHOWN_CONFIRMED_HISTORY"
+                    or unknown["status"]!="Q06_TX_NOT_IN_CONFIRMED_HISTORY"
                     or unknown["write_attempted"] is not False):
                 raise ValueError("Q06_POST_REOPEN_TXID_INSPECTION_DENIED")
             data["q06_post_reopen_txid_readonly_reconciliation"]=True
