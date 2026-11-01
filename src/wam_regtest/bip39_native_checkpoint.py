@@ -348,7 +348,7 @@ def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
                 }
                 cipher = seal(
                     json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("ascii"),
-                    clear, b"recovery")
+                    password, b"recovery")
                 phase = "PUBLISH_NPLUS1"
                 storage.publish(directory, _checkpoint_filename(gen), cipher)
                 updated = (gen, sha256(cipher).hexdigest())
