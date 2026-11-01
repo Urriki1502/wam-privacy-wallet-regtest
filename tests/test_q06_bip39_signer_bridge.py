@@ -201,6 +201,96 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.wallet.release_draft(session._prepared.proposal.token)
 
+    def test_human_regtest_confirm_mines_exactly_one_block_for_exact_tx(self):
+        from threading import RLock
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from wam_regtest.bip39_spend_session import (
+            Q06OwnedSpendSession, Q06SpendSessionError)
+
+        txid = "cd" * 32
+        class OwnedTestRpc:
+            def __init__(self):
+                self.height = 107
+                self.generated = 0
+            def attest(self):
+                return None
+            def call(self, method, params=None):
+                if method == "getblockcount":
+                    return self.height
+                raise AssertionError("WRONG_RPC_METHOD")
+            def _call(self, method, params):
+                self.generated += 1
+                self.height += 1
+                self_assert(method == "generatetoaddress"
+                            and params == ["1", "public-regtest-test-miner"])
+
+        self_assert = self.assertTrue
+        rpc = OwnedTestRpc()
+        session = object.__new__(Q06OwnedSpendSession)
+        session._lock = RLock()
+        session._q06_pending_confirm = txid
+        session._q06_uncertain = False
+        session.faulted = False
+        session.source = SOURCE
+        session._q06_owner = object()
+        session._rpc = lambda: rpc
+        session.snapshot = lambda: SimpleNamespace(
+            height=rpc.height,
+            history=(SimpleNamespace(txid=txid, confirmations=1),))
+        with patch("wam_regtest.bip39_spend_session._owned"), patch(
+                "wam_regtest.wsp_live.public_regtest_mining_address",
+                return_value="public-regtest-test-miner"):
+            with self.assertRaises(Q06SpendSessionError):
+                session.confirm_pending("ef" * 32)
+            self.assertEqual(rpc.generated, 0)
+            receipt = session.confirm_pending(txid)
+            self.assertEqual(receipt["status"], "Q06_REGTEST_EXACT_SEND_CONFIRMED")
+            self.assertEqual(receipt["height"], 108)
+            self.assertEqual(rpc.generated, 1)
+            self.assertIsNone(session._q06_pending_confirm)
+            with self.assertRaises(Q06SpendSessionError):
+                session.confirm_pending(txid)
+            self.assertEqual(rpc.generated, 1)
+
+    def test_human_regtest_confirm_ambiguous_write_never_retries(self):
+        from threading import RLock
+        from unittest.mock import patch
+        from wam_regtest.bip39_spend_session import (
+            Q06OwnedSpendSession, Q06SpendSessionError)
+
+        txid = "cd" * 32
+        attempts = []
+        class UnknownRpc:
+            def attest(self):
+                return None
+            def call(self, method, params=None):
+                if method == "getblockcount":
+                    return 107
+                raise AssertionError("WRONG_RPC_METHOD")
+            def _call(self, method, params):
+                attempts.append(method)
+                raise RuntimeError("MUTATION_OUTCOME_UNKNOWN")
+        session = object.__new__(Q06OwnedSpendSession)
+        session._lock = RLock()
+        session._q06_pending_confirm = txid
+        session._q06_uncertain = False
+        session.faulted = False
+        session.source = SOURCE
+        session._q06_owner = object()
+        session._rpc = lambda: UnknownRpc()
+        with patch("wam_regtest.bip39_spend_session._owned"), patch(
+                "wam_regtest.wsp_live.public_regtest_mining_address",
+                return_value="public-regtest-test-miner"):
+            with self.assertRaisesRegex(Q06SpendSessionError,
+                                        "Q06_CONFIRM_UNCERTAIN_NO_RETRY"):
+                session.confirm_pending(txid)
+            self.assertTrue(session._q06_uncertain)
+            self.assertTrue(session.faulted)
+            with self.assertRaises(Q06SpendSessionError):
+                session.confirm_pending(txid)
+            self.assertEqual(attempts, ["generatetoaddress"])
+
     def test_ambiguous_broadcast_retains_bip39_reservation(self):
         _, signed = self._sign_after_irreversible_mark()
         coin = self.proposal.coins[0]
