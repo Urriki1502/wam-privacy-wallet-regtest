@@ -31,6 +31,11 @@ class FakeBoundedQ06Backend:
                 raise ValueError("Q06_GUI_RECOVERY_PROOF_ARGS_DENIED")
             return {"status": "Q06_SAME_CHAIN_BIP39_HISTORY_RESCAN_PASS",
                     "signer_allowed": False}
+        if action == "inspect_confirmed":
+            if args != ("a"*64,) or kwargs:
+                raise ValueError("Q06_GUI_INSPECT_ARGUMENTS_DENIED")
+            return {"status": "Q06_CONFIRMED_IN_VERIFIED_HISTORY",
+                    "write_attempted": False, "broadcast_allowed": False}
         if action == "quit":
             return None
         raise ValueError("Q06_GUI_SPENDING_NOT_IMPLEMENTED")
@@ -42,7 +47,7 @@ class FakeBoundedQ06Backend:
 class Q06ExecutorCommandAdmission(unittest.TestCase):
     def test_q06_bounded_commands_reach_only_bound_backend(self):
         self.assertTrue({"activate", "ci_confirm", "confirm",
-                         "recovery_verify"}.issubset(COMMANDS))
+                         "recovery_verify", "inspect_confirmed"}.issubset(COMMANDS))
         self.assertNotIn("sendrawtransaction", COMMANDS)
         self.assertNotIn("sign_raw", COMMANDS)
         backend = FakeBoundedQ06Backend()
@@ -56,12 +61,15 @@ class Q06ExecutorCommandAdmission(unittest.TestCase):
             recovery=executor.request("recovery_verify", "disposable test words only")
             self.assertEqual(recovery["status"], "Q06_SAME_CHAIN_BIP39_HISTORY_RESCAN_PASS")
             self.assertIs(recovery["signer_allowed"], False)
+            inspected=executor.request("inspect_confirmed", "a"*64)
+            self.assertFalse(inspected["write_attempted"])
+            self.assertFalse(inspected["broadcast_allowed"])
             self.assertEqual([call[0] for call in backend.calls],
                              ["activate", "activate", "ci_confirm",
-                              "confirm", "recovery_verify"])
+                              "confirm", "recovery_verify", "inspect_confirmed"])
             with self.assertRaises(WalletExecutorError):
                 executor.request("sendrawtransaction", "deadbeef")
-            self.assertEqual(len(backend.calls), 5)
+            self.assertEqual(len(backend.calls), 6)
         finally:
             executor.request("quit")
             self.assertTrue(executor.join(5))
@@ -79,8 +87,11 @@ class Q06ExecutorCommandAdmission(unittest.TestCase):
                 executor.request("confirm", "b"*64)
             with self.assertRaises(WalletExecutorError):
                 executor.request("recovery_verify", "unknown phrase")
+            with self.assertRaises(WalletExecutorError):
+                executor.request("inspect_confirmed", "wrong-txid")
             self.assertEqual([call[0] for call in backend.calls],
-                             ["activate", "ci_confirm", "confirm", "recovery_verify"])
+                             ["activate", "ci_confirm", "confirm",
+                              "recovery_verify", "inspect_confirmed"])
         finally:
             executor.request("quit")
             self.assertTrue(executor.join(5))
