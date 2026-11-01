@@ -23,6 +23,25 @@ class Q06NativePlatformScope(unittest.TestCase):
                     parent/("wam-fusion-core-"+"a"*16),
                     parent/"receipt.json", confirmed=True)
 
+    def test_windows_native_read_scanners_use_approved_acl_runtime_name(self):
+        # Structural regression only; REAL Windows ACL/Qt/Core acceptance is
+        # separately required from the final executable on Windows CI.
+        import inspect
+        from wam_regtest.bip39_owner_backend import Bip39ReadOnlyBackend
+        from wam_regtest.bip39_recovery_proof import verify_mnemonic_on_original_chain
+        for function in (Bip39ReadOnlyBackend._scan_q06,
+                         verify_mnemonic_on_original_chain):
+            source=inspect.getsource(function)
+            self.assertIn('"wallet-runtime.sqlite"', source)
+            self.assertNotIn('"wallet.sqlite"', source)
+            self.assertIn('if sys.platform == "win32":', source)
+            self.assertIn('create_managed_runtime(', source)
+            self.assertLess(source.index('create_managed_runtime('),
+                            source.index('Scanner(', source.index('create_managed_runtime(')))
+        from wam_regtest.bip39_spend_session import open_owned_spend_session
+        spend=inspect.getsource(open_owned_spend_session)
+        self.assertIn('create_managed_runtime(', spend)
+
     def test_missing_explicit_regtest_consent_denied_without_creating_profile(self):
         with tempfile.TemporaryDirectory(prefix="q06-platform-no-consent-") as t:
             parent=Path(t).resolve()
