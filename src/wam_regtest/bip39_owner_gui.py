@@ -54,6 +54,7 @@ class Bip39TrialWindow(QWidget):
         self.broadcast=QPushButton("Broadcast signed transaction")
         self.confirm=QPushButton("Confirm 1 REGTEST block")
         self.recovery=QPushButton("Verify 12-word recovery on this chain")
+        self.inspect=QPushButton("Inspect past TXID (read-only)")
         self.cancel=QPushButton("Cancel unsigned draft")
         self.lock=QPushButton("Lock Q06")
         self.quit=QPushButton("Stop owned Core and quit")
@@ -64,6 +65,7 @@ class Bip39TrialWindow(QWidget):
         box.addLayout(payment)
         box.addWidget(self.confirm)
         box.addWidget(self.recovery)
+        box.addWidget(self.inspect)
         utility=QHBoxLayout()
         utility.addWidget(self.lock);utility.addWidget(self.quit)
         box.addLayout(utility)
@@ -74,6 +76,7 @@ class Bip39TrialWindow(QWidget):
         self.broadcast.clicked.connect(self._confirm_broadcast)
         self.confirm.clicked.connect(self._confirm_one_block)
         self.recovery.clicked.connect(self._verify_recovery_phrase)
+        self.inspect.clicked.connect(self._inspect_past_txid)
         self.cancel.clicked.connect(lambda:self._command("cancel"))
         self.lock.clicked.connect(lambda:self._command("lock"))
         self.quit.clicked.connect(self.request_quit)
@@ -90,20 +93,23 @@ class Bip39TrialWindow(QWidget):
 
     def _set_actions(self):
         busy=self._worker is not None or self.executor.busy
-        self.sync.setEnabled(self._ready and not busy and not self._quit_requested)
-        self.fund.setEnabled(self._ready and not self._test_funded and not self._spend_enabled
+        safe=not self.executor.state.faulted
+        self.sync.setEnabled(self._ready and safe and not busy and not self._quit_requested)
+        self.fund.setEnabled(self._ready and safe and not self._test_funded and not self._spend_enabled
                              and not busy and not self._quit_requested)
-        self.activate.setEnabled(self._ready and not self._spend_enabled and not busy and not self._quit_requested)
-        self.send.setEnabled(self._spend_enabled and self._approved_commitment is None
+        self.activate.setEnabled(self._ready and safe and not self._spend_enabled and not busy and not self._quit_requested)
+        self.send.setEnabled(safe and self._spend_enabled and self._approved_commitment is None
                              and not busy and not self._quit_requested)
-        self.broadcast.setEnabled(self._spend_enabled and self._signed_ready
+        self.broadcast.setEnabled(safe and self._spend_enabled and self._signed_ready
                                   and not busy and not self._quit_requested)
-        self.cancel.setEnabled(self._spend_enabled and self._approved_commitment is not None
+        self.cancel.setEnabled(safe and self._spend_enabled and self._approved_commitment is not None
                                and not self._signed_ready and not busy and not self._quit_requested)
-        self.confirm.setEnabled(self._spend_enabled and self._pending_confirm_txid is not None
+        self.confirm.setEnabled(safe and self._spend_enabled and self._pending_confirm_txid is not None
                                 and not busy and not self._quit_requested)
-        self.recovery.setEnabled(self._spend_enabled and self._pending_confirm_txid is None
+        self.recovery.setEnabled(safe and self._spend_enabled and self._pending_confirm_txid is None
                                  and not busy and not self._quit_requested)
+        self.inspect.setEnabled(safe and self._spend_enabled
+                                and not busy and not self._quit_requested)
         self.lock.setEnabled(self._ready and not busy and not self._quit_requested)
         self.quit.setEnabled(not busy and not self.executor.closed)
 
@@ -111,7 +117,7 @@ class Bip39TrialWindow(QWidget):
         if self._worker is not None or self.executor.busy or self.executor.closed:
             return False
         worker=ControlWorker(self.executor, action, args,
-                             kwargs={"timeout":240} if action in ("mine","snapshot","activate","prepare","sign","broadcast","confirm","recovery_verify") else None,
+                             kwargs={"timeout":240} if action in ("mine","snapshot","activate","prepare","sign","broadcast","confirm","recovery_verify","inspect_confirmed") else None,
                              parent=self)
         self._worker=worker
         worker.ready.connect(self._on_ready, Qt.ConnectionType.QueuedConnection)
@@ -228,6 +234,17 @@ class Bip39TrialWindow(QWidget):
             self._command("recovery_verify",phrase)
         phrase=""
 
+    def _inspect_past_txid(self):
+        if not self._spend_enabled or self.executor.state.faulted:
+            return
+        txid,ok=QInputDialog.getText(
+            self,"Read-only previous transaction inspection",
+            "Enter a previously broadcast REGTEST transaction ID (64 lowercase hex). "
+            "This only checks the locally verified history: no retry, mining, "
+            "broadcast, reservation release or claim if not yet found.")
+        if ok:
+            self._command("inspect_confirmed",txid)
+
     def _show_words_once(self, phrase):
         dlg=QDialog(self)
         dlg.setWindowTitle("REGTEST recovery phrase — shown once")
@@ -277,10 +294,16 @@ class Bip39TrialWindow(QWidget):
                 "\n".join("{}  height={}  atoms={}".format(
                     row["txid"],row["height"],row["atoms"]) for row in rows)
                 if rows else "No confirmed BIP352 transactions found on this disposable Core")
-            self.status.setText(
-                "Verified BIP39 REGTEST Send session; review every transaction"
-                if self._spend_enabled else
-                "Verified WAM Core and WSP scan; Send remains disabled")
+            if (self._spend_enabled and result.get("reservation_count",0)>0
+                    and self._pending_confirm_txid is None):
+                self.status.setText(
+                    "Anchored transaction reservations exist; check previous TXID "
+                    "against verified history. Never auto-rebroadcast or release locks.")
+            else:
+                self.status.setText(
+                    "Verified BIP39 REGTEST Send session; review every transaction"
+                    if self._spend_enabled else
+                    "Verified WAM Core and WSP scan; Send remains disabled")
         elif action=="prepare":
             self._approved_commitment=result.commitment
             self._signed_ready=False
@@ -322,6 +345,12 @@ class Bip39TrialWindow(QWidget):
                 "Same-chain BIP39 rescan PASS: {} confirmed history records, "
                 "{:,} atoms. Separate device/chain restoration remains unverified.".format(
                     result["history_count"],result["confirmed_atoms"]))
+        elif action=="inspect_confirmed":
+            self.status.setText(
+                "TXID is in verified recent confirmed history."
+                if result["status"]=="Q06_CONFIRMED_IN_VERIFIED_HISTORY" else
+                "TXID NOT in verified recent confirmed history; status uncertain. "
+                "Do NOT retry, remine or release coin reservations.")
         elif action=="cancel":
             self._approved_commitment=None
             self._signed_ready=False
@@ -346,7 +375,10 @@ class Bip39TrialWindow(QWidget):
     def _on_denied(self, code):
         if self._approved_commitment is not None:
             self._signed_ready=False
-        self.status.setText("Operation refused safely: " + str(code))
+        self.status.setText(
+            "Wallet faulted — stop spending; original state preserved for review."
+            if self.executor.state.faulted else
+            "Operation refused safely: " + str(code))
         self._set_actions()
 
     def _finished(self):
