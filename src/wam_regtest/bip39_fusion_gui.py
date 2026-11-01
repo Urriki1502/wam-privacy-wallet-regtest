@@ -5,21 +5,25 @@ unchanged Bip39TrialWindow/WalletExecutor and its fail-closed native custody.
 The reusable Q05 Fusion Overview/Receive/History/PaymentSteps are real widgets,
 not a painted mockup or a separate demo account.
 """
-from PySide6.QtCore import Qt
+import os
+from PySide6.QtCore import Qt, QSize, QEasingCurve, QPropertyAnimation
+from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QFrame, QLabel, QLineEdit,
-    QListWidget, QStackedWidget, QComboBox, QMessageBox, QDialog,
+    QListWidget, QStackedWidget, QMessageBox, QDialog, QToolButton,
+    QButtonGroup, QGraphicsOpacityEffect,
 )
 
 from .bip39_owner_gui import Bip39TrialWindow
 from .desktop import resolve_theme
 from .fusion_ui import (
     FusionOverview, fusion_stylesheet, fusion_palette, page, panel,
-    label, ResponsiveRow,
+    label, ResponsiveRow, vector_icon, fusion_nav_icons,
 )
 from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval
 from .wallet_read import WalletReadSnapshot
 from .amounts import parse_amount, _parse_atoms
+from .branding import brand_image
 
 
 class Bip39FusionWindow(Bip39TrialWindow):
@@ -37,49 +41,80 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self._legacy_layout_holder = legacy
         legacy.hide()
         self.setObjectName("WalletRoot")
-        self.setWindowTitle("WAM Fusion · BIP39 REGTEST")
-        self.resize(1220, 790)
-        self.setMinimumSize(870, 610)
+        self.setWindowTitle("WAM Fusion · Privacy Wallet")
+        self.setWindowIcon(QIcon(str(brand_image())))
+        self.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.GeneralFont))
+        self.resize(1260, 810)
+        self.setMinimumSize(900, 630)
         shell = QHBoxLayout(self)
         shell.setContentsMargins(0, 0, 0, 0)
         shell.setSpacing(0)
 
+        # Native macOS-style workspace, not a second wallet manager.
         sidebar = QFrame()
         sidebar.setObjectName("FusionSidebar")
-        sidebar.setFixedWidth(214)
+        sidebar.setFixedWidth(226)
         side = QVBoxLayout(sidebar)
-        side.setContentsMargins(18, 26, 18, 20)
-        side.setSpacing(18)
-        side.addWidget(label("WAM FUSION", "BrandTitle"))
-        side.addWidget(label("BIP39 · REGTEST", "FusionBadge"))
-        side.addWidget(label("WALLET WORKSPACE", "FusionKicker"))
+        side.setContentsMargins(18, 28, 18, 22)
+        side.setSpacing(16)
+        brand = QHBoxLayout()
+        brand.setSpacing(10)
+        logo = QLabel()
+        mark = QPixmap(str(brand_image())).scaled(
+            42, 42, Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation)
+        logo.setPixmap(mark)
+        logo.setFixedSize(44, 44)
+        brand.addWidget(logo)
+        name = QVBoxLayout()
+        name.setSpacing(0)
+        name.addWidget(label("WAM Fusion", "BrandTitle"))
+        name.addWidget(label("PRIVATE WALLET", "FusionKicker"))
+        brand.addLayout(name, 1)
+        side.addLayout(brand)
+        side.addSpacing(24)
+        side.addWidget(label("WORKSPACE", "FusionKicker"))
         self.navigation = QListWidget()
-        self.navigation.addItems(("Overview", "Receive", "History", "Send", "Security", "Advanced"))
+        self.navigation.setIconSize(QSize(20, 20))
+        self.navigation.setSpacing(3)
+        self.navigation.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.navigation.addItems(
+            ("Overview", "Receive", "History", "Send", "Security", "Settings"))
         side.addWidget(self.navigation, 1)
-        side.addWidget(label("Disposable REGTEST only\\nNo real funds or mainnet.", "FusionGold"))
+        side.addWidget(label("●  LOCAL REGTEST", "FusionVerified"))
+        side.addWidget(label(
+            "A safe space for testing.\nNever use real WAM or mainnet keys.",
+            "FusionMuted"))
         shell.addWidget(sidebar)
 
         main = QWidget()
         main.setObjectName("FusionTransparent")
         content = QVBoxLayout(main)
-        content.setContentsMargins(24, 16, 24, 15)
-        content.setSpacing(12)
-        top = QHBoxLayout()
-        self.page_title = label("Overview", "FusionCardTitle")
+        content.setContentsMargins(34, 19, 30, 17)
+        content.setSpacing(17)
+
+        topbar = QFrame()
+        topbar.setObjectName("FusionTopbar")
+        top = QHBoxLayout(topbar)
+        top.setContentsMargins(0, 0, 0, 18)
+        top.setSpacing(12)
+        self.page_title = label("Overview", "PageTitle")
         top.addWidget(self.page_title)
         top.addStretch()
-        self.theme_select = QComboBox()
-        self.theme_select.addItems(("Auto", "Signature Dark", "Signature Light"))
-        self.theme_select.currentIndexChanged.connect(self._apply_fusion_theme)
-        top.addWidget(self.theme_select)
+        self.connection_pill = label("AWAITING VERIFICATION", "FusionBadge")
+        top.addWidget(self.connection_pill)
+        self.sync.setText("Refresh")
+        self.sync.setObjectName("FusionSecondary")
+        self.sync.setToolTip("Verify the latest state with your owned WAM Core")
         top.addWidget(self.sync)
-        content.addLayout(top)
+        content.addWidget(topbar)
 
         self.stack = QStackedWidget()
         content.addWidget(self.stack, 1)
-        shell.addWidget(main, 1)
+        self.status.setObjectName("FusionMuted")
+        self.status.setWordWrap(True)
         content.addWidget(self.status)
-
+        shell.addWidget(main, 1)
         self.overview = FusionOverview()
         self.stack.addWidget(self.overview)
         self.receive_page = ReceivePage()
@@ -152,35 +187,78 @@ class Bip39FusionWindow(Bip39TrialWindow):
         security_layout.addStretch()
         self.stack.addWidget(security_page)
 
-        advanced, al = page(
-            "Developer / REGTEST tools",
-            "Explicit test-only block generation and native-Core inspection.",
-            "ADVANCED / VERIFIED CORE",
+        settings_page, settings_layout = page(
+            "Settings",
+            "A quieter workspace, tailored to how you use your Mac.",
+            "YOUR WALLET / PREFERENCES",
         )
-        controls, cl = panel("REGTEST chain", "Funding and mining mutate this disposable test chain.")
-        cl.addWidget(self.fund)
-        cl.addWidget(self.confirm)
-        cl.addWidget(self.inspect)
-        advanced.addWidget(controls)
-        details, dl = panel("Original session / TXID", "Read-only technical identifiers.")
-        dl.addWidget(self.account)
-        dl.addWidget(self.balance)
-        dl.addWidget(self.tip)
-        dl.addWidget(label("Last broadcast TXID (copy before closing)", "FusionKicker"))
-        dl.addWidget(self.last_txid)
-        details_row = ResponsiveRow(details)
-        advanced.addWidget(details_row)
-        advanced.addWidget(self.quit)
-        advanced.addStretch()
-        self.stack.addWidget(advanced)
+        appearance, appearance_layout = panel(
+            "Appearance",
+            "Auto follows your Mac's appearance schedule. Choose a fixed theme if preferred.")
+        self.appearance_group = QButtonGroup(self)
+        self.appearance_group.setExclusive(True)
+        self.appearance_buttons = []
+        segments = QFrame()
+        segments.setObjectName("FusionSegmented")
+        segment_layout = QHBoxLayout(segments)
+        segment_layout.setContentsMargins(4, 4, 4, 4)
+        segment_layout.setSpacing(4)
+        for n, title in enumerate(("Automatic", "Light", "Dark")):
+            button = QToolButton()
+            button.setObjectName("FusionSegment")
+            button.setText(title)
+            button.setCheckable(True)
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.appearance_group.addButton(button, n)
+            self.appearance_buttons.append(button)
+            segment_layout.addWidget(button, 1)
+        self.appearance_buttons[0].setChecked(True)
+        self.appearance_group.idClicked.connect(self._apply_fusion_theme)
+        appearance_layout.addWidget(segments)
+        settings_layout.addWidget(appearance)
 
-        self.navigation.currentRowChanged.connect(self.stack.setCurrentIndex)
-        self.navigation.currentRowChanged.connect(
-            lambda i: self.page_title.setText(
-                ("Overview", "Receive", "History", "Send", "Security", "Advanced")[i]
-                if 0 <= i < 6 else "WAM Fusion"
-            )
-        )
+        about, about_layout = panel(
+            "WAM Fusion · REGTEST",
+            "Local-first BIP352 silent payments. No remote account or cloud custody.")
+        about_layout.addWidget(label("WAM Core v0.1.11 · WSP-1 · BIP39 12 words"))
+        about_layout.addWidget(label(
+            "This preview is not a mainnet wallet. All test transactions stay on the owned REGTEST chain."))
+        settings_layout.addWidget(about)
+
+        advanced_card, advanced_layout = panel(
+            "Advanced controls",
+            "For technical acceptance and test-chain diagnostics only.")
+        self.advanced_toggle = QToolButton()
+        self.advanced_toggle.setObjectName("FusionAdvanced")
+        self.advanced_toggle.setCheckable(True)
+        self.advanced_toggle.setText("Show developer controls  ▾")
+        self.advanced_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
+        advanced_layout.addWidget(self.advanced_toggle)
+        self.advanced_container = QWidget()
+        self.advanced_container.setObjectName("FusionTransparent")
+        advanced_body = QVBoxLayout(self.advanced_container)
+        advanced_body.setContentsMargins(0, 6, 0, 0)
+        advanced_body.setSpacing(13)
+        advanced_body.addWidget(label(
+            "Test-only funding and confirmation change this isolated blockchain.",
+            "FusionGold"))
+        advanced_body.addWidget(self.fund)
+        advanced_body.addWidget(self.confirm)
+        advanced_body.addWidget(self.inspect)
+        advanced_body.addWidget(label("OWNED CORE / SESSION", "FusionKicker"))
+        advanced_body.addWidget(self.account)
+        advanced_body.addWidget(self.balance)
+        advanced_body.addWidget(self.tip)
+        advanced_body.addWidget(label("LAST BROADCAST TRANSACTION", "FusionKicker"))
+        advanced_body.addWidget(self.last_txid)
+        advanced_layout.addWidget(self.advanced_container)
+        self.advanced_container.hide()
+        self.advanced_toggle.toggled.connect(self._toggle_advanced)
+        settings_layout.addWidget(advanced_card)
+        settings_layout.addStretch()
+        self.stack.addWidget(settings_page)
+
+        self.navigation.currentRowChanged.connect(self._navigate)
         self.navigation.setCurrentRow(0)
         self.overview.go_receive.clicked.connect(
             lambda: self.navigation.setCurrentRow(1))
@@ -195,18 +273,72 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.overview.transaction_selected.connect(self._select_transaction)
         self._last_verified = None
         self._last_review = None
+        self._transition = None
+        self._advanced_transition = None
         self._apply_fusion_theme()
         self._set_actions()
 
     def _apply_fusion_theme(self, *_):
         from datetime import datetime
-        choice = self.theme_select.currentIndex()
-        # User-selected Dark/Light must override the system clock.
+        selection = self.appearance_group.checkedId()
         mode = (resolve_theme("auto", datetime.now().astimezone())
-                if choice == 0 else "dark" if choice == 1 else "light")
+                if selection == 0 else "light" if selection == 1 else "dark")
+        colors = fusion_palette(mode)
         self.setStyleSheet(fusion_stylesheet(mode))
         self.overview.set_theme(mode)
         self.history_page.set_theme(mode)
+        for item, icon in zip(
+                (self.navigation.item(i) for i in range(self.navigation.count())),
+                fusion_nav_icons(colors["accent"])):
+            item.setIcon(icon)
+        for button in self.findChildren(__import__(
+                "PySide6.QtWidgets", fromlist=["QPushButton"]).QPushButton):
+            icon = button.property("fusion_icon")
+            if icon:
+                tone = colors["onaccent"] if button.objectName() == "FusionPrimary" else colors["accent"]
+                button.setIcon(vector_icon(icon, tone, max(1, self.devicePixelRatioF())))
+        self.sync.setIcon(vector_icon("sync", colors["accent"], max(1, self.devicePixelRatioF())))
+
+    def _navigate(self, index):
+        if not 0 <= index < 6:
+            return
+        self.page_title.setText(
+            ("Overview", "Receive", "History", "Send", "Security", "Settings")[index])
+        self.stack.setCurrentIndex(index)
+        if (os.environ.get("QT_REDUCE_MOTION") == "1"
+                or os.environ.get("GITHUB_ACTIONS") == "true"):
+            return
+        # Short, non-blocking, presentation-only transition. Never run Core
+        # operations or change wallet state in the animation callback.
+        if self._transition is not None:
+            self._transition.stop()
+        current = self.stack.currentWidget()
+        effect = QGraphicsOpacityEffect(current)
+        current.setGraphicsEffect(effect)
+        effect.setOpacity(0.82)
+        self._transition = QPropertyAnimation(effect, b"opacity", self)
+        self._transition.setDuration(150)
+        self._transition.setStartValue(0.82)
+        self._transition.setEndValue(1.0)
+        self._transition.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._transition.start()
+
+    def _toggle_advanced(self, expanded):
+        self.advanced_toggle.setText(
+            "Hide developer controls  ▴" if expanded
+            else "Show developer controls  ▾")
+        self.advanced_container.setVisible(expanded)
+        if (not expanded or os.environ.get("QT_REDUCE_MOTION") == "1"
+                or os.environ.get("GITHUB_ACTIONS") == "true"):
+            return
+        effect = QGraphicsOpacityEffect(self.advanced_container)
+        self.advanced_container.setGraphicsEffect(effect)
+        self._advanced_transition = QPropertyAnimation(effect, b"opacity", self)
+        self._advanced_transition.setDuration(170)
+        self._advanced_transition.setStartValue(0.5)
+        self._advanced_transition.setEndValue(1.0)
+        self._advanced_transition.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._advanced_transition.start()
 
     def _select_transaction(self, txid):
         self.navigation.setCurrentRow(2)
