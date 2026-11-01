@@ -31,6 +31,9 @@ def qualify(core, source):
     app = qt_application()
     if app.platformName() != "cocoa":
         raise ValueError("Q06_SPEND_NATIVE_COCOA_REQUIRED")
+    from .managed_onboarding import assert_unified_welcome_qt
+    assert_unified_welcome_qt()
+    print("MACOS_Q06_SPEND_STAGE=FROZEN_UNIFIED_WELCOME_PASS",flush=True)
     adapter = DarwinArm64Adapter()
     adapter.enforce_host()
 
