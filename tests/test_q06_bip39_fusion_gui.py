@@ -3,7 +3,10 @@
 This is a Qt surface contract only, never a fake pass for real Core, on-chain
 transaction, native key custody or signed/frozen binaries.
 """
+import ast
+import importlib.util
 import os
+from pathlib import Path
 import sys
 import unittest
 
@@ -14,6 +17,8 @@ if sys.platform == "linux" and not os.environ.get("DISPLAY"):
 
 
 class Q06ExistingFusionUiContract(unittest.TestCase):
+    @unittest.skipUnless(importlib.util.find_spec("PySide6") is not None,
+                         "Native Qt GUI is verified on macOS/Windows and Linux desktop runners")
     def test_q06_main_window_reuses_existing_fusion_pages_and_owner(self):
         from types import SimpleNamespace
         from PySide6.QtWidgets import QApplication
@@ -67,11 +72,17 @@ class Q06ExistingFusionUiContract(unittest.TestCase):
             app.processEvents()
 
     def test_normal_launch_routes_to_fusion_not_old_developer_trial(self):
-        import inspect
-        from wam_regtest.bip39_owner_gui import launch_bip39_trial
-        source=inspect.getsource(launch_bip39_trial)
-        self.assertIn("Bip39FusionWindow(executor)",source)
-        self.assertNotIn("window=Bip39TrialWindow(executor)",source)
+        # Static contract on Qt-less native runners; this never imports
+        # PySide6. Actual live Fusion widgets remain required on GUI runners.
+        path=Path(__file__).resolve().parents[1]/"src"/"wam_regtest"/"bip39_owner_gui.py"
+        source=path.read_text(encoding="utf8")
+        module=ast.parse(source,filename=str(path))
+        entry=next((n for n in module.body
+                    if isinstance(n,ast.FunctionDef) and n.name=="launch_bip39_trial"),None)
+        self.assertIsNotNone(entry)
+        body=ast.get_source_segment(source,entry)
+        self.assertIn("Bip39FusionWindow(executor)",body)
+        self.assertNotIn("window=Bip39TrialWindow(executor)",body)
 
 
 if __name__=="__main__":
