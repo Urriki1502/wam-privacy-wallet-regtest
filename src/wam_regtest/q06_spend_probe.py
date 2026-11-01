@@ -25,7 +25,7 @@ def qualify(core, source):
     _pinned_source(source)
     from .q05_platforms import DarwinArm64Adapter
     from .desktop import qt_application
-    from .bip39_owner_gui import Bip39TrialWindow
+    from .bip39_fusion_gui import Bip39FusionWindow
     from .bip39_12 import Bip39Regtest12Keys
     from mnemonic import Mnemonic
     app = qt_application()
@@ -80,7 +80,7 @@ def qualify(core, source):
                     or active["receive_code"] != created["receive_code"]):
                 raise ValueError("Q06_SPEND_NATIVE_ACTIVATION_DENIED")
             stage("ACTIVATE_CHECKPOINT_PASS")
-            window = Bip39TrialWindow(executor)
+            window = Bip39FusionWindow(executor)
             window.show()
             sanitized = dict(created)
             sanitized["mnemonic_once"] = ""
