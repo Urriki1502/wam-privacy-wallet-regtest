@@ -117,3 +117,31 @@ def decode_candidate(keys, scanner, encrypted, password, *, owner_binding):
         }
     except Exception:
         raise SeededCheckpointError("Q06_CHECKPOINT_RESTORE_DENIED") from None
+
+
+
+def require_irreversible_preserved(previous, current):
+    """Fail closed if a persisted reservation loses its irreversible lock.
+
+    Records are mappings (txid, vout) -> (token, state, created).
+    Unsigned drafts may be cancelled; signed and uncertain states may not
+    disappear, change identity, or regress. This alone does NOT enable Send.
+    """
+    allowed = {
+        "signed": {"signed", "uncertain", "broadcast"},
+        "uncertain": {"uncertain", "broadcast"},
+        "broadcast": {"broadcast"},
+    }
+    if type(previous) is not dict or type(current) is not dict:
+        raise SeededCheckpointError("Q06_RESERVATION_CHECKPOINT_INVALID")
+    for coin, original in previous.items():
+        if type(original) is not tuple or len(original) != 3:
+            raise SeededCheckpointError("Q06_RESERVATION_CHECKPOINT_INVALID")
+        token, state, created = original
+        if state == "draft":
+            continue
+        now = current.get(coin)
+        if (state not in allowed or type(now) is not tuple or len(now) != 3
+                or now[0] != token or now[2] != created
+                or now[1] not in allowed[state]):
+            raise SeededCheckpointError("Q06_RESERVATION_DOWNGRADE_DENIED")

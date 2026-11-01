@@ -112,5 +112,36 @@ class Q06SeededScannerCheckpointContracts(unittest.TestCase):
             "SELECT count(*) FROM reservations").fetchone()[0], 1)
 
 
+class Q06ReservationMonotonicityContracts(unittest.TestCase):
+    def test_irreversible_states_cannot_disappear_or_regress(self):
+        from wam_regtest.bip39_scanner_checkpoint import (
+            require_irreversible_preserved, SeededCheckpointError)
+        ident = ("a"*64, 0)
+        prior = {ident: ("token", "signed", 123)}
+        for state in ("signed", "uncertain", "broadcast"):
+            require_irreversible_preserved(
+                prior, {ident: ("token", state, 123)})
+        invalid = ({}, {ident: ("token", "draft", 123)},
+                   {ident: ("wrong-token", "broadcast", 123)},
+                   {ident: ("token", "broadcast", 124)})
+        for candidate in invalid:
+            with self.assertRaises(SeededCheckpointError):
+                require_irreversible_preserved(prior, candidate)
+
+    def test_uncertain_and_broadcast_never_downgrade(self):
+        from wam_regtest.bip39_scanner_checkpoint import (
+            require_irreversible_preserved, SeededCheckpointError)
+        ident = ("b"*64, 1)
+        for state, downgraded in (("uncertain", "signed"),
+                                  ("broadcast", "uncertain"),
+                                  ("broadcast", "signed")):
+            with self.assertRaises(SeededCheckpointError):
+                require_irreversible_preserved(
+                    {ident: ("token", state, 1)},
+                    {ident: ("token", downgraded, 1)})
+        require_irreversible_preserved(
+            {ident: ("token", "draft", 1)}, {})
+
+
 if __name__ == "__main__":
     unittest.main()
