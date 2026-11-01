@@ -218,12 +218,14 @@ class Bip39TrialWindow(QWidget):
             self.account.setText("BIP39 account: "+result["account_id"])
             self.balance.setText("Balance: not yet synced against Core")
             self.tip.setText("Chain: not yet verified")
-            self.status.setText("BIP39 12-word encrypted native seed opened — read-only")
+            self.status.setText("BIP39 native seed opened. Activate Send after checkpoint verification.")
             if result.get("mnemonic_once"):self._show_words_once(result["mnemonic_once"])
         elif action=="mine":
             self._test_funded=True
             self.status.setText("Public REGTEST receive confirmed at block {} — click Sync real Core".format(result["height"]))
-        elif action=="snapshot":
+        elif action in ("snapshot","activate"):
+            if result.get("signer_allowed") is True:
+                self._spend_enabled=True
             self.receive.setText(result["receive_code"])
             self.balance.setText("Confirmed: {:,} atoms · available: {:,} atoms".format(
                 result["confirmed_atoms"],result["available_atoms"]))
@@ -235,9 +237,47 @@ class Bip39TrialWindow(QWidget):
                 "\n".join("{}  height={}  atoms={}".format(
                     row["txid"],row["height"],row["atoms"]) for row in rows)
                 if rows else "No confirmed BIP352 transactions found on this disposable Core")
-            self.status.setText("Verified real WAM Core + WSP scan · Send/Sign disabled")
+            self.status.setText(
+                "Verified BIP39 REGTEST Send session; review every transaction"
+                if self._spend_enabled else
+                "Verified WAM Core and WSP scan; Send remains disabled")
+        elif action=="prepare":
+            self._approved_commitment=result.commitment
+            self._signed_ready=False
+            choice=QMessageBox.question(
+                self,"Exact REGTEST transaction approval",
+                "Recipient: {}\nAmount: {:,} atoms\nFee: {:,} atoms\n"
+                "Change: {:,} atoms\nInputs: {}\nPSBT SHA256: {}\n\n"
+                "SIGN and irreversibly reserve these coins?".format(
+                    result.code,result.atoms,result.fee,result.change_atoms,
+                    result.input_count,result.commitment),
+                QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+            self._pending_action=(
+                ("sign",result.commitment)
+                if choice==QMessageBox.StandardButton.Yes else ("cancel",))
+            self.status.setText("Exact-transaction approval received; securing reservation")
+        elif action=="sign":
+            if result.commitment!=self._approved_commitment:
+                self._signed_ready=False
+                self.status.setText("Signed commitment mismatch — broadcast disabled")
+            else:
+                self._signed_ready=True
+                self.status.setText("PSBT signed; broadcast requires separate explicit approval")
+        elif action=="broadcast":
+            self._approved_commitment=None
+            self._signed_ready=False
+            self.status.setText("Broadcast submitted. Refreshing original Core…")
+            self._pending_action=("snapshot",)
+        elif action=="cancel":
+            self._approved_commitment=None
+            self._signed_ready=False
+            self.status.setText("Unsigned draft cancelled")
         elif action=="lock":
             self._ready=False
+            self._spend_enabled=False
+            self._signed_ready=False
+            self._approved_commitment=None
             self.receive.clear()
             self.account.setText("Account: locked")
             self.balance.setText("Balance: unverified")
@@ -250,11 +290,16 @@ class Bip39TrialWindow(QWidget):
         self._set_actions()
 
     def _on_denied(self, code):
+        if self._approved_commitment is not None:
+            self._signed_ready=False
         self.status.setText("Operation refused safely: " + str(code))
         self._set_actions()
 
     def _finished(self):
         self._worker=None
+        pending,self._pending_action=self._pending_action,None
+        if pending is not None and not self._quit_requested:
+            self._command(*pending)
         self._set_actions()
         self._check_quit()
 
