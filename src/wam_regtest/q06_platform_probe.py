@@ -226,10 +226,32 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         if window is not None:
             window._poll.stop()
             window.hide()
-        if good:
+        if not good:
+            # Executor's owner thread is intentionally non-daemon. On a
+            # synchronous read/validation failure, use the *original*
+            # authenticated owner to request bounded clean shutdown ONLY
+            # if idle; preserve all chain/anchor/SQLite bytes. Never cancel a
+            # pending write, replay a transaction or force-stop an unknown Core.
+            record["owner_after_failure"] = "PRESERVED_UNCERTAIN"
+            safe_shutdown = True
+            for worker in (restored_executor, executor):
+                if worker is None or worker.closed:
+                    continue
+                if worker.busy:
+                    safe_shutdown = False
+                    continue
+                try:
+                    worker.request("quit", timeout=45)
+                    if not worker.join(15) or not worker.closed:
+                        safe_shutdown = False
+                except Exception:
+                    safe_shutdown = False
+            if safe_shutdown:
+                record["owner_after_failure"] = "CLEAN_STOP_BYTES_PRESERVED"
+        else:
             adapter.teardown()
-        # Failed session, Core, native journal, chain and test witness are left
-        # untouched for explicit forensic review. Never retry signed sends.
+        # Failed native journal, frozen Core bytes, chain and witness are
+        # never swept or silently repaired. No re-signing or auto-broadcast.
         phrase = None
 
 
