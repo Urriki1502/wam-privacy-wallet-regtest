@@ -156,10 +156,12 @@ def open_owned_spend_session(owner, seed_folder, source, password, *,
     _owned(owner)
     keys = scanner = guard = rpc = None
     transferred = False
+    phase = 'SEED_AUTH'
     try:
         keys = open_owned_seed_container(
             owner, seed_folder, source, password,
             authorized=authorized, keychain=keychain)
+        phase = 'RUNTIME_PREFLIGHT'
         # Any leftover prior native runtime is ambiguous after a crash.
         # Deny implicit replay/recovery rather than creating a parallel signer.
         import re
@@ -173,12 +175,17 @@ def open_owned_spend_session(owner, seed_folder, source, password, *,
         if sys.platform == "win32":
             from .windows_private_storage import create_managed_runtime
             create_managed_runtime(target)
+        phase = 'SCANNER_CREATE'
         scanner = Scanner(target, keys.accounts())
+        phase = 'SCANNER_GUARD'
         guard = RuntimeGuard(target)
+        phase = 'RPC_ATTEST'
         rpc = WalletCoreCli(owner.cli, owner.directory)
         rpc.attest()
+        phase = 'CHECKPOINT_DIRECTORY'
         seed_id, folder = _directory(owner, seed_folder)
         if folder.exists() or folder.is_symlink():
+            phase = 'CHECKPOINT_RESTORE'
             previous, receipt = read_owned_candidate(
                 owner, seed_folder, source, password,
                 authorized=authorized, keychain=keychain,
@@ -206,26 +213,35 @@ def open_owned_spend_session(owner, seed_folder, source, password, *,
                     owner, seed_folder, scanner, source, password,
                     authorized=True, keychain=keychain)
         else:
+            phase = 'INITIAL_SCANNER_SYNC'
             scanner.sync(rpc)
             scanner.assert_current()
             if scanner.store.tip() != (
                     rpc.call("getblockcount"), rpc.call("getbestblockhash")):
                 raise Q06SpendSessionError("Q06_SPEND_CORE_CHANGED")
+            phase = 'INITIAL_NATIVE_PUBLISH'
             publish_owned_candidate(
                 owner, seed_folder, scanner, source, password,
                 authorized=True, keychain=keychain)
+        phase = 'NATIVE_VAULT_OPEN'
         vault = _Q06NativeScannerVault(
             owner, seed_folder, source, password, keychain)
         guard.check()
         _owned(owner)
+        phase = 'SESSION_CONSTRUCTION'
         session = Q06OwnedSpendSession(
             owner, source, keys, scanner, guard, vault, password)
         # Require both the source and Q05 transaction engine to re-observe
         # the exact native checkpoint before passing this to any GUI.
+        phase = 'OWNED_SESSION_RPC'
         session._rpc()
         transferred = True
         return session
     except Exception:
+        # CI-only fixed whitelist: no exception payloads, keys or paths.
+        if (sys.platform == 'darwin' and os.environ.get('GITHUB_ACTIONS') == 'true'
+                and os.environ.get('WAM_Q06_CI_SPEND_QUALIFY') == '1'):
+            print('MACOS_Q06_SPEND_OPEN_DENIED_STAGE=' + phase, flush=True)
         raise Q06SpendSessionError("Q06_SPEND_OPEN_DENIED") from None
     finally:
         if rpc is not None and getattr(rpc, "_transport", None) is not None:

@@ -189,6 +189,9 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             self._core(), self._seed_folder, self.source,
             bytes(self._secret), authorized=True, keychain=self.keychain)
         try:
+            if (sys.platform == 'darwin' and os.environ.get('GITHUB_ACTIONS') == 'true'
+                    and os.environ.get('WAM_Q06_CI_SPEND_QUALIFY') == '1'):
+                print('MACOS_Q06_SPEND_OPEN_SESSION_PASS', flush=True)
             state = session.snapshot()
             if (state.signer_allowed is not True
                     or state.broadcast_allowed is not True
@@ -204,6 +207,9 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                 pass
             raise Q06ReadOnlyError("Q06_GUI_SPEND_ACTIVATION_DENIED") from None
         self._spend_session = session
+        if (sys.platform == 'darwin' and os.environ.get('GITHUB_ACTIONS') == 'true'
+                and os.environ.get('WAM_Q06_CI_SPEND_QUALIFY') == '1'):
+            print('MACOS_Q06_SPEND_INITIAL_SNAPSHOT_PASS', flush=True)
         return self._session_snapshot()
 
     def _session_snapshot(self):
