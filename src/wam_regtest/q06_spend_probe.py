@@ -1,0 +1,185 @@
+"""Packaged macOS ARM64 Q06 owned BIP39 real-Core spend/restore qualification.
+
+One disposable signed-Core REGTEST chain; never production, mainnet or user
+keys. Human review remains a separate product gate. Nothing in this probe
+should be interpreted as independent security acceptance.
+"""
+from hashlib import sha256
+import json
+from pathlib import Path
+import platform
+import secrets
+import sys
+
+from . import custody
+from .bip39_owner_backend import Bip39ReadOnlyBackend
+from .wallet_executor import WalletExecutor
+from .wsp_live import _pinned_source
+
+
+def qualify(core, source):
+    if sys.platform != "darwin" or platform.machine().lower() != "arm64":
+        raise ValueError("Q06_SPEND_MACOS_NATIVE_REQUIRED")
+    from .core import verified_core_paths
+    verified_core_paths(core)
+    _pinned_source(source)
+    from .q05_platforms import DarwinArm64Adapter
+    from .desktop import qt_application
+    from .bip39_owner_gui import Bip39TrialWindow
+    from .bip39_12 import Bip39Regtest12Keys
+    from mnemonic import Mnemonic
+    app = qt_application()
+    if app.platformName() != "cocoa":
+        raise ValueError("Q06_SPEND_NATIVE_COCOA_REQUIRED")
+    adapter = DarwinArm64Adapter()
+    adapter.enforce_host()
+
+    data = {
+        "status": "FAIL",
+        "network": "regtest",
+        "mainnet_allowed": False,
+        "signed_core": True,
+        "q06_bip39_spend_confirmed": False,
+        "q06_bip39_same_owner_reopen_reserved": False,
+        "q06_bip39_fresh_mnemonic_full_history_recovery": False,
+    }
+    def stage(message):
+        print("MACOS_Q06_SPEND_STAGE=" + message, flush=True)
+
+    with custody.private_temporary_directory(prefix="q06-spend-frozen-") as temp:
+        root = Path(temp).resolve() / ("wam-fusion-core-" + secrets.token_hex(8))
+        custody.create_directory(root)
+        password = b"public-disposable-q06-signed-core-spend-only"
+        executor = WalletExecutor(lambda: Bip39ReadOnlyBackend(
+            root, core, source, _anchor_factory=adapter.make_anchor))
+        window = None
+        good = False
+        try:
+            stage("CREATE_START")
+            created = executor.request("open", password, "create", "", timeout=120)
+            phrase = created["mnemonic_once"]
+            if (len(phrase.split()) != 12 or
+                    not created["receive_code"].startswith("wamrtsp1")):
+                raise ValueError("Q06_SPEND_CREATE_IDENTITY_DENIED")
+            stage("CREATE_PASS")
+            stage("FUND_START")
+            funded = executor.request("mine", timeout=240)
+            before = executor.request("snapshot", timeout=120)
+            if (before["confirmed_atoms"] != funded["atoms"]
+                    or before["available_atoms"] != funded["atoms"]):
+                raise ValueError("Q06_SPEND_RECEIVE_DENIED")
+            stage("RECEIVE_FUNDED_PASS")
+            stage("ACTIVATE_CHECKPOINT_START")
+            active = executor.request("activate", timeout=240)
+            if (active["signer_allowed"] is not True
+                    or active["broadcast_allowed"] is not True
+                    or active["mainnet_allowed"] is not False
+                    or active["confirmed_atoms"] != funded["atoms"]
+                    or active["receive_code"] != created["receive_code"]):
+                raise ValueError("Q06_SPEND_NATIVE_ACTIVATION_DENIED")
+            stage("ACTIVATE_CHECKPOINT_PASS")
+            window = Bip39TrialWindow(executor)
+            window.show()
+            sanitized = dict(created)
+            sanitized["mnemonic_once"] = ""
+            window._on_ready("open", sanitized)
+            window._on_ready("activate", active)
+            app.processEvents()
+            if (not window.isVisible() or not window.send.isEnabled()
+                    or not window.receive.text() == created["receive_code"]):
+                raise ValueError("Q06_SPEND_QT_BINDING_DENIED")
+            stage("COCOA_SEND_BUTTON_BOUND_PASS")
+
+            with Bip39Regtest12Keys(
+                    Mnemonic("english").to_mnemonic(bytes([1] * 16)),
+                    source=source, authorized_disposable=True) as payee:
+                destination = payee.public_metadata()["receive_code"]
+            atoms = min(50_000, funded["atoms"] // 4)
+            if atoms < 330 or funded["atoms"] < atoms + 1000:
+                raise ValueError("Q06_SPEND_FUNDS_NOT_SPENDABLE")
+            stage("PREPARE_START")
+            prepared = executor.request("prepare", destination, atoms, 1000, timeout=240)
+            if (prepared.code != destination or prepared.atoms != atoms
+                    or prepared.fee != 1000 or len(prepared.commitment) != 64):
+                raise ValueError("Q06_SPEND_INTENT_DENIED")
+            stage("PREPARE_ANCHORED_PASS")
+            signed = executor.request("sign", prepared.commitment, timeout=240)
+            if signed.commitment != prepared.commitment:
+                raise ValueError("Q06_SPEND_SIGNED_INTENT_DENIED")
+            stage("SIGNED_ANCHORED_PASS")
+            broadcast = executor.request("broadcast", prepared.commitment, timeout=240)
+            if not isinstance(broadcast, str) or len(broadcast) != 64:
+                raise ValueError("Q06_SPEND_TXID_DENIED")
+            stage("BROADCAST_ANCHORED_PASS")
+            confirmed = executor.request("ci_confirm", timeout=120)
+            if confirmed["status"] != "Q06_REGTEST_CI_BLOCK_CONFIRMED":
+                raise ValueError("Q06_SPEND_CONFIRM_DENIED")
+            after = executor.request("snapshot", timeout=240)
+            if (after["height"] != confirmed["height"]
+                    or after["history_count_shown"] < 2
+                    or after["receive_code"] != created["receive_code"]):
+                raise ValueError("Q06_SPEND_HISTORY_DENIED")
+            stage("ONCHAIN_CONFIRMATION_PASS")
+            data["q06_bip39_spend_confirmed"] = True
+            data["txid_sha256"] = sha256(broadcast.encode("ascii")).hexdigest()
+            data["receive_sha256"] = sha256(
+                created["receive_code"].encode("ascii")).hexdigest()
+
+            executor.request("lock", timeout=90)
+            stage("LOCKED_ORIGINAL_PASS")
+            reopened = executor.request("open", password, "reopen", "", timeout=120)
+            if (reopened["receive_code"] != created["receive_code"]
+                    or reopened["mnemonic_once"]):
+                raise ValueError("Q06_SPEND_REOPEN_IDENTITY_DENIED")
+            recovered = executor.request("activate", timeout=240)
+            if (recovered["height"] != after["height"]
+                    or recovered["confirmed_atoms"] != after["confirmed_atoms"]
+                    or recovered["reservation_count"] != after["reservation_count"]
+                    or recovered["history_count_shown"] < 2
+                    or recovered["receive_code"] != created["receive_code"]):
+                raise ValueError("Q06_SPEND_REOPEN_STATE_DENIED")
+            data["q06_bip39_same_owner_reopen_reserved"] = True
+            stage("REOPEN_ANCHORED_RESERVATION_PASS")
+            executor.request("quit", timeout=90)
+            if not executor.join(15) or not executor.closed:
+                raise ValueError("Q06_SPEND_OWNED_SHUTDOWN_DENIED")
+            stage("CLEAN_CORE_SHUTDOWN_PASS")
+            data["status"] = "Q06_NATIVE_BIP39_SEND_CONFIRM_REOPEN_PASS"
+            good = True
+            return data
+        finally:
+            if window is not None:
+                window._poll.stop()
+                window.hide()
+                if good:
+                    from PySide6.QtCore import QCoreApplication, QEvent
+                    window.deleteLater()
+                    QCoreApplication.sendPostedEvents(
+                        None, QEvent.Type.DeferredDelete)
+                    app.processEvents()
+            # Preserve the exact Core/chain/native state on an uncertain
+            # failure. No force-kill, orphan sweep, automatic replay or retry.
+            if not good and not executor.busy and not executor.closed:
+                try:
+                    executor.request("quit", timeout=45)
+                    executor.join(15)
+                except Exception:
+                    stage("UNCERTAIN_OWNER_PRESERVED")
+            phrase = None
+
+
+def run(core, source):
+    try:
+        receipt = qualify(core, source)
+        with Path("q06-frozen-spend-evidence.json").open("x") as output:
+            json.dump(receipt, output, sort_keys=True, indent=2)
+            output.write("\n")
+        if (receipt["status"] != "Q06_NATIVE_BIP39_SEND_CONFIRM_REOPEN_PASS"
+                or receipt["q06_bip39_spend_confirmed"] is not True
+                or receipt["q06_bip39_same_owner_reopen_reserved"] is not True):
+            raise ValueError("Q06_SPEND_NOT_QUALIFIED")
+        print("MACOS_Q06_NATIVE_BIP39_SEND_CONFIRM_REOPEN_PASS", flush=True)
+        return 0
+    except Exception:
+        print("MACOS_Q06_NATIVE_BIP39_SEND_CONFIRM_REOPEN_DENIED", flush=True)
+        return 2
