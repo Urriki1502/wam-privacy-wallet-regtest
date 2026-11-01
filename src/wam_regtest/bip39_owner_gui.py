@@ -37,6 +37,13 @@ class Bip39TrialWindow(QWidget):
         self.receive.setReadOnly(True)
         self.receive.setPlaceholderText("Unlock this Q06 wallet to view your real derived receive code")
         box.addWidget(self.receive)
+        box.addWidget(QLabel("Last broadcast TXID (copy before closing):"))
+        self.last_txid=QLineEdit()
+        self.last_txid.setReadOnly(True)
+        self.last_txid.setPlaceholderText(
+            "No transaction broadcast in this GUI session. "
+            "Copy the TXID before closing; it is not auto-replayed.")
+        box.addWidget(self.last_txid)
         self.account = QLabel("Account: locked")
         self.balance = QLabel("Balance: unverified")
         self.tip = QLabel("Chain: unverified")
@@ -331,6 +338,7 @@ class Bip39TrialWindow(QWidget):
             self._approved_commitment=None
             self._signed_ready=False
             self._pending_confirm_txid=result
+            self.last_txid.setText(result)
             self.status.setText(
                 "Broadcast submitted. Record the TXID before closing: {}. "
                 "Confirm 1 REGTEST block to verify on-chain.".format(result))
@@ -363,6 +371,7 @@ class Bip39TrialWindow(QWidget):
             self._signed_ready=False
             self._approved_commitment=None
             self._pending_confirm_txid=None
+            self.last_txid.clear()
             self.receive.clear()
             self.account.setText("Account: locked")
             self.balance.setText("Balance: unverified")
