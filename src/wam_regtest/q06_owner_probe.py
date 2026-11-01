@@ -108,6 +108,15 @@ def qualify(core,source):
             app.processEvents()
             if str(funded["atoms"]) not in window.balance.text().replace(",",""):
                 raise ValueError("Q06_OWNER_FUNDED_QT_BALANCE_DENIED")
+            # Assert the REAL installed Fusion pages, not the old developer
+            # text-only window or a synthetic source-only UI screenshot.
+            from .wallet_read import format_wam
+            if (window.navigation.count() != 6
+                    or window.overview.balance_value.text()
+                        != format_wam(funded["atoms"],grouped=True)+" WAM"
+                    or window.receive_page.code != opened["receive_code"]
+                    or window.history_page.table.rowCount() < 1):
+                raise ValueError("Q06_OWNER_FUSION_VISUAL_BINDING_DENIED")
             data["Q06_actual_onchain_BIP39_received_atoms"]=funded["atoms"]
             data["Q06_actual_Core_confirmed_BIP39_txid_sha256"]=sha256(funded["txid"].encode()).hexdigest()
             data["Q06_native_Qt_funded_balance_bound"]=True
