@@ -53,6 +53,7 @@ class Bip39TrialWindow(QWidget):
         self.send=QPushButton("Prepare Send")
         self.broadcast=QPushButton("Broadcast signed transaction")
         self.confirm=QPushButton("Confirm 1 REGTEST block")
+        self.recovery=QPushButton("Verify 12-word recovery on this chain")
         self.cancel=QPushButton("Cancel unsigned draft")
         self.lock=QPushButton("Lock Q06")
         self.quit=QPushButton("Stop owned Core and quit")
@@ -62,6 +63,7 @@ class Bip39TrialWindow(QWidget):
         payment.addWidget(self.send);payment.addWidget(self.broadcast);payment.addWidget(self.cancel)
         box.addLayout(payment)
         box.addWidget(self.confirm)
+        box.addWidget(self.recovery)
         utility=QHBoxLayout()
         utility.addWidget(self.lock);utility.addWidget(self.quit)
         box.addLayout(utility)
@@ -71,6 +73,7 @@ class Bip39TrialWindow(QWidget):
         self.send.clicked.connect(self._prepare_send)
         self.broadcast.clicked.connect(self._confirm_broadcast)
         self.confirm.clicked.connect(self._confirm_one_block)
+        self.recovery.clicked.connect(self._verify_recovery_phrase)
         self.cancel.clicked.connect(lambda:self._command("cancel"))
         self.lock.clicked.connect(lambda:self._command("lock"))
         self.quit.clicked.connect(self.request_quit)
@@ -99,6 +102,8 @@ class Bip39TrialWindow(QWidget):
                                and not self._signed_ready and not busy and not self._quit_requested)
         self.confirm.setEnabled(self._spend_enabled and self._pending_confirm_txid is not None
                                 and not busy and not self._quit_requested)
+        self.recovery.setEnabled(self._spend_enabled and self._pending_confirm_txid is None
+                                 and not busy and not self._quit_requested)
         self.lock.setEnabled(self._ready and not busy and not self._quit_requested)
         self.quit.setEnabled(not busy and not self.executor.closed)
 
@@ -106,7 +111,7 @@ class Bip39TrialWindow(QWidget):
         if self._worker is not None or self.executor.busy or self.executor.closed:
             return False
         worker=ControlWorker(self.executor, action, args,
-                             kwargs={"timeout":240} if action in ("mine","snapshot","activate","prepare","sign","broadcast","confirm") else None,
+                             kwargs={"timeout":240} if action in ("mine","snapshot","activate","prepare","sign","broadcast","confirm","recovery_verify") else None,
                              parent=self)
         self._worker=worker
         worker.ready.connect(self._on_ready, Qt.ConnectionType.QueuedConnection)
@@ -210,6 +215,19 @@ class Bip39TrialWindow(QWidget):
         if choice==QMessageBox.StandardButton.Yes:
             self._command("confirm",txid)
 
+    def _verify_recovery_phrase(self):
+        if not self._spend_enabled or self._worker is not None or self.executor.busy:
+            return
+        phrase,ok=QInputDialog.getMultiLineText(
+            self,"Independent BIP39 history recovery (REGTEST)",
+            "Enter your 12 DISPOSABLE REGTEST words to independently rescan "
+            "THIS original Core blockchain. Read-only: no native reservation "
+            "migration, no clean-device recovery, no signing authority.")
+        if ok:
+            self.status.setText("Independently rescanning original REGTEST chain…")
+            self._command("recovery_verify",phrase)
+        phrase=""
+
     def _show_words_once(self, phrase):
         dlg=QDialog(self)
         dlg.setWindowTitle("REGTEST recovery phrase — shown once")
@@ -299,6 +317,11 @@ class Bip39TrialWindow(QWidget):
                 self._pending_confirm_txid=None
                 self.status.setText("REGTEST transaction confirmed on original Core")
                 self._pending_action=("snapshot",)
+        elif action=="recovery_verify":
+            self.status.setText(
+                "Same-chain BIP39 rescan PASS: {} confirmed history records, "
+                "{:,} atoms. Separate device/chain restoration remains unverified.".format(
+                    result["history_count"],result["confirmed_atoms"]))
         elif action=="cancel":
             self._approved_commitment=None
             self._signed_ready=False
