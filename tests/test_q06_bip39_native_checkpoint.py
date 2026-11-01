@@ -62,7 +62,7 @@ class FakeAnchor:
     def _advance_unlocked(self, before, after):
         if self.fail_cas:
             raise ValueError("INJECTED_CAS_CUT")
-        if before is not None or self.value != before or after[0] != 1:
+        if self.value != before or after[0] != (1 if before is None else before[0] + 1):
             raise ValueError("CAS_DENIED")
         self.value = after
 
@@ -150,6 +150,66 @@ class NativeCandidateContracts(unittest.TestCase):
         self.assertEqual(decoded["account_id"], self.crypto_keys.public_metadata()["account_id"])
         self.assertEqual(decoded["status"], "RESTORED_UNVERIFIED_NEEDS_REAL_CORE_RESYNC")
         self.assertFalse(fresh.ready)
+
+    def _advance(self):
+        from wam_regtest.bip39_native_checkpoint import advance_owned_candidate
+        from unittest.mock import patch
+        class Guard:
+            def __init__(self, path):self.path = path
+            def remove_owned(self):
+                for suffix in ("-journal", "-wal", "-shm", ""):
+                    p = self.path.with_name(self.path.name + suffix)
+                    if p.exists():p.unlink()
+            def close(self):pass
+        with patch("wam_regtest.managed_wallet_session.RuntimeGuard", Guard):
+            return advance_owned_candidate(
+                self.owner, self.seed_folder, self.scan, SOURCE,
+                PASSWORD.encode(), authorized=True)
+
+    def test_generation_two_preserves_native_anchor_and_previous_ciphertext(self):
+        self.publish()
+        first = self.storage.read(self.snapshot_folder, "snapshot-000000001.enc")
+        result = self._advance()
+        self.assertEqual(result["generation"], 2)
+        self.assertIs(result["signer_allowed"], False)
+        self.assertEqual(self.anchor.read()[0], 2)
+        self.assertEqual(
+            self.storage.read(self.snapshot_folder, "snapshot-000000001.enc"), first)
+        self.assertEqual(self.read()[1]["generation"], 2)
+        self.assertEqual(len(self.flush_calls), 2)
+
+    def test_cut_at_generation_two_never_adopts_or_cleans_orphan(self):
+        self.publish()
+        first_anchor = self.anchor.read()
+        self.anchor.fail_cas = True
+        with self.assertRaises(SeededNativeCheckpointError):
+            self._advance()
+        orphan = self.snapshot_folder / "snapshot-000000002.enc"
+        self.assertTrue(orphan.exists())
+        self.assertEqual(self.anchor.read(), first_anchor)
+        with self.assertRaises(SeededNativeCheckpointError):
+            self.read()
+        self.assertTrue(orphan.exists())
+
+    def test_confirmed_descendant_only_and_reorg_refusal(self):
+        from unittest.mock import Mock, patch
+        from wam_regtest.bip39_native_checkpoint import (
+            _require_confirmed_descendant, SeededNativeCheckpointError)
+        old=(10, "a"*64)
+        new=(12, "b"*64)
+        owner=SimpleNamespace(read=Mock())
+        owner.read.call.return_value=old[1]
+        with patch("wam_regtest.managed_wallet_checkpoint._owned"):
+            _require_confirmed_descendant(owner, old, new)
+            owner.read.call.assert_called_once_with("getblockhash", [10])
+            owner.read.call.reset_mock()
+            owner.read.call.return_value="c"*64
+            with self.assertRaises(SeededNativeCheckpointError):
+                _require_confirmed_descendant(owner, old, new)
+            with self.assertRaises(SeededNativeCheckpointError):
+                _require_confirmed_descendant(owner, new, old)
+            with self.assertRaises(SeededNativeCheckpointError):
+                _require_confirmed_descendant(owner, old, (10, "b"*64))
 
     def test_duplicate_publication_is_denied_without_overwrite(self):
         self.publish()

@@ -171,6 +171,16 @@ def qualify(core,source):
                     except Exception:
                         stage("FAIL_CLOSED_OWNER_PRESERVED")
             phrase=None
+            # Dispose Cocoa widgets while QApplication is still alive, only
+            # AFTER both original owned-Core executors have stopped cleanly.
+            # Avoid interpreter-shutdown cleanup of live PySide6 QObjects.
+            # The uncertain failure path still preserves Core/chain evidence.
+            if good and window is not None:
+                from PySide6.QtCore import QCoreApplication, QEvent
+                window.deleteLater()
+                QCoreApplication.sendPostedEvents(
+                    None, QEvent.Type.DeferredDelete)
+                app.processEvents()
     return data
 
 

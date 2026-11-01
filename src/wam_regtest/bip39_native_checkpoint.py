@@ -19,6 +19,24 @@ from .wsp_live import REGTEST_GENESIS, _pinned_source
 
 SCHEMA = "wam-q06-bip39-12-native-scanner-checkpoint/v1"
 FILE = "snapshot-000000001.enc"
+MAX_CHECKPOINT_GENERATIONS = 4096
+
+def _scanner_anchor_record(value):
+    if (type(value) not in (tuple, list) or len(value) != 2
+            or type(value[0]) is not int or not 1 <= value[0] <= MAX_CHECKPOINT_GENERATIONS
+            or type(value[1]) is not str or len(value[1]) != 64
+            or any(c not in "0123456789abcdef" for c in value[1])):
+        raise SeededNativeCheckpointError("Q06_SCANNER_ANCHOR_DENIED")
+    return value
+
+def _checkpoint_filename(generation):
+    _scanner_anchor_record((generation, "0" * 64))
+    return f"snapshot-{generation:09d}.enc"
+
+def _checkpoint_names(generation):
+    _checkpoint_filename(generation)
+    return {_checkpoint_filename(i) for i in range(1, generation + 1)}
+
 
 
 class SeededNativeCheckpointError(ValueError):
@@ -139,7 +157,8 @@ def publish_owned_candidate(owner, seed_folder, scanner, source, password, *,
 
 
 def read_owned_candidate(owner, seed_folder, source, password, *,
-                         authorized=False, keychain=None):
+                         authorized=False, keychain=None,
+                         allow_descendant=False):
     """Validate seed + original Core + checkpoint native CAS; return ciphertext.
 
     Does not create/overwrite any SQLite file. A later independent routine
@@ -155,9 +174,9 @@ def read_owned_candidate(owner, seed_folder, source, password, *,
             binding = _owner_binding(owner)
             storage, anchor = _native(directory, seed_id, source, keychain)
             with anchor.lease():
-                record = _record(anchor.read())
-                _exact_namespace(directory, {FILE})
-                ciphertext = storage.read(directory, FILE)
+                record = _scanner_anchor_record(anchor.read())
+                _exact_namespace(directory, _checkpoint_names(record[0]))
+                ciphertext = storage.read(directory, _checkpoint_filename(record[0]))
                 if sha256(ciphertext).hexdigest() != record[1]:
                     raise SeededNativeCheckpointError("Q06_NATIVE_CHECKPOINT_DIGEST_DENIED")
                 from wam_sp.keystore import unseal
@@ -170,7 +189,7 @@ def read_owned_candidate(owner, seed_folder, source, password, *,
                 public = keys.public_metadata()
                 if (type(data) is not dict or set(data) != required
                         or data["schema"] != SCHEMA
-                        or type(data["generation"]) is not int or data["generation"] != 1
+                        or type(data["generation"]) is not int or data["generation"] != record[0]
                         or data["seed_id"] != seed_id or data["anchor_id"] != anchor.wallet_id
                         or data["owner_binding"] != binding
                         or data["network"] != "regtest" or data["genesis"] != REGTEST_GENESIS
@@ -180,16 +199,161 @@ def read_owned_candidate(owner, seed_folder, source, password, *,
                 candidate = base64.b64decode(data["candidate"], validate=True)
                 if sha256(candidate).hexdigest() != data["candidate_sha256"]:
                     raise SeededNativeCheckpointError("Q06_NATIVE_CHECKPOINT_CANDIDATE_DENIED")
-                if _owned_tip(owner) != (data["height"], data["tip"]):
-                    raise SeededNativeCheckpointError("Q06_NATIVE_CHECKPOINT_TIP_CHANGED")
+                anchored_tip = (data["height"], data["tip"])
+                current_tip = _owned_tip(owner)
+                if allow_descendant is True:
+                    _require_confirmed_descendant(owner, anchored_tip, current_tip)
+                elif allow_descendant is False:
+                    if current_tip != anchored_tip:
+                        raise SeededNativeCheckpointError("Q06_NATIVE_CHECKPOINT_TIP_CHANGED")
+                else:
+                    raise SeededNativeCheckpointError("Q06_SCANNER_MODE_DENIED")
                 if anchor.read() != record:
                     raise SeededNativeCheckpointError("Q06_NATIVE_CHECKPOINT_ANCHOR_CHANGED")
                 return candidate, {
                     "schema": SCHEMA, "status": "ENCRYPTED_CANDIDATE_NEEDS_FRESH_SQLITE_RESTORE",
                     "height": data["height"], "tip": data["tip"],
-                    "account_id": public["account_id"],
+                    "generation": record[0], "account_id": public["account_id"],
                     "signer_allowed": False, "broadcast_allowed": False,
                     "mainnet_allowed": False,
                 }
     except Exception:
         raise SeededNativeCheckpointError("Q06_NATIVE_CHECKPOINT_READ_DENIED") from None
+
+
+def _require_confirmed_descendant(owner, anchored_tip, live_tip):
+    """No reorg crossing the anchored checkpoint tip; refuse all ambiguity."""
+    old_height, old_hash = anchored_tip
+    now_height, now_hash = live_tip
+    if (type(old_height) is not int or type(now_height) is not int
+            or not 0 <= old_height <= now_height <= 1_000_000
+            or type(old_hash) is not str or type(now_hash) is not str
+            or len(old_hash) != 64 or len(now_hash) != 64):
+        raise SeededNativeCheckpointError("Q06_SCANNER_ANCESTRY_INVALID")
+    if anchored_tip == live_tip:
+        return
+    if old_height == now_height:
+        raise SeededNativeCheckpointError("Q06_SCANNER_REORG_DENIED")
+    from .managed_wallet_checkpoint import _owned
+    _owned(owner)
+    if owner.read.call("getblockhash", [old_height]) != old_hash:
+        raise SeededNativeCheckpointError("Q06_SCANNER_REORG_DENIED")
+    _owned(owner)
+
+
+def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
+                            authorized=False, keychain=None):
+    """Publish N+1 at the exact original Core tip; never activate a signer."""
+    import os
+    import secrets
+    import stat
+    import sys
+    from .bip39_scanner_checkpoint import (
+        decode_candidate, require_irreversible_preserved)
+    from .managed_wallet_session import RuntimeGuard
+    from .managed_wallet_checkpoint import durable_core_checkpoint
+    from wam_sp.scanner import Scanner
+    from wam_sp.keystore import seal
+
+    clear = _owned_password(owner, source, password, authorized)
+    seed_id, directory = _directory(owner, seed_folder)
+    old_cipher, receipt = read_owned_candidate(
+        owner, seed_folder, source, password,
+        authorized=authorized, keychain=keychain, allow_descendant=True)
+    anchored_tip = (receipt["height"], receipt["tip"])
+    tip = _owned_tip(owner)
+    _require_confirmed_descendant(owner, anchored_tip, tip)
+    if scanner.store.tip() != tip:
+        raise SeededNativeCheckpointError("Q06_SCANNER_TIP_CHANGED")
+    scanner.assert_current()
+    scratch = owner.directory / ("q06-prior-" + secrets.token_hex(16) + ".sqlite")
+    if any(scratch.with_name(scratch.name + suffix).exists()
+           or scratch.with_name(scratch.name + suffix).is_symlink()
+           for suffix in ("", "-wal", "-shm", "-journal", ".scan.lock")):
+        raise SeededNativeCheckpointError("Q06_SCANNER_RUNTIME_COLLISION")
+    old_scanner = guard = None
+    try:
+        with open_owned_seed_container(
+                owner, seed_folder, source, password,
+                authorized=authorized, keychain=keychain) as keys:
+            if scanner.accounts != keys.accounts():
+                raise SeededNativeCheckpointError("Q06_SCANNER_ACCOUNT_MISMATCH")
+            if sys.platform == "win32":
+                from .windows_private_storage import create_managed_runtime
+                create_managed_runtime(scratch)
+            old_scanner = Scanner(scratch, keys.accounts())
+            guard = RuntimeGuard(scratch)
+            decode_candidate(keys, old_scanner, old_cipher, clear,
+                             owner_binding=_owner_binding(owner))
+            def reservations(s):
+                r = s.store.db.execute(
+                    "SELECT txid,vout,token,state,created FROM reservations"
+                ).fetchall()
+                if len(r) != len({(v[0], v[1]) for v in r}):
+                    raise SeededNativeCheckpointError("Q06_RESERVATION_DUPLICATE")
+                return {(v[0], v[1]): (v[2], v[3], v[4]) for v in r}
+            require_irreversible_preserved(
+                reservations(old_scanner), reservations(scanner))
+            old_scanner.close()
+            old_scanner = None
+            lock = scratch.with_name(scratch.name + ".scan.lock")
+            if lock.exists() or lock.is_symlink():
+                meta = lock.lstat()
+                if (not stat.S_ISREG(meta.st_mode) or meta.st_nlink != 1
+                        or lock.is_symlink()
+                        or (sys.platform != "win32"
+                            and (meta.st_uid != os.geteuid()
+                                 or stat.S_IMODE(meta.st_mode) != 0o600))):
+                    raise SeededNativeCheckpointError("Q06_SCANNER_LOCK_UNCERTAIN")
+                lock.unlink()
+            guard.remove_owned()
+            guard = None
+            candidate = encode_candidate(
+                keys, scanner, clear, owner_binding=_owner_binding(owner),
+                trusted_tip=tip)
+            durable_core_checkpoint(owner, *tip)
+            if _owned_tip(owner) != tip:
+                raise SeededNativeCheckpointError("Q06_SCANNER_TIP_CHANGED")
+            storage, anchor = _native(directory, seed_id, source, keychain)
+            with anchor.lease():
+                original = _scanner_anchor_record(anchor.read())
+                if original[0] != receipt["generation"]:
+                    raise SeededNativeCheckpointError("Q06_SCANNER_ANCHOR_CHANGED")
+                if original[0] == MAX_CHECKPOINT_GENERATIONS:
+                    raise SeededNativeCheckpointError("Q06_SCANNER_GENERATION_LIMIT")
+                _exact_namespace(directory, _checkpoint_names(original[0]))
+                previous_file = storage.read(directory, _checkpoint_filename(original[0]))
+                if sha256(previous_file).hexdigest() != original[1]:
+                    raise SeededNativeCheckpointError("Q06_SCANNER_PRIOR_CHANGED")
+                gen = original[0] + 1
+                public = keys.public_metadata()
+                payload = {
+                    "schema": SCHEMA, "generation": gen,
+                    "seed_id": seed_id, "anchor_id": anchor.wallet_id,
+                    "owner_binding": _owner_binding(owner),
+                    "network": "regtest", "genesis": REGTEST_GENESIS,
+                    "height": tip[0], "tip": tip[1],
+                    "account_id": public["account_id"],
+                    "receive_code": public["receive_code"],
+                    "candidate_sha256": sha256(candidate).hexdigest(),
+                    "candidate": base64.b64encode(candidate).decode("ascii"),
+                }
+                cipher = seal(
+                    json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("ascii"),
+                    clear, b"recovery")
+                storage.publish(directory, _checkpoint_filename(gen), cipher)
+                updated = (gen, sha256(cipher).hexdigest())
+                anchor._advance_unlocked(original, updated)
+                if anchor.read() != updated:
+                    raise SeededNativeCheckpointError("Q06_SCANNER_ANCHOR_UNVERIFIED")
+            return {"status": "ANCHORED_ENCRYPTED_CANDIDATE_ONLY",
+                    "generation": gen, "height": tip[0], "tip": tip[1],
+                    "signer_allowed": False, "broadcast_allowed": False,
+                    "mainnet_allowed": False}
+    except Exception:
+        raise SeededNativeCheckpointError("Q06_SCANNER_ADVANCE_DENIED") from None
+    finally:
+        if old_scanner is not None:
+            old_scanner.close()
+        if guard is not None:
+            guard.close()
