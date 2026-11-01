@@ -48,6 +48,7 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         "physical_accepted": False, "independent_reviewed": False,
         "same_chain_mnemonic_history_recovered": False,
         "fresh_chain_full_history_recovered": False,
+        "fresh_profile_seed_identity_restored": False,
         "same_owner_reopened": False, "post_reopen_txid_verified": False,
         "signed_core_transaction_confirmed": False,
         "native_gui_checked": False,
@@ -57,6 +58,7 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         raise Q06PlatformQualificationError("Q06_PLATFORM_FROZEN_EXECUTABLE_MISSING")
     record["frozen_executable_sha256"] = sha256(exe.read_bytes()).hexdigest()
     executor = None
+    restored_executor = None
     window = None
     good = False
     phrase = None
@@ -181,6 +183,30 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         executor.request("quit", timeout=120)
         if not executor.join(15) or not executor.closed:
             raise Q06PlatformQualificationError("Q06_PLATFORM_OWNER_STILL_LIVE")
+        step("FRESH_PROFILE_SEED_RESTORE")
+        # A separate owned Core has a different disposable genesis-only
+        # history. BIP39 restores keys/identity, never past blockchain blocks.
+        from .custody import create_directory
+        import secrets
+        restored_root = root.parent / ("wam-fusion-core-" + secrets.token_hex(8))
+        # Avoid copying any chain, credential, checkpoint or original vault.
+        restored_executor = WalletExecutor(lambda: Bip39ReadOnlyBackend(
+            restored_root, core, source, _anchor_factory=adapter.make_anchor))
+        restored = restored_executor.request(
+            "open", password, "restore", phrase, timeout=120)
+        fresh_view = restored_executor.request("snapshot", timeout=120)
+        if (restored["mnemonic_once"]
+                or restored["receive_code"] != opened["receive_code"]
+                or restored["account_id"] != opened["account_id"]
+                or fresh_view["height"] != 0
+                or fresh_view["confirmed_atoms"] != 0
+                or fresh_view["history_count_shown"] != 0
+                or fresh_view["signer_allowed"] is not False):
+            raise Q06PlatformQualificationError("Q06_PLATFORM_NEW_CHAIN_RESTORE_DENIED")
+        restored_executor.request("quit", timeout=120)
+        if not restored_executor.join(15) or not restored_executor.closed:
+            raise Q06PlatformQualificationError("Q06_PLATFORM_RESTORE_OWNER_STILL_LIVE")
+        record["fresh_profile_seed_identity_restored"] = True
         good = True
         record["status"] = "Q06_NATIVE_FROZEN_REAL_CORE_PASS"
         record["failure_stage"] = None
