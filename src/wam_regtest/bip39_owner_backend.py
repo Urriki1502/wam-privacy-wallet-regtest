@@ -368,6 +368,14 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             if kwargs or len(args) != 1 or self._spend_session is None:
                 raise Q06ReadOnlyError("Q06_GUI_CONFIRM_ARGUMENTS_DENIED")
             return self._spend_session.confirm_pending(args[0])
+        if action == "recovery_verify":
+            if (kwargs or len(args) != 1 or self._secret is None
+                    or self._spend_session is None):
+                raise Q06ReadOnlyError("Q06_GUI_RECOVERY_PROOF_ARGS_DENIED")
+            from .bip39_recovery_proof import verify_mnemonic_on_original_chain
+            baseline = self._spend_session.snapshot()
+            return verify_mnemonic_on_original_chain(
+                self._core(), self.source, args[0], baseline)
         if action in ("prepare", "sign", "broadcast", "cancel"):
             if kwargs or self._spend_session is None:
                 raise Q06ReadOnlyError("Q06_GUI_SPEND_NOT_ACTIVE")
