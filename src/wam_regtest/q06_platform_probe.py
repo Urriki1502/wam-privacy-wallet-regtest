@@ -99,12 +99,12 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         if not headless:
             step("NATIVE_QT")
             from .desktop import qt_application
-            from .bip39_owner_gui import Bip39TrialWindow
+            from .bip39_fusion_gui import Bip39FusionWindow
             app = qt_application()
             expected = "windows" if sys.platform == "win32" else "xcb"
             if app.platformName() != expected:
                 raise Q06PlatformQualificationError("Q06_PLATFORM_NATIVE_QT_DENIED")
-            window = Bip39TrialWindow(executor)
+            window = Bip39FusionWindow(executor)
             window.show()
             show = dict(opened, mnemonic_once="")
             window._on_ready("open", show)
