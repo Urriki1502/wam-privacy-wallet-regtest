@@ -37,7 +37,6 @@ def qualify(core, source, root, receipt, *, confirmed=False,
     adapter = detect_adapter()
     adapter.enforce_host()
     _pinned_source(source)
-    verified_core_paths(core)
     stage = "PREFLIGHT"
     record = {
         "schema": "q06-native-frozen-owned-core/v1",
@@ -70,6 +69,7 @@ def qualify(core, source, root, receipt, *, confirmed=False,
     try:
         step("TRUST")
         adapter.prepare_trust(core, linux_manifest, linux_witness, test_witness=False)
+        verified_core_paths(core)
         step("CREATE")
         password = b"disposable-native-frozen-q06-cross-platform"
         executor = WalletExecutor(lambda: Bip39ReadOnlyBackend(
