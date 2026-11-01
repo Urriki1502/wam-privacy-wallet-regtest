@@ -427,7 +427,11 @@ def launch_bip39_trial(root,core,source,*,mode,authorized=False):
     app=qt_application()
     app.setQuitOnLastWindowClosed(False)
     executor=WalletExecutor(lambda:Bip39ReadOnlyBackend(root,core,source))
-    window=Bip39TrialWindow(executor)
+    # Normal application: use the pre-existing WAM Fusion navigation,
+    # Overview, QR Receive, History, Send and Security components. Frozen
+    # diagnostic Q06 probes retain their independent owner/spend contracts.
+    from .bip39_fusion_gui import Bip39FusionWindow
+    window=Bip39FusionWindow(executor)
     window.show()
     password, ok=QInputDialog.getText(
         window, "Q06 BIP39 wallet (REGTEST only)",
