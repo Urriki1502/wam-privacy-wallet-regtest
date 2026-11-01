@@ -110,8 +110,13 @@ def qualify(core, source, root, receipt, *, confirmed=False,
             window._on_ready("open", show)
             window._on_ready("activate", active)
             app.processEvents()
-            if not window.isVisible() or not window.send.isEnabled() or window.receive.text() != opened["receive_code"]:
-                raise Q06PlatformQualificationError("Q06_PLATFORM_QT_BINDING_DENIED")
+            if (not window.isVisible() or not window.send.isEnabled()
+                    or window.receive.text()!=opened["receive_code"]
+                    or window.navigation.count()!=6
+                    or window.overview.balance_value.text()=="—"
+                    or window.receive_page.code!=opened["receive_code"]
+                    or window.history_page.table.rowCount()<1):
+                raise Q06PlatformQualificationError("Q06_PLATFORM_FUSION_QT_BINDING_DENIED")
             record["native_gui_checked"] = True
         from mnemonic import Mnemonic
         with Bip39Regtest12Keys(Mnemonic("english").to_mnemonic(bytes([1]*16)),
