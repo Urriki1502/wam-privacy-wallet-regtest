@@ -161,6 +161,23 @@ with tempfile.TemporaryDirectory(prefix='wam-q06-mac-frozen-') as clean:
             and data['Q06_Sign_or_Broadcast_executed'] is False)
     shutil.copyfile(report, 'package-output/q06-frozen-readonly-evidence.json')
 print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_PASS", flush=True)
+# Use the exact same packaged app and immutable Core/WSP source for Q06 Send.
+# This is a disposable REGTEST qualification, not a mainnet or release grant.
+print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_START", flush=True)
+spend_env = dict(cocoa)
+spend_env["WAM_Q06_CI_SPEND_QUALIFY"] = "1"
+with tempfile.TemporaryDirectory(prefix='wam-q06-spend-mac-frozen-') as clean:
+    subprocess.run([str(Path(binary).resolve()), '--ci-q06-bip39-spend'],
+                   cwd=clean, env=spend_env, timeout=600, check=True)
+    report=Path(clean)/'q06-frozen-spend-evidence.json'
+    data=loads(report.read_text())
+    assert (data["status"]=="Q06_NATIVE_BIP39_SEND_CONFIRM_REOPEN_PASS"
+            and data["mainnet_allowed"] is False
+            and data["q06_bip39_spend_confirmed"] is True
+            and data["q06_bip39_same_owner_reopen_reserved"] is True
+            and data["q06_bip39_fresh_mnemonic_full_history_recovery"] is False)
+    shutil.copyfile(report, 'package-output/q06-frozen-spend-evidence.json')
+print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_PASS", flush=True)
 PY
 python -I scripts/qualify_q05_frozen.py --executable "$BIN" \
   --output "$(pwd)/package-output/q05-frozen-evidence.json"
