@@ -39,6 +39,7 @@ class ExecutorState:
 COMMANDS=frozenset(('open','snapshot','prepare','sign','broadcast','cancel','lock',
     'unlock','backup','recover','complete_recovery','recovery_status','network',
     'disclose','mine','activate','ci_confirm','confirm','recovery_verify',
+    'inspect_confirmed',
     'core_status','core_start','core_restart','control','quit'))
 
 
