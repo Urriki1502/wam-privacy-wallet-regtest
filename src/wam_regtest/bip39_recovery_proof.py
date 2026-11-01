@@ -45,6 +45,12 @@ def verify_mnemonic_on_original_chain(owner, source, phrase, expected):
         target = directory / "wallet.sqlite"
         from wam_sp.scanner import Scanner
         from wam_sp.wallet import Wallet
+        # Consistent with Q06 owned-spend: Windows must create the private
+        # SQLite runtime through native ACL custody before sqlite3 opens it.
+        import sys
+        if sys.platform == "win32":
+            from .windows_private_storage import create_managed_runtime
+            create_managed_runtime(target)
         scanner = Scanner(target, keys.accounts())
         guard = RuntimeGuard(target)
         rpc = WalletCoreCli(owner.cli, owner.directory)
