@@ -201,6 +201,44 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.wallet.release_draft(session._prepared.proposal.token)
 
+    def test_post_reopen_full_history_txid_read_only_and_ambiguous(self):
+        from contextlib import nullcontext
+        from threading import RLock
+        from types import SimpleNamespace
+        import sqlite3
+        from wam_regtest.bip39_spend_session import (
+            Q06OwnedSpendSession, Q06SpendSessionError)
+        db=sqlite3.connect(":memory:")
+        self.addCleanup(db.close)
+        db.execute("CREATE TABLE history(txid TEXT, height INTEGER)")
+        old="b"*64
+        db.execute("INSERT INTO history(txid,height) VALUES (?,?)",(old,103))
+        store=SimpleNamespace(db=db,transaction=lambda:nullcontext())
+        session=object.__new__(Q06OwnedSpendSession)
+        session._lock=RLock()
+        session._q06_uncertain=False
+        session.faulted=False
+        session.scanner=SimpleNamespace(store=store)
+        session.snapshot=lambda:SimpleNamespace(height=108,tip="a"*64)
+        methods=[]
+        session._rpc=lambda:SimpleNamespace(call=lambda method: (
+            methods.append(method) or "a"*64))
+        count=db.total_changes
+        found=session.inspect_confirmed(old)
+        self.assertEqual(found["status"],"Q06_CONFIRMED_IN_VERIFIED_HISTORY")
+        self.assertTrue(found["complete_anchored_history"])
+        self.assertFalse(found["write_attempted"])
+        missing=session.inspect_confirmed("c"*64)
+        self.assertEqual(missing["status"],"Q06_TX_NOT_IN_CONFIRMED_HISTORY")
+        self.assertEqual(db.total_changes,count)
+        self.assertEqual(methods,["getbestblockhash","getbestblockhash"])
+        with self.assertRaises(Q06SpendSessionError):
+            session.inspect_confirmed("mainnet")
+        session._q06_uncertain=True
+        with self.assertRaises(Q06SpendSessionError):
+            session.inspect_confirmed(old)
+        self.assertEqual(db.total_changes,count)
+
     def test_human_regtest_confirm_mines_exactly_one_block_for_exact_tx(self):
         from threading import RLock
         from types import SimpleNamespace
