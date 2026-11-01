@@ -19548,7 +19548,7 @@
       "coverage_identified": true,
       "coverage_total": 24,
       "base_main_sha": "a0ec5799de3e59e93689c744672168b76bf571be",
-      "candidate_pr": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/140",
+      "candidate_pr": 140,
       "candidate_head_sha": null,
       "cases": [
         {
