@@ -1,11 +1,7 @@
-"""Q06 isolated REGTEST 12-word read-only owner-thread trial.
+"""Q06 12-word REGTEST wallet using Q05's serialized owned-Core engine.
 
-Human trial surface for mnemonic create/reopen/fresh restore, native custody,
-real BIP352 receive identity and genuine owned-Core balance/history scanning.
-
-No send/sign/prepare/broadcast, no migration from Q05, no checkpoint
-promotion or G6/G7 acceptance. A fresh full rescan is intentionally read-only;
-the absence of native scanner checkpoint forbids use as spend authority.
+The independent seed-rescan path is read-only; Send requires a native-anchored
+Q06 spend session. Neither path imports external custody or grants mainnet use.
 """
 import os
 from pathlib import Path
@@ -33,11 +29,17 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         self._spend_session = None
 
     def public_state(self):
+        # Executor.state is the GUI's safety authority. Never conceal a
+        # failed native spend session behind the unrelated control latch.
+        s = self._spend_session
         p = self.owner.process if self.owner is not None else None
+        bad = (self._control_fault
+               or s is not None and (s.faulted or s._q06_uncertain))
         return {
-            "locked": self._secret is None,
-            "faulted": self._control_fault,
-            "reauthentication_required": False,
+            "locked": self._secret is None or s is not None and s.locked,
+            "faulted": bool(bad),
+            "reauthentication_required": bool(
+                s is not None and getattr(s, "_core_reauthentication_required", False)),
             "core_alive": p is not None and p.poll() is None,
         }
 
@@ -376,6 +378,26 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             baseline = self._spend_session.snapshot()
             return verify_mnemonic_on_original_chain(
                 self._core(), self.source, args[0], baseline)
+        if action == "inspect_confirmed":
+            # Post-reopen observation only. NO replay, mining, signature,
+            # reservation clearing or inference from an absent txid.
+            if (kwargs or len(args) != 1 or type(args[0]) is not str
+                    or re.fullmatch(r"[0-9a-f]{64}", args[0]) is None
+                    or self._spend_session is None
+                    or self.public_state()["faulted"]):
+                raise Q06ReadOnlyError("Q06_GUI_INSPECT_ARGUMENTS_DENIED")
+            snap = self._spend_session.snapshot()
+            matches = tuple(row for row in snap.history
+                            if row.txid == args[0] and row.confirmations > 0)
+            return {
+                "status": ("Q06_CONFIRMED_IN_VERIFIED_HISTORY"
+                           if len(matches) == 1 else
+                           "Q06_TX_NOT_IN_SHOWN_CONFIRMED_HISTORY"),
+                "txid": args[0], "height": snap.height,
+                "shown_history_only": True, "write_attempted": False,
+                "signer_allowed": False, "broadcast_allowed": False,
+                "mainnet_allowed": False,
+            }
         if action in ("prepare", "sign", "broadcast", "cancel"):
             if kwargs or self._spend_session is None:
                 raise Q06ReadOnlyError("Q06_GUI_SPEND_NOT_ACTIVE")
