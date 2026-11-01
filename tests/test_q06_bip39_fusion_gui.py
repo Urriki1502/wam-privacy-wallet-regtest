@@ -4,9 +4,13 @@ This is a Qt surface contract only, never a fake pass for real Core, on-chain
 transaction, native key custody or signed/frozen binaries.
 """
 import os
+import sys
 import unittest
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+# Never force offscreen on Cocoa/Windows: native platform qualification needs
+# the actual desktop plugin. Only headless Linux source tests need a fallback.
+if sys.platform == "linux" and not os.environ.get("DISPLAY"):
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
 class Q06ExistingFusionUiContract(unittest.TestCase):
