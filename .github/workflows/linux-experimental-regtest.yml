@@ -300,7 +300,6 @@ jobs:
           path: linux-package-output/q06-frozen-evidence*.json
           if-no-files-found: warn
           retention-days: 14
-          retention-days: 14
   q04-miner-coexistence:
     needs: headless-wallet
     runs-on: ubuntu-24.04
