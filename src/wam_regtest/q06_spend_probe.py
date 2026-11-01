@@ -41,6 +41,7 @@ def qualify(core, source):
         "signed_core": True,
         "q06_bip39_spend_confirmed": False,
         "q06_bip39_same_owner_reopen_reserved": False,
+        "q06_bip39_same_chain_seed_history_recovery": False,
         "q06_bip39_fresh_mnemonic_full_history_recovery": False,
     }
     def stage(message):
@@ -123,6 +124,20 @@ def qualify(core, source):
                     or after["receive_code"] != created["receive_code"]):
                 raise ValueError("Q06_SPEND_HISTORY_DENIED")
             stage("ONCHAIN_CONFIRMATION_PASS")
+            # Rebuild a NEW scanner from the 12 words against THIS same
+            # attested Core. Do not adopt its checkpoint/signing authority.
+            stage("SAME_CHAIN_MNEMONIC_RESCAN_START")
+            recovery = executor.request("recovery_verify", phrase, timeout=240)
+            if (recovery["status"] != "Q06_SAME_CHAIN_BIP39_HISTORY_RESCAN_PASS"
+                    or recovery["history_count"] < 2
+                    or recovery["confirmed_atoms"] != after["confirmed_atoms"]
+                    or recovery["receive_code"] != created["receive_code"]
+                    or recovery["same_chain_only"] is not True
+                    or recovery["signer_allowed"] is not False
+                    or recovery["signed_reservations_restored"] is not False):
+                raise ValueError("Q06_SPEND_SAME_CHAIN_RECOVERY_DENIED")
+            data["q06_bip39_same_chain_seed_history_recovery"] = True
+            stage("SAME_CHAIN_MNEMONIC_RESCAN_PASS")
             data["q06_bip39_spend_confirmed"] = True
             data["txid_sha256"] = sha256(broadcast.encode("ascii")).hexdigest()
             data["receive_sha256"] = sha256(
