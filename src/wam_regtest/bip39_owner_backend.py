@@ -30,6 +30,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         self._seed_folder = None
         self._secret = None
         self._public = None
+        self._spend_session = None
 
     def public_state(self):
         p = self.owner.process if self.owner is not None else None
@@ -41,6 +42,10 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         }
 
     def _lock_q06(self):
+        if self._spend_session is not None:
+            session = self._spend_session
+            session.lock()  # fail-closed: uncertain runtime remains for review
+            self._spend_session = None
         if self._secret is not None:
             self._secret[:] = bytes(len(self._secret))
             self._secret = None
@@ -172,7 +177,63 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         finally:
             if getattr(rpc,"_transport",None) is not None:rpc._transport.close()
 
+
+    def _activate_q06(self):
+        """Explicit full REGTEST session: verify native checkpoint before Send."""
+        if self._spend_session is not None:
+            raise Q06ReadOnlyError("Q06_GUI_ALREADY_ACTIVATED")
+        if self._secret is None or self._seed_folder is None:
+            raise Q06ReadOnlyError("Q06_GUI_LOCKED")
+        from .bip39_spend_session import open_owned_spend_session
+        session = open_owned_spend_session(
+            self._core(), self._seed_folder, self.source,
+            bytes(self._secret), authorized=True, keychain=self.keychain)
+        try:
+            state = session.snapshot()
+            if (state.signer_allowed is not True
+                    or state.broadcast_allowed is not True
+                    or state.mainnet_allowed is not False
+                    or state.receive_code != self._public["receive_code"]):
+                raise Q06ReadOnlyError("Q06_GUI_SPEND_SCOPE_DENIED")
+        except Exception:
+            # If a snapshot became uncertain, preserve its runtime and anchors;
+            # the failed session is not silently replaced by read-only scanning.
+            try:
+                session.lock()
+            except Exception:
+                pass
+            raise Q06ReadOnlyError("Q06_GUI_SPEND_ACTIVATION_DENIED") from None
+        self._spend_session = session
+        return self._session_snapshot()
+
+    def _session_snapshot(self):
+        if self._spend_session is None:
+            raise Q06ReadOnlyError("Q06_GUI_SPEND_NOT_ACTIVE")
+        from wam_sp.wallet import Wallet
+        session = self._spend_session
+        item = session.snapshot()
+        available = Wallet(session.scanner).balance()["available_atoms"]
+        return {
+            "status": "Q06_REGTEST_BIP39_OWNED_SPEND_VERIFIED",
+            "profile": self._public["profile"],
+            "account_id": self._public["account_id"],
+            "receive_code": item.receive_code,
+            "height": item.height, "tip": item.tip,
+            "confirmed_atoms": item.confirmed_atoms,
+            "available_atoms": available,
+            "history_count_shown": len(item.history),
+            "history": tuple({
+                "txid": h.txid, "height": h.block_height,
+                "atoms": h.credit_atoms - h.debit_atoms
+            } for h in item.history),
+            "reservation_count": item.reservation_count,
+            "signer_allowed": True, "broadcast_allowed": True,
+            "mainnet_allowed": False,
+        }
+
     def _scan_q06(self):
+        if self._spend_session is not None:
+            return self._session_snapshot()
         if self._seed_folder is None or self._secret is None:
             raise Q06ReadOnlyError("Q06_GUI_LOCKED")
         from .managed_wallet_checkpoint import _owned
@@ -259,6 +320,18 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                     raise Q06ReadOnlyError("Q06_GUI_RUNTIME_PRESERVED") from None
 
     def execute(self, action, args, kwargs):
+        if action == "activate":
+            if args or kwargs:
+                raise Q06ReadOnlyError("Q06_GUI_ACTIVATE_ARGUMENTS_DENIED")
+            return self._activate_q06()
+        if action in ("prepare", "sign", "broadcast", "cancel"):
+            if kwargs or self._spend_session is None:
+                raise Q06ReadOnlyError("Q06_GUI_SPEND_NOT_ACTIVE")
+            expected = {"prepare": 3, "sign": 1, "broadcast": 1, "cancel": 0}
+            if len(args) != expected[action]:
+                raise Q06ReadOnlyError("Q06_GUI_SPEND_ARGUMENTS_DENIED")
+            session = self._spend_session
+            return getattr(session, action)(*args)
         if action == "open":
             if kwargs or len(args) != 3:
                 raise Q06ReadOnlyError("Q06_GUI_OPEN_ARGUMENTS_DENIED")
