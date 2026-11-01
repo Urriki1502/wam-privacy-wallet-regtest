@@ -226,6 +226,17 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         if window is not None:
             window._poll.stop()
             window.hide()
+            if good:
+                # Match the already qualified macOS frozen Q06 teardown:
+                # complete Qt's deferred widget destruction while the native
+                # QApplication still exists, BEFORE Linux entry shuts Qt down.
+                # The owned Core was positively stopped above. No owner
+                # shutdown or custody operation happens in the Qt cleanup.
+                from PySide6.QtCore import QCoreApplication, QEvent
+                window.deleteLater()
+                QCoreApplication.sendPostedEvents(
+                    None, QEvent.Type.DeferredDelete)
+                app.processEvents()
         if not good:
             # Executor's owner thread is intentionally non-daemon. On a
             # synchronous read/validation failure, use the *original*
