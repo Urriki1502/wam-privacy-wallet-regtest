@@ -8,7 +8,7 @@ not a painted mockup or a separate demo account.
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QFrame, QLabel, QLineEdit,
-    QListWidget, QStackedWidget, QComboBox, QMessageBox,
+    QListWidget, QStackedWidget, QComboBox, QMessageBox, QDialog,
 )
 
 from .bip39_owner_gui import Bip39TrialWindow
@@ -17,7 +17,7 @@ from .fusion_ui import (
     FusionOverview, fusion_stylesheet, fusion_palette, page, panel,
     label, ResponsiveRow,
 )
-from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps
+from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval
 from .wallet_read import WalletReadSnapshot
 from .amounts import parse_amount, _parse_atoms
 
@@ -194,6 +194,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
             lambda: self._command("snapshot"))
         self.overview.transaction_selected.connect(self._select_transaction)
         self._last_verified = None
+        self._last_review = None
         self._apply_fusion_theme()
         self._set_actions()
 
@@ -250,6 +251,22 @@ class Bip39FusionWindow(Bip39TrialWindow):
             return
         self._command("prepare", code, atoms, fee)
 
+    def _confirm_broadcast(self):
+        if (not self._signed_ready or self._approved_commitment is None
+                or self._last_review is None or self.executor.state.faulted
+                or self.executor.busy or self._quit_requested):
+            return
+        review = self._last_review
+        if review.commitment != self._approved_commitment:
+            return
+        dialog = PaymentApproval(review, "broadcast", self)
+        try:
+            accepted = dialog.exec() == QDialog.DialogCode.Accepted
+        finally:
+            dialog.deleteLater()
+        if accepted and review.commitment == self._approved_commitment:
+            self._command("broadcast", review.commitment)
+
     def _render_verified(self, result):
         snap = result.get("fusion_snapshot")
         if (type(snap) is not WalletReadSnapshot
@@ -282,7 +299,30 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.history_page.render_snapshot(None)
 
     def _on_ready(self, action, result):
+        if action == "prepare":
+            # Existing Q05 Fusion exact-transaction approval, not the old
+            # developer QMessageBox. Signing still requires explicit consent
+            # and retains its native-anchored irreversible reservation.
+            self._approved_commitment = result.commitment
+            self._last_review = result
+            self._signed_ready = False
+            dialog = PaymentApproval(result, "sign", self)
+            try:
+                accepted = dialog.exec() == QDialog.DialogCode.Accepted
+            finally:
+                dialog.deleteLater()
+            self._pending_action = (
+                ("sign", result.commitment) if accepted else ("cancel",)
+            )
+            self.status.setText(
+                "Transaction approved; signing owned REGTEST inputs"
+                if accepted else "Transaction not approved; canceling unsigned draft"
+            )
+            self._set_actions()
+            return
         super()._on_ready(action, result)
+        if action in ("cancel", "broadcast", "lock", "quit"):
+            self._last_review = None
         if action in ("snapshot", "activate"):
             self._render_verified(result)
         elif action == "open":
