@@ -176,6 +176,7 @@ with tempfile.TemporaryDirectory(prefix='wam-q06-spend-mac-frozen-') as clean:
             and data["q06_bip39_spend_confirmed"] is True
             and data["q06_bip39_same_owner_reopen_reserved"] is True
             and data["q06_bip39_same_chain_seed_history_recovery"] is True
+            and data["q06_post_reopen_txid_readonly_reconciliation"] is True
             and data["q06_bip39_fresh_mnemonic_full_history_recovery"] is False)
     shutil.copyfile(report, 'package-output/q06-frozen-spend-evidence.json')
 print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_PASS", flush=True)
