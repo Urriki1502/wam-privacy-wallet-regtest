@@ -200,12 +200,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
     def _apply_fusion_theme(self, *_):
         from datetime import datetime
         choice = self.theme_select.currentIndex()
-        mode = ("light" if 6 <= datetime.now().hour < 18 else "dark"
-                if choice == 0 else
-                "dark" if choice == 1 else "light")
-        # Ensure Auto respects the actual local clock, not hidden phase state.
-        if choice == 0:
-            mode = resolve_theme("auto", datetime.now().astimezone())
+        # User-selected Dark/Light must override the system clock.
+        mode = (resolve_theme("auto", datetime.now().astimezone())
+                if choice == 0 else "dark" if choice == 1 else "light")
         self.setStyleSheet(fusion_stylesheet(mode))
         self.overview.set_theme(mode)
         self.history_page.set_theme(mode)
