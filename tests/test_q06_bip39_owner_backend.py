@@ -161,6 +161,11 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         session._q06_uncertain=False
         session.locked=False
         session.snapshot.return_value=SimpleNamespace(history=history,height=108)
+        session.inspect_confirmed.side_effect=lambda t:{
+            "status":("Q06_CONFIRMED_IN_VERIFIED_HISTORY" if t==txid
+                      else "Q06_TX_NOT_IN_CONFIRMED_HISTORY"),
+            "txid":t, "write_attempted":False, "signer_allowed":False,
+            "broadcast_allowed":False, "complete_anchored_history":True}
         self.backend._spend_session=session
         self.backend._secret=bytearray(PASSWORD)
         seen=self.backend.execute("inspect_confirmed",(txid,),{})
@@ -169,13 +174,14 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         self.assertFalse(seen["signer_allowed"])
         self.assertFalse(seen["broadcast_allowed"])
         unknown=self.backend.execute("inspect_confirmed",("b"*64,),{})
-        self.assertEqual(unknown["status"],"Q06_TX_NOT_IN_SHOWN_CONFIRMED_HISTORY")
+        self.assertEqual(unknown["status"],"Q06_TX_NOT_IN_CONFIRMED_HISTORY")
         with self.assertRaises(Q06ReadOnlyError):
             self.backend.execute("inspect_confirmed",("mainnet",),{})
         session.faulted=True
         with self.assertRaises(Q06ReadOnlyError):
             self.backend.execute("inspect_confirmed",(txid,),{})
-        self.assertEqual(session.snapshot.call_count,2)
+        self.assertEqual(session.inspect_confirmed.call_count,2)
+        session.snapshot.assert_not_called()
         session.broadcast.assert_not_called()
         session.confirm_pending.assert_not_called()
 
