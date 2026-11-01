@@ -31,6 +31,11 @@ def qualify(core,source):
     if app.platformName()!="cocoa":
         raise ValueError("Q06_OWNER_NATIVE_COCOA_REQUIRED")
     from .bip39_fusion_gui import Bip39FusionWindow
+    # Exercise the exact normal-app Create/Open/Restore choice on native
+    # Cocoa before any disposable seed/Core creation. No mock wallet.
+    from .managed_onboarding import assert_unified_welcome_qt
+    assert_unified_welcome_qt()
+    print("MACOS_Q06_OWNER_STAGE=FROZEN_UNIFIED_WELCOME_PASS",flush=True)
     password=b"public-disposable-q06-native-macos-only"
     data={"status":"FAIL","network":"regtest","mainnet_allowed":False,
           "Q06_12_word_native_owned_core":False,"Q06_original_core_clean_shutdown":False,
