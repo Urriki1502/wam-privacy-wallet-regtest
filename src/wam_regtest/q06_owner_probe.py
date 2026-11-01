@@ -30,7 +30,7 @@ def qualify(core,source):
     app=qt_application()
     if app.platformName()!="cocoa":
         raise ValueError("Q06_OWNER_NATIVE_COCOA_REQUIRED")
-    from .bip39_owner_gui import Bip39TrialWindow
+    from .bip39_fusion_gui import Bip39FusionWindow
     password=b"public-disposable-q06-native-macos-only"
     data={"status":"FAIL","network":"regtest","mainnet_allowed":False,
           "Q06_12_word_native_owned_core":False,"Q06_original_core_clean_shutdown":False,
@@ -74,7 +74,7 @@ def qualify(core,source):
                     or first_view["broadcast_allowed"] is not False):
                 raise ValueError("Q06_OWNER_NATIVE_CORE_SCAN_DENIED")
             stage("COCOA_QT_RECEIVE_START")
-            window=Bip39TrialWindow(first)
+            window=Bip39FusionWindow(first)
             stage("COCOA_QT_RECEIVE_PASS")
             window.show()
             sanitized=dict(opened);sanitized["mnemonic_once"]=""
