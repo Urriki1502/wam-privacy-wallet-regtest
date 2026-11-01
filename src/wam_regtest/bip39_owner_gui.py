@@ -240,7 +240,7 @@ class Bip39TrialWindow(QWidget):
         txid,ok=QInputDialog.getText(
             self,"Read-only previous transaction inspection",
             "Enter a previously broadcast REGTEST transaction ID (64 lowercase hex). "
-            "This only checks the locally verified history: no retry, mining, "
+            "This checks complete authenticated local history: no retry, mining, "
             "broadcast, reservation release or claim if not yet found.")
         if ok:
             self._command("inspect_confirmed",txid)
@@ -331,7 +331,9 @@ class Bip39TrialWindow(QWidget):
             self._approved_commitment=None
             self._signed_ready=False
             self._pending_confirm_txid=result
-            self.status.setText("Broadcast submitted. Confirm 1 REGTEST block to verify on-chain.")
+            self.status.setText(
+                "Broadcast submitted. Record the TXID before closing: {}. "
+                "Confirm 1 REGTEST block to verify on-chain.".format(result))
             self._pending_action=("snapshot",)
         elif action=="confirm":
             if result.get("txid")!=self._pending_confirm_txid:
@@ -347,9 +349,9 @@ class Bip39TrialWindow(QWidget):
                     result["history_count"],result["confirmed_atoms"]))
         elif action=="inspect_confirmed":
             self.status.setText(
-                "TXID is in verified recent confirmed history."
+                "TXID is in complete verified confirmed history."
                 if result["status"]=="Q06_CONFIRMED_IN_VERIFIED_HISTORY" else
-                "TXID NOT in verified recent confirmed history; status uncertain. "
+                "TXID NOT in complete verified confirmed history; status uncertain. "
                 "Do NOT retry, remine or release coin reservations.")
         elif action=="cancel":
             self._approved_commitment=None
