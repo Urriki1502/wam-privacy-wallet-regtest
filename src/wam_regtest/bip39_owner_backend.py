@@ -231,6 +231,36 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             "mainnet_allowed": False,
         }
 
+    def _confirm_spend_ci(self):
+        """One explicit test-only block on the original owned REGTEST Core."""
+        if (sys.platform != "darwin"
+                or os.environ.get("GITHUB_ACTIONS") != "true"
+                or os.environ.get("WAM_Q06_CI_SPEND_QUALIFY") != "1"
+                or self._spend_session is None):
+            raise Q06ReadOnlyError("Q06_GUI_CONFIRM_CI_SCOPE_DENIED")
+        from .managed_wallet_checkpoint import _owned
+        from .wallet_session import WalletCoreCli
+        from .wsp_live import public_regtest_mining_address
+        owner = self._core()
+        _owned(owner)
+        cli = WalletCoreCli(owner.cli, owner.directory)
+        try:
+            cli.attest()
+            before = cli.call("getblockcount")
+            cli._call("generatetoaddress", ["1", public_regtest_mining_address(self.source)])
+            _owned(owner)
+            after = owner.read.call("getblockcount")
+            if after != before + 1:
+                raise Q06ReadOnlyError("Q06_GUI_CONFIRM_CI_HEIGHT_DENIED")
+            return {"status": "Q06_REGTEST_CI_BLOCK_CONFIRMED", "height": after}
+        except Q06ReadOnlyError:
+            raise
+        except Exception:
+            raise Q06ReadOnlyError("Q06_GUI_CONFIRM_CI_UNCERTAIN") from None
+        finally:
+            if getattr(cli, "_transport", None) is not None:
+                cli._transport.close()
+
     def _scan_q06(self):
         if self._spend_session is not None:
             return self._session_snapshot()
@@ -320,6 +350,10 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                     raise Q06ReadOnlyError("Q06_GUI_RUNTIME_PRESERVED") from None
 
     def execute(self, action, args, kwargs):
+        if action == "ci_confirm":
+            if args or kwargs:
+                raise Q06ReadOnlyError("Q06_GUI_CONFIRM_CI_ARGUMENTS_DENIED")
+            return self._confirm_spend_ci()
         if action == "activate":
             if args or kwargs:
                 raise Q06ReadOnlyError("Q06_GUI_ACTIVATE_ARGUMENTS_DENIED")
