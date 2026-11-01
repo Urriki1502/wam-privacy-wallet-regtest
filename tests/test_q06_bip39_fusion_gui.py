@@ -35,7 +35,7 @@ class Q06ExistingFusionUiContract(unittest.TestCase):
             self.assertIsInstance(window.payment_steps,PaymentSteps)
             self.assertEqual(
                 tuple(window.navigation.item(i).text() for i in range(window.navigation.count())),
-                ("Overview","Receive","History","Send","Security","Advanced"))
+                ("Overview","Receive","History","Send","Security","Settings"))
             self.assertIs(window.stack.widget(0),window.overview)
             self.assertIs(window.stack.widget(1),window.receive_page)
             self.assertIs(window.stack.widget(2),window.history_page)
@@ -45,7 +45,21 @@ class Q06ExistingFusionUiContract(unittest.TestCase):
             self.assertEqual(window.page_title.text(),"Send")
             window.navigation.setCurrentRow(0)
             self.assertEqual(window.page_title.text(),"Overview")
-            self.assertTrue(window.fund.parent() is not window._legacy_layout_holder)
+            # Native workspace keeps developer-only actions out of the
+            # primary navigation, while preserving original Core controls.
+            window.navigation.setCurrentRow(5)
+            self.assertEqual(window.page_title.text(),"Settings")
+            self.assertFalse(window.advanced_container.isVisible())
+            self.assertIs(window.fund.parent(), window.advanced_container)
+            self.assertTrue(all(
+                not window.navigation.item(i).icon().isNull()
+                for i in range(window.navigation.count())))
+            self.assertEqual(window.appearance_group.checkedId(),0)
+            window.appearance_buttons[2].click()
+            self.assertEqual(window.appearance_group.checkedId(),2)
+            window.reduce_motion.setChecked(True)
+            window.navigation.setCurrentRow(0)
+            self.assertTrue(window.reduce_motion.isChecked())
         finally:
             window._poll.stop()
             window.hide()
