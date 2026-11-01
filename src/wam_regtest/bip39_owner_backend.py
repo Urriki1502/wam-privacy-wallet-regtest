@@ -386,18 +386,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                     or self._spend_session is None
                     or self.public_state()["faulted"]):
                 raise Q06ReadOnlyError("Q06_GUI_INSPECT_ARGUMENTS_DENIED")
-            snap = self._spend_session.snapshot()
-            matches = tuple(row for row in snap.history
-                            if row.txid == args[0] and row.confirmations > 0)
-            return {
-                "status": ("Q06_CONFIRMED_IN_VERIFIED_HISTORY"
-                           if len(matches) == 1 else
-                           "Q06_TX_NOT_IN_SHOWN_CONFIRMED_HISTORY"),
-                "txid": args[0], "height": snap.height,
-                "shown_history_only": True, "write_attempted": False,
-                "signer_allowed": False, "broadcast_allowed": False,
-                "mainnet_allowed": False,
-            }
+            return self._spend_session.inspect_confirmed(args[0])
         if action in ("prepare", "sign", "broadcast", "cancel"):
             if kwargs or self._spend_session is None:
                 raise Q06ReadOnlyError("Q06_GUI_SPEND_NOT_ACTIVE")
