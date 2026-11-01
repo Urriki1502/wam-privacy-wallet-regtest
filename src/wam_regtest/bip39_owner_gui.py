@@ -52,6 +52,7 @@ class Bip39TrialWindow(QWidget):
         self.activate=QPushButton("Activate verified REGTEST Send")
         self.send=QPushButton("Prepare Send")
         self.broadcast=QPushButton("Broadcast signed transaction")
+        self.confirm=QPushButton("Confirm 1 REGTEST block")
         self.cancel=QPushButton("Cancel unsigned draft")
         self.lock=QPushButton("Lock Q06")
         self.quit=QPushButton("Stop owned Core and quit")
@@ -60,6 +61,7 @@ class Bip39TrialWindow(QWidget):
         payment=QHBoxLayout()
         payment.addWidget(self.send);payment.addWidget(self.broadcast);payment.addWidget(self.cancel)
         box.addLayout(payment)
+        box.addWidget(self.confirm)
         utility=QHBoxLayout()
         utility.addWidget(self.lock);utility.addWidget(self.quit)
         box.addLayout(utility)
@@ -68,6 +70,7 @@ class Bip39TrialWindow(QWidget):
         self.activate.clicked.connect(self._confirm_activation)
         self.send.clicked.connect(self._prepare_send)
         self.broadcast.clicked.connect(self._confirm_broadcast)
+        self.confirm.clicked.connect(self._confirm_one_block)
         self.cancel.clicked.connect(lambda:self._command("cancel"))
         self.lock.clicked.connect(lambda:self._command("lock"))
         self.quit.clicked.connect(self.request_quit)
@@ -78,6 +81,7 @@ class Bip39TrialWindow(QWidget):
         self._spend_enabled=False
         self._signed_ready=False
         self._approved_commitment=None
+        self._pending_confirm_txid=None
         self._pending_action=None
         self._set_actions()
 
@@ -93,6 +97,8 @@ class Bip39TrialWindow(QWidget):
                                   and not busy and not self._quit_requested)
         self.cancel.setEnabled(self._spend_enabled and self._approved_commitment is not None
                                and not self._signed_ready and not busy and not self._quit_requested)
+        self.confirm.setEnabled(self._spend_enabled and self._pending_confirm_txid is not None
+                                and not busy and not self._quit_requested)
         self.lock.setEnabled(self._ready and not busy and not self._quit_requested)
         self.quit.setEnabled(not busy and not self.executor.closed)
 
@@ -100,7 +106,7 @@ class Bip39TrialWindow(QWidget):
         if self._worker is not None or self.executor.busy or self.executor.closed:
             return False
         worker=ControlWorker(self.executor, action, args,
-                             kwargs={"timeout":240} if action in ("mine","snapshot","activate","prepare","sign","broadcast") else None,
+                             kwargs={"timeout":240} if action in ("mine","snapshot","activate","prepare","sign","broadcast","confirm") else None,
                              parent=self)
         self._worker=worker
         worker.ready.connect(self._on_ready, Qt.ConnectionType.QueuedConnection)
@@ -188,6 +194,22 @@ class Bip39TrialWindow(QWidget):
         if choice==QMessageBox.StandardButton.Yes:
             self._command("broadcast",self._approved_commitment)
 
+    def _confirm_one_block(self):
+        txid = self._pending_confirm_txid
+        if not self._spend_enabled or txid is None:
+            return
+        choice=QMessageBox.question(
+            self,"Confirm one REGTEST block",
+            "Mine exactly ONE block on this original, owned, disposable REGTEST "
+            "Core to confirm the just-broadcast transaction?\\n"
+            "TXID: {}\\n"
+            "This changes the test chain. Never use mainnet funds or seed words. "
+            "If the result is uncertain, do NOT retry.".format(txid),
+            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if choice==QMessageBox.StandardButton.Yes:
+            self._command("confirm",txid)
+
     def _show_words_once(self, phrase):
         dlg=QDialog(self)
         dlg.setWindowTitle("REGTEST recovery phrase — shown once")
@@ -267,8 +289,16 @@ class Bip39TrialWindow(QWidget):
         elif action=="broadcast":
             self._approved_commitment=None
             self._signed_ready=False
-            self.status.setText("Broadcast submitted. Refreshing original Core…")
+            self._pending_confirm_txid=result
+            self.status.setText("Broadcast submitted. Confirm 1 REGTEST block to verify on-chain.")
             self._pending_action=("snapshot",)
+        elif action=="confirm":
+            if result.get("txid")!=self._pending_confirm_txid:
+                self.status.setText("Confirmation identity mismatch — stop for review")
+            else:
+                self._pending_confirm_txid=None
+                self.status.setText("REGTEST transaction confirmed on original Core")
+                self._pending_action=("snapshot",)
         elif action=="cancel":
             self._approved_commitment=None
             self._signed_ready=False
@@ -278,6 +308,7 @@ class Bip39TrialWindow(QWidget):
             self._spend_enabled=False
             self._signed_ready=False
             self._approved_commitment=None
+            self._pending_confirm_txid=None
             self.receive.clear()
             self.account.setText("Account: locked")
             self.balance.setText("Balance: unverified")
