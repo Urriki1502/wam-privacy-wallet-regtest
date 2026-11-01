@@ -125,6 +125,15 @@ def qualify(core, source):
                     or after["receive_code"] != created["receive_code"]):
                 raise ValueError("Q06_SPEND_HISTORY_DENIED")
             stage("ONCHAIN_CONFIRMATION_PASS")
+            # Exercise actual native Qt signal handling with the real Core TXID.
+            # A subsequent automatic snapshot must not hide the copyable ID.
+            window._on_ready("broadcast", broadcast)
+            window._on_ready("snapshot", after)
+            app.processEvents()
+            if (not window.last_txid.isReadOnly()
+                    or window.last_txid.text() != broadcast):
+                raise ValueError("Q06_GUI_TXID_PERSISTENT_COPY_DENIED")
+            stage("COCOA_BROADCAST_TXID_COPYABLE_PASS")
             # Rebuild a NEW scanner from the 12 words against THIS same
             # attested Core. Do not adopt its checkpoint/signing authority.
             stage("SAME_CHAIN_MNEMONIC_RESCAN_START")
