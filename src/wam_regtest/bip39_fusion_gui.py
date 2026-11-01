@@ -149,11 +149,21 @@ class Bip39FusionWindow(Bip39TrialWindow):
             amounts.addLayout(group, 1)
         fl.addLayout(amounts)
         self.send.setText("Review payment")
+        self.send.setObjectName("FusionPrimary")
+        self.send.setProperty("fusion_icon", "send")
         fl.addWidget(self.send)
         review, rl = panel(
             "Transaction approval",
             "Review → Sign reserves inputs; Broadcast requires separate approval.",
         )
+        self.activate.setText("Enable sending")
+        self.activate.setObjectName("FusionSecondary")
+        self.activate.setProperty("fusion_icon", "security")
+        self.broadcast.setText("Approve broadcast")
+        self.broadcast.setObjectName("FusionSecondary")
+        self.broadcast.setProperty("fusion_icon", "send")
+        self.cancel.setText("Cancel unsigned draft")
+        self.cancel.setObjectName("FusionSecondary")
         rl.addWidget(self.activate)
         rl.addWidget(self.broadcast)
         rl.addWidget(self.cancel)
@@ -170,7 +180,13 @@ class Bip39FusionWindow(Bip39TrialWindow):
         wallet_card, wl = panel("Encrypted BIP39 wallet", "Original owned REGTEST Core")
         self.security_state = label("Locked / awaiting verified wallet", "FusionCardValue")
         wl.addWidget(self.security_state)
+        self.lock.setText("Lock wallet")
+        self.lock.setObjectName("FusionSecondary")
+        self.lock.setProperty("fusion_icon", "lock")
         wl.addWidget(self.lock)
+        self.quit.setText("Stop owned Core and quit")
+        self.quit.setObjectName("FusionDestructive")
+        wl.addWidget(self.quit)
         wl.addWidget(label(
             "12 words are shown only at creation; never send seed words to a support agent."
         ))
@@ -258,6 +274,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
         settings_layout.addStretch()
         self.stack.addWidget(settings_page)
 
+        self._transition = None
+        self._advanced_transition = None
         self.navigation.currentRowChanged.connect(self._navigate)
         self.navigation.setCurrentRow(0)
         self.overview.go_receive.clicked.connect(
@@ -273,8 +291,6 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.overview.transaction_selected.connect(self._select_transaction)
         self._last_verified = None
         self._last_review = None
-        self._transition = None
-        self._advanced_transition = None
         self._apply_fusion_theme()
         self._set_actions()
 
@@ -312,6 +328,10 @@ class Bip39FusionWindow(Bip39TrialWindow):
         # operations or change wallet state in the animation callback.
         if self._transition is not None:
             self._transition.stop()
+        for page_index in range(self.stack.count()):
+            widget = self.stack.widget(page_index)
+            if widget.graphicsEffect() is not None:
+                widget.setGraphicsEffect(None)
         current = self.stack.currentWidget()
         effect = QGraphicsOpacityEffect(current)
         current.setGraphicsEffect(effect)
@@ -321,6 +341,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self._transition.setStartValue(0.82)
         self._transition.setEndValue(1.0)
         self._transition.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._transition.finished.connect(
+            lambda widget=current: widget.setGraphicsEffect(None))
         self._transition.start()
 
     def _toggle_advanced(self, expanded):
@@ -421,11 +443,13 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self.status.setText("Q06_FUSION_PRESENTATION_DENIED")
             return
         self._last_verified = snap
+        self.connection_pill.setText("●  VERIFIED REGTEST")
         self.overview.go_send.setEnabled(self._spend_enabled and
                                          not self.executor.state.faulted)
 
     def _clear_visuals(self):
         self._last_verified = None
+        self.connection_pill.setText("●  NOT VERIFIED")
         self.overview.render_snapshot(None, locked=True)
         self.receive_page.render_snapshot(None)
         self.history_page.render_snapshot(None)
@@ -471,6 +495,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         super()._on_denied(code)
         if self.executor.state.faulted:
             self._clear_visuals()
+            self.connection_pill.setText("●  CORE ERROR")
         elif self._last_verified is not None:
             self.overview.live_badge.setText("Last verified · refresh required")
         self._set_actions()
