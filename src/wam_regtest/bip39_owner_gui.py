@@ -132,6 +132,62 @@ class Bip39TrialWindow(QWidget):
             self.status.setText("Funding test-only receive on owned Core; do not retry if uncertain…")
             self._command("mine")
 
+    def _confirm_activation(self):
+        if not self._ready or self._spend_enabled:
+            return
+        choice=QMessageBox.question(
+            self,"Native BIP39 REGTEST signing",
+            "Activate the existing Q05 transaction engine on the authenticated "
+            "BIP39 scanner journal of this original WAM REGTEST Core? "
+            "Uncertain reservations will stay locked. "
+            "Never use real/mainnet seed words.",
+            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if choice==QMessageBox.StandardButton.Yes:
+            self._command("activate")
+
+    def _prepare_send(self):
+        if not self._spend_enabled or self._approved_commitment is not None:
+            return
+        code,ok=QInputDialog.getText(
+            self,"Prepare WAM REGTEST Send","Recipient BIP352 REGTEST receive code:")
+        if not ok:
+            return
+        amount,ok=QInputDialog.getText(
+            self,"Prepare WAM REGTEST Send",
+            "Amount in integer atoms (1 WAM = 100,000,000 atoms):")
+        if not ok:
+            return
+        fee,ok=QInputDialog.getText(
+            self,"Prepare WAM REGTEST Send",
+            "Transaction fee in integer atoms (1–1,000,000):")
+        if not ok:
+            return
+        if (not code.startswith("wamrtsp1") or len(amount)>19 or len(fee)>7
+                or not amount.isascii() or not amount.isdecimal()
+                or not fee.isascii() or not fee.isdecimal()):
+            QMessageBox.warning(self,"Invalid Send input","Use a REGTEST address and integer atom amounts.")
+            return
+        atoms_value,fee_value=int(amount),int(fee)
+        if not (330<=atoms_value<=22_000_000*100_000_000
+                and 1<=fee_value<=1_000_000):
+            QMessageBox.warning(self,"Invalid Send input","Amount or fee outside WSP policy.")
+            return
+        self._command("prepare",code,atoms_value,fee_value)
+
+    def _confirm_broadcast(self):
+        if not self._signed_ready or self._approved_commitment is None:
+            return
+        choice=QMessageBox.question(
+            self,"Broadcast signed REGTEST transaction",
+            "The previously reviewed PSBT is signed. Broadcast it to the "
+            "original owned WAM REGTEST Core now? Ambiguous results must "
+            "keep their reservation locked.",
+            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if choice==QMessageBox.StandardButton.Yes:
+            self._command("broadcast",self._approved_commitment)
+
     def _show_words_once(self, phrase):
         dlg=QDialog(self)
         dlg.setWindowTitle("REGTEST recovery phrase — shown once")
