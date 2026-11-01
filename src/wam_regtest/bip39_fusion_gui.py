@@ -11,7 +11,7 @@ from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QFrame, QLabel, QLineEdit,
     QListWidget, QStackedWidget, QMessageBox, QDialog, QToolButton,
-    QButtonGroup, QGraphicsOpacityEffect,
+    QButtonGroup, QGraphicsOpacityEffect, QCheckBox, QApplication,
 )
 
 from .bip39_owner_gui import Bip39TrialWindow
@@ -231,6 +231,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.appearance_buttons[0].setChecked(True)
         self.appearance_group.idClicked.connect(self._apply_fusion_theme)
         appearance_layout.addWidget(segments)
+        self.reduce_motion = QCheckBox("Reduce interface motion")
+        self.reduce_motion.setChecked(os.environ.get("QT_REDUCE_MOTION") == "1")
+        appearance_layout.addWidget(self.reduce_motion)
         settings_layout.addWidget(appearance)
 
         about, about_layout = panel(
@@ -292,13 +295,26 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self._last_verified = None
         self._last_review = None
         self._apply_fusion_theme()
+        if hasattr(QApplication.styleHints(), "colorSchemeChanged"):
+            QApplication.styleHints().colorSchemeChanged.connect(
+                self._native_theme_changed)
         self._set_actions()
+
+    def _native_theme_changed(self, *_):
+        if self.appearance_group.checkedId() == 0:
+            self._apply_fusion_theme()
 
     def _apply_fusion_theme(self, *_):
         from datetime import datetime
         selection = self.appearance_group.checkedId()
-        mode = (resolve_theme("auto", datetime.now().astimezone())
-                if selection == 0 else "light" if selection == 1 else "dark")
+        if selection == 0:
+            # Match macOS System Appearance, not an assumed day/night hour.
+            scheme = QApplication.styleHints().colorScheme()
+            mode = ("dark" if scheme == Qt.ColorScheme.Dark else
+                    "light" if scheme == Qt.ColorScheme.Light else
+                    resolve_theme("auto", datetime.now().astimezone()))
+        else:
+            mode = "light" if selection == 1 else "dark"
         colors = fusion_palette(mode)
         self.setStyleSheet(fusion_stylesheet(mode))
         self.overview.set_theme(mode)
@@ -321,7 +337,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.page_title.setText(
             ("Overview", "Receive", "History", "Send", "Security", "Settings")[index])
         self.stack.setCurrentIndex(index)
-        if (os.environ.get("QT_REDUCE_MOTION") == "1"
+        if (self.reduce_motion.isChecked()
                 or os.environ.get("GITHUB_ACTIONS") == "true"):
             return
         # Short, non-blocking, presentation-only transition. Never run Core
@@ -350,7 +366,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
             "Hide developer controls  ▴" if expanded
             else "Show developer controls  ▾")
         self.advanced_container.setVisible(expanded)
-        if (not expanded or os.environ.get("QT_REDUCE_MOTION") == "1"
+        if (not expanded or self.reduce_motion.isChecked()
                 or os.environ.get("GITHUB_ACTIONS") == "true"):
             return
         effect = QGraphicsOpacityEffect(self.advanced_container)
