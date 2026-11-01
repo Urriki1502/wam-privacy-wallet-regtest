@@ -128,18 +128,26 @@ def qualify(core, source):
                     or after["receive_code"] != created["receive_code"]):
                 raise ValueError("Q06_SPEND_HISTORY_DENIED")
             stage("ONCHAIN_CONFIRMATION_PASS")
-            # Exercise actual native Qt signal handling with the real Core TXID.
-            # A subsequent automatic snapshot must not hide the copyable ID.
+            # The frozen GUI must consume the ACTUAL confirmed transaction.
+            # Fixed phase markers reveal exact failure without leaking TXIDs.
+            stage("FUSION_BROADCAST_RENDER_START")
             window._on_ready("broadcast", broadcast)
+            stage("FUSION_BROADCAST_RENDER_PASS")
             window._on_ready("snapshot", after)
+            stage("FUSION_CONFIRMED_SNAPSHOT_RENDER_PASS")
             app.processEvents()
+            stage("FUSION_EVENT_DELIVERY_PASS")
             from .wallet_read import format_wam
-            if (window.navigation.count()!=6
-                    or window.overview.balance_value.text()
-                       !=format_wam(after["confirmed_atoms"],grouped=True)+" WAM"
-                    or window.receive_page.code!=opened["receive_code"]
-                    or window.history_page.table.rowCount()<2):
-                raise ValueError("Q06_FROZEN_FUSION_GUI_AFTER_SEND_DENIED")
+            if window.navigation.count()!=6:
+                raise ValueError("Q06_FUSION_NAVIGATION_DENIED")
+            if (window.overview.balance_value.text()
+                    !=format_wam(after["confirmed_atoms"],grouped=True)+" WAM"):
+                raise ValueError("Q06_FUSION_AFTER_SEND_BALANCE_DENIED")
+            if window.receive_page.code!=opened["receive_code"]:
+                raise ValueError("Q06_FUSION_AFTER_SEND_RECEIVE_DENIED")
+            if window.history_page.table.rowCount()<2:
+                raise ValueError("Q06_FUSION_AFTER_SEND_HISTORY_DENIED")
+            stage("FUSION_REAL_CORE_CONFIRMED_VIEW_PASS")
             if (not window.last_txid.isReadOnly()
                     or window.last_txid.text() != broadcast):
                 raise ValueError("Q06_GUI_TXID_PERSISTENT_COPY_DENIED")
