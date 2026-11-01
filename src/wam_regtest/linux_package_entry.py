@@ -28,6 +28,9 @@ def main():
         if args[:1]==['--ci-q05-managed-wallet']:
             from wam_regtest.q05_packaged import run
             return run(core,source,args[1:])
+        if args[:1]==['--ci-q06-owned-spend']:
+            from wam_regtest.q06_platform_probe import run
+            return run(core,source,args[1:])
         if not args:
             # Desktop launch still requires independent manifest approval and
             # an already provisioned witness. Never auto-install root code.
