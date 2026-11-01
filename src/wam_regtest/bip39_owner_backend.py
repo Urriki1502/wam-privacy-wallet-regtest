@@ -290,7 +290,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             raise Q06ReadOnlyError("Q06_GUI_ANCHORED_SCANNER_REQUIRES_RECONCILIATION")
         runtime_dir = owner.directory / ("q06-view-" + secrets.token_hex(16))
         custody.create_directory(runtime_dir)
-        db_path = runtime_dir / "wallet.sqlite"
+        db_path = runtime_dir / "wallet-runtime.sqlite"
         scanner = guard = rpc = keys = None
         verified = False
         try:
