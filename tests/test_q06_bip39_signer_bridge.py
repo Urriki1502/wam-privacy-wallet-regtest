@@ -125,6 +125,82 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
             self.signer.sign(
                 prepared, (Intent(self.intent.code, 49_999),), 1000)
 
+    def test_q05_payment_engine_can_use_q06_key_adapter_without_rewriting_signer(self):
+        """Synthetic transport, but production Q05 prepare/sign/broadcast methods."""
+        from contextlib import nullcontext
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from wam_regtest.wallet_session import WalletSession
+        from wam_regtest.bip39_spend_session import Q06OwnedSpendSession
+
+        # The per-fixture draft is explicitly released before calling the
+        # existing engine; real sessions never discard irreversible locks.
+        self.wallet.release_draft(self.proposal.token)
+        coin = self.scanner.coins()[0]
+        class FakeRpc:
+            def call(self, method, params=None):
+                if method == "getbestblockhash":
+                    return self_tip
+                if method == "gettxout":
+                    return {"value": 0.001, "scriptPubKey": {
+                        "hex": "5120" + coin["public_key"]}}
+                if method == "testmempoolaccept":
+                    return [{"allowed": True}]
+                if method == "sendrawtransaction":
+                    raise RuntimeError("Q06_TEST_NETWORK_UNCERTAIN")
+                raise ValueError("Q06_TEST_RPC_METHOD_DENIED")
+            def attest(self):
+                pass
+        class FakeAnchor:
+            wallet_id = "d" * 32
+            def __init__(self):
+                self.value = (1, "a" * 64)
+            def read(self):
+                return self.value
+            def lease(self):
+                return nullcontext()
+        class FakeVault:
+            def __init__(self):
+                self.anchor = FakeAnchor()
+                self._expected = self.anchor.read()
+                self.saved = []
+            def save(self, keys, scanner, password):
+                if password != PASSWORD or keys is not self_keys:
+                    raise ValueError("Q06_TEST_BAD_CUSTODY")
+                self.saved.append(_reservations(scanner).copy())
+                self.anchor.value = (
+                    self.anchor.value[0] + 1, sha256(scanner.checkpoint(password)).hexdigest())
+                self._expected = self.anchor.value
+        class FakeGuard:
+            def check(self):pass
+            def close(self):pass
+        self_keys = self.keys
+        self_tip = self.scanner.store.tip()[1]
+        owner = SimpleNamespace(
+            core=self.path, directory=self.path, cli=self.path,
+            receipt={"wamd_sha256":"0"*64})
+        vault = FakeVault()
+        session = Q06OwnedSpendSession(
+            owner, SOURCE, self.keys, self.scanner, FakeGuard(), vault, PASSWORD)
+        with patch("wam_regtest.bip39_spend_session._owned"), patch.object(
+                WalletSession, "_rpc", lambda _self: FakeRpc()):
+            session.snapshot = lambda: None
+            review = session.prepare(self.intent.code, self.intent.atoms, 1000)
+            self.assertEqual(len(vault.saved), 1)
+            self.assertEqual(set(x[1] for x in vault.saved[-1].values()), {"draft"})
+            self.assertEqual(review.atoms, 50000)
+            session.sign(review.commitment)
+            self.assertEqual(len(vault.saved), 2)
+            self.assertEqual(set(x[1] for x in vault.saved[-1].values()), {"signed"})
+            with self.assertRaises(RuntimeError):
+                session.broadcast(review.commitment)
+            # The source engine turns uncertain; Q06 journal adapter persisted
+            # it BEFORE the RPC and cannot cancel it as an unsigned draft.
+            self.assertEqual(len(vault.saved), 3)
+            self.assertEqual(set(x[1] for x in vault.saved[-1].values()), {"uncertain"})
+            with self.assertRaises(ValueError):
+                self.wallet.release_draft(session._prepared.proposal.token)
+
     def test_ambiguous_broadcast_retains_bip39_reservation(self):
         _, signed = self._sign_after_irreversible_mark()
         coin = self.proposal.coins[0]
