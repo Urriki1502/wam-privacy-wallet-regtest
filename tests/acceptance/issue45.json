@@ -19548,7 +19548,7 @@
       "coverage_identified": true,
       "coverage_total": 24,
       "base_main_sha": "a0ec5799de3e59e93689c744672168b76bf571be",
-      "candidate_pr": null,
+      "candidate_pr": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/140",
       "candidate_head_sha": null,
       "cases": [
         {
@@ -20055,8 +20055,8 @@
           "note": "Stacked BIP39 engine and vectors are leads for narrow review only, NOT Q06 acceptance or prior-pass import."
         }
       ],
-      "engineering_status": "ACTIVE_SOURCE_DISCOVERY",
-      "scope_note": "Owner-directed Q06 12-word BIP39 engineering focus only. All 24 cases PENDING; no Q06 tests/receipt adopted. PR #43 is historical stacked draft review material, not merged or qualified. Begin with pinned wordlist/derivation and managed wallet integration; no mainnet, no 24-word Q07, no real funds. Prior Q05 exact-main outstanding recorded and non-waived."
+      "engineering_status": "ACTIVE_TECHNICAL_VALIDATION_PENDING",
+      "scope_note": "2026-11-01 Q06 focused engineering on Draft PR #140. Source-only BIP39/natively anchored Spend and real macOS signed-Core frozen Create/Receive/Send/Confirm/Reopen/same-chain seed history scan were previously observed green at 2065836, but affected source changed afterward: latest SHA CI must be reconciled before any case-level PASS. Current fix propagates spend-session fault into WalletExecutor/GUI, adds complete anchored read-only TXID verification after reopen (never rebroadcasts/mines/releases locks), with source regressions on macOS/Windows/Linux and macOS packaged E2E gate. A fresh isolated height-0 REGTEST chain has no historical blocks; mnemonic alone cannot recreate previous-chain funds/history or transfer native signed reservations. Cross-profile same-chain full restore, Windows/Linux Q06 actual-Core frozen Send/Restore, G6 physical operator, G7 independent security, separate owner merge and exact-main receipts remain PENDING. Preserve all 24 case PENDING / accepted=false until exact-case immutable evidence is attached and reviewed. No mainnet, Q07, extra manager, automatic merge or speculative test claims."
     },
     {
       "id": "Q07",
