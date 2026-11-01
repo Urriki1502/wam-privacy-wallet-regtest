@@ -297,6 +297,12 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             keys = open_owned_seed_container(owner, self._seed_folder, self.source,
                                              bytes(self._secret), authorized=True,
                                              keychain=self.keychain)
+            # Windows SQLite must be created with native owner-only ACLs
+            # BEFORE Scanner opens it, exactly as in the Q06 spend path.
+            # Do not relax RuntimeGuard's Windows security verification.
+            if sys.platform == "win32":
+                from .windows_private_storage import create_managed_runtime
+                create_managed_runtime(db_path)
             scanner = Scanner(db_path, keys.accounts())
             guard = RuntimeGuard(db_path)
             rpc = WalletCoreCli(owner.cli, owner.directory)
