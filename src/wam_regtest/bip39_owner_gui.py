@@ -1,7 +1,7 @@
 """Native Qt Q06 12-word REGTEST owner trial, separate from Q05 GUI.
 
-Never show an unverified BIP39 Send/Sign button. No user keys are sent over
-supervisor IPC, stored in logs, or included in native CI artifacts.
+Full REGTEST Send remains disabled until owned-Core/native-checkpoint activation.
+No keys leave this local GUI or enter native CI artifacts.
 """
 from PySide6.QtCore import Qt,QTimer
 from PySide6.QtWidgets import (
@@ -28,8 +28,8 @@ class Bip39TrialWindow(QWidget):
         title = QLabel("WAM Fusion — BIP39 12-word · REGTEST")
         title.setStyleSheet("font-size: 19px; font-weight: bold;")
         box.addWidget(title)
-        box.addWidget(QLabel("Experimental read-only wallet using the original signed WAM Core. "
-                              "No mainnet, no personal keys, no spending."))
+        box.addWidget(QLabel("REGTEST wallet. Send is available only after native checkpoint"
+                              " verification and explicit transaction review. No mainnet funds."))
         self.status = QLabel("Native Core not opened")
         box.addWidget(self.status)
         box.addWidget(QLabel("Your BIP352 receive code (REGTEST):"))
@@ -47,26 +47,52 @@ class Bip39TrialWindow(QWidget):
         self.history.setPlaceholderText("Select Sync real Core to scan the owned node")
         box.addWidget(self.history)
         bar=QHBoxLayout()
-        self.sync=QPushButton("Sync real Core (read-only)")
+        self.sync=QPushButton("Sync real Core")
         self.fund=QPushButton("Fund 1 test receive on fresh REGTEST")
+        self.activate=QPushButton("Activate verified REGTEST Send")
+        self.send=QPushButton("Prepare Send")
+        self.broadcast=QPushButton("Broadcast signed transaction")
+        self.cancel=QPushButton("Cancel unsigned draft")
         self.lock=QPushButton("Lock Q06")
         self.quit=QPushButton("Stop owned Core and quit")
-        bar.addWidget(self.sync);bar.addWidget(self.fund);bar.addWidget(self.lock);bar.addWidget(self.quit)
+        bar.addWidget(self.sync);bar.addWidget(self.fund);bar.addWidget(self.activate)
         box.addLayout(bar)
+        payment=QHBoxLayout()
+        payment.addWidget(self.send);payment.addWidget(self.broadcast);payment.addWidget(self.cancel)
+        box.addLayout(payment)
+        utility=QHBoxLayout()
+        utility.addWidget(self.lock);utility.addWidget(self.quit)
+        box.addLayout(utility)
         self.sync.clicked.connect(lambda:self._command("snapshot"))
         self.fund.clicked.connect(self._confirm_funding)
+        self.activate.clicked.connect(self._confirm_activation)
+        self.send.clicked.connect(self._prepare_send)
+        self.broadcast.clicked.connect(self._confirm_broadcast)
+        self.cancel.clicked.connect(lambda:self._command("cancel"))
         self.lock.clicked.connect(lambda:self._command("lock"))
         self.quit.clicked.connect(self.request_quit)
         self._poll=QTimer(self);self._poll.timeout.connect(self._check_quit)
         self._poll.setInterval(100);self._poll.start()
         self._ready=False
         self._test_funded=False
+        self._spend_enabled=False
+        self._signed_ready=False
+        self._approved_commitment=None
+        self._pending_action=None
         self._set_actions()
 
     def _set_actions(self):
         busy=self._worker is not None or self.executor.busy
         self.sync.setEnabled(self._ready and not busy and not self._quit_requested)
-        self.fund.setEnabled(self._ready and not self._test_funded and not busy and not self._quit_requested)
+        self.fund.setEnabled(self._ready and not self._test_funded and not self._spend_enabled
+                             and not busy and not self._quit_requested)
+        self.activate.setEnabled(self._ready and not self._spend_enabled and not busy and not self._quit_requested)
+        self.send.setEnabled(self._spend_enabled and self._approved_commitment is None
+                             and not busy and not self._quit_requested)
+        self.broadcast.setEnabled(self._spend_enabled and self._signed_ready
+                                  and not busy and not self._quit_requested)
+        self.cancel.setEnabled(self._spend_enabled and self._approved_commitment is not None
+                               and not self._signed_ready and not busy and not self._quit_requested)
         self.lock.setEnabled(self._ready and not busy and not self._quit_requested)
         self.quit.setEnabled(not busy and not self.executor.closed)
 
@@ -74,7 +100,7 @@ class Bip39TrialWindow(QWidget):
         if self._worker is not None or self.executor.busy or self.executor.closed:
             return False
         worker=ControlWorker(self.executor, action, args,
-                             kwargs={"timeout":240} if action in ("mine","snapshot") else None,
+                             kwargs={"timeout":240} if action in ("mine","snapshot","activate","prepare","sign","broadcast") else None,
                              parent=self)
         self._worker=worker
         worker.ready.connect(self._on_ready, Qt.ConnectionType.QueuedConnection)
