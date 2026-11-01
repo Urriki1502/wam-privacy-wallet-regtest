@@ -235,6 +235,9 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                 "atoms": h.credit_atoms - h.debit_atoms
             } for h in item.history),
             "reservation_count": item.reservation_count,
+            # Same verified WalletReadSnapshot consumed by existing Fusion UI.
+            # No duplicate scanner, signer or new custody/session authority.
+            "fusion_snapshot": item,
             "signer_allowed": True, "broadcast_allowed": True,
             "mainnet_allowed": False,
         }
@@ -315,6 +318,39 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             wallet = Wallet(scanner)
             balance = wallet.balance()
             history = wallet.history(limit=10)
+            from .wallet_read import WalletReadSnapshot, HistoryRow
+            from .history_pages import GUI_HISTORY_LIMIT
+            with scanner.store.transaction():
+                total = scanner.store.db.execute(
+                    "SELECT count(*) FROM history").fetchone()[0]
+                receives = scanner.store.db.execute(
+                    "SELECT count(*) FROM history WHERE credit>0").fetchone()[0]
+                verified_rows = scanner.store.db.execute(
+                    "SELECT txid,height,credit,debit FROM history "
+                    "ORDER BY height DESC,txid LIMIT ?", (GUI_HISTORY_LIMIT,)
+                ).fetchall()
+            if (type(total) is not int or total<0
+                    or type(receives) is not int or not 0<=receives<=total
+                    or len(verified_rows)>total):
+                raise Q06ReadOnlyError("Q06_GUI_HISTORY_UNVERIFIED")
+            structured = []
+            for txid,block,credit,debit in verified_rows:
+                if (type(txid) is not str or re.fullmatch(r"[0-9a-f]{64}",txid) is None
+                        or type(block) is not int or not 1<=block<=tip[0]
+                        or type(credit) is not int or credit<0
+                        or type(debit) is not int or debit<0):
+                    raise Q06ReadOnlyError("Q06_GUI_HISTORY_UNVERIFIED")
+                structured.append(HistoryRow(txid,block,tip[0]-block+1,credit,debit))
+            fusion = WalletReadSnapshot(
+                chain="regtest", height=tip[0], tip=tip[1],
+                receive_code=self._public["receive_code"],
+                confirmed_atoms=balance["confirmed_atoms"],
+                confirmed_utxos=len(scanner.coins()),
+                history=tuple(structured),
+                core_sha256=owner.receipt["wamd_sha256"],
+                history_count=total, receive_count=receives,
+                history_complete=total<=GUI_HISTORY_LIMIT,
+            )
             _owned(owner)
             guard.check()
             result = {
@@ -328,6 +364,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                 "history_count_shown": len(history),
                 "history": tuple({"txid":h.get("txid"), "height":h.get("height"),
                                   "atoms":h.get("atoms")} for h in history),
+                "fusion_snapshot": fusion,
                 "signer_allowed": False, "broadcast_allowed": False,
                 "mainnet_allowed": False,
             }
