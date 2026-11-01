@@ -77,11 +77,12 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.navigation = QListWidget()
         self.navigation.setIconSize(QSize(20, 20))
         self.navigation.setSpacing(3)
-        self.navigation.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.navigation.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.navigation.setAccessibleName("WAM Fusion wallet navigation")
         self.navigation.addItems(
             ("Overview", "Receive", "History", "Send", "Security", "Settings"))
         side.addWidget(self.navigation, 1)
-        side.addWidget(label("●  LOCAL REGTEST", "FusionVerified"))
+        side.addWidget(label("REGTEST PREVIEW", "FusionBadge"))
         side.addWidget(label(
             "A safe space for testing.\nNever use real WAM or mainnet keys.",
             "FusionMuted"))
@@ -106,6 +107,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.sync.setText("Refresh")
         self.sync.setObjectName("FusionSecondary")
         self.sync.setToolTip("Verify the latest state with your owned WAM Core")
+        self.sync.setAccessibleName("Refresh verified blockchain state")
         top.addWidget(self.sync)
         content.addWidget(topbar)
 
@@ -205,7 +207,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
         settings_page, settings_layout = page(
             "Settings",
-            "A quieter workspace, tailored to how you use your Mac.",
+            "A quieter workspace, tailored to your desktop.",
             "YOUR WALLET / PREFERENCES",
         )
         appearance, appearance_layout = panel(
@@ -251,6 +253,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.advanced_toggle.setObjectName("FusionAdvanced")
         self.advanced_toggle.setCheckable(True)
         self.advanced_toggle.setText("Show developer controls  ▾")
+        self.advanced_toggle.setAccessibleName("Expand REGTEST developer controls")
         self.advanced_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
         advanced_layout.addWidget(self.advanced_toggle)
         self.advanced_container = QWidget()
