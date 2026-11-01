@@ -161,7 +161,21 @@ class NativeCandidateContracts(unittest.TestCase):
                     p = self.path.with_name(self.path.name + suffix)
                     if p.exists():p.unlink()
             def close(self):pass
-        with patch("wam_regtest.managed_wallet_session.RuntimeGuard", Guard):
+        # FakeStorage/FakeAnchor source tests have no native Windows DACL.
+        # Verify allowlisted scratch name; real ACL tests run separately.
+        import sys
+        from contextlib import ExitStack
+        def fake_windows_create(path):
+            self.assertTrue(path.name.startswith("wallet-runtime-recovery-"))
+            self.assertEqual(len(path.stem), len("wallet-runtime-recovery-") + 16)
+            self.assertTrue(all(c in "0123456789abcdef" for c in path.stem[-16:]))
+            path.touch(exist_ok=False)
+        with ExitStack() as stack:
+            stack.enter_context(patch("wam_regtest.managed_wallet_session.RuntimeGuard", Guard))
+            if sys.platform == "win32":
+                stack.enter_context(patch(
+                    "wam_regtest.windows_private_storage.create_managed_runtime",
+                    side_effect=fake_windows_create))
             return advance_owned_candidate(
                 self.owner, self.seed_folder, self.scan, SOURCE,
                 PASSWORD.encode(), authorized=True)

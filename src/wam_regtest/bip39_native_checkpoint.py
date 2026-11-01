@@ -266,7 +266,8 @@ def advance_owned_candidate(owner, seed_folder, scanner, source, password, *,
     if scanner.store.tip() != tip:
         raise SeededNativeCheckpointError("Q06_SCANNER_TIP_CHANGED")
     scanner.assert_current()
-    scratch = owner.directory / ("q06-prior-" + secrets.token_hex(16) + ".sqlite")
+    # Match Windows native create_managed_runtime allowlist; never broaden ACL rules.
+    scratch = owner.directory / ("wallet-runtime-recovery-" + secrets.token_hex(8) + ".sqlite")
     if any(scratch.with_name(scratch.name + suffix).exists()
            or scratch.with_name(scratch.name + suffix).is_symlink()
            for suffix in ("", "-wal", "-shm", "-journal", ".scan.lock")):
