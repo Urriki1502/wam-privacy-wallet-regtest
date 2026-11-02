@@ -158,6 +158,12 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             folder, public = create_owned_seed_container(
                 owner, self.source, password, phrase,
                 authorized=True, keychain=self.keychain)
+            # Generation-2 profiles require a durable acknowledgement sidecar
+            # from birth.  Write a deferred marker now so a missing sidecar on
+            # reopen is always detectable as tampering/incomplete onboarding,
+            # while the GUI still treats the first session as "required" and
+            # shows the 12-word grid.
+            self._q06_write_ack(folder, False, deferred=True)
         else:
             if phrase:
                 raise Q06ReadOnlyError("Q06_GUI_PHRASE_NOT_EXPECTED")

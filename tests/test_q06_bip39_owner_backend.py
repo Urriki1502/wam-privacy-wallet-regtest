@@ -216,8 +216,13 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         self.assertEqual(result["mnemonic_once"], PHRASE)
         self.assertEqual(result["seed_folder"], str(folder))
         self.assertEqual(result["backup_status"], "required")
+        self.assertFalse(result["signer_allowed"])
+        self.assertFalse(result["broadcast_allowed"])
         ack_path = self.root / "q06-gui-state" / "ack" / (folder.name + ".json")
-        self.assertFalse(ack_path.exists())
+        self.assertTrue(ack_path.exists())
+        ack_data = json.loads(ack_path.read_text())
+        self.assertFalse(ack_data["acknowledged"])
+        self.assertTrue(ack_data["deferred"])
 
         words = PHRASE.split()
         positions = [2, 7, 12]
@@ -234,6 +239,7 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         self.assertTrue(ok)
         self.assertTrue(ack_path.exists())
         self.assertTrue(json.loads(ack_path.read_text())["acknowledged"])
+        self.assertTrue(json.loads(ack_path.read_text()).get("mac"))
         self.backend.execute("lock", (), {})
         self.assertTrue(self.backend.public_state()["locked"])
 
