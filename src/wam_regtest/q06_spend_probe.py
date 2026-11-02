@@ -153,7 +153,7 @@ def qualify(core, source):
                 stage("FUSION_BALANCE_BINDING_DENIED")
                 raise ValueError("Q06_FUSION_AFTER_SEND_BALANCE_DENIED")
             stage("FUSION_BALANCE_BINDING_PASS")
-            if window.receive_page.code!=opened["receive_code"]:
+            if window.receive_page.code!=created["receive_code"]:
                 stage("FUSION_RECEIVE_BINDING_DENIED")
                 raise ValueError("Q06_FUSION_AFTER_SEND_RECEIVE_DENIED")
             stage("FUSION_RECEIVE_BINDING_PASS")
