@@ -125,7 +125,7 @@ with tempfile.TemporaryDirectory(prefix='wam-q01-mac-frozen-cwd-') as clean:
                    cwd=clean, env=cocoa, timeout=600, check=True)
     # Copy public fixture evidence only, never any runtime/vault/datadir.
     review = Path(clean)
-    public = Path('package-output/cocoa-evidence'); public.mkdir()
+    public = Path('package-output/cocoa-evidence'); public.mkdir(exist_ok=True)
     shutil.copytree(review/'fusion-ui-review', public/'fusion-ui-review')
     for name in ('real-regtest-wallet-preview.png', 'real-regtest-security-preview.png'):
         shutil.copyfile(review/name, public/name)
