@@ -200,6 +200,78 @@ class BackupPageContract(unittest.TestCase):
         self.assertEqual(self.window.stack.currentIndex(), 0)
         self.assertTrue(self.window.navigation.isEnabled())
 
+    def test_backup_success_continue_unlocks_fund_lock_and_keeps_send_locked(self):
+        self._show_required()
+        self.window.backup_page.findChildren(QCheckBox)[0].setChecked(True)
+        _find_button(self.window.backup_page, "Back up now").click()
+        self.app.processEvents()
+        positions = self.window.backup_page._challenge_positions
+        words = _DISPLAY_PHRASE_WORDS.split()
+        for edit, pos in zip(self.window.backup_page._verify_inputs, positions):
+            edit.setText(words[pos - 1])
+        _find_button(self.window.backup_page, "Verify").click()
+        self.app.processEvents()
+        self.assertTrue(self.window.executor.verified)
+        _find_button(self.window.backup_page, "Continue").click()
+        self.app.processEvents()
+        # Genuinely successful authenticated backup -> ready wallet session.
+        self.assertTrue(self.window._ready)
+        self.assertFalse(self.window._backup_flow_active)
+        self.assertIsNotNone(self.window._worker)
+        # Continue dispatched the pending verified snapshot through the real
+        # ControlWorker; model its worker-finished completion and refresh.
+        self.window._worker = None
+        self.window._finished()
+        self.app.processEvents()
+        self.assertTrue(self.window._ready)
+        # Fund enabled on a fresh unfunded REGTEST chain; Lock enabled; Send
+        # stays disabled until native checkpoint + explicit signer activation.
+        self.assertTrue(self.window.fund.isEnabled())
+        self.assertTrue(self.window.lock.isEnabled())
+        self.assertFalse(self.window.send.isEnabled())
+        self.assertFalse(self.window.broadcast.isEnabled())
+        # A verified snapshot refresh keeps the ready state and does not relock.
+        self.assertFalse(self.window.executor.locked)
+        self.assertFalse(self.window.executor.state.faulted)
+
+    def test_failed_verification_keeps_wallet_locked_then_retry_unlocks(self):
+        self._show_required()
+        self.window.backup_page.findChildren(QCheckBox)[0].setChecked(True)
+        _find_button(self.window.backup_page, "Back up now").click()
+        self.app.processEvents()
+        for edit in self.window.backup_page._verify_inputs:
+            edit.setText("wrong")
+        _find_button(self.window.backup_page, "Verify").click()
+        self.app.processEvents()
+        self.assertFalse(self.window._ready)
+        self.assertTrue(self.window._backup_flow_active)
+        self.assertFalse(self.window.fund.isEnabled())
+        self.assertFalse(self.window.lock.isEnabled())
+        self.assertFalse(self.window.send.isEnabled())
+        err = self.window.backup_page._verify_error
+        self.assertIn("do not match", err.text())
+        self.assertFalse(err.isHidden())
+        # Retry with the correct words -> verified -> Continue -> ready.
+        positions = self.window.backup_page._challenge_positions
+        words = _DISPLAY_PHRASE_WORDS.split()
+        for edit, pos in zip(self.window.backup_page._verify_inputs, positions):
+            edit.setText(words[pos - 1])
+        _find_button(self.window.backup_page, "Verify").click()
+        self.app.processEvents()
+        self.assertTrue(self.window.executor.verified)
+        _find_button(self.window.backup_page, "Continue").click()
+        self.app.processEvents()
+        self.assertTrue(self.window._ready)
+        self.assertIsNotNone(self.window._worker)
+        # Continue dispatched the pending verified snapshot through the real
+        # ControlWorker; model its worker-finished completion and refresh.
+        self.window._worker = None
+        self.window._finished()
+        self.app.processEvents()
+        self.assertTrue(self.window.fund.isEnabled())
+        self.assertTrue(self.window.lock.isEnabled())
+        self.assertFalse(self.window.send.isEnabled())
+
     def test_wrong_verification_shows_error_and_allows_retry(self):
         self._show_required()
         self.window.backup_page.findChildren(QCheckBox)[0].setChecked(True)
@@ -279,6 +351,11 @@ class BackupAckSourceContract(unittest.TestCase):
         self.assertIn("backup_ack_key", source)
         self.assertIn("_q06_write_ack", source)
         self.assertIn("hmac.compare_digest", source)
+
+    def test_wallet_executor_admits_backup_ack_actions(self):
+        from wam_regtest import wallet_executor as _we
+        self.assertIn("backup_verify", _we.COMMANDS)
+        self.assertIn("backup_defer", _we.COMMANDS)
 
     def test_fixture_words_are_twelve_and_checksum_valid(self):
         self.assertEqual(len(_DISPLAY_PHRASE_WORDS.split()), 12)
