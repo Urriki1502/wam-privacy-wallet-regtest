@@ -19,6 +19,16 @@ FORMAT = "wam-q06-bip39-12-native-seed/v1"
 FILE = "seed-000000001.enc"
 FOLDER = re.compile(r"bip39-12-([0-9a-f]{32})")
 
+# Container generation distinguishes legacy (1) and new-acknowledgement (2)
+# profiles.  Generation 2 is created by the production Q06 onboarding flow and
+# requires a valid authenticated backup-acknowledgement sidecar to reopen.
+# Generation 1 containers continue to open normally (grandfathered).
+GENERATION = 2
+LEGACY_FIELDS = {
+    "format", "wallet_id", "generation", "profile", "chain",
+    "genesis", "phrase", "owner_binding", "account_id", "receive_code"}
+CURRENT_FIELDS = LEGACY_FIELDS | {"ack_required"}
+
 
 class Bip39SeedCustodyError(ValueError):
     """Fixed public refusal vocabulary; no secret or filesystem path output."""
@@ -122,11 +132,12 @@ def create_seed_container(parent, source, password, phrase, *,
                 from wam_sp.keystore import seal
                 payload = {
                     "format": FORMAT, "wallet_id": ident,
-                    "generation": 1, "profile": PROFILE,
+                    "generation": GENERATION, "profile": PROFILE,
                     "chain": "regtest", "genesis": REGTEST_GENESIS,
                     "phrase": canonical, "owner_binding": owner_binding,
                     "account_id": public["account_id"],
                     "receive_code": public["receive_code"],
+                    "ack_required": True,
                 }
                 raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
                 ciphertext = seal(raw, secret, b"recovery")
@@ -160,18 +171,7 @@ def open_seed_container(folder, source, password, *, keychain=None, owner_bindin
                 raise Bip39SeedCustodyError("Q06_SEED_DIGEST_DENIED")
             from wam_sp.keystore import unseal
             payload = json.loads(unseal(ciphertext, secret, b"recovery"))
-            if (type(payload) is not dict or set(payload) != {
-                    "format", "wallet_id", "generation", "profile", "chain",
-                    "genesis", "phrase", "owner_binding", "account_id", "receive_code"}
-                    or payload["format"] != FORMAT
-                    or payload["wallet_id"] != ident
-                    or type(payload["generation"]) is not int or payload["generation"] != 1
-                    or payload["profile"] != PROFILE or payload["chain"] != "regtest"
-                    or payload["genesis"] != REGTEST_GENESIS
-                    or payload["owner_binding"] != owner_binding
-                    or type(payload["account_id"]) is not str
-                    or type(payload["receive_code"]) is not str):
-                raise Bip39SeedCustodyError("Q06_SEED_PROFILE_DENIED")
+            _validate_payload(payload, ident, owner_binding)
             keys = Bip39Regtest12Keys(
                 payload["phrase"], source=source, authorized_disposable=True,
             )
@@ -181,12 +181,73 @@ def open_seed_container(folder, source, password, *, keychain=None, owner_bindin
                         or meta["receive_code"] != payload["receive_code"]
                         or anchor.read() != record):
                     raise Bip39SeedCustodyError("Q06_SEED_IDENTITY_DENIED")
+                keys._q06_generation = payload["generation"]
                 return keys
             except Exception:
                 keys.close()
                 raise
     except Exception:
         raise Bip39SeedCustodyError("Q06_SEED_REOPEN_DENIED") from None
+
+
+def _validate_payload(payload, ident, owner_binding):
+    """Validate encrypted payload fields and generation.
+
+    Generation 1 is the original Q06 Stage B1 format (grandfathered).
+    Generation 2 adds ack_required for the new onboarding gate.  Both are
+    accepted for reopen; only generation 2 is created by this code.
+    """
+    if type(payload) is not dict:
+        raise Bip39SeedCustodyError("Q06_SEED_PROFILE_DENIED")
+    generation = payload.get("generation")
+    if generation == 1:
+        expected_fields = LEGACY_FIELDS
+    elif generation == 2:
+        expected_fields = CURRENT_FIELDS
+        if payload.get("ack_required") is not True:
+            raise Bip39SeedCustodyError("Q06_SEED_PROFILE_DENIED")
+    else:
+        raise Bip39SeedCustodyError("Q06_SEED_PROFILE_DENIED")
+    if (set(payload) != expected_fields
+            or payload["format"] != FORMAT
+            or payload["wallet_id"] != ident
+            or payload["profile"] != PROFILE or payload["chain"] != "regtest"
+            or payload["genesis"] != REGTEST_GENESIS
+            or payload["owner_binding"] != owner_binding
+            or type(payload["account_id"]) is not str
+            or type(payload["receive_code"]) is not str):
+        raise Bip39SeedCustodyError("Q06_SEED_PROFILE_DENIED")
+
+
+def read_seed_phrase(folder, source, password, *, keychain=None, owner_binding=None):
+    """Return the canonical BIP39 phrase after the same checks as reopen.
+
+    The returned string is sensitive: the caller must clear it promptly and
+    must never log or persist it.  The container format is unchanged.
+    """
+    secret = _password(password)
+    try:
+        ident, storage, anchor = _native(folder, source, keychain)
+        with anchor.lease():
+            record = _record(anchor.read())
+            _exact_namespace(folder, {FILE})
+            ciphertext = storage.read(folder, FILE)
+            if sha256(ciphertext).hexdigest() != record[1]:
+                raise Bip39SeedCustodyError("Q06_SEED_DIGEST_DENIED")
+            from wam_sp.keystore import unseal
+            payload = json.loads(unseal(ciphertext, secret, b"recovery"))
+            _validate_payload(payload, ident, owner_binding)
+            with Bip39Regtest12Keys(
+                    payload["phrase"], source=source,
+                    authorized_disposable=True) as keys:
+                meta = keys.public_metadata()
+                if (meta["account_id"] != payload["account_id"]
+                        or meta["receive_code"] != payload["receive_code"]
+                        or anchor.read() != record):
+                    raise Bip39SeedCustodyError("Q06_SEED_IDENTITY_DENIED")
+            return payload["phrase"]
+    except Exception:
+        raise Bip39SeedCustodyError("Q06_SEED_PHRASE_READ_DENIED") from None
 
 
 def _owner_binding(owner):

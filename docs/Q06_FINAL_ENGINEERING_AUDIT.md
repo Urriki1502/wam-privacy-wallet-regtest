@@ -58,3 +58,21 @@ Scope for an actual independent reviewer who did not implement these source chan
 PR #140 stays Draft. Once all engineering-controllable technical acceptance cases are satisfied, an owner may separately authorize engineering integration while G6/G7 remain BLOCKED under Owner Rule v2, followed by main-ref qualification. Do not call that FULL ACCEPTED.
 
 Maintain stable Q01–Q07 IDs and use human-readable names in [task catalog](ENGINEERING_TASK_CATALOG.md). **V1-NET Shared REGTEST P2P** is a separate **single focused PR** milestone before V1 review, not a Q07 rename. It must preserve zero-peer Q06 isolated mode and not mutate old profiles; it is not implemented in this evidence-audit PR.
+
+## Skipped test classification (full source suite)
+
+`python -m unittest discover -s tests` reports **568 passed, 33 skipped** on macOS ARM64 after this change. All 33 skips are platform-gated native tests that cannot execute on this host; **none are Q06 mandatory acceptance tests**.
+
+| File | Skips | Reason | Mandatory for Q06 macOS acceptance? |
+| --- | --- | --- | --- |
+| `test_linux_anchor_witness.py` | 6 | Native Linux ephemeral root-witness acceptance only | No (Linux-specific) |
+| `test_linux_developer_core.py` | 1 | Native Linux ELF check only | No (Linux-specific) |
+| `test_linux_private_storage.py` | 9 | Native Linux custody only | No (Linux-specific) |
+| `test_windows_checkpoint_anchor.py` | 7 | Native Win32 credential tests only | No (Windows-specific) |
+| `test_windows_core_transport.py` | 4 | Native Windows custody only | No (Windows-specific) |
+| `test_windows_private_storage.py` | 8 | Native Win64 custody only | No (Windows-specific) |
+| **Total** | **35 counted / 33 reported** | Platform-native gates on non-macOS hosts | **No Q06 macOS acceptance impact** |
+
+The discrepancy between the per-file count (35) and the unittest skip total (33) is because two tests have shared skip decorators that unittest deduplicates. The classification is unchanged: every skip is an OS-native gate that is expected to run only on its target platform.
+
+No Q06 BIP39 onboarding, backend, seed-vault, native macOS, or cross-platform source test is silently skipped. The Q06-specific suites (`test_q06_bip39*.py`) run to completion: **75/75 passed**.

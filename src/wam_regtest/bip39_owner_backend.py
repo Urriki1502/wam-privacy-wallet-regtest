@@ -3,6 +3,8 @@
 The independent seed-rescan path is read-only; Send requires a native-anchored
 Q06 spend session. Neither path imports external custody or grants mainnet use.
 """
+import hmac
+import json
 import os
 from pathlib import Path
 import re
@@ -54,6 +56,64 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         self._public = None
         self._seed_folder = None
 
+    # Durable per-profile backup acknowledgement is stored in a NEW GUI-only
+    # sidecar directory, never inside the encrypted seed vault or any existing
+    # protected storage format.  A missing sidecar is treated as "unknown" so
+    # pre-existing profiles (e.g. Q06 owner-probe fixtures, older test data)
+    # continue to open normally; only an explicit `acknowledged=False` record
+    # written by the GUI refusal path blocks reopen.
+    def _q06_ack_dir(self):
+        d = self.root / "q06-gui-state" / "ack"
+        if not d.exists():
+            d.mkdir(mode=0o700, parents=True, exist_ok=True)
+        return d
+
+    def _q06_ack_path(self, folder):
+        return self._q06_ack_dir() / (folder.name + ".json")
+
+    def _q06_read_ack(self, folder, secret=None):
+        """Return (acknowledged, deferred, integrity).
+
+        - (None, None, True) when no sidecar exists.
+        - (False, True, True) for a legitimate deferred marker.
+        - (True, False, True) for a verified acknowledged marker.
+        - integrity=False for malformed, tampered or replaced sidecars.
+
+        If `secret` is supplied and the sidecar claims acknowledgement, the
+        stored MAC is verified; a bad MAC yields integrity=False.
+        """
+        path = self._q06_ack_path(folder)
+        if not path.exists():
+            return None, None, True
+        try:
+            data = json.loads(path.read_text())
+            if type(data) is not dict or data.get("version") != 1:
+                return False, True, False
+            if data.get("seed_id") != folder.name:
+                return False, True, False
+            acknowledged = bool(data.get("acknowledged"))
+            deferred = bool(data.get("deferred"))
+            if acknowledged and secret is not None:
+                mac = data.get("mac")
+                expected = hmac.new(secret, f"{folder.name}:acknowledged".encode(),
+                                    "sha256").hexdigest()
+                if mac is None or not hmac.compare_digest(mac, expected):
+                    return False, True, False
+            return acknowledged, deferred, True
+        except Exception:
+            return False, True, False
+
+    def _q06_write_ack(self, folder, acknowledged, deferred=False, secret=None):
+        path = self._q06_ack_path(folder)
+        tmp = path.with_suffix(".tmp")
+        data = {"version": 1, "acknowledged": bool(acknowledged),
+                "deferred": bool(deferred), "seed_id": folder.name}
+        if acknowledged and secret is not None:
+            data["mac"] = hmac.new(secret, f"{folder.name}:acknowledged".encode(),
+                                   "sha256").hexdigest()
+        tmp.write_text(json.dumps(data, separators=(',', ':')))
+        tmp.replace(path)
+
     def _only_seed(self, owner):
         from .bip39_seed_vault import _folder
         if (owner.directory / "wallet-vault").exists() or (owner.root / "supervisor.wallet").exists():
@@ -92,6 +152,9 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                     raise Q06ReadOnlyError("Q06_GUI_PHRASE_NOT_EXPECTED")
                 phrase = generate_phrase(authorized_disposable=True)
                 reveal = phrase
+                backup_status = "required"
+            else:
+                backup_status = "verified"
             folder, public = create_owned_seed_container(
                 owner, self.source, password, phrase,
                 authorized=True, keychain=self.keychain)
@@ -99,9 +162,37 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             if phrase:
                 raise Q06ReadOnlyError("Q06_GUI_PHRASE_NOT_EXPECTED")
             folder = self._only_seed(owner)
+            acknowledged, deferred, integrity = self._q06_read_ack(folder)
+            if acknowledged is False and not deferred:
+                raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_REFUSED")
             with open_owned_seed_container(owner, folder, self.source, password,
                                            authorized=True, keychain=self.keychain) as keys:
                 public = keys.public_metadata()
+                secret = keys.backup_ack_key()
+                generation = getattr(keys, "_q06_generation", 1)
+            if generation >= 2:
+                # New onboarding profiles require a trustworthy acknowledgement
+                # record.  A missing or corrupt sidecar is treated as
+                # tampering/incomplete onboarding and fails closed.
+                if not integrity:
+                    self._lock_q06()
+                    raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_TAMPERED")
+                if acknowledged is None:
+                    self._lock_q06()
+                    raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_REQUIRED")
+                if acknowledged is True:
+                    re_ack, _, re_integrity = self._q06_read_ack(folder, secret)
+                    if not re_ack or not re_integrity:
+                        self._lock_q06()
+                        raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_TAMPERED")
+            if acknowledged is True:
+                backup_status = "verified"
+            elif acknowledged is False and deferred:
+                backup_status = "deferred"
+            else:
+                # Legacy generation-1 profiles or pre-existing unversioned
+                # profiles are grandfathered.
+                backup_status = "verified"
         self._secret = bytearray(password)
         self._seed_folder = folder
         self._public = public
@@ -110,6 +201,8 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             "receive_code": public["receive_code"],
             "status": "Q06_REGTEST_READ_ONLY_OWNER_OPENED",
             "mnemonic_once": reveal,
+            "seed_folder": str(folder),
+            "backup_status": backup_status,
             "signer_allowed": False, "broadcast_allowed": False, "mainnet_allowed": False,
         }
 
@@ -442,6 +535,62 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             if kwargs or len(args) != 3:
                 raise Q06ReadOnlyError("Q06_GUI_OPEN_ARGUMENTS_DENIED")
             return self._open_q06(*args)
+        if action == "acknowledge_create_pending":
+            # GUI is about to show the phrase. Write a deferred marker so a
+            # crash before the user completes backup cannot be mistaken for an
+            # acceptance, while still allowing later completion on reopen.
+            if kwargs or len(args) != 1:
+                raise Q06ReadOnlyError("Q06_GUI_ACK_PENDING_ARGUMENTS_DENIED")
+            folder = Path(args[0])
+            if folder != self._seed_folder:
+                raise Q06ReadOnlyError("Q06_GUI_ACK_FOLDER_MISMATCH")
+            self._q06_write_ack(folder, False, deferred=True)
+            return None
+        if action == "backup_defer":
+            if args or kwargs:
+                raise Q06ReadOnlyError("Q06_GUI_BACKUP_DEFER_ARGS_DENIED")
+            if self._seed_folder is None:
+                raise Q06ReadOnlyError("Q06_GUI_BACKUP_DEFER_NO_SEED")
+            self._q06_write_ack(self._seed_folder, False, deferred=True)
+            self._lock_q06()
+            return None
+        if action == "backup_verify":
+            if kwargs or len(args) != 2:
+                raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_ARGS_DENIED")
+            positions, answers = args
+            if (type(positions) not in (tuple, list) or type(answers) not in (tuple, list)
+                    or len(positions) != len(answers) or not positions
+                    or not all(type(p) is int and 1 <= p <= 12 for p in positions)
+                    or len(set(positions)) != len(positions)
+                    or not all(type(a) is str and a.strip() for a in answers)):
+                raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_INPUT_DENIED")
+            if self._seed_folder is None or self._secret is None:
+                raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_LOCKED")
+            from .bip39_seed_vault import (
+                _owner_binding, open_owned_seed_container, read_seed_phrase)
+            owner = self._core()
+            decoded_password = bytes(self._secret).decode("utf-8")
+            phrase = read_seed_phrase(
+                self._seed_folder, self.source, decoded_password,
+                keychain=self.keychain, owner_binding=_owner_binding(owner))
+            words = phrase.split()
+            phrase = None
+            try:
+                if len(words) != 12:
+                    raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_PHRASE_DENIED")
+                normalized = [a.strip().lower() for a in answers]
+                if any(normalized[i] != words[positions[i] - 1].lower()
+                       for i in range(len(positions))):
+                    return False
+                with open_owned_seed_container(
+                        owner, self._seed_folder, self.source,
+                        bytes(self._secret), authorized=True,
+                        keychain=self.keychain) as keys:
+                    secret = keys.backup_ack_key()
+                self._q06_write_ack(self._seed_folder, True, secret=secret)
+                return True
+            except Exception:
+                raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_DENIED") from None
         if action == "snapshot":
             if args or kwargs:raise Q06ReadOnlyError("Q06_GUI_SYNC_ARGUMENTS_DENIED")
             return self._scan_q06()

@@ -3,6 +3,7 @@
 No fake Core success is reported as source-native or owned-Core acceptance.
 """
 import importlib.util
+import json
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
@@ -198,6 +199,202 @@ class Q06OwnerBackendContracts(unittest.TestCase):
             self.backend.execute("open",(PASSWORD,"reopen",""),{})
         self.assertIsNone(self.backend._seed_folder)
 
+    def _fake_opened_keys(self, generation=2):
+        keys = Bip39Regtest12Keys(
+            PHRASE, source=SOURCE, authorized_disposable=True)
+        keys._q06_generation = generation
+        return keys
 
-if __name__=="__main__":
+    def test_create_marks_backup_status_required_and_can_verify_and_reopen(self):
+        folder = self.root / ("bip39-12-" + ("0" * 32))
+        with (patch("wam_regtest.bip39_12.generate_phrase", return_value=PHRASE),
+              patch("wam_regtest.bip39_seed_vault.create_owned_seed_container",
+                    return_value=(folder, {"profile": "q06",
+                        "account_id": "public-identity",
+                        "receive_code": "wamrtsp1public"}))):
+            result = self.backend.execute("open", (PASSWORD, "create", ""), {})
+        self.assertEqual(result["mnemonic_once"], PHRASE)
+        self.assertEqual(result["seed_folder"], str(folder))
+        self.assertEqual(result["backup_status"], "required")
+        ack_path = self.root / "q06-gui-state" / "ack" / (folder.name + ".json")
+        self.assertFalse(ack_path.exists())
+
+        words = PHRASE.split()
+        positions = [2, 7, 12]
+        answers = [words[1], words[6], words[11]]
+        with (patch("wam_regtest.bip39_seed_vault.read_seed_phrase",
+                    return_value=PHRASE),
+              patch("wam_regtest.bip39_seed_vault._owner_binding",
+                    return_value="0" * 64),
+              patch("wam_regtest.bip39_seed_vault.open_owned_seed_container")
+              as open_container):
+            open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys()
+            open_container.return_value.__exit__ = lambda *a, **kw: None
+            ok = self.backend.execute("backup_verify", (positions, answers), {})
+        self.assertTrue(ok)
+        self.assertTrue(ack_path.exists())
+        self.assertTrue(json.loads(ack_path.read_text())["acknowledged"])
+        self.backend.execute("lock", (), {})
+        self.assertTrue(self.backend.public_state()["locked"])
+
+        folder.mkdir(parents=True)
+        with patch("wam_regtest.bip39_seed_vault.open_owned_seed_container") as open_container:
+            open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys()
+            open_container.return_value.__exit__ = lambda *a, **kw: None
+            reopened = self.backend.execute("open", (PASSWORD, "reopen", ""), {})
+        self.assertEqual(reopened["backup_status"], "verified")
+        self.assertEqual(reopened["mnemonic_once"], "")
+        self.assertTrue(reopened["receive_code"].startswith("wamrtsp1"))
+        self.backend.execute("lock", (), {})
+
+    def test_create_pending_marker_is_deferred_and_allows_reopen_verify(self):
+        folder = self.root / ("bip39-12-" + ("0" * 32))
+        with (patch("wam_regtest.bip39_12.generate_phrase", return_value=PHRASE),
+              patch("wam_regtest.bip39_seed_vault.create_owned_seed_container",
+                    return_value=(folder, {"profile": "q06",
+                        "account_id": "public-identity",
+                        "receive_code": "wamrtsp1public"}))):
+            self.backend.execute("open", (PASSWORD, "create", ""), {})
+        self.backend.execute("acknowledge_create_pending", (str(folder),), {})
+        ack_path = self.root / "q06-gui-state" / "ack" / (folder.name + ".json")
+        self.assertTrue(ack_path.exists())
+        data = json.loads(ack_path.read_text())
+        self.assertFalse(data["acknowledged"])
+        self.assertTrue(data["deferred"])
+
+        self.backend.execute("backup_defer", (), {})
+        self.assertTrue(self.backend.public_state()["locked"])
+
+        folder.mkdir(parents=True)
+        with patch("wam_regtest.bip39_seed_vault.open_owned_seed_container") as open_container:
+            open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys()
+            open_container.return_value.__exit__ = lambda *a, **kw: None
+            reopened = self.backend.execute("open", (PASSWORD, "reopen", ""), {})
+        self.assertEqual(reopened["backup_status"], "deferred")
+
+        words = PHRASE.split()
+        with (patch("wam_regtest.bip39_seed_vault.read_seed_phrase",
+                    return_value=PHRASE),
+              patch("wam_regtest.bip39_seed_vault._owner_binding",
+                    return_value="0" * 64),
+              patch("wam_regtest.bip39_seed_vault.open_owned_seed_container")
+              as open_container):
+            open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys()
+            open_container.return_value.__exit__ = lambda *a, **kw: None
+            self.assertFalse(self.backend.execute(
+                "backup_verify", ([1, 2, 3], ["wrong"] * 3), {}))
+            self.assertTrue(self.backend.execute(
+                "backup_verify", ([1, 2, 3], words[:3]), {}))
+        self.assertTrue(json.loads(ack_path.read_text())["acknowledged"])
+
+    def test_backup_verify_rejects_bad_inputs_and_locked_state(self):
+        folder = self.root / ("bip39-12-" + ("0" * 32))
+        with (patch("wam_regtest.bip39_12.generate_phrase", return_value=PHRASE),
+              patch("wam_regtest.bip39_seed_vault.create_owned_seed_container",
+                    return_value=(folder, {"profile": "q06",
+                        "account_id": "public-identity",
+                        "receive_code": "wamrtsp1public"}))):
+            self.backend.execute("open", (PASSWORD, "create", ""), {})
+        with self.assertRaises(Q06ReadOnlyError):
+            self.backend.execute("backup_verify", ([0, 1], ["a", "b"]), {})
+        with self.assertRaises(Q06ReadOnlyError):
+            self.backend.execute("backup_verify", ([1, 1], ["a", "b"]), {})
+        self.backend.execute("lock", (), {})
+        with self.assertRaises(Q06ReadOnlyError):
+            self.backend.execute("backup_verify", ([1, 2, 3], ["a", "b", "c"]), {})
+
+    def _reopen_backend(self):
+        """Simulate application restart with a fresh backend instance."""
+        backend = Bip39ReadOnlyBackend(self.root, Path("/synthetic-core"), SOURCE)
+        backend._core = lambda: self.owner
+        return backend
+
+    def test_generation2_missing_sidecar_fails_closed_after_restart(self):
+        folder = self.root / ("bip39-12-" + ("0" * 32))
+        folder.mkdir(parents=True)
+        with patch("wam_regtest.bip39_seed_vault.open_owned_seed_container") as open_container:
+            open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys(2)
+            open_container.return_value.__exit__ = lambda *a, **kw: None
+            with self.assertRaises(Q06ReadOnlyError) as ctx:
+                self.backend.execute("open", (PASSWORD, "reopen", ""), {})
+        self.assertIn("BACKUP_ACK_REQUIRED", str(ctx.exception))
+        self.assertTrue(self.backend.public_state()["locked"])
+
+    def test_generation2_deleted_sidecar_fails_closed_after_restart(self):
+        folder = self.root / ("bip39-12-" + ("0" * 32))
+        folder.mkdir(parents=True)
+        ack_path = self.root / "q06-gui-state" / "ack" / (folder.name + ".json")
+        ack_path.parent.mkdir(parents=True, exist_ok=True)
+        ack_path.write_text(json.dumps({"version": 1, "acknowledged": False,
+                                        "deferred": True, "seed_id": folder.name}))
+        ack_path.unlink()
+        backend = self._reopen_backend()
+        with patch("wam_regtest.bip39_seed_vault.open_owned_seed_container") as open_container:
+            open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys(2)
+            open_container.return_value.__exit__ = lambda *a, **kw: None
+            with self.assertRaises(Q06ReadOnlyError) as ctx:
+                backend.execute("open", (PASSWORD, "reopen", ""), {})
+        self.assertIn("BACKUP_ACK_REQUIRED", str(ctx.exception))
+
+    def test_generation2_malformed_sidecar_fails_closed_after_restart(self):
+        folder = self.root / ("bip39-12-" + ("0" * 32))
+        folder.mkdir(parents=True)
+        ack_path = self.root / "q06-gui-state" / "ack" / (folder.name + ".json")
+        ack_path.parent.mkdir(parents=True, exist_ok=True)
+        ack_path.write_text("not valid json")
+        backend = self._reopen_backend()
+        with patch("wam_regtest.bip39_seed_vault.open_owned_seed_container") as open_container:
+            open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys(2)
+            open_container.return_value.__exit__ = lambda *a, **kw: None
+            with self.assertRaises(Q06ReadOnlyError) as ctx:
+                backend.execute("open", (PASSWORD, "reopen", ""), {})
+        self.assertIn("BACKUP_ACK_TAMPERED", str(ctx.exception))
+
+    def test_generation2_tampered_ack_mac_fails_closed_after_restart(self):
+        folder = self.root / ("bip39-12-" + ("0" * 32))
+        folder.mkdir(parents=True)
+        ack_path = self.root / "q06-gui-state" / "ack" / (folder.name + ".json")
+        ack_path.parent.mkdir(parents=True, exist_ok=True)
+        ack_path.write_text(json.dumps({"version": 1, "acknowledged": True,
+                                        "deferred": False, "seed_id": folder.name,
+                                        "mac": "0" * 64}))
+        backend = self._reopen_backend()
+        with patch("wam_regtest.bip39_seed_vault.open_owned_seed_container") as open_container:
+            open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys(2)
+            open_container.return_value.__exit__ = lambda *a, **kw: None
+            with self.assertRaises(Q06ReadOnlyError) as ctx:
+                backend.execute("open", (PASSWORD, "reopen", ""), {})
+        self.assertIn("BACKUP_ACK_TAMPERED", str(ctx.exception))
+
+    def test_generation2_replaced_sidecar_for_wrong_seed_fails_closed(self):
+        folder = self.root / ("bip39-12-" + ("0" * 32))
+        folder.mkdir(parents=True)
+        other_folder = self.root / ("bip39-12-" + ("f" * 32))
+        ack_path = self.root / "q06-gui-state" / "ack" / (folder.name + ".json")
+        ack_path.parent.mkdir(parents=True, exist_ok=True)
+        # Sidecar claims acknowledgement but names a different seed_id.
+        ack_path.write_text(json.dumps({"version": 1, "acknowledged": True,
+                                        "deferred": False, "seed_id": other_folder.name,
+                                        "mac": "0" * 64}))
+        backend = self._reopen_backend()
+        with patch("wam_regtest.bip39_seed_vault.open_owned_seed_container") as open_container:
+            open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys(2)
+            open_container.return_value.__exit__ = lambda *a, **kw: None
+            with self.assertRaises(Q06ReadOnlyError) as ctx:
+                backend.execute("open", (PASSWORD, "reopen", ""), {})
+        self.assertIn("BACKUP_ACK_TAMPERED", str(ctx.exception))
+
+    def test_generation1_missing_sidecar_remains_grandfathered(self):
+        folder = self.root / ("bip39-12-" + ("0" * 32))
+        folder.mkdir(parents=True)
+        with patch("wam_regtest.bip39_seed_vault.open_owned_seed_container") as open_container:
+            open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys(1)
+            open_container.return_value.__exit__ = lambda *a, **kw: None
+            result = self.backend.execute("open", (PASSWORD, "reopen", ""), {})
+        self.assertEqual(result["backup_status"], "verified")
+        self.assertTrue(result["receive_code"].startswith("wamrtsp1"))
+        self.backend.execute("lock", (), {})
+
+
+if __name__ == "__main__":
     unittest.main()

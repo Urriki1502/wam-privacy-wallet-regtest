@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from .desktop import qt_application
+from .gui_errors import operation_error
 from .managed_gui import ControlWorker
 from .wallet_executor import WalletExecutor
 from .bip39_owner_backend import Bip39ReadOnlyBackend
@@ -22,6 +23,9 @@ class Bip39TrialWindow(QWidget):
         self._worker = None
         self._quit_requested = False
         self._closed = False
+        self._backup_unacked = False
+        self._backup_flow_active = False
+        self._backup_result = None
         self.setWindowTitle("WAM Fusion · BIP39 12-word REGTEST trial")
         self.resize(750, 475)
         box = QVBoxLayout(self)
@@ -252,38 +256,42 @@ class Bip39TrialWindow(QWidget):
         if ok:
             self._command("inspect_confirmed",txid)
 
-    def _show_words_once(self, phrase):
-        dlg=QDialog(self)
-        dlg.setWindowTitle("REGTEST recovery phrase — shown once")
-        layout=QVBoxLayout(dlg)
-        layout.addWidget(QLabel("Write down these 12 disposable REGTEST words in order. "
-                                 "They are NOT for mainnet or real funds."))
-        words=QTextEdit()
-        words.setPlainText(phrase)
-        words.setReadOnly(True)
-        words.setMinimumHeight(85)
-        layout.addWidget(words)
-        check=QCheckBox("I have recorded these 12 REGTEST-only words securely.")
-        layout.addWidget(check)
-        buttons=QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-        button=buttons.button(QDialogButtonBox.StandardButton.Ok)
-        button.setEnabled(False)
-        check.toggled.connect(button.setEnabled)
-        buttons.accepted.connect(dlg.accept)
-        layout.addWidget(buttons)
-        dlg.exec()
-        words.clear()
-        phrase=None
-
     def _on_ready(self, action, result):
         if action=="open":
+            self._backup_unacked=False
+            # Start from a locked UI state; the backup flow (if required) will
+            # promote to ready via _backup_flow_completed.
+            self._ready=False
+            self.receive.clear()
+            self.account.setText("Account: locked")
+            self.balance.setText("Balance: unverified")
+            self.tip.setText("Chain: unverified")
+            backup_status = result.get("backup_status", "verified")
+            seed_folder = result.get("seed_folder")
+            if backup_status in ("required", "deferred"):
+                if backup_status == "required" and seed_folder:
+                    try:
+                        self.executor.request(
+                            "acknowledge_create_pending", seed_folder, timeout=30)
+                    except Exception as error:
+                        self.status.setText(
+                            "Backup acknowledgement state unavailable — "
+                            "wallet preserved locked: " + operation_error(
+                                "acknowledge_create_pending", error))
+                        self._backup_unacked=True
+                        self._set_actions()
+                        return
+                self._backup_result = result
+                self._backup_flow_active = True
+                self._present_backup_ack(result)
+                return
             self._ready=True
             self.receive.setText(result["receive_code"])
             self.account.setText("BIP39 account: "+result["account_id"])
             self.balance.setText("Balance: not yet synced against Core")
             self.tip.setText("Chain: not yet verified")
             self.status.setText("BIP39 native seed opened. Activate Send after checkpoint verification.")
-            if result.get("mnemonic_once"):self._show_words_once(result["mnemonic_once"])
+            self._pending_action=("snapshot",)
         elif action=="mine":
             self._test_funded=True
             self.status.setText("Public REGTEST receive confirmed at block {} — click Sync real Core".format(result["height"]))
@@ -366,6 +374,9 @@ class Bip39TrialWindow(QWidget):
             self._signed_ready=False
             self.status.setText("Unsigned draft cancelled")
         elif action=="lock":
+            self._backup_unacked=False
+            self._backup_flow_active=False
+            self._backup_result=None
             self._ready=False
             self._spend_enabled=False
             self._signed_ready=False
@@ -382,6 +393,53 @@ class Bip39TrialWindow(QWidget):
             self._ready=False
             self._closed=True
         self._set_actions()
+
+    def _present_backup_ack(self, result):
+        """Subclasses override to show the production backup UI.
+
+        The base implementation has no UI, so it fails closed: the wallet is
+        deferred/locked and the flow completes as unsuccessful."""
+        self._defer_active_backup()
+
+    def _backup_flow_completed(self, success):
+        """Called by the subclass UI when backup is acknowledged or deferred."""
+        self._backup_flow_active = False
+        result = self._backup_result
+        self._backup_result = None
+        if not success or result is None:
+            self._backup_unacked = True
+            self.status.setText(
+                "Backup not acknowledged — the created wallet stops "
+                "locked and custody is preserved. Reopen with your "
+                "password after recording your 12 words; they are "
+                "never displayed again.")
+            self._set_actions()
+            self._check_quit()
+            return
+        self._ready = True
+        self.receive.setText(result["receive_code"])
+        self.account.setText("BIP39 account: " + result["account_id"])
+        self.balance.setText("Balance: not yet synced against Core")
+        self.tip.setText("Chain: not yet verified")
+        self.status.setText(
+            "BIP39 native seed opened. Activate Send after checkpoint verification.")
+        self._set_actions()
+        if self._quit_requested:
+            self._check_quit()
+            return
+        self._pending_action = ("snapshot",)
+        self._finished()
+
+    def _defer_active_backup(self):
+        """Fail-safe helper used on quit/close when the backup UI is open."""
+        if not self._backup_flow_active:
+            return
+        self._backup_flow_active = False
+        try:
+            self.executor.request("backup_defer", timeout=30)
+        except Exception:
+            pass
+        self._backup_flow_completed(False)
 
     def _on_denied(self, code):
         if self._approved_commitment is not None:
@@ -410,6 +468,7 @@ class Bip39TrialWindow(QWidget):
 
     def request_quit(self):
         self._quit_requested=True
+        self._defer_active_backup()
         self.status.setText("Stopping only this original owned REGTEST Core…")
         self._check_quit()
 

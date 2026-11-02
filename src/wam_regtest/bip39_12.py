@@ -3,6 +3,7 @@
 Not a persisted wallet, GUI onboarding, backup, payment signer or Q06 acceptance.
 No legacy Keyring conversion, no mainnet and no secret-bearing diagnostics.
 """
+import hmac
 from hashlib import sha256
 import unicodedata
 
@@ -51,7 +52,7 @@ class Bip39Regtest12Keys:
     BIP39 returns 64 bytes; use all bytes in native WSP BIP32 derivation.
     Explicit close is best-effort: CPython cannot guarantee RAM erasure.
     """
-    __slots__ = ("_seed", "_closed")
+    __slots__ = ("_seed", "_closed", "_q06_generation")
 
     def __init__(self, phrase, *, source, passphrase="", profile=PROFILE,
                  authorized_disposable=False):
@@ -125,6 +126,17 @@ class Bip39Regtest12Keys:
                 "spend": f"m/352'/1'/{account}'/0'/0",
             },
         }
+
+    def backup_ack_key(self):
+        """Return a deterministic 32-byte MAC key for the backup ack sidecar.
+
+        This is NOT a wallet key; it is derived from the BIP39 seed for the
+        sole purpose of authenticating the per-profile backup acknowledgement
+        sidecar stored outside the encrypted seed vault."""
+        if self._closed:
+            raise Bip39TwelveError("BIP39_12_KEYS_CLOSED")
+        return hmac.new(bytes(self._seed), b"Q06_BACKUP_ACK_V1",
+                        sha256).digest()
 
     def close(self):
         if not self._closed:

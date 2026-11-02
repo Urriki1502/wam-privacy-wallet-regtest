@@ -15,12 +15,15 @@ from PySide6.QtWidgets import (
 )
 
 from .bip39_owner_gui import Bip39TrialWindow
+from .bip39_locale import t
 from .desktop import resolve_theme
+from .gui_errors import operation_error
 from .fusion_ui import (
     FusionOverview, fusion_stylesheet, fusion_palette, page, panel,
     label, ResponsiveRow, vector_icon, fusion_nav_icons,
 )
 from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval
+from .bip39_backup_page import Bip39BackupPage
 from .wallet_read import WalletReadSnapshot
 from .amounts import parse_amount, _parse_atoms
 from .branding import brand_image
@@ -280,6 +283,12 @@ class Bip39FusionWindow(Bip39TrialWindow):
         settings_layout.addStretch()
         self.stack.addWidget(settings_page)
 
+        self.backup_page = Bip39BackupPage()
+        self.backup_page.verify_requested.connect(self._on_backup_verify)
+        self.backup_page.deferred_requested.connect(self._on_backup_deferred)
+        self.backup_page.continue_requested.connect(self._on_backup_continue)
+        self.stack.addWidget(self.backup_page)
+
         self._transition = None
         self._advanced_transition = None
         self.navigation.currentRowChanged.connect(self._navigate)
@@ -406,6 +415,49 @@ class Bip39FusionWindow(Bip39TrialWindow):
                     2 if self._approved_commitment is not None else 0
                 )
 
+    def _present_backup_ack(self, result):
+        self.navigation.setEnabled(False)
+        self.page_title.setText(t("backup_title"))
+        self.connection_pill.setText(t("regtest_preview"))
+        if result.get("backup_status") == "required" and result.get("mnemonic_once"):
+            self.backup_page.set_phrase(result["mnemonic_once"].split())
+        else:
+            self.backup_page.set_deferred_mode()
+        self.stack.setCurrentWidget(self.backup_page)
+
+    def _on_backup_verify(self, positions, answers):
+        try:
+            ok = self.executor.request("backup_verify", positions, answers, timeout=30)
+        except Exception as error:
+            self.status.setText(
+                "Backup verification unavailable: " + str(operation_error("backup_verify", error)))
+            self.backup_page.show_verification_error()
+            return
+        if ok:
+            self.backup_page.show_success()
+        else:
+            self.backup_page.show_verification_error()
+
+    def _on_backup_deferred(self):
+        try:
+            self.executor.request("backup_defer", timeout=30)
+        except Exception as error:
+            self.status.setText(
+                "Backup deferral unavailable: " + str(operation_error("backup_defer", error)))
+        self._backup_flow_completed(False)
+
+    def _on_backup_continue(self):
+        self._backup_flow_completed(True)
+
+    def _backup_flow_completed(self, success):
+        self.navigation.setEnabled(True)
+        self.stack.setCurrentIndex(0)
+        self.navigation.setCurrentRow(0)
+        self.page_title.setText("Overview")
+        if success:
+            self.connection_pill.setText("AWAITING VERIFICATION")
+        super()._backup_flow_completed(success)
+
     def _prepare_send(self):
         if (not self._spend_enabled or self._approved_commitment is not None
                 or self.executor.state.faulted or self.executor.busy):
@@ -502,8 +554,10 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self._render_verified(result)
         elif action == "open":
             self._clear_visuals()
-            # Same owner, bounded read-only chain sync after seed confirmation.
-            self._pending_action = ("snapshot",)
+            # Same owner, bounded read-only chain sync only after the explicit
+            # backup acknowledgement; a refused create above stops with lock.
+            if not self._backup_flow_active and not self._backup_unacked:
+                self._pending_action = ("snapshot",)
         elif action == "mine":
             self._pending_action = ("snapshot",)
         elif action in ("lock", "quit"):
