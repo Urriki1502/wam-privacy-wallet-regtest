@@ -356,6 +356,7 @@ class BackupAckSourceContract(unittest.TestCase):
         from wam_regtest import wallet_executor as _we
         self.assertIn("backup_verify", _we.COMMANDS)
         self.assertIn("backup_defer", _we.COMMANDS)
+        self.assertIn("acknowledge_create_pending", _we.COMMANDS)
 
     def test_fixture_words_are_twelve_and_checksum_valid(self):
         self.assertEqual(len(_DISPLAY_PHRASE_WORDS.split()), 12)
