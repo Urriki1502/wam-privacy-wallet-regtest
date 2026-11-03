@@ -363,5 +363,119 @@ class BackupAckSourceContract(unittest.TestCase):
         self.assertTrue(Mnemonic("english").check(_DISPLAY_PHRASE_WORDS))
 
 
+class InSessionLockUnlockContract(unittest.TestCase):
+    """Owner UX correction: in-session Lock <-> Unlock + remembered profile.
+
+    The owner must be able to lock and unlock WITHOUT quitting the app or
+    browsing for a wallet folder, and reopen the remembered original profile
+    after an app restart. All of this stays fail-closed on the authenticated
+    same-owner REGTEST boundary.
+    """
+
+    def setUp(self):
+        if importlib.util.find_spec("PySide6") is None:
+            self.skipTest("Native Qt widgets verified on Qt-capable runners")
+        self.app, self.window = _make_window()
+
+    def tearDown(self):
+        self.window._poll.stop()
+        self.window.hide()
+        self.window.deleteLater()
+        self.app.processEvents()
+
+    def _verified_open(self):
+        self.window._on_ready(
+            "open", _open_result("verified", "", self.window.executor.seed_folder))
+        self.app.processEvents()
+
+    def test_unlock_and_lock_controls_follow_authenticated_state(self):
+        self.assertFalse(self.window.unlock.isEnabled())
+        self.assertFalse(self.window.lock.isEnabled())
+        self._verified_open()
+        # Genuinely verified wallet -> unlocked: Lock enabled, Unlock hidden
+        # until the next Lock.
+        self.assertTrue(self.window.lock.isEnabled())
+        self.assertFalse(self.window.unlock.isEnabled())
+        self.assertTrue(self.window._ready)
+        # Lock -> clear sensitive GUI data and disable spend/send/broadcast.
+        self.window._on_ready("lock", None)
+        self.app.processEvents()
+        self.assertFalse(self.window._ready)
+        self.assertTrue(self.window.unlock.isEnabled())
+        self.assertFalse(self.window.lock.isEnabled())
+        self.assertFalse(self.window.fund.isEnabled())
+        self.assertFalse(self.window.send.isEnabled())
+        self.assertFalse(self.window.broadcast.isEnabled())
+
+    def test_unlock_after_lock_promotes_to_ready_and_schedules_snapshot(self):
+        self._verified_open()
+        self.window._on_ready("lock", None)
+        self.app.processEvents()
+        self.window._on_ready(
+            "unlock", _open_result("verified", "", self.window.executor.seed_folder))
+        self.app.processEvents()
+        # Same receive code, account and pending verified refresh — no new
+        # profile and no phrase regeneration.
+        self.assertTrue(self.window._ready)
+        self.assertEqual(self.window.receive.text(), "wamrtsp1public-test")
+        self.assertEqual(self.window.account.text(), "BIP39 account: test-account-identity")
+        self.assertEqual(self.window._pending_action, ("snapshot",))
+
+    def test_unlock_deferred_returns_to_fail_closed_backup_flow(self):
+        self._verified_open()
+        self.window._on_ready("lock", None)
+        self.app.processEvents()
+        self.window._on_ready(
+            "unlock", _open_result("deferred", "", self.window.executor.seed_folder))
+        self.app.processEvents()
+        self.assertTrue(self.window._backup_flow_active)
+        self.assertFalse(self.window._ready)
+        self.assertEqual(self.window.stack.currentWidget(), self.window.backup_page)
+
+    def test_unlock_refusal_keeps_wallet_locked_and_allows_retry(self):
+        self._verified_open()
+        self.window._on_ready("lock", None)
+        self.app.processEvents()
+        self.window._on_denied("WALLET_UNLOCK_REFUSED")
+        self.app.processEvents()
+        self.assertFalse(self.window._ready)
+        self.assertTrue(self.window.unlock.isEnabled())
+        # Retry path is still available for a corrected password attempt.
+        self.window._on_ready(
+            "unlock", _open_result("verified", "", self.window.executor.seed_folder))
+        self.app.processEvents()
+        self.assertTrue(self.window._ready)
+
+
+class LockUnlockSourceContract(unittest.TestCase):
+    """Static module hygiene for the in-session Lock <-> Unlock surface."""
+
+    def test_gui_uses_authenticated_in_session_unlock(self):
+        owner_source = (
+            Path(__file__).resolve().parents[1]
+            / "src" / "wam_regtest" / "bip39_owner_gui.py"
+        ).read_text(encoding="utf8")
+        self.assertIn("_unlock_prompt", owner_source)
+        self.assertIn("EchoMode.Password", owner_source)
+        self.assertIn('self._command("unlock", password, False)', owner_source)
+        self.assertIn('self._unlock_allowed', owner_source)
+        self.assertIn("QSettings", owner_source)
+        self.assertIn("last_bip39_profile", owner_source)
+        self.assertIn("_remember_profile", owner_source)
+        self.assertIn('mode == "reopen"', owner_source)
+        self.assertIn("Unlock wallet", owner_source)
+
+    def test_backend_reopen_revalidates_same_original_profile(self):
+        backend_source = (
+            Path(__file__).resolve().parents[1]
+            / "src" / "wam_regtest" / "bip39_owner_backend.py"
+        ).read_text(encoding="utf8")
+        self.assertIn("def _reopen_q06", backend_source)
+        self.assertIn('if action == "unlock":', backend_source)
+        self.assertIn("Q06_GUI_UNLOCK_ARGUMENTS_DENIED", backend_source)
+        self.assertIn("Q06_GUI_ALREADY_UNLOCKED", backend_source)
+        self.assertIn("Q06_GUI_BACKUP_ACK_TAMPERED", backend_source)
+
+
 if __name__ == "__main__":
     unittest.main()

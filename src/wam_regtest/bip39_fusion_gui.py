@@ -189,6 +189,12 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.lock.setObjectName("FusionSecondary")
         self.lock.setProperty("fusion_icon", "lock")
         wl.addWidget(self.lock)
+        self.unlock.setText("Unlock wallet")
+        self.unlock.setObjectName("FusionSecondary")
+        wl.addWidget(self.unlock)
+        # The base developer layout parks lock/unlock/quit in a utility bar;
+        # the normal Fusion workspace owns the Security-page placement instead.
+        self._legacy_layout_holder.layout().removeWidget(self.unlock)
         self.quit.setText("Stop owned Core and quit")
         self.quit.setObjectName("FusionDestructive")
         wl.addWidget(self.quit)
@@ -407,7 +413,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
                     if self.executor.state.faulted else
                     "Verified native custody · Send enabled" if self._spend_enabled else
                     "Seed open · Send awaits checkpoint" if self._ready else
-                    "Locked / awaiting verified wallet"
+                    "Locked · use Unlock wallet to reauthenticate this original REGTEST wallet"
                 )
             if hasattr(self, "payment_steps"):
                 self.payment_steps.set_stage(

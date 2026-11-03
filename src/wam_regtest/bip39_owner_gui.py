@@ -3,6 +3,8 @@
 Full REGTEST Send remains disabled until owned-Core/native-checkpoint activation.
 No keys leave this local GUI or enter native CI artifacts.
 """
+from pathlib import Path
+
 from PySide6.QtCore import Qt,QTimer
 from PySide6.QtWidgets import (
     QCheckBox,QDialog,QDialogButtonBox,QHBoxLayout,QInputDialog,QLabel,
@@ -68,6 +70,7 @@ class Bip39TrialWindow(QWidget):
         self.inspect=QPushButton("Inspect past TXID (read-only)")
         self.cancel=QPushButton("Cancel unsigned draft")
         self.lock=QPushButton("Lock Q06")
+        self.unlock=QPushButton("Unlock wallet")
         self.quit=QPushButton("Stop owned Core and quit")
         bar.addWidget(self.sync);bar.addWidget(self.fund);bar.addWidget(self.activate)
         box.addLayout(bar)
@@ -78,8 +81,9 @@ class Bip39TrialWindow(QWidget):
         box.addWidget(self.recovery)
         box.addWidget(self.inspect)
         utility=QHBoxLayout()
-        utility.addWidget(self.lock);utility.addWidget(self.quit)
+        utility.addWidget(self.lock);utility.addWidget(self.unlock);utility.addWidget(self.quit)
         box.addLayout(utility)
+        self.unlock.clicked.connect(self._unlock_prompt)
         self.sync.clicked.connect(lambda:self._command("snapshot"))
         self.fund.clicked.connect(self._confirm_funding)
         self.activate.clicked.connect(self._confirm_activation)
@@ -94,6 +98,7 @@ class Bip39TrialWindow(QWidget):
         self._poll=QTimer(self);self._poll.timeout.connect(self._check_quit)
         self._poll.setInterval(100);self._poll.start()
         self._ready=False
+        self._unlock_allowed=False
         self._test_funded=False
         self._spend_enabled=False
         self._signed_ready=False
@@ -122,6 +127,8 @@ class Bip39TrialWindow(QWidget):
         self.inspect.setEnabled(safe and self._spend_enabled
                                 and not busy and not self._quit_requested)
         self.lock.setEnabled(self._ready and not busy and not self._quit_requested)
+        self.unlock.setEnabled(self._unlock_allowed and not self._ready and not busy
+                                and not self._quit_requested)
         self.quit.setEnabled(not busy and not self.executor.closed)
 
     def _command(self, action, *args):
@@ -138,6 +145,36 @@ class Bip39TrialWindow(QWidget):
         self._set_actions()
         worker.start()
         return True
+
+    def _passphrase(self, label):
+        password, ok = QInputDialog.getText(
+            self, "WAM Fusion · REGTEST wallet", label, QLineEdit.EchoMode.Password)
+        return password.encode("utf-8") if ok and password else None
+
+    def _unlock_prompt(self):
+        # In-session reauthentication of the SAME original owned REGTEST
+        # profile. The backend revalidates owner identity, native Keychain,
+        # anchored checkpoint and backup acknowledgement on the live Core.
+        # No retry, mining, rebroadcast, reservation release or Core adoption.
+        if self._worker is not None or self.executor.busy or self._quit_requested:
+            return
+        password = self._passphrase(
+            "Wallet password to unlock this original WAM REGTEST BIP39 profile")
+        if password is None:
+            return
+        self.status.setText("Unlocking original owned WAM REGTEST wallet…")
+        self._command("unlock", password, False)
+
+    def _remember_profile(self, folder):
+        # Remember ONLY the wallet profile PATH. Never password, mnemonic,
+        # private keys or native anchor secrets cross this boundary.
+        try:
+            from PySide6.QtCore import QSettings
+            if folder:
+                QSettings("WAM Privacy Wallet", "REGTEST").setValue(
+                    "last_bip39_profile", str(folder))
+        except Exception:
+            pass
 
     def start(self, password, mode, phrase):
         self.status.setText("Verifying original Core, native custody and BIP39 profile…")
@@ -292,6 +329,7 @@ class Bip39TrialWindow(QWidget):
             self.tip.setText("Chain: not yet verified")
             self.status.setText("BIP39 native seed opened. Activate Send after checkpoint verification.")
             self._pending_action=("snapshot",)
+            self._remember_profile(result.get("seed_folder"))
         elif action=="mine":
             self._test_funded=True
             self.status.setText("Public REGTEST receive confirmed at block {} — click Sync real Core".format(result["height"]))
@@ -378,6 +416,7 @@ class Bip39TrialWindow(QWidget):
             self._backup_flow_active=False
             self._backup_result=None
             self._ready=False
+            self._unlock_allowed=True
             self._spend_enabled=False
             self._signed_ready=False
             self._approved_commitment=None
@@ -388,7 +427,38 @@ class Bip39TrialWindow(QWidget):
             self.balance.setText("Balance: unverified")
             self.tip.setText("Chain: unverified")
             self.history.clear()
-            self.status.setText("Q06 seed locked. Stop Core and quit to leave this trial.")
+            self.status.setText("Q06 wallet locked. Use Unlock wallet to reauthenticate "
+                                "in this session; Stop owned Core and quit to close.")
+        elif action=="unlock":
+            # In-session reauthentication of the SAME original owned REGTEST
+            # BIP39 profile. Only a genuinely verified acknowledgement promotes
+            # the wallet back to a usable (ready) session; deferred or refused
+            # backups return to the fail-closed backup flow.
+            backup_status = result.get("backup_status", "verified") if isinstance(result, dict) else None
+            if backup_status == "verified":
+                self._unlock_allowed = True
+                self._ready = True
+                self.receive.setText(result["receive_code"])
+                self.account.setText("BIP39 account: " + result["account_id"])
+                self.balance.setText("Balance: not yet synced against Core")
+                self.tip.setText("Chain: not yet verified")
+                self.status.setText(
+                    "BIP39 native seed unlocked. Activate Send after checkpoint verification.")
+                self._pending_action = ("snapshot",)
+            elif backup_status == "deferred":
+                self._backup_unacked = False
+                self._backup_flow_active = True
+                self._backup_result = result
+                self._unlock_allowed = False
+                self._present_backup_ack(result)
+            else:
+                self._backup_unacked = True
+                self._backup_flow_active = False
+                self._backup_result = None
+                self._unlock_allowed = False
+                self.status.setText(
+                    "Wallet unlock refused — backup acknowledgement state is "
+                    "not verified. Custody is preserved and the wallet stays locked.")
         elif action=="quit":
             self._ready=False
             self._closed=True
@@ -408,6 +478,7 @@ class Bip39TrialWindow(QWidget):
         self._backup_result = None
         if not success or result is None:
             self._backup_unacked = True
+            self._unlock_allowed = False
             self.status.setText(
                 "Backup not acknowledged — the created wallet stops "
                 "locked and custody is preserved. Reopen with your "
@@ -417,6 +488,7 @@ class Bip39TrialWindow(QWidget):
             self._check_quit()
             return
         self._ready = True
+        self._unlock_allowed = True
         self.receive.setText(result["receive_code"])
         self.account.setText("BIP39 account: " + result["account_id"])
         self.balance.setText("Balance: not yet synced against Core")
@@ -480,9 +552,26 @@ class Bip39TrialWindow(QWidget):
             self.request_quit()
 
 
+def _last_remembered_profile():
+    # Remember ONLY the last successfully opened wallet profile PATH. Never
+    # password, mnemonic, private keys or native anchor secrets cross here.
+    from PySide6.QtCore import QSettings
+    try:
+        value = QSettings("WAM Privacy Wallet", "REGTEST").value("last_bip39_profile", type=str)
+        return str(value) if value else ""
+    except Exception:
+        return ""
+
+
 def launch_bip39_trial(root,core,source,*,mode,authorized=False):
     if authorized is not True or mode not in ("create","restore","reopen"):
         raise ValueError("Q06_GUI_EXPLICIT_REGTEST_CONSENT_REQUIRED")
+    remembered = _last_remembered_profile() if mode == "reopen" else ""
+    if remembered and Path(remembered).exists():
+        # Normal reopen-after-restart: authenticated unlock of the remembered
+        # original profile, no folder browsing.
+        mode = "reopen"
+        root = Path(remembered)
     app=qt_application()
     app.setQuitOnLastWindowClosed(False)
     executor=WalletExecutor(lambda:Bip39ReadOnlyBackend(root,core,source))
@@ -492,6 +581,18 @@ def launch_bip39_trial(root,core,source,*,mode,authorized=False):
     from .bip39_fusion_gui import Bip39FusionWindow
     window=Bip39FusionWindow(executor)
     window.show()
+    if not (remembered and Path(remembered).exists()) and mode == "reopen":
+        # Multiple original profiles: friendly explicit named selection.
+        candidates = sorted(
+            path for path in Path(root).parent.glob("bip39-12-*")
+            if path.is_dir() and not path.name.startswith("bip39-12-scan-"))
+        if len(candidates) > 1:
+            names=[path.name for path in candidates]
+            choice, ok = QInputDialog.getItem(
+                window, "WAM REGTEST wallets", "Select the original owned wallet profile:",
+                names, editable=False)
+            if ok and choice in names:
+                root = Path(root).parent / str(choice)
     password, ok=QInputDialog.getText(
         window, "Q06 BIP39 wallet (REGTEST only)",
         "Disposable encrypted-seed password (12–1024 UTF-8 bytes)",

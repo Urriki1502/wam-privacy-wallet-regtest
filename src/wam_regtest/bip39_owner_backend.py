@@ -167,38 +167,9 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         else:
             if phrase:
                 raise Q06ReadOnlyError("Q06_GUI_PHRASE_NOT_EXPECTED")
-            folder = self._only_seed(owner)
-            acknowledged, deferred, integrity = self._q06_read_ack(folder)
-            if acknowledged is False and not deferred:
-                raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_REFUSED")
-            with open_owned_seed_container(owner, folder, self.source, password,
-                                           authorized=True, keychain=self.keychain) as keys:
-                public = keys.public_metadata()
-                secret = keys.backup_ack_key()
-                generation = getattr(keys, "_q06_generation", 1)
-            if generation >= 2:
-                # New onboarding profiles require a trustworthy acknowledgement
-                # record.  A missing or corrupt sidecar is treated as
-                # tampering/incomplete onboarding and fails closed.
-                if not integrity:
-                    self._lock_q06()
-                    raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_TAMPERED")
-                if acknowledged is None:
-                    self._lock_q06()
-                    raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_REQUIRED")
-                if acknowledged is True:
-                    re_ack, _, re_integrity = self._q06_read_ack(folder, secret)
-                    if not re_ack or not re_integrity:
-                        self._lock_q06()
-                        raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_TAMPERED")
-            if acknowledged is True:
-                backup_status = "verified"
-            elif acknowledged is False and deferred:
-                backup_status = "deferred"
-            else:
-                # Legacy generation-1 profiles or pre-existing unversioned
-                # profiles are grandfathered.
-                backup_status = "verified"
+            # In-session unlock of the SAME original owned profile: the exact
+            # authenticated reopen/acknowledge boundary used after a restart.
+            return self._reopen_q06(password)
         self._secret = bytearray(password)
         self._seed_folder = folder
         self._public = public
@@ -207,6 +178,60 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             "receive_code": public["receive_code"],
             "status": "Q06_REGTEST_READ_ONLY_OWNER_OPENED",
             "mnemonic_once": reveal,
+            "seed_folder": str(folder),
+            "backup_status": backup_status,
+            "signer_allowed": False, "broadcast_allowed": False, "mainnet_allowed": False,
+        }
+
+    def _reopen_q06(self, password):
+        """Authenticated in-session unlock of the SAME original REGTEST profile.
+
+        Reuses the exact original owner/Keychain/acknowledge boundary as a
+        restart reopen, so no mnemonic regeneration and no new profile is ever
+        involved. Fail-closed on missing/tampered/deferred acknowledgement and
+        clears partial in-memory custody on refusal.
+        """
+        owner = self._core()
+        folder = self._only_seed(owner)
+        acknowledged, deferred, integrity = self._q06_read_ack(folder)
+        if acknowledged is False and not deferred:
+            raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_REFUSED")
+        with open_owned_seed_container(owner, folder, self.source, password,
+                                       authorized=True, keychain=self.keychain) as keys:
+            public = keys.public_metadata()
+            secret = keys.backup_ack_key()
+            generation = getattr(keys, "_q06_generation", 1)
+        if generation >= 2:
+            # New onboarding profiles require a trustworthy acknowledgement
+            # record.  A missing or corrupt sidecar is treated as
+            # tampering/incomplete onboarding and fails closed.
+            if not integrity:
+                self._lock_q06()
+                raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_TAMPERED")
+            if acknowledged is None:
+                self._lock_q06()
+                raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_REQUIRED")
+            if acknowledged is True:
+                re_ack, _, re_integrity = self._q06_read_ack(folder, secret)
+                if not re_ack or not re_integrity:
+                    self._lock_q06()
+                    raise Q06ReadOnlyError("Q06_GUI_BACKUP_ACK_TAMPERED")
+        if acknowledged is True:
+            backup_status = "verified"
+        elif acknowledged is False and deferred:
+            backup_status = "deferred"
+        else:
+            # Legacy generation-1 profiles or pre-existing unversioned
+            # profiles are grandfathered.
+            backup_status = "verified"
+        self._secret = bytearray(password)
+        self._seed_folder = folder
+        self._public = public
+        return {
+            "profile": public["profile"], "account_id": public["account_id"],
+            "receive_code": public["receive_code"],
+            "status": "Q06_REGTEST_READ_ONLY_OWNER_OPENED",
+            "mnemonic_once": "",
             "seed_folder": str(folder),
             "backup_status": backup_status,
             "signer_allowed": False, "broadcast_allowed": False, "mainnet_allowed": False,
@@ -537,6 +562,16 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                 raise Q06ReadOnlyError("Q06_GUI_SPEND_ARGUMENTS_DENIED")
             session = self._spend_session
             return getattr(session, action)(*args)
+        if action == "unlock":
+            # In-session Lock -> Unlock of the SAME original owned REGTEST
+            # profile. Requires an explicit (non-recovery) authenticated
+            # password; the reopen revalidates owner identity, native Keychain,
+            # anchored checkpoint and backup acknowledgement on the live Core.
+            if kwargs or len(args) != 2 or args[1] is not False:
+                raise Q06ReadOnlyError("Q06_GUI_UNLOCK_ARGUMENTS_DENIED")
+            if self._secret is not None:
+                raise Q06ReadOnlyError("Q06_GUI_ALREADY_UNLOCKED")
+            return self._reopen_q06(args[0])
         if action == "open":
             if kwargs or len(args) != 3:
                 raise Q06ReadOnlyError("Q06_GUI_OPEN_ARGUMENTS_DENIED")
