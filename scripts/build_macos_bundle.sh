@@ -125,8 +125,8 @@ with tempfile.TemporaryDirectory(prefix='wam-q01-mac-frozen-cwd-') as clean:
                    cwd=clean, env=cocoa, timeout=600, check=True)
     # Copy public fixture evidence only, never any runtime/vault/datadir.
     review = Path(clean)
-    public = Path('package-output/cocoa-evidence'); public.mkdir()
-    shutil.copytree(review/'fusion-ui-review', public/'fusion-ui-review')
+    public = Path('package-output/cocoa-evidence'); public.mkdir(exist_ok=True)
+    shutil.copytree(review/'fusion-ui-review', public/'fusion-ui-review', dirs_exist_ok=True)
     for name in ('real-regtest-wallet-preview.png', 'real-regtest-security-preview.png'):
         shutil.copyfile(review/name, public/name)
 print("MACOS_APP_STAGE=FROZEN_NATIVE_COCOA_REAL_CORE_PASS", flush=True)
@@ -141,6 +141,45 @@ with tempfile.TemporaryDirectory(prefix='wam-q04-mac-frozen-') as clean:
                    cwd=clean, env=q04_env, timeout=600, check=True)
     shutil.copyfile(Path(clean)/'q04-frozen-evidence.json', 'package-output/q04-frozen-evidence.json')
 print("MACOS_APP_STAGE=FROZEN_Q04_EXTERNAL_MINER_PASS", flush=True)
+# Reuse this SAME signed-Core + frozen-app job for the actual Q06 create /
+# reopen / fresh BIP39 restore + native Cocoa receive view. No new CI job,
+# synthetic RPC, background miner or developer-managed node is introduced.
+print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_START", flush=True)
+with tempfile.TemporaryDirectory(prefix='wam-q06-mac-frozen-') as clean:
+    subprocess.run([str(Path(binary).resolve()), '--ci-q06-bip39-readonly'],
+                   cwd=clean, env=cocoa, timeout=420, check=True)
+    report = Path(clean)/'q06-frozen-readonly-evidence.json'
+    from json import loads
+    data = loads(report.read_text())
+    assert (data['status']=='Q06_NATIVE_BIP39_12_READONLY_OWNER_GUI_PASS'
+            and data['Q06_BIP39_disposable_fresh_restore_same_receive'] is True
+            and data['Q06_native_Qt_receive_bound'] is True
+            and data['Q06_native_Qt_funded_balance_bound'] is True
+            and type(data['Q06_actual_onchain_BIP39_received_atoms']) is int
+            and data['Q06_actual_onchain_BIP39_received_atoms'] > 0
+            and data['Q06_original_core_clean_shutdown'] is True
+            and data['Q06_Sign_or_Broadcast_executed'] is False)
+    shutil.copyfile(report, 'package-output/q06-frozen-readonly-evidence.json')
+print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_PASS", flush=True)
+# Use the exact same packaged app and immutable Core/WSP source for Q06 Send.
+# This is a disposable REGTEST qualification, not a mainnet or release grant.
+print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_START", flush=True)
+spend_env = dict(cocoa)
+spend_env["WAM_Q06_CI_SPEND_QUALIFY"] = "1"
+with tempfile.TemporaryDirectory(prefix='wam-q06-spend-mac-frozen-') as clean:
+    subprocess.run([str(Path(binary).resolve()), '--ci-q06-bip39-spend'],
+                   cwd=clean, env=spend_env, timeout=600, check=True)
+    report=Path(clean)/'q06-frozen-spend-evidence.json'
+    data=loads(report.read_text())
+    assert (data["status"]=="Q06_NATIVE_BIP39_SEND_CONFIRM_REOPEN_PASS"
+            and data["mainnet_allowed"] is False
+            and data["q06_bip39_spend_confirmed"] is True
+            and data["q06_bip39_same_owner_reopen_reserved"] is True
+            and data["q06_bip39_same_chain_seed_history_recovery"] is True
+            and data["q06_post_reopen_txid_readonly_reconciliation"] is True
+            and data["q06_bip39_fresh_mnemonic_full_history_recovery"] is False)
+    shutil.copyfile(report, 'package-output/q06-frozen-spend-evidence.json')
+print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_PASS", flush=True)
 PY
 python -I scripts/qualify_q05_frozen.py --executable "$BIN" \
   --output "$(pwd)/package-output/q05-frozen-evidence.json"

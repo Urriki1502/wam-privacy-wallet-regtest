@@ -229,7 +229,39 @@ class SequentialQGateContracts(unittest.TestCase):
         self.assertEqual(q06['processing'],'ACTIVE')
         self.assertEqual(q06['coverage_total'],24)
         self.assertEqual(len(q06['cases']),24)
-        self.assertTrue(all(c['status']=='PENDING' and not c['acceptance_evidence'] for c in q06['cases']))
+        counts={state:sum(c['status']==state for c in q06['cases'])
+                for state in ('PASS','PENDING','BLOCKED')}
+        self.assertEqual(counts,{'PASS':15,'PENDING':4,'BLOCKED':5})
+        self.assertFalse(q06['accepted'])
+        self.assertEqual(q06['engineering_status'],'ACTIVE_TECHNICAL_GAPS')
+        self.assertEqual({q06['gates'][g]['status'] for g in ('G6','G7')},{'BLOCKED'})
+        self.assertEqual(q06['gates']['G4']['status'],'PASS')
+        for c in q06['cases']:
+            if c['status']=='PASS':
+                self.assertTrue(c['acceptance_evidence'])
+                self.assertTrue(all(e['source_sha']=='336834198ce6fc648011218ffdea3a32512dcafb'
+                    and e['checkout_sha']=='336834198ce6fc648011218ffdea3a32512dcafb'
+                    for e in c['acceptance_evidence']))
+            elif c['status']=='BLOCKED':
+                self.assertTrue(all(c['blocker'].get(k) for k in
+                    ('actor','missing_evidence','next_action')))
+        self.assertEqual({c['id'] for c in q06['cases'] if c['status']=='PENDING'}, {
+            'Q06-ONBOARDING-GUI','Q06-MACOS-RESTORE-E2E',
+            'Q06-WINDOWS-RESTORE-E2E','Q06-LINUX-RESTORE-E2E'})
+        self.assertEqual([q['task_name'] for q in self.ledger['questions'][:7]],[
+            'Reproducible Build & Release Provenance',
+            'Authenticated WAM Core & Chain Identity',
+            'Managed RPC & Credential Lifecycle',
+            'Node/Miner Coexistence & Safe Reconnection',
+            'Owned Core Persistence & Native Wallet Custody',
+            'BIP39 12-Word Wallet & BIP352 Silent Payments',
+            'BIP39 24-Word Wallet'])
+        gate=self.ledger['pre_v1_feature_gate']
+        self.assertEqual(gate['id'],'V1-NET')
+        self.assertEqual(gate['implementation_pr_count'],1)
+        self.assertTrue(gate['not_a_q07_rename'])
+        self.assertFalse(gate['accepted'])
+
         self.assertEqual(set(q06['gates']),{f'G{i}' for i in range(8)})
         self.assertFalse(self.ledger['mainnet_allowed'])
         self.assertFalse(self.ledger['production_qualified'])

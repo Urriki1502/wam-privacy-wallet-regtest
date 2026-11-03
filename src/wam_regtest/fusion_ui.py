@@ -12,18 +12,22 @@ TYPE = {'display':42, 'heading':26, 'section':17, 'body':14, 'caption':12}
 
 
 def fusion_palette(mode):
+    # One restrained, native-desktop palette. Brand gold is reserved for
+    # small identity details; interactive actions use a single accessible blue.
     if mode=='dark':
-        return dict(bg='#0B1018',surface='#192333',panel='#111925',text='#F5F6F8',muted='#A7B6C8',border='#2A3648',
-            tint='#202D40',accent='#F1C55A',onaccent='#211A09',warning='#352A18',warning_text='#F7D78A',
-            green='#61D7B1',blue='#8BB8FF',red='#FF9A9A',hero_bottom='#152035',selection='#322D20',
-            grid='#2B384C',chart_empty='#A7B6C8',hover='#26364C',sidebar='#111925',success='#61D7B1',
-            pending='#F1C55A',error='#FF9A9A',focus='#F1C55A',shadow='#070C13')
+        return dict(bg='#101114',surface='#1C1D21',panel='#24262B',text='#F5F5F7',muted='#A1A3AB',border='#34363C',
+            tint='#292B30',accent='#81B5FF',onaccent='#101E35',warning='#332A1B',warning_text='#F1C77D',
+            green='#69D9AB',blue='#81B5FF',red='#FF9A9E',hero_bottom='#222831',selection='#253C5D',
+            grid='#383B41',chart_empty='#888C95',hover='#343A45',sidebar='#17181B',success='#69D9AB',
+            pending='#E5BE79',error='#FF9A9E',focus='#81B5FF',shadow='#0A0B0D',
+            brand='#E6C48A',segment='#25272B')
     if mode=='light':
-        return dict(bg='#F4F6FA',surface='#FFFFFF',panel='#EAF0F6',text='#172436',muted='#5D6C82',border='#D7E0EA',
-            tint='#EAF0F6',accent='#795507',onaccent='#FFFFFF',warning='#FFF1D4',warning_text='#694710',
-            green='#116F53',blue='#285EAD',red='#B3374B',hero_bottom='#FFF9EA',selection='#F8EDD2',
-            grid='#DFE6EE',chart_empty='#5D6C82',hover='#E2EAF3',sidebar='#FFFFFF',success='#116F53',
-            pending='#795507',error='#B3374B',focus='#795507',shadow='#E3E8F0')
+        return dict(bg='#F5F5F7',surface='#FFFFFF',panel='#F4F5F8',text='#1D1D1F',muted='#696B73',border='#E4E5E9',
+            tint='#EDF0F5',accent='#1666CC',onaccent='#FFFFFF',warning='#FFF5E5',warning_text='#80561A',
+            green='#147A5A',blue='#1666CC',red='#B8424C',hero_bottom='#E9F2FD',selection='#E4EEFC',
+            grid='#E4E6EC',chart_empty='#8E9199',hover='#E4EAF3',sidebar='#F8F8FA',success='#147A5A',
+            pending='#91601D',error='#B8424C',focus='#1666CC',shadow='#EAEBEE',
+            brand='#9B742E',segment='#E9EAEE')
     raise ValueError('FUSION_THEME_DENIED')
 
 
@@ -34,36 +38,41 @@ def fusion_stylesheet(mode):
     QWidget {{font-size:14px;}}
     QFrame#FusionSidebar {{background:{c['sidebar']};border-right:1px solid {c['border']};}}
     QFrame#FusionTopbar {{background:{c['bg']};border-bottom:1px solid {c['border']};}}
-    QFrame#FusionPanel,QFrame#ContentCard,QFrame#HeaderCard {{background:{c['surface']};border:1px solid {c['border']};border-radius:16px;}}
-    QFrame#FusionInset {{background:{c['panel']};border:1px solid {c['border']};border-radius:12px;}}
+    QFrame#FusionPanel,QFrame#ContentCard,QFrame#HeaderCard {{background:{c['surface']};border:1px solid {c['border']};border-radius:18px;}}
+    QFrame#FusionInset {{background:{c['panel']};border:1px solid {c['border']};border-radius:14px;}}
+    QFrame#FusionSegmented {{background:{c['segment']};border:1px solid {c['border']};border-radius:12px;}}
+    QToolButton#FusionSegment {{background:transparent;color:{c['muted']};border:0;border-radius:9px;padding:10px 16px;font-weight:600;}}
+    QToolButton#FusionSegment:checked {{background:{c['surface']};color:{c['text']};border:1px solid {c['border']};}}
+    QToolButton#FusionSegment:hover:!checked {{background:{c['hover']};color:{c['text']};}}
+    QToolButton#FusionAdvanced {{background:transparent;color:{c['accent']};border:0;text-align:left;padding:10px;font-weight:600;}}
     QFrame#FusionHero {{background:transparent;}}
     QWidget#FusionInner,QScrollArea#FusionScroll,QWidget#FusionTransparent {{background:transparent;border:0;}}
     QLabel {{color:{c['text']};background:transparent;border:0;}}
-    QLabel#BrandTitle {{font-size:24px;font-weight:700;letter-spacing:1px;}}
-    QLabel#PageTitle {{font-size:26px;font-weight:700;}}
-    QLabel#FusionBalance,QLabel#BalanceValue {{font-size:42px;font-weight:600;color:{c['text']};}}
-    QLabel#FusionKicker {{font-size:12px;font-weight:600;color:{c['muted']};letter-spacing:1px;}}
+    QLabel#BrandTitle {{font-size:22px;font-weight:700;letter-spacing:0.3px;}}
+    QLabel#PageTitle {{font-size:28px;font-weight:700;}}
+    QLabel#FusionBalance,QLabel#BalanceValue {{font-size:43px;font-weight:600;color:{c['text']};}}
+    QLabel#FusionKicker {{font-size:11px;font-weight:600;color:{c['muted']};letter-spacing:0.8px;}}
     QLabel#FusionCardTitle {{font-size:17px;font-weight:600;}}
     QLabel#FusionCardValue {{font-size:21px;font-weight:600;}}
     QLabel#FusionMuted,QLabel#SecondaryLabel,QLabel#StatusText,QLabel#FusionEmpty {{color:{c['muted']};font-size:13px;}}
     QLabel#FusionVerified {{color:{c['green']};font-weight:600;}}
     QLabel#FusionInfo {{color:{c['blue']};}}
-    QLabel#FusionGold {{color:{c['accent']};font-weight:600;}}
-    QLabel#FusionBadge {{color:{c['accent']};background:{c['selection']};border:1px solid {c['border']};border-radius:8px;padding:5px 9px;font-size:11px;font-weight:600;}}
+    QLabel#FusionGold {{color:{c['warning_text']};font-weight:600;}}
+    QLabel#FusionBadge {{color:{c['accent']};background:{c['selection']};border:0;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:600;}}
     QLabel#Warning {{color:{c['warning_text']};background:{c['warning']};border-radius:9px;padding:10px;min-height:64px;font-size:11px;}}
     QLabel#ReceiveCode,QPlainTextEdit#ReceiveCode {{font-size:14px;background:{c['panel']};border:1px solid {c['border']};border-radius:12px;padding:16px;}}
-    QListWidget {{background:transparent;color:{c['muted']};border:0;padding:4px;font-size:14px;}}
-    QListWidget::item {{padding:14px 12px;border-radius:10px;margin:3px 0;}}
-    QListWidget::item:selected {{background:{c['selection']};color:{c['accent']};font-weight:600;}}
+    QListWidget {{background:transparent;color:{c['muted']};border:0;padding:2px;font-size:14px;outline:0;}}
+    QListWidget::item {{padding:12px 13px;border-radius:11px;margin:3px 0;}}
+    QListWidget::item:selected {{background:{c['selection']};color:{c['text']};font-weight:600;}}
     QListWidget::item:hover:!selected {{background:{c['tint']};color:{c['text']};}}
-    QLineEdit,QTextEdit,QPlainTextEdit {{background:{c['panel']};color:{c['text']};selection-background-color:{c['selection']};border:1px solid {c['border']};border-radius:10px;padding:12px;}}
+    QLineEdit,QTextEdit,QPlainTextEdit {{background:{c['panel']};color:{c['text']};selection-background-color:{c['selection']};border:1px solid {c['border']};border-radius:12px;padding:12px;}}
     QLineEdit:focus,QPushButton:focus,QComboBox:focus {{border:2px solid {c['focus']};}}
     QLineEdit:disabled {{color:{c['muted']};background:{c['bg']};}}
-    QPushButton,QComboBox {{background:{c['tint']};color:{c['text']};border:1px solid {c['border']};border-radius:9px;padding:11px 14px;font-weight:600;}}
+    QPushButton,QComboBox {{background:{c['tint']};color:{c['text']};border:1px solid {c['border']};border-radius:12px;padding:12px 17px;font-weight:600;}}
     QPushButton#PrimaryButton,QPushButton#FusionPrimary {{background:{c['accent']};color:{c['onaccent']};border:1px solid {c['accent']};}}
-    QPushButton#FusionSecondary {{background:{c['surface']};color:{c['accent']};border:1px solid {c['accent']};}}
+    QPushButton#FusionSecondary {{background:{c['tint']};color:{c['text']};border:1px solid {c['border']};}}
     QPushButton#FusionDestructive {{background:{c['surface']};color:{c['red']};border:1px solid {c['border']};}}
-    QPushButton:hover:enabled,QComboBox:hover {{background:{c['hover']};border:1px solid {c['accent']};}}
+    QPushButton:hover:enabled,QComboBox:hover {{background:{c['hover']};border:1px solid {c['focus']};}}
     QPushButton#FusionPrimary:hover:enabled,QPushButton#PrimaryButton:hover:enabled {{background:{c['accent']};border:1px solid {c['onaccent']};}}
     QPushButton:pressed:enabled {{background:{c['selection']};}}
     QPushButton#FusionPrimary:disabled,QPushButton#PrimaryButton:disabled,QPushButton#FusionSecondary:disabled,QPushButton#FusionDestructive:disabled,QPushButton:disabled {{background:{c['panel']};color:{c['muted']};border:1px solid {c['border']};}}

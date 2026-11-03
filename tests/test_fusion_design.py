@@ -24,13 +24,30 @@ class FusionDesignContracts(unittest.TestCase):
     def test_dark_light_signature_palette_preserves_accessible_tokens(self):
         dark = fusion_palette("dark")
         light = fusion_palette("light")
+
+        def luminance(hexcolor):
+            rgb=[int(hexcolor[i:i+2],16)/255 for i in (1,3,5)]
+            linear=[v/12.92 if v<=0.04045 else ((v+0.055)/1.055)**2.4
+                    for v in rgb]
+            return sum(w*v for w,v in zip((0.2126,0.7152,0.0722),linear))
+
+        def contrast(a,b):
+            x,y=sorted((luminance(a),luminance(b)),reverse=True)
+            return (x+0.05)/(y+0.05)
+
         for mode, palette in (("dark", dark), ("light", light)):
-            self.assertIn("#", palette["accent"])
-            self.assertNotEqual(palette["bg"], palette["text"])
+            self.assertRegex(palette["accent"],r"^#[0-9A-Fa-f]{6}$")
+            self.assertGreaterEqual(contrast(palette["text"],palette["bg"]),7.0)
+            self.assertGreaterEqual(contrast(palette["onaccent"],palette["accent"]),4.5)
+            self.assertGreaterEqual(contrast(palette["accent"],palette["surface"]),4.5)
+            self.assertNotEqual(palette["accent"],palette["brand"])
             self.assertIn("FusionPrimary", fusion_stylesheet(mode))
             self.assertIn("FusionActivityTable", fusion_stylesheet(mode))
-        self.assertEqual(dark["accent"], "#F1C55A")
-        self.assertEqual(light["accent"], "#795507")
+            self.assertIn("FusionSegmented", fusion_stylesheet(mode))
+        # One consistent action color family; WAM brand gold is not reused as
+        # a focus/button tint. No dependence on deprecated 2026 Q05 hex values.
+        self.assertEqual(dark["accent"], "#81B5FF")
+        self.assertEqual(light["accent"], "#1666CC")
         self.assertNotEqual(dark["bg"], light["bg"])
 
     def test_invalid_theme_fails_closed(self):

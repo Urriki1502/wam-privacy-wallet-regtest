@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "WAM Privacy Wallet contributors"}]
-dependencies = []
+dependencies = ["mnemonic==0.21"]
 
 [project.optional-dependencies]
 gui = ["PySide6>=6.8,<7", "qrcode==8.2"]
