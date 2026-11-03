@@ -192,6 +192,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         clears partial in-memory custody on refusal.
         """
         owner = self._core()
+        from .bip39_seed_vault import open_owned_seed_container
         folder = self._only_seed(owner)
         acknowledged, deferred, integrity = self._q06_read_ack(folder)
         if acknowledged is False and not deferred:
