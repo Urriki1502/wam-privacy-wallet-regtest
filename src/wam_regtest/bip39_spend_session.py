@@ -8,6 +8,7 @@ This module is not a release/owner-acceptance grant. Activation requires an
 explicit owned-Core caller and must be separately tested on frozen macOS.
 """
 import os
+import json
 from pathlib import Path
 import secrets
 import stat
@@ -113,9 +114,54 @@ class Q06OwnedSpendSession(WalletSession):
             self._q06_uncertain = self.faulted = True
             raise WalletSessionError("Q06_SPEND_ANCHORED_SAVE_DENIED") from None
 
+    def _retain_signed_payment(self, stage, *, signed=None, review=None, token=None, txid=None):
+        """Create-only encrypted evidence; NEVER a replay/release authority.
+
+        Native scanner reservations remain authoritative even if this
+        supplemental evidence is absent. Existing vault formats are unchanged.
+        """
+        from wam_sp.keystore import seal
+        from wam_sp.psbt import PSBT
+        try:
+            _owned(self._q06_owner)
+            self._q06_guard.check()
+            signed = self._signed if signed is None else signed
+            review = self._review if review is None else review
+            token = self._prepared.proposal.token if token is None else token
+            psbt = PSBT.decode(signed)
+            expected_txid = psbt.txid()
+            if txid is not None and txid != expected_txid:
+                raise ValueError
+            directory = self._q06_owner.directory / 'q06-payment-evidence'
+            if not directory.exists():
+                custody.create_directory(directory)
+            body = dict(version=1, owner_binding=_owner_binding(self._q06_owner),
+                        account_id=self.ring.public_metadata()['account_id'],
+                        commitment=review.commitment, token=token, stage=stage,
+                        recipient=review.code, atoms=review.atoms, fee=review.fee,
+                        signed_psbt=signed.hex(), txid=expected_txid)
+            encrypted = seal(json.dumps(body, sort_keys=True).encode(),
+                             self._password.decode('utf-8'), b'recovery')
+            custody.storage().publish(directory, token+'-'+stage+'.enc', encrypted)
+        except Exception:
+            self.faulted = self._q06_uncertain = True
+            raise Q06SpendSessionError('Q06_PAYMENT_EVIDENCE_PRESERVED_NO_RETRY') from None
+
+    def sign(self, commitment):
+        result = super().sign(commitment)
+        self._retain_signed_payment('signed')
+        return result
+
     def broadcast(self, commitment):
         """Retain the exact owned REGTEST txid for one explicitly approved block."""
+        if (self._review is None or self._signed is None
+                or commitment != self._review.commitment):
+            raise WalletSessionError('WALLET_BROADCAST_APPROVAL_REQUIRED')
+        signed, review, token = self._signed, self._review, self._prepared.proposal.token
+        self._retain_signed_payment('uncertain')
         txid = super().broadcast(commitment)
+        self._retain_signed_payment('broadcast', signed=signed, review=review,
+                                    token=token, txid=txid)
         self._q06_pending_confirm = txid
         return txid
 

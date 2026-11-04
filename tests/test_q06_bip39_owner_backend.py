@@ -19,6 +19,36 @@ PHRASE=Mnemonic("english").to_mnemonic(bytes(16))
 
 
 class Q06OwnerBackendContracts(unittest.TestCase):
+    def test_lock_failure_erases_backend_password_without_discarding_session(self):
+        from unittest.mock import Mock
+        self.backend._secret = bytearray(PASSWORD)
+        secret = self.backend._secret
+        session = Mock()
+        session.lock.side_effect = ValueError('PUBLIC_TEST_CLOSE_FAILURE')
+        self.backend._spend_session = session
+        with self.assertRaises(ValueError):
+            self.backend._lock_q06()
+        self.assertIsNone(self.backend._secret)
+        self.assertEqual(secret, bytes(len(PASSWORD)))
+        self.assertIs(self.backend._spend_session, session)
+        self.assertFalse(self.backend._resume_spend)
+
+    def test_unlock_resumes_previously_authorized_spend_only_after_reconciliation(self):
+        self.backend._resume_spend = True
+        opened = dict(backup_status='verified', receive_code='wamrtsp1public')
+        verified = dict(signer_allowed=True, broadcast_allowed=True)
+        with (patch.object(self.backend, '_reopen_q06', return_value=opened),
+              patch.object(self.backend, '_activate_q06', return_value=verified) as activate):
+            result = self.backend.execute('unlock', (PASSWORD, False), {})
+        activate.assert_called_once_with()
+        self.assertTrue(result['signer_allowed'])
+
+    def test_unlock_without_prior_spend_consent_does_not_activate(self):
+        with (patch.object(self.backend, '_reopen_q06', return_value={'backup_status':'verified'}),
+              patch.object(self.backend, '_activate_q06') as activate):
+            self.backend.execute('unlock', (PASSWORD, False), {})
+        activate.assert_not_called()
+
     def setUp(self):
         import tempfile
         self.tmp=tempfile.TemporaryDirectory(prefix="q06-owner-unit-")

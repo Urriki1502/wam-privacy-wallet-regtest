@@ -185,6 +185,7 @@ class Bip39RecoveryVerifyDialog(QDialog):
             self._verify_error.show()
             return
         self.verify_requested.emit(phrase)
+        self._clear_fields()
         self.accept()
 
     def _on_paste(self):
@@ -304,11 +305,13 @@ class Bip39TrialWindow(QWidget):
         self._approved_commitment=None
         self._pending_confirm_txid=None
         self._pending_action=None
+        self._completed_result=None
+        self._delivering_result=False
         self._recovery_dialog=None
         self._set_actions()
 
     def _set_actions(self):
-        busy=self._worker is not None or self.executor.busy
+        busy=self._worker is not None or self.executor.busy or self._delivering_result
         safe=not self.executor.state.faulted
         self.sync.setEnabled(self._ready and safe and not busy and not self._quit_requested)
         self.fund.setEnabled(self._ready and safe and not self._test_funded and not self._spend_enabled
@@ -332,14 +335,16 @@ class Bip39TrialWindow(QWidget):
         self.quit.setEnabled(not busy and not self.executor.closed)
 
     def _command(self, action, *args):
-        if self._worker is not None or self.executor.busy or self.executor.closed:
+        if (self._worker is not None or self.executor.busy or self.executor.closed
+                or self._delivering_result):
             return False
         worker=ControlWorker(self.executor, action, args,
                              kwargs={"timeout":240} if action in ("mine","snapshot","activate","prepare","sign","broadcast","confirm","recovery_verify","inspect_confirmed") else None,
                              parent=self)
         self._worker=worker
-        worker.ready.connect(self._on_ready, Qt.ConnectionType.QueuedConnection)
-        worker.denied.connect(self._on_denied, Qt.ConnectionType.QueuedConnection)
+        self._completed_result = None
+        worker.ready.connect(self._receive_result, Qt.ConnectionType.QueuedConnection)
+        worker.denied.connect(self._receive_denial, Qt.ConnectionType.QueuedConnection)
         worker.finished.connect(self._finished)
         worker.finished.connect(worker.deleteLater)
         self._set_actions()
@@ -532,7 +537,9 @@ class Bip39TrialWindow(QWidget):
             self.balance.setText("Balance: not yet synced against Core")
             self.tip.setText("Chain: not yet verified")
             self.status.setText("BIP39 native seed opened. Activate Send after checkpoint verification.")
-            self._pending_action=("snapshot",)
+            self._pending_action = None if result.get('checkpoint_present') else ("snapshot",)
+            if result.get('checkpoint_present'):
+                self.status.setText('Original checkpoint retained. Enable sending to authenticate and reconcile it.')
             self._remember_profile(result.get("seed_folder"))
         elif action=="mine":
             self._test_funded=True
@@ -649,6 +656,8 @@ class Bip39TrialWindow(QWidget):
                 self.status.setText(
                     "BIP39 native seed unlocked. Activate Send after checkpoint verification.")
                 self._pending_action = ("snapshot",)
+                if result.get('signer_allowed') is True:
+                    self._spend_enabled = True
             elif backup_status == "deferred":
                 self._backup_unacked = False
                 self._backup_flow_active = True
@@ -718,7 +727,7 @@ class Bip39TrialWindow(QWidget):
         self._backup_flow_completed(False)
 
     def _on_denied(self, code):
-        if self._approved_commitment is not None:
+        if self.executor.state.faulted:
             self._signed_ready=False
         self.status.setText(
             "Wallet faulted — stop spending; original state preserved for review."
@@ -726,8 +735,29 @@ class Bip39TrialWindow(QWidget):
             "Operation refused safely: " + str(code))
         self._set_actions()
 
+    def _receive_result(self, action, result):
+        self._completed_result = (action, result)
+
+    def _receive_denial(self, code):
+        self._completed_result = (None, code)
+
     def _finished(self):
         self._worker=None
+        # Deliver only AFTER thread completion. A signature approval runs a
+        # nested Qt event loop; finished must not drain the next command before
+        # the operator has decided. No operation is retried or resubmitted.
+        completed, self._completed_result = self._completed_result, None
+        if completed is not None:
+            self._delivering_result = True
+            try:
+                action, result = completed
+                if action is None:
+                    self._on_denied(result)
+                else:
+                    self._on_ready(action, result)
+            finally:
+                self._delivering_result = False
+                completed = None
         pending,self._pending_action=self._pending_action,None
         if pending is not None and not self._quit_requested:
             self._command(*pending)
@@ -739,7 +769,8 @@ class Bip39TrialWindow(QWidget):
             self._poll.stop()
             self._closed=True
             qt_application().quit()
-        elif self._quit_requested and self._worker is None and not self.executor.busy:
+        elif (self._quit_requested and self._worker is None and not self.executor.busy
+              and not self._delivering_result):
             self._command("quit")
 
     def request_quit(self):

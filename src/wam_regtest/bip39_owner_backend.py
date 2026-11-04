@@ -29,6 +29,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         self._secret = None
         self._public = None
         self._spend_session = None
+        self._resume_spend = False
 
     def public_state(self):
         # Executor.state is the GUI's safety authority. Never conceal a
@@ -46,15 +47,19 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         }
 
     def _lock_q06(self):
-        if self._spend_session is not None:
-            session = self._spend_session
-            session.lock()  # fail-closed: uncertain runtime remains for review
-            self._spend_session = None
-        if self._secret is not None:
-            self._secret[:] = bytes(len(self._secret))
-            self._secret = None
-        self._public = None
-        self._seed_folder = None
+        try:
+            if self._spend_session is not None:
+                session = self._spend_session
+                self._resume_spend = False
+                session.lock()  # uncertain runtime/session remains for review
+                self._spend_session = None
+                self._resume_spend = True
+        finally:
+            if self._secret is not None:
+                self._secret[:] = bytes(len(self._secret))
+                self._secret = None
+            self._public = None
+            self._seed_folder = None
 
     # Durable per-profile backup acknowledgement is stored in a NEW GUI-only
     # sidecar directory, never inside the encrypted seed vault or any existing
@@ -180,6 +185,8 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             "mnemonic_once": reveal,
             "seed_folder": str(folder),
             "backup_status": backup_status,
+            "checkpoint_present": (owner.directory / (
+                'bip39-12-scan-' + folder.name.removeprefix('bip39-12-'))).exists(),
             "signer_allowed": False, "broadcast_allowed": False, "mainnet_allowed": False,
         }
 
@@ -235,6 +242,8 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             "mnemonic_once": "",
             "seed_folder": str(folder),
             "backup_status": backup_status,
+            "checkpoint_present": (owner.directory / (
+                'bip39-12-scan-' + folder.name.removeprefix('bip39-12-'))).exists(),
             "signer_allowed": False, "broadcast_allowed": False, "mainnet_allowed": False,
         }
 
@@ -572,7 +581,16 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                 raise Q06ReadOnlyError("Q06_GUI_UNLOCK_ARGUMENTS_DENIED")
             if self._secret is not None:
                 raise Q06ReadOnlyError("Q06_GUI_ALREADY_UNLOCKED")
-            return self._reopen_q06(args[0])
+            opened = self._reopen_q06(args[0])
+            if self._resume_spend and opened['backup_status'] == 'verified':
+                try:
+                    verified = self._activate_q06()
+                    return dict(opened, **verified)
+                except Exception:
+                    self._resume_spend = False
+                    self._lock_q06()
+                    raise Q06ReadOnlyError('Q06_GUI_UNLOCK_RECONCILIATION_DENIED') from None
+            return opened
         if action == "open":
             if kwargs or len(args) != 3:
                 raise Q06ReadOnlyError("Q06_GUI_OPEN_ARGUMENTS_DENIED")

@@ -54,7 +54,11 @@ class Bip39BackupPage(QWidget):
         root.setSpacing(0)
 
         self._stack = QStackedWidget()
-        root.addWidget(self._stack, 1)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidget(self._stack)
+        root.addWidget(scroll, 1)
 
         # --- Phrase grid page ---
         self._phrase_page = QWidget()
@@ -102,11 +106,12 @@ class Bip39BackupPage(QWidget):
         vl.setSpacing(18)
 
         vl.addWidget(label(t("backup_flow_kicker"), "FusionKicker"))
-        self._step_label = label(t("backup_step_progress").format(step=2, total=2), "PageTitle")
+        self._step_label = label(t("backup_step_progress").format(step=2, total=2), "FusionKicker")
         vl.addWidget(self._step_label)
         self._step_progress = QProgressBar()
         self._step_progress.setRange(0, 2)
-        self._step_progress.setValue(1)
+        self._step_progress.setValue(2)
+        self._step_progress.setToolTip('Step 2 of 2: verify your backup to finish.')
         self._step_progress.setTextVisible(False)
         vl.addWidget(self._step_progress)
         vl.addWidget(label(t("confirm_title"), "PageTitle"))

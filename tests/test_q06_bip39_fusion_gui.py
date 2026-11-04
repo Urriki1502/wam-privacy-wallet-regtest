@@ -85,5 +85,55 @@ class Q06ExistingFusionUiContract(unittest.TestCase):
         self.assertNotIn("window=Bip39TrialWindow(executor)",body)
 
 
+class ApprovalWorkerOrdering(unittest.TestCase):
+    """Real Qt event delivery; synthetic backend is NOT Core acceptance."""
+
+    def test_delayed_modal_approval_signs_once_after_prepare_worker_finishes(self):
+        from PySide6.QtCore import QTimer
+        from PySide6.QtWidgets import QApplication, QDialog
+        from unittest.mock import patch
+        from wam_regtest.bip39_fusion_gui import Bip39FusionWindow
+        from wam_regtest.wallet_executor import WalletExecutor
+        from wam_regtest.wallet_session import PaymentReview
+        app = QApplication.instance() or QApplication([])
+        calls = []
+        review = PaymentReview("wamrtsp1public", 300000000, 10000,
+                               4449980000, 1, "a" * 64)
+        class Backend:
+            def public_state(self):
+                return dict(locked=False, faulted=False, core_alive=False)
+            def execute(self, action, args, kwargs):
+                calls.append(action)
+                return review if action in ("prepare", "sign") else None
+        executor = WalletExecutor(Backend)
+        window = Bip39FusionWindow(executor)
+        window._ready = window._spend_enabled = True
+        class DelayedApproval(QDialog):
+            def __init__(self, *args):
+                super().__init__(window)
+                # Allow the prepare thread's finished signal to be delivered
+                # inside the real nested modal event loop before approval.
+                QTimer.singleShot(80, self.accept)
+        try:
+            with patch("wam_regtest.bip39_fusion_gui.PaymentApproval", DelayedApproval):
+                self.assertTrue(window._command("prepare", "unused", 1, 1))
+                from PySide6.QtTest import QTest
+                for _ in range(200):
+                    app.processEvents()
+                    if window._signed_ready:
+                        break
+                    QTest.qWait(10)
+            self.assertEqual(calls, ["prepare", "sign"])
+            self.assertTrue(window.broadcast.isEnabled())
+            self.assertFalse(window.cancel.isEnabled())
+        finally:
+            window._poll.stop()
+            executor.request("quit")
+            executor.join()
+            window.hide()
+            window.deleteLater()
+            app.processEvents()
+
+
 if __name__=="__main__":
     unittest.main()

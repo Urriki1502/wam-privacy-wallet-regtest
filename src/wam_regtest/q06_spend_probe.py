@@ -10,6 +10,7 @@ from pathlib import Path
 import platform
 import secrets
 import sys
+import time
 
 from . import custody
 from .bip39_owner_backend import Bip39ReadOnlyBackend
@@ -51,6 +52,38 @@ def qualify(core, source):
     def stage(message):
         print("MACOS_Q06_SPEND_STAGE=" + message, flush=True)
 
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QDialog, QPushButton
+    from PySide6.QtTest import QTest
+    def wait_for(predicate, label, timeout=240):
+        deadline = time.monotonic() + timeout
+        while not predicate():
+            app.processEvents()
+            if time.monotonic() >= deadline:
+                raise ValueError('Q06_GUI_WAIT_' + label)
+            QTest.qWait(15)
+        app.processEvents()
+    def idle():
+        return window._worker is None and not executor.busy and not window._delivering_result
+    def approve_click(button, caption, done):
+        timer = QTimer()
+        timer.setInterval(150)
+        def approve():
+            dialog = app.activeModalWidget()
+            if isinstance(dialog, QDialog):
+                for control in dialog.findChildren(QPushButton):
+                    if control.text() == caption:
+                        control.click()
+                        timer.stop()
+                        break
+        timer.timeout.connect(approve)
+        timer.start()
+        try:
+            button.click()
+            wait_for(lambda: idle() and done(), 'OPERATOR_APPROVAL')
+        finally:
+            timer.stop()
+
     with custody.private_temporary_directory(prefix="q06-spend-frozen-") as temp:
         root = Path(temp).resolve() / ("wam-fusion-core-" + secrets.token_hex(8))
         custody.create_directory(root)
@@ -61,12 +94,28 @@ def qualify(core, source):
         good = False
         try:
             stage("CREATE_START")
-            created = executor.request("open", password, "create", "", timeout=120)
+            window = Bip39FusionWindow(executor)
+            window.show()
+            window.start(password, 'create', '')
+            wait_for(lambda: idle() and window._backup_flow_active, 'CREATE_BACKUP')
+            created = dict(window._backup_result)
             phrase = created["mnemonic_once"]
             if (len(phrase.split()) != 12 or
                     not created["receive_code"].startswith("wamrtsp1")):
                 raise ValueError("Q06_SPEND_CREATE_IDENTITY_DENIED")
             stage("CREATE_PASS")
+            backup = window.backup_page
+            backup._written_check.setChecked(True)
+            backup._back_up_now.click()
+            for position, field in zip(backup._challenge_positions, backup._verify_inputs):
+                field.setText(phrase.split()[position - 1])
+            backup._verify_button.click()
+            if backup._stack.currentWidget() is not backup._success_page:
+                raise ValueError('Q06_GUI_BACKUP_VERIFICATION_DENIED')
+            backup._continue_button.click()
+            wait_for(lambda: idle() and window._last_verified is not None, 'BACKUP_SYNC')
+            data['normal_gui_backup_verified'] = True
+            stage('NORMAL_GUI_BACKUP_PASS')
             stage("FUND_START")
             funded = executor.request("mine", timeout=240)
             before = executor.request("snapshot", timeout=120)
@@ -75,7 +124,8 @@ def qualify(core, source):
                 raise ValueError("Q06_SPEND_RECEIVE_DENIED")
             stage("RECEIVE_FUNDED_PASS")
             stage("ACTIVATE_CHECKPOINT_START")
-            active = executor.request("activate", timeout=240)
+            approve_click(window.activate, 'Approve', lambda: window._spend_enabled)
+            active = executor.request('snapshot', timeout=240)
             if (active["signer_allowed"] is not True
                     or active["broadcast_allowed"] is not True
                     or active["mainnet_allowed"] is not False
@@ -83,13 +133,6 @@ def qualify(core, source):
                     or active["receive_code"] != created["receive_code"]):
                 raise ValueError("Q06_SPEND_NATIVE_ACTIVATION_DENIED")
             stage("ACTIVATE_CHECKPOINT_PASS")
-            window = Bip39FusionWindow(executor)
-            window.show()
-            sanitized = dict(created)
-            sanitized["mnemonic_once"] = ""
-            window._on_ready("open", sanitized)
-            window._on_ready("activate", active)
-            app.processEvents()
             if (not window.isVisible() or not window.send.isEnabled()
                     or not window.receive.text() == created["receive_code"]):
                 raise ValueError("Q06_SPEND_QT_BINDING_DENIED")
@@ -99,30 +142,36 @@ def qualify(core, source):
                     Mnemonic("english").to_mnemonic(bytes([1] * 16)),
                     source=source, authorized_disposable=True) as payee:
                 destination = payee.public_metadata()["receive_code"]
-            atoms = min(50_000, funded["atoms"] // 4)
+            atoms = 300_000_000
             if atoms < 330 or funded["atoms"] < atoms + 1000:
                 raise ValueError("Q06_SPEND_FUNDS_NOT_SPENDABLE")
             stage("PREPARE_START")
-            prepared = executor.request("prepare", destination, atoms, 1000, timeout=240)
+            window.recipient_input.setText(destination)
+            window.amount_input.setText('3')
+            window.fee_input.setText('0.00010000')
+            approve_click(window.send, 'Approve Sign', lambda: window._signed_ready)
+            prepared = window._last_review
             if (prepared.code != destination or prepared.atoms != atoms
-                    or prepared.fee != 1000 or len(prepared.commitment) != 64):
+                    or prepared.fee != 10000 or len(prepared.commitment) != 64):
                 raise ValueError("Q06_SPEND_INTENT_DENIED")
             stage("PREPARE_ANCHORED_PASS")
-            signed = executor.request("sign", prepared.commitment, timeout=240)
+            signed = window._last_review
             if signed.commitment != prepared.commitment:
                 raise ValueError("Q06_SPEND_SIGNED_INTENT_DENIED")
             stage("SIGNED_ANCHORED_PASS")
-            broadcast = executor.request("broadcast", prepared.commitment, timeout=240)
+            approve_click(window.broadcast, 'Approve Broadcast',
+                          lambda: window._pending_confirm_txid is not None)
+            broadcast = window._pending_confirm_txid
+            data['normal_gui_delayed_sign_broadcast'] = True
+            data['public_txid'] = broadcast
             if not isinstance(broadcast, str) or len(broadcast) != 64:
                 raise ValueError("Q06_SPEND_TXID_DENIED")
             stage("BROADCAST_ANCHORED_PASS")
             # Exercise the same exact-tx confirmation action exposed by
             # the human GUI, not a CI-only alternate mining path.
-            confirmed = executor.request("confirm", broadcast, timeout=120)
-            if (confirmed["status"] != "Q06_REGTEST_EXACT_SEND_CONFIRMED"
-                    or confirmed["txid"] != broadcast):
-                raise ValueError("Q06_SPEND_CONFIRM_DENIED")
-            after = executor.request("snapshot", timeout=240)
+            approve_click(window.confirm, 'Approve', lambda: window._pending_confirm_txid is None)
+            after = executor.request('snapshot', timeout=240)
+            confirmed = dict(height=after['height'], txid=broadcast)
             if (after["height"] != confirmed["height"]
                     or after["history_count_shown"] < 2
                     or after["receive_code"] != created["receive_code"]):
@@ -131,7 +180,6 @@ def qualify(core, source):
             # The frozen GUI must consume the ACTUAL confirmed transaction.
             # Fixed phase markers reveal exact failure without leaking TXIDs.
             stage("FUSION_BROADCAST_RENDER_START")
-            window._on_ready("broadcast", broadcast)
             stage("FUSION_BROADCAST_RENDER_PASS")
             window._on_ready("snapshot", after)
             stage("FUSION_CONFIRMED_SNAPSHOT_RENDER_PASS")
@@ -185,7 +233,52 @@ def qualify(core, source):
             data["receive_sha256"] = sha256(
                 created["receive_code"].encode("ascii")).hexdigest()
 
-            executor.request("lock", timeout=90)
+            for cycle in range(3):
+                window.custody_switch.click()
+                wait_for(lambda: idle() and executor.state.locked, 'LOCK')
+                if cycle == 0:
+                    try:
+                        executor.request('unlock', b'wrong-disposable-password', False, timeout=120)
+                    except Exception:
+                        if not executor.state.locked:
+                            raise ValueError('Q06_WRONG_PASSWORD_OPENED')
+                    else:
+                        raise ValueError('Q06_WRONG_PASSWORD_ACCEPTED')
+                timer = QTimer()
+                timer.setInterval(150)
+                def unlock_dialog():
+                    dialog = app.activeModalWidget()
+                    if dialog is not None and hasattr(dialog, 'password_input'):
+                        dialog.password_input.setText(password.decode())
+                        for button in dialog.findChildren(QPushButton):
+                            if button.text() == 'Unlock':
+                                button.click()
+                                timer.stop()
+                timer.timeout.connect(unlock_dialog)
+                timer.start()
+                window.custody_switch.click()
+                timer.stop()
+                wait_for(lambda: idle() and not executor.state.locked
+                         and window._spend_enabled and window._last_verified is not None, 'UNLOCK')
+                current = executor.request('snapshot', timeout=240)
+                if (current['receive_code'] != created['receive_code']
+                        or current['confirmed_atoms'] != after['confirmed_atoms']
+                        or current['reservation_count'] != after['reservation_count']):
+                    raise ValueError('Q06_UNLOCK_IDENTITY_OR_RESERVATION_CHANGED')
+            data['normal_gui_repeated_unlock'] = True
+            stage('NORMAL_GUI_LOCK_UNLOCK_PASS')
+            evidence_dir = executor._backend.owner.directory / 'q06-payment-evidence'
+            if len(list(evidence_dir.glob('*.enc'))) != 3:
+                raise ValueError('Q06_SIGNED_EVIDENCE_MISSING')
+            from wam_sp.keystore import unseal
+            evidence = [json.loads(unseal(custody.storage().read(evidence_dir, p.name),
+                         password.decode(), b'recovery')) for p in evidence_dir.glob('*.enc')]
+            if ({e['stage'] for e in evidence} != {'signed', 'uncertain', 'broadcast'}
+                    or any(e['txid'] != broadcast for e in evidence)
+                    or len({e['signed_psbt'] for e in evidence}) != 1):
+                raise ValueError('Q06_SIGNED_EVIDENCE_MISMATCH')
+            data['encrypted_signed_psbt_retained'] = True
+            executor.request('lock', timeout=90)
             stage("LOCKED_ORIGINAL_PASS")
             reopened = executor.request("open", password, "reopen", "", timeout=120)
             if (reopened["receive_code"] != created["receive_code"]

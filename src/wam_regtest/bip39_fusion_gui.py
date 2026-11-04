@@ -22,7 +22,7 @@ from .fusion_ui import (
     FusionOverview, fusion_stylesheet, fusion_palette, page, panel,
     label, ResponsiveRow, vector_icon, fusion_nav_icons,
 )
-from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval
+from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval, WalletConsent
 from .bip39_backup_page import Bip39BackupPage
 from .wallet_read import WalletReadSnapshot
 from .amounts import parse_amount, _parse_atoms
@@ -86,9 +86,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
             ("Overview", "Receive", "History", "Send", "Security", "Settings"))
         side.addWidget(self.navigation, 1)
         side.addWidget(label("REGTEST PREVIEW", "FusionBadge"))
-        side.addWidget(label(
-            "A safe space for testing.\nNever use real WAM or mainnet keys.",
-            "FusionMuted"))
+        notice = label('REGTEST only.\nNo real funds or mainnet keys.', 'FusionMuted')
+        notice.setMinimumWidth(0)
+        side.addWidget(notice)
         shell.addWidget(sidebar)
 
         main = QWidget()
@@ -118,6 +118,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         content.addWidget(self.stack, 1)
         self.status.setObjectName("FusionMuted")
         self.status.setWordWrap(True)
+        self.status.setMinimumWidth(0)
         content.addWidget(self.status)
         shell.addWidget(main, 1)
         self.overview = FusionOverview()
@@ -188,10 +189,15 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.lock.setText("Lock wallet")
         self.lock.setObjectName("FusionSecondary")
         self.lock.setProperty("fusion_icon", "lock")
-        wl.addWidget(self.lock)
+        self.lock.hide()
         self.unlock.setText("Unlock wallet")
         self.unlock.setObjectName("FusionSecondary")
-        wl.addWidget(self.unlock)
+        self.unlock.hide()
+        self.custody_switch = QCheckBox('Locked  /  Unlocked')
+        self.custody_switch.setAccessibleName('Wallet Lock / Unlock switch')
+        self.custody_switch.setToolTip('Unlock requires the original wallet password and verified custody.')
+        self.custody_switch.clicked.connect(self._switch_custody)
+        wl.addWidget(self.custody_switch)
         # The base developer layout parks lock/unlock/quit in a utility bar;
         # the normal Fusion workspace owns the Security-page placement instead.
         self._legacy_layout_holder.layout().removeWidget(self.unlock)
@@ -404,7 +410,14 @@ class Bip39FusionWindow(Bip39TrialWindow):
         super()._set_actions()
         if hasattr(self, "overview"):
             ready = self._ready and not self.executor.state.faulted
-            idle = self._worker is None and not self.executor.busy
+            idle = (self._worker is None and not self.executor.busy
+                    and not self._delivering_result)
+            if hasattr(self, 'custody_switch'):
+                unlocked = not self.executor.state.locked and self._ready
+                self.custody_switch.setChecked(unlocked)
+                self.custody_switch.setText('Locked  /  Unlocked' if unlocked else 'Locked  /  Unlock')
+                self.custody_switch.setEnabled(idle and not self._quit_requested
+                    and (self.lock.isEnabled() or self.unlock.isEnabled()))
             self.overview.go_send.setEnabled(ready and idle and self._spend_enabled)
             self.overview.open_security.setEnabled(not self._quit_requested)
             if hasattr(self, "security_state"):
@@ -423,13 +436,70 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
     def _present_backup_ack(self, result):
         self.navigation.setEnabled(False)
-        self.page_title.setText(t("backup_title"))
+        self.page_title.setText('Wallet backup')
         self.connection_pill.setText(t("regtest_preview"))
         if result.get("backup_status") == "required" and result.get("mnemonic_once"):
             self.backup_page.set_phrase(result["mnemonic_once"].split())
         else:
             self.backup_page.set_deferred_mode()
         self.stack.setCurrentWidget(self.backup_page)
+
+    def _switch_custody(self, checked):
+        # Reflect only authenticated backend state, never the optimistic click.
+        self._set_actions()
+        if checked:
+            self._unlock_prompt()
+        else:
+            self._command('lock')
+
+    def _passphrase(self, message):
+        dialog = WalletConsent('Unlock original wallet', message, self, password=True)
+        try:
+            if dialog.exec() == QDialog.DialogCode.Accepted and dialog.password_input.text():
+                return dialog.password_input.text().encode('utf-8')
+            return None
+        finally:
+            dialog.password_input.clear()
+            dialog.deleteLater()
+
+    def _confirm_activation(self):
+        if not self._ready or self._spend_enabled or self.executor.busy:
+            return
+        dialog = WalletConsent('Enable REGTEST sending',
+            'Verify this original Core, native custody and anchored checkpoint before enabling '
+            'signing. Signed and uncertain inputs stay reserved. Each payment still needs '
+            'separate Sign and Broadcast approval.', self)
+        try:
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                self._command('activate')
+        finally:
+            dialog.deleteLater()
+
+    def _confirm_one_block(self):
+        txid = self._pending_confirm_txid
+        if not self._spend_enabled or txid is None:
+            return
+        dialog = WalletConsent('Confirm this REGTEST payment',
+            'Mine exactly one test block on this original owned Core to confirm '
+            'the submitted transaction. An uncertain outcome must not be retried.', self)
+        try:
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                self._command('confirm', txid)
+        finally:
+            dialog.deleteLater()
+
+    def _confirm_funding(self):
+        if not self._ready or self._spend_enabled or self._test_funded:
+            return
+        dialog = WalletConsent('Fund disposable REGTEST wallet',
+            'On a fresh isolated test chain only: mine mature public fixture funds, '
+            'receive one BIP352 payment and confirm it. This changes the test chain. '
+            'Never retry an uncertain result.', self)
+        try:
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                self._command('mine')
+        finally:
+            dialog.deleteLater()
 
     def _on_backup_verify(self, positions, answers):
         try:
@@ -475,10 +545,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
             if not code.startswith("wamrtsp1") or len(code) > 256:
                 raise ValueError("Q06_FUSION_RECIPIENT_DENIED")
         except (ValueError, ArithmeticError):
-            QMessageBox.warning(
-                self, "Invalid REGTEST payment",
-                "Enter a full wamrtsp1 recipient and valid WAM amount/fee."
-            )
+            self.status.setText('Enter a complete REGTEST silent-payment recipient and valid amount/fee.')
             return
         self._command("prepare", code, atoms, fee)
 
@@ -562,12 +629,17 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self._clear_visuals()
             # Same owner, bounded read-only chain sync only after the explicit
             # backup acknowledgement; a refused create above stops with lock.
-            if not self._backup_flow_active and not self._backup_unacked:
+            if (not self._backup_flow_active and not self._backup_unacked
+                    and not result.get('checkpoint_present')):
                 self._pending_action = ("snapshot",)
         elif action == "mine":
             self._pending_action = ("snapshot",)
         elif action in ("lock", "quit"):
             self._clear_visuals()
+        elif action == 'unlock':
+            self._clear_visuals()
+            if result.get('fusion_snapshot') is not None:
+                self._render_verified(result)
         self._set_actions()
 
     def _on_denied(self, code):

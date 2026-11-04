@@ -142,6 +142,33 @@ class PaymentSteps(QFrame):
         for i,item in enumerate(self.labels):item.setObjectName('FusionGold' if i==stage else 'FusionMuted');item.style().unpolish(item);item.style().polish(item)
 
 
+class WalletConsent(QDialog):
+    """Fusion-styled explicit consent; default Cancel grants no authority."""
+    def __init__(self, title, message, parent, *, password=False):
+        super().__init__(parent)
+        self.setObjectName('FusionApproval')
+        self.setWindowTitle(title)
+        self.resize(540, 260)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.addWidget(label(title, 'PageTitle'))
+        layout.addWidget(label(message))
+        self.password_input = QLineEdit()
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.password_input.setAccessibleName('Original wallet password')
+        self.password_input.setVisible(password)
+        layout.addWidget(self.password_input)
+        buttons = QDialogButtonBox()
+        cancel = buttons.addButton('Cancel', QDialogButtonBox.ButtonRole.RejectRole)
+        approve = buttons.addButton('Unlock' if password else 'Approve', QDialogButtonBox.ButtonRole.AcceptRole)
+        cancel.setDefault(True)
+        approve.setAutoDefault(False)
+        approve.setObjectName('FusionPrimary')
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+
 class PaymentApproval(QDialog):
     """UI-only explicit approval, default Cancel; no session operation inside."""
     def __init__(self,review,kind,parent):

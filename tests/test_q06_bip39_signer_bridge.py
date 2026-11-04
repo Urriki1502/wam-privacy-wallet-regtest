@@ -182,7 +182,10 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
         vault = FakeVault()
         session = Q06OwnedSpendSession(
             owner, SOURCE, self.keys, self.scanner, FakeGuard(), vault, PASSWORD)
-        with patch("wam_regtest.bip39_spend_session._owned"), patch.object(
+        # This fixture has no native owned directory: retain the synthetic
+        # transport test's scope. Native encrypted evidence is exercised by
+        # the actual Core/Keychain GUI qualification.
+        with patch.object(session, '_retain_signed_payment') as retained, patch("wam_regtest.bip39_spend_session._owned"), patch.object(
                 WalletSession, "_rpc", lambda _self: FakeRpc()):
             session.snapshot = lambda: None
             review = session.prepare(self.intent.code, self.intent.atoms, 1000)

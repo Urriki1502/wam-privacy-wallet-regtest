@@ -184,7 +184,7 @@ class BackupPageContract(unittest.TestCase):
         _find_button(self.window.backup_page, "Back up now").click()
         self.app.processEvents()
         self.assertIn("STEP 2 OF 2", self.window.backup_page._step_label.text())
-        self.assertEqual(self.window.backup_page._step_progress.value(), 1)
+        self.assertEqual(self.window.backup_page._step_progress.value(), 2)
         self.assertEqual(self.window.backup_page._step_progress.maximum(), 2)
         self.assertEqual(len(self.window.backup_page._verify_inputs), 3)
         positions = self.window.backup_page._challenge_positions
