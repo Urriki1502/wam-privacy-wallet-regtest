@@ -13,6 +13,8 @@ import sys
 import time
 import tempfile
 from contextlib import nullcontext
+import subprocess
+from datetime import datetime, timezone
 
 from . import custody
 from .bip39_owner_backend import Bip39ReadOnlyBackend
@@ -24,7 +26,7 @@ def qualify(core, source):
     if sys.platform != "darwin" or platform.machine().lower() != "arm64":
         raise ValueError("Q06_SPEND_MACOS_NATIVE_REQUIRED")
     from .core import verified_core_paths
-    verified_core_paths(core)
+    _, _, core_receipt = verified_core_paths(core)
     _pinned_source(source)
     from .q05_platforms import DarwinArm64Adapter
     from .desktop import qt_application
@@ -50,8 +52,20 @@ def qualify(core, source):
         "q06_bip39_same_chain_seed_history_recovery": False,
         "q06_post_reopen_txid_readonly_reconciliation": False,
         "q06_bip39_fresh_mnemonic_full_history_recovery": False,
+        "core_sha256": {name:core_receipt[key] for name,key in
+                        (('wamd','wamd_sha256'),('wam-cli','wam_cli_sha256'))},
+        "wsp_source_commit": 'ac55f13423620252bdbf848c7e8a280c3b84721e',
+        "physical_accepted": False,
+        "independent_reviewed": False,
     }
+    if getattr(sys, 'frozen', False):
+        from .q05_package_provenance import read
+        data['source_sha'] = read()['source_head_sha']
+        data['frozen_executable_sha256'] = sha256(Path(sys.executable).read_bytes()).hexdigest()
+    else:
+        data['source_sha'] = subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
     def stage(message):
+        data['last_stage'] = message
         print("MACOS_Q06_SPEND_STAGE=" + message, flush=True)
 
     from PySide6.QtCore import QTimer
@@ -163,7 +177,9 @@ def qualify(core, source):
             approve_click(window.send, 'Approve Sign', lambda: window._signed_ready)
             prepared = window._last_review
             if (prepared.code != destination or prepared.atoms != atoms
-                    or prepared.fee != 10000 or len(prepared.commitment) != 64):
+                    or prepared.fee != 10000 or len(prepared.commitment) != 64
+                    or prepared.input_count != 1
+                    or prepared.change_atoms != funded['atoms'] - atoms - 10000):
                 raise ValueError("Q06_SPEND_INTENT_DENIED")
             stage("PREPARE_ANCHORED_PASS")
             signed = window._last_review
@@ -185,8 +201,14 @@ def qualify(core, source):
             confirmed = dict(height=after['height'], txid=broadcast)
             if (after["height"] != confirmed["height"]
                     or after["history_count_shown"] < 2
-                    or after["receive_code"] != created["receive_code"]):
+                    or after["receive_code"] != created["receive_code"]
+                    or after['confirmed_atoms'] != funded['atoms'] - atoms - 10000):
                 raise ValueError("Q06_SPEND_HISTORY_DENIED")
+            data['confirmed_height'] = after['height']
+            data['confirmed_tip'] = after['tip']
+            data['payment_atoms'] = atoms
+            data['fee_atoms'] = prepared.fee
+            data['change_atoms'] = prepared.change_atoms
             stage("ONCHAIN_CONFIRMATION_PASS")
             # The frozen GUI must consume the ACTUAL confirmed transaction.
             # Fixed phase markers reveal exact failure without leaking TXIDs.
@@ -225,6 +247,20 @@ def qualify(core, source):
                     or window.last_txid.text() != broadcast):
                 raise ValueError("Q06_GUI_TXID_PERSISTENT_COPY_DENIED")
             stage("COCOA_BROADCAST_TXID_COPYABLE_PASS")
+            images = Path('fusion-ui-review')
+            images.mkdir(exist_ok=True)
+            data['normal_gui_screenshots'] = {}
+            window.reduce_motion.setChecked(True)
+            window.navigation.setCurrentRow(0)
+            for theme in (0, 1, 2):
+                window.appearance_buttons[theme].click()
+                for width,height in ((900,630),(1260,810)):
+                    window.resize(width,height)
+                    app.processEvents()
+                    image = images / f'macos-q06-normal-{theme}-{width}x{height}.png'
+                    if not window.grab().save(str(image)):
+                        raise ValueError('Q06_NORMAL_GUI_SCREENSHOT_DENIED')
+                    data['normal_gui_screenshots'][image.name] = sha256(image.read_bytes()).hexdigest()
             # Rebuild a NEW scanner from the 12 words against THIS same
             # attested Core. Do not adopt its checkpoint/signing authority.
             stage("SAME_CHAIN_MNEMONIC_RESCAN_START")
@@ -319,8 +355,36 @@ def qualify(core, source):
             executor.request("quit", timeout=90)
             if not executor.join(15) or not executor.closed:
                 raise ValueError("Q06_SPEND_OWNED_SHUTDOWN_DENIED")
+            # A new owner/executor must reopen the SAME persistent profile and
+            # start a new original Popen. Reuse the existing test keychain;
+            # never recreate anchors or switch to an empty chain.
+            window._poll.stop()
+            window.hide()
+            keychain = root / 'q05-disposable.keychain-db'
+            executor = WalletExecutor(lambda: Bip39ReadOnlyBackend(
+                root, core, source, keychain=keychain))
+            window = Bip39FusionWindow(executor)
+            window.show()
+            window.start(password, 'reopen', '')
+            wait_for(lambda: idle() and window._ready, 'RESTART_REOPEN')
+            if window._spend_enabled:
+                raise ValueError('Q06_RESTART_UNAPPROVED_SIGNER')
+            approve_click(window.activate, 'Approve', lambda: window._spend_enabled)
+            restart = executor.request('snapshot', timeout=240)
+            if any(restart[key] != after[key] for key in
+                   ('height','tip','receive_code','confirmed_atoms','reservation_count','history_count_shown')):
+                raise ValueError('Q06_RESTART_HISTORY_OR_RESERVATION_CHANGED')
+            observed = executor.request('inspect_confirmed', broadcast, timeout=240)
+            if observed['status'] != 'Q06_CONFIRMED_IN_VERIFIED_HISTORY':
+                raise ValueError('Q06_RESTART_CONFIRMED_TX_MISSING')
+            data['same_profile_core_restart'] = True
+            stage('SAME_PROFILE_CORE_RESTART_PASS')
+            executor.request('quit', timeout=90)
+            if not executor.join(15) or not executor.closed:
+                raise ValueError('Q06_RESTART_SHUTDOWN_DENIED')
             stage("CLEAN_CORE_SHUTDOWN_PASS")
             data["status"] = "Q06_NATIVE_BIP39_SEND_CONFIRM_REOPEN_PASS"
+            data['timestamp_utc'] = datetime.now(timezone.utc).isoformat()
             good = True
             return data
         finally:
@@ -341,6 +405,10 @@ def qualify(core, source):
                     executor.join(15)
                 except Exception:
                     stage("UNCERTAIN_OWNER_PRESERVED")
+            if not good:
+                data['timestamp_utc'] = datetime.now(timezone.utc).isoformat()
+                data['profile_retained'] = str(root)
+                (root.parent / 'failure-public.json').write_text(json.dumps(data,indent=2)+'\n')
             phrase = None
 
 

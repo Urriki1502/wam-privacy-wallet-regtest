@@ -116,6 +116,7 @@ print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_PASS", flush=True)
 # offscreen rendering. This existing CI mode retains full custody/Core gates.
 from pathlib import Path
 import shutil, tempfile
+from contextlib import nullcontext
 cocoa = {k:v for k,v in os.environ.items() if k not in
          ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV','DYLD_LIBRARY_PATH','DYLD_INSERT_LIBRARIES')
          and not k.startswith(('QT_', 'QML_'))}
@@ -166,7 +167,10 @@ print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_PASS", flush=True)
 print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_START", flush=True)
 spend_env = dict(cocoa)
 spend_env["WAM_Q06_CI_SPEND_QUALIFY"] = "1"
-with tempfile.TemporaryDirectory(prefix='wam-q06-spend-mac-frozen-') as clean:
+# Keep signed/uncertain test state even if this outer builder fails. Only
+# public receipts/screenshots are copied to package-output; custody remains
+# private under the canonical workspace's generated bundle-input directory.
+with nullcontext(tempfile.mkdtemp(prefix='q06-frozen-', dir=Path('bundle-input').resolve())) as clean:
     subprocess.run([str(Path(binary).resolve()), '--ci-q06-bip39-spend'],
                    cwd=clean, env=spend_env, timeout=600, check=True)
     report=Path(clean)/'q06-frozen-spend-evidence.json'
@@ -179,6 +183,8 @@ with tempfile.TemporaryDirectory(prefix='wam-q06-spend-mac-frozen-') as clean:
             and data["q06_post_reopen_txid_readonly_reconciliation"] is True
             and data["q06_bip39_fresh_mnemonic_full_history_recovery"] is False)
     shutil.copyfile(report, 'package-output/q06-frozen-spend-evidence.json')
+    shutil.copytree(Path(clean)/'fusion-ui-review',
+                    'package-output/q06-ui-review', dirs_exist_ok=True)
 print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_PASS", flush=True)
 PY
 python -I scripts/qualify_q05_frozen.py --executable "$BIN" \

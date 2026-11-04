@@ -21,6 +21,7 @@ from .gui_errors import operation_error
 from .fusion_ui import (
     FusionOverview, fusion_stylesheet, fusion_palette, page, panel,
     label, ResponsiveRow, vector_icon, fusion_nav_icons,
+    StateSwitch,
 )
 from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval, WalletConsent
 from .bip39_backup_page import Bip39BackupPage
@@ -193,7 +194,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.unlock.setText("Unlock wallet")
         self.unlock.setObjectName("FusionSecondary")
         self.unlock.hide()
-        self.custody_switch = QCheckBox('Locked  /  Unlocked')
+        self.custody_switch = StateSwitch('Locked')
         self.custody_switch.setAccessibleName('Wallet Lock / Unlock switch')
         self.custody_switch.setToolTip('Unlock requires the original wallet password and verified custody.')
         self.custody_switch.clicked.connect(self._switch_custody)
@@ -415,7 +416,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
             if hasattr(self, 'custody_switch'):
                 unlocked = not self.executor.state.locked and self._ready
                 self.custody_switch.setChecked(unlocked)
-                self.custody_switch.setText('Locked  /  Unlocked' if unlocked else 'Locked  /  Unlock')
+                self.custody_switch.setText('Unlocked' if unlocked else 'Locked')
                 self.custody_switch.setEnabled(idle and not self._quit_requested
                     and (self.lock.isEnabled() or self.unlock.isEnabled()))
             self.overview.go_send.setEnabled(ready and idle and self._spend_enabled)

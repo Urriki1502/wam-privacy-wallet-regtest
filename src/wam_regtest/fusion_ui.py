@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, QRectF, QPointF, QSize, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QIcon, QPixmap, QPolygonF, QLinearGradient, QPainterPath, QFont, QFontMetrics
-from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget, QToolTip, QSizePolicy, QTableWidget, QTableWidgetItem, QPlainTextEdit
+from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget, QToolTip, QSizePolicy, QTableWidget, QTableWidgetItem, QPlainTextEdit, QCheckBox
 from .wallet_read import WalletReadSnapshot, format_wam
 from .branding import brand_image
 
@@ -92,6 +92,35 @@ def fusion_stylesheet(mode):
     QToolTip {{background:{c['surface']};color:{c['text']};border:1px solid {c['border']};padding:8px;}}
     QDialog,QMessageBox,QInputDialog {{background:{c['bg']};color:{c['text']};}}
     """
+
+
+class StateSwitch(QCheckBox):
+    """Two-position visual switch retaining Qt checkbox focus/key semantics."""
+    def sizeHint(self):
+        return QSize(self.fontMetrics().horizontalAdvance(self.text()) + 68, 34)
+
+    def hitButton(self, position):
+        return self.rect().contains(position)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        if not self.isEnabled():
+            painter.setOpacity(0.45)
+        palette = self.palette()
+        track = QRectF(2, (self.height() - 24) / 2, 46, 24)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(palette.highlight() if self.isChecked() else palette.mid())
+        painter.drawRoundedRect(track, 12, 12)
+        painter.setBrush(QColor('white'))
+        painter.drawEllipse(QRectF(28 if self.isChecked() else 6, track.y()+4, 16, 16))
+        painter.setPen(palette.windowText().color())
+        painter.drawText(QRectF(58, 0, self.width()-58, self.height()),
+                         Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, self.text())
+        if self.hasFocus():
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setPen(QPen(palette.highlight().color(), 1))
+            painter.drawRoundedRect(track.adjusted(-1,-1,1,1), 13, 13)
 
 
 class ReadableText(QPlainTextEdit):
