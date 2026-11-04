@@ -5,6 +5,7 @@ set -euo pipefail
 umask 077
 case "${1:-}" in
   "") export WAM_BUILD_SCOPE=full ;;
+  --ui-layout-focused) export WAM_BUILD_SCOPE=ui-layout-focused ;;
   --v1-net-focused) export WAM_BUILD_SCOPE=v1-net-focused ;;
   *) exit 64 ;;
 esac
@@ -106,7 +107,8 @@ import os
 import subprocess
 import sys
 binary = os.environ["WAM_FROZEN_BIN"]
-focused = os.environ.get("WAM_BUILD_SCOPE") == "v1-net-focused"
+ui_only = os.environ.get("WAM_BUILD_SCOPE") == "ui-layout-focused"
+focused = os.environ.get("WAM_BUILD_SCOPE") in ("v1-net-focused", "ui-layout-focused")
 print("MACOS_APP_STAGE=FROZEN_BUNDLE_SELF_CHECK_START", flush=True)
 try:
     subprocess.run([binary, "--check-bundle"], timeout=45, check=True)
@@ -172,49 +174,66 @@ if not focused:
                 and data['Q06_Sign_or_Broadcast_executed'] is False)
         shutil.copyfile(report, 'package-output/q06-frozen-readonly-evidence.json')
     print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_PASS", flush=True)
-# Use the exact same packaged app and immutable Core/WSP source for Q06 Send.
-# This is a disposable REGTEST qualification, not a mainnet or release grant.
-print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_START", flush=True)
-spend_env = dict(cocoa)
-spend_env["WAM_Q06_CI_SPEND_QUALIFY"] = "1"
-# Keep signed/uncertain test state even if this outer builder fails. Only
-# public receipts/screenshots are copied to package-output; custody remains
-# private under the canonical workspace's generated bundle-input directory.
-with nullcontext(tempfile.mkdtemp(prefix='q06-frozen-', dir=Path('bundle-input').resolve())) as clean:
-    subprocess.run([str(Path(binary).resolve()), '--ci-q06-bip39-spend'],
-                   cwd=clean, env=spend_env, timeout=600, check=True)
-    report=Path(clean)/'q06-frozen-spend-evidence.json'
-    data=loads(report.read_text())
-    assert (data["status"]=="Q06_NATIVE_BIP39_SEND_CONFIRM_REOPEN_PASS"
-            and data["mainnet_allowed"] is False
-            and data["q06_bip39_spend_confirmed"] is True
-            and data["q06_bip39_same_owner_reopen_reserved"] is True
-            and data["q06_bip39_same_chain_seed_history_recovery"] is True
-            and data["q06_post_reopen_txid_readonly_reconciliation"] is True
-            and data["q06_bip39_fresh_mnemonic_full_history_recovery"] is False)
-    shutil.copyfile(report, 'package-output/q06-frozen-spend-evidence.json')
-    shutil.copytree(Path(clean)/'fusion-ui-review',
-                    'package-output/q06-ui-review', dirs_exist_ok=True)
-print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_PASS", flush=True)
-print("MACOS_APP_STAGE=FROZEN_V1_NET_START", flush=True)
-with nullcontext(tempfile.mkdtemp(prefix='shared-frozen-',dir=Path('bundle-input').resolve())) as clean:
-    subprocess.run([str(Path(binary).resolve()),'--ci-v1-net-shared-regtest'],
-                   cwd=clean,env=cocoa,timeout=900,check=True)
-    report=Path(clean)/'shared-network-evidence.json'
-    shared=loads(report.read_text())
-    isolated=loads(Path('package-output/q06-frozen-spend-evidence.json').read_text())
-    assert shared['source_sha']==isolated['source_sha']
-    assert all(shared['cases'][f'V{i}']=='PASS' for i in range(1,17))
-    assert shared['cases']['V17']=='PASS' and shared['reorg']['custody_fail_closed'] is True
-    assert shared['reorg']['explicit_gui_reconciliation'] is True and shared['reorg']['post_recovery_same_profile_restart'] is True
-    assert shared['cases']['V19']=='BLOCKED' and shared['two_physical_computers'] is False
-    shared['cases']['V18']='PASS'
-    shared['isolated_regression_receipt']='q06-frozen-spend-evidence.json'
-    Path('package-output/v1-net-frozen-evidence.json').write_text(__import__('json').dumps(shared,indent=2)+'\n')
-    lab=Path(shared['retained_lab'])
-    for image in lab.glob('node-*.png'):
-        shutil.copyfile(image,Path('package-output')/image.name)
-print("MACOS_APP_STAGE=FROZEN_V1_NET_LOCAL_PASS_TWO_HOST_BLOCKED", flush=True)
+if ui_only:
+    # UI-only candidate: actual final Cocoa executable, no wallet/Core runtime.
+    for name, scale in (("native", None), ("scale-1x", "0.5")):
+        clean = Path(tempfile.mkdtemp(prefix='ui-layout-', dir=Path('bundle-input').resolve()))
+        ui_env = dict(cocoa)
+        if scale is not None:
+            ui_env['QT_SCALE_FACTOR'] = scale
+        subprocess.run([str(Path(binary).resolve()), '--ci-ui-layout'],
+                       cwd=clean, env=ui_env, timeout=120, check=True)
+        report = loads((clean/'ui-layout-evidence.json').read_text())
+        assert report['status'] == 'UI_LAYOUT_PASS' and report['frozen'] is True
+        assert report['qt_platform'] == 'cocoa' and report['backend_or_core_started'] is False
+        public = Path('package-output')/('ui-layout-' + name)
+        shutil.copytree(clean/'ui-layout-review', public)
+        shutil.copyfile(clean/'ui-layout-evidence.json', public/'evidence.json')
+    print("MACOS_APP_STAGE=FROZEN_NATIVE_UI_LAYOUT_PASS_NO_CORE_EXECUTED", flush=True)
+else:
+    # Use the exact same packaged app and immutable Core/WSP source for Q06 Send.
+    # This is a disposable REGTEST qualification, not a mainnet or release grant.
+    print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_START", flush=True)
+    spend_env = dict(cocoa)
+    spend_env["WAM_Q06_CI_SPEND_QUALIFY"] = "1"
+    # Keep signed/uncertain test state even if this outer builder fails. Only
+    # public receipts/screenshots are copied to package-output; custody remains
+    # private under the canonical workspace's generated bundle-input directory.
+    with nullcontext(tempfile.mkdtemp(prefix='q06-frozen-', dir=Path('bundle-input').resolve())) as clean:
+        subprocess.run([str(Path(binary).resolve()), '--ci-q06-bip39-spend'],
+                       cwd=clean, env=spend_env, timeout=600, check=True)
+        report=Path(clean)/'q06-frozen-spend-evidence.json'
+        data=loads(report.read_text())
+        assert (data["status"]=="Q06_NATIVE_BIP39_SEND_CONFIRM_REOPEN_PASS"
+                and data["mainnet_allowed"] is False
+                and data["q06_bip39_spend_confirmed"] is True
+                and data["q06_bip39_same_owner_reopen_reserved"] is True
+                and data["q06_bip39_same_chain_seed_history_recovery"] is True
+                and data["q06_post_reopen_txid_readonly_reconciliation"] is True
+                and data["q06_bip39_fresh_mnemonic_full_history_recovery"] is False)
+        shutil.copyfile(report, 'package-output/q06-frozen-spend-evidence.json')
+        shutil.copytree(Path(clean)/'fusion-ui-review',
+                        'package-output/q06-ui-review', dirs_exist_ok=True)
+    print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_PASS", flush=True)
+    print("MACOS_APP_STAGE=FROZEN_V1_NET_START", flush=True)
+    with nullcontext(tempfile.mkdtemp(prefix='shared-frozen-',dir=Path('bundle-input').resolve())) as clean:
+        subprocess.run([str(Path(binary).resolve()),'--ci-v1-net-shared-regtest'],
+                       cwd=clean,env=cocoa,timeout=900,check=True)
+        report=Path(clean)/'shared-network-evidence.json'
+        shared=loads(report.read_text())
+        isolated=loads(Path('package-output/q06-frozen-spend-evidence.json').read_text())
+        assert shared['source_sha']==isolated['source_sha']
+        assert all(shared['cases'][f'V{i}']=='PASS' for i in range(1,17))
+        assert shared['cases']['V17']=='PASS' and shared['reorg']['custody_fail_closed'] is True
+        assert shared['reorg']['explicit_gui_reconciliation'] is True and shared['reorg']['post_recovery_same_profile_restart'] is True
+        assert shared['cases']['V19']=='BLOCKED' and shared['two_physical_computers'] is False
+        shared['cases']['V18']='PASS'
+        shared['isolated_regression_receipt']='q06-frozen-spend-evidence.json'
+        Path('package-output/v1-net-frozen-evidence.json').write_text(__import__('json').dumps(shared,indent=2)+'\n')
+        lab=Path(shared['retained_lab'])
+        for image in lab.glob('node-*.png'):
+            shutil.copyfile(image,Path('package-output')/image.name)
+    print("MACOS_APP_STAGE=FROZEN_V1_NET_LOCAL_PASS_TWO_HOST_BLOCKED", flush=True)
 PY
 if [ "$WAM_BUILD_SCOPE" = full ]; then
   python -I scripts/qualify_q05_frozen.py --executable "$BIN" \
@@ -225,7 +244,7 @@ if [ "$WAM_BUILD_SCOPE" = full ]; then
 
 fi
 
-echo "MACOS_APP_STAGE=PACKAGED_REAL_CORE_GUI_PASS"
+echo "MACOS_APP_STAGE=PACKAGED_CHECKS_PASS_SCOPE_$WAM_BUILD_SCOPE"
 python -I -m wam_regtest.build_provenance verify --stamp "$SOURCE_STAGE/wallet-source.json" \
   --receipt package-output/BUILD_SOURCE_RECEIPT.json
 (cd wsp-upstream && env -u WAM_SOURCE_HEAD python -I -m wam_regtest.build_provenance verify --stamp "$SOURCE_STAGE/wsp-source.json")
@@ -267,7 +286,8 @@ Path("package-output/SHA256SUMS.json").write_text(
         "original_brand_sha256": sha256(Path("assets/wam-coin-original.png").read_bytes()).hexdigest(),
         "wamd_sha256": sha256(Path("core/wamd").read_bytes()).hexdigest(),
         "wam_cli_sha256": sha256(Path("core/wam-cli").read_bytes()).hexdigest(),
-        "real_core_packaged_e2e": True,
+        "real_core_packaged_e2e": __import__("os").environ["WAM_BUILD_SCOPE"] != "ui-layout-focused",
+        "native_ui_layout_e2e_pass": __import__("os").environ["WAM_BUILD_SCOPE"] == "ui-layout-focused",
         "qualification_scope": __import__("os").environ["WAM_BUILD_SCOPE"],
         "full_exact_commit_Q01_Q06_qualified": __import__("os").environ["WAM_BUILD_SCOPE"] == "full",
         "q01_external_working_directory": True,
@@ -281,5 +301,5 @@ write_candidate_manifest(Path('package-output'),'macos-arm64',{
     'wamd':sha256(Path('core/wamd').read_bytes()).hexdigest(),
     'wam-cli':sha256(Path('core/wam-cli').read_bytes()).hexdigest()},
     qualification_scope=__import__('os').environ['WAM_BUILD_SCOPE'])
-print("MACOS_ARM64_REAL_CORE_BIP352_PACKAGED_APP_DMG_E2E_PASS")
+print("MACOS_ARM64_PACKAGED_APP_DMG_PASS_SCOPE_" + __import__("os").environ["WAM_BUILD_SCOPE"])
 PY

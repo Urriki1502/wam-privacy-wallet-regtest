@@ -6,12 +6,13 @@ The reusable Q05 Fusion Overview/Receive/History/PaymentSteps are real widgets,
 not a painted mockup or a separate demo account.
 """
 import os
+import re
 from PySide6.QtCore import Qt, QSize, QEasingCurve, QPropertyAnimation
 from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QFrame, QLabel, QLineEdit,
     QListWidget, QStackedWidget, QMessageBox, QDialog, QToolButton,
-    QButtonGroup, QGraphicsOpacityEffect, QCheckBox, QApplication,
+    QButtonGroup, QGraphicsOpacityEffect, QCheckBox, QApplication, QSizePolicy,
 )
 
 from .bip39_owner_gui import Bip39TrialWindow
@@ -28,6 +29,38 @@ from .bip39_backup_page import Bip39BackupPage
 from .wallet_read import WalletReadSnapshot
 from .amounts import parse_amount, _parse_atoms
 from .branding import brand_image
+
+
+class _WrappingStatusLabel(QLabel):
+    def setText(self, text):
+        # QLabel WordWrap does not break long identifiers. Optional line breaks
+        # affect presentation only; retain the exact message in the tooltip.
+        self.setToolTip(text)
+        super().setText(re.sub(r"\S{33,}", lambda match: "\u200b".join(
+            match[0][i:i + 24] for i in range(0, len(match[0]), 24)), text))
+
+
+class _AdvancedControlsToggle(QToolButton):
+    def minimumSizeHint(self):
+        # Keep the native styled text + padding, including font/DPI changes.
+        return self.sizeHint()
+
+    def _sync_minimum(self):
+        self.setMinimumSize(self.sizeHint())
+        self.updateGeometry()
+
+    def setText(self, text):
+        super().setText(text)
+        self._sync_minimum()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._sync_minimum()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (event.Type.FontChange, event.Type.StyleChange):
+            self._sync_minimum()
 
 
 class Bip39FusionWindow(Bip39TrialWindow):
@@ -119,9 +152,19 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
         self.stack = QStackedWidget()
         content.addWidget(self.stack, 1)
+        original_status = self.status
+        self.status = _WrappingStatusLabel()
+        self.status.setTextFormat(Qt.TextFormat.PlainText)
+        self.status.setText(original_status.text())
+        original_status.deleteLater()
         self.status.setObjectName("FusionMuted")
         self.status.setWordWrap(True)
         self.status.setMinimumWidth(0)
+        status_policy = self.status.sizePolicy()
+        status_policy.setHorizontalPolicy(QSizePolicy.Policy.Ignored)
+        status_policy.setVerticalPolicy(QSizePolicy.Policy.Minimum)
+        status_policy.setHeightForWidth(True)
+        self.status.setSizePolicy(status_policy)
         content.addWidget(self.status)
         shell.addWidget(main, 1)
         self.overview = FusionOverview()
@@ -284,12 +327,15 @@ class Bip39FusionWindow(Bip39TrialWindow):
         advanced_card, advanced_layout = panel(
             "Advanced controls",
             "For technical acceptance and test-chain diagnostics only.")
-        self.advanced_toggle = QToolButton()
+        self.advanced_toggle = _AdvancedControlsToggle()
         self.advanced_toggle.setObjectName("FusionAdvanced")
         self.advanced_toggle.setCheckable(True)
         self.advanced_toggle.setText("Show developer controls  ▾")
         self.advanced_toggle.setAccessibleName("Expand REGTEST developer controls")
         self.advanced_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
+        # Native macOS minimumSizeHint omits part of the stylesheet padding.
+        # Minimum vertical policy keeps the complete styled sizeHint at any DPI.
+        self.advanced_toggle.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
         advanced_layout.addWidget(self.advanced_toggle)
         self.advanced_container = QWidget()
         self.advanced_container.setObjectName("FusionTransparent")
@@ -306,6 +352,14 @@ class Bip39FusionWindow(Bip39TrialWindow):
         advanced_body.addWidget(self.account)
         advanced_body.addWidget(self.balance)
         advanced_body.addWidget(self.tip)
+        for text in (self.account, self.balance, self.tip):
+            text.setWordWrap(True)
+            text.setMinimumWidth(0)
+            policy = text.sizePolicy()
+            policy.setHorizontalPolicy(QSizePolicy.Policy.Ignored)
+            policy.setVerticalPolicy(QSizePolicy.Policy.Minimum)
+            policy.setHeightForWidth(True)
+            text.setSizePolicy(policy)
         advanced_body.addWidget(label("LAST BROADCAST TRANSACTION", "FusionKicker"))
         advanced_body.addWidget(self.last_txid)
         advanced_layout.addWidget(self.advanced_container)

@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFrame, QLabel,
-    QLineEdit, QPushButton, QCheckBox, QStackedWidget, QScrollArea, QProgressBar,
+    QLineEdit, QPushButton, QCheckBox, QStackedWidget, QScrollArea, QProgressBar, QSizePolicy,
 )
 
 from .bip39_locale import t
@@ -55,9 +55,13 @@ class Bip39BackupPage(QWidget):
 
         self._stack = QStackedWidget()
         scroll = QScrollArea()
+        scroll.setObjectName("FusionScroll")
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setWidget(self._stack)
+        scroll.viewport().setAutoFillBackground(False)
+        self._stack.setAutoFillBackground(False)
+        self._normal_stack_policy = self._stack.sizePolicy()
         root.addWidget(scroll, 1)
 
         # --- Phrase grid page ---
@@ -165,15 +169,36 @@ class Bip39BackupPage(QWidget):
         sl.setContentsMargins(4, 4, 12, 16)
         sl.setSpacing(18)
         sl.addStretch()
-        sl.addWidget(label(t("success_title"), "PageTitle"), alignment=Qt.AlignmentFlag.AlignCenter)
-        sl.addWidget(label(t("success_subtitle")), alignment=Qt.AlignmentFlag.AlignCenter)
+        self._success_title = label(t("success_title"), "PageTitle")
+        self._success_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sl.addWidget(self._success_title)
+        self._success_description = label(t("success_subtitle"))
+        self._success_description.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._success_description.setMinimumWidth(0)
+        policy = self._success_description.sizePolicy()
+        policy.setHorizontalPolicy(QSizePolicy.Policy.Expanding)
+        policy.setVerticalPolicy(QSizePolicy.Policy.Minimum)
+        policy.setHeightForWidth(True)
+        self._success_description.setSizePolicy(policy)
+        sl.addWidget(self._success_description)
         self._continue_button = action(t("continue"), "check", primary=True)
         self._continue_button.clicked.connect(self.continue_requested.emit)
         sl.addWidget(self._continue_button, alignment=Qt.AlignmentFlag.AlignCenter)
         sl.addStretch()
         self._stack.addWidget(self._success_page)
+        self._stack.currentChanged.connect(self._fit_success_page)
 
         self._written_check.toggled.connect(self._back_up_now.setEnabled)
+
+    def _fit_success_page(self, *_):
+        # Hidden phrase/verification pages must not impose their minimum size
+        # on this short centered page. Restore their original policy on return.
+        policy = QSizePolicy(self._normal_stack_policy)
+        if self._stack.currentWidget() is self._success_page:
+            policy.setHorizontalPolicy(QSizePolicy.Policy.Ignored)
+            policy.setVerticalPolicy(QSizePolicy.Policy.Ignored)
+        self._stack.setSizePolicy(policy)
+        self._stack.updateGeometry()
 
     def set_phrase(self, words):
         """Show the 12-word grid and prepare a verification challenge."""

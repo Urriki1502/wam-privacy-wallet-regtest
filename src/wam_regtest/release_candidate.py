@@ -20,7 +20,7 @@ def write_candidate_manifest(output,platform,core_hashes,*,qualification_scope='
     This inventory is not a signature/attestation or a replacement for the
     independent Core pins and workflow logs. PR head and checkout stay distinct.
     """
-    if qualification_scope not in ('full','v1-net-focused'):
+    if qualification_scope not in ('full','v1-net-focused','ui-layout-focused'):
         raise ValueError('RC_QUALIFICATION_SCOPE_DENIED')
     if platform not in ('macos-arm64','windows-x64','linux-x86_64-headless','linux-x86_64-desktop'):
         raise ValueError('RC_PLATFORM_DENIED')
@@ -54,7 +54,8 @@ def write_candidate_manifest(output,platform,core_hashes,*,qualification_scope='
         'build_os':host_platform.platform(),'network':'regtest','core_sha256':core_hashes,
         'core_provenance':'reviewed-developer-source-build' if platform.startswith('linux') else 'official-signed-v0.1.11',
         'wsp_source_commit':WSP_COMMIT,'dependencies':dependencies,'files_sha256':files,
-        'native_final_executable_e2e_pass':True,'mainnet_allowed':False,
+        'native_final_executable_e2e_pass':qualification_scope!='ui-layout-focused',
+        'native_ui_layout_e2e_pass':qualification_scope=='ui-layout-focused','mainnet_allowed':False,
         'qualification_scope':qualification_scope,
         'full_exact_commit_Q01_Q06_qualified':qualification_scope=='full',
         'physical_or_human_acceptance':'PENDING_OPERATOR','dev_wam_reviewed':False,
