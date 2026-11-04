@@ -625,11 +625,16 @@ class Bip39TrialWindow(QWidget):
                 "{:,} atoms. Separate device/chain restoration remains unverified.".format(
                     result["history_count"],result["confirmed_atoms"]))
         elif action=="inspect_confirmed":
-            self.status.setText(
-                "TXID is in complete verified confirmed history."
-                if result["status"]=="Q06_CONFIRMED_IN_VERIFIED_HISTORY" else
-                "TXID NOT in complete verified confirmed history; status uncertain. "
-                "Do NOT retry, remine or release coin reservations.")
+            if result["status"]=="Q06_CONFIRMED_IN_VERIFIED_HISTORY":
+                self.status.setText("TXID is in complete verified confirmed history.")
+            elif result.get("in_mempool") is True:
+                self.status.setText(
+                    "TXID is pending in this Core mempool and not yet confirmed. "
+                    "Do NOT retry, remine or release coin reservations.")
+            else:
+                self.status.setText(
+                    "TXID NOT in complete verified confirmed history; status uncertain. "
+                    "Do NOT retry, remine or release coin reservations.")
         elif action=="cancel":
             self._approved_commitment=None
             self._signed_ready=False

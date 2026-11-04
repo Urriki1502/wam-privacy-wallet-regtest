@@ -205,8 +205,10 @@ class Q06OwnedSpendSession(WalletSession):
     def inspect_confirmed(self, txid):
         """Bounded read-only lookup across ALL native-anchored local history.
 
-        A missing record does NOT mean broadcast failed. No RPC mutations,
-        key derivation, signing or reservation-state modification are allowed.
+        A missing record does NOT mean broadcast failed. Mempool membership is
+        observed read-only via getrawmempool and never implied as confirmation.
+        No RPC mutations, key derivation, signing or reservation-state
+        modification are allowed.
         """
         import re
         with self._lock:
@@ -223,10 +225,16 @@ class Q06OwnedSpendSession(WalletSession):
                     or self._rpc().call("getbestblockhash") != snapshot.tip):
                 raise Q06SpendSessionError("Q06_INSPECT_HISTORY_UNVERIFIED")
             found = len(rows) == 1 and rows[0][0] > 0
+            mempool = self._rpc().call("getrawmempool")
+            if (type(mempool) is not list
+                    or any(type(item) is not str or re.fullmatch(r"[0-9a-f]{64}", item) is None
+                           for item in mempool)):
+                raise Q06SpendSessionError("Q06_INSPECT_HISTORY_UNVERIFIED")
             return {
                 "status": ("Q06_CONFIRMED_IN_VERIFIED_HISTORY" if found
                            else "Q06_TX_NOT_IN_CONFIRMED_HISTORY"),
                 "txid": txid, "height": snapshot.height,
+                "in_mempool": txid in mempool,
                 "complete_anchored_history": True,
                 "write_attempted": False,
                 "signer_allowed": False, "broadcast_allowed": False,

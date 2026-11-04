@@ -1,6 +1,7 @@
 """WAM Fusion UI presentation contracts; never substitute for live-Core E2E."""
 import unittest
 
+from wam_regtest.fusion_pages import describe_broadcast_result
 from wam_regtest.fusion_ui import activity_by_block, fusion_palette, fusion_stylesheet
 from wam_regtest.wallet_read import HistoryRow, WalletReadSnapshot
 
@@ -83,6 +84,31 @@ class FusionDesignContracts(unittest.TestCase):
                 ValueError, "^FUSION_HISTORY_UNVERIFIED_DENIED$"
             ):
                 activity_by_block(replace(snap, history=(row,)))
+
+    def test_broadcast_result_copy_uses_only_verified_inspect_facts(self):
+        txid = "1e66b1d7d7c14d914ac34d523b3d2a9847521e7786fe5c9ba8a1cfa5cee6ff77"
+        pending = describe_broadcast_result(txid, {
+            "status": "Q06_TX_NOT_IN_CONFIRMED_HISTORY",
+            "in_mempool": True,
+        })
+        self.assertIn("pending in this Core mempool", pending)
+        self.assertIn(txid, pending)
+        self.assertNotIn("failed", pending.lower())
+        confirmed = describe_broadcast_result(txid, {
+            "status": "Q06_CONFIRMED_IN_VERIFIED_HISTORY",
+            "in_mempool": False,
+        })
+        self.assertTrue(confirmed.startswith("Confirmed on this REGTEST chain."))
+        absent = describe_broadcast_result(txid, {
+            "status": "Q06_TX_NOT_IN_CONFIRMED_HISTORY",
+            "in_mempool": False,
+        })
+        self.assertIn("uncertain", absent.lower())
+        self.assertNotIn("failed", absent.lower())
+        submitted = describe_broadcast_result(txid)
+        self.assertTrue(submitted.startswith("Submitted to this Core."))
+        self.assertIn("Do not retry", submitted)
+        self.assertIn("uncertain", describe_broadcast_result("not-a-txid").lower())
 
 
 if __name__ == "__main__":

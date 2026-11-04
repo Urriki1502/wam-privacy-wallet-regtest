@@ -20,7 +20,7 @@ _MESSAGES={
  'WALLET_INPUT_AMOUNT_INVALID':'Amount not accepted. Enter 0.00000330 to 22000000 WAM, using a decimal point and at most 8 decimal places.',
  'WALLET_INPUT_FEE_INVALID':'Fee not accepted. Enter 0.00000001 to 0.01000000 WAM, using a decimal point and at most 8 decimal places.',
  'WALLET_INPUT_RECIPIENT_INVALID':'Recipient not accepted. Use the complete REGTEST silent-payment code (wamrtsp1…). Ordinary Core addresses, other networks and invalid checksums are not supported.',
- 'WALLET_INPUT_FUNDS_UNAVAILABLE':'Not enough available confirmed funds in one privacy cluster for the amount and fee. Reserved or pending inputs stay unavailable; locks are not released.',
+ 'WALLET_INPUT_FUNDS_UNAVAILABLE':'Not enough available confirmed funds in one privacy cluster for the amount and fee. Coins still reserved, in the mempool, or waiting for confirmation stay unavailable; locks are not released.',
  'WALLET_STALE_SESSION_DENIED':'Wallet session is stale. Sensitive operations are stopped and reservations retained. Use the latest anchored backup; do not reset or replace the anchor.',
  'WALLET_REVIEW_CHAIN_CHANGED':'The chain changed after review. Recheck the live chain. Only an unsigned draft may be canceled; signed reservations stay locked.',
  'WALLET_REVIEW_UTXO_CHANGED':'A reviewed input is no longer available. Signing or broadcast was refused. Reservations remain protected.',

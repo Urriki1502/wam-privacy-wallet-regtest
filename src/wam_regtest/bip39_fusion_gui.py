@@ -24,7 +24,7 @@ from .fusion_ui import (
     label, ResponsiveRow, vector_icon, nav_icon_for, FUSION_NAV_PAGES,
     StateSwitch, action,
 )
-from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval, WalletConsent, NetworkPage
+from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval, WalletConsent, NetworkPage, describe_broadcast_result
 from .bip39_backup_page import Bip39BackupPage
 from .wallet_read import WalletReadSnapshot, format_wam
 from .amounts import parse_amount, _parse_atoms
@@ -841,16 +841,28 @@ class Bip39FusionWindow(Bip39TrialWindow):
         if action == "broadcast":
             txid = self.last_txid.text().strip()
             if txid and 'uncertain' not in txid.lower():
-                self.send_result.setText('Broadcast submitted.\n' + txid)
+                self.send_result.setText(describe_broadcast_result(txid))
                 self._broadcast_complete = True
             else:
-                self.send_result.setText(
-                    'Broadcast outcome is uncertain. Reservations are retained. Do not retry automatically.')
+                self.send_result.setText(describe_broadcast_result(None))
                 self._broadcast_complete = False
+        if action == "inspect_confirmed":
+            txid = result.get("txid") if type(result) is dict else None
+            self.send_result.setText(describe_broadcast_result(txid, result))
+            if type(result) is dict and result.get("status") == "Q06_CONFIRMED_IN_VERIFIED_HISTORY":
+                self._broadcast_complete = True
+                self.payment_steps.set_stage(4)
+            elif type(result) is dict and result.get("in_mempool") is True:
+                self._broadcast_complete = True
+                self.payment_steps.set_stage(4)
         if action == "sign":
             self.payment_steps.set_stage(3)
         if action in ("snapshot", "activate"):
             self._render_verified(result)
+            txid = self._pending_confirm_txid or self.last_txid.text().strip()
+            if (action == "snapshot" and self._broadcast_complete
+                    and type(txid) is str and len(txid) == 64):
+                self._pending_action = ("inspect_confirmed", txid)
         elif action == "open":
             self._clear_visuals()
             # Same owner, bounded read-only chain sync only after the explicit
@@ -861,6 +873,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         elif action == "mine":
             self._pending_action = ("snapshot",)
         elif action in ("lock", "quit"):
+            self._broadcast_complete = False
             self._clear_visuals()
         elif action == 'unlock':
             self._clear_visuals()

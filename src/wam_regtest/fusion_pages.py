@@ -184,6 +184,27 @@ class PaymentApproval(QDialog):
         buttons=QDialogButtonBox();self.cancel=buttons.addButton('Cancel',QDialogButtonBox.ButtonRole.RejectRole);self.approve=buttons.addButton('Approve Sign' if kind=='sign' else 'Approve Broadcast',QDialogButtonBox.ButtonRole.AcceptRole);self.approve.setObjectName('FusionPrimary');self.cancel.setDefault(True);self.approve.setAutoDefault(False);buttons.rejected.connect(self.reject);buttons.accepted.connect(self.accept);layout.addWidget(buttons)
 
 
+def describe_broadcast_result(txid, inspect=None):
+    """Map verified Core inspect/history facts to Result copy. Never infers failure."""
+    import re
+    if type(txid) is not str or re.fullmatch(r'[0-9a-f]{64}', txid) is None:
+        return ('Broadcast outcome is uncertain. Reservations are retained. '
+                'Do not retry automatically.')
+    status = inspect.get('status') if type(inspect) is dict else None
+    mempool = inspect.get('in_mempool') if type(inspect) is dict else None
+    if status == 'Q06_CONFIRMED_IN_VERIFIED_HISTORY':
+        return 'Confirmed on this REGTEST chain.\n' + txid
+    if mempool is True:
+        return ('Submitted and pending in this Core mempool (not confirmed).\n'
+                + txid + '\nDo not retry. Reserved inputs stay unavailable.')
+    if mempool is False and status == 'Q06_TX_NOT_IN_CONFIRMED_HISTORY':
+        return ('Recorded TXID is not in confirmed history or this Core mempool. '
+                'Outcome is uncertain.\n' + txid
+                + '\nDo not retry or release reservations.')
+    return ('Submitted to this Core. Confirmation is pending.\n' + txid
+            + '\nDo not retry. Reserved inputs stay unavailable until confirmed.')
+
+
 class NetworkPage(QWidget):
     """V1-NET status surface. Never invents peers, height or connectivity."""
 
