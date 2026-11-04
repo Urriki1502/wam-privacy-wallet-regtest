@@ -60,7 +60,7 @@ def qualify(core, source):
     }
     if getattr(sys, 'frozen', False):
         from .q05_package_provenance import read
-        data['source_sha'] = read()['source_head_sha']
+        data['source_sha'] = read()['candidate_source_sha']
         data['frozen_executable_sha256'] = sha256(Path(sys.executable).read_bytes()).hexdigest()
     else:
         data['source_sha'] = subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
