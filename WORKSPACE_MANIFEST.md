@@ -1,5 +1,9 @@
 # Canonical workspace manifest
 
+Current continuation: owner-approved local stabilization now has qualified runtime/build source `aaf2de2a13471f955c367561e64276e5353180c5`, 561 executed source PASS / 33 platform skips, and successful actual-Core/native/frozen macOS evidence. See [current stabilization result](docs/Q06_LOCAL_STABILIZATION_20261104.md). Q06 accepted=false; physical/independent/full integration gates remain open. The owner has authorized a separate local V1-NET branch after these tests. The Phase 0 inventory below is a dated historical snapshot, not current HEAD/artifact status.
+
+Stable Q06 artifact snapshot: `build/qualified-q06-aaf2de2/package-output/`; DMG SHA256 `d482f8c2562a7f4c2162d58595ad808357b74ad7c0555419c08df23f4f227f43`. Older owner-tested and failed artifacts are preserved at `build/retained-artifacts/`; engineering logs at `build/local-evidence-20261104/`; local pinned toolchain at `build/local-toolchain/`. Private disposable runtime data is retained separately under `.wam-regtest-temp` / `bundle-input` and must not be committed or shipped.
+
 Audit date: 2026-11-04. Scope: PHASE 0 ONLY. No application/test/fixture edits, tests, Core launch, wallet operations, build, commits, branch changes, push, CI dispatch or acceptance-ledger mutation were performed. The six root audit documents are review material, not another acceptance ledger.
 
 Canonical path: `/Users/dinhdang/Documents/WAM-Q06-Audit-20261102`.
