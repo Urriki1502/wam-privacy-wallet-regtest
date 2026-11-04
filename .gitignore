@@ -2,6 +2,8 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+# Mutable operational transfer record; never an importable/runtime input.
+/ENGINEERING_HANDOFF.md
 .venv/
 build/
 dist/

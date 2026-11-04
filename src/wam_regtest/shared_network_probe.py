@@ -15,6 +15,10 @@ from .shared_regtest import SharedRegtestProfile
 from .wallet_executor import WalletExecutor
 from .bip39_owner_backend import Bip39ReadOnlyBackend
 
+# Same-host qualification only. Product/deployment defaults remain 29554/29555.
+# The owner explicitly reserved the historical standard-port labs read-only.
+LAB_PORTS=((True,45954,45955,45957),(False,45956,45957,45955))
+
 
 def qualify(core, source):
     from .desktop import qt_application
@@ -36,6 +40,8 @@ def qualify(core, source):
                   owner_accepted=False,independent_reviewed=False,
                   cases={f'V{i}':'NOT EXECUTED' for i in range(1,20)})
     report['cases']['V19'] = 'BLOCKED'
+    report['lab_port_layout']=[dict(coordinator=c,rpc=r,p2p=p,peer=q) for c,r,p,q in LAB_PORTS]
+    report['deployment_defaults']=dict(rpc=29554,p2p=29555)
     if getattr(sys,'frozen',False):
         from .q05_package_provenance import read
         report['source_sha'] = read()['candidate_source_sha']
@@ -139,7 +145,7 @@ def qualify(core, source):
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
         app.processEvents()
     try:
-        for coordinator,rpc,p2p,peer in ((True,29554,29555,29557),(False,29556,29557,29555)):
+        for coordinator,rpc,p2p,peer in LAB_PORTS:
             node={'root':lab/('wam-fusion-core-'+secrets.token_hex(8)),
                   'profile':SharedRegtestProfile('127.0.0.1',coordinator=coordinator,
                                rpc_port=rpc,p2p_port=p2p,peer_port=peer)}

@@ -14,12 +14,14 @@ RC_ID='WAM-Fusion-REGTEST-RC1'
 WSP_COMMIT='ac55f13423620252bdbf848c7e8a280c3b84721e'
 
 
-def write_candidate_manifest(output,platform,core_hashes):
+def write_candidate_manifest(output,platform,core_hashes,*,qualification_scope='full'):
     """Called ONLY after each builder's final executable acceptance succeeds.
 
     This inventory is not a signature/attestation or a replacement for the
     independent Core pins and workflow logs. PR head and checkout stay distinct.
     """
+    if qualification_scope not in ('full','v1-net-focused'):
+        raise ValueError('RC_QUALIFICATION_SCOPE_DENIED')
     if platform not in ('macos-arm64','windows-x64','linux-x86_64-headless','linux-x86_64-desktop'):
         raise ValueError('RC_PLATFORM_DENIED')
     checkout=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
@@ -53,6 +55,8 @@ def write_candidate_manifest(output,platform,core_hashes):
         'core_provenance':'reviewed-developer-source-build' if platform.startswith('linux') else 'official-signed-v0.1.11',
         'wsp_source_commit':WSP_COMMIT,'dependencies':dependencies,'files_sha256':files,
         'native_final_executable_e2e_pass':True,'mainnet_allowed':False,
+        'qualification_scope':qualification_scope,
+        'full_exact_commit_Q01_Q06_qualified':qualification_scope=='full',
         'physical_or_human_acceptance':'PENDING_OPERATOR','dev_wam_reviewed':False,
         'production_qualified':False,'official_final_release':False,
         'github_run_url':f'https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/{run}' if run else None,

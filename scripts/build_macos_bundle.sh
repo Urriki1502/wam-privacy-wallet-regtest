@@ -3,6 +3,12 @@
 # immutable WSP source and actual Core/Qt E2E before this build is allowed.
 set -euo pipefail
 umask 077
+case "${1:-}" in
+  "") export WAM_BUILD_SCOPE=full ;;
+  --v1-net-focused) export WAM_BUILD_SCOPE=v1-net-focused ;;
+  *) exit 64 ;;
+esac
+test "$#" -le 1
 
 test "$(uname -s)" = Darwin
 test "$(uname -m)" = arm64
@@ -12,7 +18,7 @@ test -x core/wam-cli
 test -f core/receipt.json
 mkdir -p bundle-input package-output
 SOURCE_STAGE=$(mktemp -d "$(pwd)/bundle-input/build-XXXXXX")
-trap 'rm -rf "$SOURCE_STAGE"' EXIT
+echo "MACOS_APP_SOURCE_STAGE=$SOURCE_STAGE"
 python -I -m wam_regtest.build_provenance capture --stamp "$SOURCE_STAGE/wallet-source.json"
 (cd wsp-upstream && env -u WAM_SOURCE_HEAD python -I -m wam_regtest.build_provenance capture --stamp "$SOURCE_STAGE/wsp-source.json")
 python -I -m wam_regtest.package_manifest \
@@ -100,68 +106,72 @@ import os
 import subprocess
 import sys
 binary = os.environ["WAM_FROZEN_BIN"]
+focused = os.environ.get("WAM_BUILD_SCOPE") == "v1-net-focused"
 print("MACOS_APP_STAGE=FROZEN_BUNDLE_SELF_CHECK_START", flush=True)
 try:
     subprocess.run([binary, "--check-bundle"], timeout=45, check=True)
 except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
     sys.exit("MACOS_FROZEN_BUNDLE_CHECK_DENIED")
 print("MACOS_APP_STAGE=FROZEN_BUNDLE_SELF_CHECK_PASS", flush=True)
-print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_START", flush=True)
-try:
-    subprocess.run([binary, "--ci-real-core-gui"], timeout=240, check=True)
-except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
-    sys.exit("MACOS_FROZEN_REAL_CORE_GUI_DENIED")
-print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_PASS", flush=True)
+if not focused:
+    print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_START", flush=True)
+    try:
+        subprocess.run([binary, "--ci-real-core-gui"], timeout=240, check=True)
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
+        sys.exit("MACOS_FROZEN_REAL_CORE_GUI_DENIED")
+    print("MACOS_APP_STAGE=FROZEN_REAL_CORE_BIP352_QT_PASS", flush=True)
 # Q01 also needs the actual native window-system runtime, independently of
 # offscreen rendering. This existing CI mode retains full custody/Core gates.
 from pathlib import Path
 import shutil, tempfile
 from contextlib import nullcontext
+from json import loads
 cocoa = {k:v for k,v in os.environ.items() if k not in
          ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV','DYLD_LIBRARY_PATH','DYLD_INSERT_LIBRARIES')
          and not k.startswith(('QT_', 'QML_'))}
 cocoa.update({'QT_QPA_PLATFORM': 'cocoa', 'PATH': '/usr/bin:/bin:/usr/sbin:/sbin'})
-with tempfile.TemporaryDirectory(prefix='wam-q01-mac-frozen-cwd-') as clean:
-    subprocess.run([str(Path(binary).resolve()), '--ci-real-core-wallet-cocoa'],
-                   cwd=clean, env=cocoa, timeout=600, check=True)
-    # Copy public fixture evidence only, never any runtime/vault/datadir.
-    review = Path(clean)
-    public = Path('package-output/cocoa-evidence'); public.mkdir(exist_ok=True)
-    shutil.copytree(review/'fusion-ui-review', public/'fusion-ui-review', dirs_exist_ok=True)
-    for name in ('real-regtest-wallet-preview.png', 'real-regtest-security-preview.png'):
-        shutil.copyfile(review/name, public/name)
-print("MACOS_APP_STAGE=FROZEN_NATIVE_COCOA_REAL_CORE_PASS", flush=True)
-print("MACOS_APP_STAGE=FROZEN_Q04_EXTERNAL_MINER_START", flush=True)
-with tempfile.TemporaryDirectory(prefix='wam-q04-mac-frozen-') as clean:
-    q04_env = {k:v for k,v in os.environ.items() if k not in
-        ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV','DYLD_LIBRARY_PATH','DYLD_INSERT_LIBRARIES')
-        and not k.startswith(('QT_', 'QML_'))}
-    q04_env['QT_QPA_PLATFORM'] = 'offscreen'
-    q04_env['PATH'] = '/usr/bin:/bin:/usr/sbin:/sbin'
-    subprocess.run([str(Path(binary).resolve()), '--ci-q04-external-miner'],
-                   cwd=clean, env=q04_env, timeout=600, check=True)
-    shutil.copyfile(Path(clean)/'q04-frozen-evidence.json', 'package-output/q04-frozen-evidence.json')
-print("MACOS_APP_STAGE=FROZEN_Q04_EXTERNAL_MINER_PASS", flush=True)
-# Reuse this SAME signed-Core + frozen-app job for the actual Q06 create /
-# reopen / fresh BIP39 restore + native Cocoa receive view. No new CI job,
-# synthetic RPC, background miner or developer-managed node is introduced.
-print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_START", flush=True)
-with tempfile.TemporaryDirectory(prefix='wam-q06-mac-frozen-') as clean:
-    subprocess.run([str(Path(binary).resolve()), '--ci-q06-bip39-readonly'],
-                   cwd=clean, env=cocoa, timeout=420, check=True)
-    report = Path(clean)/'q06-frozen-readonly-evidence.json'
-    from json import loads
-    data = loads(report.read_text())
-    assert (data['status']=='Q06_NATIVE_BIP39_12_READONLY_OWNER_GUI_PASS'
-            and data['Q06_BIP39_disposable_fresh_restore_same_receive'] is True
-            and data['Q06_native_Qt_receive_bound'] is True
-            and data['Q06_native_Qt_funded_balance_bound'] is True
-            and type(data['Q06_actual_onchain_BIP39_received_atoms']) is int
-            and data['Q06_actual_onchain_BIP39_received_atoms'] > 0
-            and data['Q06_original_core_clean_shutdown'] is True
-            and data['Q06_Sign_or_Broadcast_executed'] is False)
-    shutil.copyfile(report, 'package-output/q06-frozen-readonly-evidence.json')
-print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_PASS", flush=True)
+if not focused:
+    with tempfile.TemporaryDirectory(prefix='wam-q01-mac-frozen-cwd-') as clean:
+        subprocess.run([str(Path(binary).resolve()), '--ci-real-core-wallet-cocoa'],
+                       cwd=clean, env=cocoa, timeout=600, check=True)
+        # Copy public fixture evidence only, never any runtime/vault/datadir.
+        review = Path(clean)
+        public = Path('package-output/cocoa-evidence'); public.mkdir(exist_ok=True)
+        shutil.copytree(review/'fusion-ui-review', public/'fusion-ui-review', dirs_exist_ok=True)
+        for name in ('real-regtest-wallet-preview.png', 'real-regtest-security-preview.png'):
+            shutil.copyfile(review/name, public/name)
+    print("MACOS_APP_STAGE=FROZEN_NATIVE_COCOA_REAL_CORE_PASS", flush=True)
+    print("MACOS_APP_STAGE=FROZEN_Q04_EXTERNAL_MINER_START", flush=True)
+    with tempfile.TemporaryDirectory(prefix='wam-q04-mac-frozen-') as clean:
+        q04_env = {k:v for k,v in os.environ.items() if k not in
+            ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV','DYLD_LIBRARY_PATH','DYLD_INSERT_LIBRARIES')
+            and not k.startswith(('QT_', 'QML_'))}
+        q04_env['QT_QPA_PLATFORM'] = 'offscreen'
+        q04_env['PATH'] = '/usr/bin:/bin:/usr/sbin:/sbin'
+        subprocess.run([str(Path(binary).resolve()), '--ci-q04-external-miner'],
+                       cwd=clean, env=q04_env, timeout=600, check=True)
+        shutil.copyfile(Path(clean)/'q04-frozen-evidence.json', 'package-output/q04-frozen-evidence.json')
+    print("MACOS_APP_STAGE=FROZEN_Q04_EXTERNAL_MINER_PASS", flush=True)
+    # Reuse this SAME signed-Core + frozen-app job for the actual Q06 create /
+    # reopen / fresh BIP39 restore + native Cocoa receive view. No new CI job,
+    # synthetic RPC, background miner or developer-managed node is introduced.
+    print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_START", flush=True)
+    with tempfile.TemporaryDirectory(prefix='wam-q06-mac-frozen-') as clean:
+        subprocess.run([str(Path(binary).resolve()), '--ci-q06-bip39-readonly'],
+                       cwd=clean, env=cocoa, timeout=420, check=True)
+        report = Path(clean)/'q06-frozen-readonly-evidence.json'
+        from json import loads
+        data = loads(report.read_text())
+        assert (data['status']=='Q06_NATIVE_BIP39_12_READONLY_OWNER_GUI_PASS'
+                and data['Q06_BIP39_disposable_fresh_restore_same_receive'] is True
+                and data['Q06_native_Qt_receive_bound'] is True
+                and data['Q06_native_Qt_funded_balance_bound'] is True
+                and type(data['Q06_actual_onchain_BIP39_received_atoms']) is int
+                and data['Q06_actual_onchain_BIP39_received_atoms'] > 0
+                and data['Q06_original_core_clean_shutdown'] is True
+                and data['Q06_Sign_or_Broadcast_executed'] is False)
+        shutil.copyfile(report, 'package-output/q06-frozen-readonly-evidence.json')
+    print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_OWNER_READONLY_PASS", flush=True)
 # Use the exact same packaged app and immutable Core/WSP source for Q06 Send.
 # This is a disposable REGTEST qualification, not a mainnet or release grant.
 print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_START", flush=True)
@@ -205,11 +215,14 @@ with nullcontext(tempfile.mkdtemp(prefix='shared-frozen-',dir=Path('bundle-input
         shutil.copyfile(image,Path('package-output')/image.name)
 print("MACOS_APP_STAGE=FROZEN_V1_NET_SCOPED_PASS_REORG_AND_TWO_HOST_BLOCKED", flush=True)
 PY
-python -I scripts/qualify_q05_frozen.py --executable "$BIN" \
-  --output "$(pwd)/package-output/q05-frozen-evidence.json"
-test -s real-regtest-gui-preview.png
-test -s real-regtest-wallet-preview.png
-test -s real-regtest-security-preview.png
+if [ "$WAM_BUILD_SCOPE" = full ]; then
+  python -I scripts/qualify_q05_frozen.py --executable "$BIN" \
+    --output "$(pwd)/package-output/q05-frozen-evidence.json"
+  test -s real-regtest-gui-preview.png
+  test -s real-regtest-wallet-preview.png
+  test -s real-regtest-security-preview.png
+
+fi
 
 echo "MACOS_APP_STAGE=PACKAGED_REAL_CORE_GUI_PASS"
 python -I -m wam_regtest.build_provenance verify --stamp "$SOURCE_STAGE/wallet-source.json" \
@@ -254,6 +267,8 @@ Path("package-output/SHA256SUMS.json").write_text(
         "wamd_sha256": sha256(Path("core/wamd").read_bytes()).hexdigest(),
         "wam_cli_sha256": sha256(Path("core/wam-cli").read_bytes()).hexdigest(),
         "real_core_packaged_e2e": True,
+        "qualification_scope": __import__("os").environ["WAM_BUILD_SCOPE"],
+        "full_exact_commit_Q01_Q06_qualified": __import__("os").environ["WAM_BUILD_SCOPE"] == "full",
         "q01_external_working_directory": True,
         "q01_developer_python_path_removed": True,
         "mainnet_allowed": False,
@@ -263,6 +278,7 @@ Path("package-output/SHA256SUMS.json").write_text(
 from wam_regtest.release_candidate import write_candidate_manifest
 write_candidate_manifest(Path('package-output'),'macos-arm64',{
     'wamd':sha256(Path('core/wamd').read_bytes()).hexdigest(),
-    'wam-cli':sha256(Path('core/wam-cli').read_bytes()).hexdigest()})
+    'wam-cli':sha256(Path('core/wam-cli').read_bytes()).hexdigest()},
+    qualification_scope=__import__('os').environ['WAM_BUILD_SCOPE'])
 print("MACOS_ARM64_REAL_CORE_BIP352_PACKAGED_APP_DMG_E2E_PASS")
 PY
