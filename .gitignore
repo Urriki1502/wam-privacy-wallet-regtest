@@ -17,6 +17,7 @@ core/
 *.log
 *.sqlite*
 .wam-regtest/
+.wam-regtest-temp/
 real-core-evidence.json
 
 wsp-upstream/

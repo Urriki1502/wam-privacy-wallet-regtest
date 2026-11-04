@@ -307,6 +307,7 @@ class Bip39TrialWindow(QWidget):
         self._pending_action=None
         self._completed_result=None
         self._delivering_result=False
+        self._last_error_code=None
         self._recovery_dialog=None
         self._set_actions()
 
@@ -343,6 +344,7 @@ class Bip39TrialWindow(QWidget):
                              parent=self)
         self._worker=worker
         self._completed_result = None
+        self._last_error_code = None
         worker.ready.connect(self._receive_result, Qt.ConnectionType.QueuedConnection)
         worker.denied.connect(self._receive_denial, Qt.ConnectionType.QueuedConnection)
         worker.finished.connect(self._finished)
@@ -727,6 +729,7 @@ class Bip39TrialWindow(QWidget):
         self._backup_flow_completed(False)
 
     def _on_denied(self, code):
+        self._last_error_code = code
         if self.executor.state.faulted:
             self._signed_ready=False
         self.status.setText(

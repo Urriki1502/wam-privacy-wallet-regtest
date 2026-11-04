@@ -11,6 +11,8 @@ import platform
 import secrets
 import sys
 import time
+import tempfile
+from contextlib import nullcontext
 
 from . import custody
 from .bip39_owner_backend import Bip39ReadOnlyBackend
@@ -59,6 +61,8 @@ def qualify(core, source):
         deadline = time.monotonic() + timeout
         while not predicate():
             app.processEvents()
+            if (window is not None and idle() and window._last_error_code is not None):
+                raise ValueError('Q06_GUI_DENIED_' + label)
             if time.monotonic() >= deadline:
                 raise ValueError('Q06_GUI_WAIT_' + label)
             QTest.qWait(15)
@@ -84,7 +88,11 @@ def qualify(core, source):
         finally:
             timer.stop()
 
-    with custody.private_temporary_directory(prefix="q06-spend-frozen-") as temp:
+    # Retain every disposable profile, including failed/uncertain signed state.
+    parent = Path.cwd() / '.wam-regtest-temp'
+    if not parent.exists():
+        custody.create_directory(parent)
+    with nullcontext(tempfile.mkdtemp(prefix='q06-spend-frozen-', dir=parent)) as temp:
         root = Path(temp).resolve() / ("wam-fusion-core-" + secrets.token_hex(8))
         custody.create_directory(root)
         password = b"public-disposable-q06-signed-core-spend-only"
