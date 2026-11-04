@@ -399,8 +399,14 @@ class LiveCoreReadOnlyCli:
         if genesis != REGTEST_GENESIS:
             raise RealWspScanError("WSP_LIVE_GENESIS_DENIED")
         peers = self._call("getconnectioncount", [])
-        if type(peers) is not int or peers != 0:
-            raise RealWspScanError("WSP_LIVE_PEERS_DENIED")
+        from .rpc_scope import identity
+        shared = getattr(identity(self._datadir), 'shared_profile', None)
+        if shared is None:
+            if type(peers) is not int or peers != 0:
+                raise RealWspScanError("WSP_LIVE_PEERS_DENIED")
+        else:
+            from .shared_regtest import peer_status
+            peer_status(self._datadir)
         version=self._call('getnetworkinfo',[])
         if (type(version) is not dict or type(version.get('version')) is not int or version.get('version')!=111
                 or version.get('subversion')!='/WAM:0.1.11/' or type(version.get('protocolversion')) is not int or version.get('protocolversion')!=70016):

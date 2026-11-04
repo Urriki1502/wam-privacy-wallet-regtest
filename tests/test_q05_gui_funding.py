@@ -66,7 +66,7 @@ class FundingContracts(unittest.TestCase):
             directory=Path(temp).resolve();binary=directory/'fixture-cli';binary.write_bytes(b'fixture')
             b.owner.cli=binary;b.owner.directory=directory
             binding=SimpleNamespace(cli=binary,_assert_image=Mock())
-            context=SimpleNamespace(binding=binding,lock=threading.RLock(),faulted=False,
+            context=SimpleNamespace(binding=binding,lock=threading.RLock(),faulted=False,shared_profile=None,
                 authorized=True,credentials=Mock(port=12345),assert_endpoint=Mock(),ready=True)
             methods=[]
             def execute(argv,method,params,**kwargs):
@@ -110,7 +110,7 @@ class FundingContracts(unittest.TestCase):
         from wam_regtest.wallet_session import WalletCoreCli
         with tempfile.TemporaryDirectory() as temp:
             directory=Path(temp).resolve();binary=directory/'fixture-cli';binary.write_bytes(b'fixture')
-            context=SimpleNamespace(lock=threading.RLock(),faulted=False,authorized=False,ready=True,
+            context=SimpleNamespace(lock=threading.RLock(),faulted=False,authorized=False,ready=True,shared_profile=None,
                 binding=SimpleNamespace(cli=binary))
             with patch.dict(rpc_scope._contexts,{str(directory):context}), \
                     patch('wam_regtest.network_policy.local_rpc_port',return_value=12345), \

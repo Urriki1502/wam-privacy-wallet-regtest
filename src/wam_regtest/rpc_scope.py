@@ -19,8 +19,10 @@ _lock=threading.RLock()
 
 
 class _OwnedContext:
-    def __init__(self,process,core,directory,authorized):
+    def __init__(self,process,core,directory,authorized,shared_profile=None):
         self.binding=OwnedCoreBinding(process,core,directory)
+        self.shared_profile = shared_profile
+        self.binding.shared_profile = shared_profile
         self.authorized=authorized is True
         self.credentials=None;self.faulted=False;self.ready=False
         self.lock=threading.RLock()
@@ -34,11 +36,15 @@ class _OwnedContext:
             raise CliRpcError('CORE_RPC_UNAVAILABLE') from None
 
 
-def register(process,core,directory,*,authorized_disposable_mutation=False):
+def register(process,core,directory,*,authorized_disposable_mutation=False,shared_profile=None):
     key=str(directory.resolve(strict=True))
     with _lock:
         if key in _contexts:raise CliRpcError('CORE_RPC_SCOPE_ALREADY_EXISTS')
-        context=_OwnedContext(process,core,directory,authorized_disposable_mutation)
+        if shared_profile is not None:
+            from .shared_regtest import SharedRegtestProfile
+            if type(shared_profile) is not SharedRegtestProfile:
+                raise CliRpcError('SHARED_EXPLICIT_PROFILE_REQUIRED')
+        context=_OwnedContext(process,core,directory,authorized_disposable_mutation,shared_profile)
         _contexts[key]=context
         return context
 
@@ -70,7 +76,8 @@ def reauthenticate_owned(directory,*,authorized=False):
     with context.lock:
         context.faulted=True
         context.binding._assert_image()
-        source=CredentialSource(directory)
+        source=(CredentialSource(directory) if context.shared_profile is None else
+                CredentialSource(directory,shared_profile=context.shared_profile))
         context.assert_endpoint(source.port)
         # Only public, harmless attestation RPCs; no request replay or writes.
         context.credentials=source;context.faulted=False
@@ -87,11 +94,20 @@ def route(binary,directory,args,*,timeout=15):
     if context is None:raise CliRpcError('CORE_RPC_OWNED_SCOPE_REQUIRED')
     with context.lock:
         if context.faulted:raise CliRpcError('CORE_RPC_SCOPE_FAULTED')
+        if method in ('getpeerinfo','setnetworkactive') and context.shared_profile is None:
+            raise CliRpcError('CORE_RPC_SHARED_SCOPE_REQUIRED')
+        if method == 'generatetoaddress' and context.shared_profile is not None:
+            from .shared_regtest import peer_status
+            if not context.shared_profile.coordinator:
+                raise CliRpcError('SHARED_SINGLE_COORDINATOR_REQUIRED')
+            peer_status(directory, require_connected=True)
         try:
             if not os.path.samefile(binary,context.binding.cli):raise CliRpcError('CORE_RPC_CLI_SCOPE_DENIED')
             if method in WRITES and not context.authorized:raise CliRpcError('CORE_RPC_MUTATION_CONSENT_REQUIRED')
             context.binding._assert_image()
-            if context.credentials is None:context.credentials=CredentialSource(directory)
+            if context.credentials is None:
+                context.credentials=(CredentialSource(directory) if context.shared_profile is None else
+                    CredentialSource(directory,shared_profile=context.shared_profile))
             source=context.credentials;source.attest();context.assert_endpoint(source.port)
             argv=[str(context.binding.cli),'-datadir='+str(directory),'-rpcconnect=127.0.0.1',
                   '-rpcport='+str(source.port),*args]

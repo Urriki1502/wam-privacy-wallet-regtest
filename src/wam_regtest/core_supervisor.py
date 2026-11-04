@@ -54,10 +54,17 @@ def _profile_read(root):
     try:
         value = json.loads(read_exact(root, 'supervisor.profile').decode('ascii'),
                            object_pairs_hook=_distinct)
-        if (type(value) is not dict or set(value) != {
+        fields = {
                 'schema', 'version', 'network', 'genesis', 'core_sha256',
                 'cli_sha256', 'config_sha256', 'control_port', 'profile_id',
-                'mainnet_allowed'} or value['schema'] != PROFILE_SCHEMA
+                'mainnet_allowed'}
+        from .shared_regtest import PROFILE_SCHEMA as SHARED_SCHEMA, SharedRegtestProfile
+        shared = type(value) is dict and value.get('schema') == SHARED_SCHEMA
+        if shared:
+            fields = fields | {'shared_profile'}
+            SharedRegtestProfile.from_record(value.get('shared_profile'))
+        if (type(value) is not dict or set(value) != fields
+                or value['schema'] != (SHARED_SCHEMA if shared else PROFILE_SCHEMA)
                 or value['version'] != 'v0.1.11' or value['network'] != 'regtest'
                 or value['genesis'] != REGTEST_GENESIS
                 or value['mainnet_allowed'] is not False
@@ -105,10 +112,14 @@ def _ports():
 class CoreSupervisor:
     """Run in a separate process; GUI disconnect never calls shutdown."""
 
-    def __init__(self, root, core, *, authorized=False):
+    def __init__(self, root, core, *, authorized=False, shared_profile=None):
         if authorized is not True:
             raise ManagedCoreError('MANAGED_EXPLICIT_CONSENT_REQUIRED')
         self.root, self.core = root, core
+        from .shared_regtest import SharedRegtestProfile
+        if shared_profile is not None and type(shared_profile) is not SharedRegtestProfile:
+            raise ManagedCoreError('SHARED_EXPLICIT_PROFILE_REQUIRED')
+        self.shared_profile = shared_profile
         self.node, self.cli, self.receipt = verified_core_paths(core)
         self.directory = root / 'chain'
         self.stack = ExitStack()
@@ -130,8 +141,13 @@ class CoreSupervisor:
                 fresh=True
                 self.listener = _listener(0)
                 create_directory(self.directory)
-                with _ports() as (rpc, peer):
-                    _write_private_config(self.directory, rpc, peer)
+                if shared_profile is None:
+                    with _ports() as (rpc, peer):
+                        _write_private_config(self.directory, rpc, peer)
+                else:
+                    from .shared_regtest import reserve_ports, write_config
+                    with reserve_ports(shared_profile):
+                        write_config(self.directory, shared_profile)
                 config, _ = private_bytes(self.directory, 'wam.conf', 4096)
                 create_once(root, 'supervisor.token', secrets.token_bytes(32))
                 profile = dict(schema=PROFILE_SCHEMA, version='v0.1.11',
@@ -141,9 +157,15 @@ class CoreSupervisor:
                     config_sha256=sha256(config).hexdigest(),
                     control_port=self.listener.getsockname()[1],
                     profile_id=secrets.token_hex(16), mainnet_allowed=False)
+                if shared_profile is not None:
+                    from .shared_regtest import PROFILE_SCHEMA as SHARED_SCHEMA
+                    profile.update(schema=SHARED_SCHEMA, shared_profile=shared_profile.record())
                 create_once(root, 'supervisor.profile',
                     json.dumps(profile, sort_keys=True).encode('ascii'))
             self.profile = _profile_read(root)
+            expected = None if shared_profile is None else shared_profile.record()
+            if self.profile.get('shared_profile') != expected:
+                raise ManagedCoreError('SHARED_EXPLICIT_PROFILE_MISMATCH')
             storage().validate_directory(self.directory)
             self._check_profile()
             self.guard = ReplayGuard(read_exact(root, 'supervisor.token', length=32))
@@ -164,7 +186,9 @@ class CoreSupervisor:
                 or self.profile['cli_sha256'] != self.receipt['wam_cli_sha256']
                 or self.profile['config_sha256'] != sha256(config).hexdigest()):
             raise ManagedCoreError('MANAGED_IDENTITY_CHANGED')
-        return local_rpc_port(self.directory)
+        shared = getattr(self, 'shared_profile', None)
+        return (local_rpc_port(self.directory) if shared is None else
+                local_rpc_port(self.directory, shared_profile=shared))
 
     def _check_core(self):
         # A long-running controller must not reuse intake from construction
@@ -220,10 +244,12 @@ class CoreSupervisor:
                 cwd=self.node.parent if sys.platform == 'win32' else self.directory,
                 creationflags=0x08000000 if sys.platform == 'win32' else 0)
             self.binding = OwnedCoreBinding(self.process, self.core, self.directory)
+            self.binding.shared_profile = self.shared_profile
             # Writes stay behind Q02/Q03 signed CLI. No HTTP write API or IPC
             # wallet authority is added. This grant is local to this owner.
+            options = {} if self.shared_profile is None else {'shared_profile':self.shared_profile}
             register(self.process, self.core, self.directory,
-                     authorized_disposable_mutation=True)
+                     authorized_disposable_mutation=True, **options)
             self._registered = True
             deadline = time.monotonic() + timeout
             while time.monotonic() < deadline:
@@ -249,6 +275,9 @@ class CoreSupervisor:
                             or info['blocks']<self._minimum_recovery_height):
                         raise ManagedCoreError('MANAGED_RECOVERY_HEIGHT_REGRESSED')
                     self._height_snapshot=info['blocks']
+                    if self.shared_profile is not None:
+                        from .shared_regtest import block_magic
+                        block_magic(self.directory)
                     self.journal.append('RUNNING',self.process.pid)
                     self.state = 'ready'
                     return

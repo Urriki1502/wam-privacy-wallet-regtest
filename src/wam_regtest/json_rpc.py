@@ -214,9 +214,11 @@ class ManagedReadRpc:
         self._last_completed = None
         self._last_attest = None
         self._config_directory = directory
+        self._shared_profile = getattr(binding, 'shared_profile', None)
         self._credentials = None
         try:
-            credentials = CredentialSource(directory)
+            credentials = (CredentialSource(directory) if self._shared_profile is None else
+                           CredentialSource(directory, shared_profile=self._shared_profile))
             self._credentials = credentials
             self._auth = self._build_auth(credentials)
             # The bytes used for the header must still belong to the pinned
@@ -338,9 +340,14 @@ class ManagedReadRpc:
                 self.close()
                 raise RpcError('RPC_GENESIS_DENIED')
             self._request('getnetworkinfo', [])
-            if self._request('getconnectioncount', []) != 0:
-                self.close()
-                raise RpcError('RPC_EXTERNAL_PEERS_DENIED')
+            peers = self._request('getconnectioncount', [])
+            if self._shared_profile is None:
+                if peers != 0:
+                    self.close()
+                    raise RpcError('RPC_EXTERNAL_PEERS_DENIED')
+            else:
+                from .shared_regtest import peer_status
+                peer_status(self._config_directory)
             self._last_attest = time.monotonic()
             return info
 

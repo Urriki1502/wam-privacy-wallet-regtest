@@ -20,9 +20,20 @@ _FIXED = {'port':None,'rpcport':None,'rpcuser':None,'rpcpassword':None,
     'coinstatsindex':'1','fallbackfee':'0.0001'}
 
 
-def local_rpc_port(datadir):
+def local_rpc_port(datadir, *, shared_profile=None):
     """Read bounded private config; return only the local port, never secrets."""
     import sys
+    if shared_profile is None:
+        from .rpc_scope import identity
+        try:
+            shared_profile = getattr(identity(datadir), 'shared_profile', None)
+        except OSError:
+            pass  # Original private-directory reader still refuses absence.
+    if shared_profile is not None:
+        from .rpc_credentials import private_bytes, parse_profile
+        raw, _ = private_bytes(datadir, 'wam.conf', 4096)
+        mode = 'config' if b'rpcuser=' in raw or b'rpcpassword=' in raw else 'cookie'
+        return parse_profile(raw, mode, shared_profile=shared_profile)[0]
     if sys.platform=="win32":
         from .windows_core_transport import local_rpc_port as windows_port
         try:return windows_port(datadir)
@@ -68,18 +79,24 @@ def local_rpc_port(datadir):
 
 
 
-def parse_local_config(raw):
+def parse_local_config(raw, *, shared_profile=None):
     try:
+        fixed = _FIXED
+        if shared_profile is not None:
+            from .shared_regtest import SharedRegtestProfile
+            if type(shared_profile) is not SharedRegtestProfile:
+                raise NetworkPolicyError('SHARED_EXPLICIT_PROFILE_REQUIRED')
+            fixed = shared_profile.settings()
         lines=raw.decode('ascii').splitlines()
         if lines[:3]!=['regtest=1','server=1','[regtest]']:
             raise NetworkPolicyError('LOCAL_RPC_SCOPE_DENIED')
         config={}
         for line in lines[3:]:
             key,value=line.split('=',1)
-            if key in config or key not in _FIXED:
+            if key in config or key not in fixed:
                 raise NetworkPolicyError('LOCAL_RPC_OPTION_DENIED')
             config[key]=value
-        if set(config)!=set(_FIXED) or any(config[k]!=v for k,v in _FIXED.items() if v is not None):
+        if set(config)!=set(fixed) or any(config[k]!=v for k,v in fixed.items() if v is not None):
             raise NetworkPolicyError('LOCAL_RPC_PROFILE_DENIED')
         ports=[]
         for key in ('port','rpcport'):

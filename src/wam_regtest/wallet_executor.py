@@ -40,7 +40,7 @@ COMMANDS=frozenset(('open','snapshot','prepare','sign','broadcast','cancel','loc
     'unlock','backup','recover','complete_recovery','recovery_status','network',
     'disclose','mine','activate','ci_confirm','confirm','recovery_verify',
     'inspect_confirmed','backup_verify','backup_defer','acknowledge_create_pending',
-    'core_status','core_start','core_restart','control','quit'))
+    'core_status','core_start','core_restart','control','quit','network_status','network_active'))
 
 
 class WalletExecutor:
@@ -134,11 +134,12 @@ class WalletExecutor:
 
 class ManagedWalletBackend:
     """Original Core + wallet stay in this executor for their entire lifetime."""
-    def __init__(self,root,core,source,*,keychain=None,mining_address=None,_anchor_factory=None):
+    def __init__(self,root,core,source,*,keychain=None,mining_address=None,_anchor_factory=None,shared_profile=None):
         self.root=root;self.core=core;self.source=source;self.keychain=keychain
         self.mining_address=mining_address;self.owner=self.session=None
         self._executor=None;self._anchor_factory=_anchor_factory;self._anchor_ready=False
         self._control_thread=None;self._control_fault=False
+        self.shared_profile = shared_profile
 
     def attach_executor(self,executor):
         if self._executor is not None:raise WalletExecutorError('WALLET_EXECUTOR_ALREADY_BOUND')
@@ -167,7 +168,8 @@ class ManagedWalletBackend:
                 if not re.fullmatch('wam-fusion-core-[0-9a-f]{16}',self.root.name):
                     raise WalletExecutorError('MANAGED_PROFILE_NAME_DENIED')
                 create_directory(self.root)
-            self.owner=CoreSupervisor(self.root,self.core,authorized=True)
+            options = {} if self.shared_profile is None else {'shared_profile':self.shared_profile}
+            self.owner=CoreSupervisor(self.root,self.core,authorized=True,**options)
             self.owner._control_bridge=lambda op:self._executor.request('control',op)
             self._control_thread=threading.Thread(target=self._serve_control,name='WAM-control-io',daemon=True)
             self._control_thread.start()
@@ -191,6 +193,30 @@ class ManagedWalletBackend:
         if self.session is not None:self.session.lock()
 
     def execute(self,action,args,kwargs):
+        if action in ('network_status','network_active'):
+            from .shared_regtest import SharedRegtestProfile, peer_status, block_magic
+            from .managed_wallet_checkpoint import _owned
+            from .core import _read_cli
+            if type(self.shared_profile) is not SharedRegtestProfile or kwargs:
+                raise WalletExecutorError('SHARED_EXPLICIT_PROFILE_REQUIRED')
+            if (action == 'network_status' and args or action == 'network_active'
+                    and (len(args) != 1 or type(args[0]) is not bool)):
+                raise WalletExecutorError('SHARED_NETWORK_ARGUMENTS_DENIED')
+            owner = self._core()
+            _owned(owner)
+            prefix = [str(owner.cli), '-datadir='+str(owner.directory)]
+            if action == 'network_active':
+                # Exactly one explicit local Core write. No retry on timeout.
+                _read_cli(prefix+['setnetworkactive','true' if args[0] else 'false'])
+            state = peer_status(owner.directory)
+            info = _read_cli(prefix+['getnetworkinfo'])
+            return dict(state, status='SHARED_REGTEST_NETWORK_OBSERVED',
+                        block_record_magic=block_magic(owner.directory),
+                        height=owner.read.call('getblockcount'),
+                        tip=owner.read.call('getbestblockhash'),
+                        genesis=owner.read.call('getblockhash',[0]),
+                        network_active=info.get('networkactive'),
+                        mempool=tuple(_read_cli(prefix+['getrawmempool'])))
         if action=='open':return self._open(*args,**kwargs)
         if action=='unlock':
             if len(args)!=2 or args[1] is not False:

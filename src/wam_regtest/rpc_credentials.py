@@ -75,24 +75,29 @@ def _windows_private_bytes(directory,name,limit,*,core_cookie):
         finally:s.close(h)
 
 
-def parse_profile(raw,mode):
+def parse_profile(raw,mode,*,shared_profile=None):
     from .network_policy import parse_local_config,_FIXED
     if type(raw) is not bytes or not 1<=len(raw)<=4096 or mode not in ('config','cookie'):
         raise CredentialError('RPC_AUTH_MODE_DENIED')
+    if shared_profile is not None:
+        from .shared_regtest import SharedRegtestProfile
+        if type(shared_profile) is not SharedRegtestProfile:
+            raise CredentialError('SHARED_EXPLICIT_PROFILE_REQUIRED')
     try:
         if mode=='config':
-            port=parse_local_config(raw)
+            port=parse_local_config(raw, shared_profile=shared_profile)
             values=dict(line.split('=',1) for line in raw.decode('ascii').splitlines()[3:])
             return port,(values['rpcuser']+':'+values['rpcpassword']).encode('ascii')
         lines=raw.decode('ascii').splitlines()
         if lines[:3]!=['regtest=1','server=1','[regtest]']:raise ValueError
         pairs=[line.split('=',1) for line in lines[3:]]
         values=dict(pairs)
-        if len(values)!=len(pairs) or set(values)!=set(_FIXED)-{'rpcuser','rpcpassword'}:raise ValueError
+        fixed = _FIXED if shared_profile is None else shared_profile.settings()
+        if len(values)!=len(pairs) or set(values)!=set(fixed)-{'rpcuser','rpcpassword'}:raise ValueError
         # Reuse the exact existing protected network profile. Dummy values
         # validate its shape only; they are never sent or written to Core.
         check=raw.rstrip(b'\r\n')+b'\nrpcuser=disposable_'+b'0'*16+b'\nrpcpassword='+b'0'*64+b'\n'
-        port=parse_local_config(check)
+        port=parse_local_config(check, shared_profile=shared_profile)
         return port,None
     except Exception:raise CredentialError('RPC_CONFIG_PROFILE_DENIED') from None
 
@@ -103,13 +108,13 @@ class CredentialSource:
     The signed CLI reads the original private config/cookie itself. No secret
     enters argv, diagnostics or a persistent Python HTTP connection.
     """
-    def __init__(self,directory):
+    def __init__(self,directory,*,shared_profile=None):
         if type(directory) is not type(Path()) or not directory.is_absolute():
             raise CredentialError('RPC_CREDENTIAL_PATH_DENIED')
         self.directory=directory
         raw,identity=private_bytes(directory,'wam.conf',4096)
         self.mode='config' if b'rpcuser=' in raw or b'rpcpassword=' in raw else 'cookie'
-        self.port,_=parse_profile(raw,self.mode)
+        self.port,_=parse_profile(raw,self.mode, shared_profile=shared_profile)
         self._config=(sha256(raw).digest(),identity)
         self._cookie=None
         if self.mode=='cookie':

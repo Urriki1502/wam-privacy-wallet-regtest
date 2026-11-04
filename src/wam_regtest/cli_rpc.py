@@ -16,10 +16,10 @@ class CliRpcError(ValueError):
 
 READS=frozenset(('getblockchaininfo','getblockcount','getbestblockhash',
     'getblockhash','getblock','getconnectioncount','getnetworkinfo',
-    'getrawmempool','gettxout','listwallets','waitfornewblock'))
+    'getrawmempool','gettxout','listwallets','waitfornewblock','getpeerinfo'))
 WRITES=frozenset(('testmempoolaccept','sendrawtransaction','generatetoaddress',
     'invalidateblock','reconsiderblock','createwallet','getnewaddress','stop',
-    'gettxoutsetinfo'))  # Core flush side effect: require owned mutation consent.
+    'gettxoutsetinfo','setnetworkactive'))  # All writes require original owned consent.
 HASH=re.compile(r'[0-9a-f]{64}\Z')
 LIMIT=8*1024*1024
 
@@ -43,8 +43,9 @@ def validate(args):
     method,*params=args
     valid=False
     if method in ('getblockchaininfo','getblockcount','getbestblockhash','getconnectioncount',
-                  'getnetworkinfo','getrawmempool','listwallets','stop','getnewaddress'):
+                  'getnetworkinfo','getrawmempool','listwallets','stop','getnewaddress','getpeerinfo'):
         valid=not params
+    elif method=='setnetworkactive':valid=params in (['true'],['false'])
     elif method=='createwallet':valid=params==['test']
     elif method=='gettxoutsetinfo':valid=params==['none']
     elif method in ('getblockhash','waitfornewblock'):
@@ -109,6 +110,8 @@ def decode(raw,method,params):
             good=type(value) is list and len(value)<=100000 and all(type(v) is str and HASH.fullmatch(v) for v in value)
             if method=='generatetoaddress':good=good and len(value)==int(params[0])
         elif method=='listwallets':good=type(value) is list and all(type(v) is str for v in value)
+        elif method=='getpeerinfo':good=type(value) is list and len(value)<=8 and all(type(v) is dict for v in value)
+        elif method=='setnetworkactive':good=type(value) is bool and value is (params==['true'])
         elif method=='testmempoolaccept':
             good=type(value) is list and len(value)==1 and type(value[0]) is dict and type(value[0].get('allowed')) is bool
         else:good=value is None # invalidate/reconsider return CLI JSON null.
