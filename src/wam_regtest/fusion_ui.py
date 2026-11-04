@@ -1,96 +1,151 @@
-"""Fusion 2.0 shared Qt presentation: verified snapshots, never wallet authority."""
+"""Fusion Black & Gold Qt presentation: verified snapshots, never wallet authority."""
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, QRectF, QPointF, QSize, Signal
-from PySide6.QtGui import QColor, QPainter, QPen, QIcon, QPixmap, QPolygonF, QLinearGradient, QPainterPath, QFont, QFontMetrics
-from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget, QToolTip, QSizePolicy, QTableWidget, QTableWidgetItem, QPlainTextEdit, QCheckBox
+from PySide6.QtGui import (
+    QColor, QPainter, QPen, QIcon, QPixmap, QPolygonF, QLinearGradient,
+    QPainterPath, QFont, QFontMetrics, QRadialGradient,
+)
+from PySide6.QtWidgets import (
+    QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+    QVBoxLayout, QWidget, QToolTip, QSizePolicy, QTableWidget, QTableWidgetItem,
+    QPlainTextEdit, QCheckBox, QToolButton,
+)
 from .wallet_read import WalletReadSnapshot, format_wam
 from .branding import brand_image
 
 SPACING = (4, 8, 12, 16, 24, 32)
-TYPE = {'display':42, 'heading':26, 'section':17, 'body':14, 'caption':12}
+TYPE = {'display': 40, 'heading': 26, 'section': 17, 'body': 14, 'caption': 12}
+FUSION_NAV_PAGES = (
+    ('Overview', 'overview'),
+    ('Receive', 'receive'),
+    ('History', 'history'),
+    ('Send', 'send'),
+    ('Security', 'security'),
+    ('Network', 'network'),
+    ('Settings', 'settings'),
+)
 
 
 def fusion_palette(mode):
-    # One restrained, native-desktop palette. Brand gold is reserved for
-    # small identity details; interactive actions use a single accessible blue.
-    if mode=='dark':
-        return dict(bg='#101114',surface='#1C1D21',panel='#24262B',text='#F5F5F7',muted='#A1A3AB',border='#34363C',
-            tint='#292B30',accent='#81B5FF',onaccent='#101E35',warning='#332A1B',warning_text='#F1C77D',
-            green='#69D9AB',blue='#81B5FF',red='#FF9A9E',hero_bottom='#222831',selection='#253C5D',
-            grid='#383B41',chart_empty='#888C95',hover='#343A45',sidebar='#17181B',success='#69D9AB',
-            pending='#E5BE79',error='#FF9A9E',focus='#81B5FF',shadow='#0A0B0D',
-            brand='#E6C48A',segment='#25272B')
-    if mode=='light':
-        return dict(bg='#F5F5F7',surface='#FFFFFF',panel='#F4F5F8',text='#1D1D1F',muted='#696B73',border='#E4E5E9',
-            tint='#EDF0F5',accent='#1666CC',onaccent='#FFFFFF',warning='#FFF5E5',warning_text='#80561A',
-            green='#147A5A',blue='#1666CC',red='#B8424C',hero_bottom='#E9F2FD',selection='#E4EEFC',
-            grid='#E4E6EC',chart_empty='#8E9199',hover='#E4EAF3',sidebar='#F8F8FA',success='#147A5A',
-            pending='#91601D',error='#B8424C',focus='#1666CC',shadow='#EAEBEE',
-            brand='#9B742E',segment='#E9EAEE')
+    if mode == 'dark':
+        return dict(
+            bg='#0B0B0D', surface='#141416', panel='#1C1C20', text='#F7F4EC',
+            muted='#B7B1A4', border='#2F2A22', tint='#1F1C16', accent='#E0C36A',
+            onaccent='#1A1406', warning='#3A3018', warning_text='#F1C77D',
+            green='#3DDC97', blue='#7EB6FF', red='#FF8B8F', hero_bottom='#1A150C',
+            selection='#3A3018', grid='#3A342C', chart_empty='#8E8A80',
+            hover='#24221C', sidebar='#09090B', success='#3DDC97',
+            pending='#E5BE79', error='#FF8B8F', focus='#E0C36A', shadow='#000000',
+            brand='#E8C98A', segment='#1A1814')
+    if mode == 'light':
+        return dict(
+            bg='#F6F3EC', surface='#FFFFFF', panel='#F3EEE3', text='#1C1914',
+            muted='#6A6458', border='#E4DCC8', tint='#EFE6D4', accent='#7A5A12',
+            onaccent='#FFF8E8', warning='#FFF4D8', warning_text='#80561A',
+            green='#0F7A52', blue='#1666CC', red='#B8424C', hero_bottom='#F4EBD6',
+            selection='#F0E2BE', grid='#E4DCC8', chart_empty='#8E8A80',
+            hover='#E8DCC3', sidebar='#F4EFE4', success='#0F7A52',
+            pending='#91601D', error='#B8424C', focus='#7A5A12', shadow='#E8E0D0',
+            brand='#9B742E', segment='#E9E1CF')
     raise ValueError('FUSION_THEME_DENIED')
 
 
 def fusion_stylesheet(mode):
-    c=fusion_palette(mode)
+    c = fusion_palette(mode)
     return f"""
-    QMainWindow,QWidget#WalletRoot {{background:{c['bg']};color:{c['text']};}}
+    QMainWindow,QWidget#WalletRoot,QDialog,QMessageBox,QInputDialog {{
+        background:{c['bg']};color:{c['text']};
+    }}
     QWidget {{font-size:14px;}}
     QFrame#FusionSidebar {{background:{c['sidebar']};border-right:1px solid {c['border']};}}
     QFrame#FusionTopbar {{background:{c['bg']};border-bottom:1px solid {c['border']};}}
-    QFrame#FusionPanel,QFrame#ContentCard,QFrame#HeaderCard {{background:{c['surface']};border:1px solid {c['border']};border-radius:18px;}}
+    QFrame#FusionPanel,QFrame#ContentCard,QFrame#HeaderCard,QDialog#FusionApproval,QDialog#FusionPanel {{
+        background:{c['surface']};border:1px solid {c['border']};border-radius:18px;
+    }}
     QFrame#FusionInset {{background:{c['panel']};border:1px solid {c['border']};border-radius:14px;}}
+    QFrame#FusionHero {{background:transparent;}}
     QFrame#FusionSegmented {{background:{c['segment']};border:1px solid {c['border']};border-radius:12px;}}
     QToolButton#FusionSegment {{background:transparent;color:{c['muted']};border:0;border-radius:9px;padding:10px 16px;font-weight:600;}}
-    QToolButton#FusionSegment:checked {{background:{c['surface']};color:{c['text']};border:1px solid {c['border']};}}
+    QToolButton#FusionSegment:checked {{background:{c['accent']};color:{c['onaccent']};}}
     QToolButton#FusionSegment:hover:!checked {{background:{c['hover']};color:{c['text']};}}
     QToolButton#FusionAdvanced {{background:transparent;color:{c['accent']};border:0;text-align:left;padding:10px;font-weight:600;}}
-    QFrame#FusionHero {{background:transparent;}}
+    QToolButton#FusionQuick {{
+        background:{c['panel']};color:{c['text']};border:1px solid {c['border']};
+        border-radius:16px;padding:16px 10px;font-weight:600;
+    }}
+    QToolButton#FusionQuick:hover:enabled {{border:1px solid {c['accent']};background:{c['hover']};}}
+    QToolButton#FusionQuick:disabled {{color:{c['muted']};}}
     QWidget#FusionInner,QScrollArea#FusionScroll,QWidget#FusionTransparent {{background:transparent;border:0;}}
     QLabel {{color:{c['text']};background:transparent;border:0;}}
-    QLabel#BrandTitle {{font-size:22px;font-weight:700;letter-spacing:0.3px;}}
+    QLabel#BrandTitle {{font-size:18px;font-weight:700;letter-spacing:0.2px;color:{c['brand']};}}
     QLabel#PageTitle {{font-size:28px;font-weight:700;}}
-    QLabel#FusionBalance,QLabel#BalanceValue {{font-size:43px;font-weight:600;color:{c['text']};}}
+    QLabel#FusionBalance,QLabel#BalanceValue {{font-size:40px;font-weight:650;color:{c['text']};}}
     QLabel#FusionKicker {{font-size:11px;font-weight:600;color:{c['muted']};letter-spacing:0.8px;}}
-    QLabel#FusionCardTitle {{font-size:17px;font-weight:600;}}
-    QLabel#FusionCardValue {{font-size:21px;font-weight:600;}}
+    QLabel#FusionCardTitle {{font-size:16px;font-weight:600;}}
+    QLabel#FusionCardValue {{font-size:20px;font-weight:600;}}
     QLabel#FusionMuted,QLabel#SecondaryLabel,QLabel#StatusText,QLabel#FusionEmpty {{color:{c['muted']};font-size:13px;}}
     QLabel#FusionVerified {{color:{c['green']};font-weight:600;}}
     QLabel#FusionInfo {{color:{c['blue']};}}
     QLabel#FusionGold {{color:{c['warning_text']};font-weight:600;}}
-    QLabel#FusionBadge {{color:{c['accent']};background:{c['selection']};border:0;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:600;}}
+    QLabel#FusionBadge {{color:{c['onaccent']};background:{c['accent']};border:0;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:700;}}
     QLabel#Warning {{color:{c['warning_text']};background:{c['warning']};border-radius:9px;padding:10px;min-height:64px;font-size:11px;}}
-    QLabel#ReceiveCode,QPlainTextEdit#ReceiveCode {{font-size:14px;background:{c['panel']};border:1px solid {c['border']};border-radius:12px;padding:16px;}}
+    QLabel#ReceiveCode,QPlainTextEdit#ReceiveCode {{
+        font-size:14px;background:{c['panel']};border:1px solid {c['border']};border-radius:12px;padding:16px;
+    }}
     QListWidget {{background:transparent;color:{c['muted']};border:0;padding:2px;font-size:14px;outline:0;}}
-    QListWidget::item {{padding:12px 13px;border-radius:11px;margin:3px 0;}}
-    QListWidget::item:selected {{background:{c['selection']};color:{c['text']};font-weight:600;}}
-    QListWidget::item:hover:!selected {{background:{c['tint']};color:{c['text']};}}
-    QLineEdit,QTextEdit,QPlainTextEdit {{background:{c['panel']};color:{c['text']};selection-background-color:{c['selection']};border:1px solid {c['border']};border-radius:12px;padding:12px;}}
-    QLineEdit:focus,QPushButton:focus,QComboBox:focus {{border:2px solid {c['focus']};}}
+    QListWidget::item {{padding:9px 12px;border-radius:11px;margin:2px 0;}}
+    QListWidget::item:selected {{background:{c['accent']};color:{c['onaccent']};font-weight:700;}}
+    QListWidget::item:hover:!selected {{background:{c['hover']};color:{c['text']};}}
+    QLineEdit,QTextEdit,QPlainTextEdit {{
+        background:{c['panel']};color:{c['text']};selection-background-color:{c['selection']};
+        border:1px solid {c['border']};border-radius:12px;padding:12px;
+    }}
+    QLineEdit:focus,QPushButton:focus,QComboBox:focus,QToolButton:focus {{border:2px solid {c['focus']};}}
     QLineEdit:disabled {{color:{c['muted']};background:{c['bg']};}}
-    QPushButton,QComboBox {{background:{c['tint']};color:{c['text']};border:1px solid {c['border']};border-radius:12px;padding:12px 17px;font-weight:600;}}
-    QPushButton#PrimaryButton,QPushButton#FusionPrimary {{background:{c['accent']};color:{c['onaccent']};border:1px solid {c['accent']};}}
+    QPushButton,QComboBox {{
+        background:{c['tint']};color:{c['text']};border:1px solid {c['border']};
+        border-radius:12px;padding:12px 17px;font-weight:600;
+    }}
+    QPushButton#PrimaryButton,QPushButton#FusionPrimary {{
+        background:{c['accent']};color:{c['onaccent']};border:1px solid {c['accent']};
+    }}
     QPushButton#FusionSecondary {{background:{c['tint']};color:{c['text']};border:1px solid {c['border']};}}
     QPushButton#FusionDestructive {{background:{c['surface']};color:{c['red']};border:1px solid {c['border']};}}
     QPushButton:hover:enabled,QComboBox:hover {{background:{c['hover']};border:1px solid {c['focus']};}}
-    QPushButton#FusionPrimary:hover:enabled,QPushButton#PrimaryButton:hover:enabled {{background:{c['accent']};border:1px solid {c['onaccent']};}}
+    QPushButton#FusionPrimary:hover:enabled,QPushButton#PrimaryButton:hover:enabled {{
+        background:{c['brand']};border:1px solid {c['onaccent']};
+    }}
     QPushButton:pressed:enabled {{background:{c['selection']};}}
-    QPushButton#FusionPrimary:disabled,QPushButton#PrimaryButton:disabled,QPushButton#FusionSecondary:disabled,QPushButton#FusionDestructive:disabled,QPushButton:disabled {{background:{c['panel']};color:{c['muted']};border:1px solid {c['border']};}}
+    QPushButton#FusionPrimary:disabled,QPushButton#PrimaryButton:disabled,
+    QPushButton#FusionSecondary:disabled,QPushButton#FusionDestructive:disabled,QPushButton:disabled {{
+        background:{c['panel']};color:{c['muted']};border:1px solid {c['border']};
+    }}
     QComboBox::drop-down {{border:0;width:22px;}}
-    QComboBox QAbstractItemView {{background:{c['surface']};color:{c['text']};selection-background-color:{c['selection']};border:1px solid {c['border']};}}
+    QComboBox QAbstractItemView {{
+        background:{c['surface']};color:{c['text']};selection-background-color:{c['selection']};
+        border:1px solid {c['border']};
+    }}
     QCheckBox {{color:{c['text']};spacing:8px;}}
     QCheckBox::indicator {{width:17px;height:17px;border:1px solid {c['muted']};border-radius:4px;background:{c['panel']};}}
     QCheckBox::indicator:checked {{background:{c['accent']};border:1px solid {c['accent']};}}
-    QTableWidget,QTableWidget#FusionActivityTable {{background:{c['surface']};alternate-background-color:{c['surface']};color:{c['text']};border:0;gridline-color:{c['border']};selection-background-color:{c['selection']};selection-color:{c['text']};}}
+    QTableWidget,QTableWidget#FusionActivityTable {{
+        background:{c['surface']};alternate-background-color:{c['surface']};color:{c['text']};
+        border:0;gridline-color:{c['border']};selection-background-color:{c['selection']};selection-color:{c['text']};
+    }}
     QTableWidget::item {{padding:10px;border-bottom:1px solid {c['border']};}}
     QTableWidget::item:selected {{background:{c['selection']};color:{c['text']};}}
-    QHeaderView::section {{background:{c['surface']};color:{c['muted']};border:0;border-bottom:1px solid {c['border']};padding:10px;font-size:12px;font-weight:600;}}
+    QHeaderView::section {{
+        background:{c['surface']};color:{c['muted']};border:0;border-bottom:1px solid {c['border']};
+        padding:10px;font-size:12px;font-weight:600;
+    }}
     QProgressBar:horizontal {{background:{c['panel']};border:1px solid {c['border']};border-radius:8px;min-height:6px;max-height:6px;}}
     QProgressBar::chunk {{background:{c['accent']};border-radius:4px;}}
-    QScrollBar:vertical {{background:transparent;width:7px;}} QScrollBar::handle:vertical {{background:{c['border']};border-radius:3px;min-height:30px;}}
-    QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical {{height:0;}} QScrollBar::add-page:vertical,QScrollBar::sub-page:vertical {{background:transparent;}}
+    QScrollBar:vertical {{background:transparent;width:7px;}}
+    QScrollBar::handle:vertical {{background:{c['border']};border-radius:3px;min-height:30px;}}
+    QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical {{height:0;}}
+    QScrollBar::add-page:vertical,QScrollBar::sub-page:vertical {{background:transparent;}}
     QToolTip {{background:{c['surface']};color:{c['text']};border:1px solid {c['border']};padding:8px;}}
-    QDialog,QMessageBox,QInputDialog {{background:{c['bg']};color:{c['text']};}}
     """
 
 
@@ -107,247 +162,627 @@ class StateSwitch(QCheckBox):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         if not self.isEnabled():
             painter.setOpacity(0.45)
-        palette = self.palette()
+        mode = self.property('fusion_mode') or 'dark'
+        colors = fusion_palette(mode if mode in ('dark', 'light') else 'dark')
         track = QRectF(2, (self.height() - 24) / 2, 46, 24)
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(palette.highlight() if self.isChecked() else palette.mid())
+        painter.setBrush(QColor(colors['green'] if self.isChecked() else colors['border']))
         painter.drawRoundedRect(track, 12, 12)
-        painter.setBrush(QColor('white'))
-        painter.drawEllipse(QRectF(28 if self.isChecked() else 6, track.y()+4, 16, 16))
-        painter.setPen(palette.windowText().color())
-        painter.drawText(QRectF(58, 0, self.width()-58, self.height()),
+        painter.setBrush(QColor(colors['onaccent'] if self.isChecked() else colors['text']))
+        painter.drawEllipse(QRectF(28 if self.isChecked() else 6, track.y() + 4, 16, 16))
+        painter.setPen(QColor(colors['text']))
+        painter.drawText(QRectF(58, 0, self.width() - 58, self.height()),
                          Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, self.text())
         if self.hasFocus():
             painter.setBrush(Qt.BrushStyle.NoBrush)
-            painter.setPen(QPen(palette.highlight().color(), 1))
-            painter.drawRoundedRect(track.adjusted(-1,-1,1,1), 13, 13)
+            painter.setPen(QPen(QColor(colors['focus']), 1))
+            painter.drawRoundedRect(track.adjusted(-1, -1, 1, 1), 13, 13)
 
 
 class ReadableText(QPlainTextEdit):
     """Selectable exact plaintext with genuine wrap-anywhere; no hidden characters."""
-    def __init__(self,text=''):
+    def __init__(self, text=''):
         super().__init__()
-        from PySide6.QtGui import QTextOption,QFontDatabase
-        self.setReadOnly(True);self.setWordWrapMode(QTextOption.WrapMode.WrapAnywhere)
-        families=set(QFontDatabase.families())
-        family=next((f for f in ('Menlo','Consolas','Courier New') if f in families),None)
-        self.setFont(QFont(family,10) if family else QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
-        self.setSizePolicy(QSizePolicy.Policy.Expanding,QSizePolicy.Policy.Fixed)
-        self.setMinimumWidth(0);self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setPlainText(text);self._fit()
-    def text(self):return self.toPlainText()
-    def setText(self,text):
-        if text!=self.toPlainText():self.setPlainText(text)
+        from PySide6.QtGui import QTextOption, QFontDatabase
+        self.setReadOnly(True)
+        self.setWordWrapMode(QTextOption.WrapMode.WrapAnywhere)
+        families = set(QFontDatabase.families())
+        family = next((f for f in ('Menlo', 'Consolas', 'Courier New') if f in families), None)
+        self.setFont(QFont(family, 10) if family else QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setMinimumWidth(0)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setPlainText(text)
         self._fit()
+
+    def text(self):
+        return self.toPlainText()
+
+    def setText(self, text):
+        if text != self.toPlainText():
+            self.setPlainText(text)
+        self._fit()
+
     def _fit(self):
         import math
-        fm=self.fontMetrics();width=max(80,self.viewport().width()-28)
-        lines=sum(max(1,math.ceil(fm.horizontalAdvance(line)/width)) for line in self.toPlainText().split('\n'))
-        self.setFixedHeight(min(340,max(100,lines*fm.lineSpacing()+64)))
-    def resizeEvent(self,event):super().resizeEvent(event);self._fit()
-    def minimumSizeHint(self):return QSize(0,68)
+        fm = self.fontMetrics()
+        width = max(80, self.viewport().width() - 28)
+        lines = sum(max(1, math.ceil(fm.horizontalAdvance(line) / width)) for line in self.toPlainText().split('\n'))
+        self.setFixedHeight(min(340, max(100, lines * fm.lineSpacing() + 64)))
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._fit()
+
+    def minimumSizeHint(self):
+        return QSize(0, 68)
 
 
-def label(text='',role='FusionMuted',selectable=False):
-    if role=='ReceiveCode':
-        obj=ReadableText(text);obj.setObjectName(role);return obj
-    obj=QLabel(text);obj.setObjectName(role);obj.setWordWrap(role not in ('FusionKicker','FusionBadge'));obj.setSizePolicy(QSizePolicy.Policy.Preferred,QSizePolicy.Policy.Maximum)
-    if role=='FusionBadge':obj.setFixedHeight(28);obj.setSizePolicy(QSizePolicy.Policy.Maximum,QSizePolicy.Policy.Fixed)
-    if selectable:obj.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+def label(text='', role='FusionMuted', selectable=False):
+    if role == 'ReceiveCode':
+        obj = ReadableText(text)
+        obj.setObjectName(role)
+        return obj
+    obj = QLabel(text)
+    obj.setObjectName(role)
+    obj.setWordWrap(role not in ('FusionKicker', 'FusionBadge'))
+    obj.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+    if role == 'FusionBadge':
+        obj.setFixedHeight(28)
+        obj.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+    if selectable:
+        obj.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
     return obj
 
 
-def panel(title=None,subtitle=None,*,inset=False):
-    obj=QFrame();obj.setObjectName('FusionInset' if inset else 'FusionPanel')
-    layout=QVBoxLayout(obj);layout.setContentsMargins(22,20,22,20);layout.setSpacing(12);layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-    if title:layout.addWidget(label(title,'FusionCardTitle'))
-    if subtitle:layout.addWidget(label(subtitle))
-    return obj,layout
+def panel(title=None, subtitle=None, *, inset=False):
+    obj = QFrame()
+    obj.setObjectName('FusionInset' if inset else 'FusionPanel')
+    layout = QVBoxLayout(obj)
+    layout.setContentsMargins(22, 20, 22, 20)
+    layout.setSpacing(12)
+    layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+    if title:
+        layout.addWidget(label(title, 'FusionCardTitle'))
+    if subtitle:
+        layout.addWidget(label(subtitle))
+    return obj, layout
 
 
-def page(title,subtitle,kicker='WAM FUSION / REGTEST'):
-    scroll=QScrollArea();scroll.setObjectName('FusionScroll');scroll.setFrameShape(QFrame.Shape.NoFrame);scroll.setWidgetResizable(True)
-    root=QWidget();root.setObjectName('FusionInner');scroll.setWidget(root)
-    layout=QVBoxLayout(root);layout.setContentsMargins(4,4,12,16);layout.setSpacing(20)
-    layout.addWidget(label(kicker,'FusionKicker'));layout.addWidget(label(title,'PageTitle'));layout.addWidget(label(subtitle))
-    return scroll,layout
+def page(title, subtitle, kicker='WAM FUSION / REGTEST'):
+    scroll = QScrollArea()
+    scroll.setObjectName('FusionScroll')
+    scroll.setFrameShape(QFrame.Shape.NoFrame)
+    scroll.setWidgetResizable(True)
+    root = QWidget()
+    root.setObjectName('FusionInner')
+    scroll.setWidget(root)
+    layout = QVBoxLayout(root)
+    layout.setContentsMargins(4, 4, 12, 16)
+    layout.setSpacing(20)
+    layout.addWidget(label(kicker, 'FusionKicker'))
+    layout.addWidget(label(title, 'PageTitle'))
+    layout.addWidget(label(subtitle))
+    return scroll, layout
 
 
-def action(text,icon,primary=False):
-    button=QPushButton(text);button.setProperty('fusion_icon',icon)
+def action(text, icon, primary=False):
+    button = QPushButton(text)
+    button.setProperty('fusion_icon', icon)
     button.setObjectName('FusionPrimary' if primary else 'FusionSecondary')
-    button.setIconSize(QSize(18,18));return button
+    button.setIconSize(QSize(18, 18))
+    button.setCursor(Qt.CursorShape.PointingHandCursor)
+    return button
 
 
-_NAMES=('overview','receive','history','send','security','settings')
-def vector_icon(name,tone,dpr=2):
+def quick_action(text, icon):
+    button = QToolButton()
+    button.setObjectName('FusionQuick')
+    button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+    button.setProperty('fusion_icon', icon)
+    button.setText(text)
+    button.setIconSize(QSize(22, 22))
+    button.setCursor(Qt.CursorShape.PointingHandCursor)
+    button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+    button.setMinimumHeight(88)
+    return button
+
+
+_NAMES = tuple(name for _, name in FUSION_NAV_PAGES)
+
+
+def vector_icon(name, tone, dpr=2):
     """One original outline geometry family, rasterized at device resolution."""
-    color=QColor(tone)
-    if not color.isValid():raise ValueError('FUSION_ICON_COLOR_DENIED')
-    pix=QPixmap(int(24*dpr),int(24*dpr));pix.setDevicePixelRatio(dpr);pix.fill(Qt.GlobalColor.transparent)
-    p=QPainter(pix);p.setRenderHint(QPainter.RenderHint.Antialiasing);p.setPen(QPen(color,1.65,Qt.PenStyle.SolidLine,Qt.PenCapStyle.RoundCap,Qt.PenJoinStyle.RoundJoin));p.setBrush(Qt.BrushStyle.NoBrush)
-    def line(a,b,c,d):p.drawLine(QPointF(a,b),QPointF(c,d))
-    if name=='overview':
-        for x,y,w,h in ((3,3,7,7),(14,3,7,7),(3,14,7,7),(14,14,7,7)):p.drawRoundedRect(QRectF(x,y,w,h),1.5,1.5)
-    elif name in ('receive','send'):
-        if name=='receive':line(12,3,12,16);line(7,11,12,16);line(17,11,12,16);line(4,20,20,20)
-        else:p.drawPolygon(QPolygonF([QPointF(3,10),QPointF(21,3),QPointF(14,21),QPointF(10,14)]));line(10,14,21,3)
-    elif name=='history':p.drawEllipse(QRectF(4,4,16,16));line(12,7,12,12);line(12,12,16,14)
-    elif name in ('security','anchor'):
-        p.drawPolygon(QPolygonF([QPointF(12,3),QPointF(20,7),QPointF(19,16),QPointF(12,21),QPointF(5,16),QPointF(4,7)]));line(8,12,11,15);line(11,15,16,9)
-    elif name=='settings':
-        p.drawEllipse(QRectF(6,6,12,12));p.drawEllipse(QRectF(10,10,4,4))
-        for a,b,c,d in ((12,2,12,5),(12,19,12,22),(2,12,5,12),(19,12,22,12),(4,4,6,6),(18,18,20,20),(4,20,6,18),(18,6,20,4)):line(a,b,c,d)
-    elif name=='copy':p.drawRoundedRect(QRectF(8,8,12,13),2,2);line(4,16,4,3);line(4,3,16,3)
-    elif name in ('lock','unlock'):p.drawRoundedRect(QRectF(5,10,14,11),2,2);p.drawArc(QRectF(8,3,8,12),0 if name=='lock' else 20*16,180*16);line(12,14,12,17)
-    elif name=='backup':p.drawRoundedRect(QRectF(4,4,16,17),2,2);line(8,4,8,10);line(8,10,16,10);line(16,10,16,4);p.drawRect(QRectF(8,15,8,6))
-    elif name=='sync':p.drawArc(QRectF(4,4,16,16),35*16,260*16);line(19,3,20,9);line(20,9,14,8)
-    elif name=='core':p.drawRoundedRect(QRectF(6,6,12,12),2,2);p.drawRect(QRectF(10,10,4,4));
-    elif name=='check':line(5,12,10,17);line(10,17,20,6)
-    else:p.drawEllipse(QRectF(5,5,14,14));line(12,7,12,17);line(7,12,17,12)
-    p.end();return QIcon(pix)
+    color = QColor(tone)
+    if not color.isValid():
+        raise ValueError('FUSION_ICON_COLOR_DENIED')
+    pix = QPixmap(int(24 * dpr), int(24 * dpr))
+    pix.setDevicePixelRatio(dpr)
+    pix.fill(Qt.GlobalColor.transparent)
+    p = QPainter(pix)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    p.setPen(QPen(color, 1.65, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+    p.setBrush(Qt.BrushStyle.NoBrush)
+
+    def line(a, b, c, d):
+        p.drawLine(QPointF(a, b), QPointF(c, d))
+
+    if name in ('overview', 'home'):
+        p.drawPolygon(QPolygonF([QPointF(12, 3), QPointF(21, 11), QPointF(21, 21), QPointF(3, 21), QPointF(3, 11)]))
+        p.drawRect(QRectF(9, 14, 6, 7))
+    elif name in ('receive', 'send'):
+        if name == 'receive':
+            line(12, 3, 12, 16); line(7, 11, 12, 16); line(17, 11, 12, 16); line(4, 20, 20, 20)
+        else:
+            p.drawPolygon(QPolygonF([QPointF(3, 10), QPointF(21, 3), QPointF(14, 21), QPointF(10, 14)]))
+            line(10, 14, 21, 3)
+    elif name == 'history':
+        p.drawEllipse(QRectF(4, 4, 16, 16)); line(12, 7, 12, 12); line(12, 12, 16, 14)
+    elif name in ('security', 'anchor'):
+        p.drawPolygon(QPolygonF([QPointF(12, 3), QPointF(20, 7), QPointF(19, 16), QPointF(12, 21), QPointF(5, 16), QPointF(4, 7)]))
+        line(8, 12, 11, 15); line(11, 15, 16, 9)
+    elif name == 'settings':
+        p.drawEllipse(QRectF(6, 6, 12, 12)); p.drawEllipse(QRectF(10, 10, 4, 4))
+        for a, b, c, d in ((12, 2, 12, 5), (12, 19, 12, 22), (2, 12, 5, 12), (19, 12, 22, 12),
+                           (4, 4, 6, 6), (18, 18, 20, 20), (4, 20, 6, 18), (18, 6, 20, 4)):
+            line(a, b, c, d)
+    elif name == 'network':
+        p.drawEllipse(QRectF(9, 3, 6, 6)); p.drawEllipse(QRectF(3, 15, 6, 6)); p.drawEllipse(QRectF(15, 15, 6, 6))
+        line(12, 9, 6, 15); line(12, 9, 18, 15)
+    elif name == 'copy':
+        p.drawRoundedRect(QRectF(8, 8, 12, 13), 2, 2); line(4, 16, 4, 3); line(4, 3, 16, 3)
+    elif name in ('lock', 'unlock'):
+        p.drawRoundedRect(QRectF(5, 10, 14, 11), 2, 2)
+        p.drawArc(QRectF(8, 3, 8, 12), 0 if name == 'lock' else 20 * 16, 180 * 16)
+        line(12, 14, 12, 17)
+    elif name == 'backup':
+        p.drawRoundedRect(QRectF(4, 4, 16, 17), 2, 2); line(8, 4, 8, 10); line(8, 10, 16, 10); line(16, 10, 16, 4); p.drawRect(QRectF(8, 15, 8, 6))
+    elif name == 'sync':
+        p.drawArc(QRectF(4, 4, 16, 16), 35 * 16, 260 * 16); line(19, 3, 20, 9); line(20, 9, 14, 8)
+    elif name == 'core':
+        p.drawRoundedRect(QRectF(6, 6, 12, 12), 2, 2); p.drawRect(QRectF(10, 10, 4, 4))
+    elif name == 'wallet':
+        p.drawRoundedRect(QRectF(3, 7, 18, 13), 2, 2); p.drawRoundedRect(QRectF(14, 11, 7, 5), 1.5, 1.5)
+    elif name == 'chain':
+        p.drawRoundedRect(QRectF(3, 8, 9, 6), 2, 2); p.drawRoundedRect(QRectF(12, 10, 9, 6), 2, 2)
+    elif name == 'check':
+        line(5, 12, 10, 17); line(10, 17, 20, 6)
+    else:
+        p.drawEllipse(QRectF(5, 5, 14, 14)); line(12, 7, 12, 17); line(7, 12, 17, 12)
+    p.end()
+    return QIcon(pix)
 
 
-def fusion_nav_icons(tone):return tuple(vector_icon(n,tone) for n in _NAMES)
+def fusion_nav_icons(tone):
+    return tuple(vector_icon(name, tone) for name in _NAMES)
+
+
+def nav_icon_for(title, tone, dpr=2):
+    lookup = dict(FUSION_NAV_PAGES)
+    return vector_icon(lookup.get(title, 'overview'), tone, dpr)
 
 
 def activity_by_block(snapshot):
-    if snapshot is None:return ()
-    if type(snapshot) is not WalletReadSnapshot or snapshot.synthetic_rpc or snapshot.chain!='regtest' or snapshot.mainnet_allowed:
+    if snapshot is None:
+        return ()
+    if type(snapshot) is not WalletReadSnapshot or snapshot.synthetic_rpc or snapshot.chain != 'regtest' or snapshot.mainnet_allowed:
         raise ValueError('FUSION_HISTORY_UNVERIFIED_DENIED')
-    blocks={}
+    blocks = {}
     for row in snapshot.history:
-        if (type(row.block_height) is not int or not 1<=row.block_height<=snapshot.height or type(row.confirmations) is not int or row.confirmations<=0 or type(row.credit_atoms) is not int or row.credit_atoms<0 or type(row.debit_atoms) is not int or row.debit_atoms<0):
+        if (type(row.block_height) is not int or not 1 <= row.block_height <= snapshot.height
+                or type(row.confirmations) is not int or row.confirmations <= 0
+                or type(row.credit_atoms) is not int or row.credit_atoms < 0
+                or type(row.debit_atoms) is not int or row.debit_atoms < 0):
             raise ValueError('FUSION_HISTORY_UNVERIFIED_DENIED')
-        agg=blocks.setdefault(row.block_height,[0,0]);agg[0]+=row.credit_atoms;agg[1]+=row.debit_atoms
-    return tuple((h,*blocks[h]) for h in sorted(blocks)[-14:])
+        agg = blocks.setdefault(row.block_height, [0, 0])
+        agg[0] += row.credit_atoms
+        agg[1] += row.debit_atoms
+    return tuple((h, *blocks[h]) for h in sorted(blocks)[-14:])
 
 
 class ResponsiveRow(QWidget):
-    def __init__(self,*children,weights=None,breakpoint=760):
-        super().__init__();self.setObjectName('FusionTransparent');self._break=breakpoint;self._children=children;self._weights=weights or [1]*len(children);self._vertical=None
-        self._grid=QGridLayout(self);self._grid.setContentsMargins(0,0,0,0);self._grid.setSpacing(18)
+    def __init__(self, *children, weights=None, breakpoint=760):
+        super().__init__()
+        self.setObjectName('FusionTransparent')
+        self._break = breakpoint
+        self._children = children
+        self._weights = weights or [1] * len(children)
+        self._vertical = None
+        self._grid = QGridLayout(self)
+        self._grid.setContentsMargins(0, 0, 0, 0)
+        self._grid.setSpacing(18)
+
     def addWidget(self, widget, row=0, column=0):
-        """Add a child widget; responsive reflow still owns the final layout."""
         self._grid.addWidget(widget, row, column)
         return widget
-    def resizeEvent(self,event):
-        vertical=self.width()<self._break
-        if vertical!=self._vertical:
-            self._vertical=vertical
-            for i,child in enumerate(self._children):self._grid.addWidget(child,i if vertical else 0,0 if vertical else i)
-            for i,w in enumerate(self._weights):self._grid.setColumnStretch(i,0 if vertical else w)
+
+    def resizeEvent(self, event):
+        vertical = self.width() < self._break
+        if vertical != self._vertical:
+            self._vertical = vertical
+            for i, child in enumerate(self._children):
+                self._grid.addWidget(child, i if vertical else 0, 0 if vertical else i)
+            for i, w in enumerate(self._weights):
+                self._grid.setColumnStretch(i, 0 if vertical else w)
         super().resizeEvent(event)
 
 
 class Hero(QFrame):
     def __init__(self):
-        super().__init__();self.setObjectName('FusionHero');self.mode='dark';self.logo=QPixmap(str(brand_image()));self.setMinimumHeight(184)
-    def paintEvent(self,event):
-        c=fusion_palette(self.mode);p=QPainter(self);p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        rect=QRectF(self.rect()).adjusted(1,1,-1,-1);path=QPainterPath();path.addRoundedRect(rect,18,18);p.setClipPath(path)
-        gradient=QLinearGradient(rect.topLeft(),rect.bottomRight());gradient.setColorAt(0,QColor(c['surface']));gradient.setColorAt(1,QColor(c['hero_bottom']))
-        p.fillPath(path,gradient);p.setOpacity(.09 if self.mode=='dark' else .045);p.drawPixmap(self.width()-225,4,220,220,self.logo)
-        p.setOpacity(.1);p.setPen(QPen(QColor(c['accent']),1))
-        for offset in (0,16,32):p.drawLine(QPointF(self.width()-280+offset,0),QPointF(self.width()-180+offset,self.height()))
-        p.setOpacity(.65);p.setClipping(False);p.setPen(QPen(QColor(c['border']),1));p.drawRoundedRect(rect,18,18);p.end()
+        super().__init__()
+        self.setObjectName('FusionHero')
+        self.mode = 'dark'
+        self.logo = QPixmap(str(brand_image()))
+        self.setMinimumHeight(196)
+
+    def resizeEvent(self, event):
+        layout = self.layout()
+        if layout is not None:
+            reserve = 28 if self.width() < 540 else 200
+            layout.setContentsMargins(24, 20, reserve, 20)
+        super().resizeEvent(event)
+
+    def paintEvent(self, event):
+        c = fusion_palette(self.mode)
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        rect = QRectF(self.rect()).adjusted(1, 1, -1, -1)
+        path = QPainterPath()
+        path.addRoundedRect(rect, 20, 20)
+        p.setClipPath(path)
+        gradient = QLinearGradient(rect.topLeft(), rect.bottomRight())
+        gradient.setColorAt(0, QColor(c['surface']))
+        gradient.setColorAt(1, QColor(c['hero_bottom']))
+        p.fillPath(path, gradient)
+        glow = QRadialGradient(rect.right() - 90, rect.center().y(), 140)
+        gold = QColor(c['accent']); gold.setAlpha(40 if self.mode == 'dark' else 28)
+        glow.setColorAt(0, gold); glow.setColorAt(1, QColor(0, 0, 0, 0))
+        p.fillRect(rect, glow)
+        p.setOpacity(0.18 if self.mode == 'dark' else 0.12)
+        p.setPen(QPen(QColor(c['accent']), 1))
+        cx, cy = self.width() - 108, self.height() / 2
+        for radius in (48, 72, 96, 124):
+            p.drawEllipse(QPointF(cx, cy), radius, radius * 0.62)
+        if self.width() >= 540:
+            size = min(168, max(112, self.height() - 28))
+            p.setOpacity(0.96)
+            coin = self.logo.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            p.drawPixmap(int(self.width() - size - 22), int((self.height() - coin.height()) / 2), coin)
+        p.setOpacity(0.9); p.setClipping(False)
+        p.setPen(QPen(QColor(c['accent']), 1))
+        p.drawRoundedRect(rect, 20, 20)
+        p.end()
 
 
 class ChainActivity(QWidget):
     """Gross confirmed credits/debits: discrete block columns, exact hover data."""
     def __init__(self):
-        super().__init__();self._activity=();self._mode='dark';self._hit=[];self._hover=-1;self.setMinimumHeight(196);self.setMouseTracking(True);self.setAccessibleName('Confirmed on-chain credit and debit activity')
-    def render_snapshot(self,snapshot):
-        self._activity=activity_by_block(snapshot);self._hover=-1;self._hit=[];QToolTip.hideText();self.update()
-    def set_theme(self,mode):fusion_palette(mode);self._mode=mode;self.update()
-    def mouseMoveEvent(self,event):
-        index=next((i for i,r in enumerate(self._hit) if r.contains(event.position())),-1)
-        if index!=self._hover:self._hover=index;self.update()
-        if index>=0:
-            h,credit,debit=self._activity[index]
-            QToolTip.showText(event.globalPosition().toPoint(),f'Confirmed block {h}\nCredits  {format_wam(credit)} WAM\nDebits   {format_wam(debit)} WAM',self)
-        else:QToolTip.hideText()
-    def leaveEvent(self,event):self._hover=-1;QToolTip.hideText();self.update()
-    def paintEvent(self,event):
-        p=QPainter(self);p.setRenderHint(QPainter.RenderHint.Antialiasing);c=fusion_palette(self._mode);p.setFont(QFont(p.font().family(),10))
+        super().__init__()
+        self._activity = ()
+        self._mode = 'dark'
+        self._hit = []
+        self._hover = -1
+        self.setMinimumHeight(196)
+        self.setMouseTracking(True)
+        self.setAccessibleName('Confirmed on-chain credit and debit activity')
+
+    def render_snapshot(self, snapshot):
+        self._activity = activity_by_block(snapshot)
+        self._hover = -1
+        self._hit = []
+        QToolTip.hideText()
+        self.update()
+
+    def set_theme(self, mode):
+        fusion_palette(mode)
+        self._mode = mode
+        self.update()
+
+    def mouseMoveEvent(self, event):
+        index = next((i for i, r in enumerate(self._hit) if r.contains(event.position())), -1)
+        if index != self._hover:
+            self._hover = index
+            self.update()
+        if index >= 0:
+            h, credit, debit = self._activity[index]
+            QToolTip.showText(event.globalPosition().toPoint(),
+                              f'Confirmed block {h}\nCredits  {format_wam(credit)} WAM\nDebits   {format_wam(debit)} WAM', self)
+        else:
+            QToolTip.hideText()
+
+    def leaveEvent(self, event):
+        self._hover = -1
+        QToolTip.hideText()
+        self.update()
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        c = fusion_palette(self._mode)
+        p.setFont(QFont(p.font().family(), 10))
         if not self._activity:
-            p.setPen(QColor(c['chart_empty']));p.drawText(self.rect(),Qt.AlignmentFlag.AlignCenter,'No confirmed activity\nSync the verified chain to see credits and debits.');p.end();return
-        left,top,right,bottom=66.,20.,self.width()-16.,self.height()-37.
-        maximum=max(max(a,b) for _,a,b in self._activity)
-        if maximum<=0:p.end();return
-        quantum=10**max(0,len(str(maximum))-1);ceiling=((maximum+quantum-1)//quantum)*quantum
+            p.setPen(QColor(c['chart_empty']))
+            p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter,
+                       'No confirmed activity\nSync the verified chain to see credits and debits.')
+            p.end()
+            return
+        left, top, right, bottom = 66., 20., self.width() - 16., self.height() - 37.
+        maximum = max(max(a, b) for _, a, b in self._activity)
+        if maximum <= 0:
+            p.end()
+            return
+        quantum = 10 ** max(0, len(str(maximum)) - 1)
+        ceiling = ((maximum + quantum - 1) // quantum) * quantum
         for j in range(5):
-            value=ceiling*j//4;y=bottom-(bottom-top)*j/4
-            p.setPen(QPen(QColor(c['grid']),1,Qt.PenStyle.DotLine));p.drawLine(QPointF(left,y),QPointF(right,y))
-            p.setPen(QColor(c['muted']));amount=format_wam(value).rstrip('0').rstrip('.')
-            p.drawText(QRectF(0,y-8,left-12,18),Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter,amount)
-        count=len(self._activity);span=(right-left)/count;width=min(22.,span*.21);self._hit=[]
-        for i,(height,credit,debit) in enumerate(self._activity):
-            center=left+span*(i+.5);hit=QRectF(left+i*span,top,span,bottom-top);self._hit.append(hit)
-            if i==self._hover:p.fillRect(hit,QColor(c['panel']))
-            for x,atoms,color in ((center-width*.62,credit,c['accent']),(center+width*.62,debit,c['blue'])):
-                if atoms<=0:continue
-                bh=(bottom-top)*atoms/ceiling;r=QRectF(x-width/2,bottom-bh,width,bh)
-                gradient=QLinearGradient(r.topLeft(),r.bottomLeft());gradient.setColorAt(0,QColor(color));faded=QColor(color);faded.setAlpha(75);gradient.setColorAt(1,faded)
-                p.setPen(Qt.PenStyle.NoPen);p.setBrush(gradient);p.drawRoundedRect(r,4,4);p.setBrush(QColor(color));p.drawEllipse(QPointF(x,bottom-bh),3,3)
+            value = ceiling * j // 4
+            y = bottom - (bottom - top) * j / 4
+            p.setPen(QPen(QColor(c['grid']), 1, Qt.PenStyle.DotLine))
+            p.drawLine(QPointF(left, y), QPointF(right, y))
             p.setPen(QColor(c['muted']))
-            if count<9 or i%2==0:p.drawText(QRectF(center-span/2,bottom+9,span,20),Qt.AlignmentFlag.AlignHCenter,str(height))
+            amount = format_wam(value).rstrip('0').rstrip('.')
+            p.drawText(QRectF(0, y - 8, left - 12, 18), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, amount)
+        count = len(self._activity)
+        span = (right - left) / count
+        width = min(22., span * .21)
+        self._hit = []
+        for i, (height, credit, debit) in enumerate(self._activity):
+            center = left + span * (i + .5)
+            hit = QRectF(left + i * span, top, span, bottom - top)
+            self._hit.append(hit)
+            if i == self._hover:
+                p.fillRect(hit, QColor(c['panel']))
+            for x, atoms, color in ((center - width * .62, credit, c['green']), (center + width * .62, debit, c['blue'])):
+                if atoms <= 0:
+                    continue
+                bh = (bottom - top) * atoms / ceiling
+                r = QRectF(x - width / 2, bottom - bh, width, bh)
+                gradient = QLinearGradient(r.topLeft(), r.bottomLeft())
+                gradient.setColorAt(0, QColor(color))
+                faded = QColor(color); faded.setAlpha(75)
+                gradient.setColorAt(1, faded)
+                p.setPen(Qt.PenStyle.NoPen)
+                p.setBrush(gradient)
+                p.drawRoundedRect(r, 4, 4)
+            p.setPen(QColor(c['muted']))
+            if count < 9 or i % 2 == 0:
+                p.drawText(QRectF(center - span / 2, bottom + 9, span, 20), Qt.AlignmentFlag.AlignHCenter, str(height))
         p.end()
 
 
 class FusionOverview(QScrollArea):
-    transaction_selected=Signal(str)
+    transaction_selected = Signal(str)
+    recovery_requested = Signal()
+    network_requested = Signal()
+    backup_requested = Signal()
+
     def __init__(self):
-        super().__init__();self.setObjectName('FusionScroll');self.setFrameShape(QFrame.Shape.NoFrame);self.setWidgetResizable(True)
-        root=QWidget();root.setObjectName('FusionInner');self.setWidget(root);whole=QVBoxLayout(root);whole.setContentsMargins(4,4,12,16);whole.setSpacing(14)
-        head=QHBoxLayout();titles=QVBoxLayout();titles.addWidget(label('YOUR WALLET / REGTEST','FusionKicker'));titles.addWidget(label('Overview','PageTitle'));head.addLayout(titles);head.addStretch();self.live_badge=label('Awaiting verification','FusionBadge');head.addWidget(self.live_badge);whole.addLayout(head)
-        self.hero=Hero();hero=QVBoxLayout(self.hero);hero.setContentsMargins(24,20,24,20);hero.setSpacing(10)
-        hero.addWidget(label('CONFIRMED BALANCE','FusionKicker'));self.balance_value=label('—','FusionBalance',True);hero.addWidget(self.balance_value)
-        self.utxo_details=label('Awaiting verified Core / WSP state');hero.addWidget(self.utxo_details)
-        row=QHBoxLayout();self.go_receive=action('Receive','receive',True);self.go_send=action('Send payment','send');self.go_send.setEnabled(False);row.addWidget(self.go_receive);row.addWidget(self.go_send);row.addStretch();hero.addLayout(row)
-        privacy,pl=panel('Silent payments','BIP352 destinations · native WSP-1 scanning')
-        pl.setContentsMargins(20,16,20,16);pl.setSpacing(8)
-        self.security_note=label('Experimental REGTEST custody.\nNo production or anonymity guarantee.');pl.addWidget(self.security_note)
-        self.open_security=action('Security & backup','security');self.open_security.setEnabled(False);pl.addWidget(self.open_security);pl.addStretch()
-        whole.addWidget(ResponsiveRow(self.hero,privacy,weights=[3,2]))
-        self.status_cards=[];self.status_icons=[];cards=[]
-        for name,caption,icon in (('Verified Core','Pinned binary identity','core'),('WSP-1 scanner','BIP352 · live SQLite checkpoint','sync'),('Wallet custody','Native checkpoint anchor','security')):
-            card,cl=panel();top=QHBoxLayout();icon_label=QLabel();icon_label.setProperty('fusion_icon_label',icon);icon_label.setFixedSize(24,24);top.addWidget(icon_label);top.addWidget(label(name,'FusionCardTitle'));top.addStretch();cl.addLayout(top)
-            cl.setContentsMargins(18,14,18,14);cl.setSpacing(7)
-            value=label('Not verified','FusionCardValue');cl.addWidget(value);cl.addWidget(label(caption));self.status_cards.append(value);self.status_icons.append(icon_label);cards.append(card)
-        self.core_status,self.scanner_status,self.vault_status=self.status_cards;whole.addWidget(ResponsiveRow(*cards,breakpoint=650))
-        chart_card,chart=panel('Confirmed on-chain activity','Gross credits / debits, including change. Not balance history or market price.')
-        legend=QHBoxLayout();legend.addWidget(label('Credits · WAM','FusionGold'));legend.addWidget(label('Debits · WAM','FusionInfo'));legend.addStretch();legend.addWidget(label('Confirmed block','FusionMuted'));chart.addLayout(legend);self.chart=ChainActivity();chart.addWidget(self.chart);
-        activity,al=panel();top=QHBoxLayout();top.addWidget(label('Recent transactions','FusionCardTitle'));top.addStretch();self.open_history=action('View history','history');top.addWidget(self.open_history);al.addLayout(top)
-        self.activity_table=QTableWidget(0,2);self.activity_table.setObjectName('FusionActivityTable');self.activity_table.setHorizontalHeaderLabels(('ACTIVITY','NET WAM'));self.activity_table.verticalHeader().hide();self.activity_table.setShowGrid(False);self.activity_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers);self.activity_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows);self.activity_table.horizontalHeader().setStretchLastSection(True);self.activity_table.setMinimumHeight(196);self.activity_table.setColumnWidth(0,158);self.activity_table.cellClicked.connect(self._select_tx)
-        self._txids=[];al.addWidget(self.activity_table);self.empty=label('No confirmed transactions yet. Your verified on-chain activity will appear here.');al.addWidget(self.empty);whole.addWidget(ResponsiveRow(chart_card,activity,weights=[3,2],breakpoint=820))
-        bottom=QHBoxLayout();self.evidence_text=label('No verified blockchain snapshot');bottom.addWidget(self.evidence_text,1);self.manual_sync=action('Sync chain','sync');bottom.addWidget(self.manual_sync);whole.addLayout(bottom)
-    def _select_tx(self,row,column):
-        if 0<=row<len(self._txids):self.transaction_selected.emit(self._txids[row])
-    def set_theme(self,mode):
-        self.hero.mode=mode;self.hero.update();self.chart.set_theme(mode)
+        super().__init__()
+        self.setObjectName('FusionScroll')
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setWidgetResizable(True)
+        root = QWidget(); root.setObjectName('FusionInner'); self.setWidget(root)
+        whole = QVBoxLayout(root)
+        whole.setContentsMargins(4, 4, 12, 16)
+        whole.setSpacing(16)
+        head = QHBoxLayout()
+        titles = QVBoxLayout(); titles.setSpacing(2)
+        title_row = QHBoxLayout(); title_row.setSpacing(8)
+        home = QLabel(); home.setProperty('fusion_icon_label', 'home'); home.setFixedSize(24, 24)
+        title_row.addWidget(home); title_row.addWidget(label('Overview', 'PageTitle')); title_row.addStretch()
+        titles.addLayout(title_row)
+        titles.addWidget(label('Your WAM wallet at a glance'))
+        head.addLayout(titles, 1)
+        self.live_badge = label('Awaiting verification', 'FusionBadge')
+        self.live_badge.hide()
+        head.addWidget(self.live_badge, 0, Qt.AlignmentFlag.AlignTop)
+        whole.addLayout(head)
+
+        self.hero = Hero()
+        hero = QVBoxLayout(self.hero)
+        hero.setContentsMargins(24, 20, 200, 20)
+        hero.setSpacing(8)
+        hero.addWidget(label('CONFIRMED BALANCE', 'FusionKicker'))
+        self.balance_value = label('—', 'FusionBalance', True)
+        self.balance_value.setMinimumWidth(0)
+        hero.addWidget(self.balance_value)
+        self.utxo_details = label('Awaiting verified Core / WSP state')
+        hero.addWidget(self.utxo_details)
+        row = QHBoxLayout(); row.setSpacing(10)
+        self.go_send = action('Send', 'send', True); self.go_send.setEnabled(False)
+        self.go_receive = action('Receive', 'receive')
+        row.addWidget(self.go_send); row.addWidget(self.go_receive); row.addStretch()
+        hero.addLayout(row)
+
+        identity, il = panel()
+        il.setContentsMargins(18, 16, 18, 16)
+        ident_head = QHBoxLayout()
+        wallet_icon = QLabel(); wallet_icon.setProperty('fusion_icon_label', 'wallet'); wallet_icon.setFixedSize(24, 24)
+        ident_head.addWidget(wallet_icon)
+        ident_copy = QVBoxLayout(); ident_copy.setSpacing(2)
+        ident_copy.addWidget(label('This wallet', 'FusionCardTitle'))
+        self.wallet_profile = label('REGTEST profile')
+        ident_copy.addWidget(self.wallet_profile)
+        ident_head.addLayout(ident_copy, 1)
+        il.addLayout(ident_head)
+        self.custody_caption = label('Locked', 'FusionCardTitle')
+        il.addWidget(self.custody_caption)
+        self.lock_details = label('Unlock requires the original wallet password.')
+        il.addWidget(self.lock_details)
+        self.custody_switch = StateSwitch('Locked')
+        self.custody_switch.setAccessibleName('Wallet Lock / Unlock switch')
+        self.custody_switch.setEnabled(False)
+        il.addWidget(self.custody_switch)
+        whole.addWidget(ResponsiveRow(self.hero, identity, weights=[3, 2], breakpoint=820))
+
+        self.status_cards = []
+        self.status_icons = []
+        cards = []
+        for name, caption, icon in (
+            ('WAM Core', 'Pinned binary identity', 'core'),
+            ('Chain', 'Verified tip height', 'chain'),
+            ('Security', 'Native custody state', 'security'),
+            ('Network', 'REGTEST connectivity', 'network'),
+        ):
+            card, cl = panel()
+            top = QHBoxLayout()
+            icon_label = QLabel(); icon_label.setProperty('fusion_icon_label', icon); icon_label.setFixedSize(24, 24)
+            top.addWidget(icon_label); top.addWidget(label(name, 'FusionCardTitle')); top.addStretch()
+            cl.addLayout(top)
+            cl.setContentsMargins(16, 14, 16, 14); cl.setSpacing(6)
+            value = label('Not verified', 'FusionCardValue')
+            cl.addWidget(value); cl.addWidget(label(caption))
+            self.status_cards.append(value); self.status_icons.append(icon_label); cards.append(card)
+        self.core_status, self.chain_status, self.vault_status, self.network_status = self.status_cards
+        self.scanner_status = self.chain_status
+        whole.addWidget(ResponsiveRow(*cards, breakpoint=720))
+
+        actions, al = panel('Quick actions')
+        action_row = QHBoxLayout(); action_row.setSpacing(12)
+        self.open_backup = quick_action('Backup wallet', 'backup')
+        self.open_recovery = quick_action('Verify recovery', 'security')
+        self.quick_lock = quick_action('Lock wallet', 'lock')
+        self.open_network = quick_action('Network status', 'network')
+        for button in (self.open_backup, self.open_recovery, self.quick_lock, self.open_network):
+            action_row.addWidget(button, 1)
+        al.addLayout(action_row)
+        whole.addWidget(actions)
+
+        activity, alayout = panel()
+        top = QHBoxLayout()
+        top.addWidget(label('Recent transactions', 'FusionCardTitle')); top.addStretch()
+        self.open_history = action('View all', 'history')
+        top.addWidget(self.open_history); alayout.addLayout(top)
+        self.activity_table = QTableWidget(0, 3)
+        self.activity_table.setObjectName('FusionActivityTable')
+        self.activity_table.setHorizontalHeaderLabels(('ACTIVITY', 'AMOUNT', 'STATUS'))
+        self.activity_table.verticalHeader().hide()
+        self.activity_table.setShowGrid(False)
+        self.activity_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.activity_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.activity_table.horizontalHeader().setStretchLastSection(True)
+        self.activity_table.setMinimumHeight(196)
+        self.activity_table.setColumnWidth(0, 170)
+        self.activity_table.cellClicked.connect(self._select_tx)
+        self._txids = []
+        alayout.addWidget(self.activity_table)
+        self.empty = label('No confirmed transactions yet. Verified on-chain activity will appear here.')
+        alayout.addWidget(self.empty)
+
+        side = QWidget(); side.setObjectName('FusionTransparent')
+        sl = QVBoxLayout(side); sl.setContentsMargins(0, 0, 0, 0); sl.setSpacing(16)
+        net, nl = panel('Network & development')
+        self.network_summary = label('Shown after a verified Core snapshot.')
+        self.network_summary.setMinimumWidth(0)
+        policy = self.network_summary.sizePolicy()
+        policy.setHorizontalPolicy(QSizePolicy.Policy.Ignored)
+        policy.setVerticalPolicy(QSizePolicy.Policy.Minimum)
+        policy.setHeightForWidth(True)
+        self.network_summary.setSizePolicy(policy)
+        nl.addWidget(self.network_summary)
+        health, hl = panel('Wallet health')
+        self.health_value = label('Not verified', 'FusionCardValue')
+        self.health_details = label('Core, chain, custody and network are reported only from verified backend state.')
+        hl.addWidget(self.health_value); hl.addWidget(self.health_details)
+        sl.addWidget(net); sl.addWidget(health); sl.addStretch()
+        whole.addWidget(ResponsiveRow(activity, side, weights=[3, 2], breakpoint=860))
+
+        bottom = QHBoxLayout()
+        self.evidence_text = label('No verified blockchain snapshot')
+        self.evidence_text.setMinimumWidth(0)
+        bottom.addWidget(self.evidence_text, 1)
+        self.manual_sync = action('Refresh', 'sync')
+        self.open_security = action('Security', 'security')
+        self.open_security.setEnabled(False)
+        bottom.addWidget(self.manual_sync); bottom.addWidget(self.open_security)
+        whole.addLayout(bottom)
+
+        self.open_backup.clicked.connect(self.backup_requested.emit)
+        self.open_recovery.clicked.connect(self.recovery_requested.emit)
+        self.open_network.clicked.connect(self.network_requested.emit)
+        self.quick_lock.clicked.connect(lambda: self.custody_switch.click() if self.custody_switch.isEnabled() else None)
+        self.render_snapshot(None, locked=True)
+
+    def _select_tx(self, row, column):
+        if 0 <= row < len(self._txids):
+            self.transaction_selected.emit(self._txids[row])
+
+    def set_theme(self, mode):
+        self.hero.mode = mode
+        self.hero.update()
+        self.custody_switch.setProperty('fusion_mode', mode)
+        self.custody_switch.update()
         for row in range(self.activity_table.rowCount()):
-            item=self.activity_table.item(row,0)
+            item = self.activity_table.item(row, 0)
             if item is not None:
-                positive=item.data(Qt.ItemDataRole.UserRole)>0
-                item.setIcon(vector_icon('receive' if positive else 'send',fusion_palette(mode)['green' if positive else 'blue']))
-    def render_snapshot(self,snap,*,locked=False,operational=False):
+                positive = item.data(Qt.ItemDataRole.UserRole) > 0
+                item.setIcon(vector_icon('receive' if positive else 'send',
+                                         fusion_palette(mode)['green' if positive else 'red']))
+
+    def render_snapshot(self, snap, *, locked=False, operational=False, network=None, faulted=False):
+        network = network or {}
         if snap is None or locked:
-            self.balance_value.setText('—');self.utxo_details.setText('Unlock and verify the chain to display wallet values.');self.live_badge.setText('Locked / not verified' if locked else 'Not verified')
-            for value in self.status_cards:value.setText('Not verified')
-            self.vault_status.setText('Locked' if locked else 'Not attested');self.evidence_text.setText('No verified blockchain snapshot');self.evidence_text.setToolTip('');self.activity_table.setRowCount(0);self._txids=[];self.empty.show();self.chart.render_snapshot(None);self.go_receive.setEnabled(False);return
+            self.balance_value.setText('—')
+            self.utxo_details.setText('Unlock and verify the chain to display wallet values.')
+            self.live_badge.setText('Locked' if locked else 'Not verified')
+            for value in self.status_cards:
+                value.setText('Not verified')
+            self.vault_status.setText('Locked' if locked else 'Not attested')
+            self.network_status.setText(network.get('mode', 'Unknown'))
+            self.evidence_text.setText('No verified blockchain snapshot')
+            self.evidence_text.setToolTip('')
+            self.activity_table.setRowCount(0)
+            self._txids = []
+            self.empty.show()
+            self.go_receive.setEnabled(False)
+            self.health_value.setText('Faulted' if faulted else ('Locked' if locked else 'Not verified'))
+            self.health_details.setText('Wallet values stay hidden until this original REGTEST profile is verified.')
+            self.network_summary.setText(network.get('summary', 'Network status is shown only after a verified Core snapshot.'))
+            self.wallet_profile.setText('REGTEST profile')
+            return
         activity_by_block(snap)
-        self.balance_value.setText(format_wam(snap.confirmed_atoms,grouped=True)+' WAM');self.utxo_details.setText(f'{snap.confirmed_utxos} confirmed UTXO(s)  /  Verified block {snap.height}')
-        self.live_badge.setText('REGTEST VERIFIED');self.core_status.setText('Identity verified');self.scanner_status.setText(f'Synced · {snap.height}');self.vault_status.setText('Unlocked test wallet' if operational else 'Read-only account');self.go_receive.setEnabled(True)
-        self.evidence_text.setText('Verified tip '+snap.tip[:14]+'…  /  No real funds');self.evidence_text.setToolTip('Core SHA-256: '+snap.core_sha256+'\nVerified tip: '+snap.tip);self.chart.render_snapshot(snap)
-        rows=snap.history[:4];self._txids=[r.txid for r in rows];self.activity_table.setRowCount(len(rows));self.empty.setVisible(not rows)
-        for i,tx in enumerate(rows):
-            value=tx.credit_atoms-tx.debit_atoms;direction='Received' if value>0 else 'Sent' if value<0 else 'Activity'
-            for j,text in enumerate((direction+' · '+str(tx.block_height)+'\nConfirmed ('+str(tx.confirmations)+')',('+' if value>0 else '-' if value<0 else '')+format_wam(abs(value)))):
-                item=QTableWidgetItem(text);item.setToolTip(tx.txid+'\nClick to view exact transaction details')
-                if j==0:
-                    item.setData(Qt.ItemDataRole.UserRole,value)
-                    item.setIcon(vector_icon('receive' if value>0 else 'send',fusion_palette(self.chart._mode)['green' if value>0 else 'blue']))
-                if j==1:item.setTextAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
-                self.activity_table.setItem(i,j,item)
-            self.activity_table.setRowHeight(i,60)
+        self.balance_value.setText(format_wam(snap.confirmed_atoms, grouped=True) + ' WAM')
+        self.utxo_details.setText(
+            f'{snap.confirmed_utxos} confirmed UTXO(s)  ·  Verified block {snap.height}'
+            + ('  ·  REGTEST (Shared)' if network.get('shared') else '  ·  REGTEST (Isolated)'))
+        self.live_badge.setText('REGTEST VERIFIED')
+        self.core_status.setText('Verified')
+        self.chain_status.setText(f'Height {snap.height}')
+        self.vault_status.setText('Unlocked' if operational else 'Read-only')
+        if 'peer_count' in network and type(network['peer_count']) is int:
+            self.network_status.setText(
+                ('Connected' if network.get('connected') else 'Disconnected')
+                + f" · {network['peer_count']} peer(s)")
+        else:
+            self.network_status.setText('Isolated' if not network.get('shared') else 'Awaiting peer check')
+        self.go_receive.setEnabled(True)
+        self.evidence_text.setText('Verified tip ' + snap.tip[:14] + '…  ·  No real funds')
+        self.evidence_text.setToolTip('Core SHA-256: ' + snap.core_sha256 + '\nVerified tip: ' + snap.tip)
+        self.network_summary.setText(network.get('summary') or (
+            f"Mode  {'Shared REGTEST' if network.get('shared') else 'Isolated REGTEST'}\n"
+            f"Height  {snap.height}"))
+        self.health_value.setText('Operating normally' if not faulted else 'Faulted')
+        self.health_details.setText(
+            'Confirmed balance, custody and chain height come from this verified snapshot.'
+            if not faulted else 'Original reservations are preserved. Do not retry uncertain payments.')
+        self.wallet_profile.setText('Operational REGTEST wallet' if operational else 'Read-only REGTEST wallet')
+        rows = snap.history[:4]
+        self._txids = [r.txid for r in rows]
+        self.activity_table.setRowCount(len(rows))
+        self.empty.setVisible(not rows)
+        mode = self.hero.mode
+        for i, tx in enumerate(rows):
+            value = tx.credit_atoms - tx.debit_atoms
+            direction = 'Received' if value > 0 else 'Sent' if value < 0 else 'Activity'
+            amount = ('+' if value > 0 else '-' if value < 0 else '') + format_wam(abs(value)) + ' WAM'
+            status = f'Confirmed ({tx.confirmations})'
+            for j, text in enumerate((direction + '\n' + tx.txid[:10] + '…', amount, status)):
+                item = QTableWidgetItem(text)
+                item.setToolTip(tx.txid + '\nClick to view exact transaction details')
+                if j == 0:
+                    item.setData(Qt.ItemDataRole.UserRole, value)
+                    item.setIcon(vector_icon('receive' if value > 0 else 'send',
+                                             fusion_palette(mode)['green' if value > 0 else 'red']))
+                if j == 1:
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                self.activity_table.setItem(i, j, item)
+            self.activity_table.setRowHeight(i, 58)

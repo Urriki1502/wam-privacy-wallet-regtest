@@ -21,12 +21,12 @@ from .desktop import resolve_theme
 from .gui_errors import operation_error
 from .fusion_ui import (
     FusionOverview, fusion_stylesheet, fusion_palette, page, panel,
-    label, ResponsiveRow, vector_icon, fusion_nav_icons,
-    StateSwitch,
+    label, ResponsiveRow, vector_icon, nav_icon_for, FUSION_NAV_PAGES,
+    StateSwitch, action,
 )
-from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval, WalletConsent
+from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval, WalletConsent, NetworkPage
 from .bip39_backup_page import Bip39BackupPage
-from .wallet_read import WalletReadSnapshot
+from .wallet_read import WalletReadSnapshot, format_wam
 from .amounts import parse_amount, _parse_atoms
 from .branding import brand_image
 
@@ -80,7 +80,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self._legacy_layout_holder = legacy
         legacy.hide()
         self.setObjectName("WalletRoot")
-        self.setWindowTitle("WAM Fusion · Privacy Wallet")
+        self.setWindowTitle("WAM Fusion Wallet — REGTEST" + (" (V1-NET)" if shared_profile else ""))
         self.setWindowIcon(QIcon(str(brand_image())))
         self.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.GeneralFont))
         self.resize(1260, 810)
@@ -92,37 +92,34 @@ class Bip39FusionWindow(Bip39TrialWindow):
         # Native macOS-style workspace, not a second wallet manager.
         sidebar = QFrame()
         sidebar.setObjectName("FusionSidebar")
-        sidebar.setFixedWidth(226)
+        sidebar.setFixedWidth(232)
         side = QVBoxLayout(sidebar)
-        side.setContentsMargins(18, 28, 18, 22)
-        side.setSpacing(16)
-        brand = QHBoxLayout()
-        brand.setSpacing(10)
+        side.setContentsMargins(18, 24, 18, 18)
+        side.setSpacing(14)
+        brand = QVBoxLayout()
+        brand.setSpacing(8)
         logo = QLabel()
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         mark = QPixmap(str(brand_image())).scaled(
-            42, 42, Qt.AspectRatioMode.KeepAspectRatio,
+            58, 58, Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation)
         logo.setPixmap(mark)
-        logo.setFixedSize(44, 44)
+        logo.setFixedHeight(62)
         brand.addWidget(logo)
-        name = QVBoxLayout()
-        name.setSpacing(0)
-        name.addWidget(label("WAM Fusion", "BrandTitle"))
-        name.addWidget(label("PRIVATE WALLET", "FusionKicker"))
-        brand.addLayout(name, 1)
+        title = label("WAM Fusion Wallet", "BrandTitle")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        brand.addWidget(title)
         side.addLayout(brand)
-        side.addSpacing(24)
-        side.addWidget(label("WORKSPACE", "FusionKicker"))
+        side.addWidget(label("SHARED REGTEST" if shared_profile else "REGTEST", "FusionBadge"),
+                       0, Qt.AlignmentFlag.AlignHCenter)
         self.navigation = QListWidget()
-        self.navigation.setIconSize(QSize(20, 20))
-        self.navigation.setSpacing(3)
+        self.navigation.setIconSize(QSize(18, 18))
+        self.navigation.setSpacing(2)
         self.navigation.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.navigation.setAccessibleName("WAM Fusion wallet navigation")
-        self.navigation.addItems(
-            ("Overview", "Receive", "History", "Send", "Security", "Settings"))
+        self.navigation.addItems(tuple(title for title, _icon in FUSION_NAV_PAGES))
         side.addWidget(self.navigation, 1)
-        side.addWidget(label("SHARED REGTEST" if shared_profile else "REGTEST PREVIEW", "FusionBadge"))
-        notice = label('REGTEST only.\nNo real funds or mainnet keys.', 'FusionMuted')
+        notice = label('WAM Fusion  ·  Qt  ·  WAM Core (REGTEST)\nNo real funds or mainnet keys.', 'FusionMuted')
         notice.setMinimumWidth(0)
         side.addWidget(notice)
         shell.addWidget(sidebar)
@@ -139,6 +136,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         top.setContentsMargins(0, 0, 0, 18)
         top.setSpacing(12)
         self.page_title = label("Overview", "PageTitle")
+        self.page_title.hide()
         top.addWidget(self.page_title)
         top.addStretch()
         self.connection_pill = label("AWAITING VERIFICATION", "FusionBadge")
@@ -175,13 +173,13 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.stack.addWidget(self.history_page)
 
         send_page, send_layout = page(
-            "Send a silent payment",
-            "Review an exact REGTEST transfer; signing and broadcast have separate consent.",
+            "Send",
+            "Prepare, review, approve signature and broadcast as separate actions.",
             "TRANSACTIONS / SEND",
         )
         self.payment_steps = PaymentSteps()
         send_layout.addWidget(self.payment_steps)
-        form, fl = panel("Payment details", "BIP352 · owned Core · native checkpoint")
+        form, fl = panel("Prepare payment", "BIP352 · owned Core · native checkpoint")
         self.recipient_input = QLineEdit()
         self.recipient_input.setMaxLength(256)
         self.recipient_input.setPlaceholderText("wamrtsp1… full recipient code")
@@ -205,9 +203,12 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.send.setProperty("fusion_icon", "send")
         fl.addWidget(self.send)
         review, rl = panel(
-            "Transaction approval",
-            "Review → Sign reserves inputs; Broadcast requires separate approval.",
+            "Review, sign and broadcast",
+            "Signing reserves inputs. Broadcast is a separate explicit approval.",
         )
+        self.review_summary = label("No prepared payment. Recipient, amount, fee and change appear here after Review.")
+        self.review_summary.setMinimumWidth(0)
+        rl.addWidget(self.review_summary)
         self.activate.setText("Enable sending")
         self.activate.setObjectName("FusionSecondary")
         self.activate.setProperty("fusion_icon", "security")
@@ -219,17 +220,20 @@ class Bip39FusionWindow(Bip39TrialWindow):
         rl.addWidget(self.activate)
         rl.addWidget(self.broadcast)
         rl.addWidget(self.cancel)
+        self.send_result = label("No broadcast result yet. An uncertain outcome is never hidden or retried.")
+        self.send_result.setMinimumWidth(0)
+        rl.addWidget(self.send_result)
         rl.addWidget(label("Unknown broadcast status never triggers an automatic retry.", "FusionGold"))
         send_layout.addWidget(ResponsiveRow(form, review, weights=[3, 2]))
         send_layout.addStretch()
         self.stack.addWidget(send_page)
 
         security_page, security_layout = page(
-            "Wallet security",
-            "12-word encrypted seed, native custody and conservative recovery.",
+            "Security",
+            "Wallet protection, backup status and advanced custody controls stay separate.",
             "CUSTODY / SECURITY",
         )
-        wallet_card, wl = panel("Encrypted BIP39 wallet", "Original owned REGTEST Core")
+        wallet_card, wl = panel("Wallet protection", "Lock and unlock reflect authenticated backend custody only.")
         self.security_state = label("Locked / awaiting verified wallet", "FusionCardValue")
         wl.addWidget(self.security_state)
         self.lock.setText("Lock wallet")
@@ -262,13 +266,19 @@ class Bip39FusionWindow(Bip39TrialWindow):
             "Signed and uncertain native reservations are never imported or discarded.",
             "FusionGold",
         ))
+        backup_card, bl = panel("Backup status", "12-word creation and three-word verification remain required.")
+        bl.addWidget(label("Recovery words are shown only at creation. Never send them to a support agent."))
         security_layout.addWidget(ResponsiveRow(wallet_card, recovery_card))
+        security_layout.addWidget(backup_card)
         security_layout.addStretch()
         self.stack.addWidget(security_page)
 
+        self.network_page = NetworkPage()
+        self.stack.addWidget(self.network_page)
+
         settings_page, settings_layout = page(
             "Settings",
-            "A quieter workspace, tailored to your desktop.",
+            "Appearance, ordinary preferences and separate developer diagnostics.",
             "YOUR WALLET / PREFERENCES",
         )
         appearance, appearance_layout = panel(
@@ -306,23 +316,18 @@ class Bip39FusionWindow(Bip39TrialWindow):
         about_layout.addWidget(label(
             "This preview is not a mainnet wallet. All test transactions stay on the owned REGTEST chain."))
         settings_layout.addWidget(about)
+        self.network_state = self.network_page.connection_value
         if shared_profile is not None:
-            from .fusion_ui import action
-            network, net_layout = panel('Shared REGTEST',
-                'Manual Core P2P · local RPC only · '+('mining coordinator' if shared_profile.coordinator else 'participant; mining disabled'))
-            self.network_state = label('Peer not verified. Refresh network before mining or sending.', 'FusionMuted')
-            net_layout.addWidget(self.network_state)
-            self.reconcile_button=action('Reconcile retained shared-chain state','security')
+            self.reconcile_button = action('Reconcile retained shared-chain state', 'security')
             self.reconcile_button.clicked.connect(self._reconcile_shared)
-            net_layout.addWidget(self.reconcile_button)
-            self._last_reconciliation=None
-            for title,command in (('Verify peer and chain',('network_status',)),
-                                  ('Disconnect Core P2P',('network_active',False)),
-                                  ('Reconnect Core P2P',('network_active',True))):
-                button = action(title,'sync')
-                button.clicked.connect(lambda _checked=False,command=command:self._command(*command))
-                net_layout.addWidget(button)
-            settings_layout.addWidget(network)
+            self.network_page.controls_host.addWidget(self.reconcile_button)
+            self._last_reconciliation = None
+            for title, command in (('Verify peer and chain', ('network_status',)),
+                                   ('Disconnect Core P2P', ('network_active', False)),
+                                   ('Reconnect Core P2P', ('network_active', True))):
+                button = action(title, 'sync')
+                button.clicked.connect(lambda _checked=False, command=command: self._command(*command))
+                self.network_page.controls_host.addWidget(button)
 
         advanced_card, advanced_layout = panel(
             "Advanced controls",
@@ -387,12 +392,23 @@ class Bip39FusionWindow(Bip39TrialWindow):
             lambda: self.navigation.setCurrentRow(2))
         self.overview.open_security.clicked.connect(
             lambda: self.navigation.setCurrentRow(4))
+        self.overview.backup_requested.connect(
+            lambda: self.navigation.setCurrentRow(4))
+        self.overview.recovery_requested.connect(self.recovery.click)
+        self.overview.network_requested.connect(
+            lambda: self.navigation.setCurrentRow(5))
         self.overview.manual_sync.clicked.connect(
             lambda: self._command("snapshot"))
         self.overview.transaction_selected.connect(self._select_transaction)
+        self.overview.custody_switch.clicked.connect(self._switch_custody)
         self._last_verified = None
         self._last_review = None
+        self._last_network = None
+        self._broadcast_complete = False
         self._apply_fusion_theme()
+        self.overview.render_snapshot(
+            None, locked=True, network=self._network_view(None),
+            faulted=self.executor.state.faulted)
         if hasattr(QApplication.styleHints(), "colorSchemeChanged"):
             QApplication.styleHints().colorSchemeChanged.connect(
                 self._native_theme_changed)
@@ -417,24 +433,38 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.setStyleSheet(fusion_stylesheet(mode))
         self.overview.set_theme(mode)
         self.history_page.set_theme(mode)
-        for item, icon in zip(
-                (self.navigation.item(i) for i in range(self.navigation.count())),
-                fusion_nav_icons(colors["accent"])):
-            item.setIcon(icon)
+        selected = self.navigation.currentRow()
+        for index in range(self.navigation.count()):
+            item = self.navigation.item(index)
+            tone = colors["onaccent"] if index == selected else colors["muted"]
+            item.setIcon(nav_icon_for(item.text(), tone, max(1, self.devicePixelRatioF())))
         for button in self.findChildren(__import__(
                 "PySide6.QtWidgets", fromlist=["QPushButton"]).QPushButton):
             icon = button.property("fusion_icon")
             if icon:
                 tone = colors["onaccent"] if button.objectName() == "FusionPrimary" else colors["accent"]
                 button.setIcon(vector_icon(icon, tone, max(1, self.devicePixelRatioF())))
+        from PySide6.QtWidgets import QToolButton, QLabel
+        for button in self.findChildren(QToolButton):
+            icon = button.property("fusion_icon")
+            if icon:
+                button.setIcon(vector_icon(icon, colors["accent"], max(1, self.devicePixelRatioF())))
+        for icon_label in self.findChildren(QLabel):
+            name = icon_label.property("fusion_icon_label")
+            if name:
+                icon_label.setPixmap(vector_icon(name, colors["accent"], max(1, self.devicePixelRatioF())).pixmap(24, 24))
         self.sync.setIcon(vector_icon("sync", colors["accent"], max(1, self.devicePixelRatioF())))
+        self.custody_switch.setProperty("fusion_mode", mode)
+        self.overview.custody_switch.setProperty("fusion_mode", mode)
+        self.custody_switch.update()
+        self.overview.custody_switch.update()
 
     def _navigate(self, index):
-        if not 0 <= index < 6:
+        if not 0 <= index < len(FUSION_NAV_PAGES):
             return
-        self.page_title.setText(
-            ("Overview", "Receive", "History", "Send", "Security", "Settings")[index])
+        self.page_title.setText(FUSION_NAV_PAGES[index][0])
         self.stack.setCurrentIndex(index)
+        self._apply_fusion_theme()
         if (self.reduce_motion.isChecked()
                 or os.environ.get("GITHUB_ACTIONS") == "true"):
             return
@@ -480,6 +510,43 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.navigation.setCurrentRow(2)
         self.history_page.select_txid(txid)
 
+    def _network_view(self, snap):
+        shared = self.shared_profile is not None
+        view = {
+            'shared': shared,
+            'mode': 'Shared REGTEST' if shared else 'Isolated REGTEST',
+        }
+        net = getattr(self, '_last_network', None)
+        if isinstance(net, dict):
+            if type(net.get('peer_count')) is int:
+                view['peer_count'] = net['peer_count']
+            if 'connected' in net:
+                view['connected'] = net['connected']
+        lines = [view['mode']]
+        if 'peer_count' in view:
+            lines.append(str(view['peer_count']) + ' peer(s)')
+        elif not shared:
+            lines.append('Zero-peer isolated profile')
+        if snap is not None:
+            lines.append('Height ' + str(snap.height))
+        view['summary'] = '\n'.join(lines)
+        return view
+
+    def _render_network(self, snap=None):
+        net = getattr(self, '_last_network', None) or {}
+        snap = self._last_verified if snap is None and hasattr(self, '_last_verified') else snap
+        self.network_page.render(
+            shared=self.shared_profile is not None,
+            connected=net.get('connected') if isinstance(net, dict) else None,
+            peer_count=net.get('peer_count') if isinstance(net, dict) else None,
+            height=(snap.height if snap is not None else
+                    (net.get('height') if isinstance(net, dict) else None)),
+            tip=(snap.tip if snap is not None else
+                 (net.get('tip') if isinstance(net, dict) else None)),
+            coordinator=None if self.shared_profile is None else self.shared_profile.coordinator,
+            core_alive=self.executor.state.core_alive,
+        )
+
     def _set_actions(self):
         super()._set_actions()
         if getattr(self,'shared_profile',None) is not None:
@@ -497,9 +564,19 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 self.reconcile_button.setEnabled(idle and not self._quit_requested and self.executor.state.core_alive is True)
             if hasattr(self, 'custody_switch'):
                 unlocked = not self.executor.state.locked and self._ready
-                self.custody_switch.setChecked(unlocked)
-                self.custody_switch.setText('Unlocked' if unlocked else 'Locked')
-                self.custody_switch.setEnabled(idle and not self._quit_requested
+                for switch in (self.custody_switch, self.overview.custody_switch):
+                    switch.blockSignals(True)
+                    switch.setChecked(unlocked)
+                    switch.setText('Unlocked' if unlocked else 'Locked')
+                    switch.setEnabled(idle and not self._quit_requested
+                        and (self.lock.isEnabled() or self.unlock.isEnabled()))
+                    switch.blockSignals(False)
+                self.overview.custody_caption.setText('Unlocked' if unlocked else 'Locked')
+                self.overview.lock_details.setText(
+                    'Wallet is ready for transactions.' if unlocked
+                    else 'Unlock requires the original wallet password.')
+                self.overview.quick_lock.setText('Lock wallet' if unlocked else 'Unlock wallet')
+                self.overview.quick_lock.setEnabled(idle and not self._quit_requested
                     and (self.lock.isEnabled() or self.unlock.isEnabled()))
             self.overview.go_send.setEnabled(ready and idle and self._spend_enabled
                 and (self.shared_profile is None or self._shared_connected))
@@ -516,13 +593,16 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 )
             if hasattr(self, "payment_steps"):
                 self.payment_steps.set_stage(
+                    4 if getattr(self, '_broadcast_complete', False) else
                     3 if self._signed_ready else
                     2 if self._approved_commitment is not None else 0
                 )
+            self._render_network()
 
     def _present_backup_ack(self, result):
         self.navigation.setEnabled(False)
         self.page_title.setText('Wallet backup')
+        self.page_title.show()
         self.connection_pill.setText(t("regtest_preview"))
         if result.get("backup_status") == "required" and result.get("mnemonic_once"):
             self.backup_page.set_phrase(result["mnemonic_once"].split())
@@ -630,6 +710,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.stack.setCurrentIndex(0)
         self.navigation.setCurrentRow(0)
         self.page_title.setText("Overview")
+        self.page_title.hide()
         if success:
             self.connection_pill.setText("AWAITING VERIFICATION")
         super()._backup_flow_completed(success)
@@ -679,9 +760,11 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self.status.setText("Q06_FUSION_VERIFIED_SNAPSHOT_DENIED")
             return
         try:
-            self.overview.render_snapshot(snap, operational=True)
+            self.overview.render_snapshot(
+                snap, operational=True, network=self._network_view(snap))
             self.receive_page.render_snapshot(snap)
             self.history_page.render_snapshot(snap)
+            self._render_network(snap)
         except (ValueError, TypeError):
             self._clear_visuals()
             self.status.setText("Q06_FUSION_PRESENTATION_DENIED")
@@ -694,9 +777,14 @@ class Bip39FusionWindow(Bip39TrialWindow):
     def _clear_visuals(self):
         self._last_verified = None
         self.connection_pill.setText("●  NOT VERIFIED")
-        self.overview.render_snapshot(None, locked=True)
+        self.overview.render_snapshot(
+            None, locked=True, faulted=self.executor.state.faulted,
+            network=self._network_view(None))
         self.receive_page.render_snapshot(None)
         self.history_page.render_snapshot(None)
+        self._render_network(None)
+        if hasattr(self, 'review_summary'):
+            self.review_summary.setText('No prepared payment. Recipient, amount, fee and change appear here after Review.')
 
     def _on_ready(self, action, result):
         if action=='reconcile_reorg':
@@ -711,8 +799,10 @@ class Bip39FusionWindow(Bip39TrialWindow):
             return
         if isinstance(result,dict) and 'shared_network' in result:
             self._shared_connected = result['shared_network']['connected']
+            self._last_network = result['shared_network']
         if action in ('network_status','network_active'):
             self._shared_connected = result['connected']
+            self._last_network = result
             self.network_state.setText(('Connected' if result['connected'] else 'Disconnected')
                 +f" · {result['peer_count']} peer(s) · height {result['height']}\nTip: {result['tip']}")
             self.status.setText('Shared chain verified; refresh wallet to reconcile history.'
@@ -726,6 +816,11 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self._approved_commitment = result.commitment
             self._last_review = result
             self._signed_ready = False
+            self._broadcast_complete = False
+            self.review_summary.setText(
+                f'Recipient  {result.code}\nAmount  {format_wam(result.atoms)} WAM\n'
+                f'Fee  {format_wam(result.fee)} WAM\nChange  {format_wam(result.change_atoms)} WAM')
+            self.payment_steps.set_stage(1)
             dialog = PaymentApproval(result, "sign", self)
             try:
                 accepted = dialog.exec() == QDialog.DialogCode.Accepted
@@ -743,6 +838,17 @@ class Bip39FusionWindow(Bip39TrialWindow):
         super()._on_ready(action, result)
         if action in ("cancel", "broadcast", "lock", "quit"):
             self._last_review = None
+        if action == "broadcast":
+            txid = self.last_txid.text().strip()
+            if txid and 'uncertain' not in txid.lower():
+                self.send_result.setText('Broadcast submitted.\n' + txid)
+                self._broadcast_complete = True
+            else:
+                self.send_result.setText(
+                    'Broadcast outcome is uncertain. Reservations are retained. Do not retry automatically.')
+                self._broadcast_complete = False
+        if action == "sign":
+            self.payment_steps.set_stage(3)
         if action in ("snapshot", "activate"):
             self._render_verified(result)
         elif action == "open":

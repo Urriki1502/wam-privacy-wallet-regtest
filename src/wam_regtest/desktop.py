@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 
 from .wallet_read import WalletReadSnapshot, read_real_wallet_snapshot, format_wam
 from .branding import brand_image
-from .fusion_ui import FusionOverview, fusion_palette, fusion_stylesheet, fusion_nav_icons, vector_icon, label, action
+from .fusion_ui import FusionOverview, fusion_palette, fusion_stylesheet, nav_icon_for, vector_icon, label, action
 from .fusion_pages import ReceivePage, HistoryPage
 
 
@@ -189,11 +189,9 @@ class RegtestWalletWindow(QMainWindow):
         for icon_label in self.findChildren(QLabel):
             name=icon_label.property("fusion_icon_label")
             if name:icon_label.setPixmap(vector_icon(name,c["accent"],self.devicePixelRatioF()).pixmap(24,24))
-        for item, icon in zip(
-            (self.navigation.item(i) for i in range(self.navigation.count())),
-            fusion_nav_icons(c["accent"]),
-        ):
-            item.setIcon(icon)
+        for index in range(self.navigation.count()):
+            item = self.navigation.item(index)
+            item.setIcon(nav_icon_for(item.text(), c["accent"], self.devicePixelRatioF()))
 
     def request_sync(self):
         if self._worker is not None:

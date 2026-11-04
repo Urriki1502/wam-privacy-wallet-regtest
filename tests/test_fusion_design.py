@@ -46,8 +46,8 @@ class FusionDesignContracts(unittest.TestCase):
             self.assertIn("FusionSegmented", fusion_stylesheet(mode))
         # One consistent action color family; WAM brand gold is not reused as
         # a focus/button tint. No dependence on deprecated 2026 Q05 hex values.
-        self.assertEqual(dark["accent"], "#81B5FF")
-        self.assertEqual(light["accent"], "#1666CC")
+        self.assertEqual(dark["accent"], "#E0C36A")
+        self.assertEqual(light["accent"], "#7A5A12")
         self.assertNotEqual(dark["bg"], light["bg"])
 
     def test_invalid_theme_fails_closed(self):

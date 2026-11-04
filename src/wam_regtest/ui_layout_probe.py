@@ -80,15 +80,15 @@ def check_layouts(output=None):
                 # Policy must restore on other backup pages; verification logic is untouched.
                 window.backup_page._stack.setCurrentWidget(window.backup_page._verify_page)
                 assert window.backup_page._stack.sizePolicy() == window.backup_page._normal_stack_policy
-                window.navigation.setCurrentRow(5)
-                window.stack.setCurrentIndex(5)
+                window.navigation.setCurrentRow(6)
+                window.stack.setCurrentIndex(6)
                 window.page_title.setText('Settings')
                 settle()
                 for expanded in (False, True, False):
                     window.advanced_toggle.setChecked(expanded)
                     settle()
                     button = window.advanced_toggle
-                    scroll = window.stack.widget(5)
+                    scroll = window.stack.widget(6)
                     scroll.ensureWidgetVisible(button)
                     settle()
                     assert button.height() >= button.sizeHint().height(), ('advanced', button.height(), button.sizeHint().height())

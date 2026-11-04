@@ -34,8 +34,8 @@ class PaymentQR(QWidget):
 class ReceivePage(QWidget):
     def __init__(self):
         super().__init__();self.code=None;self.setObjectName('FusionInner');root=QVBoxLayout(self);root.setContentsMargins(0,0,0,0)
-        self.scroll,layout=page('Receive privately','One genuine BIP352 payment code. A new on-chain destination for each sender.','SILENT PAYMENTS / RECEIVE');root.addWidget(self.scroll)
-        card,cl=panel('Your silent-payment address','REGTEST only · send with a compatible BIP352 wallet')
+        self.scroll,layout=page('Receive','One genuine BIP352 silent-payment code. A new on-chain destination for each sender.','SILENT PAYMENTS / RECEIVE');root.addWidget(self.scroll)
+        card,cl=panel('Your silent-payment address','REGTEST only · BIP352 · never a reusable public address')
         self.qr=PaymentQR();qrbox=QWidget();ql=QVBoxLayout(qrbox);ql.setContentsMargins(0,0,0,0);ql.addWidget(self.qr,alignment=Qt.AlignmentFlag.AlignCenter);ql.addWidget(label('Exact address QR','FusionKicker'),alignment=Qt.AlignmentFlag.AlignCenter)
         address=QWidget();al=QVBoxLayout(address);al.setContentsMargins(0,0,0,0);al.addWidget(label('BIP352 / REGTEST','FusionBadge'));self.receive_code=label('—','ReceiveCode',True);self.receive_code.setMinimumWidth(0);al.addWidget(self.receive_code)
         self.copy_button=action('Copy full address','copy',True);self.copy_button.setEnabled(False);self.copy_button.clicked.connect(self.copy_address);al.addWidget(self.copy_button);self.copy_status=label('The copied value is never shortened.');al.addWidget(self.copy_status);al.addStretch()
@@ -63,7 +63,7 @@ class HistoryPage(QWidget):
     page_requested=Signal(int)
     def __init__(self):
         super().__init__();self.setObjectName('FusionInner');self.rows=();self.mode='dark';self._offset=0;self._total=0;root=QVBoxLayout(self);root.setContentsMargins(0,0,0,0)
-        scroll,layout=page('Transaction history','Explore only the confirmed history verified by WAM Core and WSP-1.','ON-CHAIN / HISTORY');root.addWidget(scroll)
+        scroll,layout=page('History','Confirmed credits and debits verified by WAM Core and WSP-1.','ON-CHAIN / HISTORY');root.addWidget(scroll)
         card,cl=panel();toolbar=QHBoxLayout();self.search=QLineEdit();self.search.setPlaceholderText('Search transaction ID or block height');self.search.setClearButtonEnabled(True);self.search.setAccessibleName('Search confirmed transactions');self.filter=QComboBox();self.filter.addItems(('All activity','Credits','Debits'));toolbar.addWidget(self.search,1);toolbar.addWidget(self.filter);cl.addLayout(toolbar)
         self.table=QTableWidget(0,6);self.table.setObjectName('FusionActivityTable');self.table.setHorizontalHeaderLabels(('DIRECTION','TRANSACTION','BLOCK','CONFIRMED','CREDIT WAM','DEBIT WAM'));self.table.verticalHeader().hide();self.table.setShowGrid(False);self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers);self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows);self.table.horizontalHeader().setSectionResizeMode(1,QHeaderView.ResizeMode.Stretch);self.table.setMinimumHeight(220);self.table.setColumnWidth(0,130);self.table.setColumnWidth(2,65);self.table.setColumnWidth(3,90);self.table.setColumnWidth(4,145);self.table.setColumnWidth(5,145);cl.addWidget(self.table)
         nav=QHBoxLayout();self.newer=action('Newer confirmed history','history');self.older=action('Older confirmed history','history');self.newer.setEnabled(False);self.older.setEnabled(False);self.newer.clicked.connect(self._newer);self.older.clicked.connect(self._older);nav.addWidget(self.newer);nav.addWidget(self.older);nav.addStretch();cl.addLayout(nav)
@@ -136,10 +136,14 @@ class HistoryPage(QWidget):
 class PaymentSteps(QFrame):
     def __init__(self):
         super().__init__();self.setObjectName('FusionInset');layout=QHBoxLayout(self);layout.setContentsMargins(16,13,16,13);self.labels=[]
-        for i,name in enumerate(('Prepare','Review','Approve Sign','Broadcast')):
-            item=label(f'{i+1:02d}  {name}','FusionMuted');layout.addWidget(item,1);self.labels.append(item)
+        for i,name in enumerate(('Prepare','Review','Approve signature','Broadcast','Result')):
+            item=label(f'{i+1}  {name}','FusionMuted');item.setAlignment(Qt.AlignmentFlag.AlignCenter);layout.addWidget(item,1);self.labels.append(item)
     def set_stage(self,stage):
-        for i,item in enumerate(self.labels):item.setObjectName('FusionGold' if i==stage else 'FusionMuted');item.style().unpolish(item);item.style().polish(item)
+        for i,item in enumerate(self.labels):
+            if i<stage:item.setObjectName('FusionVerified')
+            elif i==stage:item.setObjectName('FusionGold')
+            else:item.setObjectName('FusionMuted')
+            item.style().unpolish(item);item.style().polish(item)
 
 
 class WalletConsent(QDialog):
@@ -176,5 +180,76 @@ class PaymentApproval(QDialog):
         layout=QVBoxLayout(self);layout.setContentsMargins(28,24,28,24);layout.setSpacing(16)
         layout.addWidget(label('EXPLICIT TRANSACTION APPROVAL','FusionKicker'));layout.addWidget(label('Approve signature' if kind=='sign' else 'Submit to REGTEST','PageTitle'))
         layout.addWidget(label('Signing makes input reservations irreversible.' if kind=='sign' else 'An uncertain broadcast reply retains reservations. Do not assume it failed.','FusionGold'))
-        card,cl=panel('Exact recipient');cl.addWidget(label(review.code,'ReceiveCode',True));cl.addWidget(label(f'Amount  {format_wam(review.atoms)} WAM\nFee       {format_wam(review.fee)} WAM\nChange  {format_wam(review.change_atoms)} WAM\nInputs    {review.input_count}'));layout.addWidget(card)
+        card,cl=panel('Exact payment');cl.addWidget(label('Recipient','FusionKicker'));cl.addWidget(label(review.code,'ReceiveCode',True));cl.addWidget(label(f'Amount     {format_wam(review.atoms)} WAM\nFee          {format_wam(review.fee)} WAM\nChange    {format_wam(review.change_atoms)} WAM\nInputs      {review.input_count}'));layout.addWidget(card)
         buttons=QDialogButtonBox();self.cancel=buttons.addButton('Cancel',QDialogButtonBox.ButtonRole.RejectRole);self.approve=buttons.addButton('Approve Sign' if kind=='sign' else 'Approve Broadcast',QDialogButtonBox.ButtonRole.AcceptRole);self.approve.setObjectName('FusionPrimary');self.cancel.setDefault(True);self.approve.setAutoDefault(False);buttons.rejected.connect(self.reject);buttons.accepted.connect(self.accept);layout.addWidget(buttons)
+
+
+class NetworkPage(QWidget):
+    """V1-NET status surface. Never invents peers, height or connectivity."""
+
+    def __init__(self):
+        super().__init__()
+        self.setObjectName('FusionInner')
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        self.scroll, layout = page(
+            'Network',
+            'Isolated or Shared REGTEST connectivity from the owned Core. This is not a new P2P protocol.',
+            'V1-NET / REGTEST')
+        root.addWidget(self.scroll)
+        status, sl = panel('Network status', 'Unknown fields stay unknown until the owned Core verifies them.')
+        self.mode_value = label('Not verified', 'FusionCardValue')
+        self.connection_value = label('Core connectivity is not verified')
+        self.peer_value = label('Peer count is shown only after a verified network check')
+        self.height_value = label('Chain height is shown only after a verified snapshot')
+        self.sync_value = label('Sync status is unknown until Core is verified')
+        self.identity_value = label('Shared network identity is shown only for a configured Shared REGTEST profile')
+        for widget in (self.mode_value, self.connection_value, self.peer_value,
+                       self.height_value, self.sync_value, self.identity_value):
+            widget.setMinimumWidth(0)
+            sl.addWidget(widget)
+        layout.addWidget(status)
+        controls, cl = panel('Manual peer controls', 'Existing V1-NET commands only. No automatic peer discovery.')
+        self.controls_note = label('Isolated REGTEST keeps the Q06 zero-peer profile.')
+        cl.addWidget(self.controls_note)
+        self.controls_host = QVBoxLayout()
+        cl.addLayout(self.controls_host)
+        layout.addWidget(controls)
+        layout.addStretch()
+
+    def render(self, *, shared=False, connected=None, peer_count=None, height=None,
+               tip=None, coordinator=None, core_alive=None, identity=None):
+        self.mode_value.setText('Shared REGTEST' if shared else 'Isolated REGTEST')
+        if core_alive is True:
+            self.connection_value.setText('Owned Core is alive')
+        elif core_alive is False:
+            self.connection_value.setText('Owned Core is not running')
+        else:
+            self.connection_value.setText('Core connectivity is not verified')
+        if type(peer_count) is int:
+            self.peer_value.setText(
+                f'{peer_count} connected peer(s)'
+                + ('' if connected is None else (' · connected' if connected else ' · disconnected')))
+        elif not shared:
+            self.peer_value.setText('Zero-peer isolated profile')
+        else:
+            self.peer_value.setText('Peer count is shown only after a verified network check')
+        if type(height) is int:
+            self.height_value.setText('Chain height ' + str(height))
+        else:
+            self.height_value.setText('Chain height is shown only after a verified snapshot')
+        if type(tip) is str and len(tip) >= 14:
+            self.sync_value.setText('Verified tip ' + tip[:14] + '…')
+        else:
+            self.sync_value.setText('Sync status is unknown until Core is verified')
+        if identity:
+            self.identity_value.setText(identity)
+        elif coordinator is True:
+            self.identity_value.setText('This profile is the mining coordinator')
+        elif coordinator is False:
+            self.identity_value.setText('Participant profile · mining disabled')
+        else:
+            self.identity_value.setText('Shared network identity is shown only for a configured Shared REGTEST profile')
+        self.controls_note.setText(
+            'Manual connect/disconnect uses the configured Shared REGTEST peer.'
+            if shared else 'Isolated REGTEST keeps the Q06 zero-peer profile.')
