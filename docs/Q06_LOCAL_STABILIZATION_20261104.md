@@ -91,4 +91,3 @@ Read-only DMG content verification: `build/local-evidence-20261104/q06-e48d6cc-d
 Q06 remains `accepted=false`; owner G6 failure remains open pending physical retest, G7 independent review remains BLOCKED, cross-OS/exact-main qualification remains incomplete. ENGINEERING HANDOFF NO; FULL Q ACCEPTED NO. The owner's old payment outcome/reservations are not inferred from fresh disposable tests and have not been released, retried or migrated.
 
 ---
-
