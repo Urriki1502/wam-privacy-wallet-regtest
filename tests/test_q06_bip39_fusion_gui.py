@@ -88,6 +88,37 @@ class Q06ExistingFusionUiContract(unittest.TestCase):
 class ApprovalWorkerOrdering(unittest.TestCase):
     """Real Qt event delivery; synthetic backend is NOT Core acceptance."""
 
+    def test_gui_wait_deadline_retains_original_future_without_resubmission(self):
+        from concurrent.futures import Future
+        from PySide6.QtCore import QTimer
+        from PySide6.QtWidgets import QApplication
+        from PySide6.QtTest import QTest
+        from wam_regtest.managed_gui import ControlWorker
+        app = QApplication.instance() or QApplication([])
+        future = Future()
+        calls = []
+        class Executor:
+            def submit(self, action, *args, **kwargs):
+                calls.append(action)
+                return future
+        worker = ControlWorker(Executor(), 'snapshot', kwargs={'timeout':0.01})
+        ready, denied, pending = [], [], []
+        worker.ready.connect(lambda action, result: ready.append(result))
+        worker.denied.connect(denied.append)
+        worker.pending.connect(pending.append)
+        QTimer.singleShot(80, lambda: future.set_result('original-result'))
+        worker.start()
+        for _ in range(100):
+            app.processEvents()
+            if ready:
+                break
+            QTest.qWait(10)
+        self.assertTrue(worker.wait(1000))
+        self.assertEqual(calls, ['snapshot'])
+        self.assertEqual(ready, ['original-result'])
+        self.assertEqual(denied, [])
+        self.assertEqual(pending, ['WALLET_EXECUTOR_OPERATION_STILL_PENDING'])
+
     def test_delayed_modal_approval_signs_once_after_prepare_worker_finishes(self):
         from PySide6.QtCore import QTimer
         from PySide6.QtWidgets import QApplication, QDialog

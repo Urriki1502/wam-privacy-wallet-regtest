@@ -10,11 +10,30 @@ from .gui_errors import operation_error
 class ControlWorker(QThread):
     ready=Signal(str,object)
     denied=Signal(str)
+    pending=Signal(str)
     def __init__(self,executor,action,args=(),kwargs=None,parent=None):
         super().__init__(parent)
         self.executor=executor;self.action=action;self.args=args;self.kwargs=kwargs or {}
     def run(self):
-        try:self.ready.emit(self.action,self.executor.request(self.action,*self.args,**self.kwargs))
+        try:
+            from concurrent.futures import TimeoutError
+            options = dict(self.kwargs)
+            timeout = options.pop('timeout', 90)
+            future = self.executor.submit(self.action, *self.args, **options)
+            notified = False
+            while True:
+                try:
+                    result = future.result(timeout=timeout)
+                    break
+                except TimeoutError:
+                    if future.done():
+                        raise  # Backend timeout is a failure, not a new wait.
+                    if not notified:
+                        self.pending.emit('WALLET_EXECUTOR_OPERATION_STILL_PENDING')
+                        notified = True
+                    # Keep the ORIGINAL Future. No cancellation, resubmission,
+                    # RPC retry, reservation change or extra signing authority.
+            self.ready.emit(self.action, result)
         except Exception as error:self.denied.emit(operation_error(self.action,error))
         finally:self.args=();self.kwargs={}
 

@@ -65,7 +65,10 @@ def qualify(core, source):
                 raise ValueError('Q06_GUI_DENIED_' + label)
             if time.monotonic() >= deadline:
                 raise ValueError('Q06_GUI_WAIT_' + label)
-            QTest.qWait(15)
+            # QTest.qWait holds the Python GIL on this Cocoa binding and can
+            # starve the real wallet owner's file/RPC work. Sleep releases it;
+            # Qt events are still delivered on the next main-thread iteration.
+            time.sleep(0.01)
         app.processEvents()
     def idle():
         return window._worker is None and not executor.busy and not window._delivering_result

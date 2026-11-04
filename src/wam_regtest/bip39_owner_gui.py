@@ -347,6 +347,9 @@ class Bip39TrialWindow(QWidget):
         self._last_error_code = None
         worker.ready.connect(self._receive_result, Qt.ConnectionType.QueuedConnection)
         worker.denied.connect(self._receive_denial, Qt.ConnectionType.QueuedConnection)
+        worker.pending.connect(lambda _: self.status.setText(
+            'Original operation still running. Waiting for its result; do not retry.'),
+            Qt.ConnectionType.QueuedConnection)
         worker.finished.connect(self._finished)
         worker.finished.connect(worker.deleteLater)
         self._set_actions()
