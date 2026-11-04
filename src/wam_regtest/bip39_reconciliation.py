@@ -155,16 +155,20 @@ def reconcile_shared(owner,seed_folder,source,password,*,authorized=False,keycha
     seed_id,folder=_directory(owner,seed_folder)
     scanner=guard=rpc=None
     good=False
+    phase='SEED_AUTH'
     try:
         with open_owned_seed_container(owner,seed_folder,source,password,authorized=True,keychain=keychain) as keys:
+            phase='NATIVE_AUTH'
             storage,anchor=_native(folder,seed_id,source,keychain)
             with anchor.lease():
                 original=_scanner_anchor_record(anchor.read())
                 _exact_namespace(folder,_checkpoint_names(original[0]))
                 candidate,data=_read_authenticated_candidate(storage,anchor,folder,original,seed_id,_owner_binding(owner),keys,password)
+                phase='CHAIN_PROOF'
                 tip=_owned_tip(owner)
                 branch=_branch(owner,(data['height'],data['tip']),tip)
                 approved=_approved(owner,seed_id,folder,anchor,source,password)
+                phase='RESTORE_AUTHENTICATED'
                 from wam_sp.scanner import Scanner
                 from .wallet_session import WalletCoreCli
                 from .bip39_spend_session import _reservation_map,_remove_known_scanner_lock
@@ -179,18 +183,21 @@ def reconcile_shared(owner,seed_folder,source,password,*,authorized=False,keycha
                 decode_candidate(keys,scanner,candidate,password.decode('utf-8'),owner_binding=_owner_binding(owner))
                 held=_reservation_map(scanner)
                 runtimes={}
+                phase='RETAINED_RUNTIMES'
                 for path in _runtimes(owner):
                     digest,rows=_runtime_evidence(path)
                     if path.name in approved:
                         if approved[path.name]!=digest:raise ReconciliationError('Q06_RECONCILIATION_RUNTIME_CHANGED')
                     else:require_irreversible_preserved(rows,held)
                     runtimes[path.name]=digest
+                phase='CANONICAL_RESCAN'
                 rpc=WalletCoreCli(owner.cli,owner.directory);rpc.attest()
                 scanner.sync(rpc);scanner.assert_current()
                 require_irreversible_preserved(held,_reservation_map(scanner))
                 if scanner.store.tip()!=tip or _owned_tip(owner)!=tip or anchor.read()!=original:
                     raise ReconciliationError('Q06_RECONCILIATION_TIP_OR_ANCHOR_CHANGED')
                 peer_status(owner.directory,require_connected=True)
+                phase='PREPARE_RECEIPT'
                 receipts=owner.directory/'q06-reconciliations'
                 if not receipts.exists():custody.create_directory(receipts)
                 def prepare(parent,new):
@@ -199,6 +206,7 @@ def reconcile_shared(owner,seed_folder,source,password,*,authorized=False,keycha
                                 parent=parent,target=new,tip=tip,branch=branch,runtimes=runtimes)
                     raw=json.dumps(record,sort_keys=True,separators=(',',':')).encode('ascii')
                     storage.publish(receipts,f'reconciliation-{new[0]:09d}.enc',seal(raw,password,b'recovery'))
+                phase='PUBLISH_NATIVE'
                 result=_publish_advanced_candidate(owner,seed_folder,scanner,source,password,keys,folder,
                     seed_id,{'generation':original[0]},tip,keychain,anchor_override=anchor,before_publish=prepare)
                 guard.check();_owned(owner)
@@ -206,7 +214,11 @@ def reconcile_shared(owner,seed_folder,source,password,*,authorized=False,keycha
                 return dict(result,status='Q06_SHARED_RECONCILIATION_VERIFIED',branch=branch,
                             retained_runtime_count=len(runtimes),automatic_broadcast=False,
                             signing_authorized=False,reservations_preserved=True)
-    except Exception:
+    except Exception as error:
+        if os.environ.get('WAM_RECONCILIATION_DIAGNOSTICS')=='1':
+            args=error.args
+            code=args[0] if len(args)==1 and type(args[0]) is str and re.fullmatch('[A-Z0-9_]{1,96}',args[0]) else 'INTERNAL_DENIED'
+            print('Q06_RECONCILIATION_DENIED_STAGE='+phase+';CATEGORY='+code,flush=True)
         raise ReconciliationError('Q06_SHARED_RECONCILIATION_DENIED') from None
     finally:
         if scanner is not None:scanner.close()
