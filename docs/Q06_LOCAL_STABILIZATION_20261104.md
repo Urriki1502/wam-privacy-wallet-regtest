@@ -63,3 +63,32 @@ Local scope inventory/internal review/source/native-Mac/frozen-Mac and exact art
 The owner separately authorized local V1-NET work after these local engineering tests, independent of Q06 acceptance. Continue in one separate local branch from this qualified baseline; do not rename Q07, alter isolated profile defaults, update acceptance flags, push, open remote PRs or merge. V19 remains unexecuted until two actual computers are tested.
 
 KEEP: original Core/RPC/custody/checkpoint/Signer/PSBT architecture. SIMPLIFY: one worker result/Future and backend-derived payment presentation. REMOVE: no historical feature, wallet, journal or workspace was removed; only faulty newly introduced probe assumptions were corrected.
+# Follow-up checkpoint: explicit profile and Qt lifetime, 2026-11-04
+
+Qualified runtime/build source: `e48d6cc23eeb36e279611608f6021291142a0e04` on the local Q06 branch. This follow-up supersedes the older artifact details below; historical evidence remains preserved.
+
+The normal launch now honors the explicitly selected supervisor root. A remembered seed-container path and sibling seed selection cannot redirect that root after the user's choice. Backend original-profile/unique-seed/native-checkpoint authentication is unchanged. The parked legacy QWidget is parented to the actual wallet window. A focused routing regression and native Qt lifecycle runner were added; **104 Q06 source tests PASS, process exit 0**, in `build/local-evidence-20261104/q06-reopen-entry-contracts.log`.
+
+New verified distribution: `build/qualified-q06-e48d6cc/package-output/`.
+
+| Artifact / evidence | Verified value |
+|---|---|
+| DMG SHA256 | `961bdc61c2c69ef15e3fd6d3719602b67a21653dc512854a80d42b113ac2acd0` |
+| ZIP SHA256 | `2b2cf65b5d5deb1ac57b041ef7609bb901f95019dc6eb1e074a6671e3008d8cd` |
+| Frozen executable SHA256 | `5c3b14ad06a9b22e2074668f8313d3e10d9bc0f19989ca20ed7f073efcee25d7` |
+| Real Q06 payment TXID | `7ff07f5661b262d539365adda070ecfd553d50ad583d0fc29febd57b8c3b4df2` |
+| Confirmed height / block | 103 / `0f437162b737b1202d028d5852cab7d6b5ebebb7118329940aea9213c44ad3e9` |
+| Source receipt / inventory | Exact e48d6cc embedded stamp matched current literal tracked source; native inventory `c0405188a494afdd81109f9c400396b0b2e8576275bc06554d8423f4906c5a1a` |
+| Public distribution inventory | All 54 manifest members independently rehashed and matched |
+| DMG interior | Read-only mount: executable/source stamp/both Core members match; own image detached |
+
+`build/local-evidence-20261104/build-q06-reopen-entry.log` proves final frozen Q01/Core/Q02/RPC reuse/Cocoa/Q04/Q06 read-only/full-GUI scenarios, including real backup, payment approvals, confirmation, repeated Lock/Unlock, wrong-password refusal, encrypted signed evidence and same-profile/Core restart. Its outer builder stopped before Q05 qualification because the old receipt existed (`Q05_FINAL_FROZEN_SCOPE_DENIED`); no Q05 process was started by that failed command.
+
+The exact same frozen executable was then qualified into a NEW receipt directory without rebuilding passed modules: `q05-frozen-e48d6cc-resume.log` and `q06-e48d6cc-final-gates/`. Managed GUI lifecycle, security, signed/uncertain completion, divergent signed/uncertain cuts and all listed negative cases PASS; process exit 0. Source inventory and raw Python tree were independently compared to the embedded build stamp before resuming, then unchanged source was verified through final packaging. See distribution `BUILD_RESUME_RECEIPT.json` and engineering `q06-e48d6cc-finalize.log` (exit 0). Existing old artifacts/receipts were not overwritten in their qualified snapshots.
+
+Read-only DMG content verification: `build/local-evidence-20261104/q06-e48d6cc-dmg-readonly-verification.json`. This distribution is Q06 isolated REGTEST; it does **not** contain V1-NET. Shared networking remains on its separate local branch. The successful prior full source suite at aaf2de2 is historical evidence; the newly executed Q06 source scope is 104/104, not a claim that a full suite ran at e48d6cc.
+
+Q06 remains `accepted=false`; owner G6 failure remains open pending physical retest, G7 independent review remains BLOCKED, cross-OS/exact-main qualification remains incomplete. ENGINEERING HANDOFF NO; FULL Q ACCEPTED NO. The owner's old payment outcome/reservations are not inferred from fresh disposable tests and have not been released, retried or migrated.
+
+---
+

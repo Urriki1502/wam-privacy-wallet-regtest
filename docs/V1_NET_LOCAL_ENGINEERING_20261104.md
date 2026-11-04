@@ -6,9 +6,9 @@ No push, PR, merge, remote CI, consensus change, mainnet or acceptance-ledger ch
 
 ## Qualified Q06 checkpoint retained
 
-See `Q06_LOCAL_STABILIZATION_20261104.md`. Runtime/build source `aaf2de2a13471f955c367561e64276e5353180c5`; qualified distribution is preserved at `build/qualified-q06-aaf2de2/package-output/`.
-DMG SHA256: `d482f8c2562a7f4c2162d58595ad808357b74ad7c0555419c08df23f4f227f43` (rehash matched after interrupted session).
-That artifact predates V1-NET and must not be presented as a shared-network build.
+See `Q06_LOCAL_STABILIZATION_20261104.md`. Latest runtime/build source `e48d6cc23eeb36e279611608f6021291142a0e04`; qualified distribution is preserved at `build/qualified-q06-e48d6cc/package-output/`.
+DMG SHA256: `961bdc61c2c69ef15e3fd6d3719602b67a21653dc512854a80d42b113ac2acd0`; executable `5c3b14ad06a9b22e2074668f8313d3e10d9bc0f19989ca20ed7f073efcee25d7`. All 54 manifest members, ZIP executable/stamp and read-only-mounted DMG executable/Core/stamp independently matched. Own image detached. This artifact is standalone isolated Q06 and must not be presented as a shared-network build.
+Previous qualified aaf2de2 distribution remains preserved at `build/qualified-q06-aaf2de2/package-output/`, DMG SHA256 `d482f8c2562a7f4c2162d58595ad808357b74ad7c0555419c08df23f4f227f43` (rehash matched after interrupted session).
 Q06 remains `accepted=false`; owner G6 retest and independent G7 remain open.
 
 ## Architecture and changes
@@ -65,6 +65,8 @@ Native source references: `bip39_native_checkpoint._require_confirmed_descendant
 
 `Bip39FusionWindow` now parents its parked legacy widget to the actual window. The shared lab deletes retired GUI windows only after the executor and its original Core have exited. The public failure receipt is written before cleanup. Source-suite widget disposal is fixture cleanup, not permission to destroy a live wallet owner.
 
+Follow-up source commit `7ba9d3a` retains a failed-stop original owner using the existing authenticated `CoreSupervisor.serve` on a non-daemon control thread, rather than losing the Popen handle on Python exit. No PID adoption or new Core manager is introduced. Future non-frozen shared probes require clean, literal source verification and record source inventory; the earlier development-tree run is not retroactively upgraded. Commit `cbfafee` tests the real native Qt manual peer dialog (public IP rejected, private endpoint and explicit coordinator consent accepted) and bounds modal test duration. Latest `shared-policy-runner5.log`: **10 PASS, exit 0**. This includes fixtures and native configuration widgets, not a rerun of Core network acceptance.
+
 The explicit-profile correction removes two unsafe redirects in `launch_bip39_trial`: remembered seed folders no longer replace the supervisor root selected by the owner; sibling seed-folder selection no longer mutates that root after executor construction. The existing backend remains the authority for unique original seed/profile verification. Shared and isolated remembered path hints use distinct keys. No original wallet data or QSettings history is migrated or deleted.
 
 ## Current local engineering blockers
@@ -76,6 +78,16 @@ The explicit-profile correction removes two unsafe redirects in `launch_bip39_tr
 5. Owner G6 / independent G7 / formal integration remain unresolved. The versioned acceptance ledger is unchanged (blob `0e93a2b213d7dab6d0f5bc9c26997c68493aed8a`).
 
 No newly qualified V1 DMG exists. The retained Q06 DMG above is the last verified artifact, not a V1 delivery.
+
+## Handoff state and exact next actions
+
+- Q06 local branch: `feature/issue45-q06-bip39-12word-20261031`, documentation HEAD `f9c23f3`, qualified code `e48d6cc`. Its separate 104/104 scoped source run and final frozen Core/GUI/Q05 qualification passed. The first builder stopped at an existing-receipt guard; the same already-tested binary completed Q05 into fresh receipts and was packaged without rerunning passed modules. The resume receipt is in the new qualified distribution.
+- V1 local branch: `feature/v1-net-shared-regtest-20261104`; implementation `9baac93`, GUI/profile integration `84249fe`, retained evidence/blocked cases `ba0c823`, original-owner/source-proof fix `7ba9d3a`, native dialog test `cbfafee`. No merge or history rewrite joined these branches; the Q06 root/widget fix was independently applied on Q06, with equivalent changes already on V1.
+- Required process action: narrow owner exception or manual graceful shutdown of ONLY the two revalidated disposable Core instances. Read-only `lsof` matched PID 7234 to `wam-fusion-core-ae71f10558d7da35/chain`, and PID 7250 to `wam-fusion-core-d1205025070f3f86/chain`, both under the named failed lab; latest journals record those exact RUNNING PIDs and the executable is canonical `core/wamd`. Revalidate at action time. Do not clear their stale journals or retained runtime.
+- Once standard ports are safely free, run the remaining exact-commit two-Core probe, including the repaired cleanup path; record V17 BLOCKED for unavailable wallet reorg recovery. Preserve all prior failures. Source/fixture tests cannot close this step.
+- Qualify a final frozen V1 candidate separately and replay the isolated workflow against those exact bytes (V18). Use fresh public receipt paths, since both Q05 harness and release manifest deliberately reject pre-existing receipts. Preserve old output generations. Do not rebuild passed modules solely to repair an output-path collision.
+- Design authenticated checkpoint reconciliation for a genuine competing branch without weakening native floors, irreversible reservations or explicit broadcast consent. Until implemented and genuinely tested, Shared mode is not engineering-complete after checkpoint-crossing reorgs.
+- Execute V19 on two actual computers, then obtain owner physical G6 and genuinely independent G7 as separate authorities. Neither is self-declared here.
 
 ## Two-machine preparation (NOT a physical PASS)
 
