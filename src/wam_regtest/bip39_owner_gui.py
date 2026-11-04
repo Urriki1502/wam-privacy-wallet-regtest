@@ -476,7 +476,7 @@ class Bip39TrialWindow(QWidget):
         dialog.verify_requested.connect(self._on_recovery_verify_requested)
         dialog.cancelled.connect(self._on_recovery_verify_cancelled)
         self._recovery_dialog = dialog
-        dialog.show()
+        dialog.exec()
 
     def _on_recovery_verify_requested(self, phrase):
         self._recovery_dialog = None
