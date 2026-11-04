@@ -545,6 +545,38 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         return result
 
     def _execute_q06(self, action, args, kwargs):
+        if action == 'reconcile_reorg':
+            if (self.shared_profile is None or kwargs or len(args)!=1 or type(args[0]) is not bytes):
+                raise Q06ReadOnlyError('Q06_SHARED_RECONCILIATION_DENIED')
+            from .bip39_seed_vault import open_owned_seed_container
+            from .bip39_reconciliation import reconcile_shared
+            owner=self._core();folder=self._only_seed(owner);password=args[0]
+            # Authenticate backup/profile BEFORE closing any current custody.
+            with open_owned_seed_container(owner,folder,self.source,password,
+                    authorized=True,keychain=self.keychain) as keys:
+                acknowledged,_,integrity=self._q06_read_ack(folder,keys.backup_ack_key())
+                if acknowledged is not True or not integrity:
+                    raise Q06ReadOnlyError('Q06_GUI_BACKUP_ACK_REQUIRED')
+            previous=self._spend_session
+            if previous is not None:
+                if not previous.faulted:
+                    raise Q06ReadOnlyError('Q06_RECONCILIATION_NOT_NEEDED')
+                try:previous.lock()
+                except ValueError as error:
+                    if error.args!=('Q06_SPEND_RUNTIME_PRESERVED',) or not previous.locked:raise
+            try:
+                proof=reconcile_shared(owner,folder,self.source,password,authorized=True,keychain=self.keychain)
+                self._spend_session=None
+                self._resume_spend=False
+                if self._secret is not None:self._secret[:]=bytes(len(self._secret))
+                self._secret=self._public=self._seed_folder=None
+                opened=self._reopen_q06(password)
+                return dict(opened,reconciliation=proof)
+            except Exception:
+                self._spend_session=previous
+                if self._secret is not None:self._secret[:]=bytes(len(self._secret))
+                self._secret=self._public=self._seed_folder=None
+                raise Q06ReadOnlyError('Q06_SHARED_RECONCILIATION_DENIED') from None
         if action in ('network_status', 'network_active', 'core_start', 'core_status'):
             return super().execute(action, args, kwargs)
         if self.shared_profile is not None and action in ('prepare','sign','broadcast','mine','confirm','ci_confirm'):

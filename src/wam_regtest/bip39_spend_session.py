@@ -286,11 +286,16 @@ def open_owned_spend_session(owner, seed_folder, source, password, *,
         # Any leftover prior native runtime is ambiguous after a crash.
         # Deny implicit replay/recovery rather than creating a parallel signer.
         import re
-        if any(re.fullmatch(
+        prior = [p for p in owner.directory.iterdir() if re.fullmatch(
                 r"wallet-runtime-recovery-[0-9a-f]{16}\.sqlite"
-                r"(?:-journal|-wal|-shm|\.scan\.lock)?", p.name)
-               for p in owner.directory.iterdir()):
-            raise Q06SpendSessionError("Q06_SPEND_PRIOR_RUNTIME_UNCERTAIN")
+                r"(?:-journal|-wal|-shm|\.scan\.lock)?", p.name)]
+        if prior:
+            from .bip39_reconciliation import require_reconciled_runtimes,RUNTIME
+            bases=[p for p in prior if RUNTIME.fullmatch(p.name)]
+            expected={p.name for p in bases}|{p.name+'.scan.lock' for p in bases}
+            if not bases or any(p.name not in expected for p in prior):
+                raise Q06SpendSessionError("Q06_SPEND_PRIOR_RUNTIME_UNCERTAIN")
+            require_reconciled_runtimes(owner,seed_folder,source,password,bases,keychain=keychain)
         name = "wallet-runtime-recovery-" + secrets.token_hex(8) + ".sqlite"
         target = _runtime(owner, name)
         if sys.platform == "win32":

@@ -2,6 +2,8 @@
 INPUT_ERRORS=frozenset(('WALLET_INPUT_AMOUNT_INVALID','WALLET_INPUT_FEE_INVALID',
                         'WALLET_INPUT_RECIPIENT_INVALID','WALLET_INPUT_FUNDS_UNAVAILABLE'))
 _MESSAGES={
+ 'Q06_SHARED_RECONCILIATION_DENIED':'Shared-chain reconciliation was refused. Native checkpoints, signed evidence and reservations are preserved. Verify the original profile, password and chain; do not remove runtime files.',
+ 'Q06_RECONCILIATION_NOT_NEEDED':'The active custody session is healthy. Refresh the chain before requesting recovery.',
  'SHARED_CONFIRMED_PEER_REQUIRED':'The configured Core peer is disconnected or not yet verified. Reconnect and verify the shared chain; signed and pending payments remain preserved.',
  'SHARED_SINGLE_COORDINATOR_REQUIRED':'Only the explicitly designated Shared REGTEST coordinator may mine. This participant only receives and validates blocks.',
  'WALLET_EXECUTOR_OPERATION_STILL_PENDING':'The operation is still running. Wait for completion; signing or broadcast will not be repeated automatically.',

@@ -269,6 +269,10 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 'Manual Core P2P · local RPC only · '+('mining coordinator' if shared_profile.coordinator else 'participant; mining disabled'))
             self.network_state = label('Peer not verified. Refresh network before mining or sending.', 'FusionMuted')
             net_layout.addWidget(self.network_state)
+            self.reconcile_button=action('Reconcile retained shared-chain state','security')
+            self.reconcile_button.clicked.connect(self._reconcile_shared)
+            net_layout.addWidget(self.reconcile_button)
+            self._last_reconciliation=None
             for title,command in (('Verify peer and chain',('network_status',)),
                                   ('Disconnect Core P2P',('network_active',False)),
                                   ('Reconnect Core P2P',('network_active',True))):
@@ -435,6 +439,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
             ready = self._ready and not self.executor.state.faulted
             idle = (self._worker is None and not self.executor.busy
                     and not self._delivering_result)
+            if hasattr(self,'reconcile_button'):
+                self.reconcile_button.setEnabled(idle and not self._quit_requested and self.executor.state.core_alive is True)
             if hasattr(self, 'custody_switch'):
                 unlocked = not self.executor.state.locked and self._ready
                 self.custody_switch.setChecked(unlocked)
@@ -500,6 +506,20 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 self._command('activate')
         finally:
             dialog.deleteLater()
+
+    def _reconcile_shared(self):
+        if self.shared_profile is None or self.executor.busy or self._worker is not None or self._delivering_result:
+            return
+        dialog=WalletConsent('Reconcile original Shared REGTEST wallet',
+            'Authenticate this original profile and reconstruct observation from its latest native checkpoint. '
+            'A competing branch requires greater verified Core work. Signed/unknown reservations and old '
+            'runtime evidence stay retained. No payment is retried. Sending requires a separate approval afterwards.',
+            self,password=True)
+        try:
+            if dialog.exec()==QDialog.DialogCode.Accepted:
+                self._command('reconcile_reorg',dialog.password_input.text().encode('utf-8'))
+        finally:
+            dialog.password_input.clear();dialog.deleteLater()
 
     def _confirm_one_block(self):
         txid = self._pending_confirm_txid
@@ -625,6 +645,16 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.history_page.render_snapshot(None)
 
     def _on_ready(self, action, result):
+        if action=='reconcile_reorg':
+            self._last_reconciliation=result['reconciliation']
+            self._spend_enabled=self._signed_ready=False
+            self._approved_commitment=self._pending_confirm_txid=None
+            self._last_review=None
+            self._clear_visuals()
+            super()._on_ready('open',result)
+            self.status.setText('Original Shared profile reconciled. Evidence and reservations retained. Approve Enable sending to verify custody again.')
+            self._set_actions()
+            return
         if isinstance(result,dict) and 'shared_network' in result:
             self._shared_connected = result['shared_network']['connected']
         if action in ('network_status','network_active'):
