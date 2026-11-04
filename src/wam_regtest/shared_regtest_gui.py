@@ -50,4 +50,7 @@ def configure(parent=None):
         dialog.accept()
     buttons.accepted.connect(accept)
     buttons.rejected.connect(dialog.reject)
-    return result if dialog.exec() == QDialog.DialogCode.Accepted else None
+    try:
+        return result if dialog.exec() == QDialog.DialogCode.Accepted else None
+    finally:
+        dialog.deleteLater()

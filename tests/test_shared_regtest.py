@@ -1,5 +1,6 @@
 """Policy negatives; these tests do NOT certify a real P2P network."""
 import unittest
+import sys
 from wam_regtest.shared_regtest import SharedRegtestProfile, SharedRegtestError, validate_peers
 from wam_regtest.network_policy import parse_local_config, NetworkPolicyError
 from wam_regtest.cli_rpc import validate, CliRpcError
@@ -89,6 +90,44 @@ class SharedPolicyContracts(unittest.TestCase):
             self.assertEqual(close_reorg_owners([],[owner]),['ORIGINAL_OWNER_STOP_DENIED'])
         retain.assert_called_once_with(owner)
         owner.release.assert_not_called()
+
+    @unittest.skipUnless(sys.platform=='darwin','Native Qt configuration checked on macOS')
+    def test_manual_configuration_requires_private_endpoint_and_explicit_role(self):
+        from wam_regtest.desktop import qt_application
+        from wam_regtest.shared_regtest_gui import configure
+        from PySide6.QtCore import QTimer
+        from PySide6.QtWidgets import QDialog,QLineEdit,QSpinBox,QCheckBox,QDialogButtonBox
+        app=qt_application()
+        timer=QTimer()
+        timer.setInterval(30)
+        guard=QTimer()
+        guard.setSingleShot(True)
+        guard.timeout.connect(lambda:app.activeModalWidget().reject() if isinstance(app.activeModalWidget(),QDialog) else None)
+        steps=[]
+        def interact():
+            dialog=app.activeModalWidget()
+            if not isinstance(dialog,QDialog):return
+            edits=dialog.findChildren(QLineEdit)
+            peer=next(e for e in edits if e.accessibleName()=='Peer private/LAN/VPN IP')
+            box=dialog.findChild(QDialogButtonBox)
+            if not steps:
+                peer.setText('8.8.8.8')
+                box.button(QDialogButtonBox.StandardButton.Ok).click()
+                steps.append('public_endpoint_refused' if dialog.result()!=QDialog.DialogCode.Accepted else 'UNSAFE')
+                return
+            peer.setText('127.0.0.1')
+            port=next(p for p in dialog.findChildren(QSpinBox) if p.accessibleName()=='Peer P2P port')
+            port.setValue(29557)
+            dialog.findChild(QCheckBox).setChecked(True)
+            timer.stop()
+            box.button(QDialogButtonBox.StandardButton.Ok).click()
+        timer.timeout.connect(interact)
+        timer.start()
+        guard.start(5000)
+        try:profile=configure()
+        finally:timer.stop();guard.stop()
+        self.assertEqual(steps,['public_endpoint_refused'])
+        self.assertEqual(profile,SharedRegtestProfile('127.0.0.1',peer_port=29557,coordinator=True))
 
     def test_xor_block_magic_is_checked_and_symlinks_refused(self):
         from pathlib import Path
