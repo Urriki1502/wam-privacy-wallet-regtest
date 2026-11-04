@@ -1,3 +1,9 @@
+# Mandatory local Codex ↔ Cursor transfer protocol
+
+Before any local engineering, read `ENGINEERING_HANDOFF.md` FIRST when present, then verify its branch/HEAD, dirty/staged/untracked source, active owners and evidence against reality. This mutable operational record is intentionally Git-ignored so milestone updates do not alter a frozen binary's source inventory; never delete or overwrite another agent's partial handoff. It is not an acceptance ledger.
+
+Codex and Cursor must never write this workspace concurrently. Acquire the existing `scripts/engineering_lease.py --hold` lease before edits; if held, stop overlapping work. Update the handoff after commits/milestones/blockers, before long tests/builds, at session end and before tool switching. Release the lease only after source writes stop and running owners/uncertain transactions are recorded. The next agent reads the handoff and acquires the lease before continuing. Do not infer credit balances or claim an automatic tool/credit switch that has not actually occurred. No duplicate checkout/workspace for transfers.
+
 # Mandatory Issue #45 governance — TWO TRACKS, sequential Q engineering
 
 Before ANY work, read:

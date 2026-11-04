@@ -1,4 +1,58 @@
-# V1-NET local engineering — scoped evidence, remaining blockers
+# Current verified V1-NET checkpoint — 2026-11-04
+
+**Local macOS engineering cases V1–V18 PASS on final frozen source `29448e5e89079dc070b83766031c91c5ef1a9195`; V19 physical two computers BLOCKED.** Q06 accepted=false; owner G6 physical retest and independent G7 remain open. This current section supersedes the older provisional blocker conclusions retained below as historical evidence.
+
+## Final public artifact and actual evidence
+
+| Item | Verified result |
+|---|---|
+| Immutable distribution | `build/qualified-v1-29448e5/package-output/` |
+| DMG SHA256 | `3bea788d550bffa7b4195f827a8891c1aeafde2b5fec0ea85aa404b1981eb07a` |
+| Frozen executable SHA256 | `a86046ada47f9df6a57df4d93dcc7671281f3aa058624c8f7f66de9d59ed2535` |
+| Source/Core/WSP verification | Source unchanged across build; original pinned Core hashes below unchanged; WSP `ac55f13423620252bdbf848c7e8a280c3b84721e` |
+| Independent artifact check | 19 manifest members matched; ZIP executable and read-only DMG executable/source stamp/Core members matched; own image detached |
+| Real shared payment TXID | `c40f9608df49a651c97e3a68de0cbe600080473789648fad3f126dbbf20dfee3` |
+| Initial confirmed chain | height 103, block `0daa5f5a69da1daf15fe5255763bf93dd2d42695d36127a2b0f62a53ec5b7da8` |
+| Actual replacement branch | height 104, tip `50e3f27da62582fea8cb6382b968b63a3c6b7ff92bb900a482eaa4ba0943c0cf` |
+| Wallet state after recovery | A 44.49980000 WAM / 1 retained reservation; B 3.00000000 WAM / 0 reservations; original TXID once in both verified histories |
+
+Command: `PATH="$PWD/build/local-toolchain/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" bash scripts/build_macos_bundle.sh --v1-net-focused`. Exit 0. Log `build/local-evidence-20261104/v1-frozen-reconciliation-final.log`; exact frozen case receipt `v1-net-frozen-evidence.json` in the distribution. It proves actual Core TCP handshake before mining, mature funding, BIP352, explicit Sign/Broadcast, peer mempool relay, confirmation/both GUI histories, disconnect/reconnect, original-profile restart, real reorg fail-closed behavior, real password/GUI Reconcile, separate custody activation, preserved reservations and another restart. V18 is the isolated Q06 full spend/backup/lock/unlock/reopen probe on the SAME frozen executable; its receipt is included. V19 remains BLOCKED.
+
+This focused build intentionally did not repeat unrelated full Q01–Q05 baseline qualification. Both package manifests explicitly set `qualification_scope=v1-net-focused` / `full_exact_commit_Q01_Q06_qualified=false`. This is neither a full exact-main/cross-OS proof nor a release/owner/independent acceptance waiver. The standalone full Q06 artifact remains separately available as documented below.
+
+Full source regression before the final retained-file metadata guard adjustment: **611 discovered / 578 PASS / 33 platform SKIP / exit 0** (`v1-reconciliation-full-source.log`). Latest focused reconciliation guards after that adjustment: **7 PASS / exit 0** (`reorg-reconciliation-contracts4.log`), including same-inode runtime-change detection and requiring separate activation. The full suite was not redundantly replayed for the final added guard/test; exact final-code qualification is the separate frozen receipt. Source/fixture successes do not substitute for real network acceptance.
+
+Independent read-only/runtime checks: `v1-final-dmg-readonly-verification.json`, `v1-final-runtime-verification.json`. Both new final-lab lifecycle journals were HMAC-verified CLEAN; no new Core was left running. Only historical PIDs 7234/7250 remained and were inspected read-only, never adopted/signalled/stopped/modified. New lab pairs are A RPC/P2P 45954/45955 and B 45956/45957, explicitly authorized to avoid those old processes. Product/two-machine defaults remain 29554/29555, genesis/magic unchanged.
+
+## Reorg root cause and preserved authority
+
+Default `_require_confirmed_descendant` rejects competing branches. A live scanner rollback therefore made `Q06OwnedSpendSession._save` refuse publication and retain uncertain runtime; silently reopening that unanchored runtime was correctly prohibited. The repair adds a separate explicit Shared-only operation, not a relaxed default ancestry flag:
+
+1. `bip39_reconciliation.reconcile_shared` authenticates the original seed/profile/native CAS through the original signed Core owner and confirmed configured peer. `_branch` accepts a competing branch only when its canonical tip is higher and Core reports strictly greater chainwork than the known orphan checkpoint block; equal/weaker ambiguity is refused.
+2. `_read_authenticated_candidate` verifies the latest existing native digest/AEAD/profile binding. Only that authenticated scanner state is restored into a fresh private temporary database; retained runtimes are read-only evidence and never adopted as wallet state.
+3. Every irreversible reservation in unapproved retained runtime must be preserved by the authenticated candidate; existing authenticated retained-file receipts must match the exact old bytes. WSP rescan on the attested canonical chain must also preserve the checkpoint's irreversible states. File custody, no-sidecar and before/after inode metadata checks guard observation.
+4. The shared private `_publish_advanced_candidate` writer preserves the original checkpoint schema, generation limit, native CAS and create-only encrypted snapshots. An encrypted prepared receipt binds retained runtime hashes to N+1 BEFORE publication. It authorizes ignoring old evidence files only after the target generation is in native checkpoint history; pending/orphan generations never auto-adopt.
+5. Default isolated mode/public ancestry reads retain their old strict behavior. Backend `reconcile_reorg` reauthenticates backup/profile, closes any faulted custody secrets, and returns seed-open state with signing disabled. The real Fusion consent uses a separate **Reconcile** action; **Enable sending** still needs its original independent approval. Signed/unknown PSBT evidence, old runtime files and native generations stay retained; no rebroadcast/replacement/release or data migration is performed.
+
+Source commits: `91e0041` implementation; `51e8ee4` bounded opt-in diagnostics; `29448e5` GUI/restart proof and retained-file race guard. Source files: `bip39_reconciliation.py`, `bip39_native_checkpoint.py`, `bip39_spend_session.py`, `bip39_owner_backend.py`, `bip39_fusion_gui.py`, existing executor/consent components. New default-mode and pending-CAS regression tests are in `test_q06_bip39_reconciliation.py`; original native checkpoint tests still pass. No Core consensus or wallet/vault KDF format was changed.
+
+## Retained failures and additional native proof
+
+Initial source helper extraction failed account metadata lookup; fixed and original 9/9 checkpoint contracts replayed PASS. The first new contract fixture used invalid plaintext `.enc`; replaced with genuine WSP ciphertext. Logs `reorg-native-refactor-contracts.log` / `...2.log`, `reorg-reconciliation-contracts1.log` / `...2.log` preserve failures and corrections.
+
+Targeted real reconciliation attempts at `91e0041` / `51e8ee4` first refused at seed authentication; each stopped new owners cleanly with no checkpoint advance. After explicit authentication of ONLY the existing disposable fixture keychain, both nodes reconciled, retained runtime bytes stayed identical and same-profile restart passed (`reconciliation-target3.log`, `reconciliation-target.json`). Earlier FAIL receipts remain `reconciliation-target-fail1.json` and `...fail2.json`. A fixture auto-lock explanation is an inference; the observed resolution is explicit fixture-keychain authentication. No production Keychain settings or anchor reset was used.
+
+After final frozen qualification, a separate focused native test at the SAME source exercised the live faulted backend session branch without repeating funding/send: `reconciliation-hot-target.log` / JSON, exit 0, both nodes PASS, no new owner leaked. It advanced only the new final disposable lab to height 105 / tip `1480f1ca73a3d7871885720a5f2ef30fe2bf2344c55d4dc578018c93e28d73c4`, with A/B balances and reservations unchanged and the original TXID exactly once. Historical public frozen receipts remain snapshots of their own run; runtime generations subsequently advanced under this additional authorized test.
+
+## Remaining gates and transfer
+
+V19 physical two-machine execution, Windows/Linux Shared qualification, owner physical G6, genuinely independent G7 and formal exact-main integration remain unqualified. Power-loss/fault injection across the NEW reconciliation publication is not represented by the successful normal-path real-Core run; source pending-CAS/native-cut tests are separately labelled fixtures. No claim of full hardware/power-loss or compromised-host protection is added.
+
+[Two-computer procedure](V1_NET_TWO_COMPUTER_ACCEPTANCE.md) is reproducible preparation, not evidence of two-device PASS. `ENGINEERING_HANDOFF.md` is the mutable canonical Codex↔Cursor transfer record. AGENTS.md requires reading it first and mutual exclusion through the existing lease. No automatic quota measurement or unexecuted Cursor handoff is claimed. Owner acceptance/remote handoff remain owner-controlled; no push, merge, remote CI or mainnet was performed.
+
+---
+
+# Historical scoped evidence and blockers (retained)
 
 Canonical workspace: `/Users/dinhdang/Documents/WAM-Q06-Audit-20261102`.
 Branch: `feature/v1-net-shared-regtest-20261104`, based on Q06 documentation commit `03208bc`. Core/profile implementation commit `9baac93`; GUI/custody integration commit `84249fe`.
