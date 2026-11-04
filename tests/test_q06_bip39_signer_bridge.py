@@ -50,6 +50,42 @@ class _Chain:
 
 
 class Q06Bip39SignerBridgeContracts(unittest.TestCase):
+    @unittest.skipUnless(__import__('sys').platform == 'darwin', 'native macOS private storage')
+    def test_signed_evidence_is_encrypted_create_only_and_password_authenticated(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from wam_regtest.bip39_spend_session import Q06OwnedSpendSession
+        from wam_regtest.wallet_session import PaymentReview
+        from wam_regtest import custody
+        from wam_sp.keystore import unseal
+        import json
+        prepared = self.signer.prepare(self.proposal)
+        signed = self.signer.sign(prepared, (self.intent,), 1000)
+        session = object.__new__(Q06OwnedSpendSession)
+        session._q06_owner = SimpleNamespace(directory=self.path.resolve())
+        session._q06_guard = SimpleNamespace(check=lambda: None)
+        session._prepared = prepared
+        session._signed = signed
+        session._review = PaymentReview(self.intent.code, 50000, 1000, 49000, 1, 'a'*64)
+        session.ring = self.keys
+        session._password = PASSWORD
+        session.faulted = session._q06_uncertain = False
+        with (patch('wam_regtest.bip39_spend_session._owned'),
+              patch('wam_regtest.bip39_spend_session._owner_binding', return_value='public-test-binding')):
+            session._retain_signed_payment('signed')
+            directory = self.path.resolve() / 'q06-payment-evidence'
+            name = prepared.proposal.token+'-signed.enc'
+            ciphertext = custody.storage().read(directory, name)
+            data = json.loads(unseal(ciphertext, PASSWORD, b'recovery'))
+            self.assertTrue(data['signed_psbt'] == signed.hex())
+            self.assertTrue(data['txid'] == PSBT.decode(signed).txid())
+            with self.assertRaises(ValueError):
+                unseal(ciphertext, b'wrong-disposable-password', b'recovery')
+            with self.assertRaises(ValueError):
+                session._retain_signed_payment('signed')
+            self.assertTrue(session.faulted)
+            self.assertTrue(custody.storage().read(directory, name) == ciphertext)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="q06-signer-source-")
         self.addCleanup(self.temp.cleanup)

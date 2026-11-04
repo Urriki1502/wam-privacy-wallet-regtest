@@ -280,7 +280,7 @@ def qualify(core, source):
                 raise ValueError('Q06_SIGNED_EVIDENCE_MISSING')
             from wam_sp.keystore import unseal
             evidence = [json.loads(unseal(custody.storage().read(evidence_dir, p.name),
-                         password.decode(), b'recovery')) for p in evidence_dir.glob('*.enc')]
+                         password, b'recovery')) for p in evidence_dir.glob('*.enc')]
             if ({e['stage'] for e in evidence} != {'signed', 'uncertain', 'broadcast'}
                     or any(e['txid'] != broadcast for e in evidence)
                     or len({e['signed_psbt'] for e in evidence}) != 1):

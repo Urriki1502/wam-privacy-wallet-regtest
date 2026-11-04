@@ -141,7 +141,7 @@ class Q06OwnedSpendSession(WalletSession):
                         recipient=review.code, atoms=review.atoms, fee=review.fee,
                         signed_psbt=signed.hex(), txid=expected_txid)
             encrypted = seal(json.dumps(body, sort_keys=True).encode(),
-                             self._password.decode('utf-8'), b'recovery')
+                             self._password, b'recovery')
             custody.storage().publish(directory, token+'-'+stage+'.enc', encrypted)
         except Exception:
             self.faulted = self._q06_uncertain = True

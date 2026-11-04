@@ -549,6 +549,13 @@ class Bip39TrialWindow(QWidget):
         elif action in ("snapshot","activate"):
             if result.get("signer_allowed") is True:
                 self._spend_enabled=True
+            if 'payment_review' in result:
+                review = result['payment_review']
+                self._approved_commitment = review.commitment if review is not None else None
+                self._signed_ready = result.get('payment_signed') is True
+                self._pending_confirm_txid = result.get('pending_confirm_txid')
+                if hasattr(self, '_last_review'):
+                    self._last_review = review
             self.receive.setText(result["receive_code"])
             self.balance.setText("Confirmed: {:,} atoms · available: {:,} atoms".format(
                 result["confirmed_atoms"],result["available_atoms"]))
