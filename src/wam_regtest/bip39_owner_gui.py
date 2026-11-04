@@ -5,10 +5,10 @@ No keys leave this local GUI or enter native CI artifacts.
 """
 from pathlib import Path
 
-from PySide6.QtCore import Qt,QTimer
+from PySide6.QtCore import Qt,QTimer,QEvent,Signal
 from PySide6.QtWidgets import (
-    QCheckBox,QDialog,QDialogButtonBox,QHBoxLayout,QInputDialog,QLabel,
-    QLineEdit,QMessageBox,QPushButton,QTextEdit,QVBoxLayout,QWidget,
+    QCheckBox,QDialog,QDialogButtonBox,QHBoxLayout,QGridLayout,QInputDialog,QLabel,
+    QLineEdit,QMessageBox,QPushButton,QTextEdit,QVBoxLayout,QWidget,QApplication,
 )
 
 from .desktop import qt_application
@@ -16,6 +16,205 @@ from .gui_errors import operation_error
 from .managed_gui import ControlWorker
 from .wallet_executor import WalletExecutor
 from .bip39_owner_backend import Bip39ReadOnlyBackend
+from .bip39_12 import normalize_phrase
+from .bip39_locale import t
+from .fusion_ui import label, action
+
+
+class Bip39RecoveryVerifyDialog(QDialog):
+    """Owner-approved Q06 independent 12-word recovery verification modal.
+
+    Scope A of the owner-approved Recovery & Backup Verification UX. Real Qt
+    inputs only: sequential focus navigation, user-initiated paste, explicit
+    clear, clean inline validation errors and a backend-authority BIP39
+    checksum gate. No generic Qt message boxes for ordinary validation
+    failures, no automatic clipboard reads/writes and no seed echo.
+    """
+
+    WORD_COUNT = 12
+
+    verify_requested = Signal(str)
+    cancelled = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("FusionPanel")
+        self.setWindowTitle(t("recovery_verify_title"))
+        self._fields = []
+        self._count_label = None
+        self._verify_button = None
+        self._verify_error = None
+        self._build_ui()
+
+    def _build_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(22, 20, 22, 20)
+        layout.setSpacing(12)
+        layout.addWidget(label(t("recovery_verify_kicker"), "FusionKicker"))
+        layout.addWidget(label(t("recovery_verify_title"), "PageTitle"))
+        layout.addWidget(label(t("recovery_verify_subtitle")))
+        layout.addWidget(label(t("recovery_readonly_notice"), "FusionMuted"))
+        grid = QGridLayout()
+        grid.setSpacing(12)
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 1)
+        grid.setColumnStretch(2, 1)
+        self._grid = grid
+        for index in range(self.WORD_COUNT):
+            field_box = QWidget()
+            field_box.setObjectName("FusionInset")
+            field_layout = QVBoxLayout(field_box)
+            field_layout.setContentsMargins(12, 10, 12, 10)
+            field_layout.setSpacing(6)
+            position_label = QLabel(f"WORD {index + 1:02d}")
+            position_label.setObjectName("FusionMuted")
+            position_label.setStyleSheet("font-size:11px;font-weight:600;letter-spacing:0.4px;")
+            field = QLineEdit()
+            field.setObjectName("RecoveryWordField")
+            field.setMaxLength(16)
+            field.setPlaceholderText(t("word_label"))
+            field.setEchoMode(QLineEdit.EchoMode.Password)
+            field.setAccessibleName(f"Recovery word {index + 1}")
+            field.textChanged.connect(self._refresh_state)
+            field.returnPressed.connect(lambda i=index: self._on_field_returned(i))
+            field_layout.addWidget(position_label)
+            field_layout.addWidget(field)
+            grid.addWidget(field_box, index // 3, index % 3)
+            self._fields.append(field)
+            field.installEventFilter(self)
+        layout.addLayout(grid)
+        self._verify_error = label("", "FusionGold")
+        self._verify_error.hide()
+        layout.addWidget(self._verify_error)
+        self._count_label = label(t("recovery_word_count").format(entered=0), "FusionMuted")
+        self._paste_button = QPushButton(t("recovery_paste_words"))
+        self._paste_button.setObjectName("FusionSecondary")
+        self._paste_button.clicked.connect(self._on_paste)
+        self._clear_button = QPushButton(t("recovery_clear_words"))
+        self._clear_button.setObjectName("FusionDestructive")
+        self._clear_button.clicked.connect(self._on_clear)
+        self._cancel_button = action(t("recovery_cancel"), "backup")
+        self._cancel_button.setObjectName("FusionSecondary")
+        self._cancel_button.clicked.connect(self._on_cancel)
+        self._verify_button = action(t("recovery_verify_phrase"), "check", primary=True)
+        self._verify_button.setObjectName("FusionPrimary")
+        self._verify_button.setEnabled(False)
+        self._verify_button.clicked.connect(self._on_verify_phrase)
+        footer = QHBoxLayout()
+        footer.addWidget(self._paste_button)
+        footer.addWidget(self._clear_button)
+        footer.addStretch()
+        footer.addWidget(self._count_label)
+        footer.addStretch()
+        footer.addWidget(self._cancel_button)
+        footer.addWidget(self._verify_button)
+        layout.addLayout(footer)
+        layout.addStretch()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.KeyPress:
+            key = event.key()
+            index = -1
+            for i, field in enumerate(self._fields):
+                if field is obj:
+                    index = i
+                    break
+            if index >= 0:
+                handled = False
+                if key == Qt.Key_Backspace and not obj.text():
+                    if index > 0:
+                        self._fields[index - 1].setFocus()
+                        handled = True
+                elif key in (Qt.Key_Tab, Qt.Key_Backtab):
+                    next_index = index + 1 if key == Qt.Key_Tab else index - 1
+                    if 0 <= next_index < len(self._fields):
+                        self._fields[next_index].setFocus()
+                        handled = True
+                if handled:
+                    event.accept()
+                    return True
+        return super().eventFilter(obj, event)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self._on_cancel()
+            return
+        super().keyPressEvent(event)
+
+    def _on_field_returned(self, index):
+        if index < len(self._fields) - 1:
+            self._fields[index + 1].setFocus()
+        else:
+            self._on_verify_phrase()
+
+    def _current_phrase(self):
+        return " ".join(
+            field.text().strip().lower()
+            for field in self._fields if field.text().strip())
+
+    def _refresh_state(self):
+        words = [field.text().strip().lower() for field in self._fields]
+        valid = False
+        if len(words) == self.WORD_COUNT and all(words):
+            try:
+                normalize_phrase(" ".join(words))
+                valid = True
+            except Exception:
+                valid = False
+        self._verify_button.setEnabled(valid)
+        self._count_label.setText(t("recovery_word_count").format(
+            entered=sum(1 for field in self._fields if field.text().strip())))
+
+    def _clear_fields(self):
+        for field in self._fields:
+            field.clear()
+        self._refresh_state()
+
+    def _on_verify_phrase(self):
+        phrase = self._current_phrase()
+        words = phrase.split()
+        valid = False
+        if len(words) == self.WORD_COUNT and all(words):
+            try:
+                normalize_phrase(phrase)
+                valid = True
+            except Exception:
+                valid = False
+        if not valid:
+            self._verify_error.setText(t("recovery_invalid"))
+            self._verify_error.show()
+            return
+        self.verify_requested.emit(phrase)
+        self.accept()
+
+    def _on_paste(self):
+        self._apply_paste(QApplication.clipboard().text())
+
+    def _apply_paste(self, text):
+        tokens = str(text or "").strip().lower().split()
+        targets = [field for field in self._fields if not field.text().strip()]
+        for token, field in zip(tokens, targets):
+            field.setText(token)
+        self._refresh_state()
+
+    def _on_clear(self):
+        for field in self._fields:
+            field.clear()
+        self._refresh_state()
+
+    def _on_cancel(self):
+        self._clear_fields()
+        self.cancelled.emit()
+        self.accept()
+
+    def reject(self):
+        self._clear_fields()
+        self.cancelled.emit()
+        super().reject()
+
+    def closeEvent(self, event):
+        self._clear_fields()
+        super().closeEvent(event)
 
 
 class Bip39TrialWindow(QWidget):
@@ -105,6 +304,7 @@ class Bip39TrialWindow(QWidget):
         self._approved_commitment=None
         self._pending_confirm_txid=None
         self._pending_action=None
+        self._recovery_dialog=None
         self._set_actions()
 
     def _set_actions(self):
@@ -272,15 +472,19 @@ class Bip39TrialWindow(QWidget):
     def _verify_recovery_phrase(self):
         if not self._spend_enabled or self._worker is not None or self.executor.busy:
             return
-        phrase,ok=QInputDialog.getMultiLineText(
-            self,"Independent BIP39 history recovery (REGTEST)",
-            "Enter your 12 DISPOSABLE REGTEST words to independently rescan "
-            "THIS original Core blockchain. Read-only: no native reservation "
-            "migration, no clean-device recovery, no signing authority.")
-        if ok:
-            self.status.setText("Independently rescanning original REGTEST chain…")
-            self._command("recovery_verify",phrase)
-        phrase=""
+        dialog = Bip39RecoveryVerifyDialog(self)
+        dialog.verify_requested.connect(self._on_recovery_verify_requested)
+        dialog.cancelled.connect(self._on_recovery_verify_cancelled)
+        self._recovery_dialog = dialog
+        dialog.show()
+
+    def _on_recovery_verify_requested(self, phrase):
+        self._recovery_dialog = None
+        self.status.setText("Independently rescanning original REGTEST chain…")
+        self._command("recovery_verify", phrase)
+
+    def _on_recovery_verify_cancelled(self):
+        self._recovery_dialog = None
 
     def _inspect_past_txid(self):
         if not self._spend_enabled or self.executor.state.faulted:

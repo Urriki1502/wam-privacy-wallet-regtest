@@ -85,6 +85,8 @@ def fusion_stylesheet(mode):
     QTableWidget::item {{padding:10px;border-bottom:1px solid {c['border']};}}
     QTableWidget::item:selected {{background:{c['selection']};color:{c['text']};}}
     QHeaderView::section {{background:{c['surface']};color:{c['muted']};border:0;border-bottom:1px solid {c['border']};padding:10px;font-size:12px;font-weight:600;}}
+    QProgressBar:horizontal {{background:{c['panel']};border:1px solid {c['border']};border-radius:8px;min-height:6px;max-height:6px;}}
+    QProgressBar::chunk {{background:{c['accent']};border-radius:4px;}}
     QScrollBar:vertical {{background:transparent;width:7px;}} QScrollBar::handle:vertical {{background:{c['border']};border-radius:3px;min-height:30px;}}
     QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical {{height:0;}} QScrollBar::add-page:vertical,QScrollBar::sub-page:vertical {{background:transparent;}}
     QToolTip {{background:{c['surface']};color:{c['text']};border:1px solid {c['border']};padding:8px;}}
@@ -196,6 +198,10 @@ class ResponsiveRow(QWidget):
     def __init__(self,*children,weights=None,breakpoint=760):
         super().__init__();self.setObjectName('FusionTransparent');self._break=breakpoint;self._children=children;self._weights=weights or [1]*len(children);self._vertical=None
         self._grid=QGridLayout(self);self._grid.setContentsMargins(0,0,0,0);self._grid.setSpacing(18)
+    def addWidget(self, widget, row=0, column=0):
+        """Add a child widget; responsive reflow still owns the final layout."""
+        self._grid.addWidget(widget, row, column)
+        return widget
     def resizeEvent(self,event):
         vertical=self.width()<self._break
         if vertical!=self._vertical:

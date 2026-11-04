@@ -7,11 +7,11 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFrame, QLabel,
-    QLineEdit, QPushButton, QCheckBox, QStackedWidget, QScrollArea,
+    QLineEdit, QPushButton, QCheckBox, QStackedWidget, QScrollArea, QProgressBar,
 )
 
 from .bip39_locale import t
-from .fusion_ui import label, panel, action, fusion_palette
+from .fusion_ui import label, panel, action, fusion_palette, ResponsiveRow
 
 
 class _WordCard(QFrame):
@@ -44,6 +44,8 @@ class Bip39BackupPage(QWidget):
         super().__init__(parent)
         self._phrase_words = []
         self._challenge_positions = []
+        self._verify_inputs = []
+        self._verify_cards = []
         self._build_ui()
 
     def _build_ui(self):
@@ -92,36 +94,61 @@ class Bip39BackupPage(QWidget):
 
         self._stack.addWidget(self._phrase_page)
 
-        # --- Verification page ---
+        # --- Verification page (STEP 2 OF 2 backup confirmation) ---
         self._verify_page = QWidget()
         self._verify_page.setObjectName("FusionInner")
         vl = QVBoxLayout(self._verify_page)
         vl.setContentsMargins(4, 4, 12, 16)
         vl.setSpacing(18)
 
-        vl.addWidget(label(t("verify_title"), "PageTitle"))
-        vl.addWidget(label(t("verify_subtitle")))
+        vl.addWidget(label(t("backup_flow_kicker"), "FusionKicker"))
+        self._step_label = label(t("backup_step_progress").format(step=2, total=2), "PageTitle")
+        vl.addWidget(self._step_label)
+        self._step_progress = QProgressBar()
+        self._step_progress.setRange(0, 2)
+        self._step_progress.setValue(1)
+        self._step_progress.setTextVisible(False)
+        vl.addWidget(self._step_progress)
+        vl.addWidget(label(t("confirm_title"), "PageTitle"))
+        vl.addWidget(label(t("confirm_subtitle")))
+        vl.addWidget(label(t("backup_privacy_note"), "FusionMuted"))
 
-        verify_card, vcl = panel(t("verify_title"))
-        self._verify_inputs = []
-        self._verify_layout = QGridLayout()
-        self._verify_layout.setSpacing(14)
-        vcl.addLayout(self._verify_layout)
-        vl.addWidget(verify_card)
+        self._verify_cards = []
+        for _ in range(3):
+            card = QWidget()
+            card.setObjectName("FusionInset")
+            card_layout = QVBoxLayout(card)
+            card_layout.setContentsMargins(12, 14, 12, 14)
+            card_layout.setSpacing(8)
+            title = label("", "FusionCardTitle")
+            edit = QLineEdit()
+            edit.setEchoMode(QLineEdit.EchoMode.Password)
+            edit.setMaxLength(16)
+            edit.setPlaceholderText(t("word_label"))
+            edit.returnPressed.connect(self._on_verify)
+            card_layout.addWidget(title)
+            card_layout.addWidget(edit)
+            self._verify_cards.append((card, title, edit))
+        self._verify_cards_row = ResponsiveRow(
+            self._verify_cards[0][0], self._verify_cards[1][0],
+            self._verify_cards[2][0], weights=[1, 1, 1])
+        for index, (card, title, edit) in enumerate(self._verify_cards):
+            self._verify_cards_row.addWidget(card, index, 0)
+        vl.addWidget(self._verify_cards_row)
 
         self._verify_error = label("", "FusionGold")
         self._verify_error.hide()
         vl.addWidget(self._verify_error)
 
-        vcontrols = QHBoxLayout()
-        vcontrols.addStretch()
-        self._verify_back_up_later = action(t("back_up_later"), "backup")
-        self._verify_back_up_later.clicked.connect(self._on_back_up_later)
-        vcontrols.addWidget(self._verify_back_up_later)
-        self._verify_button = action(t("verify"), "check", primary=True)
+        self._verify_back = action(t("backup_back"), "backup")
+        self._verify_back.clicked.connect(self._on_verify_back)
+        self._verify_button = action(t("verify_backup"), "check", primary=True)
         self._verify_button.clicked.connect(self._on_verify)
-        vcontrols.addWidget(self._verify_button)
-        vl.addLayout(vcontrols)
+        fcontrols = QHBoxLayout()
+        fcontrols.addWidget(self._verify_back)
+        fcontrols.addStretch()
+        fcontrols.addWidget(self._verify_button)
+        vl.addLayout(fcontrols)
         vl.addStretch()
 
         self._stack.addWidget(self._verify_page)
@@ -182,21 +209,14 @@ class Bip39BackupPage(QWidget):
     def _build_verify_inputs(self, positions):
         # Clear old inputs.
         for edit in self._verify_inputs:
-            edit.deleteLater()
-        self._verify_inputs.clear()
-        while self._verify_layout.count():
-            item = self._verify_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        for i, pos in enumerate(positions):
-            prompt = label(t("verify_prompt").format(position=pos), "FusionCardTitle")
-            edit = QLineEdit()
-            edit.setMaxLength(32)
-            edit.setPlaceholderText(t("word_label").lower())
-            edit.returnPressed.connect(self._on_verify)
+            edit.clear()
+        self._verify_inputs = []
+        self._challenge_positions = list(positions)
+        for index, position in enumerate(self._challenge_positions):
+            card, title, edit = self._verify_cards[index]
+            title.setText(f"WORD #{position}")
+            edit.clear()
             self._verify_inputs.append(edit)
-            self._verify_layout.addWidget(prompt, i, 0)
-            self._verify_layout.addWidget(edit, i, 1)
 
     def _on_back_up_now(self):
         if not self._written_check.isChecked():
@@ -206,6 +226,10 @@ class Bip39BackupPage(QWidget):
     def _on_back_up_later(self):
         self.clear_phrase()
         self.deferred_requested.emit()
+
+    def _on_verify_back(self):
+        if self._phrase_words:
+            self._stack.setCurrentWidget(self._phrase_page)
 
     def _on_verify(self):
         answers = [edit.text().strip() for edit in self._verify_inputs]

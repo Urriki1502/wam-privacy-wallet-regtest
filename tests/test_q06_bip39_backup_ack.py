@@ -78,6 +78,7 @@ if importlib.util.find_spec("PySide6") is not None:
 
     from wam_regtest.wallet_executor import ExecutorState
     from wam_regtest.bip39_fusion_gui import Bip39FusionWindow
+    from wam_regtest.bip39_owner_gui import Bip39RecoveryVerifyDialog
 
 
 def _make_window():
@@ -167,6 +168,34 @@ class BackupPageContract(unittest.TestCase):
         self.assertFalse(self.window._ready)
         self.assertEqual(self.window.stack.currentIndex(), 0)
         self.assertTrue(self.window.navigation.isEnabled())
+
+    def test_backup_verify_back_returns_to_phrase_page(self):
+        self._show_required()
+        self.window.backup_page.findChildren(QCheckBox)[0].setChecked(True)
+        _find_button(self.window.backup_page, "Back up now").click()
+        self.app.processEvents()
+        self.window.backup_page._verify_back.click()
+        self.app.processEvents()
+        self.assertEqual(self.window.backup_page._stack.currentWidget(), self.window.backup_page._phrase_page)
+
+    def test_backup_verify_page_shows_step_2_of_2_progress_and_three_cards(self):
+        self._show_required()
+        self.window.backup_page.findChildren(QCheckBox)[0].setChecked(True)
+        _find_button(self.window.backup_page, "Back up now").click()
+        self.app.processEvents()
+        self.assertIn("STEP 2 OF 2", self.window.backup_page._step_label.text())
+        self.assertEqual(self.window.backup_page._step_progress.value(), 1)
+        self.assertEqual(self.window.backup_page._step_progress.maximum(), 2)
+        self.assertEqual(len(self.window.backup_page._verify_inputs), 3)
+        positions = self.window.backup_page._challenge_positions
+        self.assertEqual(len(positions), 3)
+        self.assertEqual(len(set(positions)), 3)
+        self.assertTrue(all(1 <= position <= 12 for position in positions))
+        for index, (card, title, edit) in enumerate(self.window.backup_page._verify_cards):
+            self.assertEqual(title.text(), f"WORD #{positions[index]}")
+            self.assertEqual(edit.echoMode(), QLineEdit.EchoMode.Password)
+        privacy = [w.text() for w in self.window.backup_page.findChildren(QLabel) if "locally" in w.text()]
+        self.assertEqual(privacy, ["Verification happens locally."])
 
     def test_escape_defers_and_locks_backend(self):
         self._show_required()
@@ -475,6 +504,183 @@ class LockUnlockSourceContract(unittest.TestCase):
         self.assertIn("Q06_GUI_UNLOCK_ARGUMENTS_DENIED", backend_source)
         self.assertIn("Q06_GUI_ALREADY_UNLOCKED", backend_source)
         self.assertIn("Q06_GUI_BACKUP_ACK_TAMPERED", backend_source)
+
+
+class RecoveryUxSourceContract(unittest.TestCase):
+    """Static module hygiene for the owner-approved recovery/backup UX."""
+
+    def _read_source(self, name):
+        return (Path(__file__).resolve().parents[1]
+                / "src" / "wam_regtest" / name).read_text(encoding="utf8")
+
+    def test_owner_gui_uses_custom_recovery_modal(self):
+        source = self._read_source("bip39_owner_gui.py")
+        self.assertIn("Bip39RecoveryVerifyDialog", source)
+        self.assertIn("_on_recovery_verify_requested", source)
+        self.assertIn("_on_recovery_verify_cancelled", source)
+        self.assertIn('self._command("recovery_verify", phrase)', source)
+        self.assertNotIn("Independent BIP39 history recovery", source)
+
+    def test_backup_page_uses_owner_approved_step_ui(self):
+        source = self._read_source("bip39_backup_page.py")
+        self.assertIn("_step_label", source)
+        self.assertIn("_step_progress", source)
+        self.assertIn("_verify_cards_row", source)
+        self.assertIn("ResponsiveRow", source)
+
+
+class RecoveryVerifyDispatchContract(unittest.TestCase):
+    """Owner window wires the custom modal into the backend recovery command."""
+
+    def setUp(self):
+        if importlib.util.find_spec("PySide6") is None:
+            self.skipTest("Native Qt widgets verified on Qt-capable runners")
+        self.app, self.window = _make_window()
+
+    def tearDown(self):
+        self.window._poll.stop()
+        self.window.hide()
+        self.window.deleteLater()
+        self.app.processEvents()
+
+    def test_owner_window_dispatches_custom_dialog_phrase_to_backend(self):
+        from unittest import mock
+        with mock.patch.object(self.window, "_command") as command:
+            self.window._on_recovery_verify_requested(_DISPLAY_PHRASE_WORDS)
+            command.assert_called_once_with("recovery_verify", _DISPLAY_PHRASE_WORDS)
+        self.assertIsNone(self.window._recovery_dialog)
+        self.window._on_recovery_verify_cancelled()
+        self.assertIsNone(self.window._recovery_dialog)
+
+
+class RecoveryVerifyDialogContract(unittest.TestCase):
+    """Owner-approved Scope A: custom independent 12-word recovery modal."""
+
+    def setUp(self):
+        if importlib.util.find_spec("PySide6") is None:
+            self.skipTest("Native Qt widgets verified on Qt-capable runners")
+        self.app, self.window = _make_window()
+
+    def tearDown(self):
+        self.window._poll.stop()
+        self.window.hide()
+        self.window.deleteLater()
+        self.app.processEvents()
+
+    def _make_dialog(self):
+        dialog = Bip39RecoveryVerifyDialog(self.window)
+        self.verified_phrase = None
+        self.cancelled_flag = False
+
+        def _capture_verify(phrase):
+            self.verified_phrase = phrase
+
+        def _capture_cancel():
+            self.cancelled_flag = True
+
+        dialog.verify_requested.connect(_capture_verify)
+        dialog.cancelled.connect(_capture_cancel)
+        dialog.show()
+        self.app.processEvents()
+        return dialog
+
+    def test_dialog_layout_is_three_by_four_numbered_fields(self):
+        dialog = self._make_dialog()
+        self.dialog = dialog
+        self.assertEqual(len(dialog.findChildren(QLineEdit)), 12)
+        self.assertEqual(dialog._grid.columnCount(), 3)
+        self.assertEqual(dialog._grid.rowCount(), 4)
+        labels = sorted(
+            w.text() for w in dialog.findChildren(QLabel)
+            if str(w.text()).startswith("WORD "))
+        self.assertEqual(labels, sorted(f"WORD {i:02d}" for i in range(1, 13)))
+        self.assertFalse(dialog._verify_button.isEnabled())
+        self.assertEqual(dialog._count_label.text(), "0/12 words entered")
+
+    def test_verify_requires_full_valid_checksum_phrase(self):
+        dialog = self._make_dialog()
+        self.dialog = dialog
+        words = _DISPLAY_PHRASE_WORDS.split()
+        broken = list(words)
+        broken[0] = Mnemonic("english").wordlist[1]
+        for field, word in zip(dialog._fields, words):
+            field.setText(word)
+        self.app.processEvents()
+        self.assertTrue(dialog._verify_button.isEnabled())
+        dialog._fields[0].setText(broken[0])
+        self.app.processEvents()
+        self.assertFalse(dialog._verify_button.isEnabled())
+        self.verified_phrase = None
+        dialog._on_verify_phrase()
+        self.app.processEvents()
+        self.assertIsNone(self.verified_phrase)
+        for field, word in zip(dialog._fields, words):
+            field.setText(word)
+        self.app.processEvents()
+        self.assertTrue(dialog._verify_button.isEnabled())
+        _find_button(dialog, "Verify phrase").click()
+        self.app.processEvents()
+        self.assertEqual(self.verified_phrase, _DISPLAY_PHRASE_WORDS)
+
+    def test_full_phrase_paste_splits_fields_and_clear_all_resets(self):
+        dialog = self._make_dialog()
+        self.dialog = dialog
+        words = _DISPLAY_PHRASE_WORDS.split()
+        from PySide6.QtWidgets import QApplication
+        QApplication.clipboard().setText("  ".join(words) + "  ")
+        _find_button(dialog, "Paste 12 words").click()
+        self.app.processEvents()
+        for field, word in zip(dialog._fields, words):
+            self.assertEqual(field.text(), word)
+        self.assertTrue(dialog._verify_button.isEnabled())
+        _find_button(dialog, "Clear all").click()
+        self.app.processEvents()
+        self.assertEqual(dialog._count_label.text(), "0/12 words entered")
+        self.assertFalse(dialog._verify_button.isEnabled())
+        QApplication.clipboard().setText(words[4])
+        _find_button(dialog, "Paste 12 words").click()
+        self.app.processEvents()
+        self.assertEqual(dialog._fields[0].text(), words[4])
+        self.assertEqual(dialog._count_label.text(), "1/12 words entered")
+
+    def test_cancel_clears_fields_and_emits_cancelled(self):
+        dialog = self._make_dialog()
+        self.dialog = dialog
+        words = _DISPLAY_PHRASE_WORDS.split()
+        dialog._fields[0].setText(words[0])
+        self.assertEqual(dialog._count_label.text(), "1/12 words entered")
+        _find_button(dialog, "Cancel").click()
+        self.app.processEvents()
+        self.assertTrue(self.cancelled_flag)
+        self.assertEqual(dialog._fields[0].text(), "")
+        self.assertFalse(dialog._verify_button.isEnabled())
+
+    def test_sequential_tab_backspace_and_return_navigation(self):
+        dialog = self._make_dialog()
+        self.dialog = dialog
+        dialog._fields[3].setFocus()
+        self.assertTrue(dialog._fields[3].hasFocus())
+        QTest.keyClick(dialog._fields[3], Qt.Key_Backspace)
+        self.app.processEvents()
+        self.assertTrue(dialog._fields[2].hasFocus())
+        QTest.keyClick(dialog._fields[2], Qt.Key_Tab)
+        self.app.processEvents()
+        self.assertTrue(dialog._fields[3].hasFocus())
+        QTest.keyClick(dialog._fields[3], Qt.Key_Backtab)
+        self.app.processEvents()
+        self.assertTrue(dialog._fields[2].hasFocus())
+        dialog._on_field_returned(0)
+        self.app.processEvents()
+        self.assertTrue(dialog._fields[1].hasFocus())
+
+    def test_dialog_dismiss_clears_references(self):
+        dialog = self._make_dialog()
+        self.dialog = dialog
+        dialog._fields[0].setText(_DISPLAY_PHRASE_WORDS.split()[0])
+        dialog.reject()
+        self.app.processEvents()
+        self.assertTrue(self.cancelled_flag)
+        self.assertEqual(dialog._fields[0].text(), "")
 
 
 if __name__ == "__main__":
