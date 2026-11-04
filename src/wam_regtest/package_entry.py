@@ -71,7 +71,8 @@ def main() -> int:
         q04_mode = sys.argv[1:] == ["--ci-q04-external-miner"]
         q06_mode = sys.argv[1:] == ["--ci-q06-bip39-readonly"]
         q06_spend_mode = sys.argv[1:] == ["--ci-q06-bip39-spend"]
-        ci_mode = sys.argv[1:] == ["--ci-real-core-gui"] or cocoa_mode or q04_mode or q05_mode or q06_mode or q06_spend_mode
+        shared_mode = sys.argv[1:] == ["--ci-v1-net-shared-regtest"]
+        ci_mode = sys.argv[1:] == ["--ci-real-core-gui"] or cocoa_mode or q04_mode or q05_mode or q06_mode or q06_spend_mode or shared_mode
         if cocoa_mode and os.environ.get("QT_QPA_PLATFORM") != "cocoa":
             raise BundleLaunchError("WAM_BUNDLE_COCOA_PLATFORM_REQUIRED")
         self_test = sys.argv[1:] == ["--check-bundle"]
@@ -88,6 +89,9 @@ def main() -> int:
             return run(core_dir,source)
         if q06_spend_mode:
             from wam_regtest.q06_spend_probe import run
+            return run(core_dir,source)
+        if shared_mode:
+            from wam_regtest.shared_network_probe import run
             return run(core_dir,source)
         if not sys.argv[1:]:
             from wam_regtest.managed_onboarding import launch

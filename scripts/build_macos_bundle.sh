@@ -186,6 +186,24 @@ with nullcontext(tempfile.mkdtemp(prefix='q06-frozen-', dir=Path('bundle-input')
     shutil.copytree(Path(clean)/'fusion-ui-review',
                     'package-output/q06-ui-review', dirs_exist_ok=True)
 print("MACOS_APP_STAGE=FROZEN_Q06_BIP39_SPEND_PASS", flush=True)
+print("MACOS_APP_STAGE=FROZEN_V1_NET_START", flush=True)
+with nullcontext(tempfile.mkdtemp(prefix='shared-frozen-',dir=Path('bundle-input').resolve())) as clean:
+    subprocess.run([str(Path(binary).resolve()),'--ci-v1-net-shared-regtest'],
+                   cwd=clean,env=cocoa,timeout=900,check=True)
+    report=Path(clean)/'shared-network-evidence.json'
+    shared=loads(report.read_text())
+    isolated=loads(Path('package-output/q06-frozen-spend-evidence.json').read_text())
+    assert shared['source_sha']==isolated['source_sha']
+    assert all(shared['cases'][f'V{i}']=='PASS' for i in range(1,17))
+    assert shared['cases']['V17']=='BLOCKED' and shared['reorg']['custody_fail_closed'] is True
+    assert shared['cases']['V19']=='BLOCKED' and shared['two_physical_computers'] is False
+    shared['cases']['V18']='PASS'
+    shared['isolated_regression_receipt']='q06-frozen-spend-evidence.json'
+    Path('package-output/v1-net-frozen-evidence.json').write_text(__import__('json').dumps(shared,indent=2)+'\n')
+    lab=Path(shared['retained_lab'])
+    for image in lab.glob('node-*-confirmed.png'):
+        shutil.copyfile(image,Path('package-output')/image.name)
+print("MACOS_APP_STAGE=FROZEN_V1_NET_SCOPED_PASS_REORG_AND_TWO_HOST_BLOCKED", flush=True)
 PY
 python -I scripts/qualify_q05_frozen.py --executable "$BIN" \
   --output "$(pwd)/package-output/q05-frozen-evidence.json"
