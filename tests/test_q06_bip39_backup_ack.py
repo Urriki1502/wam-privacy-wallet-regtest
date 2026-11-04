@@ -491,7 +491,7 @@ class LockUnlockSourceContract(unittest.TestCase):
         self.assertIn("QSettings", owner_source)
         self.assertIn("last_bip39_profile", owner_source)
         self.assertIn("_remember_profile", owner_source)
-        self.assertIn('mode == "reopen"', owner_source)
+        self.assertNotIn('root = Path(remembered)', owner_source)
         self.assertIn("Unlock wallet", owner_source)
 
     def test_backend_reopen_revalidates_same_original_profile(self):

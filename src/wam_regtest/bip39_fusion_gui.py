@@ -38,9 +38,11 @@ class Bip39FusionWindow(Bip39TrialWindow):
     into the correct Fusion pages. No second Qt worker or owner is started.
     """
 
-    def __init__(self, executor):
+    def __init__(self, executor, *, shared_profile=None):
+        self.shared_profile = shared_profile
+        self._shared_connected = False
         super().__init__(executor)
-        legacy = QWidget()
+        legacy = QWidget(self)
         legacy.setLayout(self.layout())
         self._legacy_layout_holder = legacy
         legacy.hide()
@@ -86,7 +88,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.navigation.addItems(
             ("Overview", "Receive", "History", "Send", "Security", "Settings"))
         side.addWidget(self.navigation, 1)
-        side.addWidget(label("REGTEST PREVIEW", "FusionBadge"))
+        side.addWidget(label("SHARED REGTEST" if shared_profile else "REGTEST PREVIEW", "FusionBadge"))
         notice = label('REGTEST only.\nNo real funds or mainnet keys.', 'FusionMuted')
         notice.setMinimumWidth(0)
         side.addWidget(notice)
@@ -261,6 +263,19 @@ class Bip39FusionWindow(Bip39TrialWindow):
         about_layout.addWidget(label(
             "This preview is not a mainnet wallet. All test transactions stay on the owned REGTEST chain."))
         settings_layout.addWidget(about)
+        if shared_profile is not None:
+            from .fusion_ui import action
+            network, net_layout = panel('Shared REGTEST',
+                'Manual Core P2P · local RPC only · '+('mining coordinator' if shared_profile.coordinator else 'participant; mining disabled'))
+            self.network_state = label('Peer not verified. Refresh network before mining or sending.', 'FusionMuted')
+            net_layout.addWidget(self.network_state)
+            for title,command in (('Verify peer and chain',('network_status',)),
+                                  ('Disconnect Core P2P',('network_active',False)),
+                                  ('Reconnect Core P2P',('network_active',True))):
+                button = action(title,'sync')
+                button.clicked.connect(lambda _checked=False,command=command:self._command(*command))
+                net_layout.addWidget(button)
+            settings_layout.addWidget(network)
 
         advanced_card, advanced_layout = panel(
             "Advanced controls",
@@ -409,6 +424,13 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
     def _set_actions(self):
         super()._set_actions()
+        if getattr(self,'shared_profile',None) is not None:
+            if not self.shared_profile.coordinator:
+                self.fund.setEnabled(False)
+                self.confirm.setEnabled(False)
+            if not self._shared_connected:
+                for control in (self.fund,self.confirm,self.send,self.broadcast):
+                    control.setEnabled(False)
         if hasattr(self, "overview"):
             ready = self._ready and not self.executor.state.faulted
             idle = (self._worker is None and not self.executor.busy
@@ -419,12 +441,15 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 self.custody_switch.setText('Unlocked' if unlocked else 'Locked')
                 self.custody_switch.setEnabled(idle and not self._quit_requested
                     and (self.lock.isEnabled() or self.unlock.isEnabled()))
-            self.overview.go_send.setEnabled(ready and idle and self._spend_enabled)
+            self.overview.go_send.setEnabled(ready and idle and self._spend_enabled
+                and (self.shared_profile is None or self._shared_connected))
             self.overview.open_security.setEnabled(not self._quit_requested)
             if hasattr(self, "security_state"):
                 self.security_state.setText(
                     "Faulted · original reservations preserved"
                     if self.executor.state.faulted else
+                    "Custody verified · peer disconnected · payment state preserved"
+                    if self.shared_profile is not None and self._spend_enabled and not self._shared_connected else
                     "Verified native custody · Send enabled" if self._spend_enabled else
                     "Seed open · Send awaits checkpoint" if self._ready else
                     "Locked · use Unlock wallet to reauthenticate this original REGTEST wallet"
@@ -600,6 +625,16 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.history_page.render_snapshot(None)
 
     def _on_ready(self, action, result):
+        if isinstance(result,dict) and 'shared_network' in result:
+            self._shared_connected = result['shared_network']['connected']
+        if action in ('network_status','network_active'):
+            self._shared_connected = result['connected']
+            self.network_state.setText(('Connected' if result['connected'] else 'Disconnected')
+                +f" · {result['peer_count']} peer(s) · height {result['height']}\nTip: {result['tip']}")
+            self.status.setText('Shared chain verified; refresh wallet to reconcile history.'
+                                if result['connected'] else 'Peer disconnected. Signed and pending payments remain preserved.')
+            self._set_actions()
+            return
         if action == "prepare":
             # Existing Q05 Fusion exact-transaction approval, not the old
             # developer QMessageBox. Signing still requires explicit consent
@@ -645,6 +680,10 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
     def _on_denied(self, code):
         super()._on_denied(code)
+        if code == 'SHARED_CONFIRMED_PEER_REQUIRED':
+            self._shared_connected=False
+            self.status.setText('Peer disconnected. Reconnect and verify the chain; signed and pending payments remain preserved.')
+            self._set_actions()
         if self.executor.state.faulted:
             self._clear_visuals()
             self.connection_pill.setText("●  CORE ERROR")

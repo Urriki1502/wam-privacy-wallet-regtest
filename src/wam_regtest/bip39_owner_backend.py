@@ -22,9 +22,9 @@ class Q06ReadOnlyError(ValueError):
 class Bip39ReadOnlyBackend(ManagedWalletBackend):
     """All owned-Core and native-keychain calls execute on WalletExecutor thread."""
 
-    def __init__(self, root, core, source, *, keychain=None, _anchor_factory=None):
+    def __init__(self, root, core, source, *, keychain=None, _anchor_factory=None, shared_profile=None):
         super().__init__(root, core, source, keychain=keychain,
-                         _anchor_factory=_anchor_factory)
+                         _anchor_factory=_anchor_factory, shared_profile=shared_profile)
         self._seed_folder = None
         self._secret = None
         self._public = None
@@ -538,6 +538,20 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                     raise Q06ReadOnlyError("Q06_GUI_RUNTIME_PRESERVED") from None
 
     def execute(self, action, args, kwargs):
+        result = self._execute_q06(action,args,kwargs)
+        if self.shared_profile is not None and type(result) is dict and action in ('snapshot','activate','unlock'):
+            from .shared_regtest import peer_status
+            result['shared_network'] = peer_status(self._core().directory)
+        return result
+
+    def _execute_q06(self, action, args, kwargs):
+        if action in ('network_status', 'network_active', 'core_start', 'core_status'):
+            return super().execute(action, args, kwargs)
+        if self.shared_profile is not None and action in ('prepare','sign','broadcast','mine','confirm','ci_confirm'):
+            from .shared_regtest import peer_status
+            if action in ('mine','confirm','ci_confirm') and not self.shared_profile.coordinator:
+                raise Q06ReadOnlyError('SHARED_SINGLE_COORDINATOR_REQUIRED')
+            peer_status(self._core().directory, require_connected=True)
         if action == "ci_confirm":
             if args or kwargs:
                 raise Q06ReadOnlyError("Q06_GUI_CONFIRM_CI_ARGUMENTS_DENIED")

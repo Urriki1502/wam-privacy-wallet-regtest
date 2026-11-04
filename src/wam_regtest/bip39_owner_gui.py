@@ -382,7 +382,7 @@ class Bip39TrialWindow(QWidget):
             from PySide6.QtCore import QSettings
             if folder:
                 QSettings("WAM Privacy Wallet", "REGTEST").setValue(
-                    "last_bip39_profile", str(folder))
+                    "last_shared_bip39_profile" if getattr(self,'shared_profile',None) else "last_bip39_profile", str(folder))
         except Exception:
             pass
 
@@ -811,36 +811,21 @@ def _last_remembered_profile():
         return ""
 
 
-def launch_bip39_trial(root,core,source,*,mode,authorized=False):
+def launch_bip39_trial(root,core,source,*,mode,authorized=False,shared_profile=None):
     if authorized is not True or mode not in ("create","restore","reopen"):
         raise ValueError("Q06_GUI_EXPLICIT_REGTEST_CONSENT_REQUIRED")
-    remembered = _last_remembered_profile() if mode == "reopen" else ""
-    if remembered and Path(remembered).exists():
-        # Normal reopen-after-restart: authenticated unlock of the remembered
-        # original profile, no folder browsing.
-        mode = "reopen"
-        root = Path(remembered)
+    # The caller already obtained explicit selection of the supervisor root.
+    # A remembered seed-container path is only a GUI hint, never authority to
+    # redirect Core or select a different profile after the user's choice.
     app=qt_application()
     app.setQuitOnLastWindowClosed(False)
-    executor=WalletExecutor(lambda:Bip39ReadOnlyBackend(root,core,source))
+    executor=WalletExecutor(lambda:Bip39ReadOnlyBackend(root,core,source,shared_profile=shared_profile))
     # Normal application: use the pre-existing WAM Fusion navigation,
     # Overview, QR Receive, History, Send and Security components. Frozen
     # diagnostic Q06 probes retain their independent owner/spend contracts.
     from .bip39_fusion_gui import Bip39FusionWindow
-    window=Bip39FusionWindow(executor)
+    window=Bip39FusionWindow(executor,shared_profile=shared_profile)
     window.show()
-    if not (remembered and Path(remembered).exists()) and mode == "reopen":
-        # Multiple original profiles: friendly explicit named selection.
-        candidates = sorted(
-            path for path in Path(root).parent.glob("bip39-12-*")
-            if path.is_dir() and not path.name.startswith("bip39-12-scan-"))
-        if len(candidates) > 1:
-            names=[path.name for path in candidates]
-            choice, ok = QInputDialog.getItem(
-                window, "WAM REGTEST wallets", "Select the original owned wallet profile:",
-                names, editable=False)
-            if ok and choice in names:
-                root = Path(root).parent / str(choice)
     password, ok=QInputDialog.getText(
         window, "Q06 BIP39 wallet (REGTEST only)",
         "Disposable encrypted-seed password (12–1024 UTF-8 bytes)",

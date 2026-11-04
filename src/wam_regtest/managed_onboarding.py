@@ -47,7 +47,7 @@ def welcome_dialog():
     """One native Qt welcome screen; no Core, seed or credential is opened."""
     from PySide6.QtCore import Qt
     from PySide6.QtWidgets import (
-        QApplication, QDialog, QFrame, QHBoxLayout, QToolButton, QVBoxLayout,
+        QApplication, QDialog, QFrame, QHBoxLayout, QToolButton, QVBoxLayout, QCheckBox,
     )
     from .fusion_ui import action, label, panel, fusion_palette, fusion_stylesheet, vector_icon
 
@@ -73,6 +73,9 @@ def welcome_dialog():
         "no account or cloud connection is required."
     ))
     root.addWidget(label("REGTEST PREVIEW · NO REAL FUNDS", "FusionBadge"))
+    dialog.shared_mode = QCheckBox('Shared REGTEST · manual Core P2P')
+    dialog.shared_mode.setToolTip('Explicit separate profile. RPC stays on this computer. No automatic peer discovery.')
+    root.addWidget(dialog.shared_mode)
 
     choices, layout = panel(
         "Your wallet",
@@ -167,9 +170,19 @@ def launch(core, source):
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return 0
         choice = dialog.selection
+        shared = dialog.shared_mode.isChecked()
     finally:
         dialog.deleteLater()
     q06, mode, create = wallet_route(choice)
+    shared_profile = None
+    if shared:
+        if not q06:
+            QMessageBox.warning(None, 'Shared REGTEST', 'Shared mode requires a BIP39 wallet profile.')
+            return 0
+        from .shared_regtest_gui import configure
+        shared_profile = configure()
+        if shared_profile is None:
+            return 0
     selected = QFileDialog.getExistingDirectory(
         None,
         ("Choose a parent folder for the NEW REGTEST wallet profile"
@@ -190,7 +203,7 @@ def launch(core, source):
     if q06:
         from .bip39_owner_gui import launch_bip39_trial
         return launch_bip39_trial(
-            root, core, source, mode=mode, authorized=True)
+            root, core, source, mode=mode, authorized=True, shared_profile=shared_profile)
     # Preserve the established Q05 engine and separate legacy format.
     from .managed_gui import launch_managed
     return launch_managed(

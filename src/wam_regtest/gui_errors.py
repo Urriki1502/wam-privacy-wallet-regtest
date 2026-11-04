@@ -2,6 +2,8 @@
 INPUT_ERRORS=frozenset(('WALLET_INPUT_AMOUNT_INVALID','WALLET_INPUT_FEE_INVALID',
                         'WALLET_INPUT_RECIPIENT_INVALID','WALLET_INPUT_FUNDS_UNAVAILABLE'))
 _MESSAGES={
+ 'SHARED_CONFIRMED_PEER_REQUIRED':'The configured Core peer is disconnected or not yet verified. Reconnect and verify the shared chain; signed and pending payments remain preserved.',
+ 'SHARED_SINGLE_COORDINATOR_REQUIRED':'Only the explicitly designated Shared REGTEST coordinator may mine. This participant only receives and validates blocks.',
  'WALLET_EXECUTOR_OPERATION_STILL_PENDING':'The operation is still running. Wait for completion; signing or broadcast will not be repeated automatically.',
  'WALLET_EXECUTOR_BUSY_OR_CLOSED':'A wallet operation is in progress or the session is closed. Wait for completion or explicitly reopen the wallet.',
  'WALLET_MANAGED_RUNTIME_PRESERVED':'Wallet keys are closed and recovery data is preserved. Authenticated recovery is required before reopening; do not remove files.',

@@ -81,8 +81,25 @@ class Q06ExistingFusionUiContract(unittest.TestCase):
                     if isinstance(n,ast.FunctionDef) and n.name=="launch_bip39_trial"),None)
         self.assertIsNotNone(entry)
         body=ast.get_source_segment(source,entry)
-        self.assertIn("Bip39FusionWindow(executor)",body)
+        self.assertIn("Bip39FusionWindow(executor,shared_profile=shared_profile)",body)
         self.assertNotIn("window=Bip39TrialWindow(executor)",body)
+
+    def test_explicit_supervisor_selection_cannot_be_redirected_by_remembered_seed(self):
+        from unittest.mock import patch, Mock
+        from wam_regtest import bip39_owner_gui as gui
+        root=Path('/explicitly-selected/wam-fusion-core-0123456789abcdef')
+        seen=[]
+        class StopBeforePassword(Exception):pass
+        def executor(factory):
+            factory()
+            raise StopBeforePassword
+        with patch.object(gui,'qt_application',return_value=Mock()), \
+                patch.object(gui,'_last_remembered_profile',return_value='/other/chain/bip39-12-old'), \
+                patch.object(gui,'Bip39ReadOnlyBackend',side_effect=lambda selected,*a,**k:seen.append(selected)), \
+                patch.object(gui,'WalletExecutor',side_effect=executor):
+            with self.assertRaises(StopBeforePassword):
+                gui.launch_bip39_trial(root,Path('/core'),Path('/wsp'),mode='reopen',authorized=True)
+        self.assertEqual(seen,[root])
 
 
 class ApprovalWorkerOrdering(unittest.TestCase):
