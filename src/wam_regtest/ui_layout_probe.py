@@ -82,6 +82,7 @@ def check_layouts(output=None):
                 assert window.backup_page._stack.sizePolicy() == window.backup_page._normal_stack_policy
                 window.navigation.setCurrentRow(5)
                 window.stack.setCurrentIndex(5)
+                window.page_title.setText('Settings')
                 settle()
                 for expanded in (False, True, False):
                     window.advanced_toggle.setChecked(expanded)
@@ -98,6 +99,12 @@ def check_layouts(output=None):
                                         expanded=expanded, height=button.height(),
                                         needed_height=button.sizeHint().height()))
                     snapshot(f'advanced-{width}-{theme}-{expanded}')
+                    if expanded:
+                        for diagnostic in (window.account, window.balance, window.tip):
+                            text_fits(diagnostic, 'advanced-status')
+                        scroll.ensureWidgetVisible(window.last_txid)
+                        settle()
+                        snapshot(f'advanced-bottom-{width}-{theme}')
                 for number, message in enumerate((
                     'Operation could not complete safely. Wallet state and reservations are retained. '
                     'Verify the original REGTEST profile, native checkpoint and pending transaction before continuing. '

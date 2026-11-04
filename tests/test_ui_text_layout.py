@@ -7,7 +7,7 @@ class UiTextLayoutTests(unittest.TestCase):
         from wam_regtest.ui_layout_probe import check_layouts
         result = check_layouts()
         self.assertEqual(result['status'], 'UI_LAYOUT_PASS')
-        self.assertEqual(len(result['measurements']), 32)
+        self.assertEqual(len(result['measurements']), 44)
         self.assertFalse(result['backend_or_core_started'])
 
     def test_ui_candidate_does_not_claim_core_or_full_runtime_qualification(self):
