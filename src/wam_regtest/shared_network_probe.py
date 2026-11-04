@@ -26,7 +26,7 @@ def qualify(core, source):
     from .bip39_fusion_gui import Bip39FusionWindow
     from .custody import create_directory
     from PySide6.QtCore import QTimer
-    from PySide6.QtWidgets import QDialog, QPushButton
+    from PySide6.QtWidgets import QDialog, QPushButton, QLineEdit
     app = qt_application()
     if app.platformName() != 'cocoa':
         raise ValueError('SHARED_NATIVE_COCOA_REQUIRED')
@@ -74,7 +74,7 @@ def qualify(core, source):
     def idle(node):
         w,e = node['window'],node['executor']
         return w._worker is None and not w._delivering_result and not e.busy
-    def approve(node,button,caption,predicate):
+    def approve(node,button,caption,predicate,*,credential=None):
         if not button.isEnabled():
             raise ValueError('SHARED_GUI_APPROVAL_DISABLED')
         timer = QTimer()
@@ -82,6 +82,10 @@ def qualify(core, source):
         def consent():
             dialog = app.activeModalWidget()
             if isinstance(dialog,QDialog):
+                if credential is not None:
+                    for field in dialog.findChildren(QLineEdit):
+                        if field.echoMode()==QLineEdit.EchoMode.Password:
+                            field.setText(credential.decode('utf-8'))
                 for control in dialog.findChildren(QPushButton):
                     if control.text() == caption:
                         control.click()
@@ -107,7 +111,7 @@ def qualify(core, source):
     def start(node,create):
         root,profile = node['root'],node['profile']
         options = ({'_anchor_factory':adapter.make_anchor} if create else
-                   {'keychain':root/'q05-disposable.keychain-db'})
+                   {'keychain':adapter.reopen_anchor(root)})
         e = WalletExecutor(lambda:Bip39ReadOnlyBackend(root,core,source,shared_profile=profile,**options))
         w = Bip39FusionWindow(e,shared_profile=profile)
         node.update(executor=e,window=w)
@@ -228,8 +232,42 @@ def qualify(core, source):
         stage('SAME_PROFILES_RESTART_CHECKPOINTS_PRESERVED')
         for node in reversed(nodes):stop(node)
         report['reorg'] = qualify_reorg(nodes,core,source,password,txid)
-        report['cases']['V17']='BLOCKED'
-        stage('REAL_REORG_FAIL_CLOSED_PASS_WALLET_RECOVERY_BLOCKED')
+        stage('REAL_REORG_FAIL_CLOSED_PASS')
+        for node in nodes:start(node,False)
+        wait(connected,'REORG_RECOVERY_PEERS',120)
+        reconciled=[]
+        for index,node in enumerate(nodes):
+            window=node['window']
+            approve(node,window.reconcile_button,'Reconcile',
+                    lambda window=window:window._last_reconciliation is not None,credential=password)
+            proof=window._last_reconciliation
+            if (window._spend_enabled or proof['signing_authorized'] is not False
+                    or proof['automatic_broadcast'] is not False or proof['reservations_preserved'] is not True):
+                raise ValueError('SHARED_REORG_CONSENT_SCOPE_DENIED')
+            approve(node,window.activate,'Approve',lambda window=window:window._spend_enabled)
+            observed=node['executor'].request('snapshot',timeout=240)
+            if (observed['receive_code']!=node['receive_code']
+                    or observed['confirmed_atoms']!=snapshots[index]['confirmed_atoms']
+                    or observed['reservation_count']!=snapshots[index]['reservation_count']
+                    or sum(h['txid']==txid for h in observed['history'])!=1
+                    or txid not in window.history.toPlainText()):
+                raise ValueError('SHARED_REORG_RECONCILED_HISTORY_DENIED')
+            node['reconciled_state']=tuple(observed[k] for k in ('height','tip','confirmed_atoms','reservation_count'))
+            reconciled.append(dict(proof))
+            window.grab().save(str(lab/f'node-{index}-reconciled.png'))
+        for node in reversed(nodes):stop(node)
+        for node in nodes:start(node,False)
+        wait(connected,'RECONCILED_RESTART_PEERS',120)
+        for node in nodes:
+            approve(node,node['window'].activate,'Approve',lambda node=node:node['window']._spend_enabled)
+            observed=node['executor'].request('snapshot',timeout=240)
+            if tuple(observed[k] for k in ('height','tip','confirmed_atoms','reservation_count'))!=node['reconciled_state']:
+                raise ValueError('SHARED_REORG_RESTART_CHANGED')
+        report['reorg'].update(status='PASS_EXPLICIT_AUTHENTICATED_GUI_RECOVERY',
+            reconciliation=reconciled,explicit_gui_reconciliation=True,
+            post_recovery_same_profile_restart=True,recovery_status='PASS',automatic_reorg_wallet_recovery=False)
+        report['cases']['V17']='PASS'
+        stage('REAL_REORG_GUI_RECONCILIATION_AND_RESTART_PASS')
         report['status']='PASS_SCOPED_EXECUTED_CASES'
         return report
     finally:

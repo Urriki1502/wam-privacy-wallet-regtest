@@ -59,6 +59,17 @@ class DarwinArm64Adapter(PlatformAdapter):
             raise OwnedLifecycleError('Q05_DISPOSABLE_KEYCHAIN_DENIED')
         return keychain
 
+    def reopen_anchor(self,root):
+        # Qualification fixture authentication only; never relax production
+        # Keychain locking/settings or recreate a lost native anchor.
+        keychain=root/'q05-disposable.keychain-db'
+        if not keychain.is_file() or keychain.is_symlink():
+            raise OwnedLifecycleError('Q05_DISPOSABLE_KEYCHAIN_DENIED')
+        result=subprocess.run(['/usr/bin/security','unlock-keychain','-p',
+            'public-test-only',str(keychain)],capture_output=True,timeout=15)
+        if result.returncode:raise OwnedLifecycleError('Q05_DISPOSABLE_KEYCHAIN_DENIED')
+        return keychain
+
 
 class WindowsX64Adapter(PlatformAdapter):
     platform_id='windows-x64'

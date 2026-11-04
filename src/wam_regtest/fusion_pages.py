@@ -144,7 +144,7 @@ class PaymentSteps(QFrame):
 
 class WalletConsent(QDialog):
     """Fusion-styled explicit consent; default Cancel grants no authority."""
-    def __init__(self, title, message, parent, *, password=False):
+    def __init__(self, title, message, parent, *, password=False, accept_text=None):
         super().__init__(parent)
         self.setObjectName('FusionApproval')
         self.setWindowTitle(title)
@@ -160,7 +160,7 @@ class WalletConsent(QDialog):
         layout.addWidget(self.password_input)
         buttons = QDialogButtonBox()
         cancel = buttons.addButton('Cancel', QDialogButtonBox.ButtonRole.RejectRole)
-        approve = buttons.addButton('Unlock' if password else 'Approve', QDialogButtonBox.ButtonRole.AcceptRole)
+        approve = buttons.addButton(accept_text or ('Unlock' if password else 'Approve'), QDialogButtonBox.ButtonRole.AcceptRole)
         cancel.setDefault(True)
         approve.setAutoDefault(False)
         approve.setObjectName('FusionPrimary')

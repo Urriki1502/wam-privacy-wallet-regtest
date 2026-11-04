@@ -514,7 +514,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
             'Authenticate this original profile and reconstruct observation from its latest native checkpoint. '
             'A competing branch requires greater verified Core work. Signed/unknown reservations and old '
             'runtime evidence stay retained. No payment is retried. Sending requires a separate approval afterwards.',
-            self,password=True)
+            self,password=True,accept_text='Reconcile')
         try:
             if dialog.exec()==QDialog.DialogCode.Accepted:
                 self._command('reconcile_reorg',dialog.password_input.text().encode('utf-8'))

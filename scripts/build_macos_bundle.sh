@@ -205,15 +205,16 @@ with nullcontext(tempfile.mkdtemp(prefix='shared-frozen-',dir=Path('bundle-input
     isolated=loads(Path('package-output/q06-frozen-spend-evidence.json').read_text())
     assert shared['source_sha']==isolated['source_sha']
     assert all(shared['cases'][f'V{i}']=='PASS' for i in range(1,17))
-    assert shared['cases']['V17']=='BLOCKED' and shared['reorg']['custody_fail_closed'] is True
+    assert shared['cases']['V17']=='PASS' and shared['reorg']['custody_fail_closed'] is True
+    assert shared['reorg']['explicit_gui_reconciliation'] is True and shared['reorg']['post_recovery_same_profile_restart'] is True
     assert shared['cases']['V19']=='BLOCKED' and shared['two_physical_computers'] is False
     shared['cases']['V18']='PASS'
     shared['isolated_regression_receipt']='q06-frozen-spend-evidence.json'
     Path('package-output/v1-net-frozen-evidence.json').write_text(__import__('json').dumps(shared,indent=2)+'\n')
     lab=Path(shared['retained_lab'])
-    for image in lab.glob('node-*-confirmed.png'):
+    for image in lab.glob('node-*.png'):
         shutil.copyfile(image,Path('package-output')/image.name)
-print("MACOS_APP_STAGE=FROZEN_V1_NET_SCOPED_PASS_REORG_AND_TWO_HOST_BLOCKED", flush=True)
+print("MACOS_APP_STAGE=FROZEN_V1_NET_LOCAL_PASS_TWO_HOST_BLOCKED", flush=True)
 PY
 if [ "$WAM_BUILD_SCOPE" = full ]; then
   python -I scripts/qualify_q05_frozen.py --executable "$BIN" \

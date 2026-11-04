@@ -49,6 +49,7 @@ def _runtime_evidence(path):
     guard=RuntimeGuard(path)
     connection=None
     try:
+        before=os.fstat(guard.fd)
         if any(path.with_name(path.name+s).exists() or path.with_name(path.name+s).is_symlink()
                for s in ('-journal','-wal','-shm')):
             raise ReconciliationError('Q06_RECONCILIATION_RUNTIME_BUSY')
@@ -64,6 +65,9 @@ def _runtime_evidence(path):
         if len(rows)>100000 or len(rows)!=len({(r[0],r[1]) for r in rows}):
             raise ReconciliationError('Q06_RECONCILIATION_RESERVATIONS_INVALID')
         guard.check()
+        after=os.fstat(guard.fd)
+        if any(getattr(before,k)!=getattr(after,k) for k in ('st_size','st_mtime_ns','st_ctime_ns')):
+            raise ReconciliationError('Q06_RECONCILIATION_RUNTIME_CHANGED')
         return digest.hexdigest(),{(r[0],r[1]):tuple(r[2:]) for r in rows}
     finally:
         if connection is not None:connection.close()
