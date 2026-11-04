@@ -3,12 +3,14 @@ from .shared_regtest import SharedRegtestProfile, SharedRegtestError
 
 
 def configure(parent=None):
-    from PySide6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QLineEdit, QSpinBox, QCheckBox, QDialogButtonBox
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QApplication, QDialog, QVBoxLayout, QFormLayout, QLineEdit, QSpinBox, QCheckBox, QDialogButtonBox
     from .fusion_ui import label, fusion_stylesheet
     dialog = QDialog(parent)
     dialog.setWindowTitle('Shared REGTEST · manual peer')
     dialog.setMinimumWidth(530)
-    dialog.setStyleSheet(fusion_stylesheet('light'))
+    mode='dark' if QApplication.styleHints().colorScheme()==Qt.ColorScheme.Dark else 'light'
+    dialog.setStyleSheet(fusion_stylesheet(mode))
     layout = QVBoxLayout(dialog)
     layout.addWidget(label('Use a NEW separate profile. Reopen requires these exact settings. '
                            'Only the designated coordinator mines. Connect both nodes before mining. '
@@ -18,6 +20,7 @@ def configure(parent=None):
     for key,title,default in (('peer_host','Peer private/LAN/VPN IP',''),
                               ('bind_host','This computer’s P2P interface IP','127.0.0.1')):
         field = QLineEdit(default)
+        field.setAccessibleName(title)
         fields[key] = field
         form.addRow(title,field)
     for key,title,default in (('rpc_port','Local RPC port',29554),('p2p_port','Local P2P port',29555),
@@ -25,6 +28,7 @@ def configure(parent=None):
         field = QSpinBox()
         field.setRange(1024,65535)
         field.setValue(default)
+        field.setAccessibleName(title)
         fields[key] = field
         form.addRow(title,field)
     role = QCheckBox('I authorize this node as the sole mining coordinator')

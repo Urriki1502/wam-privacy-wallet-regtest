@@ -79,6 +79,17 @@ class SharedPolicyContracts(unittest.TestCase):
         owner.close.assert_called_once_with()
         owner.recover_stop.assert_not_called()
 
+    def test_reorg_stop_failure_retains_original_owner_instead_of_losing_handle(self):
+        from unittest.mock import Mock,patch
+        from wam_regtest.shared_network_probe import close_reorg_owners
+        owner=Mock(_faulted=False)
+        owner.shutdown.side_effect=ValueError('MANAGED_SHUTDOWN_UNCERTAIN')
+        with patch('wam_regtest.rpc_scope.identity',return_value=None), \
+                patch('wam_regtest.shared_network_probe.retain_original_owner') as retain:
+            self.assertEqual(close_reorg_owners([],[owner]),['ORIGINAL_OWNER_STOP_DENIED'])
+        retain.assert_called_once_with(owner)
+        owner.release.assert_not_called()
+
     def test_xor_block_magic_is_checked_and_symlinks_refused(self):
         from pathlib import Path
         import tempfile

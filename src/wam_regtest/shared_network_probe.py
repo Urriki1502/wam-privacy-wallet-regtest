@@ -6,7 +6,6 @@ are new disposable data retained after failures. No test RPC is added to GUI.
 from pathlib import Path
 import json
 import secrets
-import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -42,7 +41,15 @@ def qualify(core, source):
         report['source_sha'] = read()['candidate_source_sha']
         report['executable_sha256'] = sha256(Path(sys.executable).read_bytes()).hexdigest()
     else:
-        report['source_sha'] = subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+        from .build_provenance import capture,public_receipt
+        from .probe_source import verify_source
+        repository=Path(__file__).resolve().parents[2]
+        proof=verify_source(repository)
+        receipt=public_receipt(capture(repository))
+        report['source_sha']=receipt['checkout_sha']
+        report['source_inventory_sha256']=receipt['native_source_inventory_sha256']
+        report['raw_python_tree_sha256']=proof['raw_python_tree_sha256']
+        report['literal_source_verified']=True
     nodes = []
     password = b'public-disposable-shared-regtest-lab-only'
     def stage(name):
@@ -250,7 +257,6 @@ def qualify_reorg(nodes,core,source,password,txid):
     from .bip39_spend_session import open_owned_spend_session
     from .wsp_live import public_regtest_mining_address
     owners,sessions=[],[]
-    cleanup_errors=[]
     result=None
     def rpc(owner,method,*args):
         return _read_cli([str(owner.cli),'-datadir='+str(owner.directory),method,*args])
@@ -324,5 +330,25 @@ def close_reorg_owners(sessions,owners):
             else:owner.shutdown()
             owner.release()
             owner.close()
-        except Exception:errors.append('ORIGINAL_OWNER_STOP_DENIED')
+        except Exception:
+            errors.append('ORIGINAL_OWNER_STOP_DENIED')
+            retain_original_owner(owner)
     return errors
+
+
+def retain_original_owner(owner):
+    """Keep the real handle alive for existing authenticated Core control.
+
+    A failed stop must not turn the next exception into a foreign-PID problem.
+    This reuses CoreSupervisor.serve; no new manager or wallet RPC is added.
+    """
+    import threading
+    if owner.process is None or owner.process.poll() is not None:
+        return
+    def serve():
+        try:owner.serve()
+        finally:
+            if owner.process is None or owner.process.poll() is not None:
+                owner.close()
+    thread=threading.Thread(target=serve,name='WAM-retained-original-control',daemon=False)
+    thread.start()
