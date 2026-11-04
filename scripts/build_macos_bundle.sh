@@ -34,7 +34,7 @@ python -I -m PyInstaller --noconfirm --clean --onedir --windowed \
   --name "WAM Privacy Wallet REGTEST" \
   --osx-bundle-identifier "org.wamcoin.privacywallet.regtest" \
   --icon "$(pwd)/assets/wam-wallet.icns" \
-  --add-data "$(pwd)/assets/wam-coin-original.png:branding" \
+  --add-data "$(pwd)/assets/wam-coin-logo.png:branding" \
   --paths "$(pwd)/src" \
   --add-data "$SOURCE_STAGE/Q05_BUILD_SOURCE.json:." \
   --collect-submodules wam_regtest \
@@ -284,6 +284,8 @@ Path("package-output/SHA256SUMS.json").write_text(
         "source_commit": __import__("subprocess").check_output(["git", "rev-parse", "HEAD"],text=True).strip(),
         "independent_contract_receipt_sha256": sha256(Path("package-output/INDEPENDENT-WALLET-SECURITY.json").read_bytes()).hexdigest(),
         "original_brand_sha256": sha256(Path("assets/wam-coin-original.png").read_bytes()).hexdigest(),
+        "logo_brand_sha256": sha256(Path("assets/wam-coin-logo.png").read_bytes()).hexdigest(),
+        "bundle_icon_sha256": sha256(Path("assets/wam-wallet.icns").read_bytes()).hexdigest(),
         "wamd_sha256": sha256(Path("core/wamd").read_bytes()).hexdigest(),
         "wam_cli_sha256": sha256(Path("core/wam-cli").read_bytes()).hexdigest(),
         "real_core_packaged_e2e": __import__("os").environ["WAM_BUILD_SCOPE"] != "ui-layout-focused",

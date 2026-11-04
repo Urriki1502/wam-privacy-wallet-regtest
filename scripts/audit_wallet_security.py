@@ -92,7 +92,7 @@ def evaluate(root,core,app=None):
     if app is not None:
         import plistlib
         info=plistlib.loads((app/'Contents/Info.plist').read_bytes())
-        results['original_brand_identity']=sha(app/'Contents/Resources'/info['CFBundleIconFile'])=='dc8c4de2aeac66e062ac530b2a462e639646e02b3cfe5a7ba6f8c4bd8f571fb7'
+        results['original_brand_identity']=sha(app/'Contents/Resources'/info['CFBundleIconFile'])=='833c0c6149a87d0cfa76dc4f5ee4bc03e0267aa3e326b6223e9ee7eed8b67525'
         for n,h in PINS.items():
             members=[p for p in app.rglob(n) if p.is_file() and not p.is_symlink()]
             results['bundled_'+n+'_identity']=len(members)==1 and sha(members[0])==h

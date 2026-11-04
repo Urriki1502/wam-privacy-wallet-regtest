@@ -3,16 +3,19 @@ from hashlib import sha256
 from pathlib import Path
 import sys
 
+# Historical owner PNG, retained verbatim in assets/ and never overwritten.
 ORIGINAL_SHA256 = "1b189fb54969e6229a984f27ade4524bf4c327bb447d6da9fdbef3a8c2c30989"
-ICON_SHA256 = "dc8c4de2aeac66e062ac530b2a462e639646e02b3cfe5a7ba6f8c4bd8f571fb7"
+# Isolated circular coin derived from design-reference/og-card.png.
+LOGO_SHA256 = "6e1dc7be0b1c49c24a406e388869e50f4a9b222c75871f5339c72ff648bfd700"
+ICON_SHA256 = "833c0c6149a87d0cfa76dc4f5ee4bc03e0267aa3e326b6223e9ee7eed8b67525"
 
 
 def brand_image():
     root = (Path(sys._MEIPASS) / "branding" if getattr(sys, "frozen", False)
             else Path(__file__).resolve().parents[2] / "assets")
-    image = root / "wam-coin-original.png"
-    if sha256(image.read_bytes()).hexdigest() != ORIGINAL_SHA256:
-        raise ValueError("WAM_ORIGINAL_BRAND_IMAGE_DENIED")
+    image = root / "wam-coin-logo.png"
+    if sha256(image.read_bytes()).hexdigest() != LOGO_SHA256:
+        raise ValueError("WAM_OWNER_BRAND_IMAGE_DENIED")
     return image
 
 
