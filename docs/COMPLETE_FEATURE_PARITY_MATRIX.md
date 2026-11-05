@@ -1,7 +1,7 @@
 # Complete feature parity matrix — Fusion V2.2
 
-Functional reference: `17adf5c5cbb1213ea5abd95a2ecdd9464b0874a2`  
-Audit checkout: see `ENGINEERING_HANDOFF.md` (this document may land on a later SHA).  
+Mac frozen package pin: `17adf5c5cbb1213ea5abd95a2ecdd9464b0874a2`  
+Review / Win-Linux probe SHA: `65a804ae1621546dae7948450912da526f346bdb`  
 WSP: `ac55f13423620252bdbf848c7e8a280c3b84721e`  
 Recorded: 2026-11-05T04:40:00Z on macOS 27.0.1 arm64.
 
