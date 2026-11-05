@@ -94,6 +94,8 @@ class Q06ExistingFusionUiContract(unittest.TestCase):
         self.assertIn("Bip39FusionWindow(executor,shared_profile=shared_profile)",body)
         self.assertNotIn("window=Bip39TrialWindow(executor)",body)
 
+    @unittest.skipUnless(importlib.util.find_spec("PySide6") is not None,
+                         "Native Qt GUI is verified on macOS/Windows and Linux desktop runners")
     def test_explicit_supervisor_selection_cannot_be_redirected_by_remembered_seed(self):
         from unittest.mock import patch, Mock
         from wam_regtest import bip39_owner_gui as gui
@@ -112,6 +114,8 @@ class Q06ExistingFusionUiContract(unittest.TestCase):
         self.assertEqual(seen,[root])
 
 
+@unittest.skipUnless(importlib.util.find_spec("PySide6") is not None,
+                     "Native Qt GUI is verified on macOS/Windows and Linux desktop runners")
 class ApprovalWorkerOrdering(unittest.TestCase):
     """Real Qt event delivery; synthetic backend is NOT Core acceptance."""
 

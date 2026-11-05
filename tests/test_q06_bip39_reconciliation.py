@@ -2,14 +2,28 @@
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock,patch
+import importlib.util
 import json
 import os
 import sqlite3
+import sys
 import tempfile
 import unittest
 from hashlib import sha256
 
 from wam_regtest.bip39_reconciliation import _branch,_runtime_evidence,_approved,ReconciliationError
+
+
+def _linux_core_witness_unbound():
+    if sys.platform != 'linux':
+        return False
+    from wam_regtest.linux_developer_core import LinuxCoreError
+    from wam_regtest.linux_runtime import policy
+    try:
+        policy()
+    except LinuxCoreError:
+        return True
+    return False
 
 
 class ReconciliationContracts(unittest.TestCase):
@@ -35,6 +49,8 @@ class ReconciliationContracts(unittest.TestCase):
         block['confirmations']=1
         with self.assertRaises(ReconciliationError):_branch(owner,old,tip)
 
+    @unittest.skipIf(_linux_core_witness_unbound(),
+                     "Linux RuntimeGuard requires explicit Core+witness; covered by native Core jobs")
     def test_retained_sqlite_is_read_only_and_busy_sidecars_refused(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp).resolve();path=root/('wallet-runtime-recovery-'+'a'*16+'.sqlite')
@@ -49,6 +65,8 @@ class ReconciliationContracts(unittest.TestCase):
             path.with_name(path.name+'-wal').write_bytes(b'retained')
             with self.assertRaisesRegex(ReconciliationError,'RUNTIME_BUSY'):_runtime_evidence(path)
 
+    @unittest.skipIf(_linux_core_witness_unbound(),
+                     "Linux custody.storage requires explicit Core+witness; covered by native Core jobs")
     def test_prepared_receipt_cannot_authorize_uncommitted_native_generation(self):
         from wam_sp.keystore import seal
         from wam_regtest import custody
@@ -71,6 +89,8 @@ class ReconciliationContracts(unittest.TestCase):
                 self.assertEqual(_approved(owner,'b'*32,folder,anchor,None,password),{})
                 with self.assertRaises(Exception):_approved(owner,'b'*32,folder,anchor,None,b'incorrect-password-only')
 
+    @unittest.skipIf(_linux_core_witness_unbound(),
+                     "Linux RuntimeGuard requires explicit Core+witness; covered by native Core jobs")
     def test_runtime_change_during_read_cannot_receive_reconciliation_authority(self):
         with tempfile.TemporaryDirectory() as temp:
             path=Path(temp).resolve()/('wallet-runtime-recovery-'+'a'*16+'.sqlite')
@@ -97,6 +117,8 @@ class ReconciliationContracts(unittest.TestCase):
             _require_confirmed_descendant(owner,(103,'a'*64),(103,'b'*64))
         owner.read.call.assert_not_called()
 
+    @unittest.skipUnless(importlib.util.find_spec("PySide6") is not None,
+                         "Native Qt GUI is verified on macOS/Windows and Linux desktop runners")
     def test_gui_reconciliation_never_enables_signing_without_separate_activation(self):
         from wam_regtest.desktop import qt_application
         from wam_regtest.bip39_fusion_gui import Bip39FusionWindow
