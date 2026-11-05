@@ -17,16 +17,21 @@ def confirmed_balance_visible(window, atoms):
     """Accept the wide suffix and the narrow unit label for the same atoms.
 
     Below 640 logical pixels the overview moves the denomination into the
-    adjacent unit label so the amount is not clipped. The atoms and the
-    visible WAM unit both remain mandatory.
+    adjacent unit label. isVisible() is not the layout decision: a unit that
+    has been shown can still report invisible while a scaled Windows window
+    is mapped. The exact amount and a unit that is not hidden both remain
+    mandatory. The wide form keeps the suffix in the amount text.
     """
+    if type(atoms) is not int or atoms < 0:
+        return False
+    amount = format_wam(atoms, grouped=True)
     shown = window.balance_text.text()
     unit = window.dashboard.balance_unit
-    if unit.isVisible():
-        return (type(atoms) is int and atoms >= 0
-                and shown == format_wam(atoms, grouped=True)
-                and unit.text() == 'WAM')
-    return shown == f'{atoms/100_000_000:,.8f} WAM'
+    hero = getattr(window.dashboard, 'hero', None)
+    narrow = hero is not None and hero.width() > 0 and hero.width() < 640
+    if narrow or shown == amount:
+        return shown == amount and unit.text() == 'WAM' and not unit.isHidden()
+    return shown == amount + ' WAM'
 
 
 class WalletProbeError(ValueError):
