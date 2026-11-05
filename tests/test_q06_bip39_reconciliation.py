@@ -12,6 +12,7 @@ import unittest
 from hashlib import sha256
 
 from wam_regtest.bip39_reconciliation import _branch,_runtime_evidence,_approved,ReconciliationError
+from wam_regtest import custody
 
 
 def _linux_core_witness_unbound():
@@ -24,6 +25,26 @@ def _linux_core_witness_unbound():
     except LinuxCoreError:
         return True
     return False
+
+
+def _private_dir(root, name):
+    folder = root / name
+    if sys.platform == 'win32':
+        custody.create_directory(folder)
+    else:
+        folder.mkdir(mode=0o700)
+    return folder
+
+
+def _recovery_runtime(directory, token='a' * 16):
+    path = directory / ('wallet-runtime-recovery-' + token + '.sqlite')
+    if sys.platform == 'win32':
+        from wam_regtest.windows_private_storage import create_managed_runtime
+        create_managed_runtime(path)
+    else:
+        path.touch()
+        path.chmod(0o600)
+    return path
 
 
 class ReconciliationContracts(unittest.TestCase):
@@ -53,11 +74,14 @@ class ReconciliationContracts(unittest.TestCase):
                      "Linux RuntimeGuard requires explicit Core+witness; covered by native Core jobs")
     def test_retained_sqlite_is_read_only_and_busy_sidecars_refused(self):
         with tempfile.TemporaryDirectory() as temp:
-            root=Path(temp).resolve();path=root/('wallet-runtime-recovery-'+'a'*16+'.sqlite')
+            root=_private_dir(Path(temp).resolve(),'work')
+            path=_recovery_runtime(root)
             connection=sqlite3.connect(path)
             connection.execute('CREATE TABLE reservations(txid TEXT,vout INTEGER,token TEXT,state TEXT,created INTEGER)')
             connection.execute('INSERT INTO reservations VALUES(?,?,?,?,?)',('a'*64,0,'fixture-token','broadcast',1))
-            connection.commit();connection.close();path.chmod(0o600)
+            connection.commit();connection.close()
+            if sys.platform != 'win32':
+                path.chmod(0o600)
             before=sha256(path.read_bytes()).hexdigest()
             digest,rows=_runtime_evidence(path)
             self.assertEqual(digest,before);self.assertEqual(rows[('a'*64,0)][1],'broadcast')
@@ -69,10 +93,10 @@ class ReconciliationContracts(unittest.TestCase):
                      "Linux custody.storage requires explicit Core+witness; covered by native Core jobs")
     def test_prepared_receipt_cannot_authorize_uncommitted_native_generation(self):
         from wam_sp.keystore import seal
-        from wam_regtest import custody
         with tempfile.TemporaryDirectory() as temp:
-            root=Path(temp).resolve();folder=root/'snapshot';folder.mkdir(mode=0o700)
-            receipts=root/'q06-reconciliations';receipts.mkdir(mode=0o700)
+            root=_private_dir(Path(temp).resolve(),'work')
+            folder=_private_dir(root,'snapshot')
+            receipts=_private_dir(root,'q06-reconciliations')
             storage=custody.storage();password=b'public-source-contract-only'
             one,two=seal(b'old-checkpoint',password,b'recovery'),seal(b'new-checkpoint',password,b'recovery')
             parent=(1,sha256(one).hexdigest());target=(2,sha256(two).hexdigest())
@@ -93,10 +117,12 @@ class ReconciliationContracts(unittest.TestCase):
                      "Linux RuntimeGuard requires explicit Core+witness; covered by native Core jobs")
     def test_runtime_change_during_read_cannot_receive_reconciliation_authority(self):
         with tempfile.TemporaryDirectory() as temp:
-            path=Path(temp).resolve()/('wallet-runtime-recovery-'+'a'*16+'.sqlite')
+            path=_recovery_runtime(_private_dir(Path(temp).resolve(),'work'))
             db=sqlite3.connect(path)
             db.execute('CREATE TABLE reservations(txid TEXT,vout INTEGER,token TEXT,state TEXT,created INTEGER)')
-            db.commit();db.close();path.chmod(0o600)
+            db.commit();db.close()
+            if sys.platform != 'win32':
+                path.chmod(0o600)
             connect=sqlite3.connect
             def changed(*args,**kwargs):
                 real=connect(*args,**kwargs)
