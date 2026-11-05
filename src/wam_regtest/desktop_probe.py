@@ -87,7 +87,8 @@ def probe_running_real_core_gui(
             or win.stack.widget(0) is not win.dashboard
             or win.dashboard.balance_value.text() != win.balance_text.text()
             or win.dashboard.activity_table.rowCount() != 1
-            or win.dashboard.chart._activity != ((expected_height, expected_atoms, 0),)
+            or win.dashboard.balance_chart._points != (
+                (expected_height - 1, 0), (expected_height, expected_atoms))
             or win.dashboard.go_send.isEnabled()
             or "REGTEST VERIFIED" not in win.dashboard.live_badge.text()):
         raise NativeGuiProbeError("GUI_REAL_REGTEST_VIEW_MISMATCH")

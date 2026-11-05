@@ -63,6 +63,11 @@ class PlatformReuseContracts(unittest.TestCase):
         self.assertEqual(BINARY_SHA256['wam-cli.exe'],
                          '538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21')
 
+    def test_macos_frozen_qt_probe_reads_v22_overview_chart(self):
+        probe = (ROOT / 'src' / 'wam_regtest' / 'desktop_probe.py').read_text()
+        self.assertIn('balance_chart._points', probe)
+        self.assertNotIn('dashboard.chart._activity', probe)
+
     def test_linux_gnu_stack_rw_required_rwe_denied(self):
         self.assertEqual(inspect_elf(bytes(elf(6)))['gnu_stack'], 'RW')
         with self.assertRaisesRegex(LinuxCoreError, 'GNU_STACK'):
