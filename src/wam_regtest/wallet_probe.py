@@ -8,8 +8,25 @@ from PySide6.QtCore import QEventLoop,QTimer,QCoreApplication,QEvent,Qt
 from PySide6.QtWidgets import QApplication
 from .fusion_pages import PaymentApproval
 from .fusion_ui import fusion_palette
+from .wallet_read import format_wam
 from .wallet_session import WalletSession, WalletSessionError, WalletCoreCli
 from .operational_gui import OperationalWalletWindow
+
+
+def confirmed_balance_visible(window, atoms):
+    """Accept the wide suffix and the narrow unit label for the same atoms.
+
+    Below 640 logical pixels the overview moves the denomination into the
+    adjacent unit label so the amount is not clipped. The atoms and the
+    visible WAM unit both remain mandatory.
+    """
+    shown = window.balance_text.text()
+    unit = window.dashboard.balance_unit
+    if unit.isVisible():
+        return (type(atoms) is int and atoms >= 0
+                and shown == format_wam(atoms, grouped=True)
+                and unit.text() == 'WAM')
+    return shown == f'{atoms/100_000_000:,.8f} WAM'
 
 
 class WalletProbeError(ValueError):
@@ -301,7 +318,7 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         expected=initial.confirmed_atoms-review.atoms-review.fee
         assert confirmed.height==105 and confirmed.confirmed_atoms==expected
         assert window._submitted_txid is None and 'CONFIRMED' in window.review_text.text()
-        assert window.balance_text.text()==f'{expected/100_000_000:,.8f} WAM'
+        assert confirmed_balance_visible(window, expected)
         assert window.history_table.rowCount()==2
         recipient_scan=Scanner(datadir/'recipient.sqlite',recipient.accounts())
         recipient_scan.sync(rpc)

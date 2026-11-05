@@ -6,7 +6,10 @@ import unittest
 from dataclasses import replace
 
 from PySide6.QtCore import Qt, QRect
-from PySide6.QtWidgets import QAbstractButton, QDialog, QLabel, QToolButton
+from PySide6.QtWidgets import (
+    QAbstractButton, QDialog, QFrame, QHBoxLayout, QLabel, QMainWindow, QToolButton,
+    QVBoxLayout, QWidget,
+)
 
 from wam_regtest.desktop import qt_application
 from wam_regtest.fusion_status import classify
@@ -105,6 +108,45 @@ class FusionV21LayoutAndMotion(unittest.TestCase):
         self.app.processEvents()
         self.assertTrue(page.security_card.isVisible())
         self.assertTrue(label_fits(page.security_card.value), page.security_card.value.text())
+
+    def test_windows_scale_width_keeps_exact_confirmed_balance_visible(self):
+        from wam_regtest.wallet_probe import confirmed_balance_visible
+        atoms = verified_snapshot().confirmed_atoms
+        for width, compact in ((1024, False), (820, True)):
+            window = QMainWindow()
+            self.addCleanup(window.deleteLater)
+            window.setMinimumSize(820, 600)
+            base = QWidget()
+            window.setCentralWidget(base)
+            shell = QHBoxLayout(base)
+            shell.setContentsMargins(0, 0, 0, 0)
+            shell.setSpacing(0)
+            sidebar = QFrame()
+            sidebar.setFixedWidth(214)
+            shell.addWidget(sidebar)
+            workspace = QWidget()
+            column = QVBoxLayout(workspace)
+            column.setContentsMargins(28, 0, 22, 12)
+            page = FusionOverview()
+            column.addWidget(page, 1)
+            shell.addWidget(workspace, 1)
+            window.resize(width, 700)
+            page.render_snapshot(
+                verified_snapshot(), operational=True, core_alive=True,
+                network={"mode": "Isolated REGTEST"})
+            window.show()
+            self.app.processEvents()
+            host = type("Host", (), {"balance_text": page.balance_value, "dashboard": page})()
+            self.assertEqual(page.balance_unit.isVisible(), compact)
+            self.assertLess(page.hero.width(), 640) if compact else self.assertGreaterEqual(page.hero.width(), 640)
+            self.assertTrue(confirmed_balance_visible(host, atoms))
+            self.assertFalse(confirmed_balance_visible(host, atoms - 1))
+            if compact:
+                self.assertEqual(page.balance_value.text(), "1.50000000")
+                self.assertEqual(page.balance_unit.text(), "WAM")
+            else:
+                self.assertEqual(page.balance_value.text(), "1.50000000 WAM")
+            window.close()
 
     def test_flow_grid_uses_two_columns_when_four_do_not_fit(self):
         cards = [StatusCard("WAM Core", "Pinned binary identity") for _ in range(4)]
