@@ -170,6 +170,9 @@ def verify_signed_windows_archive(archive: Path, signing_key: Path,
     result = inspect_signed_zip_shape(archive, expected)
     if result["archive_sha256"] != ARCHIVE_SHA256 or result["member_sha256"] != BINARY_SHA256:
         _fail("WIN_RELEASE_INDEPENDENT_PIN_DENIED")
+    from .release import FINGERPRINT
+    result["publisher_fingerprint"] = FINGERPRINT
+    result["signed_sums_sha256"] = SUMS_SHA256
     result["signed_archive_verified"] = True
     return result
 

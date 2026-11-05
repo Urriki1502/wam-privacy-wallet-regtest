@@ -15,7 +15,8 @@ import stat
 import subprocess
 import time
 
-from .release import ARCHIVES, CLI_SHA256, _sha
+from .release import ARCHIVES, CLI_SHA256, FINGERPRINT, VERSION, _sha
+from .official_core_v013 import ARCHIVES as SIGNED_ARCHIVES
 from .custody import private_temporary_directory
 from .telemetry import increment
 
@@ -41,7 +42,11 @@ def verified_core_paths(core_dir: Path) -> tuple[Path, Path, dict]:
         platform = receipt["platform"]
         node = core_dir / "wamd"
         cli = core_dir / "wam-cli"
-        if (platform not in ARCHIVES or
+        if (platform != "macos-arm64" or platform not in ARCHIVES
+                or receipt.get("tag") != VERSION
+                or receipt.get("archive") != SIGNED_ARCHIVES["macos-arm64"][0]
+                or receipt.get("archive_sha256") != SIGNED_ARCHIVES["macos-arm64"][2]
+                or receipt.get("publisher_fingerprint") != FINGERPRINT or
                 receipt["signed_archive_verified"] is not True or
                 receipt.get("mainnet_allowed") is not False or
                 receipt.get("loader_process_binding_qualified") is not False or

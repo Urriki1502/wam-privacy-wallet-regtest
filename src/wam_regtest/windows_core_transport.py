@@ -70,7 +70,12 @@ def read_private(directory,name):
 def verified_core_paths(directory):
     try:
         receipt=json.loads(read_private(directory,'receipt.json'))
-        if (receipt['platform']!='windows-x64' or receipt['signed_archive_verified'] is not True
+        from .release import FINGERPRINT
+        from .official_core_v013 import SUMS_SHA256
+        if (receipt.get('release')!='v0.1.13'
+                or receipt.get('publisher_fingerprint')!=FINGERPRINT
+                or receipt.get('signed_sums_sha256')!=SUMS_SHA256
+                or receipt['platform']!='windows-x64' or receipt['signed_archive_verified'] is not True
                 or receipt['archive_sha256']!=ARCHIVE_SHA256 or receipt['member_sha256']!=BINARY_SHA256
                 or receipt['mainnet_allowed'] is not False or receipt['loader_process_binding_qualified'] is not False):
             raise ValueError
