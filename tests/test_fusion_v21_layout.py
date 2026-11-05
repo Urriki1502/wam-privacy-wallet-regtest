@@ -6,7 +6,7 @@ import unittest
 from dataclasses import replace
 
 from PySide6.QtCore import Qt, QRect
-from PySide6.QtWidgets import QDialog, QLabel
+from PySide6.QtWidgets import QAbstractButton, QDialog, QLabel, QToolButton
 
 from wam_regtest.desktop import qt_application
 from wam_regtest.fusion_status import classify
@@ -96,8 +96,10 @@ class FusionV21LayoutAndMotion(unittest.TestCase):
         self.assertIn("1.50000000", page.balance_value.text())
         self.assertTrue(
             "WAM" in page.balance_value.text() or page.balance_unit.isVisible())
-        self.assertTrue(page.open_backup.isVisible())
-        self.assertGreaterEqual(page.open_backup.height(), 24)
+        self.assertEqual(page.findChildren(QToolButton, "FusionQuick"), [])
+        self.assertTrue(page.go_send.isVisible())
+        self.assertTrue(page.go_receive.isVisible())
+        self.assertTrue(page.balance_chart.isVisible())
         self.assertGreaterEqual(page.verticalScrollBar().maximum(), 0)
         page.verticalScrollBar().setValue(page.verticalScrollBar().maximum())
         self.app.processEvents()
@@ -139,21 +141,27 @@ class FusionV21LayoutAndMotion(unittest.TestCase):
         self.assertEqual(host.currentIndex(), 0)
         self.assertEqual(host.currentWidget().text(), "a")
 
-    def test_network_flyout_escape_closes(self):
+    def test_quick_actions_are_absent_and_workflows_remain_on_pages(self):
         from types import SimpleNamespace
         from wam_regtest.wallet_executor import ExecutorState
         from wam_regtest.bip39_fusion_gui import Bip39FusionWindow
-        from PySide6.QtTest import QTest
         owner = SimpleNamespace(state=ExecutorState(), busy=False, closed=False)
         window = Bip39FusionWindow(owner)
         self.addCleanup(window.deleteLater)
         window._poll.stop()
         window.show()
         self.app.processEvents()
-        window._open_network_flyout()
-        self.assertTrue(window.network_flyout.isVisible())
-        QTest.keyClick(window.network_flyout, Qt.Key.Key_Escape)
-        self.assertFalse(window.network_flyout.isVisible())
+        self.assertEqual(window.overview.findChildren(QToolButton, "FusionQuick"), [])
+        labels = " ".join(item.text() for item in window.overview.findChildren(QLabel))
+        self.assertNotIn("Quick actions", labels)
+        self.assertNotIn("Wallet environment", labels)
+        self.assertTrue(window.recovery.isVisible() or window.recovery.parent() is not None)
+        self.assertTrue(window.custody_switch.isVisible() or window.custody_switch.parent() is not None)
+        self.assertTrue(window.backup_review.isVisible() or window.backup_review.parent() is not None)
+        self.assertTrue(window.network_page is not None)
+        window.navigation.setCurrentRow(5)
+        self.app.processEvents()
+        self.assertEqual(window.stack.currentWidget(), window.network_page)
         window.reduce_motion.setChecked(True)
         window._play_overview_intro()
         self.assertTrue(window.reduce_motion.isChecked())
@@ -228,6 +236,19 @@ class FusionV21LayoutAndMotion(unittest.TestCase):
         glyph.set_state("unknown", animate=False)
         self.assertEqual(glyph.state(), "unknown")
         self.assertFalse(glyph._spin.isActive())
+
+    def test_compact_chart_stays_visible_without_horizontal_overflow(self):
+        page = FusionOverview()
+        self.addCleanup(page.deleteLater)
+        page.render_snapshot(verified_snapshot(), operational=True, core_alive=False)
+        page.resize(520, 760)
+        page.show()
+        self.app.processEvents()
+        page.hero.resizeEvent(None)
+        self.app.processEvents()
+        self.assertTrue(page.balance_chart.isVisible())
+        self.assertLessEqual(page.horizontalScrollBar().maximum(), 0)
+        self.assertIn("1.50000000", page.balance_value.text())
 
     def test_broadcast_result_semantics_unchanged(self):
         from wam_regtest.fusion_pages import describe_broadcast_result

@@ -22,47 +22,47 @@ def classify(kind, *, snap=None, locked=False, operational=False, faulted=False,
         if snap is not None:
             if core_alive is False:
                 return ('warning', 'Identity pinned',
-                        'Snapshot includes the pinned Core binary. The Core process is not connected.')
+                        'Pinned binary · Core not connected')
             if core_alive is True:
                 return ('verified', 'Identity pinned',
-                        'Pinned WAM Core binary identity from this verified snapshot.')
+                        'Pinned binary from this snapshot')
             return ('warning', 'Identity pinned',
-                    'Pinned Core binary is in this snapshot. Live process is not confirmed here.')
+                    'Pinned binary · live process unconfirmed')
         if busy:
-            return ('pending', 'Verifying', 'Checking owned Core identity. No wallet values yet.')
+            return ('pending', 'Verifying', 'Checking owned Core identity')
         if core_alive is False:
-            return ('unknown', 'Not connected', 'Owned Core process is not running.')
+            return ('unknown', 'Not connected', 'Owned Core is not running')
         if core_alive is True:
-            return ('pending', 'Core running', 'Owned Core is alive. Wallet snapshot is not verified yet.')
-        return ('unknown', 'Not verified', 'Pinned Core identity appears after a verified snapshot.')
+            return ('pending', 'Core running', 'Process alive · snapshot not verified')
+        return ('unknown', 'Not verified', 'Identity appears after a verified snapshot')
     if kind == 'chain':
         if snap is not None:
             return ('verified', 'Height ' + str(snap.height),
-                    'Verified tip height from this snapshot. Not a live peer count.')
+                    'Verified snapshot height')
         if busy:
-            return ('pending', 'Syncing', 'Waiting for a verified chain snapshot.')
-        return ('unknown', 'Not verified', 'Chain height appears after a verified snapshot.')
+            return ('pending', 'Syncing', 'Waiting for a verified snapshot')
+        return ('unknown', 'Not verified', 'Height appears after a verified snapshot')
     if kind == 'security':
         if locked or snap is None or not operational:
             return ('unknown', 'Locked',
-                    'Unlock requires the original wallet password. Locked is the custody state.')
+                    'Password required to unlock')
         return ('warning', 'Unlocked',
-                'Keys are open on this device. Unlocked is not a security score or Core proof.')
+                'Keys open · not a security score')
     if kind == 'network':
         shared = bool(network.get('shared'))
         if 'peer_count' in network and type(network['peer_count']) is int:
             if network.get('connected') is False:
                 return ('error', 'Disconnected',
-                        str(network['peer_count']) + ' peer(s) reported disconnected.')
+                        str(network['peer_count']) + ' peer(s) disconnected')
             if network.get('connected') is True:
                 return ('verified', 'Connected',
-                        str(network['peer_count']) + ' verified peer(s). Shared REGTEST only.')
+                        str(network['peer_count']) + ' verified peer(s)')
             return ('warning', 'Peer check',
-                    str(network['peer_count']) + ' peer(s) reported without a connection flag.')
+                    str(network['peer_count']) + ' peer(s) without a connection flag')
         if shared:
             return ('pending' if busy else 'unknown', 'Awaiting peer check',
-                    'Shared REGTEST peer state is shown only after a verified network check.')
-        return ('unknown', 'Isolated', 'Zero-peer isolated REGTEST profile. Not a public network.')
+                    'Peer state follows a verified network check')
+        return ('unknown', 'Isolated', 'Zero-peer REGTEST')
     if snap is not None:
         return ('verified', 'Snapshot verified', 'Wallet values come from this verified REGTEST snapshot.')
     if busy:

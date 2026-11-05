@@ -132,7 +132,7 @@ class FusionV2Widgets(unittest.TestCase):
   page.render_snapshot(fixture())
   self.assertEqual(page.balance_chart._points, confirmed_balance_history(fixture()))
   self.assertTrue(page.balance_value.text().endswith(' WAM'))
-  self.assertTrue(page.open_backup.isVisible() or page.open_backup.parent() is not None)
+  self.assertTrue(page.go_send.isVisible() or page.go_receive.parent() is not None)
   page.render_snapshot(None, locked=True)
   self.assertEqual(page.balance_chart._points, ())
   self.assertEqual(page.balance_value.text(), '—')

@@ -168,8 +168,14 @@ class FusionV2PresentationWidgets(unittest.TestCase):
         self.assertEqual(page.balance_chart._points, ())
         self.assertTrue(page.balance_value.text().endswith(" WAM"))
         self.assertGreaterEqual(page.balance_value.font().pointSize(), 0)
-        rails = (page.open_backup, page.open_recovery, page.quick_lock, page.open_network)
-        self.assertTrue(all(b.objectName() == "FusionQuick" for b in rails))
+        from PySide6.QtWidgets import QAbstractButton, QToolButton
+        self.assertEqual(page.findChildren(QToolButton, "FusionQuick"), [])
+        overview_buttons = [b.text() for b in page.findChildren(QAbstractButton)]
+        self.assertIn("Send", overview_buttons)
+        self.assertIn("Receive", overview_buttons)
+        self.assertNotIn("Backup Wallet", overview_buttons)
+        self.assertNotIn("Verify Recovery", overview_buttons)
+        self.assertNotIn("Network Status", overview_buttons)
         page.render_snapshot(None, locked=True)
         self.assertEqual(page.balance_value.text(), "—")
         consistent = replace(

@@ -7,7 +7,7 @@ not a painted mockup or a separate demo account.
 """
 import os
 import re
-from PySide6.QtCore import Qt, QSize, QSettings, QTimer, QRect
+from PySide6.QtCore import Qt, QSize, QSettings, QTimer
 from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QFrame, QLabel, QLineEdit,
@@ -22,9 +22,9 @@ from .gui_errors import operation_error
 from .fusion_ui import (
     FusionOverview, fusion_stylesheet, fusion_palette, page, panel,
     label, ResponsiveRow, vector_icon, nav_icon_for, FUSION_NAV_PAGES,
-    StateSwitch, action, ThemeSlider, NetworkFlyout,
+    StateSwitch, action, ThemeSlider,
 )
-from .fusion_motion import fade_widget, PressFeedback, PAGE_MS, TransitionHost, STAGGER_MS, STANDARD_MS, motion_reduced, slide_geometry
+from .fusion_motion import fade_widget, PressFeedback, TransitionHost, STAGGER_MS, STANDARD_MS, motion_reduced
 from .fusion_status import classify
 from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval, WalletConsent, NetworkPage, describe_broadcast_result
 from .bip39_backup_page import Bip39BackupPage
@@ -161,14 +161,6 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
         self.stack = TransitionHost()
         content.addWidget(self.stack, 1)
-        self._dimmer = QFrame(main)
-        self._dimmer.setObjectName('FusionDimmer')
-        self._dimmer.hide()
-        self._dimmer.setAccessibleName('Dismiss network status drawer')
-        self.network_flyout = NetworkFlyout(main)
-        self.network_flyout.hide()
-        self.network_flyout.closed.connect(self._close_network_flyout)
-        self._dimmer.installEventFilter(self)
         original_status = self.status
         self.status = _WrappingStatusLabel()
         self.status.setTextFormat(Qt.TextFormat.PlainText)
@@ -287,6 +279,10 @@ class Bip39FusionWindow(Bip39TrialWindow):
         ))
         backup_card, bl = panel("Backup status", "12-word creation and three-word verification remain required.")
         bl.addWidget(label("Recovery words are shown only at creation. Never send them to a support agent."))
+        self.backup_review = action('Review backup requirements', 'backup')
+        self.backup_review.setAccessibleName('Review backup requirements')
+        self.backup_review.clicked.connect(self._quick_backup)
+        bl.addWidget(self.backup_review)
         security_layout.addWidget(ResponsiveRow(wallet_card, recovery_card))
         security_layout.addWidget(backup_card)
         security_layout.addStretch()
@@ -409,9 +405,6 @@ class Bip39FusionWindow(Bip39TrialWindow):
             lambda: self.navigation.setCurrentRow(2))
         self.overview.open_security.clicked.connect(
             lambda: self.navigation.setCurrentRow(4))
-        self.overview.backup_requested.connect(self._quick_backup)
-        self.overview.recovery_requested.connect(self.recovery.click)
-        self.overview.network_requested.connect(self._open_network_flyout)
         self.overview.manual_sync.clicked.connect(
             lambda: self._command("snapshot"))
         self.overview.transaction_selected.connect(self._select_transaction)
@@ -518,51 +511,6 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self._advanced_transition = fade_widget(
             self.advanced_container, start=0.5, end=1.0, duration=180, parent=self)
 
-    def eventFilter(self, watched, event):
-        from PySide6.QtCore import QEvent
-        if watched is getattr(self, '_dimmer', None) and event.type() == QEvent.Type.MouseButtonPress:
-            self._close_network_flyout()
-            return True
-        return super().eventFilter(watched, event)
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self._place_flyout()
-
-    def _place_flyout(self):
-        if not hasattr(self, '_dimmer'):
-            return
-        host = self._dimmer.parentWidget()
-        if host is None:
-            return
-        self._dimmer.setGeometry(host.rect())
-        width = min(360, max(280, host.width() // 3))
-        self.network_flyout.setGeometry(
-            host.width() - width - 16, 16, width, max(220, host.height() - 32))
-
-    def _open_network_flyout(self):
-        snap = self._last_verified
-        self.network_flyout.render(
-            network=self._network_view(snap),
-            core_alive=self.executor.state.core_alive,
-            height=None if snap is None else snap.height)
-        self._place_flyout()
-        self._dimmer.show()
-        self._dimmer.raise_()
-        self.network_flyout.show()
-        self.network_flyout.raise_()
-        if not motion_reduced(self) and not self.reduce_motion.isChecked():
-            target = self.network_flyout.geometry()
-            start = QRect(target.x() + 24, target.y(), target.width(), target.height())
-            self.network_flyout.setGeometry(start)
-            slide_geometry(self.network_flyout, target, duration=PAGE_MS, parent=self)
-            fade_widget(self.network_flyout, start=0.86, end=1.0, duration=PAGE_MS, parent=self)
-        self.network_flyout.setFocus()
-
-    def _close_network_flyout(self):
-        self.network_flyout.hide()
-        self._dimmer.hide()
-
     def _quick_backup(self):
         dialog = WalletConsent(
             'Backup this REGTEST wallet',
@@ -582,7 +530,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         groups = (
             self.overview.hero,
             self.overview.status_board,
-            self.overview.open_backup.parentWidget(),
+            self.overview.activity_panel,
         )
         for delay, widget in enumerate(groups):
             QTimer.singleShot(
@@ -665,9 +613,6 @@ class Bip39FusionWindow(Bip39TrialWindow):
                     busy=not idle,
                     network=self._network_view(self._last_verified),
                 ), animate=False)
-                self.overview.quick_lock.setText('Lock Wallet' if unlocked else 'Unlock Wallet')
-                self.overview.quick_lock.setEnabled(idle and not self._quit_requested
-                    and (self.lock.isEnabled() or self.unlock.isEnabled()))
             self.overview.go_send.setEnabled(ready and idle and self._spend_enabled
                 and (self.shared_profile is None or self._shared_connected))
             self.overview.open_security.setEnabled(not self._quit_requested)
