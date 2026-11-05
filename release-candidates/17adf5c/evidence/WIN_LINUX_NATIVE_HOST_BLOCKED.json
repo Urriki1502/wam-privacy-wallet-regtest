@@ -1,0 +1,105 @@
+{
+  "schema": "wam-fusion-v22-win-linux-native-requal/v1",
+  "recorded_at_utc": "2026-11-05T04:22:00Z",
+  "functional_source_sha": "17adf5c5cbb1213ea5abd95a2ecdd9464b0874a2",
+  "wsp_source_pin": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+  "recorder_host": {
+    "os": "macOS-27.0.1-arm64",
+    "machine": "arm64",
+    "role": "macos_frozen_already_PASS; not a Win/Linux native host"
+  },
+  "builders_reused": [
+    "scripts/build_windows_bundle.py",
+    "src/wam_regtest/windows_package_entry.py",
+    "scripts/build_linux_wallet.py",
+    "src/wam_regtest/linux_package_entry.py"
+  ],
+  "builder_refusal_on_this_host": {
+    "windows": "AssertionError: sys.platform=='win32' and amd64",
+    "linux_desktop": "AssertionError: sys.platform=='linux' and x86_64",
+    "linux_headless": "AssertionError: sys.platform=='linux' and x86_64"
+  },
+  "source_contracts_on_this_host": {
+    "test_platform_reuse_contracts": "PASS",
+    "test_linux_developer_core": "PASS (native ELF stack test skipped)",
+    "test_q06_bip39_fusion_gui": "PASS",
+    "test_two_window_sign_approval": "PASS",
+    "qualifies_native_win_linux": false
+  },
+  "platforms": {
+    "windows-x64": {
+      "status": "BLOCKED / NOT EXECUTED",
+      "blocker_actor": "authorized Windows 11 x64 native host + developer rebuild",
+      "blocker_action": "checkout 17adf5c and run scripts/build_windows_bundle.py",
+      "core_identity": "official-signed-v0.1.11-PE",
+      "core_archive_sha256": "ece622fa7ec3072c4e8b0d32e2c3749397d66260f2b0cf22b3636346873d15c5",
+      "core_sha256": {
+        "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+        "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+      },
+      "application_artifact_path": null,
+      "application_sha256": null,
+      "signing_status": "not produced; expected unsigned PE unless Authenticode is applied later",
+      "test_receipt": null,
+      "known_limitations": [
+        "No Windows 11 x64 environment on the recorder host",
+        "Remote CI not authorized"
+      ]
+    },
+    "linux-x86_64-desktop": {
+      "status": "BLOCKED / NOT EXECUTED",
+      "blocker_actor": "authorized Ubuntu 24.04 x86_64 host + reviewed developer Core",
+      "blocker_action": "checkout 17adf5c and run scripts/build_linux_wallet.py --core-dir <reviewed> --desktop",
+      "core_identity": "reviewed-developer-ELF",
+      "official_signed_core_release": false,
+      "approved_core_manifest_sha256": "e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806",
+      "core_sha256": {
+        "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+        "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652"
+      },
+      "gnu_stack_required": "PT_GNU_STACK RW flags=6",
+      "application_artifact_path": null,
+      "application_sha256": null,
+      "signing_status": "not produced; unsigned developer candidate",
+      "test_receipt": null,
+      "known_limitations": [
+        "No Ubuntu 24.04 x86_64 environment on the recorder host",
+        "Developer ELF is not official signed Linux Core",
+        "Remote CI not authorized"
+      ]
+    },
+    "linux-x86_64-headless": {
+      "status": "BLOCKED / NOT EXECUTED",
+      "blocker_actor": "authorized Ubuntu 24.04 x86_64 headless venv (no PySide6)",
+      "blocker_action": "checkout 17adf5c and run scripts/build_linux_wallet.py --core-dir <reviewed>",
+      "core_identity": "reviewed-developer-ELF",
+      "official_signed_core_release": false,
+      "approved_core_manifest_sha256": "e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806",
+      "core_sha256": {
+        "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+        "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652"
+      },
+      "gnu_stack_required": "PT_GNU_STACK RW flags=6",
+      "application_artifact_path": null,
+      "application_sha256": null,
+      "signing_status": "not produced; unsigned developer candidate",
+      "test_receipt": null,
+      "known_limitations": [
+        "Headless package cannot qualify Qt PaymentApproval",
+        "No Ubuntu 24.04 x86_64 environment on the recorder host"
+      ]
+    }
+  },
+  "macos_arm64_already_produced_at_same_sha": {
+    "status": "local frozen PASS; not a Windows or Linux result",
+    "app_zip": "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip",
+    "dmg": "package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
+  },
+  "v19": "BLOCKED / NOT EXECUTED",
+  "q06_accepted": false,
+  "g6": "BLOCKED",
+  "g7": "BLOCKED",
+  "mainnet_allowed": false,
+  "remote_ci_executed": false,
+  "source_pushed": false
+}
