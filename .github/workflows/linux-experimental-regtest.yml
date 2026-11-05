@@ -22,11 +22,17 @@ on:
       - 'tests/test_v1_wsp_execution.py'
       - 'tests/test_linux*.py'
   workflow_dispatch:
+    inputs:
+      intake_only:
+        description: 'Observe official v0.1.13 bytes on native Linux before integration'
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
 jobs:
   native-contracts:
+    if: ${{ inputs.intake_only != true }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
@@ -91,6 +97,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   headless-wallet:
+    if: ${{ inputs.intake_only != true }}
     needs: native-contracts
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -146,6 +153,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   native-qt-wallet:
+    if: ${{ inputs.intake_only != true }}
     needs: native-contracts
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -211,6 +219,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   frozen-wallet:
+    if: ${{ inputs.intake_only != true }}
     needs: [headless-wallet, native-qt-wallet]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -301,6 +310,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   q04-miner-coexistence:
+    if: ${{ inputs.intake_only != true }}
     needs: headless-wallet
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -342,6 +352,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   q04-contention:
+    if: ${{ inputs.intake_only != true }}
     needs: headless-wallet
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -383,8 +394,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   developer-core:
+    if: ${{ inputs.intake_only != true && (github.event_name == 'workflow_dispatch' || needs.native-contracts.outputs.core_changed == 'true') }}
     needs: native-contracts
-    if: github.event_name == 'workflow_dispatch' || needs.native-contracts.outputs.core_changed == 'true'
+    # Historical developer build job remains available outside intake-only runs.
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -439,6 +451,7 @@ jobs:
           if-no-files-found: error
 
   q05-managed-gui:
+    if: ${{ inputs.intake_only != true }}
     name: Q05 serialized owned GUI / reviewed Core / test root witness
     runs-on: ubuntu-24.04
     timeout-minutes: 35
@@ -517,3 +530,26 @@ jobs:
             ${{ runner.temp }}/q05-native-matrix/
           if-no-files-found: warn
           retention-days: 14
+
+  official-core-intake:
+    if: ${{ inputs.intake_only == true }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.15'
+      - name: Authenticate official archives and observe native loader and RPC
+        run: python scripts/official_core_v013_preflight.py --destination "$RUNNER_TEMP/official-v013" --report official-v013-native.json
+      - name: Retain public native intake receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-v013-linux-native-${{ github.sha }}
+          path: official-v013-native.json
+          if-no-files-found: error
+          retention-days: 90
