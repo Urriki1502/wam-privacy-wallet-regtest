@@ -87,3 +87,60 @@ The intermediate Linux receipt retains inherited V0_1_11 status-token spelling,
 but independently reports observed_core_version=113 and subver /WAM:0.1.13/.
 Do not interpret that inherited token as an execution of the old Core. Correct
 active producer tokens and rerun the final common-source matrix before completion.
+
+## 6 November 2026 LOCAL FIRST continuation of PR #141
+
+Resumed the existing `f96db6fc4f2044deba2c632a9a237b56b259b13c`
+candidate; no restart, checkout replacement, retained-profile migration or
+acceptance transfer. Live PR base remains `c61e3c5`, main `35553f6`.
+
+Preserved failing exact-head Linux run
+[42079022057](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/42079022057):
+fresh historical restoration passed, but immediate restored-profile reopen
+failed with `OSError` errno 98. A local deterministic regression test proves
+`WalletExecutor.join()` returned before the original control thread exited.
+Closing the listener from another thread can leave its kernel reference alive
+while `accept()` finishes. Join now waits for that original thread within the
+same total timeout. It neither adopts a listener nor retries a Core launch.
+Native Linux confirmation remains required; the local regression alone does
+not prove the CI failure resolved.
+
+Preserved failing macOS real-core run
+[42078990218](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/42078990218):
+all native jobs passed; its frozen additional restore refused with
+`Q06_SEED_ORIGINAL_OWNER_CHANGED`. Local genuine-Core standalone restoration
+and the complete Cocoa spend/confirm/reopen plus fresh restoration diagnostic
+passed, with original owners stopped. The refusal did not reproduce locally.
+Retain it as unresolved; bounded fixture diagnostics now record supervisor
+state, fixed cause categories and project function/line locations. Status
+faults use the existing create-only diagnostic record with a fixed-code
+allowlist; arbitrary exception text is never recorded. Custody refusal,
+process proof and native anchors remain mandatory.
+
+Local source regression: 677 discovered, 642 PASS, 35 platform skips; latest
+supervisor/control/privacy additions separately replayed, 30 PASS. Local
+CPython 3.12.15/PySide6 6.12.0 diagnostics are not the CI-declared macOS
+CPython 3.12.10 qualification. The existing untracked owner audit documents
+remain untouched; no clean-source guard was bypassed. Logs and disposable
+profiles are retained under `/private/tmp/wam-v013-resume-20261106`.
+
+The Lite workflow's historical run `38579345792` no longer supplies artifact
+`11900859924` (FAIL [42078990030](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/42078990030)).
+It now selects the independently downloaded and rehashed successful frozen
+run [42079016062](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/42079016062),
+artifact `13440798567`, source **f96db6f only**. Outer ZIP SHA256:
+`4b147607c4df32ac6a4168ffb5fa304bec3c966166f82cf96b675541bf7a0eec`.
+Inner DMG (71,093,647 bytes):
+`9de540606d6088d001a066e4b8e40805700724527cfc64adf09b660a1510cfa5`;
+app ZIP (62,499,845 bytes):
+`6be60ce26c2b9e16457cfd9e658a2e8c67a07ce96f267a5abe75b8d7f51f487f`.
+The workflow pins both package identities independently of the manifest;
+its actual verification/repack code passes locally. This is a download-only
+historical package, not qualification of the new source or a production release.
+
+The canonical ledger remains unchanged: Q06 technical PASS 0 / FAIL 0 /
+PENDING 4 / STALE 15; external BLOCKED 5. G0 PENDING; G1–G5 STALE;
+G6/G7 BLOCKED. Individual CI failures above remain retained technical gaps;
+zero ledger FAIL does not mean zero unresolved failure. V19 BLOCKED.
+Engineering handoff NO; full acceptance NO. Common final-source Linux,
+Windows and macOS native/frozen replay is still required after repair.

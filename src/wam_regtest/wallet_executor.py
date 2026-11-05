@@ -8,6 +8,7 @@ from dataclasses import dataclass,fields,is_dataclass,replace
 from queue import Queue
 import re
 import threading
+import time
 
 
 class WalletExecutorError(ValueError):pass
@@ -84,8 +85,18 @@ class WalletExecutor:
             raise WalletExecutorError('WALLET_EXECUTOR_OPERATION_STILL_PENDING') from None
 
     def join(self,timeout=5):
+        deadline=None if timeout is None else time.monotonic()+timeout
         self._thread.join(timeout)
-        return not self._thread.is_alive()
+        if self._thread.is_alive():return False
+        # close() cannot revoke a kernel reference held by accept() on the
+        # original control thread. Do not report shutdown complete until it
+        # returns, or an immediate profile reopen can fail EADDRINUSE.
+        control=getattr(self._backend,'_control_thread',None)
+        if control is not None:
+            if control is threading.current_thread():return False
+            control.join(None if deadline is None else max(0,deadline-time.monotonic()))
+            if control.is_alive():return False
+        return True
 
     def _run(self):
         while True:

@@ -47,6 +47,35 @@ def qualify(core, source, parent, adapter):
                 report['backend_failure']={'action':action,
                     'type':type(error).__name__,
                     'errno':error.errno if isinstance(error,OSError) else None}
+                owner=self.owner
+                if owner is not None:
+                    report['backend_failure']['owner_state']=owner.state
+                    report['backend_failure']['owner_faulted']=owner._faulted
+                    from .supervisor_store import read_exact
+                    from .core_supervisor import DIAGNOSTIC_CODES
+                    try:
+                        failure=json.loads(read_exact(owner.root,'supervisor.failure'))
+                        if (type(failure) is dict and set(failure)=={'stage','code'}
+                                and failure['stage'] in ('start','status','recover-stop')
+                                and failure['code'] in DIAGNOSTIC_CODES|{'MANAGED_UNCLASSIFIED_FAILURE'}):
+                            report['backend_failure']['supervisor_failure']=failure
+                    except (OSError,ValueError,TypeError):pass
+                # Seed custody intentionally masks underlying owner failures.
+                # Retain only these fixed public categories, never exception
+                # text/arguments, paths, credentials or arbitrary cause strings.
+                cause=error.__context__
+                if (cause is not None and cause.args in (
+                        ('MANAGED_WALLET_ORIGINAL_OWNER_REQUIRED',),
+                        ('MANAGED_WALLET_RUNNING_JOURNAL_REQUIRED',),
+                        ('MANAGED_WALLET_OWNED_CORE_UNVERIFIED',))):
+                    report['backend_failure']['owner_failure_code']=cause.args[0]
+                frames=[]
+                tb=error.__traceback__
+                while tb is not None:
+                    if tb.tb_frame.f_code.co_filename.endswith('/core_supervisor.py'):
+                        frames.append({'function':tb.tb_frame.f_code.co_name,'line':tb.tb_lineno})
+                    tb=tb.tb_next
+                if frames:report['backend_failure']['supervisor_frames']=frames
                 print('Q06_SAME_CHAIN_BACKEND_FAILURE='+json.dumps(report['backend_failure']),flush=True)
                 raise
     def start(index, mode, mnemonic='', existing_root=None):

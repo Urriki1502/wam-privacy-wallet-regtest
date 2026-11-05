@@ -340,8 +340,10 @@ class CoreSupervisor:
             if error.args == ('RPC_NODE_BUSY',):
                 self._busy_until = time.monotonic() + BUSY_COOLDOWN
                 return public_status(state='busy', owned=True)
+            self._record_failure('status',error)
             self._faulted = True
-        except (OSError, ValueError, RuntimeError):
+        except (OSError, ValueError, RuntimeError) as error:
+            self._record_failure('status',error)
             self._faulted = True
         self.state = 'recovery-needed'
         return public_status(state=self.state)
