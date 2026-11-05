@@ -129,7 +129,8 @@ class ReconciliationContracts(unittest.TestCase):
                 class ReadOnly:
                     def execute(self,*args):
                         result=real.execute(*args)
-                        st=path.stat();os.utime(path,ns=(st.st_atime_ns,st.st_mtime_ns+1))
+                        # NTFS can ignore a 1ns bump. One second is still a real change.
+                        st=path.stat();os.utime(path,ns=(st.st_atime_ns,st.st_mtime_ns+1_000_000_000))
                         return result
                     def close(self):real.close()
                 return ReadOnly()
