@@ -147,6 +147,14 @@ def main():
                             code=candidate
                     except (OSError,ValueError,TypeError):
                         pass
+                line_path=review/'wallet-probe-public-line.json'
+                if line_path.is_file():
+                    try:
+                        line=json.loads(line_path.read_text(encoding='utf8')).get('line')
+                        if type(line) is int and 1<=line<=10000:
+                            print('WALLET_PROBE_ASSERTION_LINE='+str(line),flush=True)
+                    except (OSError,ValueError,TypeError):
+                        pass
                 print('WIN_SCALED_FROZEN_PUBLIC_DENIAL_'+factor.replace('.','_')+'='+code,flush=True)
                 with (output/('Q01_SCALE_'+factor+'_FAILURE.json')).open('x') as failure:
                     json.dump({'status':'FAIL','stage':'frozen-'+factor,'reason_code':code},failure)

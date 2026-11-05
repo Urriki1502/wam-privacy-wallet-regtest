@@ -316,14 +316,24 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         print("WALLET_E2E_STAGE=CONFIRM",flush=True)
         confirmed=_operation(app,window,'mine',window.mine_button.click)
         expected=initial.confirmed_atoms-review.atoms-review.fee
-        assert confirmed.height==105 and confirmed.confirmed_atoms==expected
-        assert window._submitted_txid is None and 'CONFIRMED' in window.review_text.text()
-        assert confirmed_balance_visible(window, expected)
-        assert window.history_table.rowCount()==2
+        if not (confirmed.height==105 and confirmed.confirmed_atoms==expected):
+            raise WalletProbeError('WALLET_REAL_CORE_CONFIRM_CHAIN_DENIED')
+        if not (window._submitted_txid is None and 'CONFIRMED' in window.review_text.text()):
+            raise WalletProbeError('WALLET_REAL_CORE_CONFIRM_VIEW_DENIED')
+        if not confirmed_balance_visible(window, expected):
+            raise WalletProbeError('WALLET_REAL_CORE_CONFIRM_BALANCE_DENIED')
+        if window.history_table.rowCount()!=2:
+            raise WalletProbeError('WALLET_REAL_CORE_CONFIRM_HISTORY_DENIED')
         recipient_scan=Scanner(datadir/'recipient.sqlite',recipient.accounts())
-        recipient_scan.sync(rpc)
-        coins=recipient_scan.coins()
-        assert len(coins)==1 and coins[0]['txid']==txid and coins[0]['atoms']==review.atoms
+        try:
+            recipient_scan.sync(rpc)
+            coins=recipient_scan.coins()
+        except WalletProbeError:
+            raise
+        except Exception:
+            raise WalletProbeError('WALLET_REAL_CORE_CONFIRM_SCAN_DENIED') from None
+        if not (len(coins)==1 and coins[0]['txid']==txid and coins[0]['atoms']==review.atoms):
+            raise WalletProbeError('WALLET_REAL_CORE_CONFIRM_RECIPIENT_DENIED')
         # Real send-block reorg must remove debit/change and recipient receive;
         # signed/broadcast reservations remain irreversible during rollback.
         stage="REORG"
@@ -471,7 +481,14 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         import traceback
         frames=traceback.extract_tb(error.__traceback__)
         lines=[f.lineno for f in frames if Path(f.filename).name=='wallet_probe.py']
-        if lines:print('WALLET_PROBE_ASSERTION_LINE='+str(lines[-1]),flush=True)
+        if lines and type(lines[-1]) is int:
+            print('WALLET_PROBE_ASSERTION_LINE='+str(lines[-1]),flush=True)
+            try:
+                import json
+                Path('wallet-probe-public-line.json').write_text(
+                    json.dumps({'line':lines[-1]}),encoding='utf8')
+            except OSError:
+                pass
         raise WalletProbeError('WALLET_REAL_CORE_'+stage+'_DENIED') from None
     finally:
         if window is not None:
