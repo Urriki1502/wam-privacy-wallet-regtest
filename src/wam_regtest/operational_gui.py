@@ -106,7 +106,7 @@ class OperationalWalletWindow(RegtestWalletWindow):
         bl.addWidget(label('Linux experimental · PayJoin validation only. No production or real-fund operations.'))
         layout.addWidget(ResponsiveRow(appearance,build))
         node,nl=panel('Developer WAM Core' if sys.platform=='linux' else 'Official WAM Core',
-            'Pinned upstream source build · not a signed release' if sys.platform=='linux' else 'v0.1.11 · independent binary identity checks')
+            'Official signed v0.1.13 · reviewed loader and root witness' if sys.platform=='linux' else 'v0.1.13 · independent binary identity checks')
         self.core_identity=label('No verified Core identity in this session','ReceiveCode',True);nl.addWidget(self.core_identity);layout.addWidget(node)
         privacy,pl=panel('Local network policy','Scan and broadcast use the same isolated local REGTEST node.')
         self.network_button=action('Verify node privacy','security');pl.addWidget(self.network_button);self.network_text=label('Remote/proxy routes and fallback are unavailable. Zero peers must be verified; there is no anonymity guarantee.');pl.addWidget(self.network_text);layout.addWidget(privacy)

@@ -59,3 +59,31 @@ Core migratewallet is BDB-to-descriptor conversion, not this identity protocol.
 Until positive monotonic/crash-safe evidence exists, keep default rejection;
 new-profile success cannot qualify old-profile migration. Artificial fixtures
 may be created later; the approximately 42 retained test profiles are excluded.
+
+## Reviewed code-site classification
+
+| Site | Category / treatment |
+|---|---|
+| release.py VERSION/ARCHIVES/CLI_SHA256/MEMBER_ROOT and downloads | Active official tar intake; migrate exact authenticated bytes, preserve old evidence in Git/history |
+| windows_release_preflight.py ASSET/ROOT/ARCHIVE_SHA256/BINARY_SHA256 | Active PE/archive source pins; Stage A2 pending |
+| windows_core_transport.py | Active DACL/no-reparse private read/write and immutable member comparison via preflight pins; preserve |
+| core.py, json_rpc.py, wsp_live.py, q02_probe.py | Active native RPC allowlist; observed Linux tuple 113,/WAM:0.1.13/,70016; wrong versions still refuse |
+| shared_regtest.py | Active strict peer subver; update exact observed version, no discovery/network identity changes |
+| core_supervisor.py profile read and fresh create | Active profile guard/new format identity; v0.1.11 remains rejected, never rewritten |
+| linux_developer_core.py, build_linux_developer_core.sh, test_linux_developer_core.py | Historical separately reviewed developer policy/helpers, retained unchanged; not new official trust |
+| linux_official_core.py, linux_runtime.py | New candidate signed member pins plus immutable reviewed loader closure; root witness still required |
+| build_linux_wallet.py, linux_headless_acceptance.py, q01_core_negatives.py, qualify_q05_native.py / frozen.py, qualify_q06_frozen.py | Active new candidate inputs and qualification; original developer artifacts retained |
+| q05_platforms.py / gui_scenario.py / checkpoint_scenario.py / security_scenario.py | Active platform adapters/current receipts; actual native proofs remain OS-specific |
+| build_windows_bundle.py and Windows workflow download stanzas | Active Stage A2 inputs; must use signed v0.1.13 URL and exact pinned root |
+| build_macos_bundle.sh, audit_wallet_security.py, macOS workflows | Active Stage A3 intake and frozen byte preservation; Stage A3 pending |
+| package_entry.py, desktop_probe.py, core.py V0_1_11 status strings | Legacy version-labelled result tokens in active producers; must become current version at integration; old receipts immutable |
+| fusion_ui.py, bip39_fusion_gui.py, desktop.py, operational_gui.py, cli.py | Current UI/help labels; describe official candidate, independent witness and actual identity |
+| build_provenance.py tests/source_contract/v0.1.11 path | Historical literal-source corpus allowlist; preserve directory identity |
+| q_gate.py and update_q03_ledger.py / update_q04_ledger.py old proof validation | Historical integrated-Q evidence contracts, not candidate Core authority; do not use these scripts to relabel new receipts |
+| tests/acceptance/issue45.json existing case evidence | Historical case-level ledger; no blanket PASS transfer to changed candidate; Q06 accepted=false |
+| docs/evidence, prior audits and public RC manifests | Immutable historical evidence; leave original hashes/failures and source attribution intact |
+
+The intermediate Linux receipt retains inherited V0_1_11 status-token spelling,
+but independently reports observed_core_version=113 and subver /WAM:0.1.13/.
+Do not interpret that inherited token as an execution of the old Core. Correct
+active producer tokens and rerun the final common-source matrix before completion.

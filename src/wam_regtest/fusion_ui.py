@@ -1231,7 +1231,7 @@ class FusionOverview(QScrollArea):
             'Confirmed balance, custody and chain height come from this verified snapshot.'
             if not faulted else 'Original reservations are preserved. Do not retry uncertain payments.')
         self.wallet_profile.setText('Operational REGTEST wallet' if operational else 'Read-only REGTEST wallet')
-        self.environment_core.setText('WAM Core v0.1.11  ·  SHA-256 ' + snap.core_sha256[:12] + '…')
+        self.environment_core.setText('WAM Core v0.1.13  ·  SHA-256 ' + snap.core_sha256[:12] + '…')
         self.environment_core.setToolTip('Core SHA-256: ' + snap.core_sha256)
         rows = snap.history[:4]
         self._txids = [r.txid for r in rows]

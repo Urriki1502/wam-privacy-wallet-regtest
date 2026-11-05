@@ -35,9 +35,9 @@ def main():
         q05_source=stage/'Q05_BUILD_SOURCE.json';stage_q05(source_stamp,q05_source)
         for remote,name,limit in (
             ('/SIGNING-KEY.asc','SIGNING-KEY.asc',32768),
-            ('/downloads/v0.1.11/SHA256SUMS','SHA256SUMS',131072),
-            ('/downloads/v0.1.11/SHA256SUMS.asc','SHA256SUMS.asc',16384),
-            ('/downloads/v0.1.11/'+ASSET,ASSET,320*1024*1024)):
+            ('/downloads/v0.1.13/SHA256SUMS','SHA256SUMS',131072),
+            ('/downloads/v0.1.13/SHA256SUMS.asc','SHA256SUMS.asc',16384),
+            ('/downloads/v0.1.13/'+ASSET,ASSET,320*1024*1024)):
             _download_exact(remote,limit,stage/name)
         receipt=verify_signed_windows_archive(stage/ASSET,stage/'SIGNING-KEY.asc',stage/'SHA256SUMS',stage/'SHA256SUMS.asc')
         from wam_regtest.windows_release_preflight import ROOT

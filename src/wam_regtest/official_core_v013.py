@@ -28,11 +28,13 @@ MEMBERS = {
 }
 
 
-def stage_tar(platform, destination):
+def stage_tar(platform, destination, gpg_exe="gpg"):
     """New private directory only; no extraction of unrelated binaries or links."""
     from .release import _download_exact, _validate_signed_sums, ReleaseError, FINGERPRINT
     if platform not in ('linux-x86_64','macos-arm64') or not destination.is_absolute() or destination.exists() or destination.is_symlink():
         raise ReleaseError('V013_NEW_TAR_DESTINATION_REQUIRED')
+    if any(parent.is_symlink() for parent in destination.parents):
+        raise ReleaseError('V013_DESTINATION_ANCESTOR_LINK_DENIED')
     asset,size,digest=ARCHIVES[platform]
     with tempfile.TemporaryDirectory(prefix='wam-official-v013-') as temp:
         root=Path(temp);root.chmod(0o700)
@@ -43,7 +45,7 @@ def stage_tar(platform, destination):
             _download_exact(remote,bound,root/name)
         if sha256((root/'SHA256SUMS').read_bytes()).hexdigest()!=SUMS_SHA256 or sha256((root/'SHA256SUMS.asc').read_bytes()).hexdigest()!=SIGNATURE_SHA256:
             raise ReleaseError('V013_SIGNED_MANIFEST_PIN_DENIED')
-        if _validate_signed_sums('gpg',root,asset)!=digest or (root/asset).stat().st_size!=size or sha256((root/asset).read_bytes()).hexdigest()!=digest:
+        if _validate_signed_sums(gpg_exe,root,asset)!=digest or (root/asset).stat().st_size!=size or sha256((root/asset).read_bytes()).hexdigest()!=digest:
             raise ReleaseError('V013_SIGNED_ARCHIVE_PIN_DENIED')
         payloads={};seen=set();total=0
         with tarfile.open(root/asset,'r:gz') as tar:

@@ -19,12 +19,13 @@ class IntakeRefusal(unittest.TestCase):
 
     def run_fixture(self,archive,*,signed=None,manifest=b'manifest'):
         with tempfile.TemporaryDirectory() as temp:
-            dest=Path(temp)/'new'
+            dest=Path(temp).resolve()/'new'
             digest=sha256(archive).hexdigest()
             def download(remote,maximum,target):
                 target.write_bytes(archive if target.name=='fixture.tar.gz' else manifest if target.name=='SHA256SUMS' else b'sig' if target.name.endswith('.asc') else b'key')
             with patch.dict(intake.ARCHIVES,{'linux-x86_64':('fixture.tar.gz',len(archive),digest)}),patch.object(intake,'SUMS_SHA256',sha256(b'manifest').hexdigest()),patch.object(intake,'SIGNATURE_SHA256',sha256(b'sig').hexdigest()),patch('wam_regtest.release._download_exact',side_effect=download),patch('wam_regtest.release._validate_signed_sums',return_value=signed or digest):
-                with self.assertRaises(ReleaseError):intake.stage_tar('linux-x86_64',dest)
+                with self.assertRaises(ReleaseError) as refusal:intake.stage_tar('linux-x86_64',dest)
+                self.assertNotIn('DESTINATION',str(refusal.exception))
             self.assertFalse(dest.exists())
 
     def test_wrong_signed_archive_denies_before_output(self):
@@ -36,6 +37,14 @@ class IntakeRefusal(unittest.TestCase):
     def test_traversal_and_wrong_member_refuse(self):
         for name in ('wam-coin-v0.1.13/../outside','/wam-coin-v0.1.13/bin/wamd','wam-coin-v0.1.13/bin/wamd'):
             with self.subTest(name=name):self.run_fixture(self.fixture(name))
+
+    def test_linked_parent_is_refused_before_download(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp).resolve();(root/'actual').mkdir();(root/'alias').symlink_to(root/'actual')
+            with patch('wam_regtest.release._download_exact') as download:
+                with self.assertRaisesRegex(ReleaseError,'ANCESTOR_LINK_DENIED'):
+                    intake.stage_tar('linux-x86_64',root/'alias'/'new')
+                download.assert_not_called()
 
     def test_existing_destination_never_modified(self):
         with tempfile.TemporaryDirectory() as temp:

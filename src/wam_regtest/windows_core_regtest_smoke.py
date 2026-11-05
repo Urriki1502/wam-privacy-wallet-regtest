@@ -1,4 +1,4 @@
-"""REAL signed WAM Core v0.1.11 Windows x64 REGTEST smoke; no wallet/signing.
+"""REAL signed WAM Core v0.1.13 Windows x64 REGTEST smoke; no wallet/signing.
 
 This executes the exact Windows wamd.exe and wam-cli.exe only AFTER the
 official GPG-signed archive, SHA256, ZIP entry policy and PE64 shape qualify.
@@ -192,6 +192,14 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
         rpc, p2p = _port(), _port()
         _config(datadir, rpc, p2p)
         env = _host_env(datadir)
+        versions = {}
+        for binary in (node, cli):
+            observed = subprocess.check_output([str(binary), '-version'], env=env,
+                cwd=node.parent, text=True, timeout=15,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).splitlines()[0]
+            if 'v0.1.13' not in observed:
+                _deny("WIN_CORE_NATIVE_VERSION_DENIED")
+            versions[binary.name] = observed
         daemon = None
         try:
             with (datadir / "node-output.log").open("xb") as log:
@@ -221,6 +229,11 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                 _deny("WIN_CORE_REGTEST_START_TIMEOUT")
             if _rpc(cli, datadir, rpc, env, "getconnectioncount") != 0:
                 _deny("WIN_CORE_UNEXPECTED_PEERS")
+            network = _rpc(cli, datadir, rpc, env, "getnetworkinfo")
+            if (type(network) is not dict or type(network.get('version')) is not int
+                    or (network.get('version'), network.get('subversion'), network.get('protocolversion'))
+                    != (113, '/WAM:0.1.13/', 70016)):
+                _deny("WIN_CORE_OBSERVED_RPC_VERSION_DENIED")
             _rpc(cli, datadir, rpc, env, "createwallet", "test")
             address = _rpc(cli, datadir, rpc, env, "-rpcwallet=test", "getnewaddress")
             if type(address) is not str or not 20 <= len(address) <= 120:
@@ -265,6 +278,8 @@ def smoke_signed_windows_regtest(archive: Path, signing_key: Path, sha256sums: P
                            "WIN64_REAL_CORE_WSP1_BIP352_CONFIRMED_RECEIVE_PASS"
                            if wsp_receipt is not None else
                            "WIN64_SIGNED_WAM_CORE_REGTEST_101_BLOCK_SMOKE_PASS"),
+                "native_versions": versions,
+                "observed_rpc_version": {k:network[k] for k in ('version','subversion','protocolversion')},
                 "official_signed_core": True,
                 "real_node_process": True,
                 "actual_regtest_101_blocks": True,

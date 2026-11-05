@@ -1,0 +1,24 @@
+{
+  "wamd.exe": {
+    "imports": [
+      "ADVAPI32.dll",
+      "IPHLPAPI.DLL",
+      "KERNEL32.dll",
+      "msvcrt.dll",
+      "SHELL32.dll",
+      "WS2_32.dll"
+    ],
+    "loader_status": "static dependency names; native resolution pending"
+  },
+  "wam-cli.exe": {
+    "imports": [
+      "ADVAPI32.dll",
+      "IPHLPAPI.DLL",
+      "KERNEL32.dll",
+      "msvcrt.dll",
+      "SHELL32.dll",
+      "WS2_32.dll"
+    ],
+    "loader_status": "static dependency names; native resolution pending"
+  }
+}

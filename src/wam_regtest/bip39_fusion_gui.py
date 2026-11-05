@@ -315,7 +315,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         about, about_layout = panel(
             "WAM Fusion · REGTEST",
             "Local-first BIP352 silent payments. No remote account or cloud custody.")
-        about_layout.addWidget(label("WAM Core v0.1.11 · WSP-1 · BIP39 12 words"))
+        about_layout.addWidget(label("WAM Core v0.1.13 · WSP-1 · BIP39 12 words"))
         about_layout.addWidget(label(
             "This preview is not a mainnet wallet. All test transactions stay on the owned REGTEST chain."))
         settings_layout.addWidget(about)

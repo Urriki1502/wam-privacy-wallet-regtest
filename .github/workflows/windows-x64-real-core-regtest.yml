@@ -1,6 +1,6 @@
 # First ACTUAL Windows Core node lifecycle; no WSP payment, GUI or signer.
 # This is additional evidence, never a replacement for macOS V1 E2E.
-name: REAL signed WAM Core v0.1.11 Windows x64 REGTEST smoke
+name: REAL signed WAM Core v0.1.13 Windows x64 REGTEST smoke
 
 on:
   pull_request:
@@ -57,9 +57,9 @@ jobs:
               root=Path(temp)
               files=(
                   ("/SIGNING-KEY.asc","SIGNING-KEY.asc",32768),
-                  ("/downloads/v0.1.11/SHA256SUMS","SHA256SUMS",131072),
-                  ("/downloads/v0.1.11/SHA256SUMS.asc","SHA256SUMS.asc",16384),
-                  ("/downloads/v0.1.11/"+ASSET,ASSET,320*1024*1024),
+                  ("/downloads/v0.1.13/SHA256SUMS","SHA256SUMS",131072),
+                  ("/downloads/v0.1.13/SHA256SUMS.asc","SHA256SUMS.asc",16384),
+                  ("/downloads/v0.1.13/"+ASSET,ASSET,320*1024*1024),
               )
               for remote,name,limit in files:
                   _download_exact(remote,limit,root/name)
@@ -118,9 +118,9 @@ jobs:
               create_directory(core_dir)
               files=(
                   ("/SIGNING-KEY.asc","SIGNING-KEY.asc",32768),
-                  ("/downloads/v0.1.11/SHA256SUMS","SHA256SUMS",131072),
-                  ("/downloads/v0.1.11/SHA256SUMS.asc","SHA256SUMS.asc",16384),
-                  ("/downloads/v0.1.11/"+ASSET,ASSET,320*1024*1024),
+                  ("/downloads/v0.1.13/SHA256SUMS","SHA256SUMS",131072),
+                  ("/downloads/v0.1.13/SHA256SUMS.asc","SHA256SUMS.asc",16384),
+                  ("/downloads/v0.1.13/"+ASSET,ASSET,320*1024*1024),
               )
               for remote,name,limit in files:
                   _download_exact(remote,limit,core_dir/name)
@@ -186,9 +186,9 @@ jobs:
               create_directory(core_dir)
               files=(
                   ("/SIGNING-KEY.asc","SIGNING-KEY.asc",32768),
-                  ("/downloads/v0.1.11/SHA256SUMS","SHA256SUMS",131072),
-                  ("/downloads/v0.1.11/SHA256SUMS.asc","SHA256SUMS.asc",16384),
-                  ("/downloads/v0.1.11/"+ASSET,ASSET,320*1024*1024),
+                  ("/downloads/v0.1.13/SHA256SUMS","SHA256SUMS",131072),
+                  ("/downloads/v0.1.13/SHA256SUMS.asc","SHA256SUMS.asc",16384),
+                  ("/downloads/v0.1.13/"+ASSET,ASSET,320*1024*1024),
               )
               for remote,name,limit in files:
                   _download_exact(remote,limit,core_dir/name)

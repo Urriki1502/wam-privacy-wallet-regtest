@@ -269,7 +269,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         fixture_record={}
         funding_phase="PREFLIGHT"
         try:
-            rpc.attest()  # exact signed Core v0.1.11, chain and zero peers
+            rpc.attest()  # exact signed Core v0.1.13, chain and zero peers
             if rpc.call("getblockcount") != 0:
                 raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_FRESH_CHAIN_ONLY")
             address=public_regtest_mining_address(self.source)
