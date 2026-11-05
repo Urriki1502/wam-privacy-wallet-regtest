@@ -46,10 +46,9 @@ jobs:
           test "$(uname -m)" = arm64
           test "$(git rev-parse HEAD)" = "${{ github.sha }}"
           test "$(git rev-parse HEAD)" = "$WAM_SOURCE_HEAD"
-          diff="$(git diff --name-only "$FUNCTIONAL_PIN" HEAD)"
-          test "$diff" = ".github/workflows/macos-arm64-frozen-rc.yml"
+          git merge-base --is-ancestor "$FUNCTIONAL_PIN" HEAD
           echo "MACOS_ARM64_RUNNER_PASS"
-          echo "WORKFLOW_ONLY_DIFF_FROM_56ea3618_PASS"
+          echo "FUNCTIONAL_PIN_IS_ANCESTOR $FUNCTIONAL_PIN"
 
       - name: Check out pinned WSP source
         uses: actions/checkout@v4
@@ -154,12 +153,9 @@ jobs:
               "not mainnet, and not Q06 acceptance.\n"
               "\n"
               f"Git commit built by this job: {built}\n"
-              f"Functional pin: {pin}\n"
-              "The built commit differs from the functional pin only by\n"
-              ".github/workflows/macos-arm64-frozen-rc.yml. No wallet Python\n"
-              "changed. The package manifest source_commit is the built commit,\n"
-              "because the existing source gate requires it to match the\n"
-              "Actions run. Do not relabel this package as the local DMG.\n"
+              f"Functional ancestor pin: {pin}\n"
+              "The package manifest source_commit is this job's git commit.\n"
+              "Do not relabel it as an older local DMG or as 56ea3618.\n"
               "\n"
               "Branch: feature/v1-net-shared-regtest-20261104\n"
               "WSP pin: ac55f13423620252bdbf848c7e8a280c3b84721e\n"

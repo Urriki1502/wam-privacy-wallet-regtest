@@ -28,6 +28,7 @@ python -I -m wam_regtest.package_manifest \
 
 python -I -m wam_regtest.q05_package_provenance --stamp "$SOURCE_STAGE/wallet-source.json" \
   --output "$SOURCE_STAGE/Q05_BUILD_SOURCE.json"
+python -I -m wam_regtest.distribution_notices --output "$SOURCE_STAGE/third-party-notices" --qt
 
 echo "MACOS_APP_STAGE=PYINSTALLER_START"
 python -I -m PyInstaller --noconfirm --clean --onedir --windowed \
@@ -45,6 +46,7 @@ python -I -m PyInstaller --noconfirm --clean --onedir --windowed \
   --add-data "$(pwd)/core/wam-cli:core" \
   --add-data "$(pwd)/core/receipt.json:core" \
   --add-data "$SOURCE_STAGE/wsp-source:wsp-source" \
+  --add-data "$SOURCE_STAGE/third-party-notices:third-party-notices" \
   src/wam_regtest/package_entry.py
 
 echo "MACOS_APP_STAGE=PYINSTALLER_COMPLETED"

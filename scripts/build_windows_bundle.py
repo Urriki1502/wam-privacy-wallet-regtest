@@ -61,11 +61,15 @@ def main():
             and not k.startswith(('QT_','QML_'))}
         build_environment['PATH']=os.pathsep.join(map(str,(Path(sys.executable).parent,
             Path(sys.base_prefix),Path(sys.base_prefix)/'DLLs',system_root/'System32',system_root)))
+        from wam_regtest.distribution_notices import stage_distribution_notices
+        notices=stage/'third-party-notices'
+        stage_distribution_notices(notices,qt=True)
         subprocess.run([sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--noupx','--onedir','--windowed',
             '--name','WAM-Privacy-Wallet-REGTEST','--icon',str(icon),'--paths','src',
             '--collect-submodules','wam_regtest','--collect-submodules','wam_sp',
             '--collect-all','coincurve','--hidden-import','_cffi_backend',
             '--add-data',str(q05_source)+':.','--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
+            '--add-data',str(notices)+':third-party-notices',
             '--add-data',str(brand_image())+':branding','src/wam_regtest/windows_package_entry.py'],env=build_environment,check=True)
     bundle=Path('dist/WAM-Privacy-Wallet-REGTEST').absolute()
     executable=bundle/'WAM-Privacy-Wallet-REGTEST.exe'
@@ -211,8 +215,8 @@ def main():
         'authenticode_signed_application':False,'production_qualified':False,'mainnet_allowed':False,
         'dependencies':{n:importlib.metadata.version(n) for n in ('PySide6','PyInstaller','coincurve','cryptography','Pillow','qrcode')}}
     (output/'WINDOWS_PACKAGE_MANIFEST.json').write_text(json.dumps(manifest,sort_keys=True,indent=2)+'\n')
-    (output/'SHA256SUMS.txt').write_text(''.join(sha256(p.read_bytes()).hexdigest()+'  '+p.name+'\n'
-        for p in sorted(output.iterdir()) if p.is_file() and p.name!='SHA256SUMS.txt'))
+    from wam_regtest.release_candidate import write_portable_sha256sums
+    write_portable_sha256sums(output)
     from wam_regtest.release_candidate import write_candidate_manifest
     write_candidate_manifest(output,'windows-x64',BINARY_SHA256)
     print('WIN64_FROZEN_OPERATIONAL_REAL_CORE_WALLET_PACKAGE_PASS')

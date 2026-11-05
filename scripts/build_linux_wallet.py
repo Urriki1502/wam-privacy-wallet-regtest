@@ -41,16 +41,28 @@ def main():
         from wam_regtest.q05_package_provenance import stage as stage_q05
         q05_source=stage/'Q05_BUILD_SOURCE.json';stage_q05(source_stamp,q05_source)
         stage_pinned_wsp(Path('wsp-upstream').absolute(),wsp)
+        from wam_regtest.distribution_notices import stage_distribution_notices
+        notices=stage/'third-party-notices'
+        stage_distribution_notices(notices,qt=args.desktop)
         command=[sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--onedir','--noupx',
             '--name',name,'--paths','src','--collect-submodules','wam_regtest',
             '--collect-submodules','wam_sp','--collect-all','coincurve','--hidden-import','_cffi_backend',
             '--add-data',str(q05_source)+':.','--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
+            '--add-data',str(notices)+':third-party-notices',
             '--add-data',str(brand_image())+':branding']
         if not args.desktop:
             for module in ('PySide6','shiboken6','qrcode'):command+=['--exclude-module',module]
         subprocess.run([*command,'src/wam_regtest/linux_package_entry.py'],check=True)
     bundle=Path('dist',name).absolute();binary=bundle/name
     inspect_elf(binary.read_bytes())
+    if args.desktop:
+        from wam_regtest.qt_bundle_prune import prune_unreferenced_qt
+        removed=prune_unreferenced_qt(bundle)
+        print('LINUX_QT_UNREFERENCED_REMOVED', len(removed['removed']), flush=True)
+        for item in removed['removed']:
+            print('LINUX_QT_REMOVED', item, flush=True)
+        for item in removed['kept_candidates']:
+            print('LINUX_QT_KEPT_REFERENCED', item, flush=True)
     for member,digest in CORE.items():
         files=[p for p in bundle.rglob(member) if p.is_file()]
         assert len(files)==1 and not files[0].is_symlink()
@@ -114,8 +126,8 @@ def main():
     # Public helper source is for explicit administrator review/provisioning.
     shutil.copyfile('src/wam_regtest/linux_anchor_witness.py',output/'root-witness-review-only.py')
     shutil.copyfile('docs/LINUX_ROOT_WITNESS_POLICY.md',output/'ROOT_WITNESS_POLICY.md')
-    (output/'SHA256SUMS.txt').write_text(''.join(sha256(p.read_bytes()).hexdigest()+'  '+p.name+'\n'
-        for p in sorted(output.iterdir()) if p.is_file() and p.name!='SHA256SUMS.txt'))
+    from wam_regtest.release_candidate import write_portable_sha256sums
+    write_portable_sha256sums(output)
     from wam_regtest.release_candidate import write_candidate_manifest
     write_candidate_manifest(output,'linux-x86_64-'+('desktop' if args.desktop else 'headless'),CORE)
     print('LINUX_FINAL_FROZEN_'+('DESKTOP' if args.desktop else 'NO_QT_HEADLESS')+'_REAL_WALLET_PASS')

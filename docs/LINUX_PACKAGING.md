@@ -1,5 +1,7 @@
 # Experimental Linux frozen wallet packages
 
+Current packages require glibc >= 2.38 and Ubuntu 24.04. Ubuntu 22.04 is not supported. Details: `docs/LINUX_GLIBC_BASELINE.md`.
+
 Two native Ubuntu24.04 x86_64 PyInstaller onedir tarballs: `wam-regtest-headless`
 (no Qt/shiboken modules or libraries) and `wam-regtest-desktop` (existing Fusion
 Qt/xcb). Each includes Python, the pinned WSP source corpus/native crypto, exact

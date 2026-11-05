@@ -62,10 +62,51 @@ def write_candidate_manifest(output,platform,core_hashes,*,qualification_scope='
         'production_qualified':False,'official_final_release':False,
         'github_run_url':f'https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/{run}' if run else None,
         'github_event':os.environ.get('GITHUB_EVENT_NAME'),'artifact_retention_days':14}
-    with (output/'RELEASE_CANDIDATE_MANIFEST.json').open('x',encoding='utf8') as stream:
+    with (output/'RELEASE_CANDIDATE_MANIFEST.json').open('x',encoding='utf8',newline='\n') as stream:
         json.dump(record,stream,sort_keys=True,indent=2);stream.write('\n')
     # Existing per-platform manifests remain intact. All public top-level
     # payloads/inventories/instructions also get conventional portable hashes.
-    (output/'SHA256SUMS.txt').write_text(''.join(sha256(p.read_bytes()).hexdigest()+'  '+p.name+'\n'
-        for p in sorted(output.iterdir()) if p.is_file() and p.name!='SHA256SUMS.txt'),encoding='utf8')
+    write_portable_sha256sums(output)
     return record
+
+
+def write_portable_sha256sums(output):
+    """UTF-8 SHA256SUMS.txt with LF endings, whatever os.linesep is.
+
+    Written in binary so Windows cannot translate the newlines. The sums file
+    is not an entry. sha256sum -c accepts this format under Git Bash and WSL.
+    """
+    lines=[]
+    for path in sorted(p for p in Path(output).iterdir() if p.is_file() and not p.is_symlink()):
+        if path.name=='SHA256SUMS.txt':
+            continue
+        if '\n' in path.name or '\r' in path.name:
+            raise ValueError('RC_CHECKSUM_NAME_DENIED')
+        lines.append(sha256(path.read_bytes()).hexdigest()+'  '+path.name+'\n')
+    payload=''.join(lines).encode('ascii')
+    if b'\r' in payload or (payload and not payload.endswith(b'\n')):
+        raise ValueError('RC_CHECKSUM_CR_DENIED')
+    with (Path(output)/'SHA256SUMS.txt').open('wb') as stream:
+        stream.write(payload)
+    verify_portable_sha256sums(output)
+
+
+def verify_portable_sha256sums(output):
+    directory=Path(output)
+    raw=(directory/'SHA256SUMS.txt').read_bytes()
+    if b'\r' in raw or not raw.endswith(b'\n'):
+        raise ValueError('RC_CHECKSUM_LINE_ENDING_DENIED')
+    seen=set()
+    for line in raw.decode('ascii').split('\n'):
+        if line=='':
+            continue
+        digest,sep,name=line.partition('  ')
+        if (sep!='  ' or not re.fullmatch('[0-9a-f]{64}',digest) or name in ('','SHA256SUMS.txt')
+                or name in seen or '/' in name or '\\' in name):
+            raise ValueError('RC_CHECKSUM_ENTRY_DENIED')
+        seen.add(name)
+        if sha256((directory/name).read_bytes()).hexdigest()!=digest:
+            raise ValueError('RC_CHECKSUM_MISMATCH')
+    if not seen:
+        raise ValueError('RC_CHECKSUM_EMPTY')
+    return seen
