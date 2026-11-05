@@ -141,6 +141,11 @@ class CoreSupervisor:
                 fresh=True
                 self.listener = _listener(0)
                 create_directory(self.directory)
+                if sys.platform == 'win32':
+                    # New namespaces only. Core's public chain directories
+                    # must begin with explicit user owner/protected DACL.
+                    create_directory(self.directory/'regtest')
+                    create_directory(self.directory/'regtest'/'blocks')
                 if shared_profile is None:
                     with _ports() as (rpc, peer):
                         _write_private_config(self.directory, rpc, peer)
@@ -237,12 +242,19 @@ class CoreSupervisor:
         self.state = 'starting'
         self.journal.append('STARTING')
         try:
-            self.process = subprocess.Popen(
-                [str(self.node), f'-datadir={self.directory}', '-daemon=0'],
-                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL, env=env,
-                cwd=self.node.parent if sys.platform == 'win32' else self.directory,
-                creationflags=0x08000000 if sys.platform == 'win32' else 0)
+            from contextlib import nullcontext
+            if sys.platform == 'win32':
+                from .windows_core_files import child_user_owner
+                creation_owner = child_user_owner()
+            else:
+                creation_owner = nullcontext()
+            with creation_owner:
+                self.process = subprocess.Popen(
+                    [str(self.node), f'-datadir={self.directory}', '-daemon=0'],
+                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, env=env,
+                    cwd=self.node.parent if sys.platform == 'win32' else self.directory,
+                    creationflags=0x08000000 if sys.platform == 'win32' else 0)
             self.binding = OwnedCoreBinding(self.process, self.core, self.directory)
             self.binding.shared_profile = self.shared_profile
             # Writes stay behind Q02/Q03 signed CLI. No HTTP write API or IPC

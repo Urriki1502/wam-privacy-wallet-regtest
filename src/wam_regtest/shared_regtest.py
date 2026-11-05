@@ -177,6 +177,9 @@ def block_magic(directory):
     blocks = directory/'regtest'/'blocks'
     storage().validate_directory(blocks)
     def read(name,count):
+        if sys.platform == 'win32':
+            from .windows_core_files import public_block_prefix
+            return public_block_prefix(directory,name,count)
         fd = os.open(blocks/name,os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC|os.O_NONBLOCK)
         try:
             info = os.fstat(fd)

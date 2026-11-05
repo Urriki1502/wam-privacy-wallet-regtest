@@ -158,6 +158,7 @@ def qualify(core, source, parent, adapter):
         report['status'] = 'FAIL'
         code = error.args[0] if len(error.args)==1 and type(error.args[0]) is str else ''
         report['failure_code'] = code if re.fullmatch('[A-Z0-9_]{5,100}',code) else 'Q06_SAME_CHAIN_RESTORE_DENIED'
+        print('Q06_SAME_CHAIN_RESTORE_FAILURE=' + report['failure_code'], flush=True)
     finally:
         clean = True
         for worker in reversed(workers):
