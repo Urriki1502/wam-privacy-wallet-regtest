@@ -60,7 +60,7 @@ def main():
             os.environ['WAM_ROOT_WITNESS_NATIVE_TESTS']='1'
             from test_linux_anchor_witness import NativeRootWitness
             NativeRootWitness.setUpClass();witness=NativeRootWitness
-            args+=['--linux-developer-manifest','e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
+            args+=['--linux-developer-manifest','1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d',
                 '--linux-root-witness',str(witness.root/'anchor.sock'),'--qualification-test-witness']
         subprocess.run(args,env=env,cwd=parent,check=True,timeout=420)
         base=json.loads(receipt.read_text())
@@ -94,7 +94,7 @@ def main():
                 '--root',str(target),'--receipt',str(result),'--confirm-disposable-regtest',*options]
             if witness is not None:
                 command+=['--linux-developer-manifest',
-                    'e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
+                    '1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d',
                     '--linux-root-witness',str(witness.root/'anchor.sock'),'--qualification-test-witness']
             commands.append(command)
             safe=False

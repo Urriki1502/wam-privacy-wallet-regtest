@@ -33,7 +33,7 @@ try:
     context=tempfile.TemporaryDirectory(prefix='wam-q01-linux-frozen-cwd-') if args.executable else nullcontext(None)
     with context as clean:
         result=subprocess.run([*command,
-            '--manifest-sha256','e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
+            '--manifest-sha256','1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d',
             '--anchor-socket',str(NativeRootWitness.root/'anchor.sock'),
             '--confirm-experimental-developer-regtest','--confirm-qt-e2e' if args.qt else '--confirm-headless-e2e',
             '--report',str(report)],env=environment,cwd=clean,stdin=subprocess.DEVNULL,timeout=600)
@@ -63,7 +63,7 @@ try:
         q04_report=report.parent/'q04-evidence.json'
         with tempfile.TemporaryDirectory(prefix='wam-q04-linux-frozen-cwd-') as clean:
             subprocess.run([str(args.executable.absolute()), 'q04-external-miner',
-                '--manifest-sha256','e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
+                '--manifest-sha256','1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d',
                 '--anchor-socket',str(NativeRootWitness.root/'anchor.sock'),
                 '--confirm-experimental-developer-regtest','--report',str(q04_report)],
                 env=environment,cwd=clean,stdin=subprocess.DEVNULL,timeout=600,check=True)

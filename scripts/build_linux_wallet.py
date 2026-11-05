@@ -16,7 +16,7 @@ import sys
 import tarfile
 import tempfile
 
-APPROVED='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806'
+APPROVED='1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d'
 CORE={'wamd':'ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6',
       'wam-cli':'ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652'}
 

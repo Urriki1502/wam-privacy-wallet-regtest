@@ -117,7 +117,7 @@ def package_record(z,platform,head):
         require(linux['platform']==platform and linux['source_head_sha']==head
             and linux['checkout_sha']==m['checkout_sha']
             and linux['official_signed_core_release'] is False
-            and linux['approved_core_manifest_sha256']=='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806'
+            and linux['approved_core_manifest_sha256']=='1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d'
             and linux['developer_core_sha256']==PINS[platform])
     else:check_package_platform(platform,m['platform'])
     b,bhash=read_json(z,prefix+'BUILD_SOURCE_RECEIPT.json')
@@ -238,7 +238,7 @@ def main():
                 record['package_platform']=m['platform']
                 if platform=='linux-x86_64':
                     record.update(official_signed_release=False,
-                        approved_developer_manifest_sha256='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
+                        approved_developer_manifest_sha256='1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d',
                         core_artifact_run_id=38697805476,
                         core_artifact_name='linux-developer-core-576082d227ccd9eb139686ded431c69c07399237')
                 reuse=[]
@@ -277,7 +277,7 @@ def main():
                 record=common(a,j,checkout);record['runtime_receipts']=proofs
                 if platform=='linux-x86_64':
                     record.update(official_signed_release=False,
-                        approved_developer_manifest_sha256='e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806',
+                        approved_developer_manifest_sha256='1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d',
                         core_artifact_run_id=38697805476,
                         core_artifact_name='linux-developer-core-576082d227ccd9eb139686ded431c69c07399237')
                 native[platform].append(record)

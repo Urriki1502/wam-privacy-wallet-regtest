@@ -116,7 +116,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
             elif sys.platform=='linux' and adapter._witness is not None:
                 args+=['--linux-root-witness',str(adapter._witness.root/'anchor.sock'),
                        '--linux-developer-manifest',a.linux_developer_manifest or
-                       'e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806']
+                       '1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d']
             subprocess.run(args,check=True,timeout=30,stdin=subprocess.DEVNULL,
                            stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             child=json.loads(child_receipt.read_text())
