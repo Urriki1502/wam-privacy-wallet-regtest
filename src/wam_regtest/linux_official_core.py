@@ -14,7 +14,41 @@ from .official_core_v013 import MEMBERS, SUMS_SHA256, SIGNATURE_SHA256
 
 MANIFEST_NAME='LINUX_OFFICIAL_CORE_MANIFEST.json'
 MANIFEST_SHA256='4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2'
-EXPECTED={'schema': 'wam-linux-official-signed-core/v1', 'sources': {'wam': 'b3fb899ddb1ceab7e9b3b12ccd034ad1b4be8186'}, 'platform': 'linux-x86_64', 'policy': 'OFFICIAL_SIGNED_V013_REGTEST_ONLY', 'official_signed_release': True, 'mainnet_allowed': False, 'process_loader_binding_qualified': False, 'files': {'wam-cli': {'elf': {'architecture': 'ELF64-x86_64', 'gnu_stack': 'RW', 'interpreter': '/lib64/ld-linux-x86-64.so.2'}, 'libraries': {'libc.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libc.so.6', 'sha256': '3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf'}, 'libgcc_s.so.1': {'path': '/usr/lib/x86_64-linux-gnu/libgcc_s.so.1', 'sha256': 'd93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb'}, 'libm.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libm.so.6', 'sha256': 'fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0'}, 'libstdc++.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33', 'sha256': '1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11'}}, 'loader': {'path': '/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2', 'sha256': 'c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da'}, 'sha256': 'd99fc90e3aa4233979056d9981a388360e5d7ff77090d00b9bc37191a2425300'}, 'wamd': {'elf': {'architecture': 'ELF64-x86_64', 'gnu_stack': 'RW', 'interpreter': '/lib64/ld-linux-x86-64.so.2'}, 'libraries': {'libc.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libc.so.6', 'sha256': '3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf'}, 'libgcc_s.so.1': {'path': '/usr/lib/x86_64-linux-gnu/libgcc_s.so.1', 'sha256': 'd93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb'}, 'libm.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libm.so.6', 'sha256': 'fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0'}, 'libstdc++.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33', 'sha256': '1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11'}}, 'loader': {'path': '/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2', 'sha256': 'c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da'}, 'sha256': 'a3e3bf810e74824e3739fd4cbd1a45037cae997056b8c978c4dc1a61d674f0c7'}}}
+EXPECTED={'files': {'wam-cli': {'elf': {'architecture': 'ELF64-x86_64',
+                               'gnu_stack': 'RW',
+                               'interpreter': '/lib64/ld-linux-x86-64.so.2'},
+                       'libraries': {'libc.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libc.so.6',
+                                                   'sha256': '3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf'},
+                                     'libgcc_s.so.1': {'path': '/usr/lib/x86_64-linux-gnu/libgcc_s.so.1',
+                                                       'sha256': 'd93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb'},
+                                     'libm.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libm.so.6',
+                                                   'sha256': 'fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0'},
+                                     'libstdc++.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33',
+                                                        'sha256': '1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11'}},
+                       'loader': {'path': '/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2',
+                                  'sha256': 'c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da'},
+                       'sha256': 'd99fc90e3aa4233979056d9981a388360e5d7ff77090d00b9bc37191a2425300'},
+           'wamd': {'elf': {'architecture': 'ELF64-x86_64',
+                            'gnu_stack': 'RW',
+                            'interpreter': '/lib64/ld-linux-x86-64.so.2'},
+                    'libraries': {'libc.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libc.so.6',
+                                                'sha256': '3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf'},
+                                  'libgcc_s.so.1': {'path': '/usr/lib/x86_64-linux-gnu/libgcc_s.so.1',
+                                                    'sha256': 'd93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb'},
+                                  'libm.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libm.so.6',
+                                                'sha256': 'fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0'},
+                                  'libstdc++.so.6': {'path': '/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33',
+                                                     'sha256': '1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11'}},
+                    'loader': {'path': '/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2',
+                               'sha256': 'c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da'},
+                    'sha256': 'a3e3bf810e74824e3739fd4cbd1a45037cae997056b8c978c4dc1a61d674f0c7'}},
+ 'mainnet_allowed': False,
+ 'official_signed_release': True,
+ 'platform': 'linux-x86_64',
+ 'policy': 'OFFICIAL_SIGNED_V013_REGTEST_ONLY',
+ 'process_loader_binding_qualified': False,
+ 'schema': 'wam-linux-official-signed-core/v1',
+ 'sources': {'wam': 'b3fb899ddb1ceab7e9b3b12ccd034ad1b4be8186'}}
 
 
 def manifest_bytes():

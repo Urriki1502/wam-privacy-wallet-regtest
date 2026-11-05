@@ -1,7 +1,7 @@
 """Fusion Black & Gold Qt presentation: verified snapshots, never wallet authority."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QRectF, QPointF, QSize, Signal, Property, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import QEvent, Qt, QRectF, QPointF, QSize, Signal, Property, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import (
     QColor, QPainter, QPen, QIcon, QPixmap, QPolygonF, QLinearGradient,
     QPainterPath, QFont, QFontMetrics, QRadialGradient,
@@ -1123,11 +1123,19 @@ class FusionOverview(QScrollArea):
         whole.addWidget(self._compat)
 
         self._confirmed_atoms = None
+        self.hero.installEventFilter(self)
         self.render_snapshot(None, locked=True)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._apply_balance_text()
+
+    def eventFilter(self, watched, event):
+        # QScrollArea lays out its child after the outer resizeEvent. Use
+        # the actual hero resize so compact balance text follows final width.
+        if watched is getattr(self, "hero", None) and event.type() == QEvent.Type.Resize:
+            self._apply_balance_text()
+        return super().eventFilter(watched, event)
 
     def _apply_balance_text(self):
         if self._confirmed_atoms is None:
