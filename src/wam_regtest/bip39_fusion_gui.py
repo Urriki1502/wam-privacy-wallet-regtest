@@ -909,7 +909,10 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self.payment_steps.set_stage(3)
         if action in ("snapshot", "activate"):
             self._render_verified(result)
-            txid = self._pending_confirm_txid or self.last_txid.text().strip()
+            txid = self._pending_confirm_txid
+            # Only inspect the exact pending broadcast. last_txid after
+            # confirmation must not start a second inspect that can deny
+            # the following lock/unlock wait.
             if (action == "snapshot" and self._broadcast_complete
                     and type(txid) is str and len(txid) == 64):
                 self._pending_action = ("inspect_confirmed", txid)
