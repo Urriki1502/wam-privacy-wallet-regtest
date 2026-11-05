@@ -82,6 +82,16 @@ def main():
             "native_gui":data.get("native_gui_checked") is (not a.headless),
             "frozen_binary_sha256":data.get("frozen_executable_sha256")==sha256(exe.read_bytes()).hexdigest(),
         }
+        if not a.headless:
+            checks.update({
+                "gui_backup":data.get("normal_gui_backup_verified") is True,
+                "gui_cancel_sign":data.get("gui_cancel_does_not_sign") is True,
+                "gui_duplicate_send":data.get("gui_duplicate_send_one_reservation") is True,
+                "gui_sign_broadcast":data.get("normal_gui_separate_sign_broadcast") is True,
+            })
+        expected_source = os.environ.get("WAM_SOURCE_HEAD") or subprocess.check_output(
+            ['git','rev-parse','HEAD'],text=True).strip()
+        checks["source_sha"] = data.get("source_sha") == expected_source
         # Public, bounded diagnostic keys ONLY. Keep strict failure on ANY
         # mismatched gate (especially native binary hash and process exit).
         # No args, datadirs, raw errors, keys, RPC bodies or seed words.
