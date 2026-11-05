@@ -63,6 +63,13 @@ class PlatformReuseContracts(unittest.TestCase):
         self.assertEqual(BINARY_SHA256['wam-cli.exe'],
                          '538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21')
 
+    def test_q06_owner_probe_uses_current_fusion_nav(self):
+        from wam_regtest.fusion_ui import FUSION_NAV_PAGES
+        text = (ROOT / 'src' / 'wam_regtest' / 'q06_owner_probe.py').read_text()
+        self.assertIn('FUSION_NAV_PAGES', text)
+        self.assertNotIn('navigation.count() != 6', text)
+        self.assertGreaterEqual(len(FUSION_NAV_PAGES), 6)
+
     def test_macos_frozen_qt_probe_reads_v22_overview_chart(self):
         probe = (ROOT / 'src' / 'wam_regtest' / 'desktop_probe.py').read_text()
         self.assertIn('balance_chart._points', probe)

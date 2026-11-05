@@ -116,9 +116,11 @@ def qualify(core,source):
             # Assert the REAL installed Fusion pages, not the old developer
             # text-only window or a synthetic source-only UI screenshot.
             from .wallet_read import format_wam
-            if (window.navigation.count() != 6
-                    or window.overview.balance_value.text()
-                        != format_wam(funded["atoms"],grouped=True)+" WAM"
+            from .fusion_ui import FUSION_NAV_PAGES
+            shown = window.overview.balance_value.text()
+            formatted = format_wam(funded["atoms"], grouped=True)
+            if (window.navigation.count() != len(FUSION_NAV_PAGES)
+                    or shown not in (formatted + " WAM", formatted)
                     or window.receive_page.code != opened["receive_code"]
                     or window.history_page.table.rowCount() < 1):
                 raise ValueError("Q06_OWNER_FUSION_VISUAL_BINDING_DENIED")
