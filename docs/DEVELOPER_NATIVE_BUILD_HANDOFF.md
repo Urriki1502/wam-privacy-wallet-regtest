@@ -39,10 +39,15 @@ Until that host runs, Windows is **BLOCKED / NOT EXECUTED**.
 ## Linux Ubuntu 24.04 x86_64 (required host)
 
 1. Same git SHA. Linux developer Core is **not** official signed Core.
-2. Independently reviewed Core dir + manifest SHA256
+2. Independently reviewed **developer** Core dir + manifest SHA256
    `e77a5745263b8fdbcffdb282af22800b6f7805f033c09f00738e997150a0f806`
    with `wamd` `ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6`
    and `wam-cli` `ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652`.
+   Official v0.1.11 Linux archive (GPG, 2026-11-05) is
+   `bd010ed615ab8063d5c12aa61236311ece7e9d19896d9541dacba1888dd9987a`
+   (`wam-coin-v0.1.11-x86_64-linux-gnu.tar.gz`). **Do not treat that archive as
+   this builder’s Core** until members are extracted, hashed, and a human
+   decides provenance. Keep `official_signed_core_release=false` for Fusion Linux.
 3. Provision the root witness separately (`docs/LINUX_ROOT_WITNESS_POLICY.md`). The app never sudo-installs it.
 4. Headless (no Qt in the venv):  
    `python -I scripts/build_linux_wallet.py --core-dir <verified-core>`

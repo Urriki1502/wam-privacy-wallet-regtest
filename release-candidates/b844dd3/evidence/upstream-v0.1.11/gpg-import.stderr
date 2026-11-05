@@ -1,0 +1,5 @@
+gpg: keybox '/var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/tmp.lXtE9fWDx6/pubring.kbx' created
+gpg: /var/folders/3l/hqzxttpd0rx2hp38q52pkb240000gn/T/tmp.lXtE9fWDx6/trustdb.gpg: trustdb created
+gpg: key 3798462FE00ADBA4: public key "WAM Coin (release signing) <wam.coin.official@proton.me>" imported
+gpg: Total number processed: 1
+gpg:               imported: 1

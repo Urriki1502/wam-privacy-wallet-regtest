@@ -7,6 +7,32 @@ Agents (Cursor/Codex) **must not** fill Owner, Developer, or Independent verdict
 
 Status vocabulary: `PASS` (named evidence), `FAIL` (retained), `PENDING`, `BLOCKED`, `NOT EXECUTED`. Skipped ≠ PASS.
 
+Official Core v0.1.11: GPG `VALIDSIG` over `SHA256SUMS` from `https://wamcoin.org` (fingerprint `4BD4A8D3AFD43F5CBCB500E23798462FE00ADBA4`). GitHub Releases 404. Details: `docs/UPSTREAM_CORE_V0.1.11_VERIFICATION.md`.
+
+## OWNER (human only)
+
+| Platform | Build SHA256 | Physical evidence | PASS/FAIL/BLOCKED | Acceptance | Date |
+| --- | --- | --- | --- | --- | --- |
+| macOS ARM64 | | | | | |
+| Windows x64 | | | | | |
+| Linux x86_64 | | | | | |
+
+## DEVELOPER (human only; independent rebuild)
+
+| Platform | Rebuilt artifact SHA256 | Build environment | Security observations | Tests | Acceptance | Date |
+| --- | --- | --- | --- | --- | --- | --- |
+| macOS ARM64 | | | | | | |
+| Windows x64 | | | | | | |
+| Linux x86_64 | | | | | | |
+
+Developer review is **not** automatically G7.
+
+## INDEPENDENT REVIEWER (human only)
+
+| Scope | Findings | Evidence reviewed | Decision | Date |
+| --- | --- | --- | --- | --- |
+| | | | | |
+
 ## Platform build / install
 
 | Item | macOS ARM64 | Windows x64 | Linux x86_64 desktop | Linux x86_64 headless |
@@ -66,8 +92,9 @@ Final release decision: **NOT AUTHORIZED**. `production_qualified=false`. `offic
 - No frozen V2.2 macOS DMG from this SHA (deliberate: do not overwrite `package-output/`).
 - No Windows or Linux runner in this workspace.
 - Compact Overview still needs vertical scroll at 1024×768.
-- Linux Core is developer-built; never relabel as signed official Linux.
+- Linux Fusion uses developer-built Core; official gnu tarball `bd010ed6…` is GPG-listed but **not** the Linux packager input; official ELF **members** remain UNVERIFIED here.
 - V19 hardware absent.
+- Official Core ignores `rpcbind`/`port` unless they sit in a `[regtest]` section.
 
 ## Agent attestation (not a human verdict)
 

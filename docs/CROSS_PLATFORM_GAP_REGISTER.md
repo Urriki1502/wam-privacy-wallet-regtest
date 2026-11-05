@@ -21,6 +21,10 @@ waiver. Do not run a macOS bundle on Windows or Linux.
 | G-11 | UI V2.2 | Overview/theme/motion proven in source Qt on this Mac only. Frozen Win/Linux GUI of V2.2 is untested. | Medium | Native GUI evidence required |
 | G-12 | Second host | V19 needs two physical computers. | Blocker | V19 BLOCKED / NOT EXECUTED |
 | G-13 | Human gates | G6 physical solo-miner observation and G7 independent architecture/security sign-off remain human. | Blocker | Unchanged; agents must not self-approve |
+| G-14 | Official Linux vs Fusion Linux | GPG-valid official gnu tarball `bd010ed6…` is **not** `build_linux_wallet.py` input (developer ELF `ccc9f0f1…`). Official ELF members UNVERIFIED this session. | High | Never label Linux Fusion Core as official signed v0.1.11 |
+| G-15 | `[regtest]` config | Official v0.1.11 ignores `rpcbind`/`port`/`connect` outside `[regtest]`. | High | Fusion `write_config` must keep the section |
+| G-16 | GitHub Releases | `github.com/wamcoin-core-dev/wam-coin` tag `v0.1.11` 404 from this environment | Medium | Use wamcoin.org + GPG, not GitHub badge |
+| G-17 | Pillow | Missing on this Mac; Windows ICO conversion needs Pillow on the Windows host | Medium | Windows builder dependency |
 
 ## Hardcoded / OS-specific (intentional)
 
