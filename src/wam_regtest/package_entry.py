@@ -162,7 +162,8 @@ def main() -> int:
         # text, RPC credentials, paths, traceback or secrets.
         code = str(error)
         accepted = {"BundleLaunchError", "CoreSmokeError",
-                    "RealWspScanError", "ReleaseError", "Q04RunnerError"}
+                    "RealWspScanError", "ReleaseError", "Q04RunnerError",
+                    "ValueError"}
         reason = (code if type(error).__name__ in accepted
                   and 5 <= len(code) <= 110
                   and code == code.upper()

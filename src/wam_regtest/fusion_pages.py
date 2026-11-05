@@ -176,7 +176,7 @@ class WalletConsent(QDialog):
 class PaymentApproval(QDialog):
     """UI-only explicit approval, default Cancel; no session operation inside."""
     def __init__(self,review,kind,parent):
-        super().__init__(parent);self.setWindowTitle('Approve signature' if kind=='sign' else 'Approve broadcast');self.setObjectName('FusionApproval');self.resize(580,440)
+        super().__init__(parent);self.setWindowTitle('Approve signature' if kind=='sign' else 'Approve broadcast');self.setObjectName('FusionApproval');self.setWindowModality(Qt.WindowModality.ApplicationModal);self.resize(580,440)
         layout=QVBoxLayout(self);layout.setContentsMargins(28,24,28,24);layout.setSpacing(16)
         layout.addWidget(label('EXPLICIT TRANSACTION APPROVAL','FusionKicker'));layout.addWidget(label('Approve signature' if kind=='sign' else 'Submit to REGTEST','PageTitle'))
         layout.addWidget(label('Signing makes input reservations irreversible.' if kind=='sign' else 'An uncertain broadcast reply retains reservations. Do not assume it failed.','FusionGold'))

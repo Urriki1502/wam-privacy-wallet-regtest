@@ -110,6 +110,7 @@ class FusionV2Widgets(unittest.TestCase):
   review=PaymentReview(fixture().receive_code,100000,10000,400000,1,'e'*64)
   for kind in ('sign','broadcast'):
    dialog=PaymentApproval(review,kind,None);self.addCleanup(dialog.deleteLater)
+   self.assertEqual(dialog.windowModality(),Qt.WindowModality.ApplicationModal)
    self.assertTrue(dialog.cancel.isDefault());self.assertFalse(dialog.approve.isDefault());self.assertEqual(dialog.result(),QDialog.DialogCode.Rejected)
    dialog.cancel.click();self.assertEqual(dialog.result(),QDialog.DialogCode.Rejected)
  def test_selectable_wrap_never_changes_hash_or_payment_code(self):

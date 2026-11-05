@@ -5,6 +5,7 @@ are new disposable data retained after failures. No test RPC is added to GUI.
 """
 from pathlib import Path
 import json
+import os
 import secrets
 import sys
 import time
@@ -18,6 +19,23 @@ from .bip39_owner_backend import Bip39ReadOnlyBackend
 # Same-host qualification only. Product/deployment defaults remain 29554/29555.
 # The owner explicitly reserved the historical standard-port labs read-only.
 LAB_PORTS=((True,45954,45955,45957),(False,45956,45957,45955))
+
+
+def click_visible_approval(app, caption):
+    """Click an explicit approval on any visible dialog, not only the active modal.
+
+    Two Fusion windows make a WindowModal Sign/Broadcast dialog easy to miss via
+    activeModalWidget(); the operator action is still the labeled QPushButton.
+    """
+    from PySide6.QtWidgets import QDialog, QPushButton
+    for widget in app.allWidgets():
+        if not isinstance(widget, QDialog) or not widget.isVisible():
+            continue
+        for control in widget.findChildren(QPushButton):
+            if control.text() == caption and control.isEnabled():
+                control.click()
+                return True
+    return False
 
 
 def qualify(core, source):
@@ -81,16 +99,12 @@ def qualify(core, source):
         timer.setInterval(120)
         def consent():
             dialog = app.activeModalWidget()
-            if isinstance(dialog,QDialog):
-                if credential is not None:
-                    for field in dialog.findChildren(QLineEdit):
-                        if field.echoMode()==QLineEdit.EchoMode.Password:
-                            field.setText(credential.decode('utf-8'))
-                for control in dialog.findChildren(QPushButton):
-                    if control.text() == caption:
-                        control.click()
-                        timer.stop()
-                        break
+            if credential is not None and isinstance(dialog,QDialog):
+                for field in dialog.findChildren(QLineEdit):
+                    if field.echoMode()==QLineEdit.EchoMode.Password:
+                        field.setText(credential.decode('utf-8'))
+            if click_visible_approval(app, caption):
+                timer.stop()
         timer.timeout.connect(consent)
         timer.start()
         try:
@@ -270,17 +284,35 @@ def qualify(core, source):
         stage('REAL_REORG_GUI_RECONCILIATION_AND_RESTART_PASS')
         report['status']='PASS_SCOPED_EXECUTED_CASES'
         return report
+    except Exception as error:
+        if isinstance(error,ValueError) and error.args and type(error.args[0]) is str:
+            report['denied']=error.args[0]
+        report['gui_denied']=[n['window']._last_error_code for n in nodes if 'window' in n]
+        raise
     finally:
         # Persist before touching Qt: even a native GUI cleanup crash must
         # leave an honest failed-case receipt and retained profile paths.
         report['timestamp_utc']=datetime.now(timezone.utc).isoformat()
         report['retained_lab']=str(lab)
         (lab/'public-evidence.json').write_text(json.dumps(report,indent=2)+'\n')
+        retained=False
         for node in reversed(nodes):
-            if 'executor' in node and not node['executor'].closed and not node['executor'].busy:
-                try:stop(node)
-                except Exception:stage('UNCERTAIN_ORIGINAL_OWNER_RETAINED')
+            if 'executor' not in node or node['executor'].closed:
+                continue
+            if node['executor'].busy:
+                stage('UNCERTAIN_ORIGINAL_OWNER_RETAINED')
+                retained=True
+                continue
+            try:stop(node)
+            except Exception:
+                stage('UNCERTAIN_ORIGINAL_OWNER_RETAINED')
+                retained=True
         (lab/'public-evidence.json').write_text(json.dumps(report,indent=2)+'\n')
+        if retained:
+            # QApplication.shutdown() destroys QThread children while the
+            # original ControlWorker/owner threads are still running (SIGABRT).
+            # Leave those processes as original owners; do not Qt-teardown them.
+            os._exit(2)
 
 
 def run(core,source):

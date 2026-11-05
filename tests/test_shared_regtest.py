@@ -129,6 +129,34 @@ class SharedPolicyContracts(unittest.TestCase):
         self.assertEqual(steps,['public_endpoint_refused'])
         self.assertEqual(profile,SharedRegtestProfile('127.0.0.1',peer_port=29557,coordinator=True))
 
+    @unittest.skipUnless(sys.platform=='darwin','Native Qt configuration checked on macOS')
+    def test_two_window_sign_approval_is_clicked_without_active_modal(self):
+        from wam_regtest.desktop import qt_application
+        from wam_regtest.shared_network_probe import click_visible_approval
+        from PySide6.QtCore import QTimer
+        from PySide6.QtWidgets import QDialog, QPushButton, QWidget
+        app = qt_application()
+        first, second = QWidget(), QWidget()
+        first.setWindowTitle('node-a'); second.setWindowTitle('node-b')
+        first.show(); second.show()
+        dialog = QDialog(first)
+        dialog.setWindowTitle('Approve signature')
+        approve = QPushButton('Approve Sign', dialog)
+        approve.clicked.connect(dialog.accept)
+        dialog.show()
+        second.raise_()
+        second.activateWindow()
+        app.processEvents()
+        self.assertTrue(click_visible_approval(app, 'Approve Sign'))
+        deadline = QTimer()
+        deadline.setSingleShot(True)
+        deadline.timeout.connect(dialog.reject)
+        deadline.start(1000)
+        try:
+            self.assertEqual(dialog.result(), QDialog.DialogCode.Accepted)
+        finally:
+            deadline.stop(); dialog.close(); first.close(); second.close()
+
     def test_xor_block_magic_is_checked_and_symlinks_refused(self):
         from pathlib import Path
         import tempfile
