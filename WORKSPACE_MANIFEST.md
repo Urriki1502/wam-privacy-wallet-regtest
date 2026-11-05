@@ -1,3 +1,28 @@
+# Official Core v0.1.13 candidate — 2026-11-05
+
+Current branch: `feature/official-core-v013-three-platform-20261105`.
+Draft [#141](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/141)
+base `remediation/post-dev-review-20261105` (`c61e3c5`), with verified docs-only
+ancestor `bd783d7` retained. No remediation/main branch was pushed or moved.
+
+The old qualified v0.1.11 RC source and artifacts below remain preserved.
+They do not qualify this candidate. Official HTTPS/GPG/signed checksums and
+six independently observed member hashes: [provenance](docs/WAM_CORE_V013_PROVENANCE.md).
+Linux native intake at `4098f21` PASS. Linux source/native/frozen qualification
+at `c8bee3ecd95a2f95cb0264a6d0564fc02e5c9447` is in
+[run 42061583763](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/42061583763):
+contracts, headless wallet, Q05 native and Q04 coexistence/contention PASS;
+Qt/frozen results remain PENDING at this checkpoint. Later signature-status
+refusal changes require new exact-source qualification. Windows/macOS runtime
+migration and common-source frozen matrix remain PENDING.
+
+Retained profiles, native anchors, artifacts and sidecar checkout unchanged.
+No owner profile conversion. Q06 accepted=false, G6/G7 BLOCKED, V19 physical
+NOT EXECUTED/BLOCKED. Qt legal review OPEN. No merge/release/mainnet.
+Read ignored `ENGINEERING_HANDOFF.md` first for current process/lease/dirty state.
+
+---
+
 # Canonical workspace manifest
 
 ## Current status — 2026-11-05 pre-Codex handoff

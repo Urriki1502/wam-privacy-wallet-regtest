@@ -162,7 +162,11 @@ def _validate_signed_sums(gpg_path: str, tmp: Path, archive_name: str) -> str:
     rc, checks = _gpg(gpg_path, home, "--no-default-keyring", "--keyring", str(ring),
                       "--status-fd", "1", "--verify", str(sig), str(sums))
     valids = [line.split() for line in checks.splitlines() if line.startswith("[GNUPG:] VALIDSIG ")]
-    if rc != 0 or len(valids) != 1 or valids[0][2] != FINGERPRINT:
+    denied_status = {'BADSIG', 'ERRSIG', 'EXPSIG', 'EXPKEYSIG', 'REVKEYSIG',
+                     'KEYREVOKED', 'KEYEXPIRED', 'SIGEXPIRED', 'FAILURE', 'ERROR'}
+    bad = any(len(line.split()) > 1 and line.split()[0] == '[GNUPG:]'
+              and line.split()[1] in denied_status for line in checks.splitlines())
+    if rc != 0 or bad or len(valids) != 1 or valids[0][2] != FINGERPRINT:
         raise ReleaseError("RELEASE_SIGNATURE_DENIED")
     try:
         lines = sums.read_text(encoding="ascii").splitlines()

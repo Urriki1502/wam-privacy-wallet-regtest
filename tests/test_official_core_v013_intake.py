@@ -42,3 +42,16 @@ class IntakeRefusal(unittest.TestCase):
             dest=Path(temp);(dest/'preserve').write_bytes(b'original')
             with self.assertRaises(ReleaseError):intake.stage_tar('linux-x86_64',dest)
             self.assertEqual((dest/'preserve').read_bytes(),b'original')
+
+
+class SignerStatusRefusal(unittest.TestCase):
+    def test_revoked_expired_and_error_status_deny_even_with_validsig(self):
+        from wam_regtest.release import _validate_signed_sums, FINGERPRINT
+        for status in ('REVKEYSIG','EXPKEYSIG','EXPSIG','KEYEXPIRED','FAILURE','ERROR'):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as t:
+                p=Path(t)
+                key='pub:-:4096:1:KEY:0:0::::::\nfpr:::::::::'+FINGERPRINT+':\n'
+                checks='[GNUPG:] VALIDSIG '+FINGERPRINT+' 2026-10-31 0\n[GNUPG:] '+status+' fixture\n'
+                with patch('wam_regtest.release._gpg',side_effect=[(0,key),(0,''),(0,checks)]):
+                    with self.assertRaisesRegex(ReleaseError,'RELEASE_SIGNATURE_DENIED'):
+                        _validate_signed_sums('gpg',p,'fixture.tar.gz')
