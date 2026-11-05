@@ -13,7 +13,8 @@ from PySide6.QtWidgets import (
 )
 from .wallet_read import WalletReadSnapshot, format_wam
 from .branding import brand_image
-from .fusion_motion import motion_reduced, slide_geometry, fade_widget, CHART_MS
+from .fusion_motion import motion_reduced, slide_geometry, fade_widget, CHART_MS, StatusGlyph
+from .fusion_status import classify
 
 SPACING = (4, 8, 12, 16, 24, 32)
 TYPE = {'display': 48, 'heading': 26, 'section': 17, 'body': 14, 'caption': 12}
@@ -78,6 +79,10 @@ def fusion_stylesheet(mode):
     QToolButton#FusionQuick:hover:enabled {{border:1px solid {c['accent']};background:{c['hover']};}}
     QToolButton#FusionQuick:disabled {{color:{c['muted']};}}
     QFrame#FusionThemeThumb {{background:{c['accent']};border:0;border-radius:10px;}}
+    QFrame#FusionDimmer {{background:rgba(12,12,14,0.38);border:0;}}
+    QFrame#FusionFlyout {{
+        background:{c['surface']};border:1px solid {c['border']};border-radius:18px;
+    }}
     QWidget#FusionInner,QScrollArea#FusionScroll,QWidget#FusionTransparent {{background:transparent;border:0;}}
     QLabel {{color:{c['text']};background:transparent;border:0;}}
     QLabel#BrandTitle {{font-size:18px;font-weight:700;letter-spacing:0.2px;color:{c['brand']};}}
@@ -334,9 +339,15 @@ def label(text='', role='FusionMuted', selectable=False):
     obj.setObjectName(role)
     obj.setWordWrap(role not in ('FusionKicker', 'FusionBadge'))
     obj.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+    if role in ('FusionCardTitle', 'FusionCardValue', 'FusionMuted', 'FusionBalance', 'BalanceValue'):
+        obj.setMinimumWidth(0)
+    if role in ('FusionCardTitle', 'FusionCardValue'):
+        obj.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        obj.setWordWrap(True)
     if role in ('FusionBalance', 'BalanceValue'):
         obj.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        obj.setMinimumHeight(76)
+        obj.setMinimumHeight(56)
+        obj.setWordWrap(True)
     if role == 'FusionDenom':
         obj.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
     if role == 'FusionBadge':
@@ -569,10 +580,12 @@ def confirmed_balance_history(snapshot):
 
 
 class ResponsiveRow(QWidget):
-    def __init__(self, *children, weights=None, breakpoint=760):
+    def __init__(self, *children, weights=None, breakpoint=760, min_side=0):
         super().__init__()
         self.setObjectName('FusionTransparent')
+        self.setMinimumWidth(0)
         self._break = breakpoint
+        self._min_side = min_side
         self._children = children
         self._weights = weights or [1] * len(children)
         self._vertical = None
@@ -585,14 +598,81 @@ class ResponsiveRow(QWidget):
         return widget
 
     def resizeEvent(self, event):
-        vertical = self.width() < self._break
+        needed = self._break
+        if self._min_side:
+            needed = max(needed, self._min_side)
+        vertical = self.width() < needed
         if vertical != self._vertical:
             self._vertical = vertical
             for i, child in enumerate(self._children):
                 self._grid.addWidget(child, i if vertical else 0, 0 if vertical else i)
             for i, w in enumerate(self._weights):
                 self._grid.setColumnStretch(i, 0 if vertical else w)
+                self._grid.setRowStretch(i, w if vertical else 0)
         super().resizeEvent(event)
+
+
+class FlowGrid(QWidget):
+    """1/2/4 columns from actual width vs minimum readable card size."""
+
+    def __init__(self, *children, min_item=220, max_columns=4):
+        super().__init__()
+        self.setObjectName('FusionTransparent')
+        self.setMinimumWidth(0)
+        self._children = children
+        self._min_item = min_item
+        self._max_columns = max_columns
+        self._columns = None
+        self._grid = QGridLayout(self)
+        self._grid.setContentsMargins(0, 0, 0, 0)
+        self._grid.setSpacing(12)
+        for child in children:
+            child.setMinimumWidth(0)
+            child.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+    def resizeEvent(self, event):
+        usable = max(1, self.width())
+        raw = max(1, min(self._max_columns, usable // max(1, self._min_item)))
+        columns = 4 if raw >= 4 else 2 if raw >= 2 else 1
+        if columns != self._columns:
+            self._columns = columns
+            for i, child in enumerate(self._children):
+                self._grid.addWidget(child, i // columns, i % columns)
+            for column in range(self._max_columns):
+                self._grid.setColumnStretch(column, 1 if column < columns else 0)
+        super().resizeEvent(event)
+
+
+class StatusCard(QFrame):
+    def __init__(self, title, caption):
+        super().__init__()
+        self.setObjectName('FusionPanel')
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(6)
+        top = QHBoxLayout(); top.setSpacing(8)
+        self.glyph = StatusGlyph()
+        heading = label(title, 'FusionCardTitle')
+        heading.setMinimumWidth(0)
+        top.addWidget(self.glyph, 0, Qt.AlignmentFlag.AlignTop)
+        top.addWidget(heading, 1)
+        layout.addLayout(top)
+        self.value = label('Not verified', 'FusionCardValue')
+        self.detail = label(caption)
+        self.detail.setWordWrap(True)
+        self.detail.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        layout.addWidget(self.value)
+        layout.addWidget(self.detail)
+
+    def apply(self, state, title, detail, *, animate=True):
+        self.glyph.set_state(state, animate=animate)
+        self.value.setText(title)
+        self.detail.setText(detail)
+
+    def set_theme(self, mode):
+        self.glyph.set_theme(mode)
 
 
 class Hero(QFrame):
@@ -601,15 +681,18 @@ class Hero(QFrame):
         self.setObjectName('FusionHero')
         self.mode = 'dark'
         self.logo = QPixmap(str(brand_image()))
-        self.setMinimumHeight(228)
+        self.setMinimumHeight(148)
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
     def resizeEvent(self, event):
         layout = self.layout()
-        compact = self.width() < 560
+        compact = self.width() < 640
+        self.setMinimumHeight(148 if compact else 176)
         if layout is not None:
-            layout.setContentsMargins(28, 24, 20 if compact else 196, 22)
+            layout.setContentsMargins(22, 16, 16 if compact else 28, 16)
         for child in self.findChildren(BalanceHistoryChart):
-            child.setVisible(self.width() >= 520)
+            child.setVisible(self.width() >= 720)
         super().resizeEvent(event)
 
     def paintEvent(self, event):
@@ -628,13 +711,14 @@ class Hero(QFrame):
         gold = QColor(c['accent']); gold.setAlpha(40 if self.mode == 'dark' else 28)
         glow.setColorAt(0, gold); glow.setColorAt(1, QColor(0, 0, 0, 0))
         p.fillRect(rect, glow)
-        p.setOpacity(0.18 if self.mode == 'dark' else 0.12)
-        p.setPen(QPen(QColor(c['accent']), 1))
-        cx, cy = self.width() - 108, self.height() / 2
-        for radius in (48, 72, 96, 124):
-            p.drawEllipse(QPointF(cx, cy), radius, radius * 0.62)
-        if self.width() >= 540:
-            size = min(168, max(112, self.height() - 28))
+        if self.width() >= 720:
+            p.setOpacity(0.18 if self.mode == 'dark' else 0.12)
+            p.setPen(QPen(QColor(c['accent']), 1))
+            cx, cy = self.width() - 108, self.height() / 2
+            for radius in (48, 72, 96, 124):
+                p.drawEllipse(QPointF(cx, cy), radius, radius * 0.62)
+        if self.width() >= 720:
+            size = min(148, max(96, self.height() - 28))
             p.setOpacity(0.96)
             coin = self.logo.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             p.drawPixmap(int(self.width() - size - 22), int((self.height() - coin.height()) / 2), coin)
@@ -890,6 +974,67 @@ class BalanceHistoryChart(QWidget):
         p.end()
 
 
+class NetworkFlyout(QFrame):
+    """Compact verified network facts. Not a second Network page."""
+    closed = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName('FusionFlyout')
+        self.setAccessibleName('Network status drawer')
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 18, 20, 18)
+        layout.setSpacing(10)
+        head = QHBoxLayout()
+        head.addWidget(label('Network status', 'FusionCardTitle'))
+        head.addStretch()
+        self.close_button = action('Close', 'history')
+        self.close_button.setAccessibleName('Close network status drawer')
+        self.close_button.clicked.connect(self.closed.emit)
+        head.addWidget(self.close_button)
+        layout.addLayout(head)
+        self.mode_value = label('Isolated or Shared REGTEST is shown after verification.')
+        self.core_value = label('Owned Core process is not confirmed here.')
+        self.peer_value = label('Peer count is shown only after a verified network check.')
+        self.height_value = label('Chain height is shown only after a verified snapshot.')
+        for widget in (self.mode_value, self.core_value, self.peer_value, self.height_value):
+            widget.setWordWrap(True)
+            widget.setMinimumWidth(0)
+            layout.addWidget(widget)
+        layout.addWidget(label('Open Network for peer controls and full diagnostics.'))
+        layout.addStretch()
+        self.setMinimumWidth(280)
+        self.setMaximumWidth(360)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.closed.emit()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+    def render(self, *, network=None, core_alive=None, height=None):
+        network = network or {}
+        self.mode_value.setText(network.get('mode', 'REGTEST mode is unknown until verified.'))
+        if core_alive is True:
+            self.core_value.setText('Owned Core process is running.')
+        elif core_alive is False:
+            self.core_value.setText('Owned Core process is not running.')
+        else:
+            self.core_value.setText('Owned Core process is not confirmed here.')
+        if type(network.get('peer_count')) is int:
+            self.peer_value.setText(str(network['peer_count']) + ' reported peer(s).')
+        elif network.get('shared'):
+            self.peer_value.setText('Shared REGTEST peer count is awaiting a verified check.')
+        else:
+            self.peer_value.setText('Zero-peer isolated REGTEST profile.')
+        if type(height) is int:
+            self.height_value.setText('Verified snapshot height ' + str(height) + '.')
+        else:
+            self.height_value.setText('Chain height is shown only after a verified snapshot.')
+
+
 class FusionOverview(QScrollArea):
     transaction_selected = Signal(str)
     recovery_requested = Signal()
@@ -901,10 +1046,13 @@ class FusionOverview(QScrollArea):
         self.setObjectName('FusionScroll')
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         root = QWidget(); root.setObjectName('FusionInner'); self.setWidget(root)
+        root.setMinimumWidth(0)
         whole = QVBoxLayout(root)
-        whole.setContentsMargins(4, 4, 12, 16)
-        whole.setSpacing(16)
+        whole.setContentsMargins(4, 4, 8, 36)
+        whole.setSpacing(14)
         head = QHBoxLayout()
         titles = QVBoxLayout(); titles.setSpacing(2)
         title_row = QHBoxLayout(); title_row.setSpacing(8)
@@ -920,14 +1068,17 @@ class FusionOverview(QScrollArea):
 
         self.hero = Hero()
         hero_row = QHBoxLayout(self.hero)
-        hero_row.setContentsMargins(28, 24, 168, 22)
+        hero_row.setContentsMargins(22, 16, 22, 16)
         hero_row.setSpacing(12)
         hero = QVBoxLayout()
-        hero.setSpacing(8)
+        hero.setSpacing(6)
         hero.addWidget(label('CONFIRMED BALANCE', 'FusionKicker'))
         self.balance_value = label('—', 'FusionBalance', True)
         self.balance_value.setMinimumWidth(0)
+        self.balance_unit = label('WAM', 'FusionDenom')
+        self.balance_unit.hide()
         hero.addWidget(self.balance_value)
+        hero.addWidget(self.balance_unit)
         self.utxo_details = label('Awaiting verified Core / WSP state')
         hero.addWidget(self.utxo_details)
         self.fund_details = label('')
@@ -943,41 +1094,27 @@ class FusionOverview(QScrollArea):
         self.balance_chart = BalanceHistoryChart()
         hero_row.addWidget(self.balance_chart, 3)
 
-        main = QWidget(); main.setObjectName('FusionTransparent')
-        ml = QVBoxLayout(main); ml.setContentsMargins(0, 0, 0, 0); ml.setSpacing(16)
-        ml.addWidget(self.hero)
-
-        self.status_cards = []
-        self.status_icons = []
-        cards = []
-        for name, caption, icon in (
-            ('WAM Core', 'Pinned binary identity', 'core'),
-            ('Chain', 'Verified tip height', 'chain'),
-            ('Security', 'Native custody state', 'security'),
-            ('Network', 'REGTEST connectivity', 'network'),
-        ):
-            card, cl = panel()
-            top = QHBoxLayout()
-            icon_label = QLabel(); icon_label.setProperty('fusion_icon_label', icon); icon_label.setFixedSize(24, 24)
-            top.addWidget(icon_label); top.addWidget(label(name, 'FusionCardTitle')); top.addStretch()
-            cl.addLayout(top)
-            cl.setContentsMargins(16, 14, 16, 14); cl.setSpacing(6)
-            value = label('Not verified', 'FusionCardValue')
-            cl.addWidget(value)
-            if icon == 'security':
-                self.custody_caption = value
-                self.lock_details = label(caption)
-                cl.addWidget(self.lock_details)
-                self.custody_switch = StateSwitch('Locked')
-                self.custody_switch.setAccessibleName('Wallet Lock / Unlock switch')
-                self.custody_switch.setEnabled(False)
-                cl.addWidget(self.custody_switch)
-            else:
-                cl.addWidget(label(caption))
-            self.status_cards.append(value); self.status_icons.append(icon_label); cards.append(card)
-        self.core_status, self.chain_status, self.vault_status, self.network_status = self.status_cards
+        self.core_card = StatusCard('WAM Core', 'Pinned binary identity')
+        self.chain_card = StatusCard('Chain', 'Verified tip height')
+        self.security_card = StatusCard('Security', 'Native custody state')
+        self.network_card = StatusCard('Network', 'REGTEST connectivity')
+        self.core_status = self.core_card.value
+        self.chain_status = self.chain_card.value
+        self.vault_status = self.security_card.value
+        self.network_status = self.network_card.value
         self.scanner_status = self.chain_status
-        ml.addWidget(ResponsiveRow(*cards, breakpoint=520))
+        self.custody_caption = self.security_card.value
+        self.lock_details = self.security_card.detail
+        self.custody_switch = StateSwitch('Locked')
+        self.custody_switch.setAccessibleName('Wallet Lock / Unlock switch')
+        self.custody_switch.setEnabled(False)
+        self.security_card.layout().addWidget(self.custody_switch)
+        self.status_cards = [self.core_status, self.chain_status, self.vault_status, self.network_status]
+        self.status_icons = [self.core_card.glyph, self.chain_card.glyph,
+                             self.security_card.glyph, self.network_card.glyph]
+        self.status_board = FlowGrid(
+            self.core_card, self.chain_card, self.security_card, self.network_card,
+            min_item=210, max_columns=4)
 
         activity, alayout = panel()
         top = QHBoxLayout()
@@ -993,6 +1130,7 @@ class FusionOverview(QScrollArea):
         self.activity_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.activity_table.horizontalHeader().setStretchLastSection(True)
         self.activity_table.setMinimumHeight(168)
+        self.activity_table.setMinimumWidth(0)
         self.activity_table.setColumnWidth(0, 170)
         self.activity_table.cellClicked.connect(self._select_tx)
         self._txids = []
@@ -1006,18 +1144,20 @@ class FusionOverview(QScrollArea):
         el.addWidget(self.wallet_profile)
         el.addWidget(self.environment_core)
         el.addWidget(self.environment_stack)
-        ml.addWidget(ResponsiveRow(activity, environment, weights=[3, 2], breakpoint=860))
 
         rail, rl = panel('Quick actions')
         self.open_backup = quick_action('Backup Wallet', 'backup')
         self.open_recovery = quick_action('Verify Recovery', 'security')
         self.quick_lock = quick_action('Lock Wallet', 'lock')
         self.open_network = quick_action('Network Status', 'network')
-        for button in (self.open_backup, self.open_recovery, self.quick_lock, self.open_network):
-            rl.addWidget(button)
+        rl.addWidget(FlowGrid(
+            self.open_backup, self.open_recovery, self.quick_lock, self.open_network,
+            min_item=168, max_columns=2))
         rl.addStretch()
 
-        whole.addWidget(ResponsiveRow(main, rail, weights=[5, 2], breakpoint=760))
+        whole.addWidget(ResponsiveRow(self.hero, rail, weights=[5, 2], breakpoint=840, min_side=780))
+        whole.addWidget(self.status_board)
+        whole.addWidget(ResponsiveRow(activity, environment, weights=[3, 2], breakpoint=720, min_side=640))
 
         self._compat = QWidget(); self._compat.hide()
         compat = QVBoxLayout(self._compat)
@@ -1033,11 +1173,26 @@ class FusionOverview(QScrollArea):
             compat.addWidget(widget)
         whole.addWidget(self._compat)
 
+        self._confirmed_atoms = None
         self.open_backup.clicked.connect(self.backup_requested.emit)
         self.open_recovery.clicked.connect(self.recovery_requested.emit)
         self.open_network.clicked.connect(self.network_requested.emit)
         self.quick_lock.clicked.connect(lambda: self.custody_switch.click() if self.custody_switch.isEnabled() else None)
         self.render_snapshot(None, locked=True)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._apply_balance_text()
+
+    def _apply_balance_text(self):
+        if self._confirmed_atoms is None:
+            self.balance_value.setText('—')
+            self.balance_unit.hide()
+            return
+        amount = format_wam(self._confirmed_atoms, grouped=True)
+        compact = self.hero.width() > 0 and self.hero.width() < 640
+        self.balance_unit.setVisible(compact)
+        self.balance_value.setText(amount if compact else amount + ' WAM')
 
     def _select_tx(self, row, column):
         if 0 <= row < len(self._txids):
@@ -1047,6 +1202,8 @@ class FusionOverview(QScrollArea):
         self.hero.mode = mode
         self.hero.update()
         self.balance_chart.set_theme(mode)
+        for card in (self.core_card, self.chain_card, self.security_card, self.network_card):
+            card.set_theme(mode)
         self.custody_switch.setProperty('fusion_mode', mode)
         self.custody_switch.update()
         for row in range(self.activity_table.rowCount()):
@@ -1057,18 +1214,28 @@ class FusionOverview(QScrollArea):
                                          fusion_palette(mode)['green' if positive else 'red']))
 
     def render_snapshot(self, snap, *, locked=False, operational=False, network=None,
-                        faulted=False, available_atoms=None, reservation_count=None):
+                        faulted=False, available_atoms=None, reservation_count=None,
+                        core_alive=None, busy=False):
         network = network or {}
+        facts = dict(snap=None if (snap is None or locked) else snap, locked=locked,
+                     operational=operational, faulted=faulted, core_alive=core_alive,
+                     busy=busy, network=network)
+        self.core_card.apply(*classify('core', **facts), animate=not locked)
+        self.chain_card.apply(*classify('chain', **facts), animate=not locked)
+        self.security_card.apply(*classify('security', **facts), animate=False)
+        self.network_card.apply(*classify('network', **facts), animate=not locked)
+        unlocked = not locked and operational and snap is not None
+        self.custody_switch.blockSignals(True)
+        self.custody_switch.setChecked(unlocked)
+        self.custody_switch.setText('Unlocked' if unlocked else 'Locked')
+        self.custody_switch.blockSignals(False)
         if snap is None or locked:
-            self.balance_value.setText('—')
+            self._confirmed_atoms = None
+            self._apply_balance_text()
             self.utxo_details.setText('Unlock and verify the chain to display wallet values.')
             self.fund_details.hide()
             self.balance_chart.render_points(())
             self.live_badge.setText('Locked' if locked else 'Not verified')
-            for value in self.status_cards:
-                value.setText('Not verified')
-            self.vault_status.setText('Locked' if locked else 'Not attested')
-            self.network_status.setText(network.get('mode', 'Unknown'))
             self.evidence_text.setText('No verified blockchain snapshot')
             self.evidence_text.setToolTip('')
             self.activity_table.setRowCount(0)
@@ -1084,7 +1251,8 @@ class FusionOverview(QScrollArea):
             return
         activity_by_block(snap)
         self.balance_chart.render_points(confirmed_balance_history(snap))
-        self.balance_value.setText(format_wam(snap.confirmed_atoms, grouped=True) + ' WAM')
+        self._confirmed_atoms = snap.confirmed_atoms
+        self._apply_balance_text()
         self.utxo_details.setText(
             f'{snap.confirmed_utxos} confirmed UTXO(s)  ·  Verified block {snap.height}'
             + ('  ·  REGTEST (Shared)' if network.get('shared') else '  ·  REGTEST (Isolated)'))
@@ -1097,15 +1265,6 @@ class FusionOverview(QScrollArea):
         self.fund_details.setText('  ·  '.join(funds))
         self.fund_details.setVisible(bool(funds))
         self.live_badge.setText('REGTEST VERIFIED')
-        self.core_status.setText('Verified')
-        self.chain_status.setText(f'Height {snap.height}')
-        self.vault_status.setText('Unlocked' if operational else 'Read-only')
-        if 'peer_count' in network and type(network['peer_count']) is int:
-            self.network_status.setText(
-                ('Connected' if network.get('connected') else 'Disconnected')
-                + f" · {network['peer_count']} peer(s)")
-        else:
-            self.network_status.setText('Isolated' if not network.get('shared') else 'Awaiting peer check')
         self.go_receive.setEnabled(True)
         self.evidence_text.setText('Verified tip ' + snap.tip[:14] + '…  ·  No real funds')
         self.evidence_text.setToolTip('Core SHA-256: ' + snap.core_sha256 + '\nVerified tip: ' + snap.tip)

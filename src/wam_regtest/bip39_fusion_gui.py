@@ -7,11 +7,11 @@ not a painted mockup or a separate demo account.
 """
 import os
 import re
-from PySide6.QtCore import Qt, QSize, QSettings
+from PySide6.QtCore import Qt, QSize, QSettings, QTimer, QRect
 from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QFrame, QLabel, QLineEdit,
-    QListWidget, QStackedWidget, QMessageBox, QDialog, QToolButton,
+    QListWidget, QMessageBox, QDialog, QToolButton,
     QCheckBox, QApplication, QSizePolicy,
 )
 
@@ -22,9 +22,10 @@ from .gui_errors import operation_error
 from .fusion_ui import (
     FusionOverview, fusion_stylesheet, fusion_palette, page, panel,
     label, ResponsiveRow, vector_icon, nav_icon_for, FUSION_NAV_PAGES,
-    StateSwitch, action, ThemeSlider,
+    StateSwitch, action, ThemeSlider, NetworkFlyout,
 )
-from .fusion_motion import fade_widget, PressFeedback, PAGE_MS
+from .fusion_motion import fade_widget, PressFeedback, PAGE_MS, TransitionHost, STAGGER_MS, STANDARD_MS, motion_reduced, slide_geometry
+from .fusion_status import classify
 from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval, WalletConsent, NetworkPage, describe_broadcast_result
 from .bip39_backup_page import Bip39BackupPage
 from .wallet_read import WalletReadSnapshot, format_wam
@@ -140,7 +141,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.page_title.hide()
         top.addWidget(self.page_title)
         top.addStretch()
-        self.connection_pill = label("AWAITING VERIFICATION", "FusionBadge")
+        self.connection_pill = label("Snapshot not verified", "FusionBadge")
         top.addWidget(self.connection_pill)
         self.sync.setText("Refresh")
         self.sync.setObjectName("FusionSecondary")
@@ -158,8 +159,16 @@ class Bip39FusionWindow(Bip39TrialWindow):
         top.addWidget(self.header_theme)
         content.addWidget(topbar)
 
-        self.stack = QStackedWidget()
+        self.stack = TransitionHost()
         content.addWidget(self.stack, 1)
+        self._dimmer = QFrame(main)
+        self._dimmer.setObjectName('FusionDimmer')
+        self._dimmer.hide()
+        self._dimmer.setAccessibleName('Dismiss network status drawer')
+        self.network_flyout = NetworkFlyout(main)
+        self.network_flyout.hide()
+        self.network_flyout.closed.connect(self._close_network_flyout)
+        self._dimmer.installEventFilter(self)
         original_status = self.status
         self.status = _WrappingStatusLabel()
         self.status.setTextFormat(Qt.TextFormat.PlainText)
@@ -389,6 +398,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self.header_theme.setCurrentIndex(saved, animate=False)
             self.settings_theme.setCurrentIndex(saved, animate=False)
         self._set_reduce_motion(self.reduce_motion.isChecked())
+        self._overview_intro = False
         self.navigation.currentRowChanged.connect(self._navigate)
         self.navigation.setCurrentRow(0)
         self.overview.go_receive.clicked.connect(
@@ -399,11 +409,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
             lambda: self.navigation.setCurrentRow(2))
         self.overview.open_security.clicked.connect(
             lambda: self.navigation.setCurrentRow(4))
-        self.overview.backup_requested.connect(
-            lambda: self.navigation.setCurrentRow(4))
+        self.overview.backup_requested.connect(self._quick_backup)
         self.overview.recovery_requested.connect(self.recovery.click)
-        self.overview.network_requested.connect(
-            lambda: self.navigation.setCurrentRow(5))
+        self.overview.network_requested.connect(self._open_network_flyout)
         self.overview.manual_sync.clicked.connect(
             lambda: self._command("snapshot"))
         self.overview.transaction_selected.connect(self._select_transaction)
@@ -416,7 +424,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self._press_feedback.attach(self)
         self.overview.render_snapshot(
             None, locked=True, network=self._network_view(None),
-            faulted=self.executor.state.faulted)
+            faulted=self.executor.state.faulted,
+            core_alive=self.executor.state.core_alive)
         if hasattr(QApplication.styleHints(), "colorSchemeChanged"):
             QApplication.styleHints().colorSchemeChanged.connect(
                 self._native_theme_changed)
@@ -493,13 +502,11 @@ class Bip39FusionWindow(Bip39TrialWindow):
         if not 0 <= index < len(FUSION_NAV_PAGES):
             return
         self.page_title.setText(FUSION_NAV_PAGES[index][0])
-        self.stack.setCurrentIndex(index)
+        reduced = self.reduce_motion.isChecked() or motion_reduced(self)
+        self.stack.set_current(index, reduced=reduced)
         self._apply_fusion_theme()
-        if self._transition is not None:
-            self._transition.stop()
-            self._transition = None
-        self._transition = fade_widget(
-            self.stack.currentWidget(), start=0.86, end=1.0, duration=PAGE_MS, parent=self)
+        if index == 0:
+            self._play_overview_intro()
 
     def _toggle_advanced(self, expanded):
         self.advanced_toggle.setText(
@@ -510,6 +517,78 @@ class Bip39FusionWindow(Bip39TrialWindow):
             return
         self._advanced_transition = fade_widget(
             self.advanced_container, start=0.5, end=1.0, duration=180, parent=self)
+
+    def eventFilter(self, watched, event):
+        from PySide6.QtCore import QEvent
+        if watched is getattr(self, '_dimmer', None) and event.type() == QEvent.Type.MouseButtonPress:
+            self._close_network_flyout()
+            return True
+        return super().eventFilter(watched, event)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._place_flyout()
+
+    def _place_flyout(self):
+        if not hasattr(self, '_dimmer'):
+            return
+        host = self._dimmer.parentWidget()
+        if host is None:
+            return
+        self._dimmer.setGeometry(host.rect())
+        width = min(360, max(280, host.width() // 3))
+        self.network_flyout.setGeometry(
+            host.width() - width - 16, 16, width, max(220, host.height() - 32))
+
+    def _open_network_flyout(self):
+        snap = self._last_verified
+        self.network_flyout.render(
+            network=self._network_view(snap),
+            core_alive=self.executor.state.core_alive,
+            height=None if snap is None else snap.height)
+        self._place_flyout()
+        self._dimmer.show()
+        self._dimmer.raise_()
+        self.network_flyout.show()
+        self.network_flyout.raise_()
+        if not motion_reduced(self) and not self.reduce_motion.isChecked():
+            target = self.network_flyout.geometry()
+            start = QRect(target.x() + 24, target.y(), target.width(), target.height())
+            self.network_flyout.setGeometry(start)
+            slide_geometry(self.network_flyout, target, duration=PAGE_MS, parent=self)
+            fade_widget(self.network_flyout, start=0.86, end=1.0, duration=PAGE_MS, parent=self)
+        self.network_flyout.setFocus()
+
+    def _close_network_flyout(self):
+        self.network_flyout.hide()
+        self._dimmer.hide()
+
+    def _quick_backup(self):
+        dialog = WalletConsent(
+            'Backup this REGTEST wallet',
+            'Recovery words are shown only at wallet creation. This action does not '
+            'display the seed. Use Verify Recovery to check words you already wrote down.',
+            self, accept_text='Verify recovery words')
+        try:
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                self.recovery.click()
+        finally:
+            dialog.deleteLater()
+
+    def _play_overview_intro(self):
+        if getattr(self, '_overview_intro', False) or motion_reduced(self) or self.reduce_motion.isChecked():
+            return
+        self._overview_intro = True
+        groups = (
+            self.overview.hero,
+            self.overview.status_board,
+            self.overview.open_backup.parentWidget(),
+        )
+        for delay, widget in enumerate(groups):
+            QTimer.singleShot(
+                STAGGER_MS * delay,
+                lambda widget=widget: fade_widget(
+                    widget, start=0.35, end=1.0, duration=STANDARD_MS, parent=self))
 
     def _select_transaction(self, txid):
         self.navigation.setCurrentRow(2)
@@ -576,10 +655,16 @@ class Bip39FusionWindow(Bip39TrialWindow):
                     switch.setEnabled(idle and not self._quit_requested
                         and (self.lock.isEnabled() or self.unlock.isEnabled()))
                     switch.blockSignals(False)
-                self.overview.custody_caption.setText('Unlocked' if unlocked else 'Locked')
-                self.overview.lock_details.setText(
-                    'Wallet is ready for transactions.' if unlocked
-                    else 'Unlock requires the original wallet password.')
+                self.overview.security_card.apply(*classify(
+                    'security',
+                    snap=self._last_verified,
+                    locked=not unlocked,
+                    operational=unlocked,
+                    faulted=self.executor.state.faulted,
+                    core_alive=self.executor.state.core_alive,
+                    busy=not idle,
+                    network=self._network_view(self._last_verified),
+                ), animate=False)
                 self.overview.quick_lock.setText('Lock Wallet' if unlocked else 'Unlock Wallet')
                 self.overview.quick_lock.setEnabled(idle and not self._quit_requested
                     and (self.lock.isEnabled() or self.unlock.isEnabled()))
@@ -717,7 +802,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.page_title.setText("Overview")
         self.page_title.hide()
         if success:
-            self.connection_pill.setText("AWAITING VERIFICATION")
+            self.connection_pill.setText(classify(
+                'snapshot', snap=None, locked=True,
+                core_alive=self.executor.state.core_alive)[1])
         super()._backup_flow_completed(success)
 
     def _prepare_send(self):
@@ -768,7 +855,14 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self.overview.render_snapshot(
                 snap, operational=True, network=self._network_view(snap),
                 available_atoms=result.get("available_atoms"),
-                reservation_count=result.get("reservation_count"))
+                reservation_count=result.get("reservation_count"),
+                core_alive=self.executor.state.core_alive,
+                busy=False)
+            self.connection_pill.setText(classify(
+                'snapshot', snap=snap, operational=True,
+                faulted=self.executor.state.faulted,
+                core_alive=self.executor.state.core_alive,
+                network=self._network_view(snap))[1])
             self.receive_page.render_snapshot(snap)
             self.history_page.render_snapshot(snap)
             self._render_network(snap)
@@ -777,16 +871,19 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self.status.setText("Q06_FUSION_PRESENTATION_DENIED")
             return
         self._last_verified = snap
-        self.connection_pill.setText("●  VERIFIED REGTEST")
         self.overview.go_send.setEnabled(self._spend_enabled and
                                          not self.executor.state.faulted)
 
     def _clear_visuals(self):
         self._last_verified = None
-        self.connection_pill.setText("●  NOT VERIFIED")
+        self.connection_pill.setText(classify(
+            'snapshot', snap=None, locked=True,
+            faulted=self.executor.state.faulted,
+            core_alive=self.executor.state.core_alive)[1])
         self.overview.render_snapshot(
             None, locked=True, faulted=self.executor.state.faulted,
-            network=self._network_view(None))
+            network=self._network_view(None),
+            core_alive=self.executor.state.core_alive)
         self.receive_page.render_snapshot(None)
         self.history_page.render_snapshot(None)
         self._render_network(None)
@@ -896,7 +993,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self._set_actions()
         if self.executor.state.faulted:
             self._clear_visuals()
-            self.connection_pill.setText("●  CORE ERROR")
+            self.connection_pill.setText(classify(
+                'snapshot', snap=None, locked=True, faulted=True,
+                core_alive=self.executor.state.core_alive)[1])
         elif self._last_verified is not None:
             self.overview.live_badge.setText("Last verified · refresh required")
         self._set_actions()
