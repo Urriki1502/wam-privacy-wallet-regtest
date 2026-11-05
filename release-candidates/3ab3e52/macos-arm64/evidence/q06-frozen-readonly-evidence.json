@@ -1,0 +1,14 @@
+{
+  "Q06_12_word_native_owned_core": true,
+  "Q06_BIP39_disposable_fresh_restore_same_receive": true,
+  "Q06_Sign_or_Broadcast_executed": false,
+  "Q06_actual_Core_confirmed_BIP39_txid_sha256": "a50cb64a0a997f2ed3436ded2312acea91220500ed4f433265a6f4837eeb7a3e",
+  "Q06_actual_onchain_BIP39_received_atoms": 4749990000,
+  "Q06_native_Qt_funded_balance_bound": true,
+  "Q06_native_Qt_receive_bound": true,
+  "Q06_original_core_clean_shutdown": true,
+  "mainnet_allowed": false,
+  "network": "regtest",
+  "receive_code_sha256": "5bbe362aa620b9b0729594c6170932b641355e8ead8375cfbfc24797ddd40b04",
+  "status": "Q06_NATIVE_BIP39_12_READONLY_OWNER_GUI_PASS"
+}

@@ -1,6 +1,6 @@
 # Joint Owner / Developer acceptance checklist
 
-Pinned source: `b844dd371d4ac5dc3d0469eb899d6709e8ac407f`  
+Pinned source: `3ab3e527cb90930631c4265f12923981452bf21e`  
 WSP: `ac55f13423620252bdbf848c7e8a280c3b84721e`  
 Q06 `accepted=false`. G6/G7 **unchanged** until named humans complete them.  
 Agents (Cursor/Codex) **must not** fill Owner, Developer, or Independent verdicts.
@@ -37,7 +37,7 @@ Developer review is **not** automatically G7.
 
 | Item | macOS ARM64 | Windows x64 | Linux x86_64 desktop | Linux x86_64 headless |
 | --- | --- | --- | --- | --- |
-| Same source SHA packaged | NOT EXECUTED (fresh DMG) | BLOCKED | BLOCKED | BLOCKED |
+| Same source SHA packaged | FAIL (full builder stopped; no DMG) | BLOCKED | BLOCKED | BLOCKED |
 | Artifact SHA256 recorded | — | — | — | — |
 | Core bytes match pin | local `core/` matches receipt; frozen restore unproven for this SHA | official PE pin | developer ELF pin | developer ELF pin |
 | Presented as signed official wallet | NO (ad-hoc at most) | NO (unsigned) | NO | NO |
@@ -50,19 +50,19 @@ Record job/receipt, OS, package SHA, Core digest, timestamp. Disposable REGTEST 
 
 | Case | macOS | Windows | Linux desktop |
 | --- | --- | --- | --- |
-| Core verification (identity ≠ live process) | PENDING | BLOCKED | BLOCKED |
-| Create 12-word wallet | PENDING | BLOCKED | BLOCKED |
-| Backup + recovery verification (no seed in screenshots) | PENDING | BLOCKED | BLOCKED |
-| Lock / Unlock | PENDING | BLOCKED | BLOCKED |
-| BIP352 Receive | PENDING | BLOCKED | BLOCKED |
-| Prepare / Sign / Broadcast | PENDING | BLOCKED | BLOCKED |
-| Mempool acceptance | PENDING | BLOCKED | BLOCKED |
-| On-chain confirmation | PENDING | BLOCKED | BLOCKED |
-| Balance + History (verified snapshot only) | PENDING | BLOCKED | BLOCKED |
-| Reservation protection / no auto-retry | PENDING | BLOCKED | BLOCKED |
-| Theme Automatic / Light / Dark | source Qt only | BLOCKED | BLOCKED |
-| Page motion + Reduced Motion | source Qt only | BLOCKED | BLOCKED |
-| Shared REGTEST P2P (29555, RPC 127.0.0.1:29554) | PENDING / V19 still physical | BLOCKED | BLOCKED |
+| Core verification (identity ≠ live process) | PASS (frozen cocoa/offscreen Core gates) | BLOCKED | BLOCKED |
+| Create 12-word wallet | PASS (`--ci-q06-bip39-readonly`) | BLOCKED | BLOCKED |
+| Backup + recovery verification (no seed in screenshots) | PASS (cocoa wallet + Q06 readonly restore) | BLOCKED | BLOCKED |
+| Lock / Unlock | PASS (cocoa packaged wallet) | BLOCKED | BLOCKED |
+| BIP352 Receive | PASS (readonly funded scan + Qt bind) | BLOCKED | BLOCKED |
+| Prepare / Sign / Broadcast | FAIL (Q06 spend stopped after `SIGNED_ANCHORED_PASS`; cocoa Q05-path send still PASS) | BLOCKED | BLOCKED |
+| Mempool acceptance | NOT COMPLETE for Q06 spend | BLOCKED | BLOCKED |
+| On-chain confirmation | NOT COMPLETE for Q06 spend | BLOCKED | BLOCKED |
+| Balance + History (verified snapshot only) | PASS on readonly/cocoa paths | BLOCKED | BLOCKED |
+| Reservation protection / no auto-retry | PASS on cocoa wallet reorg/lost-broadcast path | BLOCKED | BLOCKED |
+| Theme Automatic / Light / Dark | PASS (`MACOS_COCOA_PACKAGED_AUTO_LIGHT_DARK_REAL_CORE_WALLET_PASS`) | BLOCKED | BLOCKED |
+| Page motion + Reduced Motion | PASS frozen `--ci-ui-layout` (no Core) | BLOCKED | BLOCKED |
+| Shared REGTEST P2P (29555, RPC 127.0.0.1:29554) | NOT REACHED this build / V19 still physical | BLOCKED | BLOCKED |
 
 Source-only Mac presentation tests (not Core E2E, not Q06 ledger): 34 unittest OK on 2026-11-05 (`tests.test_fusion_v21_layout`, `test_fusion_design`, `test_q06_bip39_fusion_gui`, `test_ui_text_layout`).
 
