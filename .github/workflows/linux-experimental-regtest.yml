@@ -397,7 +397,7 @@ jobs:
           python-version: '3.12.15'
       - uses: actions/checkout@v4
         with:
-          repository: wamcoin-core-dev/wam-coin
+          repository: wamcoin-Project/wam-coin
           ref: 82a1487fd86f7021b1b9fc1524d267fca126f7d4
           path: linux-upstream
           persist-credentials: false
