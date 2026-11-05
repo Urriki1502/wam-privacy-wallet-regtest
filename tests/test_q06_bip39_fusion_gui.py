@@ -196,6 +196,54 @@ class ApprovalWorkerOrdering(unittest.TestCase):
             window.deleteLater()
             app.processEvents()
 
+    def test_prepare_approval_clicked_during_show_signs_once(self):
+        from PySide6.QtCore import QEvent, QObject
+        from PySide6.QtWidgets import QApplication, QDialog, QPushButton
+        from wam_regtest.bip39_fusion_gui import Bip39FusionWindow
+        from wam_regtest.wallet_executor import WalletExecutor
+        from wam_regtest.wallet_session import PaymentReview
+        app = QApplication.instance() or QApplication([])
+        calls = []
+        review = PaymentReview("wamrtsp1public", 300000000, 10000,
+                               4449980000, 1, "b" * 64)
+        class Backend:
+            def public_state(self):
+                return dict(locked=False, faulted=False, core_alive=False)
+            def execute(self, action, args, kwargs):
+                calls.append(action)
+                return review if action in ("prepare", "sign") else None
+        class ClickOnShow(QObject):
+            def eventFilter(self, obj, event):
+                if (event.type() == QEvent.Type.Show and isinstance(obj, QDialog)
+                        and obj.objectName() == 'FusionApproval'):
+                    for button in obj.findChildren(QPushButton):
+                        if button.text() == 'Approve Sign':
+                            button.clicked.emit()
+                return False
+        watcher = ClickOnShow()
+        app.installEventFilter(watcher)
+        executor = WalletExecutor(Backend)
+        window = Bip39FusionWindow(executor)
+        window._ready = window._spend_enabled = True
+        try:
+            self.assertTrue(window._command("prepare", "unused", 1, 1))
+            for _ in range(100):
+                app.processEvents()
+                if window._signed_ready:
+                    break
+            self.assertEqual(calls, ["prepare", "sign"])
+            self.assertTrue(window._signed_ready)
+            self.assertFalse(any(isinstance(w, QDialog) and w.isVisible()
+                                  for w in app.allWidgets()))
+        finally:
+            app.removeEventFilter(watcher)
+            window._poll.stop()
+            executor.request("quit")
+            executor.join()
+            window.hide()
+            window.deleteLater()
+            app.processEvents()
+
     def test_post_broadcast_snapshot_does_not_clear_pending_txid(self):
         from PySide6.QtWidgets import QApplication
         from wam_regtest.bip39_owner_gui import Bip39TrialWindow

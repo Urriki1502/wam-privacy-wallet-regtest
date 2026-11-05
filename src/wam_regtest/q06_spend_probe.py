@@ -69,16 +69,28 @@ def qualify(core, source):
         print("MACOS_Q06_SPEND_STAGE=" + message, flush=True)
 
     from PySide6.QtCore import QTimer
-    from PySide6.QtWidgets import QDialog, QPushButton
-    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QPushButton
     def wait_for(predicate, label, timeout=240):
         deadline = time.monotonic() + timeout
+        next_beat = time.monotonic()
         while not predicate():
             app.processEvents()
             if (window is not None and idle() and window._last_error_code is not None):
                 data['gui_denied'] = window._last_error_code
                 raise ValueError('Q06_GUI_DENIED_' + label)
-            if time.monotonic() >= deadline:
+            now = time.monotonic()
+            if now >= next_beat and window is not None:
+                next_beat = now + 5
+                print(
+                    'MACOS_Q06_LIVENESS wait=' + label
+                    + ' stage=' + str(data.get('last_stage') or '')
+                    + ' modal=' + ('1' if app.activeModalWidget() is not None else '0')
+                    + ' worker=' + ('1' if window._worker is not None else '0')
+                    + ' busy=' + ('1' if executor.busy else '0')
+                    + ' delivering=' + ('1' if window._delivering_result else '0')
+                    + ' core=' + ('1' if executor.state.core_alive is True else '0'),
+                    flush=True)
+            if now >= deadline:
                 raise ValueError('Q06_GUI_WAIT_' + label)
             # QTest.qWait holds the Python GIL on this Cocoa binding and can
             # starve the real wallet owner's file/RPC work. Sleep releases it;
@@ -88,16 +100,13 @@ def qualify(core, source):
     def idle():
         return window._worker is None and not executor.busy and not window._delivering_result
     def approve_click(button, caption, done):
+        from .shared_network_probe import click_visible_approval
         timer = QTimer()
         timer.setInterval(150)
         def approve():
-            dialog = app.activeModalWidget()
-            if isinstance(dialog, QDialog):
-                for control in dialog.findChildren(QPushButton):
-                    if control.text() == caption:
-                        control.click()
-                        timer.stop()
-                        break
+            # Retry until the labeled button accepts. A single click() can
+            # land while the dialog is opening and must not be the last try.
+            click_visible_approval(app, caption)
         timer.timeout.connect(approve)
         timer.start()
         try:

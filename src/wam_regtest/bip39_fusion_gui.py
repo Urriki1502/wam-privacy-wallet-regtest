@@ -752,6 +752,19 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 core_alive=self.executor.state.core_alive)[1])
         super()._backup_flow_completed(success)
 
+    def _open_payment_decision(self, dialog, decide):
+        """Present PaymentApproval without a nested QDialog.exec() loop.
+
+        Cocoa can fail to leave exec() when the dialog is accepted while
+        exec() is still inside show(). The Accept button is unchanged and
+        nothing is signed or broadcast until that button finishes the dialog.
+        """
+        def finished(code):
+            dialog.deleteLater()
+            decide(code)
+        dialog.finished.connect(finished)
+        dialog.open()
+
     def _prepare_send(self):
         if (not self._spend_enabled or self._approved_commitment is not None
                 or self.executor.state.faulted or self.executor.busy):
@@ -776,12 +789,12 @@ class Bip39FusionWindow(Bip39TrialWindow):
         if review.commitment != self._approved_commitment:
             return
         dialog = PaymentApproval(review, "broadcast", self)
-        try:
-            accepted = dialog.exec() == QDialog.DialogCode.Accepted
-        finally:
-            dialog.deleteLater()
-        if accepted and review.commitment == self._approved_commitment:
-            self._command("broadcast", review.commitment)
+        commitment = review.commitment
+        def decide(code):
+            if (code == QDialog.DialogCode.Accepted
+                    and commitment == self._approved_commitment):
+                self._command("broadcast", commitment)
+        self._open_payment_decision(dialog, decide)
 
     def _render_verified(self, result):
         snap = result.get("fusion_snapshot")
@@ -871,18 +884,33 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 f'Fee  {format_wam(result.fee)} WAM\nChange  {format_wam(result.change_atoms)} WAM')
             self.payment_steps.set_stage(1)
             dialog = PaymentApproval(result, "sign", self)
-            try:
-                accepted = dialog.exec() == QDialog.DialogCode.Accepted
-            finally:
-                dialog.deleteLater()
-            self._pending_action = (
-                ("sign", result.commitment) if accepted else ("cancel",)
-            )
-            self.status.setText(
-                "Transaction approved; signing owned REGTEST inputs"
-                if accepted else "Transaction not approved; canceling unsigned draft"
-            )
-            self._set_actions()
+            commitment = result.commitment
+            def decide(code):
+                accepted = code == QDialog.DialogCode.Accepted
+                self.status.setText(
+                    "Transaction approved; signing owned REGTEST inputs"
+                    if accepted else
+                    "Transaction not approved; canceling unsigned draft"
+                )
+                if accepted and commitment == self._approved_commitment:
+                    pending = ("sign", commitment)
+                elif not accepted:
+                    pending = ("cancel",)
+                else:
+                    pending = None
+                # Acceptance during show() is still inside prepare delivery.
+                # Leave the one explicit command for _finished. A later click
+                # is outside delivery and must start that same command itself.
+                if self._delivering_result:
+                    self._pending_action = pending
+                elif (pending is not None and self._worker is None
+                      and not self._quit_requested):
+                    self._command(*pending)
+                self._set_actions()
+            # The prepare worker has already finished. Opening the dialog
+            # returns to the main loop so an approval that arrives during
+            # show() cannot wedge QDialog.exec() and hide the wait deadline.
+            self._open_payment_decision(dialog, decide)
             return
         super()._on_ready(action, result)
         if action in ("cancel", "broadcast", "lock", "quit"):

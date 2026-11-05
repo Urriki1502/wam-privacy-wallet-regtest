@@ -33,7 +33,10 @@ def click_visible_approval(app, caption):
             continue
         for control in widget.findChildren(QPushButton):
             if control.text() == caption and control.isEnabled():
-                control.click()
+                # QPushButton.click() can be delivered while the dialog is
+                # still showing. Emit the same clicked signal the button uses
+                # so Accept runs on the main loop that opened the dialog.
+                control.clicked.emit()
                 return True
     return False
 
@@ -81,11 +84,29 @@ def qualify(core, source):
         print('SHARED_REGTEST_STAGE='+name,flush=True)
     def wait(predicate, label, timeout=240):
         deadline = time.monotonic()+timeout
+        next_beat = time.monotonic()
         while not predicate():
             app.processEvents()
             if any('window' in n and idle(n) and n['window']._last_error_code for n in nodes):
                 raise ValueError('SHARED_GUI_OPERATION_DENIED')
-            if time.monotonic() > deadline:
+            now = time.monotonic()
+            if now >= next_beat:
+                next_beat = now + 5
+                alive = []
+                for node in nodes:
+                    executor = node.get('executor')
+                    window = node.get('window')
+                    if executor is None or window is None:
+                        continue
+                    alive.append(
+                        'busy=' + ('1' if executor.busy else '0')
+                        + ' worker=' + ('1' if window._worker is not None else '0')
+                        + ' delivering=' + ('1' if window._delivering_result else '0')
+                        + ' core=' + ('1' if executor.state.core_alive is True else '0'))
+                print('SHARED_REGTEST_LIVENESS wait=' + label
+                      + ' modal=' + ('1' if app.activeModalWidget() is not None else '0')
+                      + ' ' + ' '.join(alive), flush=True)
+            if now > deadline:
                 raise ValueError('SHARED_WAIT_'+label)
             time.sleep(.01)
         app.processEvents()
@@ -103,8 +124,9 @@ def qualify(core, source):
                 for field in dialog.findChildren(QLineEdit):
                     if field.echoMode()==QLineEdit.EchoMode.Password:
                         field.setText(credential.decode('utf-8'))
-            if click_visible_approval(app, caption):
-                timer.stop()
+            # Keep looking until the caller leaves this approval. Stopping
+            # on the first click drops a press that the dialog did not accept.
+            click_visible_approval(app, caption)
         timer.timeout.connect(consent)
         timer.start()
         try:
