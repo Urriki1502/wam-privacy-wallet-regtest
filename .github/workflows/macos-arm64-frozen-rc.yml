@@ -1,0 +1,195 @@
+# Review-only macOS ARM64 package of the frozen source pin.
+# The workflow file may live on a later review commit. The job checks out
+# the pin below and builds only that tree. It does not merge, release, or
+# claim Q06 acceptance. A hosted rebuild may differ from a local DMG.
+name: WAM Fusion macOS ARM64 frozen RC
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/v1-net-shared-regtest-20261104
+    paths:
+      - .github/workflows/macos-arm64-frozen-rc.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-arm64-frozen-rc-56ea3618
+  cancel-in-progress: false
+
+jobs:
+  macos-arm64-frozen-rc:
+    name: Build and qualify frozen macOS ARM64 app and DMG
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      WAM_SOURCE_HEAD: 56ea36186bf5a3410c75dda63b885f084de83610
+      PACKAGE_SOURCE_SHA: 56ea36186bf5a3410c75dda63b885f084de83610
+      WSP_PIN: ac55f13423620252bdbf848c7e8a280c3b84721e
+    steps:
+      - name: Record the Actions commit separately from the package source
+        run: |
+          set -euo pipefail
+          echo "ACTIONS_WORKFLOW_COMMIT=${{ github.sha }}"
+          echo "PACKAGE_SOURCE_SHA=${PACKAGE_SOURCE_SHA}"
+          test -n "${{ github.sha }}"
+          test "${PACKAGE_SOURCE_SHA}" = "56ea36186bf5a3410c75dda63b885f084de83610"
+
+      - name: Check out the frozen package source
+        uses: actions/checkout@v4
+        with:
+          ref: 56ea36186bf5a3410c75dda63b885f084de83610
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Check out pinned WSP source
+        uses: actions/checkout@v4
+        with:
+          repository: Urriki1502/wam-silent-payments
+          ref: ac55f13423620252bdbf848c7e8a280c3b84721e
+          path: wsp-upstream
+          persist-credentials: false
+
+      - name: Require Apple Silicon
+        run: |
+          set -euo pipefail
+          test "$(uname -s)" = Darwin
+          test "$(uname -m)" = arm64
+          test "$(git rev-parse HEAD)" = "$PACKAGE_SOURCE_SHA"
+          test "$(git -C wsp-upstream rev-parse HEAD)" = "$WSP_PIN"
+          echo "MACOS_ARM64_RUNNER_PASS"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.10"
+          architecture: arm64
+
+      - name: Install GnuPG for the official Core signature check
+        run: |
+          set -euo pipefail
+          if ! command -v gpg >/dev/null; then brew install gnupg; fi
+          command -v gpg
+          gpg --version
+
+      - name: Hash-locked GUI environment
+        run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
+
+      - name: Fetch official signed WAM Core v0.1.11 and check identities
+        run: |
+          set -euo pipefail
+          python -I -m wam_regtest.release --platform macos-arm64 --destination "$PWD/core"
+          python -I - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          expected = {
+              "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+              "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+          }
+          for name, digest in expected.items():
+              got = sha256((Path("core") / name).read_bytes()).hexdigest()
+              if got != digest:
+                  raise SystemExit("MACOS_OFFICIAL_CORE_SHA_DENIED")
+          print("MACOS_OFFICIAL_CORE_SHA256_PASS")
+          PY
+
+      - name: Build, qualify, and package
+        env:
+          # Existing verify_source requires GITHUB_SHA to equal the checkout.
+          # The Actions run commit stays ${{ github.sha }}. This step attests
+          # the tree that was checked out, which is the frozen pin.
+          GITHUB_SHA: 56ea36186bf5a3410c75dda63b885f084de83610
+        run: bash scripts/build_macos_bundle.sh
+
+      - name: Independently hash the packages and write the download note
+        run: |
+          set -euo pipefail
+          python -I - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          pin = "56ea36186bf5a3410c75dda63b885f084de83610"
+          local_dmg = "a77337b612fe9c9b2d9f5725ca7cf86c029172cfc869fa1b04c31503570e2d2c"
+          out = Path("package-output")
+          receipt = json.loads((out / "SHA256SUMS.json").read_text())
+          if receipt.get("source_commit") != pin:
+              raise SystemExit("MACOS_RC_SOURCE_COMMIT_DENIED")
+          if receipt.get("mainnet_allowed") is not False:
+              raise SystemExit("MACOS_RC_MAINNET_DENIED")
+          if receipt.get("qualification_scope") != "full":
+              raise SystemExit("MACOS_RC_SCOPE_DENIED")
+          if receipt.get("status") != "UNNOTARIZED_REAL_REGTEST_MACOS_ARM64_PREVIEW":
+              raise SystemExit("MACOS_RC_SIGNING_STATUS_DENIED")
+          if receipt.get("wamd_sha256") != "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068":
+              raise SystemExit("MACOS_RC_WAMD_DENIED")
+          if receipt.get("wam_cli_sha256") != "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82":
+              raise SystemExit("MACOS_RC_WAM_CLI_DENIED")
+          names = (
+              "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg",
+              "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip",
+          )
+          lines = []
+          publish = Path("macos-rc-publish")
+          publish.mkdir(mode=0o700)
+          for name in names:
+              blob = (out / name).read_bytes()
+              digest = hashlib.sha256(blob).hexdigest()
+              recorded = receipt["files"][name]["sha256"]
+              if digest != recorded:
+                  raise SystemExit("MACOS_RC_INDEPENDENT_HASH_MISMATCH")
+              (publish / name).write_bytes(blob)
+              lines.append(f"{digest}  {name}")
+              print(f"INDEPENDENT_SHA256 {name} {digest}")
+              if name.endswith(".dmg") and digest == local_dmg:
+                  print("HOSTED_DMG_MATCHES_LOCAL_BUILD")
+              elif name.endswith(".dmg"):
+                  print("HOSTED_DMG_DIFFERS_FROM_LOCAL_BUILD")
+          (publish / "SHA256SUMS").write_text("\n".join(lines) + "\n")
+          (publish / "SHA256SUMS.json").write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+          (publish / "README.txt").write_text(
+              "WAM Fusion REGTEST — macOS ARM64 review package\n"
+              "\n"
+              "This is a review-only REGTEST build. It is not a GitHub Release,\n"
+              "not mainnet, and not Q06 acceptance.\n"
+              "\n"
+              f"Package source SHA: {pin}\n"
+              "Branch: feature/v1-net-shared-regtest-20261104\n"
+              "WSP pin: ac55f13423620252bdbf848c7e8a280c3b84721e\n"
+              "Official Core: WAM Core v0.1.11 ARM64\n"
+              "wamd: 7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068\n"
+              "wam-cli: 81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82\n"
+              "\n"
+              "Signing: the Fusion app is ad-hoc signed (codesign --sign -).\n"
+              "It is not Developer ID signed and not notarized. Gatekeeper may\n"
+              "warn. Do not disable system protections. The bundled Core bytes\n"
+              "are the official v0.1.11 hashes above.\n"
+              "\n"
+              "Install: unzip this artifact, open the .dmg, and copy the app out.\n"
+              "Or unzip the .app.zip. Use a new disposable REGTEST profile.\n"
+              "Do not open an existing Desktop wallet.\n"
+              "\n"
+              "Test: create and restore a 12-word wallet, receive on REGTEST,\n"
+              "then Sign and Broadcast as two separate approvals and confirm\n"
+              "after one block. History, balance, and reopen must agree.\n"
+              "V1-V18 were exercised on one machine. V19 needs two physical\n"
+              "computers and is not passed by this package.\n"
+              "\n"
+              "SHA256SUMS in this folder was hashed again after the builder\n"
+              "wrote SHA256SUMS.json. A different byte string from an earlier\n"
+              "local DMG is expected unless the two files actually match.\n"
+              "Q06 accepted=false. G6 and G7 are not accepted here.\n",
+              encoding="utf-8",
+          )
+          print("MACOS_RC_PUBLISH_TREE_PASS")
+          PY
+
+      - name: Upload the DMG, app zip, checksums, and README
+        uses: actions/upload-artifact@v4
+        with:
+          name: WAM-Fusion-REGTEST-macos-arm64-56ea36186bf5a3410c75dda63b885f084de83610
+          path: macos-rc-publish/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
