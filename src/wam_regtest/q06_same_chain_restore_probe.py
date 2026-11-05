@@ -38,11 +38,22 @@ def qualify(core, source, parent, adapter):
     def step(name):
         report['stage'] = name
         print('Q06_SAME_CHAIN_RESTORE_STAGE=' + name, flush=True)
+    class ObservedBackend(Bip39ReadOnlyBackend):
+        def execute(self, action, args, kwargs):
+            try:return super().execute(action,args,kwargs)
+            except Exception as error:
+                # Public type/errno only: never exception strings, args,
+                # mnemonic, credentials, chain records or signed payloads.
+                report['backend_failure']={'action':action,
+                    'type':type(error).__name__,
+                    'errno':error.errno if isinstance(error,OSError) else None}
+                print('Q06_SAME_CHAIN_BACKEND_FAILURE='+json.dumps(report['backend_failure']),flush=True)
+                raise
     def start(index, mode, mnemonic='', existing_root=None):
         root = existing_root or lab / ('wam-fusion-core-' + secrets.token_hex(8))
         options = ({'_anchor_factory':adapter.make_anchor} if mode != 'reopen' else
                    {'keychain':adapter.reopen_anchor(root) if adapter.platform_id=='macos-arm64' else None})
-        worker = WalletExecutor(lambda:Bip39ReadOnlyBackend(
+        worker = WalletExecutor(lambda:ObservedBackend(
             root,core,source,shared_profile=profiles[index],**options))
         workers.append(worker)
         opened = worker.request('open',password,mode,mnemonic,timeout=120)
