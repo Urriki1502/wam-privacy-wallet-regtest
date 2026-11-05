@@ -192,6 +192,64 @@ class ApprovalWorkerOrdering(unittest.TestCase):
             window.deleteLater()
             app.processEvents()
 
+    def test_post_broadcast_snapshot_does_not_clear_pending_txid(self):
+        from PySide6.QtWidgets import QApplication
+        from wam_regtest.bip39_owner_gui import Bip39TrialWindow
+        from wam_regtest.wallet_executor import ExecutorState, immutable
+        app = QApplication.instance() or QApplication([])
+        txid = "c" * 64
+        class Owner:
+            state=ExecutorState(locked=False,core_alive=True)
+            busy=False
+            closed=False
+        window=Bip39TrialWindow(Owner())
+        try:
+            window._ready=window._spend_enabled=window._signed_ready=True
+            window._pending_confirm_txid=txid
+            window.last_txid.setText(txid)
+            window._on_ready("snapshot", immutable({
+                "signer_allowed": True, "broadcast_allowed": True,
+                "mainnet_allowed": False, "receive_code": "wamrtsp1public",
+                "confirmed_atoms": 1, "available_atoms": 0, "height": 102,
+                "tip": "a"*64, "history": ({"txid":"b"*64,"height":102,"atoms":1},),
+                "reservation_count": 1, "payment_review": None,
+                "payment_signed": False, "pending_confirm_txid": None,
+            }))
+            self.assertEqual(window._pending_confirm_txid, txid)
+            self.assertEqual(window.last_txid.text(), txid)
+        finally:
+            window._poll.stop()
+            window.hide()
+            window.deleteLater()
+            app.processEvents()
+
+    def test_fusion_inspect_result_accepts_executor_frozen_mapping(self):
+        from PySide6.QtWidgets import QApplication
+        from wam_regtest.bip39_fusion_gui import Bip39FusionWindow
+        from wam_regtest.wallet_executor import ExecutorState, immutable
+        app = QApplication.instance() or QApplication([])
+        txid = "d" * 64
+        class Owner:
+            state=ExecutorState(locked=False,core_alive=True)
+            busy=False
+            closed=False
+        window=Bip39FusionWindow(Owner())
+        try:
+            window._on_ready("inspect_confirmed", immutable({
+                "status": "Q06_TX_NOT_IN_CONFIRMED_HISTORY",
+                "txid": txid, "height": 102, "in_mempool": True,
+                "complete_anchored_history": True, "write_attempted": False,
+                "signer_allowed": False, "broadcast_allowed": False,
+                "mainnet_allowed": False,
+            }))
+            self.assertIn("pending in this Core mempool", window.send_result.text())
+            self.assertTrue(window._broadcast_complete)
+        finally:
+            window._poll.stop()
+            window.hide()
+            window.deleteLater()
+            app.processEvents()
+
 
 if __name__=="__main__":
     unittest.main()

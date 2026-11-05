@@ -261,14 +261,17 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
         session.snapshot=lambda:SimpleNamespace(height=108,tip="a"*64)
         methods=[]
         mempool=[]
-        def rpc_call(method):
-            methods.append(method)
+        def rpc_call(method,params=None):
+            methods.append(('call',method))
             if method=="getbestblockhash":
                 return "a"*64
-            if method=="getrawmempool":
+            raise AssertionError(method)
+        def rpc_raw(method,args):
+            methods.append(('_call',method,tuple(args)))
+            if method=="getrawmempool" and list(args)==[]:
                 return list(mempool)
             raise AssertionError(method)
-        session._rpc=lambda:SimpleNamespace(call=rpc_call)
+        session._rpc=lambda:SimpleNamespace(call=rpc_call,_call=rpc_raw)
         count=db.total_changes
         found=session.inspect_confirmed(old)
         self.assertEqual(found["status"],"Q06_CONFIRMED_IN_VERIFIED_HISTORY")
@@ -284,9 +287,9 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
         self.assertTrue(pending["in_mempool"])
         self.assertEqual(db.total_changes,count)
         self.assertEqual(methods,[
-            "getbestblockhash","getrawmempool",
-            "getbestblockhash","getrawmempool",
-            "getbestblockhash","getrawmempool"])
+            ("call","getbestblockhash"),("_call","getrawmempool",()),
+            ("call","getbestblockhash"),("_call","getrawmempool",()),
+            ("call","getbestblockhash"),("_call","getrawmempool",())])
         with self.assertRaises(Q06SpendSessionError):
             session.inspect_confirmed("mainnet")
         session._q06_uncertain=True

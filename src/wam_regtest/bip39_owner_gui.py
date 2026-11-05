@@ -556,7 +556,12 @@ class Bip39TrialWindow(QWidget):
                 review = result['payment_review']
                 self._approved_commitment = review.commitment if review is not None else None
                 self._signed_ready = result.get('payment_signed') is True
-                self._pending_confirm_txid = result.get('pending_confirm_txid')
+                pending = result.get('pending_confirm_txid')
+                # A post-broadcast snapshot must not erase the GUI's exact TXID
+                # when the session has not yet published pending_confirm_txid.
+                # Confirm/lock still clear this field explicitly.
+                if pending is not None:
+                    self._pending_confirm_txid = pending
                 if hasattr(self, '_last_review'):
                     self._last_review = review
             self.receive.setText(result["receive_code"])

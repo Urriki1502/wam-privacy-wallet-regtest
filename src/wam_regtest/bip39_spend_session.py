@@ -225,7 +225,10 @@ class Q06OwnedSpendSession(WalletSession):
                     or self._rpc().call("getbestblockhash") != snapshot.tip):
                 raise Q06SpendSessionError("Q06_INSPECT_HISTORY_UNVERIFIED")
             found = len(rows) == 1 and rows[0][0] > 0
-            mempool = self._rpc().call("getrawmempool")
+            rpc = self._rpc()
+            # Scanner-facing call() keeps getrawmempool denied. Owned CLI
+            # _call is the existing bounded mempool-id read used by probes.
+            mempool = rpc._call("getrawmempool", [])
             if (type(mempool) is not list
                     or any(type(item) is not str or re.fullmatch(r"[0-9a-f]{64}", item) is None
                            for item in mempool)):

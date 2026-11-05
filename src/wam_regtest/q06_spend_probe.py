@@ -76,6 +76,7 @@ def qualify(core, source):
         while not predicate():
             app.processEvents()
             if (window is not None and idle() and window._last_error_code is not None):
+                data['gui_denied'] = window._last_error_code
                 raise ValueError('Q06_GUI_DENIED_' + label)
             if time.monotonic() >= deadline:
                 raise ValueError('Q06_GUI_WAIT_' + label)

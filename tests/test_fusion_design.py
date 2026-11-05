@@ -145,6 +145,14 @@ class FusionDesignContracts(unittest.TestCase):
         self.assertTrue(submitted.startswith("Submitted to this Core."))
         self.assertIn("Do not retry", submitted)
         self.assertIn("uncertain", describe_broadcast_result("not-a-txid").lower())
+        from wam_regtest.wallet_executor import immutable
+        frozen = immutable({
+            "status": "Q06_TX_NOT_IN_CONFIRMED_HISTORY",
+            "in_mempool": True,
+            "txid": txid,
+        })
+        self.assertNotEqual(type(frozen), dict)
+        self.assertIn("pending in this Core mempool", describe_broadcast_result(txid, frozen))
 
     def test_unverified_snapshot_cannot_drive_balance_history(self):
         for synthetic, mainnet in ((True, False), (False, True)):

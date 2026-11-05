@@ -190,8 +190,8 @@ def describe_broadcast_result(txid, inspect=None):
     if type(txid) is not str or re.fullmatch(r'[0-9a-f]{64}', txid) is None:
         return ('Broadcast outcome is uncertain. Reservations are retained. '
                 'Do not retry automatically.')
-    status = inspect.get('status') if type(inspect) is dict else None
-    mempool = inspect.get('in_mempool') if type(inspect) is dict else None
+    status = inspect.get('status') if isinstance(inspect, dict) else None
+    mempool = inspect.get('in_mempool') if isinstance(inspect, dict) else None
     if status == 'Q06_CONFIRMED_IN_VERIFIED_HISTORY':
         return 'Confirmed on this REGTEST chain.\n' + txid
     if mempool is True:

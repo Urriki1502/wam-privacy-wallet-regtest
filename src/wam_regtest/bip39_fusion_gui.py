@@ -896,12 +896,13 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 self.send_result.setText(describe_broadcast_result(None))
                 self._broadcast_complete = False
         if action == "inspect_confirmed":
-            txid = result.get("txid") if type(result) is dict else None
-            self.send_result.setText(describe_broadcast_result(txid, result))
-            if type(result) is dict and result.get("status") == "Q06_CONFIRMED_IN_VERIFIED_HISTORY":
+            facts = result if isinstance(result, dict) else None
+            txid = facts.get("txid") if facts is not None else None
+            self.send_result.setText(describe_broadcast_result(txid, facts))
+            if facts is not None and facts.get("status") == "Q06_CONFIRMED_IN_VERIFIED_HISTORY":
                 self._broadcast_complete = True
                 self.payment_steps.set_stage(4)
-            elif type(result) is dict and result.get("in_mempool") is True:
+            elif facts is not None and facts.get("in_mempool") is True:
                 self._broadcast_complete = True
                 self.payment_steps.set_stage(4)
         if action == "sign":
