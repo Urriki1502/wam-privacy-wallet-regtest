@@ -63,6 +63,7 @@ def qualify(core, source, root, receipt, *, confirmed=False,
     window = None
     good = False
     phrase = None
+    approval_failure = []
     def step(name):
         nonlocal stage
         stage = name
@@ -77,6 +78,8 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         deadline = time.monotonic() + 240
         while not predicate():
             app.processEvents()
+            if approval_failure:
+                raise Q06PlatformQualificationError(approval_failure[0])
             if window._last_error_code:
                 raise Q06PlatformQualificationError("Q06_PLATFORM_GUI_OPERATION_DENIED")
             if time.monotonic() >= deadline:
@@ -94,9 +97,19 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         def consent():
             for dialog in app.allWidgets():
                 if isinstance(dialog, PaymentApproval) and dialog.isVisible():
-                    if (dialog.windowModality() != Qt.WindowModality.ApplicationModal
-                            or not dialog.cancel.isDefault() or dialog.approve.isDefault()):
-                        raise Q06PlatformQualificationError("Q06_PLATFORM_PAYMENT_APPROVAL_DENIED")
+                    # QDialog.open() intentionally switches the visible
+                    # dialog to WindowModal; constructor ApplicationModal is
+                    # checked separately by source widget contracts.
+                    record['visible_payment_approval'] = {
+                        'modality':dialog.windowModality().name,
+                        'modal':dialog.isModal(),'cancel_default':dialog.cancel.isDefault(),
+                        'approve_default':dialog.approve.isDefault()}
+                    if (dialog.windowModality() != Qt.WindowModality.WindowModal
+                            or not dialog.isModal() or not dialog.cancel.isDefault()
+                            or dialog.approve.isDefault()):
+                        approval_failure.append("Q06_PLATFORM_PAYMENT_APPROVAL_DENIED")
+                        timer.stop()
+                        return
                     if duplicate and caption == "Approve Sign":
                         # Deliver repeated clicks to the same visible native
                         # approval. The real executor below must see one sign.
@@ -362,6 +375,14 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         if not restored_executor.join(15) or not restored_executor.closed:
             raise Q06PlatformQualificationError("Q06_PLATFORM_RESTORE_OWNER_STILL_LIVE")
         record["fresh_profile_seed_identity_restored"] = True
+        step("FRESH_PROFILE_SAME_CHAIN_HISTORY_RESTORE")
+        from .q06_same_chain_restore_probe import qualify as restore_same_chain
+        restored_history = restore_same_chain(core,source,root.parent,adapter)
+        record["fresh_profile_same_chain_history"] = restored_history
+        if (restored_history['status']!='FRESH_PROFILE_SAME_CHAIN_HISTORY_RESTORE_PASS'
+                or restored_history['all_original_owners_shutdown_verified'] is not True):
+            raise Q06PlatformQualificationError("Q06_PLATFORM_FRESH_SAME_CHAIN_RESTORE_DENIED")
+        record["fresh_same_chain_profile_full_history_recovered"] = True
         good = True
         record["status"] = "Q06_NATIVE_FROZEN_REAL_CORE_PASS"
         record["failure_stage"] = None

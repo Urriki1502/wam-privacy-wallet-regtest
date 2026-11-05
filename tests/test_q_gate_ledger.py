@@ -230,14 +230,17 @@ class SequentialQGateContracts(unittest.TestCase):
         self.assertEqual(q06['coverage_total'],24)
         self.assertEqual(len(q06['cases']),24)
         counts={state:sum(c['status']==state for c in q06['cases'])
-                for state in ('PASS','PENDING','BLOCKED')}
-        self.assertEqual(counts,{'PASS':15,'PENDING':4,'BLOCKED':5})
+                for state in ('PASS','PENDING','BLOCKED','STALE')}
+        self.assertEqual(counts,{'PASS':0,'PENDING':4,'BLOCKED':5,'STALE':15})
         self.assertFalse(q06['accepted'])
         self.assertEqual(q06['engineering_status'],'ACTIVE_TECHNICAL_GAPS')
         self.assertEqual({q06['gates'][g]['status'] for g in ('G6','G7')},{'BLOCKED'})
-        self.assertEqual(q06['gates']['G4']['status'],'PASS')
+        self.assertEqual(q06['gates']['G4']['status'],'STALE')
+        self.assertEqual(q06['core_migration']['target_version'],'v0.1.13')
+        self.assertEqual(q06['candidate_pr'],141)
         for c in q06['cases']:
-            if c['status']=='PASS':
+            if c['status']=='STALE':
+                self.assertIn('v0.1.13',c['stale_reason'])
                 self.assertTrue(c['acceptance_evidence'])
                 self.assertTrue(all(e['source_sha']=='336834198ce6fc648011218ffdea3a32512dcafb'
                     and e['checkout_sha']=='336834198ce6fc648011218ffdea3a32512dcafb'
@@ -338,3 +341,34 @@ class SequentialQGateContracts(unittest.TestCase):
 
 if __name__=='__main__':
     unittest.main()
+
+
+class OfficialV013EvidencePolicy(unittest.TestCase):
+    """Metadata fixtures only; never an actual Core/acceptance receipt."""
+    def evidence(self, platform='windows-x64'):
+        from wam_regtest.official_core_v013 import MEMBERS, ARCHIVES
+        from wam_regtest.release import FINGERPRINT
+        from wam_regtest.linux_official_core import MANIFEST_SHA256
+        return {'core_version':'v0.1.13','platform':platform,
+            'core_sha256':copy.deepcopy(MEMBERS[platform]),
+            'archive_sha256':ARCHIVES[platform][2],'signed_archive_verified':True,
+            'publisher_fingerprint':FINGERPRINT,'core_trust':'official-signed-v0.1.13',
+            'candidate_pr_url':'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/141',
+            'approved_core_manifest_sha256':MANIFEST_SHA256,'native_root_witness':True}
+
+    def test_v013_is_scoped_to_q06_with_exact_archive_signer_and_members(self):
+        from wam_regtest.q_gate import _core_evidence_version
+        good=self.evidence()
+        self.assertTrue(_core_evidence_version({'id':'Q06'},good))
+        self.assertFalse(_core_evidence_version({'id':'Q05'},good))
+        for field in ('core_sha256','archive_sha256','publisher_fingerprint','signed_archive_verified','candidate_pr_url','core_trust','core_version'):
+            bad=copy.deepcopy(good);bad[field]='untrusted'
+            self.assertFalse(_core_evidence_version({'id':'Q06'},bad),field)
+
+    def test_linux_signed_core_still_requires_the_reviewed_loader_and_root_witness(self):
+        from wam_regtest.q_gate import _core_evidence_version
+        good=self.evidence('linux-x86_64')
+        self.assertTrue(_core_evidence_version({'id':'Q06'},good))
+        for field in ('approved_core_manifest_sha256','native_root_witness'):
+            bad=copy.deepcopy(good);bad.pop(field)
+            self.assertFalse(_core_evidence_version({'id':'Q06'},bad))

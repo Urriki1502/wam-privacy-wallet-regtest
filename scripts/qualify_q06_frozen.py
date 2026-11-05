@@ -79,6 +79,7 @@ def main():
             "txid_readonly":data.get("post_reopen_txid_verified") is True,
             "no_fictional_history":data.get("fresh_chain_full_history_recovered") is False,
             "fresh_profile_identity":data.get("fresh_profile_seed_identity_restored") is True,
+            "fresh_same_chain_history":data.get("fresh_same_chain_profile_full_history_recovered") is True,
             "native_gui":data.get("native_gui_checked") is (not a.headless),
             "frozen_binary_sha256":data.get("frozen_executable_sha256")==sha256(exe.read_bytes()).hexdigest(),
         }

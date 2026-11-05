@@ -184,6 +184,17 @@ jobs:
               "Q06 accepted=false. G6 and G7 are not accepted here.\n",
               encoding="utf-8",
           )
+          # Publish bounded public receipts as well as the payloads. No
+          # profiles, encrypted vaults, cookies or test keychains are copied.
+          import shutil
+          for path in out.iterdir():
+              if path.is_file() and not path.is_symlink() and path.suffix == '.json':
+                  if path.stat().st_size > 8 * 1024 * 1024:
+                      raise SystemExit("MACOS_PUBLIC_RECEIPT_SIZE_DENIED")
+                  if path.name != 'SHA256SUMS.json':
+                      shutil.copyfile(path, publish / path.name)
+          from wam_regtest.release_candidate import write_portable_sha256sums
+          write_portable_sha256sums(publish)
           print("MACOS_RC_PUBLISH_TREE_PASS")
           PY
 

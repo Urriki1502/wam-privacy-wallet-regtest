@@ -211,6 +211,7 @@ else:
                 and data["q06_bip39_spend_confirmed"] is True
                 and data["q06_bip39_same_owner_reopen_reserved"] is True
                 and data["q06_bip39_same_chain_seed_history_recovery"] is True
+                and data["fresh_same_chain_profile_full_history_recovered"] is True
                 and data["q06_post_reopen_txid_readonly_reconciliation"] is True
                 and data["q06_bip39_fresh_mnemonic_full_history_recovery"] is False)
         shutil.copyfile(report, 'package-output/q06-frozen-spend-evidence.json')
