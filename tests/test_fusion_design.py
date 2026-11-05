@@ -1,8 +1,12 @@
 """WAM Fusion UI presentation contracts; never substitute for live-Core E2E."""
 import unittest
 
+from dataclasses import replace
+
 from wam_regtest.fusion_pages import describe_broadcast_result
-from wam_regtest.fusion_ui import activity_by_block, fusion_palette, fusion_stylesheet
+from wam_regtest.fusion_ui import (
+    activity_by_block, confirmed_balance_history, fusion_palette, fusion_stylesheet,
+)
 from wam_regtest.wallet_read import HistoryRow, WalletReadSnapshot
 
 
@@ -45,6 +49,7 @@ class FusionDesignContracts(unittest.TestCase):
             self.assertIn("FusionPrimary", fusion_stylesheet(mode))
             self.assertIn("FusionActivityTable", fusion_stylesheet(mode))
             self.assertIn("FusionSegmented", fusion_stylesheet(mode))
+            self.assertIn("FusionThemeThumb", fusion_stylesheet(mode))
         # One consistent action color family; WAM brand gold is not reused as
         # a focus/button tint. No dependence on deprecated 2026 Q05 hex values.
         self.assertEqual(dark["accent"], "#E0C36A")
@@ -60,6 +65,37 @@ class FusionDesignContracts(unittest.TestCase):
 
     def test_missing_snapshot_has_no_synthetic_plot(self):
         self.assertEqual(activity_by_block(None), ())
+        self.assertEqual(confirmed_balance_history(None), ())
+
+    def test_incomplete_or_inconsistent_history_does_not_invent_balance_series(self):
+        snap = verified_snapshot()
+        self.assertEqual(confirmed_balance_history(snap), ())
+        incomplete = replace(snap, history_complete=False, confirmed_atoms=129000000)
+        self.assertEqual(confirmed_balance_history(incomplete), ())
+        paged = replace(snap, history_offset=250, confirmed_atoms=129000000)
+        self.assertEqual(confirmed_balance_history(paged), ())
+        empty_nonzero = replace(snap, history=(), history_complete=True, confirmed_atoms=1)
+        self.assertEqual(confirmed_balance_history(empty_nonzero), ())
+
+    def test_complete_history_reconstructs_exact_confirmed_balance_points(self):
+        snap = replace(
+            verified_snapshot(),
+            confirmed_atoms=150000000,
+            height=110,
+            history=(
+                HistoryRow("b"*64, 108, 3, 200000000, 0),
+                HistoryRow("c"*64, 110, 1, 0, 50000000),
+            ),
+            history_complete=True,
+            history_offset=0,
+        )
+        self.assertEqual(confirmed_balance_history(snap), (
+            (107, 0),
+            (108, 200000000),
+            (110, 150000000),
+        ))
+        zero = replace(snap, history=(), confirmed_atoms=0, height=3)
+        self.assertEqual(confirmed_balance_history(zero), ((3, 0),))
 
     def test_confirmed_credit_debit_by_real_block_only(self):
         self.assertEqual(activity_by_block(verified_snapshot()), (
@@ -109,6 +145,71 @@ class FusionDesignContracts(unittest.TestCase):
         self.assertTrue(submitted.startswith("Submitted to this Core."))
         self.assertIn("Do not retry", submitted)
         self.assertIn("uncertain", describe_broadcast_result("not-a-txid").lower())
+
+    def test_unverified_snapshot_cannot_drive_balance_history(self):
+        for synthetic, mainnet in ((True, False), (False, True)):
+            with self.subTest(synthetic=synthetic, mainnet=mainnet), self.assertRaisesRegex(
+                ValueError, "^FUSION_HISTORY_UNVERIFIED_DENIED$"
+            ):
+                confirmed_balance_history(verified_snapshot(synthetic=synthetic, mainnet=mainnet))
+
+
+class FusionV2PresentationWidgets(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from wam_regtest.desktop import qt_application
+        cls.app = qt_application()
+
+    def test_overview_uses_verified_series_or_honest_empty_chart(self):
+        from wam_regtest.fusion_ui import FusionOverview
+        page = FusionOverview()
+        self.addCleanup(page.deleteLater)
+        page.render_snapshot(verified_snapshot())
+        self.assertEqual(page.balance_chart._points, ())
+        self.assertTrue(page.balance_value.text().endswith(" WAM"))
+        self.assertGreaterEqual(page.balance_value.font().pointSize(), 0)
+        rails = (page.open_backup, page.open_recovery, page.quick_lock, page.open_network)
+        self.assertTrue(all(b.objectName() == "FusionQuick" for b in rails))
+        page.render_snapshot(None, locked=True)
+        self.assertEqual(page.balance_value.text(), "—")
+        consistent = replace(
+            verified_snapshot(),
+            confirmed_atoms=150000000,
+            height=110,
+            history=(
+                HistoryRow("b"*64, 108, 3, 200000000, 0),
+                HistoryRow("c"*64, 110, 1, 0, 50000000),
+            ),
+        )
+        page.render_snapshot(consistent)
+        self.assertEqual(page.balance_chart._points, (
+            (107, 0), (108, 200000000), (110, 150000000),
+        ))
+        page.render_snapshot(
+            consistent, available_atoms=100000000, reservation_count=1)
+        self.assertIn("Spendable", page.fund_details.text())
+        self.assertIn("reserved", page.fund_details.text())
+
+    def test_theme_slider_three_positions_keyboard_and_no_binary_collapse(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        from wam_regtest.fusion_ui import ThemeSlider
+        slider = ThemeSlider()
+        self.addCleanup(slider.deleteLater)
+        slider.show()
+        self.app.processEvents()
+        self.assertEqual([b.toolTip() for b in slider.buttons],
+                         ["Automatic", "Light", "Dark"])
+        slider.setCurrentIndex(2, animate=False)
+        self.assertTrue(slider.buttons[2].isChecked())
+        self.assertFalse(slider.buttons[0].isChecked())
+        slider.setFocus()
+        QTest.keyClick(slider, Qt.Key.Key_Left)
+        self.assertEqual(slider.currentIndex(), 1)
+        QTest.keyClick(slider, Qt.Key.Key_Home)
+        self.assertEqual(slider.currentIndex(), 0)
+        QTest.keyClick(slider, Qt.Key.Key_End)
+        self.assertEqual(slider.currentIndex(), 2)
 
 
 if __name__ == "__main__":

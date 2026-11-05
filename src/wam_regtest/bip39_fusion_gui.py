@@ -7,12 +7,12 @@ not a painted mockup or a separate demo account.
 """
 import os
 import re
-from PySide6.QtCore import Qt, QSize, QEasingCurve, QPropertyAnimation
+from PySide6.QtCore import Qt, QSize, QSettings
 from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QFrame, QLabel, QLineEdit,
     QListWidget, QStackedWidget, QMessageBox, QDialog, QToolButton,
-    QButtonGroup, QGraphicsOpacityEffect, QCheckBox, QApplication, QSizePolicy,
+    QCheckBox, QApplication, QSizePolicy,
 )
 
 from .bip39_owner_gui import Bip39TrialWindow
@@ -22,8 +22,9 @@ from .gui_errors import operation_error
 from .fusion_ui import (
     FusionOverview, fusion_stylesheet, fusion_palette, page, panel,
     label, ResponsiveRow, vector_icon, nav_icon_for, FUSION_NAV_PAGES,
-    StateSwitch, action,
+    StateSwitch, action, ThemeSlider,
 )
+from .fusion_motion import fade_widget, PressFeedback, PAGE_MS
 from .fusion_pages import ReceivePage, HistoryPage, PaymentSteps, PaymentApproval, WalletConsent, NetworkPage, describe_broadcast_result
 from .bip39_backup_page import Bip39BackupPage
 from .wallet_read import WalletReadSnapshot, format_wam
@@ -146,6 +147,15 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.sync.setToolTip("Verify the latest state with your owned WAM Core")
         self.sync.setAccessibleName("Refresh verified blockchain state")
         top.addWidget(self.sync)
+        divider = QFrame()
+        divider.setFrameShape(QFrame.Shape.VLine)
+        divider.setFixedWidth(1)
+        divider.setStyleSheet("color: palette(mid);")
+        top.addWidget(divider)
+        top.addWidget(label("Theme", "FusionMuted"))
+        self.header_theme = ThemeSlider(compact=True)
+        self.header_theme.setAccessibleName("Compact appearance selector")
+        top.addWidget(self.header_theme)
         content.addWidget(topbar)
 
         self.stack = QStackedWidget()
@@ -283,29 +293,17 @@ class Bip39FusionWindow(Bip39TrialWindow):
         )
         appearance, appearance_layout = panel(
             "Appearance",
-            "Auto follows your Mac's appearance schedule. Choose a fixed theme if preferred.")
-        self.appearance_group = QButtonGroup(self)
-        self.appearance_group.setExclusive(True)
-        self.appearance_buttons = []
-        segments = QFrame()
-        segments.setObjectName("FusionSegmented")
-        segment_layout = QHBoxLayout(segments)
-        segment_layout.setContentsMargins(4, 4, 4, 4)
-        segment_layout.setSpacing(4)
-        for n, title in enumerate(("Automatic", "Light", "Dark")):
-            button = QToolButton()
-            button.setObjectName("FusionSegment")
-            button.setText(title)
-            button.setCheckable(True)
-            button.setCursor(Qt.CursorShape.PointingHandCursor)
-            self.appearance_group.addButton(button, n)
-            self.appearance_buttons.append(button)
-            segment_layout.addWidget(button, 1)
-        self.appearance_buttons[0].setChecked(True)
-        self.appearance_group.idClicked.connect(self._apply_fusion_theme)
-        appearance_layout.addWidget(segments)
+            "Automatic follows macOS appearance. Light and Dark apply immediately.")
+        self.settings_theme = ThemeSlider(compact=False)
+        appearance_layout.addWidget(self.settings_theme, 0, Qt.AlignmentFlag.AlignLeft)
+        self.appearance_group = self.header_theme.group
+        self.appearance_buttons = self.header_theme.buttons
         self.reduce_motion = QCheckBox("Reduce interface motion")
-        self.reduce_motion.setChecked(os.environ.get("QT_REDUCE_MOTION") == "1")
+        stored = QSettings("WAM Privacy Wallet", "REGTEST")
+        self.reduce_motion.setChecked(
+            os.environ.get("QT_REDUCE_MOTION") == "1"
+            or stored.value("fusion_reduce_motion", False, type=bool))
+        self.reduce_motion.toggled.connect(self._set_reduce_motion)
         appearance_layout.addWidget(self.reduce_motion)
         settings_layout.addWidget(appearance)
 
@@ -382,6 +380,15 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
         self._transition = None
         self._advanced_transition = None
+        self._press_feedback = PressFeedback(self)
+        self._theme_sync = False
+        self.header_theme.currentChanged.connect(self._theme_chosen)
+        self.settings_theme.currentChanged.connect(self._theme_chosen)
+        saved = QSettings("WAM Privacy Wallet", "REGTEST").value("fusion_appearance", 0, type=int)
+        if saved in (0, 1, 2):
+            self.header_theme.setCurrentIndex(saved, animate=False)
+            self.settings_theme.setCurrentIndex(saved, animate=False)
+        self._set_reduce_motion(self.reduce_motion.isChecked())
         self.navigation.currentRowChanged.connect(self._navigate)
         self.navigation.setCurrentRow(0)
         self.overview.go_receive.clicked.connect(
@@ -406,6 +413,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self._last_network = None
         self._broadcast_complete = False
         self._apply_fusion_theme()
+        self._press_feedback.attach(self)
         self.overview.render_snapshot(
             None, locked=True, network=self._network_view(None),
             faulted=self.executor.state.faulted)
@@ -414,13 +422,32 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 self._native_theme_changed)
         self._set_actions()
 
+    def _set_reduce_motion(self, checked):
+        self.setProperty("fusion_reduce_motion", bool(checked))
+        QSettings("WAM Privacy Wallet", "REGTEST").setValue("fusion_reduce_motion", bool(checked))
+        self.style().unpolish(self)
+        self.style().polish(self)
+
+    def _theme_chosen(self, index):
+        if index not in (0, 1, 2) or self._theme_sync:
+            return
+        self._theme_sync = True
+        try:
+            for slider in (self.header_theme, self.settings_theme):
+                if slider.currentIndex() != index:
+                    slider.setCurrentIndex(index, animate=slider is not self.sender())
+            QSettings("WAM Privacy Wallet", "REGTEST").setValue("fusion_appearance", index)
+            self._apply_fusion_theme()
+        finally:
+            self._theme_sync = False
+
     def _native_theme_changed(self, *_):
-        if self.appearance_group.checkedId() == 0:
+        if self.header_theme.currentIndex() == 0:
             self._apply_fusion_theme()
 
     def _apply_fusion_theme(self, *_):
         from datetime import datetime
-        selection = self.appearance_group.checkedId()
+        selection = self.header_theme.currentIndex()
         if selection == 0:
             # Match macOS System Appearance, not an assumed day/night hour.
             scheme = QApplication.styleHints().colorScheme()
@@ -445,10 +472,13 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 tone = colors["onaccent"] if button.objectName() == "FusionPrimary" else colors["accent"]
                 button.setIcon(vector_icon(icon, tone, max(1, self.devicePixelRatioF())))
         from PySide6.QtWidgets import QToolButton, QLabel
+        dpr = max(1, self.devicePixelRatioF())
         for button in self.findChildren(QToolButton):
             icon = button.property("fusion_icon")
             if icon:
-                button.setIcon(vector_icon(icon, colors["accent"], max(1, self.devicePixelRatioF())))
+                on_thumb = (button.objectName() == "FusionSegment" and button.isChecked())
+                button.setIcon(vector_icon(
+                    icon, colors["onaccent"] if on_thumb else colors["accent"], dpr))
         for icon_label in self.findChildren(QLabel):
             name = icon_label.property("fusion_icon_label")
             if name:
@@ -465,46 +495,21 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.page_title.setText(FUSION_NAV_PAGES[index][0])
         self.stack.setCurrentIndex(index)
         self._apply_fusion_theme()
-        if (self.reduce_motion.isChecked()
-                or os.environ.get("GITHUB_ACTIONS") == "true"):
-            return
-        # Short, non-blocking, presentation-only transition. Never run Core
-        # operations or change wallet state in the animation callback.
         if self._transition is not None:
             self._transition.stop()
-        for page_index in range(self.stack.count()):
-            widget = self.stack.widget(page_index)
-            if widget.graphicsEffect() is not None:
-                widget.setGraphicsEffect(None)
-        current = self.stack.currentWidget()
-        effect = QGraphicsOpacityEffect(current)
-        current.setGraphicsEffect(effect)
-        effect.setOpacity(0.82)
-        self._transition = QPropertyAnimation(effect, b"opacity", self)
-        self._transition.setDuration(150)
-        self._transition.setStartValue(0.82)
-        self._transition.setEndValue(1.0)
-        self._transition.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self._transition.finished.connect(
-            lambda widget=current: widget.setGraphicsEffect(None))
-        self._transition.start()
+            self._transition = None
+        self._transition = fade_widget(
+            self.stack.currentWidget(), start=0.86, end=1.0, duration=PAGE_MS, parent=self)
 
     def _toggle_advanced(self, expanded):
         self.advanced_toggle.setText(
             "Hide developer controls  ▴" if expanded
             else "Show developer controls  ▾")
         self.advanced_container.setVisible(expanded)
-        if (not expanded or self.reduce_motion.isChecked()
-                or os.environ.get("GITHUB_ACTIONS") == "true"):
+        if not expanded:
             return
-        effect = QGraphicsOpacityEffect(self.advanced_container)
-        self.advanced_container.setGraphicsEffect(effect)
-        self._advanced_transition = QPropertyAnimation(effect, b"opacity", self)
-        self._advanced_transition.setDuration(170)
-        self._advanced_transition.setStartValue(0.5)
-        self._advanced_transition.setEndValue(1.0)
-        self._advanced_transition.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self._advanced_transition.start()
+        self._advanced_transition = fade_widget(
+            self.advanced_container, start=0.5, end=1.0, duration=180, parent=self)
 
     def _select_transaction(self, txid):
         self.navigation.setCurrentRow(2)
@@ -575,7 +580,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 self.overview.lock_details.setText(
                     'Wallet is ready for transactions.' if unlocked
                     else 'Unlock requires the original wallet password.')
-                self.overview.quick_lock.setText('Lock wallet' if unlocked else 'Unlock wallet')
+                self.overview.quick_lock.setText('Lock Wallet' if unlocked else 'Unlock Wallet')
                 self.overview.quick_lock.setEnabled(idle and not self._quit_requested
                     and (self.lock.isEnabled() or self.unlock.isEnabled()))
             self.overview.go_send.setEnabled(ready and idle and self._spend_enabled
@@ -761,7 +766,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
             return
         try:
             self.overview.render_snapshot(
-                snap, operational=True, network=self._network_view(snap))
+                snap, operational=True, network=self._network_view(snap),
+                available_atoms=result.get("available_atoms"),
+                reservation_count=result.get("reservation_count"))
             self.receive_page.render_snapshot(snap)
             self.history_page.render_snapshot(snap)
             self._render_network(snap)

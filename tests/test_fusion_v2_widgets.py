@@ -126,6 +126,28 @@ class FusionV2Widgets(unittest.TestCase):
     for surface in ('bg','surface','panel'):
      values=sorted((luminance(colors[text]),luminance(colors[surface])))
      self.assertGreaterEqual((values[1]+.05)/(values[0]+.05),4.5,(mode,text,surface))
+ def test_overview_hero_chart_uses_complete_history_or_empty_state(self):
+  from wam_regtest.fusion_ui import FusionOverview, confirmed_balance_history
+  page=FusionOverview();self.addCleanup(page.deleteLater)
+  page.render_snapshot(fixture())
+  self.assertEqual(page.balance_chart._points, confirmed_balance_history(fixture()))
+  self.assertTrue(page.balance_value.text().endswith(' WAM'))
+  self.assertTrue(page.open_backup.isVisible() or page.open_backup.parent() is not None)
+  page.render_snapshot(None, locked=True)
+  self.assertEqual(page.balance_chart._points, ())
+  self.assertEqual(page.balance_value.text(), '—')
+ def test_theme_slider_has_three_states_and_keyboard_selection(self):
+  from PySide6.QtTest import QTest
+  from wam_regtest.fusion_ui import ThemeSlider
+  slider=ThemeSlider();self.addCleanup(slider.deleteLater);slider.show();self.app.processEvents()
+  self.assertEqual(len(slider.buttons), 3)
+  self.assertEqual(slider.currentIndex(), 0)
+  slider.setCurrentIndex(2, animate=False)
+  self.assertTrue(slider.buttons[2].isChecked())
+  slider.setFocus();QTest.keyClick(slider, Qt.Key.Key_Left)
+  self.assertEqual(slider.currentIndex(), 1)
+  QTest.keyClick(slider, Qt.Key.Key_Home)
+  self.assertEqual(slider.currentIndex(), 0)
  def test_presentation_has_no_signer_or_rpc_authority(self):
   source=Path(__file__).resolve().parents[1]/'src/wam_regtest'
   for name in ('fusion_ui.py','fusion_pages.py'):

@@ -1,7 +1,7 @@
 """Fusion Black & Gold Qt presentation: verified snapshots, never wallet authority."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QRectF, QPointF, QSize, Signal
+from PySide6.QtCore import Qt, QRectF, QPointF, QSize, Signal, Property, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import (
     QColor, QPainter, QPen, QIcon, QPixmap, QPolygonF, QLinearGradient,
     QPainterPath, QFont, QFontMetrics, QRadialGradient,
@@ -9,13 +9,14 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
     QVBoxLayout, QWidget, QToolTip, QSizePolicy, QTableWidget, QTableWidgetItem,
-    QPlainTextEdit, QCheckBox, QToolButton,
+    QPlainTextEdit, QCheckBox, QToolButton, QButtonGroup,
 )
 from .wallet_read import WalletReadSnapshot, format_wam
 from .branding import brand_image
+from .fusion_motion import motion_reduced, slide_geometry, fade_widget, CHART_MS
 
 SPACING = (4, 8, 12, 16, 24, 32)
-TYPE = {'display': 40, 'heading': 26, 'section': 17, 'body': 14, 'caption': 12}
+TYPE = {'display': 48, 'heading': 26, 'section': 17, 'body': 14, 'caption': 12}
 FUSION_NAV_PAGES = (
     ('Overview', 'overview'),
     ('Receive', 'receive'),
@@ -66,21 +67,23 @@ def fusion_stylesheet(mode):
     QFrame#FusionInset {{background:{c['panel']};border:1px solid {c['border']};border-radius:14px;}}
     QFrame#FusionHero {{background:transparent;}}
     QFrame#FusionSegmented {{background:{c['segment']};border:1px solid {c['border']};border-radius:12px;}}
-    QToolButton#FusionSegment {{background:transparent;color:{c['muted']};border:0;border-radius:9px;padding:10px 16px;font-weight:600;}}
-    QToolButton#FusionSegment:checked {{background:{c['accent']};color:{c['onaccent']};}}
-    QToolButton#FusionSegment:hover:!checked {{background:{c['hover']};color:{c['text']};}}
+    QToolButton#FusionSegment {{background:transparent;color:{c['muted']};border:0;border-radius:9px;padding:8px 12px;font-weight:600;}}
+    QToolButton#FusionSegment:checked {{background:transparent;color:{c['onaccent']};}}
+    QToolButton#FusionSegment:hover:!checked {{color:{c['text']};}}
     QToolButton#FusionAdvanced {{background:transparent;color:{c['accent']};border:0;text-align:left;padding:10px;font-weight:600;}}
     QToolButton#FusionQuick {{
-        background:{c['panel']};color:{c['text']};border:1px solid {c['border']};
-        border-radius:16px;padding:16px 10px;font-weight:600;
+        background:{c['surface']};color:{c['text']};border:1px solid {c['border']};
+        border-radius:14px;padding:12px 14px;font-weight:600;text-align:left;
     }}
     QToolButton#FusionQuick:hover:enabled {{border:1px solid {c['accent']};background:{c['hover']};}}
     QToolButton#FusionQuick:disabled {{color:{c['muted']};}}
+    QFrame#FusionThemeThumb {{background:{c['accent']};border:0;border-radius:10px;}}
     QWidget#FusionInner,QScrollArea#FusionScroll,QWidget#FusionTransparent {{background:transparent;border:0;}}
     QLabel {{color:{c['text']};background:transparent;border:0;}}
     QLabel#BrandTitle {{font-size:18px;font-weight:700;letter-spacing:0.2px;color:{c['brand']};}}
     QLabel#PageTitle {{font-size:28px;font-weight:700;}}
-    QLabel#FusionBalance,QLabel#BalanceValue {{font-size:40px;font-weight:650;color:{c['text']};}}
+    QLabel#FusionBalance,QLabel#BalanceValue {{font-size:48px;font-weight:700;color:{c['text']};letter-spacing:-0.8px;}}
+    QLabel#FusionDenom {{font-size:22px;font-weight:700;color:{c['brand']};}}
     QLabel#FusionKicker {{font-size:11px;font-weight:600;color:{c['muted']};letter-spacing:0.8px;}}
     QLabel#FusionCardTitle {{font-size:16px;font-weight:600;}}
     QLabel#FusionCardValue {{font-size:20px;font-weight:600;}}
@@ -179,6 +182,110 @@ class StateSwitch(QCheckBox):
             painter.drawRoundedRect(track.adjusted(-1, -1, 1, 1), 13, 13)
 
 
+class ThemeSlider(QFrame):
+    """Three-position Automatic / Light / Dark control with a sliding thumb."""
+    currentChanged = Signal(int)
+
+    def __init__(self, *, compact=False):
+        super().__init__()
+        self.setObjectName('FusionSegmented')
+        self.setAccessibleName('Appearance: Automatic, Light or Dark')
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self._index = 0
+        self._compact = compact
+        self._move = None
+        self.group = QButtonGroup(self)
+        self.group.setExclusive(True)
+        self.buttons = []
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(3, 3, 3, 3)
+        layout.setSpacing(0)
+        self._indicator = QFrame(self)
+        self._indicator.setObjectName('FusionThemeThumb')
+        self._indicator.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        for index, (icon, title) in enumerate((('auto', 'Automatic'), ('sun', 'Light'), ('moon', 'Dark'))):
+            button = QToolButton()
+            button.setObjectName('FusionSegment')
+            button.setCheckable(True)
+            button.setAutoRaise(True)
+            button.setText('' if compact else title)
+            button.setToolTip(title)
+            button.setAccessibleName(title + ' appearance')
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            button.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+            button.setProperty('fusion_icon', icon)
+            button.setToolButtonStyle(
+                Qt.ToolButtonStyle.ToolButtonIconOnly if compact
+                else Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            button.setMinimumWidth(36 if compact else 96)
+            self.group.addButton(button, index)
+            self.buttons.append(button)
+            layout.addWidget(button, 1)
+        self.buttons[0].setChecked(True)
+        self.group.idClicked.connect(self._clicked)
+        self.setFixedHeight(36 if compact else 42)
+        self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+        if compact:
+            self.setFixedWidth(138)
+        else:
+            self.setMaximumWidth(420)
+
+    def currentIndex(self):
+        return self._index
+
+    def setCurrentIndex(self, index, animate=True):
+        if index not in (0, 1, 2):
+            return
+        block = self.group.blockSignals(True)
+        self.buttons[index].setChecked(True)
+        self.group.blockSignals(block)
+        self._slide(index, animate=animate)
+        if index != self._index:
+            self._index = index
+            self.currentChanged.emit(index)
+
+    def _clicked(self, index):
+        self._slide(index, animate=True)
+        if index != self._index:
+            self._index = index
+            self.currentChanged.emit(index)
+
+    def _thumb_rect(self, index):
+        return self.buttons[index].geometry().adjusted(2, 2, -2, -2)
+
+    def _slide(self, index, animate=True):
+        rect = self._thumb_rect(index)
+        if self._move is not None:
+            self._move.stop()
+            self._move = None
+        if not animate or motion_reduced(self):
+            self._indicator.setGeometry(rect)
+            return
+        self._move = slide_geometry(self._indicator, rect, parent=self)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._indicator.setGeometry(self._thumb_rect(self._index))
+        self._indicator.lower()
+        for button in self.buttons:
+            button.raise_()
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Home, Qt.Key.Key_End):
+            if event.key() == Qt.Key.Key_Left:
+                index = max(0, self._index - 1)
+            elif event.key() == Qt.Key.Key_Right:
+                index = min(2, self._index + 1)
+            elif event.key() == Qt.Key.Key_Home:
+                index = 0
+            else:
+                index = 2
+            self.setCurrentIndex(index)
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+
 class ReadableText(QPlainTextEdit):
     """Selectable exact plaintext with genuine wrap-anywhere; no hidden characters."""
     def __init__(self, text=''):
@@ -227,6 +334,11 @@ def label(text='', role='FusionMuted', selectable=False):
     obj.setObjectName(role)
     obj.setWordWrap(role not in ('FusionKicker', 'FusionBadge'))
     obj.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+    if role in ('FusionBalance', 'BalanceValue'):
+        obj.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        obj.setMinimumHeight(76)
+    if role == 'FusionDenom':
+        obj.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
     if role == 'FusionBadge':
         obj.setFixedHeight(28)
         obj.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
@@ -278,13 +390,13 @@ def action(text, icon, primary=False):
 def quick_action(text, icon):
     button = QToolButton()
     button.setObjectName('FusionQuick')
-    button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+    button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
     button.setProperty('fusion_icon', icon)
     button.setText(text)
-    button.setIconSize(QSize(22, 22))
+    button.setIconSize(QSize(18, 18))
     button.setCursor(Qt.CursorShape.PointingHandCursor)
     button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-    button.setMinimumHeight(88)
+    button.setMinimumHeight(48)
     return button
 
 
@@ -347,6 +459,26 @@ def vector_icon(name, tone, dpr=2):
         p.drawRoundedRect(QRectF(3, 8, 9, 6), 2, 2); p.drawRoundedRect(QRectF(12, 10, 9, 6), 2, 2)
     elif name == 'check':
         line(5, 12, 10, 17); line(10, 17, 20, 6)
+    elif name == 'sun':
+        p.drawEllipse(QRectF(9, 9, 6, 6))
+        for a, b, c, d in ((12, 2, 12, 5), (12, 19, 12, 22), (2, 12, 5, 12), (19, 12, 22, 12),
+                           (5, 5, 7, 7), (17, 17, 19, 19), (5, 19, 7, 17), (17, 7, 19, 5)):
+            line(a, b, c, d)
+    elif name == 'moon':
+        crescent = QPainterPath()
+        crescent.addEllipse(QRectF(5, 4, 14, 16))
+        punch = QPainterPath()
+        punch.addEllipse(QRectF(10, 5, 13, 14))
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(color)
+        p.drawPath(crescent.subtracted(punch))
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.setPen(QPen(color, 1.65, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+    elif name == 'auto':
+        p.drawEllipse(QRectF(4, 4, 16, 16))
+        p.setBrush(color)
+        p.drawPie(QRectF(4, 4, 16, 16), 90 * 16, 180 * 16)
+        p.setBrush(Qt.BrushStyle.NoBrush)
     else:
         p.drawEllipse(QRectF(5, 5, 14, 14)); line(12, 7, 12, 17); line(7, 12, 17, 12)
     p.end()
@@ -378,6 +510,62 @@ def activity_by_block(snapshot):
         agg[0] += row.credit_atoms
         agg[1] += row.debit_atoms
     return tuple((h, *blocks[h]) for h in sorted(blocks)[-14:])
+
+
+def _deny_unverified_snapshot(snapshot):
+    if snapshot is None:
+        return None
+    if (type(snapshot) is not WalletReadSnapshot or snapshot.synthetic_rpc
+            or snapshot.chain != 'regtest' or snapshot.mainnet_allowed):
+        raise ValueError('FUSION_HISTORY_UNVERIFIED_DENIED')
+    if type(snapshot.confirmed_atoms) is not int or snapshot.confirmed_atoms < 0:
+        raise ValueError('FUSION_HISTORY_UNVERIFIED_DENIED')
+    if type(snapshot.height) is not int or snapshot.height < 0:
+        raise ValueError('FUSION_HISTORY_UNVERIFIED_DENIED')
+    for row in snapshot.history:
+        if (type(row.block_height) is not int or not 1 <= row.block_height <= snapshot.height
+                or type(row.confirmations) is not int or row.confirmations <= 0
+                or type(row.credit_atoms) is not int or row.credit_atoms < 0
+                or type(row.debit_atoms) is not int or row.debit_atoms < 0):
+            raise ValueError('FUSION_HISTORY_UNVERIFIED_DENIED')
+    return snapshot
+
+
+def confirmed_balance_history(snapshot):
+    """Oldest-to-newest (height, confirmed_atoms) from complete verified history.
+
+    Empty when pagination, missing rows or inconsistent nets would require invention.
+    """
+    snapshot = _deny_unverified_snapshot(snapshot)
+    if snapshot is None:
+        return ()
+    if snapshot.history_complete is not True or snapshot.history_offset != 0:
+        return ()
+    if not snapshot.history:
+        return ((snapshot.height, 0),) if snapshot.confirmed_atoms == 0 else ()
+    net = 0
+    blocks = {}
+    for row in snapshot.history:
+        delta = row.credit_atoms - row.debit_atoms
+        net += delta
+        blocks[row.block_height] = blocks.get(row.block_height, 0) + delta
+    if snapshot.confirmed_atoms - net != 0:
+        return ()
+    running = 0
+    points = []
+    first = min(blocks)
+    if first > 1:
+        points.append((first - 1, 0))
+    for height in sorted(blocks):
+        running += blocks[height]
+        if running < 0:
+            return ()
+        points.append((height, running))
+    if not points or points[-1][1] != snapshot.confirmed_atoms:
+        return ()
+    if points[-1][0] != snapshot.height:
+        points.append((snapshot.height, snapshot.confirmed_atoms))
+    return tuple(points)
 
 
 class ResponsiveRow(QWidget):
@@ -413,13 +601,15 @@ class Hero(QFrame):
         self.setObjectName('FusionHero')
         self.mode = 'dark'
         self.logo = QPixmap(str(brand_image()))
-        self.setMinimumHeight(196)
+        self.setMinimumHeight(228)
 
     def resizeEvent(self, event):
         layout = self.layout()
+        compact = self.width() < 560
         if layout is not None:
-            reserve = 28 if self.width() < 540 else 200
-            layout.setContentsMargins(24, 20, reserve, 20)
+            layout.setContentsMargins(28, 24, 20 if compact else 196, 22)
+        for child in self.findChildren(BalanceHistoryChart):
+            child.setVisible(self.width() >= 520)
         super().resizeEvent(event)
 
     def paintEvent(self, event):
@@ -549,6 +739,157 @@ class ChainActivity(QWidget):
         p.end()
 
 
+class BalanceHistoryChart(QWidget):
+    """Confirmed wallet balance over verified blocks. Never a price series."""
+
+    def __init__(self):
+        super().__init__()
+        self._points = ()
+        self._mode = 'dark'
+        self._hover = -1
+        self._hit = []
+        self._reveal = 1.0
+        self._reveal_anim = None
+        self.setMinimumHeight(128)
+        self.setMinimumWidth(132)
+        self.setMouseTracking(True)
+        self.setAccessibleName('Confirmed wallet balance history')
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    def get_reveal(self):
+        return self._reveal
+
+    def set_reveal(self, value):
+        self._reveal = max(0.0, min(1.0, float(value)))
+        self.update()
+
+    reveal = Property(float, get_reveal, set_reveal)
+
+    def render_points(self, points):
+        previous = self._points
+        self._points = tuple(points)
+        self._hover = -1
+        QToolTip.hideText()
+        if self._reveal_anim is not None:
+            self._reveal_anim.stop()
+            self._reveal_anim = None
+        if self._points and self._points != previous and not motion_reduced(self):
+            self._reveal = 0.12
+            animation = QPropertyAnimation(self, b'reveal', self)
+            animation.setDuration(CHART_MS)
+            animation.setStartValue(0.12)
+            animation.setEndValue(1.0)
+            animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+            self._reveal_anim = animation
+            animation.start()
+        else:
+            self._reveal = 1.0
+        self.update()
+
+    def set_theme(self, mode):
+        fusion_palette(mode)
+        self._mode = mode
+        self.update()
+
+    def _mapped(self, width, height):
+        if not self._points:
+            return ()
+        left, top, right, bottom = 8.0, 18.0, width - 10.0, height - 22.0
+        xs = [h for h, _ in self._points]
+        ys = [v for _, v in self._points]
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        span_x = max(1, max_x - min_x)
+        span_y = max(1, max_y - min_y)
+        mapped = []
+        for height_value, atoms in self._points:
+            x = left + (right - left) * (height_value - min_x) / span_x
+            y = bottom - (bottom - top) * (atoms - min_y) / span_y
+            mapped.append((x, y, height_value, atoms))
+        return mapped
+
+    def mouseMoveEvent(self, event):
+        mapped = self._mapped(self.width(), self.height())
+        index = -1
+        nearest = 1e9
+        for i, (x, y, _h, _v) in enumerate(mapped):
+            distance = abs(event.position().x() - x)
+            if distance < nearest and distance < 28:
+                nearest, index = distance, i
+        if index != self._hover:
+            self._hover = index
+            self.update()
+        if index >= 0:
+            _x, _y, height, atoms = mapped[index]
+            QToolTip.showText(event.globalPosition().toPoint(),
+                              f'Verified block {height}\nConfirmed {format_wam(atoms)} WAM', self)
+        else:
+            QToolTip.hideText()
+
+    def leaveEvent(self, event):
+        self._hover = -1
+        QToolTip.hideText()
+        self.update()
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        c = fusion_palette(self._mode)
+        if not self._points:
+            p.setPen(QColor(c['chart_empty']))
+            p.drawText(self.rect().adjusted(10, 10, -10, -10),
+                       Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter | Qt.TextFlag.TextWordWrap,
+                       'Balance history is not yet available.')
+            p.end()
+            return
+        mapped = self._mapped(self.width(), self.height())
+        clip_right = 8.0 + (self.width() - 18.0) * self._reveal
+        p.setClipRect(QRectF(0, 0, clip_right, self.height()))
+        if len(mapped) == 1:
+            x, y, height, atoms = mapped[0]
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(QColor(c['accent']))
+            p.drawEllipse(QPointF(x, y), 5.0, 5.0)
+            p.setPen(QColor(c['muted']))
+            p.drawText(self.rect().adjusted(8, 8, -8, -8),
+                       Qt.AlignmentFlag.AlignCenter,
+                       f'Confirmed {format_wam(atoms)} WAM\nat block {height}')
+            p.end()
+            return
+        path = QPainterPath()
+        path.moveTo(mapped[0][0], mapped[0][1])
+        for i in range(1, len(mapped)):
+            x0, y0 = mapped[i - 1][0], mapped[i - 1][1]
+            x1, y1 = mapped[i][0], mapped[i][1]
+            dx = x1 - x0
+            path.cubicTo(x0 + dx / 3.0, y0, x1 - dx / 3.0, y1, x1, y1)
+        fill = QPainterPath(path)
+        fill.lineTo(mapped[-1][0], self.height() - 22)
+        fill.lineTo(mapped[0][0], self.height() - 22)
+        fill.closeSubpath()
+        gradient = QLinearGradient(QPointF(0, 16), QPointF(0, self.height() - 18))
+        gold = QColor(c['accent']); gold.setAlpha(90 if self._mode == 'dark' else 70)
+        fade = QColor(c['accent']); fade.setAlpha(0)
+        gradient.setColorAt(0, gold)
+        gradient.setColorAt(1, fade)
+        p.fillPath(fill, gradient)
+        pen = QPen(QColor(c['accent']), 2.2)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        p.setPen(pen)
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.drawPath(path)
+        for i, (x, y, height, atoms) in enumerate(mapped):
+            if i == self._hover or len(mapped) == 1:
+                p.setPen(Qt.PenStyle.NoPen)
+                p.setBrush(QColor(c['accent']))
+                p.drawEllipse(QPointF(x, y), 4.2, 4.2)
+                p.setPen(QColor(c['muted']))
+                p.drawText(QRectF(x - 36, self.height() - 20, 72, 16),
+                           Qt.AlignmentFlag.AlignHCenter, str(height))
+        p.end()
+
+
 class FusionOverview(QScrollArea):
     transaction_selected = Signal(str)
     recovery_requested = Signal()
@@ -578,8 +919,10 @@ class FusionOverview(QScrollArea):
         whole.addLayout(head)
 
         self.hero = Hero()
-        hero = QVBoxLayout(self.hero)
-        hero.setContentsMargins(24, 20, 200, 20)
+        hero_row = QHBoxLayout(self.hero)
+        hero_row.setContentsMargins(28, 24, 168, 22)
+        hero_row.setSpacing(12)
+        hero = QVBoxLayout()
         hero.setSpacing(8)
         hero.addWidget(label('CONFIRMED BALANCE', 'FusionKicker'))
         self.balance_value = label('—', 'FusionBalance', True)
@@ -587,32 +930,22 @@ class FusionOverview(QScrollArea):
         hero.addWidget(self.balance_value)
         self.utxo_details = label('Awaiting verified Core / WSP state')
         hero.addWidget(self.utxo_details)
+        self.fund_details = label('')
+        self.fund_details.hide()
+        hero.addWidget(self.fund_details)
         row = QHBoxLayout(); row.setSpacing(10)
         self.go_send = action('Send', 'send', True); self.go_send.setEnabled(False)
         self.go_receive = action('Receive', 'receive')
         row.addWidget(self.go_send); row.addWidget(self.go_receive); row.addStretch()
         hero.addLayout(row)
+        hero.addStretch()
+        hero_row.addLayout(hero, 5)
+        self.balance_chart = BalanceHistoryChart()
+        hero_row.addWidget(self.balance_chart, 3)
 
-        identity, il = panel()
-        il.setContentsMargins(18, 16, 18, 16)
-        ident_head = QHBoxLayout()
-        wallet_icon = QLabel(); wallet_icon.setProperty('fusion_icon_label', 'wallet'); wallet_icon.setFixedSize(24, 24)
-        ident_head.addWidget(wallet_icon)
-        ident_copy = QVBoxLayout(); ident_copy.setSpacing(2)
-        ident_copy.addWidget(label('This wallet', 'FusionCardTitle'))
-        self.wallet_profile = label('REGTEST profile')
-        ident_copy.addWidget(self.wallet_profile)
-        ident_head.addLayout(ident_copy, 1)
-        il.addLayout(ident_head)
-        self.custody_caption = label('Locked', 'FusionCardTitle')
-        il.addWidget(self.custody_caption)
-        self.lock_details = label('Unlock requires the original wallet password.')
-        il.addWidget(self.lock_details)
-        self.custody_switch = StateSwitch('Locked')
-        self.custody_switch.setAccessibleName('Wallet Lock / Unlock switch')
-        self.custody_switch.setEnabled(False)
-        il.addWidget(self.custody_switch)
-        whole.addWidget(ResponsiveRow(self.hero, identity, weights=[3, 2], breakpoint=820))
+        main = QWidget(); main.setObjectName('FusionTransparent')
+        ml = QVBoxLayout(main); ml.setContentsMargins(0, 0, 0, 0); ml.setSpacing(16)
+        ml.addWidget(self.hero)
 
         self.status_cards = []
         self.status_icons = []
@@ -630,22 +963,21 @@ class FusionOverview(QScrollArea):
             cl.addLayout(top)
             cl.setContentsMargins(16, 14, 16, 14); cl.setSpacing(6)
             value = label('Not verified', 'FusionCardValue')
-            cl.addWidget(value); cl.addWidget(label(caption))
+            cl.addWidget(value)
+            if icon == 'security':
+                self.custody_caption = value
+                self.lock_details = label(caption)
+                cl.addWidget(self.lock_details)
+                self.custody_switch = StateSwitch('Locked')
+                self.custody_switch.setAccessibleName('Wallet Lock / Unlock switch')
+                self.custody_switch.setEnabled(False)
+                cl.addWidget(self.custody_switch)
+            else:
+                cl.addWidget(label(caption))
             self.status_cards.append(value); self.status_icons.append(icon_label); cards.append(card)
         self.core_status, self.chain_status, self.vault_status, self.network_status = self.status_cards
         self.scanner_status = self.chain_status
-        whole.addWidget(ResponsiveRow(*cards, breakpoint=720))
-
-        actions, al = panel('Quick actions')
-        action_row = QHBoxLayout(); action_row.setSpacing(12)
-        self.open_backup = quick_action('Backup wallet', 'backup')
-        self.open_recovery = quick_action('Verify recovery', 'security')
-        self.quick_lock = quick_action('Lock wallet', 'lock')
-        self.open_network = quick_action('Network status', 'network')
-        for button in (self.open_backup, self.open_recovery, self.quick_lock, self.open_network):
-            action_row.addWidget(button, 1)
-        al.addLayout(action_row)
-        whole.addWidget(actions)
+        ml.addWidget(ResponsiveRow(*cards, breakpoint=520))
 
         activity, alayout = panel()
         top = QHBoxLayout()
@@ -660,41 +992,46 @@ class FusionOverview(QScrollArea):
         self.activity_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.activity_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.activity_table.horizontalHeader().setStretchLastSection(True)
-        self.activity_table.setMinimumHeight(196)
+        self.activity_table.setMinimumHeight(168)
         self.activity_table.setColumnWidth(0, 170)
         self.activity_table.cellClicked.connect(self._select_tx)
         self._txids = []
         alayout.addWidget(self.activity_table)
-        self.empty = label('No confirmed transactions yet. Verified on-chain activity will appear here.')
+        self.empty = label('No recent transactions. Your confirmed activity will appear here.')
         alayout.addWidget(self.empty)
+        environment, el = panel('Wallet environment')
+        self.wallet_profile = label('REGTEST profile')
+        self.environment_core = label('WAM Core identity is shown after verification')
+        self.environment_stack = label('WSP-1  ·  BIP39 (12 words)')
+        el.addWidget(self.wallet_profile)
+        el.addWidget(self.environment_core)
+        el.addWidget(self.environment_stack)
+        ml.addWidget(ResponsiveRow(activity, environment, weights=[3, 2], breakpoint=860))
 
-        side = QWidget(); side.setObjectName('FusionTransparent')
-        sl = QVBoxLayout(side); sl.setContentsMargins(0, 0, 0, 0); sl.setSpacing(16)
-        net, nl = panel('Network & development')
+        rail, rl = panel('Quick actions')
+        self.open_backup = quick_action('Backup Wallet', 'backup')
+        self.open_recovery = quick_action('Verify Recovery', 'security')
+        self.quick_lock = quick_action('Lock Wallet', 'lock')
+        self.open_network = quick_action('Network Status', 'network')
+        for button in (self.open_backup, self.open_recovery, self.quick_lock, self.open_network):
+            rl.addWidget(button)
+        rl.addStretch()
+
+        whole.addWidget(ResponsiveRow(main, rail, weights=[5, 2], breakpoint=760))
+
+        self._compat = QWidget(); self._compat.hide()
+        compat = QVBoxLayout(self._compat)
         self.network_summary = label('Shown after a verified Core snapshot.')
-        self.network_summary.setMinimumWidth(0)
-        policy = self.network_summary.sizePolicy()
-        policy.setHorizontalPolicy(QSizePolicy.Policy.Ignored)
-        policy.setVerticalPolicy(QSizePolicy.Policy.Minimum)
-        policy.setHeightForWidth(True)
-        self.network_summary.setSizePolicy(policy)
-        nl.addWidget(self.network_summary)
-        health, hl = panel('Wallet health')
         self.health_value = label('Not verified', 'FusionCardValue')
         self.health_details = label('Core, chain, custody and network are reported only from verified backend state.')
-        hl.addWidget(self.health_value); hl.addWidget(self.health_details)
-        sl.addWidget(net); sl.addWidget(health); sl.addStretch()
-        whole.addWidget(ResponsiveRow(activity, side, weights=[3, 2], breakpoint=860))
-
-        bottom = QHBoxLayout()
         self.evidence_text = label('No verified blockchain snapshot')
-        self.evidence_text.setMinimumWidth(0)
-        bottom.addWidget(self.evidence_text, 1)
         self.manual_sync = action('Refresh', 'sync')
         self.open_security = action('Security', 'security')
         self.open_security.setEnabled(False)
-        bottom.addWidget(self.manual_sync); bottom.addWidget(self.open_security)
-        whole.addLayout(bottom)
+        for widget in (self.network_summary, self.health_value, self.health_details,
+                       self.evidence_text, self.manual_sync, self.open_security):
+            compat.addWidget(widget)
+        whole.addWidget(self._compat)
 
         self.open_backup.clicked.connect(self.backup_requested.emit)
         self.open_recovery.clicked.connect(self.recovery_requested.emit)
@@ -709,6 +1046,7 @@ class FusionOverview(QScrollArea):
     def set_theme(self, mode):
         self.hero.mode = mode
         self.hero.update()
+        self.balance_chart.set_theme(mode)
         self.custody_switch.setProperty('fusion_mode', mode)
         self.custody_switch.update()
         for row in range(self.activity_table.rowCount()):
@@ -718,11 +1056,14 @@ class FusionOverview(QScrollArea):
                 item.setIcon(vector_icon('receive' if positive else 'send',
                                          fusion_palette(mode)['green' if positive else 'red']))
 
-    def render_snapshot(self, snap, *, locked=False, operational=False, network=None, faulted=False):
+    def render_snapshot(self, snap, *, locked=False, operational=False, network=None,
+                        faulted=False, available_atoms=None, reservation_count=None):
         network = network or {}
         if snap is None or locked:
             self.balance_value.setText('—')
             self.utxo_details.setText('Unlock and verify the chain to display wallet values.')
+            self.fund_details.hide()
+            self.balance_chart.render_points(())
             self.live_badge.setText('Locked' if locked else 'Not verified')
             for value in self.status_cards:
                 value.setText('Not verified')
@@ -731,6 +1072,7 @@ class FusionOverview(QScrollArea):
             self.evidence_text.setText('No verified blockchain snapshot')
             self.evidence_text.setToolTip('')
             self.activity_table.setRowCount(0)
+            self.activity_table.hide()
             self._txids = []
             self.empty.show()
             self.go_receive.setEnabled(False)
@@ -738,12 +1080,22 @@ class FusionOverview(QScrollArea):
             self.health_details.setText('Wallet values stay hidden until this original REGTEST profile is verified.')
             self.network_summary.setText(network.get('summary', 'Network status is shown only after a verified Core snapshot.'))
             self.wallet_profile.setText('REGTEST profile')
+            self.environment_core.setText('WAM Core identity is shown after verification')
             return
         activity_by_block(snap)
+        self.balance_chart.render_points(confirmed_balance_history(snap))
         self.balance_value.setText(format_wam(snap.confirmed_atoms, grouped=True) + ' WAM')
         self.utxo_details.setText(
             f'{snap.confirmed_utxos} confirmed UTXO(s)  ·  Verified block {snap.height}'
             + ('  ·  REGTEST (Shared)' if network.get('shared') else '  ·  REGTEST (Isolated)'))
+        funds = []
+        if type(available_atoms) is int and available_atoms >= 0:
+            if available_atoms != snap.confirmed_atoms:
+                funds.append('Spendable ' + format_wam(available_atoms, grouped=True) + ' WAM')
+        if type(reservation_count) is int and reservation_count > 0:
+            funds.append(str(reservation_count) + ' reserved input(s) stay unavailable')
+        self.fund_details.setText('  ·  '.join(funds))
+        self.fund_details.setVisible(bool(funds))
         self.live_badge.setText('REGTEST VERIFIED')
         self.core_status.setText('Verified')
         self.chain_status.setText(f'Height {snap.height}')
@@ -765,10 +1117,15 @@ class FusionOverview(QScrollArea):
             'Confirmed balance, custody and chain height come from this verified snapshot.'
             if not faulted else 'Original reservations are preserved. Do not retry uncertain payments.')
         self.wallet_profile.setText('Operational REGTEST wallet' if operational else 'Read-only REGTEST wallet')
+        self.environment_core.setText('WAM Core v0.1.11  ·  SHA-256 ' + snap.core_sha256[:12] + '…')
+        self.environment_core.setToolTip('Core SHA-256: ' + snap.core_sha256)
         rows = snap.history[:4]
         self._txids = [r.txid for r in rows]
         self.activity_table.setRowCount(len(rows))
+        self.activity_table.setVisible(bool(rows))
         self.empty.setVisible(not rows)
+        if rows:
+            self.activity_table.setMinimumHeight(min(220, 48 + 58 * len(rows)))
         mode = self.hero.mode
         for i, tx in enumerate(rows):
             value = tx.credit_atoms - tx.debit_atoms
@@ -777,6 +1134,7 @@ class FusionOverview(QScrollArea):
             status = f'Confirmed ({tx.confirmations})'
             for j, text in enumerate((direction + '\n' + tx.txid[:10] + '…', amount, status)):
                 item = QTableWidgetItem(text)
+                item.setForeground(QColor(fusion_palette(mode)['text']))
                 item.setToolTip(tx.txid + '\nClick to view exact transaction details')
                 if j == 0:
                     item.setData(Qt.ItemDataRole.UserRole, value)
