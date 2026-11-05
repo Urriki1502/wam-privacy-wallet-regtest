@@ -37,12 +37,12 @@ def main():
     head = proof['candidate_source_sha']
     node, cli, intake = verified_core_paths(args.core_dir)
     receipt = dict(schema='q05-stage-a-native-lifecycle/v1', source_sha=head,
-        checkout_sha=proof['checkout_sha'], platform='macos-arm64', core_version='v0.1.11',
+        checkout_sha=proof['checkout_sha'], platform='macos-arm64', core_version='v0.1.13',
         python_version=platform.python_version(),
         command=['python3.12','scripts/probe_q05_macos_lifecycle.py',
                  '--core-dir','<verified signed Core>','--root','<new isolated profile>',
                  '--receipt','<new receipt>','--confirm-disposable-regtest'],
-        core_trust='official-signed-v0.1.11', wsp_source_commit=PINNED_WSP_COMMIT,
+        core_trust='official-signed-v0.1.13', wsp_source_commit=PINNED_WSP_COMMIT,
         wsp_execution=False, synthetic_rpc=False, frozen=False,
         mainnet_allowed=False, core_intake=intake,
         core_sha256={p.name: sha256(p.read_bytes()).hexdigest() for p in (node, cli)},

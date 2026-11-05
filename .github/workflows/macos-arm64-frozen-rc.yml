@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: macos-arm64-frozen-rc-56ea3618
+  group: macos-arm64-frozen-rc-official-v013
   cancel-in-progress: false
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
       WAM_SOURCE_HEAD: ${{ github.sha }}
-      FUNCTIONAL_PIN: 56ea36186bf5a3410c75dda63b885f084de83610
+      FUNCTIONAL_PIN: c61e3c5be4b8519dc6c4d9eb56d124fce84cf02d
       WSP_PIN: ac55f13423620252bdbf848c7e8a280c3b84721e
     steps:
       - name: Check out this review commit
@@ -76,7 +76,7 @@ jobs:
       - name: Hash-locked GUI environment
         run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
 
-      - name: Fetch official signed WAM Core v0.1.11 and check identities
+      - name: Fetch official signed WAM Core v0.1.13 and check identities
         run: |
           set -euo pipefail
           python -I -m wam_regtest.release --platform macos-arm64 --destination "$PWD/core"
@@ -84,8 +84,8 @@ jobs:
           from hashlib import sha256
           from pathlib import Path
           expected = {
-              "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
-              "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+              "wamd": "fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba",
+              "wam-cli": "2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19",
           }
           for name, digest in expected.items():
               got = sha256((Path("core") / name).read_bytes()).hexdigest()
@@ -120,9 +120,9 @@ jobs:
               raise SystemExit("MACOS_RC_QUALIFICATION_FLAG_DENIED")
           if receipt.get("status") != "UNNOTARIZED_REAL_REGTEST_MACOS_ARM64_PREVIEW":
               raise SystemExit("MACOS_RC_SIGNING_STATUS_DENIED")
-          if receipt.get("wamd_sha256") != "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068":
+          if receipt.get("wamd_sha256") != "fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba":
               raise SystemExit("MACOS_RC_WAMD_DENIED")
-          if receipt.get("wam_cli_sha256") != "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82":
+          if receipt.get("wam_cli_sha256") != "2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19":
               raise SystemExit("MACOS_RC_WAM_CLI_DENIED")
           names = (
               "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg",
@@ -157,16 +157,16 @@ jobs:
               "The package manifest source_commit is this job's git commit.\n"
               "Do not relabel it as an older local DMG or as 56ea3618.\n"
               "\n"
-              "Branch: feature/v1-net-shared-regtest-20261104\n"
+              "Branch: feature/official-core-v013-three-platform-20261105\n"
               "WSP pin: ac55f13423620252bdbf848c7e8a280c3b84721e\n"
-              "Official Core: WAM Core v0.1.11 ARM64\n"
-              "wamd: 7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068\n"
-              "wam-cli: 81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82\n"
+              "Official Core: WAM Core v0.1.13 ARM64\n"
+              "wamd: fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba\n"
+              "wam-cli: 2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19\n"
               "\n"
               "Signing: the Fusion app is ad-hoc signed (codesign --sign -).\n"
               "It is not Developer ID signed and not notarized. Gatekeeper may\n"
               "warn. Do not disable system protections. The bundled Core bytes\n"
-              "are the official v0.1.11 hashes above.\n"
+              "are the official v0.1.13 hashes above.\n"
               "\n"
               "Install: unzip this artifact, open the .dmg, and copy the app out.\n"
               "Or unzip the .app.zip. Use a new disposable REGTEST profile.\n"

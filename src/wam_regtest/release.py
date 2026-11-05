@@ -1,4 +1,4 @@
-"""Fetch and verify OFFICIAL signed WAM Core v0.1.11 release binaries.
+"""Fetch and verify OFFICIAL signed WAM Core v0.1.13 release binaries.
 
 Fixed WAM HTTPS endpoints and independently pinned GPG signer. Only the
 wamd/wam-cli binary members are extracted. Does NOT start or authorize Core.
@@ -22,23 +22,24 @@ import urllib.request
 import urllib.error
 
 FINGERPRINT = "4BD4A8D3AFD43F5CBCB500E23798462FE00ADBA4"
-VERSION = "v0.1.11"
+VERSION = "v0.1.13"
 RELEASE_URL = "https://wamcoin.org"
-MEMBER_ROOT = "wam-coin-v0.1.11/bin/"
+MEMBER_ROOT = "wam-coin-v0.1.13/bin/"
 ARCHIVES = {
     "macos-arm64": (
-        "wam-coin-v0.1.11-arm64-apple-darwin.tar.gz",
-        "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+        "wam-coin-v0.1.13-arm64-apple-darwin.tar.gz",
+        "fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba",
     ),
     "linux-x64": (
-        "wam-coin-v0.1.11-x86_64-linux-gnu.tar.gz",
-        "625609c08afef441e9dddd71330dcab1cec112d6fabe361769b9907f0efe7ab4",
+        "wam-coin-v0.1.13-x86_64-linux-gnu.tar.gz",
+        "a3e3bf810e74824e3739fd4cbd1a45037cae997056b8c978c4dc1a61d674f0c7",
     ),
 }
 # Independently pinned exact macOS CLI member from the same GPG-verified
-# official v0.1.11 archive; a mutable receipt cannot authorize another CLI.
+# official v0.1.13 archive; a mutable receipt cannot authorize another CLI.
 CLI_SHA256 = {
-    "macos-arm64": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+    "linux-x64": "d99fc90e3aa4233979056d9981a388360e5d7ff77090d00b9bc37191a2425300",
+    "macos-arm64": "2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19",
 }
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 MAX_ARCHIVE = 320 * 1024 * 1024
@@ -218,73 +219,15 @@ def _verify_executable_shape(target: Path, os_arch: str) -> None:
 
 
 def review_and_stage(os_arch: str, destination: Path, gpg_exe: str = "gpg") -> dict:
-    if os_arch not in ARCHIVES or not destination.is_absolute() or destination.exists():
+    if os_arch not in ARCHIVES:
         raise ReleaseError("RELEASE_SCOPE_DENIED")
-    archive_name, node_sha = ARCHIVES[os_arch]
-    with tempfile.TemporaryDirectory(prefix="wam-release-review-") as td:
-        tmp = Path(td)
-        tmp.chmod(0o700)
-        files = [
-            ("/SIGNING-KEY.asc", 32768, "SIGNING-KEY.asc"),
-            ("/downloads/v0.1.11/SHA256SUMS", 131072, "SHA256SUMS"),
-            ("/downloads/v0.1.11/SHA256SUMS.asc", 16384, "SHA256SUMS.asc"),
-            (f"/downloads/v0.1.11/{archive_name}", MAX_ARCHIVE, archive_name),
-        ]
-        for path, maximum, name in files:
-            _download_exact(path, maximum, tmp / name)
-        signed_sha = _validate_signed_sums(gpg_exe, tmp, archive_name)
-        if _sha(tmp / archive_name) != signed_sha:
-            raise ReleaseError("RELEASE_ARCHIVE_SHA_DENIED")
-        stage = tmp / "stage"
-        stage.mkdir(mode=0o700)
-        name_lookup = {MEMBER_ROOT + "wamd": "wamd", MEMBER_ROOT + "wam-cli": "wam-cli"}
-        hashes = {}
-        try:
-            with tarfile.open(tmp / archive_name, mode="r:gz") as tar:
-                members = tar.getmembers()
-                if not 1 <= len(members) <= 64:
-                    raise ReleaseError("RELEASE_MEMBER_COUNT_DENIED")
-                names = set()
-                for member in members:
-                    name = member.name.rstrip("/")
-                    if name in names or not (name == "wam-coin-v0.1.11" or name.startswith("wam-coin-v0.1.11/")) or any(bit in ("", ".", "..") for bit in name.split("/")) or not (member.isfile() or member.isdir()) or member.issym() or member.islnk():
-                        raise ReleaseError("RELEASE_MEMBER_PATH_DENIED")
-                    names.add(name)
-                    if member.size > MAX_MEMBER:
-                        raise ReleaseError("RELEASE_MEMBER_SIZE_DENIED")
-                    if name in name_lookup:
-                        hashes[name_lookup[name]] = _write_exact_binary(tar, member, stage / name_lookup[name])
-        except (OSError, tarfile.TarError):
-            raise ReleaseError("RELEASE_ARCHIVE_CONTENT_DENIED") from None
-        if set(hashes) != {"wamd", "wam-cli"} or hashes["wamd"] != node_sha:
-            raise ReleaseError("RELEASE_MEMBER_SHA_DENIED")
-        if os_arch in CLI_SHA256 and hashes["wam-cli"] != CLI_SHA256[os_arch]:
-            raise ReleaseError("RELEASE_CLI_MEMBER_SHA_DENIED")
-        _verify_executable_shape(stage / "wamd", os_arch)
-        _verify_executable_shape(stage / "wam-cli", os_arch)
-        receipt = {
-            "tag": VERSION, "platform": os_arch, "archive": archive_name,
-            "archive_sha256": signed_sha, "wamd_sha256": node_sha,
-            "wam_cli_sha256": hashes["wam-cli"], "publisher_fingerprint": FINGERPRINT,
-            "signed_archive_verified": True,
-            "loader_process_binding_qualified": False,
-            "real_wsp_e2e_qualified": False,
-            "mainnet_allowed": False,
-        }
-        (stage / "receipt.json").write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n")
-        for p in stage.iterdir():
-            os.chmod(p, 0o600 if p.name.endswith(".json") else 0o700)
-        try:
-            shutil.copytree(stage, destination, symlinks=False)
-        except OSError:
-            if destination.is_dir():
-                shutil.rmtree(destination, ignore_errors=True)
-            raise ReleaseError("RELEASE_OUTPUT_DENIED") from None
-        return receipt
+    from .official_core_v013 import stage_tar
+    return stage_tar('linux-x86_64' if os_arch == 'linux-x64' else os_arch,
+                     destination, gpg_exe)
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Stage signed official WAM v0.1.11 Core (NO EXEC)")
+    ap = argparse.ArgumentParser(description="Stage signed official WAM v0.1.13 Core (NO EXEC)")
     ap.add_argument("--platform", choices=sorted(ARCHIVES), required=True)
     ap.add_argument("--destination", type=Path, required=True)
     ap.add_argument("--gpg", default="gpg")

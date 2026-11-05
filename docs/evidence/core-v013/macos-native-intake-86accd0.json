@@ -1,0 +1,37 @@
+{
+  "files": {},
+  "genesis": "b88f3d262f285e38e184f50bf3eea1c8e615486ae67d3d9eaf0976fbd6d3d30d",
+  "height": 101,
+  "mainnet_allowed": false,
+  "native_versions": {
+    "wam-cli": "WAM Coin RPC client version v0.1.13",
+    "wamd": "WAM Coin version v0.1.13"
+  },
+  "networkinfo": {
+    "connections": 0,
+    "protocolversion": 70016,
+    "subversion": "/WAM:0.1.13/",
+    "version": 113
+  },
+  "original_popen_stopped": true,
+  "platform": "macos-arm64",
+  "release": {
+    "archive": "wam-coin-v0.1.13-arm64-apple-darwin.tar.gz",
+    "archive_sha256": "2e6d4cb34e4e1ca800db82591295ede775e5ba1769fec737db70ebaa38ab5894",
+    "loader_process_binding_qualified": false,
+    "mainnet_allowed": false,
+    "platform": "macos-arm64",
+    "publisher_fingerprint": "4BD4A8D3AFD43F5CBCB500E23798462FE00ADBA4",
+    "real_wsp_e2e_qualified": false,
+    "signed_archive_verified": true,
+    "tag": "v0.1.13",
+    "wam_cli_sha256": "2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19",
+    "wamd_sha256": "fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba"
+  },
+  "schema": "wam-official-v013-native-intake/v1",
+  "source_sha": "86accd05cfc81b3c71b04b632eb91feb6bc08d7e",
+  "status": "NATIVE_OFFICIAL_CORE_INTAKE_101_BLOCKS_PASS",
+  "synthetic_rpc": false,
+  "upstream_source": "b3fb899ddb1ceab7e9b3b12ccd034ad1b4be8186",
+  "zero_peers": true
+}

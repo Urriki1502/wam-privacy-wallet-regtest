@@ -40,11 +40,24 @@ class _StubExecutor:
         self.seed_folder = seed_folder
         self.phrase = phrase
         self.log = []          # list of action records
+        self.requests = []     # durable action names; no secret arguments
         self.locked = False
         self.verified = False
         self.marker = None
 
+    def submit(self, action, *args, **kwargs):
+        # ControlWorker uses submit(), as the real executor does. Preserve
+        # completion/denial via an actual Future instead of an absent method.
+        from concurrent.futures import Future
+        future = Future()
+        try:
+            future.set_result(self.request(action, *args, **kwargs))
+        except Exception as error:
+            future.set_exception(error)
+        return future
+
     def request(self, action, *args, timeout=90, **kwargs):
+        self.requests.append(action)
         if action == "acknowledge_create_pending":
             folder = args[0]
             self.log.append(("pending", folder))
@@ -123,8 +136,30 @@ class BackupPageContract(unittest.TestCase):
 
     def tearDown(self):
         self.window._poll.stop()
+        worker = self.window._worker
+        if worker is not None:
+            self.assertTrue(worker.wait(2000))
+        self.app.processEvents()
         self.window.hide()
         self.window.deleteLater()
+        self.app.processEvents()
+
+    def _assert_snapshot_dispatched(self):
+        # A fast real ControlWorker can already have finished after events
+        # are processed. Observe its request instead of transient liveness.
+        import time
+        deadline = time.monotonic() + 2
+        while "snapshot" not in self.window.executor.requests:
+            self.assertLess(time.monotonic(), deadline, "snapshot not dispatched")
+            QTest.qWait(5)
+            self.app.processEvents()
+        self.assertEqual(self.window.executor.requests.count("snapshot"), 1)
+
+    def _finish_snapshot_worker(self):
+        self._assert_snapshot_dispatched()
+        worker = self.window._worker
+        if worker is not None:
+            self.assertTrue(worker.wait(2000))
         self.app.processEvents()
 
     def _show_required(self):
@@ -225,7 +260,7 @@ class BackupPageContract(unittest.TestCase):
         self.app.processEvents()
         self.assertTrue(self.window._ready)
         self.assertEqual(self.window.receive.text(), "wamrtsp1public-test")
-        self.assertIsNotNone(self.window._worker)
+        self._assert_snapshot_dispatched()
         self.assertEqual(self.window.stack.currentIndex(), 0)
         self.assertTrue(self.window.navigation.isEnabled())
 
@@ -246,12 +281,10 @@ class BackupPageContract(unittest.TestCase):
         # Genuinely successful authenticated backup -> ready wallet session.
         self.assertTrue(self.window._ready)
         self.assertFalse(self.window._backup_flow_active)
-        self.assertIsNotNone(self.window._worker)
+        self._assert_snapshot_dispatched()
         # Continue dispatched the pending verified snapshot through the real
         # ControlWorker; model its worker-finished completion and refresh.
-        self.window._worker = None
-        self.window._finished()
-        self.app.processEvents()
+        self._finish_snapshot_worker()
         self.assertTrue(self.window._ready)
         # Fund enabled on a fresh unfunded REGTEST chain; Lock enabled; Send
         # stays disabled until native checkpoint + explicit signer activation.
@@ -291,12 +324,10 @@ class BackupPageContract(unittest.TestCase):
         _find_button(self.window.backup_page, "Continue").click()
         self.app.processEvents()
         self.assertTrue(self.window._ready)
-        self.assertIsNotNone(self.window._worker)
+        self._assert_snapshot_dispatched()
         # Continue dispatched the pending verified snapshot through the real
         # ControlWorker; model its worker-finished completion and refresh.
-        self.window._worker = None
-        self.window._finished()
-        self.app.processEvents()
+        self._finish_snapshot_worker()
         self.assertTrue(self.window.fund.isEnabled())
         self.assertTrue(self.window.lock.isEnabled())
         self.assertFalse(self.window.send.isEnabled())
@@ -337,7 +368,7 @@ class BackupPageContract(unittest.TestCase):
         _find_button(self.window.backup_page, "Continue").click()
         self.app.processEvents()
         self.assertTrue(self.window._ready)
-        self.assertIsNotNone(self.window._worker)
+        self._assert_snapshot_dispatched()
 
     def test_verified_status_bypasses_backup_page(self):
         self.window._on_ready(
@@ -408,6 +439,10 @@ class InSessionLockUnlockContract(unittest.TestCase):
 
     def tearDown(self):
         self.window._poll.stop()
+        worker = self.window._worker
+        if worker is not None:
+            self.assertTrue(worker.wait(2000))
+        self.app.processEvents()
         self.window.hide()
         self.window.deleteLater()
         self.app.processEvents()
@@ -539,6 +574,10 @@ class RecoveryVerifyDispatchContract(unittest.TestCase):
 
     def tearDown(self):
         self.window._poll.stop()
+        worker = self.window._worker
+        if worker is not None:
+            self.assertTrue(worker.wait(2000))
+        self.app.processEvents()
         self.window.hide()
         self.window.deleteLater()
         self.app.processEvents()
@@ -563,6 +602,10 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
 
     def tearDown(self):
         self.window._poll.stop()
+        worker = self.window._worker
+        if worker is not None:
+            self.assertTrue(worker.wait(2000))
+        self.app.processEvents()
         self.window.hide()
         self.window.deleteLater()
         self.app.processEvents()

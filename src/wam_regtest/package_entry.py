@@ -120,8 +120,8 @@ def main() -> int:
             interactive_demo=not ci_mode,
         )
         if ci_mode:
-            expected_status = ("REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS" if cocoa_mode else
-                               "REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS")
+            expected_status = ("REAL_WAM_CORE_V0_1_13_BIP352_RECEIVE_E2E_PASS" if cocoa_mode else
+                               "REAL_WAM_CORE_V0_1_13_NATIVE_QT_WALLET_E2E_PASS")
             if (result.get("status") != expected_status
                     or result.get("gui_real_core_e2e_pass") is not (not cocoa_mode)
                     or not result.get("wsp_bip352_e2e_pass")

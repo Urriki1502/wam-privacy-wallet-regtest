@@ -391,13 +391,13 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 "interactive_demo_closed_cleanly": demo_finished,
                 "gui_real_core_e2e_pass": gui_receipt is not None,
                 "gui_live_core_view": gui_receipt,
-                "status": ("REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS"
+                "status": ("REAL_WAM_CORE_V0_1_13_NATIVE_QT_WALLET_E2E_PASS"
                            if gui_receipt is not None else
-                           "REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS"
+                           "REAL_WAM_CORE_V0_1_13_BIP352_RECEIVE_E2E_PASS"
                            if wsp_payment_e2e and wsp_receipt is not None else
-                           "REAL_WAM_CORE_V0_1_11_REGTEST_AND_NATIVE_WSP_SCANNER_PASS"
+                           "REAL_WAM_CORE_V0_1_13_REGTEST_AND_NATIVE_WSP_SCANNER_PASS"
                            if wsp_receipt is not None else
-                           "REAL_WAM_CORE_V0_1_11_REGTEST_RPC_101_BLOCKS_PASS"),
+                           "REAL_WAM_CORE_V0_1_13_REGTEST_RPC_101_BLOCKS_PASS"),
                 "wsp_real_core_scan_pass": wsp_receipt is not None,
                 "wsp_live_scan": wsp_receipt,
                 "regtest_public_fixture_broadcast_confirmed": (

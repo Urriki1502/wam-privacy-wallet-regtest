@@ -46,9 +46,9 @@ jobs:
               or receipt.get("real_core_packaged_e2e") is not True
               or receipt.get("mainnet_allowed") is not False
               or receipt.get("wamd_sha256") !=
-                    "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+                    "fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba"
               or receipt.get("wam_cli_sha256") !=
-                    "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"):
+                    "2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19"):
               raise SystemExit("LITE_EXACT_TRUST_PROVENANCE_DENIED")
           files = receipt.get("files")
           dmg = "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"

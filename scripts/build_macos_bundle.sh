@@ -282,7 +282,7 @@ assert len(out) == 2
 Path("package-output/SHA256SUMS.json").write_text(
     json.dumps({
         "status": "UNNOTARIZED_REAL_REGTEST_MACOS_ARM64_PREVIEW",
-        "source": "signed WAM Core v0.1.11 + pinned WSP-1",
+        "source": "signed WAM Core v0.1.13 + pinned WSP-1",
         "source_commit": __import__("subprocess").check_output(["git", "rev-parse", "HEAD"],text=True).strip(),
         "independent_contract_receipt_sha256": sha256(Path("package-output/INDEPENDENT-WALLET-SECURITY.json").read_bytes()).hexdigest(),
         "original_brand_sha256": sha256(Path("assets/wam-coin-original.png").read_bytes()).hexdigest(),

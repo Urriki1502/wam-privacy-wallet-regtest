@@ -1,4 +1,4 @@
-name: REAL WAM Core v0.1.11 REGTEST (macOS ARM64)
+name: REAL WAM Core v0.1.13 REGTEST (macOS ARM64)
 on:
   push:
     branches: [main]
@@ -53,7 +53,7 @@ jobs:
           test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
           python -m pip check
       - name: Run fail-closed unit contracts (not E2E)
-        run: python -m unittest discover -s tests -v
+        run: python scripts/run_macos_source_tests.py
       - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
         run: |
           python -m wam_regtest.release --platform macos-arm64 --destination core
@@ -85,7 +85,7 @@ jobs:
           import json
           from pathlib import Path
           proof=json.loads(Path('real-core-evidence.json').read_text())
-          assert proof['status']=='REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS'
+          assert proof['status']=='REAL_WAM_CORE_V0_1_13_NATIVE_QT_WALLET_E2E_PASS'
           assert proof['chain']=='regtest' and proof['block_height']==105
           assert proof['q02_authentication']['status']=='REAL_Q02_SIGNED_CLI_AUTH_FAIL_CLOSED_PASS'
           assert len(proof['q02_authentication']['cases'])==33
@@ -108,7 +108,7 @@ jobs:
           assert proof['wallet_send_e2e_pass'] is True
           assert proof['gui_real_core_e2e_pass'] is True
           view = proof['gui_live_core_view']
-          assert view['status']=='REAL_WAM_CORE_V0_1_11_NATIVE_QT_RECEIVE_BALANCE_HISTORY_PASS'
+          assert view['status']=='REAL_WAM_CORE_V0_1_13_NATIVE_QT_RECEIVE_BALANCE_HISTORY_PASS'
           assert view['real_core_rpc'] is True and view['synthetic_rpc'] is False
           assert view['qt_gui_rendered'] is True
           assert view['confirmed_balance_atoms']==actual['confirmed_receive_atoms']
@@ -339,8 +339,8 @@ jobs:
           test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
           python -m pip check
       - name: Security and bundling contracts
-        run: python -m unittest discover -s tests -v
-      - name: Fetch and authenticate exact official v0.1.11 ARM64 Core
+        run: python scripts/run_macos_source_tests.py
+      - name: Fetch and authenticate exact official v0.1.13 ARM64 Core
         run: |
           python -m wam_regtest.release --platform macos-arm64 --destination core
           python scripts/q01_core_negatives.py --core-dir core --output q01-core-negatives.json
