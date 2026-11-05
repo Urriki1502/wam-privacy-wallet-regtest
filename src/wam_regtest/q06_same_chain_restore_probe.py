@@ -1,12 +1,13 @@
 """Fresh-profile mnemonic restoration from real historical REGTEST blocks.
 
 Qualification only: three NEW namespaces, two Core owners at a time. A second
-participant is positively stopped before a fresh participant restores the seed
+participant is positively stopped before a fresh participant on new ports restores the seed
 and syncs historical blocks from the sole coordinator. No chain/vault/anchor is
 copied; restored custody remains read-only and original reservations survive.
 """
 from hashlib import sha256
 import json
+import errno
 from pathlib import Path
 import re
 import secrets
@@ -24,11 +25,13 @@ def qualify(core, source, parent, adapter):
               'physical_accepted':False,'independent_reviewed':False,
               'chain_copied':False,'native_anchor_copied':False,
               'old_profile_overwritten':False,'restored_signer_enabled':False,
-              'platform':adapter.platform_id,'ports':[[29554,29555],[29556,29557]]}
+              'platform':adapter.platform_id,'ports':[[29554,29555],[29556,29557],[29558,29559]]}
     profiles = [SharedRegtestProfile('127.0.0.1',coordinator=True,
                     rpc_port=29554,p2p_port=29555,peer_port=29557),
                 SharedRegtestProfile('127.0.0.1',coordinator=False,
-                    rpc_port=29556,p2p_port=29557,peer_port=29555)]
+                    rpc_port=29556,p2p_port=29557,peer_port=29555),
+                SharedRegtestProfile('127.0.0.1',coordinator=False,
+                    rpc_port=29558,p2p_port=29559,peer_port=29555)]
     workers = []
     password = b'public-disposable-same-chain-profile-restore'
     phrase = None
@@ -97,7 +100,19 @@ def qualify(core, source, parent, adapter):
         stop(b)
         report['original_participant_shutdown_verified'] = True
         step('NEW_PROFILE_RESTORE_THEN_SYNC_HISTORICAL_CHAIN')
-        c, restored = start(1,'restore',phrase)
+        # Do not adopt/reuse an endpoint whose old TCP lifetime may remain
+        # reserved after clean shutdown. The new participant initiates its
+        # one manual connection to A; A's unchanged inbound peer policy still
+        # attests the configured private host and exact Core subversion.
+        from .shared_regtest import reserve_ports
+        try:
+            with reserve_ports(profiles[1]):pass
+            report['retired_endpoint_available'] = True
+        except OSError as error:
+            if error.errno != errno.EADDRINUSE:raise
+            report['retired_endpoint_available'] = False
+            report['retired_endpoint_not_adopted'] = True
+        c, restored = start(2,'restore',phrase)
         if (restored['receive_code']!=opened['receive_code'] or restored['mnemonic_once']
                 or restored['account_id']!=opened['account_id']
                 or restored['signer_allowed'] is not False):
