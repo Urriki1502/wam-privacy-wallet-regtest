@@ -118,9 +118,15 @@ def qualify(core, source, root, receipt, *, confirmed=False,
                     or window.receive.text()!=opened["receive_code"]
                     or window.navigation.count()!=len(FUSION_NAV_PAGES)
                     or window.overview.balance_value.text()=="—"
+                    or not hasattr(window.overview, "balance_chart")
+                    or not hasattr(window.overview, "go_send")
+                    or not hasattr(window.overview, "go_receive")
                     or window.receive_page.code!=opened["receive_code"]
                     or window.history_page.table.rowCount()<1):
                 raise Q06PlatformQualificationError("Q06_PLATFORM_FUSION_QT_BINDING_DENIED")
+            from PySide6.QtWidgets import QLabel
+            if any("Quick Actions" in (label.text() or "") for label in window.findChildren(QLabel)):
+                raise Q06PlatformQualificationError("Q06_PLATFORM_FUSION_QUICK_ACTIONS_DENIED")
             record["native_gui_checked"] = True
         from mnemonic import Mnemonic
         with Bip39Regtest12Keys(Mnemonic("english").to_mnemonic(bytes([1]*16)),
@@ -133,6 +139,21 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         draft = executor.request("prepare", destination, atoms, 1_000, timeout=240)
         if draft.code != destination or draft.atoms != atoms or len(draft.commitment) != 64:
             raise Q06PlatformQualificationError("Q06_PLATFORM_INTENT_DENIED")
+        if window is not None:
+            from PySide6.QtCore import Qt
+            from PySide6.QtWidgets import QDialog
+            from .fusion_pages import PaymentApproval
+            dialog = PaymentApproval(draft, "sign", window)
+            try:
+                if (dialog.windowModality() != Qt.WindowModality.ApplicationModal
+                        or not dialog.cancel.isDefault()
+                        or dialog.approve.isDefault()
+                        or dialog.approve.text() != "Approve Sign"
+                        or dialog.result() != QDialog.DialogCode.Rejected):
+                    raise Q06PlatformQualificationError("Q06_PLATFORM_PAYMENT_APPROVAL_DENIED")
+            finally:
+                dialog.deleteLater()
+                app.processEvents()
         step("SIGN")
         signed = executor.request("sign", draft.commitment, timeout=240)
         if signed.commitment != draft.commitment:
