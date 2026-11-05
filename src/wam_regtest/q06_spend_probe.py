@@ -219,9 +219,10 @@ def qualify(core, source):
             app.processEvents()
             stage("FUSION_EVENT_DELIVERY_PASS")
             from .wallet_read import format_wam
+            from .fusion_ui import FUSION_NAV_PAGES
             # Fixed public one-token categories. Never log wallet values,
             # seed, receive code, TXID, RPC response or arbitrary UI text.
-            if window.navigation.count()!=6:
+            if window.navigation.count()!=len(FUSION_NAV_PAGES):
                 stage("FUSION_NAVIGATION_DENIED")
                 raise ValueError("Q06_FUSION_NAVIGATION_DENIED")
             stage("FUSION_NAVIGATION_PASS")
@@ -229,8 +230,9 @@ def qualify(core, source):
                 stage("FUSION_VERIFIED_SNAPSHOT_NOT_RENDERED")
                 raise ValueError("Q06_FUSION_VERIFIED_SNAPSHOT_NOT_RENDERED")
             stage("FUSION_VERIFIED_SNAPSHOT_RENDERED")
-            if (window.overview.balance_value.text()
-                    !=format_wam(after["confirmed_atoms"],grouped=True)+" WAM"):
+            shown=window.overview.balance_value.text()
+            formatted=format_wam(after["confirmed_atoms"],grouped=True)
+            if shown not in (formatted+" WAM", formatted):
                 stage("FUSION_BALANCE_BINDING_DENIED")
                 raise ValueError("Q06_FUSION_AFTER_SEND_BALANCE_DENIED")
             stage("FUSION_BALANCE_BINDING_PASS")

@@ -113,9 +113,10 @@ def qualify(core, source, root, receipt, *, confirmed=False,
             window._on_ready("open", show)
             window._on_ready("activate", active)
             app.processEvents()
+            from .fusion_ui import FUSION_NAV_PAGES
             if (not window.isVisible() or not window.send.isEnabled()
                     or window.receive.text()!=opened["receive_code"]
-                    or window.navigation.count()!=6
+                    or window.navigation.count()!=len(FUSION_NAV_PAGES)
                     or window.overview.balance_value.text()=="—"
                     or window.receive_page.code!=opened["receive_code"]
                     or window.history_page.table.rowCount()<1):

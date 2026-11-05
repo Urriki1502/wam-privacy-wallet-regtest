@@ -69,6 +69,10 @@ class PlatformReuseContracts(unittest.TestCase):
         self.assertIn('FUSION_NAV_PAGES', text)
         self.assertNotIn('navigation.count() != 6', text)
         self.assertGreaterEqual(len(FUSION_NAV_PAGES), 6)
+        spend = (ROOT / 'src' / 'wam_regtest' / 'q06_spend_probe.py').read_text()
+        platform = (ROOT / 'src' / 'wam_regtest' / 'q06_platform_probe.py').read_text()
+        self.assertIn('FUSION_NAV_PAGES', spend)
+        self.assertIn('FUSION_NAV_PAGES', platform)
 
     def test_macos_frozen_qt_probe_reads_v22_overview_chart(self):
         probe = (ROOT / 'src' / 'wam_regtest' / 'desktop_probe.py').read_text()
