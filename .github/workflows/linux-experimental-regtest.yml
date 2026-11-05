@@ -138,6 +138,16 @@ jobs:
           chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
           python scripts/q01_core_negatives.py --core-dir qualified-linux-core/linux-core --output q01-core-negatives.json
           python scripts/linux_headless_acceptance.py --core-dir qualified-linux-core/linux-core
+      - name: Q06 fresh same-chain native profile restoration (no custody copy)
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python scripts/qualify_q06_same_chain_restore.py --core-dir "$GITHUB_WORKSPACE/qualified-linux-core/linux-core" --wsp-source "$GITHUB_WORKSPACE/wsp-upstream" --report "$RUNNER_TEMP/q06-same-chain-native.json" --test-root-witness --confirm-disposable-regtest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: q06-same-chain-native-linux-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/q06-same-chain-native.json
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
           name: linux-headless-wallet-evidence-${{ github.event.pull_request.head.sha || github.sha }}

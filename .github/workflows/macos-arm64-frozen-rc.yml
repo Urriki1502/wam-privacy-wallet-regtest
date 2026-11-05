@@ -94,6 +94,14 @@ jobs:
           print("MACOS_OFFICIAL_CORE_SHA256_PASS")
           PY
 
+      - name: Fresh same-chain native profile restore before freezing
+        run: python scripts/qualify_q06_same_chain_restore.py --core-dir "$PWD/core" --wsp-source "$PWD/wsp-upstream" --report "$RUNNER_TEMP/q06-same-chain-native.json" --confirm-disposable-regtest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: q06-same-chain-native-macos-${{ github.sha }}
+          path: ${{ runner.temp }}/q06-same-chain-native.json
+          if-no-files-found: warn
       - name: Build, qualify, and package
         run: bash scripts/build_macos_bundle.sh
 
