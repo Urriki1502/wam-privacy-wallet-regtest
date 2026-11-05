@@ -16,9 +16,9 @@ import sys
 import tarfile
 import tempfile
 
-APPROVED='1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d'
-CORE={'wamd':'ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6',
-      'wam-cli':'ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652'}
+APPROVED='4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2'
+CORE={'wamd':'a3e3bf810e74824e3739fd4cbd1a45037cae997056b8c978c4dc1a61d674f0c7',
+      'wam-cli':'d99fc90e3aa4233979056d9981a388360e5d7ff77090d00b9bc37191a2425300'}
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     if not args.desktop:
         assert importlib.util.find_spec('PySide6') is None,'HEADLESS_BUILD_MUST_HAVE_NO_QT'
     from wam_regtest.package_manifest import stage_pinned_wsp
-    from wam_regtest.linux_developer_core import verify as verify_core,inspect_elf
+    from wam_regtest.linux_official_core import verify as verify_core,inspect_elf
     from wam_regtest.branding import brand_image
     core=args.core_dir.absolute();verify_core(core,APPROVED,authorized=True)
     name='wam-regtest-desktop' if args.desktop else 'wam-regtest-headless'
@@ -68,7 +68,7 @@ def main():
         assert len(files)==1 and not files[0].is_symlink()
         assert sha256(files[0].read_bytes()).hexdigest()==digest,'FROZEN_CORE_BYTES_CHANGED'
         files[0].chmod(0o700)
-    manifests=list(bundle.rglob('DEVELOPER_CORE_MANIFEST.json'))
+    manifests=list(bundle.rglob('LINUX_OFFICIAL_CORE_MANIFEST.json'))
     assert len(manifests)==1 and sha256(manifests[0].read_bytes()).hexdigest()==APPROVED
     if not args.desktop:
         assert not any('pyside6' in p.as_posix().lower() or 'shiboken' in p.as_posix().lower() for p in bundle.rglob('*'))
@@ -82,7 +82,7 @@ def main():
     evidence=Path('linux-qt-evidence.json' if args.desktop else 'linux-headless-evidence.json')
     record=json.loads(evidence.read_text());wallet=record['wallet_live_core']
     assert record['frozen_runtime'] is True
-    assert record['platform']=='linux-x86_64' and not record['official_signed_release']
+    assert record['platform']=='linux-x86_64' and record['official_signed_release'] is True
     assert wallet['synthetic_rpc'] is False and wallet['mainnet_allowed'] is False
     subprocess.run([sys.executable,'-I','scripts/qualify_q05_frozen.py',
         '--executable',str(binary),'--output',str((output/'q05-frozen-evidence.json').absolute()),
@@ -113,12 +113,12 @@ def main():
     manifest={'schema':'wam-regtest-linux-package/v1','source_head_sha':head,'checkout_sha':checkout,
         'platform':'linux-x86_64','build_os':'Ubuntu24.04','frontend':'desktop' if args.desktop else 'headless',
         'wsp_source_commit':'ac55f13423620252bdbf848c7e8a280c3b84721e',
-        'approved_core_manifest_sha256':APPROVED,'developer_core_sha256':CORE,
+        'approved_core_manifest_sha256':APPROVED,'official_core_sha256':CORE,
         'bundle_files_sha256':members,'internal_symlinks':links,'archive_name':archive.name,
         'archive_sha256':sha256(archive.read_bytes()).hexdigest(),'final_frozen_executable_e2e_pass':True,
         'e2e_evidence_sha256':sha256(evidence.read_bytes()).hexdigest(),'system_loader_libraries_pinned':True,
         'relocatable_across_linux_distributions_qualified':False,'human_desktop_signoff':False,
-        'official_signed_core_release':False,'production_qualified':False,'mainnet_allowed':False,
+        'official_signed_core_release':True,'production_qualified':False,'mainnet_allowed':False,
         'dependencies':{n:importlib.metadata.version(n) for n in
             (('PySide6','qrcode') if args.desktop else ())+('PyInstaller','coincurve','cryptography')}}
     (output/'LINUX_PACKAGE_MANIFEST.json').write_text(json.dumps(manifest,sort_keys=True,indent=2)+'\n')

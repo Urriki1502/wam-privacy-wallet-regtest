@@ -52,7 +52,7 @@ def write_candidate_manifest(output,platform,core_hashes,*,qualification_scope='
         'source_head_sha':head,'checkout_sha':checkout,'single_commit_build':head==checkout,
         'platform':platform,'python_version':sys.version.split()[0],
         'build_os':host_platform.platform(),'network':'regtest','core_sha256':core_hashes,
-        'core_provenance':'reviewed-developer-source-build' if platform.startswith('linux') else 'official-signed-v0.1.11',
+        'core_provenance':'official-signed-v0.1.13',
         'wsp_source_commit':WSP_COMMIT,'dependencies':dependencies,'files_sha256':files,
         'native_final_executable_e2e_pass':qualification_scope!='ui-layout-focused',
         'native_ui_layout_e2e_pass':qualification_scope=='ui-layout-focused','mainnet_allowed':False,

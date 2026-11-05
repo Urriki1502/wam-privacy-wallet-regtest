@@ -268,9 +268,9 @@ def probe(core):
                 assert observed and rpc._genesis is None
                 _expect(('WSP_LIVE_METHOD_DENIED',),lambda:rpc.call('getblockcount'))
             version=a.call('getnetworkinfo')
-            assert (version['version'],version['subversion'],version['protocolversion'])==(111,'/WAM:0.1.11/',70016)
+            assert (version['version'],version['subversion'],version['protocolversion'])==(113,'/WAM:0.1.13/',70016)
             def version_faults():
-                for key,bad in (('version',112),('version',111.0),('subversion','/WAM:0.1.12/'),('protocolversion',0)):
+                for key,bad in (('version',112),('version',113.0),('subversion','/WAM:0.1.12/'),('protocolversion',0)):
                     fault_attest('getnetworkinfo',lambda raw,v:json.dumps({**v,key:bad}).encode(),'WSP_LIVE_VERSION_DENIED')
             case('RPC-VERSION',version_faults,fault=True)
             case('PEERS',lambda:fault_attest('getconnectioncount',lambda *_:b'1','WSP_LIVE_PEERS_DENIED'),fault=True)
@@ -452,7 +452,7 @@ def probe(core):
         assert len(records)==33
         assert originals=={p.name:sha256(p.read_bytes()).hexdigest() for p in (node,cli)}
         return {'status':'REAL_Q02_SIGNED_CLI_AUTH_FAIL_CLOSED_PASS','cases':records,
-            'observed_genesis':before[1],'observed_rpc_version':version['version'],'core_version':'v0.1.11','core_sha256':originals,
+            'observed_genesis':before[1],'observed_rpc_version':version['version'],'core_version':'v0.1.13','core_sha256':originals,
             'genuine_core_processes':True,'synthetic_rpc_server':False,
             'negative_injections_are_not_observed_wrong_network_core':True,
             'persistent_shared_rpc_implemented':False,'mainnet_allowed':False,'production_qualified':False}

@@ -33,7 +33,7 @@ try:
     context=tempfile.TemporaryDirectory(prefix='wam-q01-linux-frozen-cwd-') if args.executable else nullcontext(None)
     with context as clean:
         result=subprocess.run([*command,
-            '--manifest-sha256','1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d',
+            '--manifest-sha256','4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2',
             '--anchor-socket',str(NativeRootWitness.root/'anchor.sock'),
             '--confirm-experimental-developer-regtest','--confirm-qt-e2e' if args.qt else '--confirm-headless-e2e',
             '--report',str(report)],env=environment,cwd=clean,stdin=subprocess.DEVNULL,timeout=600)
@@ -51,7 +51,7 @@ try:
     wallet=record['wallet_live_core']
     if args.qt:assert wallet['q02_gui_auth']['real_core_cli_auth_failure_gui_fail_closed'] is True
     assert wallet['status']==('REAL_LINUX_CORE_ROOT_WITNESS_NATIVE_QT_WALLET_E2E_PASS' if args.qt else 'REAL_LINUX_CORE_ROOT_WITNESS_HEADLESS_WALLET_E2E_PASS')
-    assert record['qt_imported'] is args.qt and record['official_signed_release'] is False
+    assert record['qt_imported'] is args.qt and record['official_signed_release'] is True
     assert wallet['synthetic_rpc'] is False and wallet['mainnet_allowed'] is False
     assert wallet['confirmed_recipient_atoms']==100000
     if not args.qt:assert wallet['actual_reorg_depths']==[1,12,100]
@@ -63,7 +63,7 @@ try:
         q04_report=report.parent/'q04-evidence.json'
         with tempfile.TemporaryDirectory(prefix='wam-q04-linux-frozen-cwd-') as clean:
             subprocess.run([str(args.executable.absolute()), 'q04-external-miner',
-                '--manifest-sha256','1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d',
+                '--manifest-sha256','4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2',
                 '--anchor-socket',str(NativeRootWitness.root/'anchor.sock'),
                 '--confirm-experimental-developer-regtest','--report',str(q04_report)],
                 env=environment,cwd=clean,stdin=subprocess.DEVNULL,timeout=600,check=True)

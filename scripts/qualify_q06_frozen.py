@@ -54,7 +54,7 @@ def main():
             NativeRootWitness.setUpClass()
             witness=NativeRootWitness
             args+=["--linux-developer-manifest",
-                   "1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d",
+                   "4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2",
                    "--linux-root-witness",str(witness.root/"anchor.sock")]
         # Capture only fixed public phase names. A frozen windowed Windows
         # executable has no stdout; receipt is always the proof authority.

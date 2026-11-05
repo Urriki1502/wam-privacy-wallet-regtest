@@ -43,3 +43,16 @@ codesign, Authenticode, notarization or physical acceptance.
 
 Q06 accepted=false; G6/G7 BLOCKED; V19 NOT EXECUTED/BLOCKED. No merge,
 release, mainnet or owner-profile conversion is authorized by this receipt.
+
+Native Linux intake [run 42060782393](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/42060782393)
+at source `4098f21aae9e00650eca4cad91227fc00302b90f` PASS: observed numeric
+113, `/WAM:0.1.13/`, protocol70016, zero peers, exact genesis and 101 blocks;
+original Popen stopped. Downloaded receipt retained as
+`evidence/core-v013/linux-native-intake-4098f21.json`.
+Both ELF stacks RW; no RPATH/RUNPATH or missing dependency. The exact
+Ubuntu24.04 root-owned loader/libc/libm/libgcc/libstdc++ closure was reviewed
+and separately pinned in linux_official_core.py. Manifest
+`4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2`
+is deterministic from those reviewed identities; archive/member trust is
+independently fixed in official_core_v013.py, never learned from that manifest.
+This intake is not Q04/Q05/Q06 or frozen wallet qualification.

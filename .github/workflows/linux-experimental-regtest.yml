@@ -1,4 +1,4 @@
-name: Linux x86_64 experimental developer Core REGTEST
+name: Linux x86_64 official Core v0.1.13 REGTEST
 on:
   pull_request:
     paths:
@@ -75,6 +75,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_q06_bip39*.py' -v
           python -m unittest discover -s tests -p 'test_q06_executor_commands.py' -v
           python -m unittest discover -s tests -p 'test_linux*.py' -v
+          python -m unittest discover -s tests -p 'test_official_core_v013*.py' -v
           python - <<'PY'
           import os,subprocess
           base=os.environ.get('BASE_SHA')
@@ -121,13 +122,15 @@ jobs:
         run: python -I scripts/q01_environment.py --profile headless --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Q01 native missing-dependency refusal (no Core execution)
         run: python scripts/q01_dependency_negatives.py
-      - name: Fetch previously qualified immutable developer Core artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Native headless dependency closure and actual wallet executable
         run: |
           sudo apt-get update -qq
@@ -177,13 +180,15 @@ jobs:
         run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Q01 native missing-dependency refusal (no Core execution)
         run: python scripts/q01_dependency_negatives.py
-      - name: Fetch previously qualified immutable developer Core artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Native xcb Qt over actual Core and independent root witness
         run: |
           sudo apt-get update -qq
@@ -247,12 +252,15 @@ jobs:
         run: python -I scripts/q01_environment.py --profile ${{ matrix.frontend == 'desktop' && 'gui' || 'headless' }} --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Q01 native missing-dependency refusal (no Core execution)
         run: python scripts/q01_dependency_negatives.py
-      - uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Native dependencies and pinned source closure
         run: |
           sudo apt-get update -qq
@@ -332,13 +340,15 @@ jobs:
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python -I scripts/q01_environment.py --profile headless --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
-      - name: Fetch previously qualified immutable developer Core artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Q04 genuine Core miner coexistence and read-only attachment
         run: |
           sudo apt-get update -qq
@@ -374,13 +384,15 @@ jobs:
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python -I scripts/q01_environment.py --profile headless --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
-      - name: Fetch previously qualified immutable developer Core artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Q04 RPC contention handling on genuine Core
         run: |
           sudo apt-get update -qq
@@ -394,7 +406,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   developer-core:
-    if: ${{ inputs.intake_only != true && (github.event_name == 'workflow_dispatch' || needs.native-contracts.outputs.core_changed == 'true') }}
+    if: ${{ false }} # Historical developer build retained; not this official candidate
     needs: native-contracts
     # Historical developer build job remains available outside intake-only runs.
     runs-on: ubuntu-24.04
@@ -476,13 +488,15 @@ jobs:
           architecture: 'x64'
       - name: Q01 hash-locked GUI environment
         run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q05-gui-env" --receipt q05-install.json
-      - name: Fetch immutable qualified developer Core (not official signed Linux)
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Install native ACL and Qt runtime
         run: |
           sudo apt-get update -qq
@@ -497,7 +511,7 @@ jobs:
             --core-dir "${GITHUB_WORKSPACE}/qualified-linux-core/linux-core" \
             --wsp-source "${GITHUB_WORKSPACE}/wsp-upstream" \
             --output-dir "${RUNNER_TEMP}/q05-native-matrix" --confirm-disposable-regtest \
-            --linux-developer-manifest 1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d \
+            --linux-developer-manifest 4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2 \
             --test-root-witness
       - name: Require actual combined-source GUI receipt
         shell: python

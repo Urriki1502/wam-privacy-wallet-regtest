@@ -11,8 +11,9 @@ v0.1.12 bbe584f5befe378657c7287c3149a613d2cd5eef;
 v0.1.13 b3fb899ddb1ceab7e9b3b12ccd034ad1b4be8186.
 Upstream v0.1.12 corrects uninitialized enforce_BIP94 (REGTEST true,
 main/test false); identical behavior to v0.1.11 must not be assumed.
-v0.1.12 GitHub Release API currently returns 404; source-tag inspection
-is required to substantiate the research description before qualification.
+v0.1.12 GitHub Release API currently returns 404; source-tag compare inspected on 2026-11-05 confirms all three assignments in
+[chainparams.cpp](https://github.com/wamcoin-Project/wam-coin/compare/v0.1.11...v0.1.12).
+The release API absence does not imply the source tag is absent.
 v0.1.13 release adds five ZMQ publishers/HWM options and runtime-library
 packaging checks. Its no-consensus-change statement is relative to v0.1.12.
 Fusion continues authenticated loopback RPC only; no ZMQ, discovery, remote

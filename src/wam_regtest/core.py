@@ -1,4 +1,4 @@
-"""Real WAM v0.1.11 Core REGTEST disposable RPC smoke, never mock or mainnet.
+"""Real WAM v0.1.13 Core REGTEST disposable RPC smoke, never mock or mainnet.
 
 This is a developer acceptance harness, not a production executable loader
 binding or key custody boundary. No user datadir is ever read or modified.
@@ -269,8 +269,8 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             genesis=_read_cli(prefix + ['getblockhash','0'])
             if genesis!=REGTEST_GENESIS:raise CoreSmokeError('CORE_WRONG_GENESIS_DENIED')
             version=_read_cli(prefix + ['getnetworkinfo'])
-            if (type(version) is not dict or type(version.get('version')) is not int or version.get('version')!=111
-                    or version.get('subversion')!='/WAM:0.1.11/' or type(version.get('protocolversion')) is not int or version.get('protocolversion')!=70016):
+            if (type(version) is not dict or type(version.get('version')) is not int or version.get('version')!=113
+                    or version.get('subversion')!='/WAM:0.1.13/' or type(version.get('protocolversion')) is not int or version.get('protocolversion')!=70016):
                 raise CoreSmokeError('CORE_RPC_VERSION_DENIED')
             if _read_cli(prefix + ["getconnectioncount"]) != 0:
                 raise CoreSmokeError("CORE_EXTERNAL_PEERS_DENIED")

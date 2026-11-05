@@ -149,7 +149,7 @@ def run(args):
         result=smoke_real_core(core,explicit_consent=args.confirm_experimental_developer_regtest,
             wsp_source=source,wsp_payment_e2e=True,headless_callback=callback,
             q02_e2e=bool(args.confirm_headless_e2e or args.confirm_qt_e2e))
-        result.update({'official_signed_release':False,'developer_manifest_sha256':args.manifest_sha256,
+        result.update({'official_signed_release':True,'official_manifest_sha256':args.manifest_sha256,
             'frozen_runtime':bool(getattr(sys,'frozen',False)),
             'linux_headless':not (args.gui or args.confirm_qt_e2e),'qt_imported':any(n.startswith('PySide6') for n in sys.modules)})
         if args.report:

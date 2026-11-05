@@ -140,9 +140,9 @@ def validate_peers(rows, profile, *, require_connected=False):
                 or type(row.get('inbound')) is not bool
                 or not row['inbound'] and port != profile.peer_port
                 or type(row.get('version')) is not int or row.get('version') not in (0,70016)
-                or row.get('subver') not in ('','/WAM:0.1.11/')):
+                or row.get('subver') not in ('','/WAM:0.1.13/')):
             raise SharedRegtestError('SHARED_UNEXPECTED_PEER_DENIED')
-    ready = [r for r in rows if r.get('version') == 70016 and r.get('subver') == '/WAM:0.1.11/']
+    ready = [r for r in rows if r.get('version') == 70016 and r.get('subver') == '/WAM:0.1.13/']
     if require_connected and not ready:
         raise SharedRegtestError('SHARED_CONFIRMED_PEER_REQUIRED')
     return {'connected': bool(ready), 'peer_count':len(ready),
@@ -170,7 +170,7 @@ def peer_status(directory, *, require_connected=False):
 def block_magic(directory):
     """Read only the public first record marker of this owned Core's blocks.
 
-    Core v0.1.11 defaults to XOR-obfuscated block files. The local mask is
+    Core v0.1.13 defaults to XOR-obfuscated block files. The local mask is
     never returned or logged. This checks disk framing, not a wire capture.
     """
     from .custody import storage
