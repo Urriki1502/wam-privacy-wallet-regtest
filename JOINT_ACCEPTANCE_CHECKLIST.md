@@ -66,6 +66,8 @@ Record job/receipt, OS, package SHA, Core digest, timestamp. Disposable REGTEST 
 
 Source-only Mac presentation tests (not Core E2E, not Q06 ledger): 34 unittest OK on 2026-11-05 (`tests.test_fusion_v21_layout`, `test_fusion_design`, `test_q06_bip39_fusion_gui`, `test_ui_text_layout`).
 
+RC1 native CI PASS at `144d877` (runs 38747153198 / 38747163508 / 38747174307) is **historical**. Those Actions artifacts are expired (`total_count=0` on 2026-11-05). See `docs/PLATFORM_REUSE_GAP_MATRIX.md`. Not V2.2 qualification.
+
 ## V19 two physical computers
 
 Procedure: `docs/V19_PHYSICAL_ACCEPTANCE_READY.md` and `docs/V1_NET_TWO_COMPUTER_ACCEPTANCE.md`.  

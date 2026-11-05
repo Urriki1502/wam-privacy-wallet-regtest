@@ -1,10 +1,6 @@
 # Developer native Windows / Linux build handoff
 
-Use **one** source revision on every OS:
-
-```
-b844dd371d4ac5dc3d0469eb899d6709e8ac407f
-```
+Use **one** source revision on every OS: the commit that contains the Q06 frozen deny-token classification on the existing Windows/Linux package entries. Record the exact SHA from `git rev-parse HEAD` after that commit (also in `ENGINEERING_HANDOFF.md`). Do not use UI pin `b844dd371d4ac5dc3d0469eb899d6709e8ac407f` once that classification is in HEAD.
 
 WSP pin: `ac55f13423620252bdbf848c7e8a280c3b84721e`
 
@@ -18,6 +14,8 @@ release-candidates/b844dd3/windows-x64/
 release-candidates/b844dd3/linux-x86_64-desktop/
 release-candidates/b844dd3/linux-x86_64-headless/
 ```
+
+Reuse the **existing** builders and entries. Do not add a second Windows or Linux backend. Exact RC1 vs V2.2 file matrix: `docs/PLATFORM_REUSE_GAP_MATRIX.md`.
 
 No GitHub push, merge, new CI workflow, or mainnet.
 

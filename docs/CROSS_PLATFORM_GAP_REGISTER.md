@@ -25,6 +25,10 @@ waiver. Do not run a macOS bundle on Windows or Linux.
 | G-15 | `[regtest]` config | Official v0.1.11 ignores `rpcbind`/`port`/`connect` outside `[regtest]`. | High | Fusion `write_config` must keep the section |
 | G-16 | GitHub Releases | `github.com/wamcoin-core-dev/wam-coin` tag `v0.1.11` 404 from this environment | Medium | Use wamcoin.org + GPG, not GitHub badge |
 | G-17 | Pillow | Missing on this Mac; Windows ICO conversion needs Pillow on the Windows host | Medium | Windows builder dependency |
+| G-18 | RC1 artifacts | GitHub runs 38747153198 / 38747163508 / 38747174307 remain `success` at `144d877`, but Actions artifacts `total_count=0` (expired ~2026-10-29). | High | Historical PASS only; cannot re-download packages |
+| G-19 | Git ancestry | This clone has **no merge-base** between RC1 `144d877` and pin `b844dd3`. Reuse is the surviving `scripts/build_*` and `*_package_entry.py` files. | High | Do not claim V2.2 contains RC1 as ancestor |
+| G-20 | V1-NET frozen | `--ci-v1-net-shared-regtest` is Cocoa/`package_entry.py` only. Win/Linux reuse interactive shared-mode, not that probe. | Medium | Do not copy the Cocoa lab onto PE/ELF |
+| G-21 | GNU_STACK | Developer ELF must be `PT_GNU_STACK` RW (`flags=6`). Official published Linux RWE remains rejected and is not the Fusion builder input. | High | Never relabel developer Core as official signed |
 
 ## Hardcoded / OS-specific (intentional)
 
