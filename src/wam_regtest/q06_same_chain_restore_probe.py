@@ -38,13 +38,15 @@ def qualify(core, source, parent, adapter):
     def step(name):
         report['stage'] = name
         print('Q06_SAME_CHAIN_RESTORE_STAGE=' + name, flush=True)
-    def start(index, mode, mnemonic=''):
-        root = lab / ('wam-fusion-core-' + secrets.token_hex(8))
+    def start(index, mode, mnemonic='', existing_root=None):
+        root = existing_root or lab / ('wam-fusion-core-' + secrets.token_hex(8))
+        options = ({'_anchor_factory':adapter.make_anchor} if mode != 'reopen' else
+                   {'keychain':adapter.reopen_anchor(root) if adapter.platform_id=='macos-arm64' else None})
         worker = WalletExecutor(lambda:Bip39ReadOnlyBackend(
-            root,core,source,shared_profile=profiles[index],_anchor_factory=adapter.make_anchor))
+            root,core,source,shared_profile=profiles[index],**options))
         workers.append(worker)
         opened = worker.request('open',password,mode,mnemonic,timeout=120)
-        return worker, opened
+        return worker, opened, root
     def wait(predicate):
         deadline = time.monotonic() + 120
         while not predicate():
@@ -59,7 +61,7 @@ def qualify(core, source, parent, adapter):
             raise ValueError('Q06_SAME_CHAIN_RESTORE_ORIGINAL_OWNER_LIVE')
     try:
         step('NEW_COORDINATOR_AND_PARTICIPANT')
-        a, opened = start(0,'create')
+        a, opened, _ = start(0,'create')
         phrase = opened['mnemonic_once']
         a.request('acknowledge_create_pending',opened['seed_folder'],timeout=30)
         positions = (1,6,12)
@@ -67,7 +69,7 @@ def qualify(core, source, parent, adapter):
         if a.request('backup_verify',positions,answers,timeout=30) is not True:
             raise ValueError('Q06_SAME_CHAIN_RESTORE_BACKUP_DENIED')
         answers = None
-        b, unused = start(1,'create')
+        b, unused, _ = start(1,'create')
         unused = None
         wait(lambda:state(a)['connected'] and state(b)['connected'])
         peers = state(a)['peers'] + state(b)['peers']
@@ -112,7 +114,7 @@ def qualify(core, source, parent, adapter):
             if error.errno != errno.EADDRINUSE:raise
             report['retired_endpoint_available'] = False
             report['retired_endpoint_not_adopted'] = True
-        c, restored = start(2,'restore',phrase)
+        c, restored, restored_root = start(2,'restore',phrase)
         if (restored['receive_code']!=opened['receive_code'] or restored['mnemonic_once']
                 or restored['account_id']!=opened['account_id']
                 or restored['signer_allowed'] is not False):
@@ -137,6 +139,18 @@ def qualify(core, source, parent, adapter):
             confirmed_atoms=before['confirmed_atoms'],history_count=len(actual),
             original_irreversible_reservations_preserved=True,
             mnemonic_does_not_restore_signed_reservations=True)
+        step('RESTORED_PROFILE_CORE_RESTART_AND_HISTORY')
+        stop(c)
+        c, reopened, _ = start(2,'reopen',existing_root=restored_root)
+        wait(lambda:state(a)['connected'] and state(c)['connected']
+                       and state(c)['tip']==before['tip'])
+        reopened_view = c.request('snapshot',timeout=240)
+        if (reopened['mnemonic_once'] or reopened['receive_code']!=opened['receive_code']
+                or reopened_view['confirmed_atoms']!=before['confirmed_atoms']
+                or {row['txid'] for row in reopened_view['history']}!=expected
+                or reopened_view['signer_allowed'] is not False):
+            raise ValueError('Q06_SAME_CHAIN_RESTORE_POST_RESTART_HISTORY_DENIED')
+        report['restored_same_owner_core_reopened'] = True
         step('RESTORED_AND_ORIGINAL_OWNERS_CLEAN_SHUTDOWN')
         stop(c)
         stop(a)
