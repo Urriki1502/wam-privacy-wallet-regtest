@@ -42,7 +42,9 @@ class PlatformReuseContracts(unittest.TestCase):
         self.assertIn('Q06PlatformQualificationError', linux)
         self.assertIn('Q06PlatformQualificationError', windows)
         self.assertIn(r'(?:LINUX|Q04|EXTERNAL_ATTACHMENT|Q06)_', linux)
-        self.assertIn(r'(?:CORE|WIN|WALLET|WSP|Q04|Q06)_', windows)
+        from wam_regtest.windows_package_entry import _public_denial
+        for code in ('Q06_NATIVE_SCOPE_DENIED','Q02_ACCEPTANCE_CONFIG_AUTH_FAILED'):
+            self.assertEqual(_public_denial(ValueError(code))['reason_code'],code)
 
     def test_v1_net_frozen_lab_stays_cocoa_and_v19_blocked(self):
         probe = (ROOT / 'src' / 'wam_regtest' / 'shared_network_probe.py').read_text()
