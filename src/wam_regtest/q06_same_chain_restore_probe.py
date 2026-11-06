@@ -18,20 +18,22 @@ from .shared_regtest import SharedRegtestProfile
 from .custody import create_directory
 
 
-def qualify(core, source, parent, adapter):
+def qualify(core, source, parent, adapter, *, port_base=29554):
+    if type(port_base) is not int or not 1024<=port_base<=65530:
+        raise ValueError('Q06_SAME_CHAIN_RESTORE_PORT_SCOPE_DENIED')
     lab = parent / ('same-chain-restore-' + secrets.token_hex(8))
     create_directory(lab)
     report = {'status':'FAIL','synthetic_rpc':False,'mainnet_allowed':False,
               'physical_accepted':False,'independent_reviewed':False,
               'chain_copied':False,'native_anchor_copied':False,
               'old_profile_overwritten':False,'restored_signer_enabled':False,
-              'platform':adapter.platform_id,'ports':[[29554,29555],[29556,29557],[29558,29559]]}
+              'platform':adapter.platform_id,'ports':[[port_base+i,port_base+i+1] for i in (0,2,4)]}
     profiles = [SharedRegtestProfile('127.0.0.1',coordinator=True,
-                    rpc_port=29554,p2p_port=29555,peer_port=29557),
+                    rpc_port=port_base,p2p_port=port_base+1,peer_port=port_base+3),
                 SharedRegtestProfile('127.0.0.1',coordinator=False,
-                    rpc_port=29556,p2p_port=29557,peer_port=29555),
+                    rpc_port=port_base+2,p2p_port=port_base+3,peer_port=port_base+1),
                 SharedRegtestProfile('127.0.0.1',coordinator=False,
-                    rpc_port=29558,p2p_port=29559,peer_port=29555)]
+                    rpc_port=port_base+4,p2p_port=port_base+5,peer_port=port_base+1)]
     workers = []
     password = b'public-disposable-same-chain-profile-restore'
     phrase = None
@@ -40,33 +42,36 @@ def qualify(core, source, parent, adapter):
         report['stage'] = name
         print('Q06_SAME_CHAIN_RESTORE_STAGE=' + name, flush=True)
     class ObservedBackend(Bip39ReadOnlyBackend):
-        def _core(self):
-            owner=super()._core()
-            if (self.shared_profile is profiles[2] and restore_tip is not None
-                    and getattr(self,'_fixture_ready_owner',None) is not owner):
-                # A new node can be validating historical blocks while seed
-                # custody does its first owner/status check. Wait at this
-                # fixture's bootstrap boundary using genuine, original-owned
-                # signed CLI reads, before any seed/anchor is created/opened.
-                # Ordinary HTTP timeouts and fail-closed custody stay intact.
-                from .core import _read_cli
-                deadline=time.monotonic()+120
-                while True:
-                    remaining=deadline-time.monotonic()
-                    if remaining<=0:
-                        raise ValueError('Q06_RESTORED_CORE_BOOTSTRAP_SYNC_TIMEOUT')
-                    info=_read_cli([str(owner.cli),'-datadir='+str(owner.directory),
-                                    'getblockchaininfo'],timeout=min(15,remaining))
-                    if (info['blocks'],info['bestblockhash'])==restore_tip:break
-                    if info['blocks']>restore_tip[0]:
-                        raise ValueError('Q06_RESTORED_CORE_BOOTSTRAP_TIP_DENIED')
-                    time.sleep(.1)
-                self._fixture_ready_owner=owner
-                report['restored_core_synced_before_seed_custody']=True
-            return owner
+        def _start_core(self):
+            self.owner.start(timeout=90,
+                _defer_shared_network=self.shared_profile is profiles[2])
 
         def execute(self, action, args, kwargs):
-            try:return super().execute(action,args,kwargs)
+            try:
+                result=super().execute(action,args,kwargs)
+                if action=='open' and self.shared_profile is profiles[2]:
+                    # Hold P2P inactive through original-process/HTTP
+                    # attestation AND native seed opening. Only then enable
+                    # this disposable participant and await real blocks.
+                    from .core import _read_cli
+                    owner=self.owner
+                    prefix=[str(owner.cli),'-datadir='+str(owner.directory)]
+                    _read_cli(prefix+['setnetworkactive','true'])
+                    deadline=time.monotonic()+120
+                    while True:
+                        remaining=deadline-time.monotonic()
+                        if remaining<=0:
+                            raise ValueError('Q06_RESTORED_CORE_BOOTSTRAP_SYNC_TIMEOUT')
+                        info=_read_cli(prefix+['getblockchaininfo'],timeout=min(15,remaining))
+                        if (info['blocks'],info['bestblockhash'])==restore_tip:break
+                        if info['blocks']>restore_tip[0]:
+                            raise ValueError('Q06_RESTORED_CORE_BOOTSTRAP_TIP_DENIED')
+                        time.sleep(.1)
+                    from .managed_wallet_checkpoint import _owned
+                    _owned(owner)  # Unchanged HTTP and custody checks after sync.
+                    report['restored_core_attested_before_network_sync']=True
+                    report['restored_core_synced_before_history_scan']=True
+                return result
             except Exception as error:
                 # Public type/errno only: never exception strings, args,
                 # mnemonic, credentials, chain records or signed payloads.
@@ -111,7 +116,8 @@ def qualify(core, source, parent, adapter):
         worker = WalletExecutor(lambda:ObservedBackend(
             root,core,source,shared_profile=profiles[index],**options))
         workers.append(worker)
-        opened = worker.request('open',password,mode,mnemonic,timeout=120)
+        # Covers bounded Core bootstrap (90s) plus historical sync (120s).
+        opened = worker.request('open',password,mode,mnemonic,timeout=240)
         return worker, opened, root
     def wait(predicate):
         deadline = time.monotonic() + 120

@@ -221,10 +221,13 @@ class CoreSupervisor:
         except (ValueError,OSError):
             pass  # No successful operation follows diagnostic publication failure.
 
-    def start(self, *, timeout=90, _recovering=False):
+    def start(self, *, timeout=90, _recovering=False, _defer_shared_network=False):
         if (type(timeout) is not int or not 1 <= timeout <= 90
                 or self.process is not None or self._faulted):
             raise ManagedCoreError('MANAGED_START_NOT_ALLOWED')
+        if (type(_defer_shared_network) is not bool
+                or _defer_shared_network and self.shared_profile is None):
+            raise ManagedCoreError('SHARED_EXPLICIT_PROFILE_REQUIRED')
         port = self._check_profile()
         self._check_core()
         self.journal.reserve_start()
@@ -249,8 +252,10 @@ class CoreSupervisor:
             else:
                 creation_owner = nullcontext()
             with creation_owner:
+                args=[str(self.node), f'-datadir={self.directory}', '-daemon=0']
+                if _defer_shared_network:args.append('-networkactive=0')
                 self.process = subprocess.Popen(
-                    [str(self.node), f'-datadir={self.directory}', '-daemon=0'],
+                    args,
                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL, env=env,
                     cwd=self.node.parent if sys.platform == 'win32' else self.directory,

@@ -169,3 +169,28 @@ or retry uncertain writes. A local genuine-Core diagnostic passed restoration,
 full history, read-only enforcement and restart with
 `restored_core_synced_before_seed_custody=true`, all owners stopped; native
 macOS CI and the next common-source frozen matrix remain required.
+
+The subsequent additional frozen workflow `42135293719` at e3b461b retained
+another FAIL: the same uncertain-read category occurred in `start()` itself,
+before the post-start sync barrier. Therefore e3b461b's separate RC PASS does
+not close the common macOS failure.
+
+The next candidate explicitly withholds the fresh restored participant's P2P
+networking through original-process/HTTP attestation and seed opening. Only
+then does the fixture issue one original-owned signed `setnetworkactive=true`
+and await the historical tip before scanning. Core v0.1.13's exact binary help
+confirms `-networkactive=0` support. The ordinary application start defaults,
+HTTP timeouts, profile/config bytes, custody checks and fail-closed transport
+remain unchanged. The binding recognizes only the exact original argv or that
+argv plus the single network-suppression flag; unknown/duplicate options and
+post-binding drift refuse. Local targeted startup/binding/lifecycle checks:
+45 PASS; full source suite: 681 discovered,646 PASS,35 platform skips.
+
+A first local attempt correctly refused the new flag before the binding
+allowlist was updated. Its original diagnostic parent retained the disposable
+child; the process action is blocked on original-parent recovery capability.
+The exact live-owner observation and required recovery boundary are recorded
+in the ignored ENGINEERING_HANDOFF.md. No foreign-PID adoption, signal, lock
+removal or user-profile operation was performed. Further local diagnostics use
+an explicitly separate port range and NEW namespaces. This retained failure
+and the macOS CI failures prevent any engineering-handoff/completion claim.

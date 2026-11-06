@@ -184,8 +184,11 @@ class ManagedWalletBackend:
             self.owner._control_bridge=lambda op:self._executor.request('control',op)
             self._control_thread=threading.Thread(target=self._serve_control,name='WAM-control-io',daemon=True)
             self._control_thread.start()
-        if self.owner.process is None:self.owner.start(timeout=90)
+        if self.owner.process is None:self._start_core()
         return self.owner
+
+    def _start_core(self):
+        self.owner.start(timeout=90)
 
     def _open(self,password,create=False):
         from .wallet_session import WalletSession

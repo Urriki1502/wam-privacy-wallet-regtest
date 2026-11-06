@@ -84,6 +84,60 @@ class StartupContracts(unittest.TestCase):
                                     authorized_readonly=True, binding=binding)
         self.assertNotIn('rpcpassword', str(spawn.call_args))
 
+    def test_deferred_network_requires_explicit_shared_profile_before_spawn(self):
+        owner=self.owner()
+        for value in (True,'true',1):
+            with patch.object(module.subprocess,'Popen') as spawn:
+                with self.assertRaisesRegex(module.ManagedCoreError,'SHARED_EXPLICIT_PROFILE_REQUIRED'):
+                    owner.start(_defer_shared_network=value)
+                spawn.assert_not_called()
+        self.assertEqual(owner.journal.state,'CLEAN')
+
+    def test_binding_accepts_only_exact_network_suppression_and_rejects_argument_drift(self):
+        from wam_regtest import core_process
+        self.core.mkdir(mode=0o700)
+        node,cli=self.core/'wamd',self.core/'wam-cli'
+        node.write_bytes(b'unit fixture only');cli.write_bytes(b'unit fixture only')
+        class Process:
+            def __init__(self,args):self.args=args
+            def poll(self):return None
+        baseline=[str(node),f'-datadir={self.root}','-daemon=0']
+        with patch.object(core_process.subprocess,'Popen',Process), \
+                patch.object(core_process,'verified_core_paths',return_value=(node,cli,{})), \
+                patch.object(core_process,'_metadata',return_value=('unit fixture',)):
+            for args in (baseline,baseline+['-networkactive=0']):
+                process=Process(args)
+                with patch.object(OwnedCoreBinding,'_assert_image') as attest:
+                    binding=OwnedCoreBinding(process,self.core,self.root)
+                    attest.assert_called_once()
+                process.args=baseline+['-networkactive=1']
+                with self.assertRaisesRegex(CoreBindingError,'RPC_OWNED_PROCESS_EXITED'):
+                    binding._assert_image()
+            for suffix in (['-networkactive=1'],['-networkactive=0','-rpcbind=0.0.0.0'],
+                           ['-networkactive=0','-networkactive=0'],['-listen=1']):
+                with self.assertRaisesRegex(CoreBindingError,'RPC_OWNED_PROCESS_REQUIRED'):
+                    OwnedCoreBinding(Process(baseline+suffix),self.core,self.root)
+
+    def test_shared_deferred_bootstrap_still_requires_original_http_attestation(self):
+        from wam_regtest.shared_regtest import SharedRegtestProfile
+        owner=module.CoreSupervisor(self.root,self.core,authorized=True,
+            shared_profile=SharedRegtestProfile('127.0.0.1',rpc_port=29654,
+                p2p_port=29655,peer_port=29657))
+        self.addCleanup(owner.close)
+        before=(owner.directory/'wam.conf').read_bytes()
+        process,binding,registered,rpc,spawn=self.startup(owner)
+        with patch('wam_regtest.shared_regtest.block_magic',return_value='57414d52'), \
+                patch.object(module,'_read_cli',return_value={'chain':'regtest'}) as boot:
+            owner.start(timeout=1,_defer_shared_network=True)
+        self.assertEqual(spawn.call_args.args[0],
+            [str(owner.node),f'-datadir={owner.directory}','-daemon=0','-networkactive=0'])
+        rpc.assert_called_once_with(owner.core,owner.directory,
+                                    authorized_readonly=True,binding=binding)
+        boot.assert_called_once_with([str(owner.cli),f'-datadir={owner.directory}',
+                                      'getblockchaininfo'],timeout=unittest.mock.ANY)
+        self.assertEqual((owner.directory/'wam.conf').read_bytes(),before)
+        self.assertIs(owner.process,process)
+
     def test_warmup_only_retry_preserves_spawn_and_scope(self):
         owner = self.owner()
         read = Mock()
