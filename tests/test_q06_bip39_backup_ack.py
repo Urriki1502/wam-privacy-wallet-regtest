@@ -97,7 +97,7 @@ class _StubExecutor:
 
 
 if importlib.util.find_spec("PySide6") is not None:
-    from PySide6.QtCore import Qt
+    from PySide6.QtCore import Qt, QCoreApplication, QEvent
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import (
         QApplication, QLineEdit, QCheckBox, QPushButton, QLabel)
@@ -640,6 +640,10 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
         self.app, self.window = _make_window()
 
     def tearDown(self):
+        dialog = getattr(self, 'dialog', None)
+        if dialog is not None:
+            dialog.close()
+            dialog.deleteLater()
         self.window._poll.stop()
         worker = self.window._worker
         if worker is not None:
@@ -647,6 +651,9 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
         self.app.processEvents()
         self.window.hide()
         self.window.deleteLater()
+        # processEvents alone does not flush DeferredDelete without an outer
+        # event loop. Dispose these known fixtures before the next focus test.
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         self.app.processEvents()
 
     def _make_dialog(self):
