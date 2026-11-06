@@ -55,6 +55,22 @@ class NativeProbeSourceContracts(unittest.TestCase):
             with self.assertRaisesRegex(ProbeSourceError,'CLEAN_SOURCE_REQUIRED'):
                 local_audit_documents(self.root,status)
 
+    def test_named_owner_security_instructions_are_hashed_as_non_runtime(self):
+        from hashlib import sha256
+        names = (
+            'docs/security-audit/WAM_Fusion_PreMainnet_Security_Audit_Charter_2026-11-06.md',
+            'docs/security-audit/WAM_Fusion_Security_Remediation_Design_Review_2026-11-06.md')
+        expected = {}
+        for name in names:
+            path = self.root/name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b'public owner instructions\n')
+            expected[name] = sha256(path.read_bytes()).hexdigest()
+        status = b''.join(b'?? '+name.encode()+b'\n' for name in names)
+        self.assertEqual(local_audit_documents(self.root, status), expected)
+        for name in names:
+            self.assertEqual((self.root/name).read_bytes(), b'public owner instructions\n')
+
     @unittest.skipIf(os.name=='nt','POSIX metadata; native Windows reparse/custody has separate contracts')
     def test_retained_audit_cannot_be_executable_symlink_or_hardlink(self):
         name='docs/INDEPENDENT_RC_AUDIT_56ea3618.md'

@@ -3,7 +3,7 @@
 CI may have untracked JSON/build artifacts. It may NOT change/add Python inputs,
 hide tracked edits behind index flags, substitute a merge runtime or import a
 different project package. Local qualification requires exact committed source;
-four retained, non-runtime audit Markdown files are recorded separately.
+Explicitly enumerated non-runtime audit Markdown files are recorded separately.
 """
 from hashlib import sha1,sha256
 import json
@@ -18,7 +18,9 @@ LOCAL_AUDIT_DOCUMENTS=frozenset((
     'docs/DEVELOPER_INDEPENDENT_REBUILD_GUIDE.md',
     'docs/INDEPENDENT_RC_AUDIT_56ea3618.md',
     'docs/RC_PACKAGE_CONTENT_VERIFICATION.md',
-    'docs/RC_RUNTIME_DEPENDENCY_MATRIX.md'))
+    'docs/RC_RUNTIME_DEPENDENCY_MATRIX.md',
+    'docs/security-audit/WAM_Fusion_PreMainnet_Security_Audit_Charter_2026-11-06.md',
+    'docs/security-audit/WAM_Fusion_Security_Remediation_Design_Review_2026-11-06.md'))
 
 
 class ProbeSourceError(ValueError):pass
