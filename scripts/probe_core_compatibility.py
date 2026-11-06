@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import subprocess
 import re
+import platform
 from datetime import datetime, timezone
 
 from wam_regtest.q02_probe import _Node
@@ -112,7 +113,15 @@ def main():
     subprocess.run(['git','diff','--quiet','HEAD','--'],cwd=root,check=True)
     tree=_tree(root,head);digests,normalized=verify_python_tree(root,tree,tree)
     result=probe(args.core_dir.resolve(strict=True),args.wsp_source.resolve(strict=True))
+    subprocess.run(['git','diff','--quiet','HEAD','--'],cwd=root,check=True)
+    if subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()!=head:
+        raise ValueError('CORE_COMPATIBILITY_SOURCE_CHANGED')
+    after,_=verify_python_tree(root,tree,tree)
+    if after!=digests:raise ValueError('CORE_COMPATIBILITY_SOURCE_CHANGED')
     result['source_sha']=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+    result['literal_python_unchanged_across_probe']=True
+    result['wsp_source_commit']='ac55f13423620252bdbf848c7e8a280c3b84721e'
+    result['host']={'os':platform.system(),'arch':platform.machine()}
     result['literal_committed_python_sha256']=digests
     result['source_gate_scope']='research-only literal Python; not final frozen attestation'
     result['timestamp_utc']=datetime.now(timezone.utc).isoformat()

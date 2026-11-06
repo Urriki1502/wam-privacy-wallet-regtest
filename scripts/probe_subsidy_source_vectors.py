@@ -52,6 +52,7 @@ int main() {
               [400001,1250000000,0,1250000000],[600000,1250000000,0,1250000000],[600001,625000000,0,625000000]]
     assert rows==expected,'SUBSIDY_SOURCE_VECTOR_MISMATCH'
     receipt={'status':'PASS_SCOPED_UNCHANGED_UPSTREAM_SOURCE_VECTORS',
+             'candidate_source_sha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
              'upstream_commit':'b3fb899ddb1ceab7e9b3b12ccd034ad1b4be8186',
              'source_pins_sha256':PINS,'minimal_type_stubs':True,
              'core_binary_executed':False,'columns':['height','total_atoms','treasury_atoms','miner_atoms'],
