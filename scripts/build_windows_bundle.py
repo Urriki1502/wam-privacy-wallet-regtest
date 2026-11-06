@@ -4,6 +4,7 @@ Reuses only build tactics from legacy PR170/206, never their GUI-only acceptance
 Original owner-supplied PNG -> ICO conversion; no substituted/generated artwork.
 """
 from hashlib import sha256
+from contextlib import nullcontext
 import importlib.metadata
 import json
 import os
@@ -100,7 +101,9 @@ def main():
         ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV') and not k.startswith(('QT_','QML_'))}
     system_root=Path(os.environ['SystemRoot'])
     environment.update({'QT_QPA_PLATFORM':'windows','PATH':str(system_root/'System32')+os.pathsep+str(system_root)})
-    with tempfile.TemporaryDirectory(prefix='wam-q01-win-frozen-cwd-') as clean:
+    # Preserve this NEW qualification namespace on failure, including a live
+    # original owner. Never upload private profiles/configs or sweep temp roots.
+    with nullcontext(tempfile.mkdtemp(prefix='wam-q01-win-frozen-cwd-')) as clean:
         isolated=Path(clean).resolve()
         result=subprocess.run([str(executable),'--ci-real-core-wallet'],env=environment,cwd=isolated,stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
@@ -110,19 +113,29 @@ def main():
             # Never print OS/RPC logs, paths, exception text or credentials.
             refusal=isolated/'windows-packaged-wallet-denied.json'
             code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
+            from wam_regtest.windows_package_entry import public_failure_details
+            details=public_failure_details({})
             if refusal.is_file():
                 try:
                     payload=json.loads(refusal.read_text(encoding='utf8'))
                     candidate=payload.get('reason_code')
                     if (payload.get('status')=='WIN_BUNDLE_DENIED'
                             and type(candidate) is str and len(candidate)<=110
-                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',candidate)):
+                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q02|Q04|Q06)_[A-Z0-9_]{4,105}',candidate)):
                         code=candidate
+                        details=public_failure_details(payload)
                 except (OSError,ValueError,TypeError):
                     pass
             print('WIN_FROZEN_DEFAULT_PUBLIC_DENIAL='+code,flush=True)
+            line_path=isolated/'wallet-probe-public-line.json'
+            if line_path.is_file():
+                try:
+                    line=json.loads(line_path.read_text(encoding='utf8')).get('line')
+                    if type(line) is int and 1<=line<=10000:details['wallet_probe_line']=line
+                except (OSError,ValueError,TypeError):pass
+            print('WIN_FROZEN_DEFAULT_PUBLIC_DETAILS='+json.dumps(details,sort_keys=True),flush=True)
             with (output/'Q01_DEFAULT_FAILURE.json').open('x') as failure:
-                json.dump({'status':'FAIL','stage':'frozen-100','reason_code':code},failure)
+                json.dump({'status':'FAIL','stage':'frozen-100','reason_code':code,**details},failure)
             raise AssertionError('WIN_FROZEN_REAL_WALLET_DENIED')
         evidence=json.loads((isolated/'windows-packaged-wallet-evidence.json').read_text())
         assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
@@ -147,7 +160,7 @@ def main():
                         candidate=payload.get('reason_code')
                         if (payload.get('status')=='WIN_BUNDLE_DENIED'
                                 and type(candidate) is str and len(candidate)<=110
-                                and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',candidate)):
+                                and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q02|Q04|Q06)_[A-Z0-9_]{4,105}',candidate)):
                             code=candidate
                     except (OSError,ValueError,TypeError):
                         pass
