@@ -1,6 +1,60 @@
+# Official Core v0.1.13 candidate — 2026-11-05
+
+Current branch: `feature/official-core-v013-three-platform-20261105`.
+Draft [#141](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/141)
+base `remediation/post-dev-review-20261105` (`c61e3c5`), with verified docs-only
+ancestor `bd783d7` retained. No remediation/main branch was pushed or moved.
+
+The old qualified v0.1.11 RC source and artifacts below remain preserved.
+They do not qualify this candidate. Official HTTPS/GPG/signed checksums and
+six independently observed member hashes: [provenance](docs/WAM_CORE_V013_PROVENANCE.md).
+Linux native intake at `4098f21` PASS. Linux source/native/frozen qualification
+at `c8bee3ecd95a2f95cb0264a6d0564fc02e5c9447` is in
+[run 42061583763](https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/42061583763):
+contracts, headless wallet, Q05 native and Q04 coexistence/contention PASS;
+Qt/frozen results remain PENDING at this checkpoint. Later signature-status
+refusal changes require new exact-source qualification. Windows/macOS runtime
+migration and common-source frozen matrix remain PENDING.
+
+Retained profiles, native anchors, artifacts and sidecar checkout unchanged.
+No owner profile conversion. Q06 accepted=false, G6/G7 BLOCKED, V19 physical
+NOT EXECUTED/BLOCKED. Qt legal review OPEN. No merge/release/mainnet.
+Read ignored `ENGINEERING_HANDOFF.md` first for current process/lease/dirty state.
+
+---
+
 # Canonical workspace manifest
 
-**Latest V1-NET runtime/build checkpoint: `29448e5e89079dc070b83766031c91c5ef1a9195`.** Actual frozen macOS/Core/Cocoa V1–V18 PASS (including explicit GUI reorg reconciliation + restart and isolated Q06 on the same binary); V19 physical two machines BLOCKED. Artifact `build/qualified-v1-29448e5/package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg`, SHA256 `3bea788d550bffa7b4195f827a8891c1aeafde2b5fec0ea85aa404b1981eb07a`; executable `a86046ada47f9df6a57df4d93dcc7671281f3aa058624c8f7f66de9d59ed2535`. All 19 manifest members, ZIP and read-only DMG contents independently matched. This focused V1 qualification does not relabel unexecuted full exact-commit Q01–Q05/cross-OS checks as PASS. [Current detailed evidence](docs/V1_NET_LOCAL_ENGINEERING_20261104.md).
+## Current status — 2026-11-05 pre-Codex handoff
+
+The sections below this one are historical checkpoints. They still describe older SHAs (`29448e5`, `e48d6cc`, `aaf2de2`, and the 2026-11-04 Phase 0 branch). They are not the current source identity and were not rewritten as if `c61e3c5` had produced them.
+
+| Item | Actual local result |
+|---|---|
+| Workspace and Git root | `/Users/dinhdang/Documents/WAM-Q06-Audit-20261102` |
+| Branch | `remediation/post-dev-review-20261105` |
+| Qualified executable SHA | `c61e3c5be4b8519dc6c4d9eb56d124fce84cf02d` |
+| Remote | `https://github.com/Urriki1502/wam-privacy-wallet-regtest.git` |
+| Fetched remediation tip | same SHA, ahead/behind 0/0. No remote-tracking ref is stored for this branch because `remote.origin.fetch` only maps the older Q06 feature branch. |
+| Other worktree | `/Users/dinhdang/Documents/WAM-RC-sidecars/checkout-56ea3618` detached `56ea3618`, retained |
+| Public RC index | `artifacts/rc-c61e3c5/` local-only via `.git/info/exclude` |
+| Inventory index | `evidence/workspace-audit/INVENTORY_20261105.md` local-only |
+| Private data | `bundle-input/`, `.wam-regtest-temp/`, `dist/` retained and not copied into public indexes |
+| Historical builds | `build/qualified-*`, `build/retained-artifacts`, `package-output/` retained in place |
+| Live processes | no `wamd` or wallet GUI at audit time; historical PIDs were not signalled |
+| Acceptance | Q06 accepted=false; G6 BLOCKED; G7 BLOCKED; V19 BLOCKED / NOT EXECUTED |
+
+Three-platform RC for `c61e3c5`, inner package SHA256 re-hashed locally on 2026-11-05:
+
+- macOS run `42040071124`, artifact `13424195214`: DMG `e1128214d12970f759b4e612646a03d8003a3d6da951c365a291595d164ad346`; app zip `039b5be60b8b18355b890035075236304a0ac31adab7df5388f261ad6155d413`
+- Windows run `42045852754`, artifact `13424489894`: zip `13fdc01f87959ba761eba96ebef2942bca1b0fda3ed2f52129f4031dee62d2b5`. Also success: `42045859130`, `42045866296`, `42045874094`, `42045880498`
+- Linux run `42045846771`, 9/9: desktop `90bc21e6af55091e974919ef60f4bc9dbbfb4e1c8d2aaf18b1df69367342c549`; headless `77f1f2c986d3fb66c922765796952aef326573ba58856dc484aea7632b990647`
+
+Core remains official signed v0.1.11 on macOS and Windows, and reviewed developer-built v0.1.11 on Linux (`official_signed_core_release=false`). WSP remains `ac55f13423620252bdbf848c7e8a280c3b84721e`. v0.1.13 is not integrated. A later documentation commit of this file does not requalify those packages.
+
+Resume: read `ENGINEERING_HANDOFF.md` first, acquire `python3 scripts/engineering_lease.py --hold`, and start the v0.1.13 migration only on a dedicated branch in the next authorized session. Do not push, merge, or dispatch CI from this inventory update.
+
+**Historical V1-NET runtime/build checkpoint: `29448e5e89079dc070b83766031c91c5ef1a9195`.** Actual frozen macOS/Core/Cocoa V1–V18 PASS (including explicit GUI reorg reconciliation + restart and isolated Q06 on the same binary); V19 physical two machines BLOCKED. Artifact `build/qualified-v1-29448e5/package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg`, SHA256 `3bea788d550bffa7b4195f827a8891c1aeafde2b5fec0ea85aa404b1981eb07a`; executable `a86046ada47f9df6a57df4d93dcc7671281f3aa058624c8f7f66de9d59ed2535`. All 19 manifest members, ZIP and read-only DMG contents independently matched. This focused V1 qualification does not relabel unexecuted full exact-commit Q01–Q05/cross-OS checks as PASS. [Current detailed evidence](docs/V1_NET_LOCAL_ENGINEERING_20261104.md).
 
 Source regression 611 discovered / 578 PASS / 33 SKIP / exit 0; latest focused reconciliation guards 7 PASS. Additional real native recovery from still-live faulted sessions passed with unchanged reservations and clean new owners. Historical orphan PIDs 7234/7250 remain read-only/unauthorized for process actions; new tests used 45954–45957. Product/two-machine defaults remain 29554/29555. Old owner-tested/Q06/V1 artifacts, failed receipts and private runtime generations are preserved. Q06 accepted=false; G6 physical retest pending, G7 independent BLOCKED; no acceptance ledger change, push, merge, CI dispatch or mainnet.
 

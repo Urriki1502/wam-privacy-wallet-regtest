@@ -10,6 +10,7 @@ from pathlib import Path
 import platform
 import re
 import sys
+import time
 
 from .bip39_12 import Bip39Regtest12Keys
 from .bip39_owner_backend import Bip39ReadOnlyBackend
@@ -62,22 +63,135 @@ def qualify(core, source, root, receipt, *, confirmed=False,
     window = None
     good = False
     phrase = None
+    approval_failure = []
     def step(name):
         nonlocal stage
         stage = name
         record["failure_stage"] = name
         print("Q06_" + adapter.platform_id.upper().replace("-", "_")
               + "_STAGE=" + name, flush=True)
+    def idle():
+        return (window._worker is None and not executor.busy
+                and not window._delivering_result)
+
+    def wait_gui(predicate, label):
+        deadline = time.monotonic() + 240
+        while not predicate():
+            app.processEvents()
+            if approval_failure:
+                raise Q06PlatformQualificationError(approval_failure[0])
+            if window._last_error_code:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_GUI_OPERATION_DENIED")
+            if time.monotonic() >= deadline:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_GUI_WAIT_" + label)
+            time.sleep(.01)
+        app.processEvents()
+
+    def gui_approval(button, caption, done, *, duplicate=False):
+        from PySide6.QtCore import QTimer, Qt
+        from .fusion_pages import PaymentApproval
+        from .qualification_gui import click_visible_approval
+        timer = QTimer()
+        timer.setInterval(100)
+        clicked = [False]
+        def consent():
+            for dialog in app.allWidgets():
+                if isinstance(dialog, PaymentApproval) and dialog.isVisible():
+                    # QDialog.open() intentionally switches the visible
+                    # dialog to WindowModal; constructor ApplicationModal is
+                    # checked separately by source widget contracts.
+                    record['visible_payment_approval'] = {
+                        'modality':dialog.windowModality().name,
+                        'modal':dialog.isModal(),'cancel_default':dialog.cancel.isDefault(),
+                        'approve_default':dialog.approve.isDefault()}
+                    if (dialog.windowModality() != Qt.WindowModality.WindowModal
+                            or not dialog.isModal() or not dialog.cancel.isDefault()
+                            or dialog.approve.isDefault()):
+                        approval_failure.append("Q06_PLATFORM_PAYMENT_APPROVAL_DENIED")
+                        timer.stop()
+                        return
+                    if duplicate and caption == "Approve Sign":
+                        # Deliver repeated clicks to the same visible native
+                        # approval. The real executor below must see one sign.
+                        control = dialog.approve
+                        control.clicked.emit()
+                        control.clicked.emit()
+                        clicked[0] = True
+                        return
+            if click_visible_approval(app, caption):
+                clicked[0] = True
+        timer.timeout.connect(consent)
+        timer.start()
+        try:
+            button.click()
+            if duplicate:
+                button.click()  # A busy/disabled Send must not prepare twice.
+            wait_gui(lambda: clicked[0] and idle() and done(), "APPROVAL")
+        finally:
+            timer.stop()
+
     try:
         step("TRUST")
         adapter.prepare_trust(core, linux_manifest, linux_witness, test_witness=False)
-        verified_core_paths(core)
+        node, cli, _ = verified_core_paths(core)
+        from .q05_package_provenance import read
+        provenance = read()
+        record["source_sha"] = provenance["candidate_source_sha"]
+        record["checkout_sha"] = provenance["checkout_sha"]
+        record["core_version"] = adapter.core_version
+        record["core_sha256"] = {path.name:sha256(path.read_bytes()).hexdigest() for path in (node,cli)}
+        record["wsp_source_commit"] = "ac55f13423620252bdbf848c7e8a280c3b84721e"
         step("CREATE")
         password = b"disposable-native-frozen-q06-cross-platform"
         executor = WalletExecutor(lambda: Bip39ReadOnlyBackend(
             root, core, source, _anchor_factory=adapter.make_anchor))
-        opened = executor.request("open", password, "create", "", timeout=120)
-        phrase = opened["mnemonic_once"]
+        if headless:
+            opened = executor.request("open", password, "create", "", timeout=120)
+            phrase = opened["mnemonic_once"]
+        else:
+            from .desktop import qt_application
+            from .bip39_fusion_gui import Bip39FusionWindow
+            app = qt_application()
+            expected = "windows" if sys.platform == "win32" else "xcb"
+            if app.platformName() != expected:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_NATIVE_QT_DENIED")
+            from .managed_onboarding import assert_unified_welcome_qt
+            assert_unified_welcome_qt()
+            step("FROZEN_UNIFIED_WELCOME_PASS")
+            # Transparent observation of the real executor Future boundary.
+            # Forward every request unchanged; never intercept Core RPC/keys.
+            dispatch_counts = {}
+            original_submit = executor.submit
+            def observed_submit(action, *args, **kwargs):
+                dispatch_counts[action] = dispatch_counts.get(action, 0) + 1
+                return original_submit(action, *args, **kwargs)
+            executor.submit = observed_submit
+            window = Bip39FusionWindow(executor)
+            gui_results = {}
+            original_ready = window._on_ready
+            def observed_ready(action, result):
+                if action == "confirm":
+                    gui_results[action] = dict(result)  # Actual backend public result.
+                return original_ready(action, result)
+            window._on_ready = observed_ready
+            window.show()
+            window.start(password, "create", "")
+            wait_gui(lambda: idle() and window._backup_flow_active, "CREATE")
+            opened = dict(window._backup_result)
+            phrase = opened["mnemonic_once"]
+            backup = window.backup_page
+            backup._written_check.setChecked(True)
+            backup._back_up_now.click()
+            words = phrase.split()
+            for position, field in zip(backup._challenge_positions, backup._verify_inputs):
+                field.setText(words[position - 1])
+            words = None
+            backup._verify_button.click()
+            if backup._stack.currentWidget() is not backup._success_page:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_GUI_BACKUP_DENIED")
+            backup._continue_button.click()
+            wait_gui(lambda: idle() and window._last_verified is not None, "BACKUP")
+            record["normal_gui_backup_verified"] = True
         if (len(phrase.split()) != 12
                 or not opened["receive_code"].startswith("wamrtsp1")
                 or opened["signer_allowed"] is not False):
@@ -90,28 +204,19 @@ def qualify(core, source, root, receipt, *, confirmed=False,
                 or first["history_count_shown"] < 1):
             raise Q06PlatformQualificationError("Q06_PLATFORM_FUNDED_RECEIVE_DENIED")
         step("ACTIVATE")
-        active = executor.request("activate", timeout=240)
+        if window is None:
+            active = executor.request("activate", timeout=240)
+        else:
+            gui_approval(window.activate, "Approve", lambda: window._spend_enabled)
+            active = executor.request("snapshot", timeout=240)
         if (active["signer_allowed"] is not True
                 or active["broadcast_allowed"] is not True
                 or active["confirmed_atoms"] != funded["atoms"]
                 or active["mainnet_allowed"] is not False):
             raise Q06PlatformQualificationError("Q06_PLATFORM_NATIVE_SPEND_DENIED")
-        if not headless:
+        if window is not None:
             step("NATIVE_QT")
-            from .desktop import qt_application
-            from .bip39_fusion_gui import Bip39FusionWindow
-            app = qt_application()
-            expected = "windows" if sys.platform == "win32" else "xcb"
-            if app.platformName() != expected:
-                raise Q06PlatformQualificationError("Q06_PLATFORM_NATIVE_QT_DENIED")
-            from .managed_onboarding import assert_unified_welcome_qt
-            assert_unified_welcome_qt()
-            step("FROZEN_UNIFIED_WELCOME_PASS")
-            window = Bip39FusionWindow(executor)
-            window.show()
-            show = dict(opened, mnemonic_once="")
-            window._on_ready("open", show)
-            window._on_ready("activate", active)
+            window._on_ready("snapshot", active)
             app.processEvents()
             from .fusion_ui import FUSION_NAV_PAGES
             if (not window.isVisible() or not window.send.isEnabled()
@@ -136,34 +241,67 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         if atoms < 330 or funded["atoms"] < atoms + 1_000:
             raise Q06PlatformQualificationError("Q06_PLATFORM_INSUFFICIENT_TEST_FUNDS")
         step("PREPARE")
-        draft = executor.request("prepare", destination, atoms, 1_000, timeout=240)
-        if draft.code != destination or draft.atoms != atoms or len(draft.commitment) != 64:
-            raise Q06PlatformQualificationError("Q06_PLATFORM_INTENT_DENIED")
-        if window is not None:
-            from PySide6.QtCore import Qt
-            from PySide6.QtWidgets import QDialog
-            from .fusion_pages import PaymentApproval
-            dialog = PaymentApproval(draft, "sign", window)
-            try:
-                if (dialog.windowModality() != Qt.WindowModality.ApplicationModal
-                        or not dialog.cancel.isDefault()
-                        or dialog.approve.isDefault()
-                        or dialog.approve.text() != "Approve Sign"
-                        or dialog.result() != QDialog.DialogCode.Rejected):
-                    raise Q06PlatformQualificationError("Q06_PLATFORM_PAYMENT_APPROVAL_DENIED")
-            finally:
-                dialog.deleteLater()
-                app.processEvents()
-        step("SIGN")
-        signed = executor.request("sign", draft.commitment, timeout=240)
-        if signed.commitment != draft.commitment:
-            raise Q06PlatformQualificationError("Q06_PLATFORM_SIGN_DENIED")
-        step("BROADCAST")
-        txid = executor.request("broadcast", draft.commitment, timeout=240)
+        if window is None:
+            draft = executor.request("prepare", destination, atoms, 1_000, timeout=240)
+            if draft.code != destination or draft.atoms != atoms or len(draft.commitment) != 64:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_INTENT_DENIED")
+            step("SIGN")
+            signed = executor.request("sign", draft.commitment, timeout=240)
+            if signed.commitment != draft.commitment:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_SIGN_DENIED")
+            step("BROADCAST")
+            txid = executor.request("broadcast", draft.commitment, timeout=240)
+        else:
+            window.recipient_input.setText(destination)
+            window.amount_input.setText(f"{atoms // 100_000_000}.{atoms % 100_000_000:08d}")
+            window.fee_input.setText("0.00001000")
+            before = executor.request("snapshot", timeout=240)
+            gui_approval(window.send, "Cancel", lambda: window._last_review is None)
+            cancelled = executor.request("snapshot", timeout=240)
+            if (window._signed_ready or cancelled["reservation_count"] != before["reservation_count"]
+                    or cancelled["confirmed_atoms"] != before["confirmed_atoms"]):
+                raise Q06PlatformQualificationError("Q06_PLATFORM_CANCEL_SIGNED")
+            if dispatch_counts.get("sign", 0) != 0:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_CANCEL_DISPATCHED_SIGN")
+            record["gui_cancel_does_not_sign"] = True
+            window.recipient_input.setText(destination)
+            window.amount_input.setText(f"{atoms // 100_000_000}.{atoms % 100_000_000:08d}")
+            window.fee_input.setText("0.00001000")
+            step("SIGN")
+            gui_approval(window.send, "Approve Sign", lambda: window._signed_ready, duplicate=True)
+            draft = window._last_review
+            if (draft.code != destination or draft.atoms != atoms or draft.fee != 1_000
+                    or len(draft.commitment) != 64):
+                raise Q06PlatformQualificationError("Q06_PLATFORM_INTENT_DENIED")
+            signed_view = executor.request("snapshot", timeout=240)
+            if signed_view["reservation_count"] != before["reservation_count"] + 1:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_DUPLICATE_SIGN_DENIED")
+            if dispatch_counts.get("sign", 0) != 1:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_SIGN_DISPATCH_COUNT_DENIED")
+            record["gui_sign_dispatch_count"] = dispatch_counts["sign"]
+            record["gui_duplicate_send_one_reservation"] = True
+            step("BROADCAST")
+            gui_approval(window.broadcast, "Cancel", lambda: window._signed_ready)
+            if window._pending_confirm_txid is not None or dispatch_counts.get("broadcast", 0) != 0:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_CANCEL_BROADCAST_DENIED")
+            gui_approval(window.broadcast, "Approve Broadcast",
+                         lambda: window._pending_confirm_txid is not None)
+            txid = window._pending_confirm_txid
+            if dispatch_counts.get("broadcast", 0) != 1:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_BROADCAST_DISPATCH_COUNT_DENIED")
+            record["gui_broadcast_dispatch_count"] = dispatch_counts["broadcast"]
+            record["normal_gui_separate_sign_broadcast"] = True
         if type(txid) is not str or re.fullmatch(r"[0-9a-f]{64}", txid) is None:
             raise Q06PlatformQualificationError("Q06_PLATFORM_BROADCAST_DENIED")
         step("CONFIRM")
-        confirmed_tx = executor.request("confirm", txid, timeout=240)
+        if window is None:
+            confirmed_tx = executor.request("confirm", txid, timeout=240)
+        else:
+            gui_approval(window.confirm, "Approve", lambda: window._pending_confirm_txid is None)
+            confirmed_tx = gui_results.get("confirm")
+            if type(confirmed_tx) is not dict:
+                raise Q06PlatformQualificationError("Q06_PLATFORM_GUI_CONFIRM_RESULT_MISSING")
+            record["normal_gui_confirm_verified"] = True
         after = executor.request("snapshot", timeout=240)
         if (confirmed_tx["status"] != "Q06_REGTEST_EXACT_SEND_CONFIRMED"
                 or confirmed_tx["txid"] != txid
@@ -237,6 +375,14 @@ def qualify(core, source, root, receipt, *, confirmed=False,
         if not restored_executor.join(15) or not restored_executor.closed:
             raise Q06PlatformQualificationError("Q06_PLATFORM_RESTORE_OWNER_STILL_LIVE")
         record["fresh_profile_seed_identity_restored"] = True
+        step("FRESH_PROFILE_SAME_CHAIN_HISTORY_RESTORE")
+        from .q06_same_chain_restore_probe import qualify as restore_same_chain
+        restored_history = restore_same_chain(core,source,root.parent,adapter)
+        record["fresh_profile_same_chain_history"] = restored_history
+        if (restored_history['status']!='FRESH_PROFILE_SAME_CHAIN_HISTORY_RESTORE_PASS'
+                or restored_history['all_original_owners_shutdown_verified'] is not True):
+            raise Q06PlatformQualificationError("Q06_PLATFORM_FRESH_SAME_CHAIN_RESTORE_DENIED")
+        record["fresh_same_chain_profile_full_history_recovered"] = True
         good = True
         record["status"] = "Q06_NATIVE_FROZEN_REAL_CORE_PASS"
         record["failure_stage"] = None

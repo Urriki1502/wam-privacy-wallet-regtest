@@ -427,6 +427,14 @@ def qualify(core, source):
 def run(core, source):
     try:
         receipt = qualify(core, source)
+        from .q06_same_chain_restore_probe import qualify as restore_same_chain
+        from .q05_platforms import DarwinArm64Adapter
+        restored = restore_same_chain(core,source,Path.cwd(),DarwinArm64Adapter())
+        receipt['fresh_profile_same_chain_history'] = restored
+        if (restored['status']!='FRESH_PROFILE_SAME_CHAIN_HISTORY_RESTORE_PASS'
+                or restored['all_original_owners_shutdown_verified'] is not True):
+            raise ValueError('Q06_MAC_FRESH_SAME_CHAIN_RESTORE_DENIED')
+        receipt['fresh_same_chain_profile_full_history_recovered'] = True
         with Path("q06-frozen-spend-evidence.json").open("x") as output:
             json.dump(receipt, output, sort_keys=True, indent=2)
             output.write("\n")

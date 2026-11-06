@@ -340,7 +340,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
             'INTERRUPTED_PUBLICATION_SAFE_REFUSAL' if a.interrupt_publication else 'CLEAN_OWNER_REOPEN'),
         'source_sha':head,'checkout_sha':provenance['checkout_sha'],'source_provenance':provenance,
         'platform':adapter.platform_id,'frozen':frozen,
-        'core_trust':adapter.core_trust,'official_signed_release':adapter.official_signed,'core_version':'v0.1.11',
+        'core_trust':adapter.core_trust,'official_signed_release':adapter.official_signed,'core_version':'v0.1.13',
         'core_sha256':{p.name:sha256(p.read_bytes()).hexdigest() for p in (node,cli)},
         'wsp_source_commit':PINNED_WSP_COMMIT,'wsp_executed':True,
         'python_version':platform.python_version(),'command':sys.argv[1:],

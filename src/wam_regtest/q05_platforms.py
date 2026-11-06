@@ -14,13 +14,13 @@ import tempfile
 import zipfile
 from .custody import create_directory
 
-APPROVED_LINUX_MANIFEST='1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d'
+APPROVED_LINUX_MANIFEST='4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2'
 class OwnedLifecycleError(ValueError):pass
 
 class PlatformAdapter:
     platform_id=''
     core_trust=''
-    core_version='v0.1.11'
+    core_version='v0.1.13'
     official_signed=False
     gui_mode='none'
     frozen=False
@@ -43,7 +43,7 @@ class PlatformAdapter:
 
 class DarwinArm64Adapter(PlatformAdapter):
     platform_id='macos-arm64'
-    core_trust='official-signed-v0.1.11'
+    core_trust='official-signed-v0.1.13'
     official_signed=True
     gui_mode='offscreen'
 
@@ -73,7 +73,7 @@ class DarwinArm64Adapter(PlatformAdapter):
 
 class WindowsX64Adapter(PlatformAdapter):
     platform_id='windows-x64'
-    core_trust='official-signed-v0.1.11'
+    core_trust='official-signed-v0.1.13'
     official_signed=True
     gui_mode='offscreen'
 
@@ -89,8 +89,8 @@ class WindowsX64Adapter(PlatformAdapter):
 
 class LinuxX64Adapter(PlatformAdapter):
     platform_id='linux-x86_64'
-    core_trust='qualified-developer-core-reviewed-manifest'
-    official_signed=False
+    core_trust='official-signed-v0.1.13-reviewed-loader'
+    official_signed=True
     gui_mode='xcb-xvfb'
     _witness=None
 
@@ -103,9 +103,9 @@ class LinuxX64Adapter(PlatformAdapter):
         if pin!=APPROVED_LINUX_MANIFEST:
             raise OwnedLifecycleError('LINUX_APPROVED_MANIFEST_DENIED')
         on_disk=None
-        for path in (core_dir/'DEVELOPER_CORE_MANIFEST.json',
-                     core_dir/'LINUX_DEVELOPER_CORE_MANIFEST_SHA256.txt',
-                     core_dir.parent/'LINUX_DEVELOPER_CORE_MANIFEST_SHA256.txt'):
+        for path in (core_dir/'LINUX_OFFICIAL_CORE_MANIFEST.json',
+                     core_dir/'manifest.sha256',
+                     core_dir.parent/'manifest.sha256'):
             if path.is_file() and not path.is_symlink():
                 if path.name.endswith('.json'):
                     on_disk=sha256(path.read_bytes()).hexdigest()
@@ -167,9 +167,9 @@ def stage_windows_core(destination):
         root=Path(temp)
         files=(
             ('/SIGNING-KEY.asc','SIGNING-KEY.asc',32768),
-            ('/downloads/v0.1.11/SHA256SUMS','SHA256SUMS',131072),
-            ('/downloads/v0.1.11/SHA256SUMS.asc','SHA256SUMS.asc',16384),
-            ('/downloads/v0.1.11/'+ASSET,ASSET,320*1024*1024),
+            ('/downloads/v0.1.13/SHA256SUMS','SHA256SUMS',131072),
+            ('/downloads/v0.1.13/SHA256SUMS.asc','SHA256SUMS.asc',16384),
+            ('/downloads/v0.1.13/'+ASSET,ASSET,320*1024*1024),
         )
         for remote,name,limit in files:
             _download_exact(remote,limit,root/name)

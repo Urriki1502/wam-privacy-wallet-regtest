@@ -37,9 +37,9 @@ def main():
             from wam_regtest.desktop import qt_application
             from PySide6.QtWidgets import QInputDialog,QMessageBox
             app=qt_application()
-            approved,ok=QInputDialog.getText(None,'Experimental developer Core',
+            approved,ok=QInputDialog.getText(None,'Official signed Core v0.1.13',
                 'Enter the independently reviewed Core manifest SHA-256.\n'
-                'Linux source build; not an official signed release.')
+                'Official Core; independently reviewed Ubuntu24.04 loader closure.')
             if not ok:return 0
             endpoint,ok=QInputDialog.getText(None,'Independent root witness',
                 'Absolute socket path of the administratively provisioned root witness:')

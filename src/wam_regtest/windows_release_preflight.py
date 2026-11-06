@@ -17,13 +17,13 @@ import sys
 import tempfile
 import zipfile
 
-ASSET = "wam-coin-v0.1.11-x86_64-w64-mingw32.zip"
-ROOT = "wam-coin-v0.1.11"
-# Independently authenticated official v0.1.11 bytes; never learned from a receipt.
-ARCHIVE_SHA256 = "ece622fa7ec3072c4e8b0d32e2c3749397d66260f2b0cf22b3636346873d15c5"
+ASSET = "wam-coin-v0.1.13-x86_64-w64-mingw32.zip"
+ROOT = "wam-coin-v0.1.13"
+# Independently authenticated official v0.1.13 bytes; never learned from a receipt.
+ARCHIVE_SHA256 = "db6bcb58e909a72a69ab7bb74a95ab3837298c12fd847dc83fdb37fca10732b4"
 BINARY_SHA256 = {
-    "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
-    "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21",
+    "wamd.exe": "5fbeb6e07a83b337209edf0efbe342201bc3bf2e0c113dea8fdf7bf0e07d49e3",
+    "wam-cli.exe": "a6171ed6cddfeea58b9a6a8b722f2c07c0d332f0f1a7263f52193e4ef9f6f326",
 }
 MEMBERS = {f"{ROOT}/bin/{name}.exe" for name in ("wamd", "wam-cli")}
 MAX_ARCHIVE_BYTES = 320 * 1024 * 1024
@@ -132,7 +132,7 @@ def inspect_signed_zip_shape(archive: Path, expected_sha256: str) -> dict:
     return {
         "status": "WIN_X64_OFFLINE_CORE_SHAPE_PASS_NOT_EXECUTABLE_AUTHORITY",
         "platform": "windows-x64",
-        "release": "v0.1.11",
+        "release": "v0.1.13",
         "archive_sha256": expected_sha256,
         "member_sha256": {key.rsplit("/", 1)[-1]: found[key] for key in sorted(found)},
         "native_windows_tests_passed": False,
@@ -153,6 +153,10 @@ def verify_signed_windows_archive(archive: Path, signing_key: Path,
                 for p in (archive, signing_key, sha256sums, signature))
             or archive.name != ASSET):
         _fail("WIN_RELEASE_INPUT_DENIED")
+    from .official_core_v013 import SUMS_SHA256, SIGNATURE_SHA256, ARCHIVES
+    if (_sha256(sha256sums) != SUMS_SHA256 or _sha256(signature) != SIGNATURE_SHA256
+            or archive.stat().st_size != ARCHIVES['windows-x64'][1]):
+        _fail("WIN_RELEASE_PUBLIC_METADATA_PIN_DENIED")
     with tempfile.TemporaryDirectory(prefix="wam-win-review-") as d:
         tmp = Path(d)
         for source, name in ((signing_key, "SIGNING-KEY.asc"),
@@ -166,12 +170,15 @@ def verify_signed_windows_archive(archive: Path, signing_key: Path,
     result = inspect_signed_zip_shape(archive, expected)
     if result["archive_sha256"] != ARCHIVE_SHA256 or result["member_sha256"] != BINARY_SHA256:
         _fail("WIN_RELEASE_INDEPENDENT_PIN_DENIED")
+    from .release import FINGERPRINT
+    result["publisher_fingerprint"] = FINGERPRINT
+    result["signed_sums_sha256"] = SUMS_SHA256
     result["signed_archive_verified"] = True
     return result
 
 
 def main() -> int:
-    cli = argparse.ArgumentParser(description="OFFLINE Windows v0.1.11 Core ZIP review — NEVER EXEC")
+    cli = argparse.ArgumentParser(description="OFFLINE Windows v0.1.13 Core ZIP review — NEVER EXEC")
     for opt in ("archive", "signing-key", "sha256sums", "signature"):
         cli.add_argument("--" + opt, required=True, type=Path)
     cli.add_argument("--gpg", default="gpg")

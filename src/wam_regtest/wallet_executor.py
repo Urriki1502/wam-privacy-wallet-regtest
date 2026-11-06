@@ -8,6 +8,7 @@ from dataclasses import dataclass,fields,is_dataclass,replace
 from queue import Queue
 import re
 import threading
+import time
 
 
 class WalletExecutorError(ValueError):pass
@@ -39,7 +40,8 @@ class ExecutorState:
 COMMANDS=frozenset(('open','snapshot','prepare','sign','broadcast','cancel','lock',
     'unlock','backup','recover','complete_recovery','recovery_status','network',
     'disclose','mine','activate','ci_confirm','confirm','recovery_verify',
-    'inspect_confirmed','backup_verify','backup_defer','acknowledge_create_pending',
+    'inspect_confirmed','backup_verify','backup_challenge','backup_challenge_cancel',
+    'backup_defer','acknowledge_create_pending',
     'core_status','core_start','core_restart','control','quit','network_status','network_active','reconcile_reorg'))
 
 
@@ -84,8 +86,18 @@ class WalletExecutor:
             raise WalletExecutorError('WALLET_EXECUTOR_OPERATION_STILL_PENDING') from None
 
     def join(self,timeout=5):
+        deadline=None if timeout is None else time.monotonic()+timeout
         self._thread.join(timeout)
-        return not self._thread.is_alive()
+        if self._thread.is_alive():return False
+        # close() cannot revoke a kernel reference held by accept() on the
+        # original control thread. Do not report shutdown complete until it
+        # returns, or an immediate profile reopen can fail EADDRINUSE.
+        control=getattr(self._backend,'_control_thread',None)
+        if control is not None:
+            if control is threading.current_thread():return False
+            control.join(None if deadline is None else max(0,deadline-time.monotonic()))
+            if control.is_alive():return False
+        return True
 
     def _run(self):
         while True:
@@ -173,8 +185,11 @@ class ManagedWalletBackend:
             self.owner._control_bridge=lambda op:self._executor.request('control',op)
             self._control_thread=threading.Thread(target=self._serve_control,name='WAM-control-io',daemon=True)
             self._control_thread.start()
-        if self.owner.process is None:self.owner.start(timeout=90)
+        if self.owner.process is None:self._start_core()
         return self.owner
+
+    def _start_core(self):
+        self.owner.start(timeout=90)
 
     def _open(self,password,create=False):
         from .wallet_session import WalletSession

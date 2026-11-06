@@ -4,7 +4,8 @@ from hashlib import sha256
 from pathlib import Path
 import secrets
 import threading
-from .linux_developer_core import verify,native,LinuxCoreError,_read_binary
+from .linux_official_core import verify
+from .linux_developer_core import native,LinuxCoreError,_read_binary
 from .linux_anchor_witness import LinuxRootWitnessAnchor
 
 
@@ -44,7 +45,7 @@ def verified_paths(core):
     node,cli,record=verify(core,bound.manifest_sha256,authorized=True)
     return node,cli,{'platform':'linux-x86_64','wamd_sha256':record['files']['wamd']['sha256'],
         'wam_cli_sha256':record['files']['wam-cli']['sha256'],
-        'official_signed_release':False,'source_manifest_sha256':bound.manifest_sha256,
+        'official_signed_release':True,'source_manifest_sha256':bound.manifest_sha256,
         'mainnet_allowed':False,'loader_process_binding_qualified':False}
 
 

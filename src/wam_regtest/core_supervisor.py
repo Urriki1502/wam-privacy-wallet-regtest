@@ -65,7 +65,7 @@ def _profile_read(root):
             SharedRegtestProfile.from_record(value.get('shared_profile'))
         if (type(value) is not dict or set(value) != fields
                 or value['schema'] != (SHARED_SCHEMA if shared else PROFILE_SCHEMA)
-                or value['version'] != 'v0.1.11' or value['network'] != 'regtest'
+                or value['version'] != 'v0.1.13' or value['network'] != 'regtest'
                 or value['genesis'] != REGTEST_GENESIS
                 or value['mainnet_allowed'] is not False
                 or type(value['control_port']) is not int
@@ -141,6 +141,11 @@ class CoreSupervisor:
                 fresh=True
                 self.listener = _listener(0)
                 create_directory(self.directory)
+                if sys.platform == 'win32':
+                    # New namespaces only. Core's public chain directories
+                    # must begin with explicit user owner/protected DACL.
+                    create_directory(self.directory/'regtest')
+                    create_directory(self.directory/'regtest'/'blocks')
                 if shared_profile is None:
                     with _ports() as (rpc, peer):
                         _write_private_config(self.directory, rpc, peer)
@@ -150,7 +155,7 @@ class CoreSupervisor:
                         write_config(self.directory, shared_profile)
                 config, _ = private_bytes(self.directory, 'wam.conf', 4096)
                 create_once(root, 'supervisor.token', secrets.token_bytes(32))
-                profile = dict(schema=PROFILE_SCHEMA, version='v0.1.11',
+                profile = dict(schema=PROFILE_SCHEMA, version='v0.1.13',
                     network='regtest', genesis=REGTEST_GENESIS,
                     core_sha256=self.receipt['wamd_sha256'],
                     cli_sha256=self.receipt['wam_cli_sha256'],
@@ -216,10 +221,13 @@ class CoreSupervisor:
         except (ValueError,OSError):
             pass  # No successful operation follows diagnostic publication failure.
 
-    def start(self, *, timeout=90, _recovering=False):
+    def start(self, *, timeout=90, _recovering=False, _defer_shared_network=False):
         if (type(timeout) is not int or not 1 <= timeout <= 90
                 or self.process is not None or self._faulted):
             raise ManagedCoreError('MANAGED_START_NOT_ALLOWED')
+        if (type(_defer_shared_network) is not bool
+                or _defer_shared_network and self.shared_profile is None):
+            raise ManagedCoreError('SHARED_EXPLICIT_PROFILE_REQUIRED')
         port = self._check_profile()
         self._check_core()
         self.journal.reserve_start()
@@ -237,12 +245,21 @@ class CoreSupervisor:
         self.state = 'starting'
         self.journal.append('STARTING')
         try:
-            self.process = subprocess.Popen(
-                [str(self.node), f'-datadir={self.directory}', '-daemon=0'],
-                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL, env=env,
-                cwd=self.node.parent if sys.platform == 'win32' else self.directory,
-                creationflags=0x08000000 if sys.platform == 'win32' else 0)
+            from contextlib import nullcontext
+            if sys.platform == 'win32':
+                from .windows_core_files import child_user_owner
+                creation_owner = child_user_owner()
+            else:
+                creation_owner = nullcontext()
+            with creation_owner:
+                args=[str(self.node), f'-datadir={self.directory}', '-daemon=0']
+                if _defer_shared_network:args.append('-networkactive=0')
+                self.process = subprocess.Popen(
+                    args,
+                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, env=env,
+                    cwd=self.node.parent if sys.platform == 'win32' else self.directory,
+                    creationflags=0x08000000 if sys.platform == 'win32' else 0)
             self.binding = OwnedCoreBinding(self.process, self.core, self.directory)
             self.binding.shared_profile = self.shared_profile
             # Writes stay behind Q02/Q03 signed CLI. No HTTP write API or IPC
@@ -328,8 +345,10 @@ class CoreSupervisor:
             if error.args == ('RPC_NODE_BUSY',):
                 self._busy_until = time.monotonic() + BUSY_COOLDOWN
                 return public_status(state='busy', owned=True)
+            self._record_failure('status',error)
             self._faulted = True
-        except (OSError, ValueError, RuntimeError):
+        except (OSError, ValueError, RuntimeError) as error:
+            self._record_failure('status',error)
             self._faulted = True
         self.state = 'recovery-needed'
         return public_status(state=self.state)

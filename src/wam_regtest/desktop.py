@@ -1,7 +1,7 @@
 """Native Qt macOS REGTEST view, reading *real* Core/WSP state.
 
 The baseline view is read-only; the operational subclass adds gated payments. Core is a separately running, verified
-v0.1.11 regtest daemon. All balances/history are cleared on RPC failure.
+v0.1.13 regtest daemon. All balances/history are cleared on RPC failure.
 A Qt worker runs live WSP Scanner.sync off the GUI thread.
 """
 from __future__ import annotations
@@ -138,7 +138,7 @@ class RegtestWalletWindow(QMainWindow):
         self.navigation.addItems(('Overview','Receive','History'));side.addWidget(self.navigation,1)
         side.addWidget(label('REGTEST','FusionBadge'))
         self.warning=label('PUBLIC DEMO ACCOUNT / NO REAL FUNDS / SEND & SIGN DISABLED','Warning');side.addWidget(self.warning)
-        side.addWidget(label('WAM Core v0.1.11\nBIP352 · WSP-1','FusionMuted'));shell.addWidget(sidebar)
+        side.addWidget(label('WAM Core v0.1.13\nBIP352 · WSP-1','FusionMuted'));shell.addWidget(sidebar)
         workspace=QWidget();workspace.setObjectName('FusionTransparent');col=QVBoxLayout(workspace);col.setContentsMargins(28,0,22,12);col.setSpacing(18)
         topbar=QFrame();topbar.setObjectName('FusionTopbar');top=QHBoxLayout(topbar);top.setContentsMargins(0,18,0,18)
         self.workspace_title=label('Privacy wallet','FusionCardTitle');top.addWidget(self.workspace_title);top.addStretch()

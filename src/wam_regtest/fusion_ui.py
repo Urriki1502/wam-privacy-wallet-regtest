@@ -1,7 +1,7 @@
 """Fusion Black & Gold Qt presentation: verified snapshots, never wallet authority."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QRectF, QPointF, QSize, Signal, Property, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import QEvent, Qt, QRectF, QPointF, QSize, Signal, Property, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import (
     QColor, QPainter, QPen, QIcon, QPixmap, QPolygonF, QLinearGradient,
     QPainterPath, QFont, QFontMetrics, QRadialGradient,
@@ -1123,11 +1123,19 @@ class FusionOverview(QScrollArea):
         whole.addWidget(self._compat)
 
         self._confirmed_atoms = None
+        self.hero.installEventFilter(self)
         self.render_snapshot(None, locked=True)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._apply_balance_text()
+
+    def eventFilter(self, watched, event):
+        # QScrollArea lays out its child after the outer resizeEvent. Use
+        # the actual hero resize so compact balance text follows final width.
+        if watched is getattr(self, "hero", None) and event.type() == QEvent.Type.Resize:
+            self._apply_balance_text()
+        return super().eventFilter(watched, event)
 
     def _apply_balance_text(self):
         if self._confirmed_atoms is None:
@@ -1223,7 +1231,7 @@ class FusionOverview(QScrollArea):
             'Confirmed balance, custody and chain height come from this verified snapshot.'
             if not faulted else 'Original reservations are preserved. Do not retry uncertain payments.')
         self.wallet_profile.setText('Operational REGTEST wallet' if operational else 'Read-only REGTEST wallet')
-        self.environment_core.setText('WAM Core v0.1.11  ·  SHA-256 ' + snap.core_sha256[:12] + '…')
+        self.environment_core.setText('WAM Core v0.1.13  ·  SHA-256 ' + snap.core_sha256[:12] + '…')
         self.environment_core.setToolTip('Core SHA-256: ' + snap.core_sha256)
         rows = snap.history[:4]
         self._txids = [r.txid for r in rows]

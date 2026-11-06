@@ -50,6 +50,35 @@ def _engineering_handoff_qualified(record, index):
     ) for c in cases)
 
 
+def _core_evidence_version(r, e):
+    """Keep old qualified proof intact; v013 requires independent official pins.
+
+    A consistent receipt is still not executable/human qualification. This
+    accepts the scoped Q06 candidate evidence, never merge/release authority.
+    """
+    if e.get('core_version') == 'v0.1.11':
+        return True
+    if r['id'] != 'Q06' or e.get('core_version') != 'v0.1.13':
+        return False
+    from .official_core_v013 import ARCHIVES, MEMBERS
+    from .release import FINGERPRINT
+    platform = e.get('platform')
+    if type(platform) is not str or platform not in MEMBERS:
+        return False
+    if not (e.get('core_sha256') == MEMBERS[platform]
+            and e.get('archive_sha256') == ARCHIVES[platform][2]
+            and e.get('signed_archive_verified') is True
+            and e.get('publisher_fingerprint') == FINGERPRINT
+            and e.get('core_trust') == 'official-signed-v0.1.13'
+            and e.get('candidate_pr_url') == 'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/141'):
+        return False
+    if platform == 'linux-x86_64':
+        from .linux_official_core import MANIFEST_SHA256
+        return (e.get('approved_core_manifest_sha256') == MANIFEST_SHA256
+                and e.get('native_root_witness') is True)
+    return True
+
+
 def validate(ledger):
     def require(value):
         if not value:raise ValueError('Q_GATE_LEDGER_INCONSISTENT')
@@ -88,7 +117,7 @@ def validate(ledger):
                                 'https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/'))
                     else:
                         if c['layer'] in ('CORE_E2E','NEGATIVE_INJECTION','FROZEN','MAIN'):
-                            require(e.get('synthetic_rpc') is False and e.get('core_version')=='v0.1.11'
+                            require(e.get('synthetic_rpc') is False and _core_evidence_version(r,e)
                                 and e.get('wsp_source_commit')=='ac55f13423620252bdbf848c7e8a280c3b84721e')
                             require(all(e.get(k) for k in ('core_sha256','core_trust','workflow_run_id','job_id')))
                         if c['layer'] in ('FROZEN','MAIN'):

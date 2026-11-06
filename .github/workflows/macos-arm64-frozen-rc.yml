@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: macos-arm64-frozen-rc-56ea3618
+  group: macos-arm64-frozen-rc-official-v013
   cancel-in-progress: false
 
 jobs:
@@ -30,13 +30,13 @@ jobs:
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
       WAM_SOURCE_HEAD: ${{ github.sha }}
-      FUNCTIONAL_PIN: 56ea36186bf5a3410c75dda63b885f084de83610
+      FUNCTIONAL_PIN: c61e3c5be4b8519dc6c4d9eb56d124fce84cf02d
       WSP_PIN: ac55f13423620252bdbf848c7e8a280c3b84721e
     steps:
       - name: Check out this review commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          fetch-depth: 20
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Require Apple Silicon and a workflow-only diff from the pin
@@ -51,7 +51,7 @@ jobs:
           echo "FUNCTIONAL_PIN_IS_ANCESTOR $FUNCTIONAL_PIN"
 
       - name: Check out pinned WSP source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
@@ -61,7 +61,7 @@ jobs:
       - name: Require the WSP pin
         run: test "$(git -C wsp-upstream rev-parse HEAD)" = "$WSP_PIN"
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12.10"
           architecture: arm64
@@ -76,7 +76,7 @@ jobs:
       - name: Hash-locked GUI environment
         run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
 
-      - name: Fetch official signed WAM Core v0.1.11 and check identities
+      - name: Fetch official signed WAM Core v0.1.13 and check identities
         run: |
           set -euo pipefail
           python -I -m wam_regtest.release --platform macos-arm64 --destination "$PWD/core"
@@ -84,8 +84,8 @@ jobs:
           from hashlib import sha256
           from pathlib import Path
           expected = {
-              "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
-              "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82",
+              "wamd": "fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba",
+              "wam-cli": "2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19",
           }
           for name, digest in expected.items():
               got = sha256((Path("core") / name).read_bytes()).hexdigest()
@@ -94,6 +94,14 @@ jobs:
           print("MACOS_OFFICIAL_CORE_SHA256_PASS")
           PY
 
+      - name: Fresh same-chain native profile restore before freezing
+        run: python scripts/qualify_q06_same_chain_restore.py --core-dir "$PWD/core" --wsp-source "$PWD/wsp-upstream" --report "$RUNNER_TEMP/q06-same-chain-native.json" --confirm-disposable-regtest
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: q06-same-chain-native-macos-${{ github.sha }}
+          path: ${{ runner.temp }}/q06-same-chain-native.json
+          if-no-files-found: warn
       - name: Build, qualify, and package
         run: bash scripts/build_macos_bundle.sh
 
@@ -120,9 +128,9 @@ jobs:
               raise SystemExit("MACOS_RC_QUALIFICATION_FLAG_DENIED")
           if receipt.get("status") != "UNNOTARIZED_REAL_REGTEST_MACOS_ARM64_PREVIEW":
               raise SystemExit("MACOS_RC_SIGNING_STATUS_DENIED")
-          if receipt.get("wamd_sha256") != "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068":
+          if receipt.get("wamd_sha256") != "fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba":
               raise SystemExit("MACOS_RC_WAMD_DENIED")
-          if receipt.get("wam_cli_sha256") != "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82":
+          if receipt.get("wam_cli_sha256") != "2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19":
               raise SystemExit("MACOS_RC_WAM_CLI_DENIED")
           names = (
               "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg",
@@ -157,16 +165,16 @@ jobs:
               "The package manifest source_commit is this job's git commit.\n"
               "Do not relabel it as an older local DMG or as 56ea3618.\n"
               "\n"
-              "Branch: feature/v1-net-shared-regtest-20261104\n"
+              "Branch: feature/official-core-v013-three-platform-20261105\n"
               "WSP pin: ac55f13423620252bdbf848c7e8a280c3b84721e\n"
-              "Official Core: WAM Core v0.1.11 ARM64\n"
-              "wamd: 7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068\n"
-              "wam-cli: 81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82\n"
+              "Official Core: WAM Core v0.1.13 ARM64\n"
+              "wamd: fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba\n"
+              "wam-cli: 2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19\n"
               "\n"
               "Signing: the Fusion app is ad-hoc signed (codesign --sign -).\n"
               "It is not Developer ID signed and not notarized. Gatekeeper may\n"
               "warn. Do not disable system protections. The bundled Core bytes\n"
-              "are the official v0.1.11 hashes above.\n"
+              "are the official v0.1.13 hashes above.\n"
               "\n"
               "Install: unzip this artifact, open the .dmg, and copy the app out.\n"
               "Or unzip the .app.zip. Use a new disposable REGTEST profile.\n"
@@ -184,11 +192,22 @@ jobs:
               "Q06 accepted=false. G6 and G7 are not accepted here.\n",
               encoding="utf-8",
           )
+          # Publish bounded public receipts as well as the payloads. No
+          # profiles, encrypted vaults, cookies or test keychains are copied.
+          import shutil
+          for path in out.iterdir():
+              if path.is_file() and not path.is_symlink() and path.suffix == '.json':
+                  if path.stat().st_size > 8 * 1024 * 1024:
+                      raise SystemExit("MACOS_PUBLIC_RECEIPT_SIZE_DENIED")
+                  if path.name != 'SHA256SUMS.json':
+                      shutil.copyfile(path, publish / path.name)
+          from wam_regtest.release_candidate import write_portable_sha256sums
+          write_portable_sha256sums(publish)
           print("MACOS_RC_PUBLISH_TREE_PASS")
           PY
 
       - name: Upload the DMG, app zip, checksums, and README
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: WAM-Fusion-REGTEST-macos-arm64-${{ github.sha }}
           path: macos-rc-publish/

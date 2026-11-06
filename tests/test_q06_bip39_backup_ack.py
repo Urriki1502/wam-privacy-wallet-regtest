@@ -40,11 +40,26 @@ class _StubExecutor:
         self.seed_folder = seed_folder
         self.phrase = phrase
         self.log = []          # list of action records
+        self.requests = []     # durable action names; no secret arguments
         self.locked = False
         self.verified = False
         self.marker = None
+        self.challenge = None
+        self.challenge_counter = 0
+
+    def submit(self, action, *args, **kwargs):
+        # ControlWorker uses submit(), as the real executor does. Preserve
+        # completion/denial via an actual Future instead of an absent method.
+        from concurrent.futures import Future
+        future = Future()
+        try:
+            future.set_result(self.request(action, *args, **kwargs))
+        except Exception as error:
+            future.set_exception(error)
+        return future
 
     def request(self, action, *args, timeout=90, **kwargs):
+        self.requests.append(action)
         if action == "acknowledge_create_pending":
             folder = args[0]
             self.log.append(("pending", folder))
@@ -55,11 +70,22 @@ class _StubExecutor:
             self.locked = True
             self.marker = (False, True)
             return None
+        if action == 'backup_challenge_cancel':
+            self.challenge = None
+            return None
+        if action == 'backup_challenge':
+            self.challenge_counter += 1
+            self.challenge = {'challenge_id': f'{self.challenge_counter:064x}',
+                              'positions': (2, 7, 12), 'expires_in_seconds': 120}
+            return self.challenge
         if action == "backup_verify":
-            positions, answers = args
-            self.log.append(("verify", positions, answers))
+            identifier, answers = args
+            challenge, self.challenge = self.challenge, None
+            positions = challenge['positions'] if challenge else ()
+            self.log.append(("verify", identifier, answers))
             words = self.phrase.split()
-            ok = (len(positions) == len(answers)
+            ok = (challenge is not None and identifier == challenge['challenge_id']
+                  and len(positions) == len(answers) == 3
                   and all(words[p - 1].lower() == a.strip().lower()
                           for p, a in zip(positions, answers)))
             if ok:
@@ -71,7 +97,7 @@ class _StubExecutor:
 
 
 if importlib.util.find_spec("PySide6") is not None:
-    from PySide6.QtCore import Qt
+    from PySide6.QtCore import Qt, QCoreApplication, QEvent
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import (
         QApplication, QLineEdit, QCheckBox, QPushButton, QLabel)
@@ -123,8 +149,30 @@ class BackupPageContract(unittest.TestCase):
 
     def tearDown(self):
         self.window._poll.stop()
+        worker = self.window._worker
+        if worker is not None:
+            self.assertTrue(worker.wait(2000))
+        self.app.processEvents()
         self.window.hide()
         self.window.deleteLater()
+        self.app.processEvents()
+
+    def _assert_snapshot_dispatched(self):
+        # A fast real ControlWorker can already have finished after events
+        # are processed. Observe its request instead of transient liveness.
+        import time
+        deadline = time.monotonic() + 2
+        while "snapshot" not in self.window.executor.requests:
+            self.assertLess(time.monotonic(), deadline, "snapshot not dispatched")
+            QTest.qWait(5)
+            self.app.processEvents()
+        self.assertEqual(self.window.executor.requests.count("snapshot"), 1)
+
+    def _finish_snapshot_worker(self):
+        self._assert_snapshot_dispatched()
+        worker = self.window._worker
+        if worker is not None:
+            self.assertTrue(worker.wait(2000))
         self.app.processEvents()
 
     def _show_required(self):
@@ -149,6 +197,32 @@ class BackupPageContract(unittest.TestCase):
         self.assertEqual(sorted(labels), sorted(_DISPLAY_PHRASE_WORDS.split()))
         self.assertEqual(self.window.stack.currentWidget(), self.window.backup_page)
         self.assertFalse(self.window.navigation.isEnabled())
+
+    def test_verification_back_invalidates_backend_challenge(self):
+        self._show_required()
+        page = self.window.backup_page
+        page._written_check.setChecked(True)
+        page._back_up_now.click()
+        previous = page._challenge_id
+        self.assertIsNotNone(previous)
+        page._on_verify_back()
+        self.assertIsNone(page._challenge_id)
+        self.assertIsNone(self.window.executor.challenge)
+        page._back_up_now.click()
+        self.assertNotEqual(page._challenge_id, previous)
+
+    def test_wrong_answer_requests_fresh_backend_challenge_without_retry(self):
+        self._show_required()
+        page = self.window.backup_page
+        page._written_check.setChecked(True)
+        page._back_up_now.click()
+        previous = page._challenge_id
+        for edit in page._verify_inputs:
+            edit.setText('wrong')
+        page._verify_button.click()
+        self.assertNotEqual(page._challenge_id, previous)
+        self.assertEqual(self.window.executor.requests.count('backup_verify'), 1)
+        self.assertFalse(self.window._ready)
 
     def test_back_up_now_disabled_until_written_checkbox(self):
         self._show_required()
@@ -225,7 +299,7 @@ class BackupPageContract(unittest.TestCase):
         self.app.processEvents()
         self.assertTrue(self.window._ready)
         self.assertEqual(self.window.receive.text(), "wamrtsp1public-test")
-        self.assertIsNotNone(self.window._worker)
+        self._assert_snapshot_dispatched()
         self.assertEqual(self.window.stack.currentIndex(), 0)
         self.assertTrue(self.window.navigation.isEnabled())
 
@@ -246,12 +320,10 @@ class BackupPageContract(unittest.TestCase):
         # Genuinely successful authenticated backup -> ready wallet session.
         self.assertTrue(self.window._ready)
         self.assertFalse(self.window._backup_flow_active)
-        self.assertIsNotNone(self.window._worker)
+        self._assert_snapshot_dispatched()
         # Continue dispatched the pending verified snapshot through the real
         # ControlWorker; model its worker-finished completion and refresh.
-        self.window._worker = None
-        self.window._finished()
-        self.app.processEvents()
+        self._finish_snapshot_worker()
         self.assertTrue(self.window._ready)
         # Fund enabled on a fresh unfunded REGTEST chain; Lock enabled; Send
         # stays disabled until native checkpoint + explicit signer activation.
@@ -291,12 +363,10 @@ class BackupPageContract(unittest.TestCase):
         _find_button(self.window.backup_page, "Continue").click()
         self.app.processEvents()
         self.assertTrue(self.window._ready)
-        self.assertIsNotNone(self.window._worker)
+        self._assert_snapshot_dispatched()
         # Continue dispatched the pending verified snapshot through the real
         # ControlWorker; model its worker-finished completion and refresh.
-        self.window._worker = None
-        self.window._finished()
-        self.app.processEvents()
+        self._finish_snapshot_worker()
         self.assertTrue(self.window.fund.isEnabled())
         self.assertTrue(self.window.lock.isEnabled())
         self.assertFalse(self.window.send.isEnabled())
@@ -337,7 +407,7 @@ class BackupPageContract(unittest.TestCase):
         _find_button(self.window.backup_page, "Continue").click()
         self.app.processEvents()
         self.assertTrue(self.window._ready)
-        self.assertIsNotNone(self.window._worker)
+        self._assert_snapshot_dispatched()
 
     def test_verified_status_bypasses_backup_page(self):
         self.window._on_ready(
@@ -408,6 +478,10 @@ class InSessionLockUnlockContract(unittest.TestCase):
 
     def tearDown(self):
         self.window._poll.stop()
+        worker = self.window._worker
+        if worker is not None:
+            self.assertTrue(worker.wait(2000))
+        self.app.processEvents()
         self.window.hide()
         self.window.deleteLater()
         self.app.processEvents()
@@ -539,6 +613,10 @@ class RecoveryVerifyDispatchContract(unittest.TestCase):
 
     def tearDown(self):
         self.window._poll.stop()
+        worker = self.window._worker
+        if worker is not None:
+            self.assertTrue(worker.wait(2000))
+        self.app.processEvents()
         self.window.hide()
         self.window.deleteLater()
         self.app.processEvents()
@@ -562,9 +640,20 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
         self.app, self.window = _make_window()
 
     def tearDown(self):
+        dialog = getattr(self, 'dialog', None)
+        if dialog is not None:
+            dialog.close()
+            dialog.deleteLater()
         self.window._poll.stop()
+        worker = self.window._worker
+        if worker is not None:
+            self.assertTrue(worker.wait(2000))
+        self.app.processEvents()
         self.window.hide()
         self.window.deleteLater()
+        # processEvents alone does not flush DeferredDelete without an outer
+        # event loop. Dispose these known fixtures before the next focus test.
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         self.app.processEvents()
 
     def _make_dialog(self):
@@ -583,6 +672,27 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
         dialog.show()
         self.app.processEvents()
         return dialog
+
+    def _activate_own_cocoa_application(self):
+        if self.app.platformName() != 'cocoa':
+            return
+        # Native GUI test precondition for the unbundled Python process.
+        # Request activation of THIS process, never assign Qt focus state or
+        # activate another PID. AppKit may refuse; the real-active gate below
+        # must still pass within its original deadline.
+        import ctypes, os
+        objc = ctypes.CDLL('/usr/lib/libobjc.A.dylib')
+        objc.objc_getClass.argtypes = [ctypes.c_char_p]
+        objc.objc_getClass.restype = ctypes.c_void_p
+        objc.sel_registerName.argtypes = [ctypes.c_char_p]
+        objc.sel_registerName.restype = ctypes.c_void_p
+        send_id = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)(('objc_msgSend', objc))
+        send_pid = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p)(('objc_msgSend', objc))
+        activate = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_ulong)(('objc_msgSend', objc))
+        current = send_id(objc.objc_getClass(b'NSRunningApplication'), objc.sel_registerName(b'currentApplication'))
+        self.assertIsNotNone(current)
+        self.assertEqual(send_pid(current, objc.sel_registerName(b'processIdentifier')), os.getpid())
+        activate(current, objc.sel_registerName(b'activateWithOptions:'), 0)
 
     def test_dialog_layout_is_three_by_four_numbered_fields(self):
         dialog = self._make_dialog()
@@ -658,6 +768,21 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
     def test_sequential_tab_backspace_and_return_navigation(self):
         dialog = self._make_dialog()
         self.dialog = dialog
+        # Cocoa activation is asynchronous. Establish the actual key window
+        # before asserting keyboard focus; show()/processEvents() alone can
+        # return while activation still belongs to the previous test window.
+        import time
+        deadline = time.monotonic() + 2
+        self._activate_own_cocoa_application()
+        dialog.raise_()
+        dialog.activateWindow()
+        # Keep native events and Python callbacks progressing instead of
+        # blocking inside the QtTest binding. The same 2s/native-active gate
+        # applies; no focus state is assigned or synthesized by the test.
+        while not dialog.isActiveWindow() and time.monotonic() < deadline:
+            self.app.processEvents()
+            time.sleep(.01)
+        self.assertTrue(dialog.isActiveWindow())
         dialog._fields[3].setFocus()
         self.assertTrue(dialog._fields[3].hasFocus())
         QTest.keyClick(dialog._fields[3], Qt.Key_Backspace)
