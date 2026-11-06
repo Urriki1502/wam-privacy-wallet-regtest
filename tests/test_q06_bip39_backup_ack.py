@@ -701,6 +701,11 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
     def test_sequential_tab_backspace_and_return_navigation(self):
         dialog = self._make_dialog()
         self.dialog = dialog
+        # Cocoa activation is asynchronous. Establish the actual key window
+        # before asserting keyboard focus; show()/processEvents() alone can
+        # return while activation still belongs to the previous test window.
+        dialog.activateWindow()
+        self.assertTrue(QTest.qWaitForWindowActive(dialog, 2000))
         dialog._fields[3].setFocus()
         self.assertTrue(dialog._fields[3].hasFocus())
         QTest.keyClick(dialog._fields[3], Qt.Key_Backspace)
