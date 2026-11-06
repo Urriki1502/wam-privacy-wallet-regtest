@@ -35,10 +35,36 @@ def qualify(core, source, parent, adapter):
     workers = []
     password = b'public-disposable-same-chain-profile-restore'
     phrase = None
+    restore_tip = None
     def step(name):
         report['stage'] = name
         print('Q06_SAME_CHAIN_RESTORE_STAGE=' + name, flush=True)
     class ObservedBackend(Bip39ReadOnlyBackend):
+        def _core(self):
+            owner=super()._core()
+            if (self.shared_profile is profiles[2] and restore_tip is not None
+                    and getattr(self,'_fixture_ready_owner',None) is not owner):
+                # A new node can be validating historical blocks while seed
+                # custody does its first owner/status check. Wait at this
+                # fixture's bootstrap boundary using genuine, original-owned
+                # signed CLI reads, before any seed/anchor is created/opened.
+                # Ordinary HTTP timeouts and fail-closed custody stay intact.
+                from .core import _read_cli
+                deadline=time.monotonic()+120
+                while True:
+                    remaining=deadline-time.monotonic()
+                    if remaining<=0:
+                        raise ValueError('Q06_RESTORED_CORE_BOOTSTRAP_SYNC_TIMEOUT')
+                    info=_read_cli([str(owner.cli),'-datadir='+str(owner.directory),
+                                    'getblockchaininfo'],timeout=min(15,remaining))
+                    if (info['blocks'],info['bestblockhash'])==restore_tip:break
+                    if info['blocks']>restore_tip[0]:
+                        raise ValueError('Q06_RESTORED_CORE_BOOTSTRAP_TIP_DENIED')
+                    time.sleep(.1)
+                self._fixture_ready_owner=owner
+                report['restored_core_synced_before_seed_custody']=True
+            return owner
+
         def execute(self, action, args, kwargs):
             try:return super().execute(action,args,kwargs)
             except Exception as error:
@@ -154,6 +180,7 @@ def qualify(core, source, parent, adapter):
             if error.errno != errno.EADDRINUSE:raise
             report['retired_endpoint_available'] = False
             report['retired_endpoint_not_adopted'] = True
+        restore_tip = (before['height'],before['tip'])
         c, restored, restored_root = start(2,'restore',phrase)
         if (restored['receive_code']!=opened['receive_code'] or restored['mnemonic_once']
                 or restored['account_id']!=opened['account_id']

@@ -1,0 +1,64 @@
+{
+  "status": "FAIL",
+  "synthetic_rpc": false,
+  "mainnet_allowed": false,
+  "physical_accepted": false,
+  "independent_reviewed": false,
+  "chain_copied": false,
+  "native_anchor_copied": false,
+  "old_profile_overwritten": false,
+  "restored_signer_enabled": false,
+  "platform": "linux-x86_64",
+  "ports": [
+    [
+      29554,
+      29555
+    ],
+    [
+      29556,
+      29557
+    ],
+    [
+      29558,
+      29559
+    ]
+  ],
+  "stage": "RESTORED_PROFILE_CORE_RESTART_AND_HISTORY",
+  "observed_peer_subversions": [
+    "/WAM:0.1.13/"
+  ],
+  "observed_peer_protocols": [
+    70016
+  ],
+  "backend_failure": {
+    "action": "open",
+    "type": "OSError",
+    "errno": 98
+  },
+  "original_participant_shutdown_verified": true,
+  "retired_endpoint_available": false,
+  "retired_endpoint_not_adopted": true,
+  "restored_receive_code_sha256": "9d25a000d22ee6da57f6da633256e57d598c6ab4f1be7e1545a4a3068e5d4b62",
+  "confirmed_txid": "fd38fc1c479ca154681596d5170116a3b1e65f0b5e1e79fda2cfabdef2003f81",
+  "confirmed_height": 103,
+  "confirmed_tip": "7531d68ad811d3161cd231891fcd5ea5a98bbe9191b1448f6c187cf72441d231",
+  "confirmed_atoms": 4749939000,
+  "history_count": 2,
+  "original_irreversible_reservations_preserved": true,
+  "mnemonic_does_not_restore_signed_reservations": true,
+  "failure_code": "WALLET_EXECUTOR_DENIED",
+  "all_original_owners_shutdown_verified": true,
+  "source_provenance": {
+    "candidate_source_sha": "f96db6fc4f2044deba2c632a9a237b56b259b13c",
+    "checkout_sha": "f96db6fc4f2044deba2c632a9a237b56b259b13c",
+    "ci_artifacts_allowed": true,
+    "literal_python_files_verified": 233,
+    "python_crlf_normalized": false,
+    "raw_python_tree_sha256": "9004ba6fec02eb9203147be55df297df3c97c20472b27a9f4b9cefaeacf8af3f"
+  },
+  "core_sha256": {
+    "wamd": "a3e3bf810e74824e3739fd4cbd1a45037cae997056b8c978c4dc1a61d674f0c7",
+    "wam-cli": "d99fc90e3aa4233979056d9981a388360e5d7ff77090d00b9bc37191a2425300"
+  },
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e"
+}

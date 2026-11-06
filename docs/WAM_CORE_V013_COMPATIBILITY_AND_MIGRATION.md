@@ -144,3 +144,28 @@ G6/G7 BLOCKED. Individual CI failures above remain retained technical gaps;
 zero ledger FAIL does not mean zero unresolved failure. V19 BLOCKED.
 Engineering handoff NO; full acceptance NO. Common final-source Linux,
 Windows and macOS native/frozen replay is still required after repair.
+
+The Linux repair was subsequently confirmed by the complete exact-dff75ab
+workflow: **8 executed jobs PASS**, including native restart and both frozen
+frontends; two intentionally disabled/historical jobs SKIP, never PASS.
+Run `42133383463` and its receipt retain their own source identity.
+
+Final-candidate macOS RC run `42134109006` at `7421ba7` failed in the early
+native fresh-restore fixture before any build. Unlike the earlier masked seed
+error, the bounded diagnostic identifies status-stage
+`RPC_CONNECTION_UNCERTAIN_READ_FAILED` during fresh participant bootstrap.
+Its roughly five-second timing suggests an HTTP timeout during historical
+sync; the underlying socket exception is not established by that category
+alone. All original owners were positively stopped. Public failure receipts
+are retained in `evidence/core-v013/*-FAIL.json`; no retry is relabelled PASS.
+
+The next fixture candidate waits for the new participant's **exact historical
+height and tip** using bounded, original-owned signed CLI bootstrap reads
+before seed creation/opening. The encrypted seed, native anchor and old
+profiles are not copied. Ordinary application HTTP timeouts, session
+revocation, per-operation owner checks and custody refusal are unchanged.
+This is fixture sequencing, not permission to reauthenticate a failed session
+or retry uncertain writes. A local genuine-Core diagnostic passed restoration,
+full history, read-only enforcement and restart with
+`restored_core_synced_before_seed_custody=true`, all owners stopped; native
+macOS CI and the next common-source frozen matrix remain required.
