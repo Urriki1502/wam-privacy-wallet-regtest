@@ -673,6 +673,27 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
         self.app.processEvents()
         return dialog
 
+    def _activate_own_cocoa_application(self):
+        if self.app.platformName() != 'cocoa':
+            return
+        # Native GUI test precondition for the unbundled Python process.
+        # Request activation of THIS process, never assign Qt focus state or
+        # activate another PID. AppKit may refuse; the real-active gate below
+        # must still pass within its original deadline.
+        import ctypes, os
+        objc = ctypes.CDLL('/usr/lib/libobjc.A.dylib')
+        objc.objc_getClass.argtypes = [ctypes.c_char_p]
+        objc.objc_getClass.restype = ctypes.c_void_p
+        objc.sel_registerName.argtypes = [ctypes.c_char_p]
+        objc.sel_registerName.restype = ctypes.c_void_p
+        send_id = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)(('objc_msgSend', objc))
+        send_pid = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p)(('objc_msgSend', objc))
+        activate = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_ulong)(('objc_msgSend', objc))
+        current = send_id(objc.objc_getClass(b'NSRunningApplication'), objc.sel_registerName(b'currentApplication'))
+        self.assertIsNotNone(current)
+        self.assertEqual(send_pid(current, objc.sel_registerName(b'processIdentifier')), os.getpid())
+        activate(current, objc.sel_registerName(b'activateWithOptions:'), 0)
+
     def test_dialog_layout_is_three_by_four_numbered_fields(self):
         dialog = self._make_dialog()
         self.dialog = dialog
@@ -752,6 +773,7 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
         # return while activation still belongs to the previous test window.
         import time
         deadline = time.monotonic() + 2
+        self._activate_own_cocoa_application()
         dialog.raise_()
         dialog.activateWindow()
         # Keep native events and Python callbacks progressing instead of
