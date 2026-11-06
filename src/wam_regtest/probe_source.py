@@ -103,7 +103,9 @@ def verify_source(root):
             raise ProbeSourceError('Q05_CI_SOURCE_CONTEXT_DENIED')
         status=_git(root,'status','--porcelain','--untracked-files=no')
     else:
-        candidate=head;status=_git(root,'status','--porcelain')
+        # Entirely untracked owner-document folders must be enumerated. Never
+        # accept a collapsed directory row or exempt unknown siblings.
+        candidate=head;status=_git(root,'status','--porcelain','--untracked-files=all')
         non_runtime=local_audit_documents(root,status)
         # Also compare ALL tracked files with HEAD, independent of Git index
         # flags, and reject untracked importable modules anywhere in the tree.

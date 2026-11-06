@@ -80,3 +80,13 @@ scanner/transaction/anchor state machine without separately qualified design.
 Stress thresholds must be declared before a measured final workload, not inferred
 from a short probe. Cross-platform/frozen/physical work remains unexecuted for any
 new candidate until actual matching proof; no push or Actions dispatch is allowed.
+
+## Proposed Issue45 scope comment — not posted
+
+Owner scope proposal: retain stable Q01–Q20 IDs and all historical cases/results.
+Remove Q07/Q08/Q09/Q17 only from future V1 development; retain their functionality
+and security regressions. Future ordered roadmap is Q10–Q16,Q18–Q20, excluding
+.dat/BDB imports and old-profile conversion. Q06 remains active and accepted=false;
+no Q transition, acceptance, merge, mainnet or release authority is granted.
+Publish/authenticate this governance decision separately before activating the
+new scope layer. G6/G7/V19 and unresolved technical cases are not waived.
