@@ -34,7 +34,7 @@ jobs:
       WSP_PIN: ac55f13423620252bdbf848c7e8a280c3b84721e
     steps:
       - name: Check out this review commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -51,7 +51,7 @@ jobs:
           echo "FUNCTIONAL_PIN_IS_ANCESTOR $FUNCTIONAL_PIN"
 
       - name: Check out pinned WSP source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
@@ -61,7 +61,7 @@ jobs:
       - name: Require the WSP pin
         run: test "$(git -C wsp-upstream rev-parse HEAD)" = "$WSP_PIN"
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12.10"
           architecture: arm64
@@ -96,7 +96,7 @@ jobs:
 
       - name: Fresh same-chain native profile restore before freezing
         run: python scripts/qualify_q06_same_chain_restore.py --core-dir "$PWD/core" --wsp-source "$PWD/wsp-upstream" --report "$RUNNER_TEMP/q06-same-chain-native.json" --confirm-disposable-regtest
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: q06-same-chain-native-macos-${{ github.sha }}
@@ -207,7 +207,7 @@ jobs:
           PY
 
       - name: Upload the DMG, app zip, checksums, and README
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: WAM-Fusion-REGTEST-macos-arm64-${{ github.sha }}
           path: macos-rc-publish/
