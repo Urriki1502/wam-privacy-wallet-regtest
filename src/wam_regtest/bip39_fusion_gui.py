@@ -379,6 +379,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
         self.backup_page = Bip39BackupPage()
         self.backup_page.verify_requested.connect(self._on_backup_verify)
+        self.backup_page.challenge_requested.connect(self._on_backup_challenge)
+        self.backup_page.challenge_cancelled.connect(self._on_backup_challenge_cancel)
         self.backup_page.deferred_requested.connect(self._on_backup_deferred)
         self.backup_page.continue_requested.connect(self._on_backup_continue)
         self.stack.addWidget(self.backup_page)
@@ -716,18 +718,36 @@ class Bip39FusionWindow(Bip39TrialWindow):
         finally:
             dialog.deleteLater()
 
-    def _on_backup_verify(self, positions, answers):
+    def _on_backup_challenge(self):
         try:
-            ok = self.executor.request("backup_verify", positions, answers, timeout=30)
+            challenge = self.executor.request('backup_challenge', timeout=30)
+            self.backup_page.set_challenge(challenge)
+        except Exception as error:
+            self.backup_page.show_verification_error()
+            self.status.setText('Backup verification unavailable: ' +
+                                str(operation_error('backup_challenge', error)))
+
+    def _on_backup_challenge_cancel(self):
+        try:
+            self.executor.request('backup_challenge_cancel', timeout=30)
+        except Exception as error:
+            self.status.setText('Backup verification unavailable: ' +
+                                str(operation_error('backup_challenge_cancel', error)))
+
+    def _on_backup_verify(self, identifier, answers):
+        try:
+            ok = self.executor.request("backup_verify", identifier, answers, timeout=30)
         except Exception as error:
             self.status.setText(
                 "Backup verification unavailable: " + str(operation_error("backup_verify", error)))
             self.backup_page.show_verification_error()
+            self._on_backup_challenge()
             return
         if ok:
             self.backup_page.show_success()
         else:
             self.backup_page.show_verification_error()
+            self._on_backup_challenge()
 
     def _on_backup_deferred(self):
         try:

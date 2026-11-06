@@ -136,11 +136,45 @@ def qualify(core, source, parent, adapter, *, port_base=29554):
         a, opened, _ = start(0,'create')
         phrase = opened['mnemonic_once']
         a.request('acknowledge_create_pending',opened['seed_folder'],timeout=30)
-        positions = (1,6,12)
+        # Exercise the actual owner/executor and native seed, including in the
+        # final frozen executable. Only these newly created REGTEST profiles.
+        denied = []
+        def refused(label, *args):
+            try:
+                a.request('backup_verify', *args, timeout=30)
+            except WalletExecutorError as error:
+                if not error.args or not error.args[0].startswith('Q06_GUI_BACKUP_'):
+                    raise
+                denied.append(label)
+            else:
+                raise ValueError('Q06_BACKUP_CHALLENGE_NEGATIVE_ACCEPTED')
+        words = phrase.split()
+        for count in (1, 2):
+            challenge = a.request('backup_challenge', timeout=30)
+            answers = tuple(words[i-1] for i in challenge['positions'])
+            refused('short-'+str(count), challenge['challenge_id'], answers[:count])
+        refused('caller-selected-positions', (1, 6, 12), tuple(words[i-1] for i in (1, 6, 12)))
+        challenge = a.request('backup_challenge', timeout=30)
+        answers = tuple(words[i-1] for i in challenge['positions'])
+        if a.request('backup_verify', challenge['challenge_id'], ('wrong',)*3, timeout=30) is not False:
+            raise ValueError('Q06_BACKUP_CHALLENGE_WRONG_ANSWER_ACCEPTED')
+        refused('wrong-answer-replay', challenge['challenge_id'], answers)
+        challenge = a.request('backup_challenge', timeout=30)
+        a.request('backup_challenge_cancel', timeout=30)
+        refused('cancelled', challenge['challenge_id'], tuple(words[i-1] for i in challenge['positions']))
+        challenge = a.request('backup_challenge', timeout=30)
+        a.request('lock', timeout=30)
+        a.request('open', password, 'reopen', '', timeout=120)
+        refused('lock-reopen', challenge['challenge_id'], tuple(words[i-1] for i in challenge['positions']))
+        challenge = a.request('backup_challenge', timeout=30)
+        positions = challenge['positions']
         answers = tuple(phrase.split()[i-1] for i in positions)
-        if a.request('backup_verify',positions,answers,timeout=30) is not True:
+        if a.request('backup_verify',challenge['challenge_id'],answers,timeout=30) is not True:
             raise ValueError('Q06_SAME_CHAIN_RESTORE_BACKUP_DENIED')
-        answers = None
+        refused('success-replay', challenge['challenge_id'], answers)
+        report['backend_backup_challenge_negative_cases'] = denied
+        report['backend_backup_challenge_exact_three_native_ack'] = True
+        answers = words = None
         b, unused, _ = start(1,'create')
         unused = None
         wait(lambda:state(a)['connected'] and state(b)['connected'])

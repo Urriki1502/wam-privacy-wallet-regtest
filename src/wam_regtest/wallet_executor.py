@@ -40,7 +40,8 @@ class ExecutorState:
 COMMANDS=frozenset(('open','snapshot','prepare','sign','broadcast','cancel','lock',
     'unlock','backup','recover','complete_recovery','recovery_status','network',
     'disclose','mine','activate','ci_confirm','confirm','recovery_verify',
-    'inspect_confirmed','backup_verify','backup_defer','acknowledge_create_pending',
+    'inspect_confirmed','backup_verify','backup_challenge','backup_challenge_cancel',
+    'backup_defer','acknowledge_create_pending',
     'core_status','core_start','core_restart','control','quit','network_status','network_active','reconcile_reorg'))
 
 

@@ -11,6 +11,7 @@ import re
 import secrets
 import stat
 import sys
+import time
 
 from .wallet_executor import ManagedWalletBackend, WalletExecutorError
 
@@ -30,6 +31,24 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         self._public = None
         self._spend_session = None
         self._resume_spend = False
+        self._backup_challenge = None
+        self._backup_epoch = 0
+
+    def _invalidate_backup_challenge(self):
+        self._backup_challenge = None
+        self._backup_epoch += 1
+
+    def _new_backup_challenge(self):
+        # Serialized owner-session memory only. No mnemonic/answers persisted.
+        self._backup_challenge = None
+        if self._secret is None or self._seed_folder is None:
+            raise Q06ReadOnlyError('Q06_GUI_BACKUP_VERIFY_LOCKED')
+        positions = tuple(sorted(secrets.SystemRandom().sample(range(1, 13), 3)))
+        identifier = secrets.token_hex(32)
+        self._backup_challenge = (identifier, positions, self._seed_folder,
+                                  self._backup_epoch, time.monotonic() + 120)
+        return {'challenge_id': identifier, 'positions': positions,
+                'expires_in_seconds': 120}
 
     def public_state(self):
         # Executor.state is the GUI's safety authority. Never conceal a
@@ -47,6 +66,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         }
 
     def _lock_q06(self):
+        self._invalidate_backup_challenge()
         try:
             if self._spend_session is not None:
                 session = self._spend_session
@@ -132,6 +152,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         return matches[0]
 
     def _open_q06(self, password, mode, phrase=""):
+        self._invalidate_backup_challenge()
         if (type(password) is not bytes or not 12 <= len(password) <= 1024
                 or mode not in ("create", "restore", "reopen")
                 or type(phrase) is not str):
@@ -198,6 +219,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         involved. Fail-closed on missing/tampered/deferred acknowledgement and
         clears partial in-memory custody on refusal.
         """
+        self._invalidate_backup_challenge()
         owner = self._core()
         from .bip39_seed_vault import open_owned_seed_container
         folder = self._only_seed(owner)
@@ -663,18 +685,34 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             self._q06_write_ack(self._seed_folder, False, deferred=True)
             self._lock_q06()
             return None
+        if action == 'backup_challenge_cancel':
+            self._invalidate_backup_challenge()
+            if args or kwargs:
+                raise Q06ReadOnlyError('Q06_GUI_BACKUP_CHALLENGE_ARGS_DENIED')
+            return None
+        if action == 'backup_challenge':
+            self._backup_challenge = None
+            if args or kwargs:
+                raise Q06ReadOnlyError('Q06_GUI_BACKUP_CHALLENGE_ARGS_DENIED')
+            return self._new_backup_challenge()
         if action == "backup_verify":
+            # Consume BEFORE validation/decryption/ack write: wrong answers,
+            # exceptions and concurrent/replayed submissions cannot reuse it.
+            challenge, self._backup_challenge = self._backup_challenge, None
             if kwargs or len(args) != 2:
                 raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_ARGS_DENIED")
-            positions, answers = args
-            if (type(positions) not in (tuple, list) or type(answers) not in (tuple, list)
-                    or len(positions) != len(answers) or not positions
-                    or not all(type(p) is int and 1 <= p <= 12 for p in positions)
-                    or len(set(positions)) != len(positions)
-                    or not all(type(a) is str and a.strip() for a in answers)):
+            identifier, answers = args
+            if (type(identifier) is not str or not re.fullmatch('[0-9a-f]{64}', identifier)
+                    or type(answers) not in (tuple, list) or len(answers) != 3
+                    or not all(type(a) is str and 1 <= len(a) <= 32 and a.strip() for a in answers)):
                 raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_INPUT_DENIED")
             if self._seed_folder is None or self._secret is None:
                 raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_LOCKED")
+            if (challenge is None or not hmac.compare_digest(identifier, challenge[0])
+                    or challenge[2] != self._seed_folder or challenge[3] != self._backup_epoch
+                    or time.monotonic() >= challenge[4]):
+                raise Q06ReadOnlyError('Q06_GUI_BACKUP_CHALLENGE_DENIED')
+            positions = challenge[1]
             from .bip39_seed_vault import (
                 _owner_binding, open_owned_seed_container, read_seed_phrase)
             owner = self._core()
@@ -696,6 +734,8 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                         bytes(self._secret), authorized=True,
                         keychain=self.keychain) as keys:
                     secret = keys.backup_ack_key()
+                if time.monotonic() >= challenge[4]:
+                    raise Q06ReadOnlyError('Q06_GUI_BACKUP_CHALLENGE_DENIED')
                 self._q06_write_ack(self._seed_folder, True, secret=secret)
                 return True
             except Exception:

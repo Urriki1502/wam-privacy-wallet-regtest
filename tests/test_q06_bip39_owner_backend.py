@@ -3,6 +3,7 @@
 No fake Core success is reported as source-native or owned-Core acceptance.
 """
 import importlib.util
+from contextlib import contextmanager
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -19,6 +20,156 @@ PHRASE=Mnemonic("english").to_mnemonic(bytes(16))
 
 
 class Q06OwnerBackendContracts(unittest.TestCase):
+    @contextmanager
+    def _backup_verifier(self):
+        self.backend._secret = bytearray(PASSWORD)
+        self.backend._seed_folder = self.root / ('bip39-12-' + 'a' * 32)
+        with (patch('wam_regtest.bip39_seed_vault.read_seed_phrase', return_value=PHRASE),
+              patch('wam_regtest.bip39_seed_vault._owner_binding', return_value='0' * 64),
+              patch('wam_regtest.bip39_seed_vault.open_owned_seed_container') as opened,
+              patch.object(self.backend, '_q06_write_ack') as write):
+            opened.return_value.__enter__.return_value = self._fake_opened_keys()
+            yield write
+
+    def _backup_request(self):
+        challenge = self.backend.execute('backup_challenge', (), {})
+        answers = [PHRASE.split()[p - 1] for p in challenge['positions']]
+        return challenge, answers
+
+    def test_backup_challenge_exact_three_one_use_and_no_secret_output(self):
+        with self._backup_verifier() as write:
+            challenge, answers = self._backup_request()
+            self.assertEqual(len(set(challenge['positions'])), 3)
+            self.assertTrue(all(1 <= p <= 12 for p in challenge['positions']))
+            self.assertEqual(challenge['expires_in_seconds'], 120)
+            self.assertNotIn(PHRASE, repr(challenge))
+            self.assertNotIn(PASSWORD.decode(), repr(challenge))
+            self.assertTrue(self.backend.execute('backup_verify', (challenge['challenge_id'], answers), {}))
+            with self.assertRaises(Q06ReadOnlyError):
+                self.backend.execute('backup_verify', (challenge['challenge_id'], answers), {})
+            write.assert_called_once()
+
+    def test_backup_challenge_denies_one_two_extra_and_caller_positions(self):
+        with self._backup_verifier() as write:
+            for count in (1, 2, 4):
+                with self.subTest(count=count):
+                    challenge, answers = self._backup_request()
+                    with self.assertRaises(Q06ReadOnlyError):
+                        self.backend.execute('backup_verify', (challenge['challenge_id'], (answers * 2)[:count]), {})
+                    with self.assertRaises(Q06ReadOnlyError):
+                        self.backend.execute('backup_verify', (challenge['challenge_id'], answers), {})
+            challenge, answers = self._backup_request()
+            with self.assertRaises(Q06ReadOnlyError):
+                self.backend.execute('backup_verify', ([1, 2, 3], answers), {})
+            write.assert_not_called()
+
+    def test_backup_wrong_answer_consumes_challenge(self):
+        with self._backup_verifier() as write:
+            challenge, answers = self._backup_request()
+            self.assertFalse(self.backend.execute('backup_verify', (challenge['challenge_id'], ['wrong'] * 3), {}))
+            with self.assertRaises(Q06ReadOnlyError):
+                self.backend.execute('backup_verify', (challenge['challenge_id'], answers), {})
+            write.assert_not_called()
+            fresh, answers = self._backup_request()
+            self.assertNotEqual(fresh['challenge_id'], challenge['challenge_id'])
+            self.assertTrue(self.backend.execute('backup_verify', (fresh['challenge_id'], answers), {}))
+
+    def test_backup_expired_challenge_and_expiry_during_native_auth_refuse(self):
+        with self._backup_verifier() as write, patch('wam_regtest.bip39_owner_backend.time.monotonic') as clock:
+            clock.return_value = 1000
+            challenge, answers = self._backup_request()
+            clock.return_value = 1120
+            with self.assertRaises(Q06ReadOnlyError):
+                self.backend.execute('backup_verify', (challenge['challenge_id'], answers), {})
+            clock.return_value = 2000
+            challenge, answers = self._backup_request()
+            def decrypt(*args, **kwargs):
+                clock.return_value = 2120
+                return PHRASE
+            with patch('wam_regtest.bip39_seed_vault.read_seed_phrase', side_effect=decrypt):
+                with self.assertRaises(Q06ReadOnlyError):
+                    self.backend.execute('backup_verify', (challenge['challenge_id'], answers), {})
+            write.assert_not_called()
+
+    def test_backup_profile_epoch_cancel_and_replaced_id_refuse(self):
+        with self._backup_verifier() as write:
+            for change in ('profile', 'epoch', 'cancel', 'replace'):
+                with self.subTest(change=change):
+                    challenge, answers = self._backup_request()
+                    original = self.backend._seed_folder
+                    if change == 'profile':
+                        self.backend._seed_folder = self.root / ('bip39-12-' + 'b' * 32)
+                    elif change == 'epoch':
+                        self.backend._backup_epoch += 1
+                    elif change == 'cancel':
+                        self.backend.execute('backup_challenge_cancel', (), {})
+                    else:
+                        self._backup_request()
+                    with self.assertRaises(Q06ReadOnlyError):
+                        self.backend.execute('backup_verify', (challenge['challenge_id'], answers), {})
+                    self.backend._seed_folder = original
+            write.assert_not_called()
+
+    def test_backup_lock_and_restarted_backend_cannot_reuse_id(self):
+        with self._backup_verifier() as write:
+            challenge, answers = self._backup_request()
+            folder = self.backend._seed_folder
+            self.backend._lock_q06()
+            self.backend._secret, self.backend._seed_folder = bytearray(PASSWORD), folder
+            with self.assertRaises(Q06ReadOnlyError):
+                self.backend.execute('backup_verify', (challenge['challenge_id'], answers), {})
+            restarted = Bip39ReadOnlyBackend(self.root, Path('/synthetic-core'), SOURCE)
+            restarted._secret, restarted._seed_folder = bytearray(PASSWORD), folder
+            with self.assertRaises(Q06ReadOnlyError):
+                restarted.execute('backup_verify', (challenge['challenge_id'], answers), {})
+            restarted._lock_q06()
+            write.assert_not_called()
+
+    def test_backup_ack_write_failure_cannot_retry_same_challenge(self):
+        with self._backup_verifier() as write:
+            challenge, answers = self._backup_request()
+            write.side_effect = OSError('public test storage failure')
+            with self.assertRaises(Q06ReadOnlyError):
+                self.backend.execute('backup_verify', (challenge['challenge_id'], answers), {})
+            with self.assertRaises(Q06ReadOnlyError):
+                self.backend.execute('backup_verify', (challenge['challenge_id'], answers), {})
+            write.assert_called_once()
+
+    def test_backup_simultaneous_executor_submissions_only_one_ack(self):
+        from wam_regtest.wallet_executor import WalletExecutor, WalletExecutorError
+        with self._backup_verifier() as write:
+            facade = SimpleNamespace(
+                execute=lambda action, args, kwargs: None if action == 'quit' else self.backend.execute(action, args, kwargs),
+                public_state=self.backend.public_state)
+            executor = WalletExecutor(lambda: facade)
+            try:
+                challenge = executor.request('backup_challenge')
+                answers = [PHRASE.split()[p - 1] for p in challenge['positions']]
+                futures = [executor.submit('backup_verify', challenge['challenge_id'], answers) for _ in range(2)]
+                successes = 0
+                for future in futures:
+                    try:
+                        successes += future.result(timeout=5) is True
+                    except (WalletExecutorError, Q06ReadOnlyError):
+                        pass
+                self.assertEqual(successes, 1)
+                write.assert_called_once()
+            finally:
+                executor.request('quit')
+                self.assertTrue(executor.join(5))
+
+    def test_backup_submission_requires_backend_owned_challenge(self):
+        self.backend._secret = bytearray(PASSWORD)
+        self.backend._seed_folder = self.root / ('bip39-12-' + 'a' * 32)
+        with (patch('wam_regtest.bip39_seed_vault.read_seed_phrase', return_value=PHRASE),
+              patch('wam_regtest.bip39_seed_vault._owner_binding', return_value='0' * 64),
+              patch('wam_regtest.bip39_seed_vault.open_owned_seed_container') as opened,
+              patch.object(self.backend, '_q06_write_ack') as write):
+            opened.return_value.__enter__.return_value = self._fake_opened_keys()
+            with self.assertRaises(Q06ReadOnlyError):
+                self.backend.execute('backup_verify', ([1], [PHRASE.split()[0]]), {})
+            write.assert_not_called()
+
     def test_lock_failure_erases_backend_password_without_discarding_session(self):
         from unittest.mock import Mock
         self.backend._secret = bytearray(PASSWORD)
@@ -255,8 +406,8 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         self.assertTrue(ack_data["deferred"])
 
         words = PHRASE.split()
-        positions = [2, 7, 12]
-        answers = [words[1], words[6], words[11]]
+        challenge = self.backend.execute('backup_challenge', (), {})
+        answers = [words[p - 1] for p in challenge['positions']]
         with (patch("wam_regtest.bip39_seed_vault.read_seed_phrase",
                     return_value=PHRASE),
               patch("wam_regtest.bip39_seed_vault._owner_binding",
@@ -265,7 +416,7 @@ class Q06OwnerBackendContracts(unittest.TestCase):
               as open_container):
             open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys()
             open_container.return_value.__exit__ = lambda *a, **kw: None
-            ok = self.backend.execute("backup_verify", (positions, answers), {})
+            ok = self.backend.execute("backup_verify", (challenge['challenge_id'], answers), {})
         self.assertTrue(ok)
         self.assertTrue(ack_path.exists())
         self.assertTrue(json.loads(ack_path.read_text())["acknowledged"])
@@ -317,10 +468,13 @@ class Q06OwnerBackendContracts(unittest.TestCase):
               as open_container):
             open_container.return_value.__enter__ = lambda *a, **kw: self._fake_opened_keys()
             open_container.return_value.__exit__ = lambda *a, **kw: None
+            challenge = self.backend.execute('backup_challenge', (), {})
             self.assertFalse(self.backend.execute(
-                "backup_verify", ([1, 2, 3], ["wrong"] * 3), {}))
+                "backup_verify", (challenge['challenge_id'], ["wrong"] * 3), {}))
+            challenge = self.backend.execute('backup_challenge', (), {})
             self.assertTrue(self.backend.execute(
-                "backup_verify", ([1, 2, 3], words[:3]), {}))
+                "backup_verify", (challenge['challenge_id'],
+                                  [words[p - 1] for p in challenge['positions']]), {}))
         self.assertTrue(json.loads(ack_path.read_text())["acknowledged"])
 
     def test_backup_verify_rejects_bad_inputs_and_locked_state(self):

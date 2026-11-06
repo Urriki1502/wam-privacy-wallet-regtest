@@ -44,6 +44,8 @@ class _StubExecutor:
         self.locked = False
         self.verified = False
         self.marker = None
+        self.challenge = None
+        self.challenge_counter = 0
 
     def submit(self, action, *args, **kwargs):
         # ControlWorker uses submit(), as the real executor does. Preserve
@@ -68,11 +70,22 @@ class _StubExecutor:
             self.locked = True
             self.marker = (False, True)
             return None
+        if action == 'backup_challenge_cancel':
+            self.challenge = None
+            return None
+        if action == 'backup_challenge':
+            self.challenge_counter += 1
+            self.challenge = {'challenge_id': f'{self.challenge_counter:064x}',
+                              'positions': (2, 7, 12), 'expires_in_seconds': 120}
+            return self.challenge
         if action == "backup_verify":
-            positions, answers = args
-            self.log.append(("verify", positions, answers))
+            identifier, answers = args
+            challenge, self.challenge = self.challenge, None
+            positions = challenge['positions'] if challenge else ()
+            self.log.append(("verify", identifier, answers))
             words = self.phrase.split()
-            ok = (len(positions) == len(answers)
+            ok = (challenge is not None and identifier == challenge['challenge_id']
+                  and len(positions) == len(answers) == 3
                   and all(words[p - 1].lower() == a.strip().lower()
                           for p, a in zip(positions, answers)))
             if ok:
@@ -184,6 +197,32 @@ class BackupPageContract(unittest.TestCase):
         self.assertEqual(sorted(labels), sorted(_DISPLAY_PHRASE_WORDS.split()))
         self.assertEqual(self.window.stack.currentWidget(), self.window.backup_page)
         self.assertFalse(self.window.navigation.isEnabled())
+
+    def test_verification_back_invalidates_backend_challenge(self):
+        self._show_required()
+        page = self.window.backup_page
+        page._written_check.setChecked(True)
+        page._back_up_now.click()
+        previous = page._challenge_id
+        self.assertIsNotNone(previous)
+        page._on_verify_back()
+        self.assertIsNone(page._challenge_id)
+        self.assertIsNone(self.window.executor.challenge)
+        page._back_up_now.click()
+        self.assertNotEqual(page._challenge_id, previous)
+
+    def test_wrong_answer_requests_fresh_backend_challenge_without_retry(self):
+        self._show_required()
+        page = self.window.backup_page
+        page._written_check.setChecked(True)
+        page._back_up_now.click()
+        previous = page._challenge_id
+        for edit in page._verify_inputs:
+            edit.setText('wrong')
+        page._verify_button.click()
+        self.assertNotEqual(page._challenge_id, previous)
+        self.assertEqual(self.window.executor.requests.count('backup_verify'), 1)
+        self.assertFalse(self.window._ready)
 
     def test_back_up_now_disabled_until_written_checkbox(self):
         self._show_required()
