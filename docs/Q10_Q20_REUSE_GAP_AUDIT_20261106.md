@@ -20,10 +20,13 @@ qualification; original ledger and all historical FAIL receipts remain intact.
 Full Q10–Q20 qualification is PENDING/BLOCKED, none accepted. New independently
 safe probes are local contract evidence, not feature activation or Q handoff.
 Windows/Linux cannot be executed natively on this Mac; no CI dispatch authorized.
-The newly supplied untracked ADR package is not in the frozen source guard's
-six-document allowlist. Do not hide/move/ignore it or relax source attestation to
-claim a current full frozen build. Runtime changes and frozen qualification must
-first reconcile exact source inventory under owner-approved governance.
+The initial full source guard refused the newly supplied untracked ADR package
+(`Q05_NATIVE_PROBE_CLEAN_SOURCE_REQUIRED`, retained diagnostic). Enumerate only
+the three exact owner Markdown paths alongside the six retained audits, retaining
+regular-file/owner/single-link/non-executable/stable-read checks and separate
+hashes. Unknown Markdown and Python in that same directory must still refuse.
+No folder-wide exemption, move, ignore or acceptance shortcut. A successful source
+preflight is not a native/frozen build or acceptance receipt.
 
 Q07/Q08/Q09/Q17: OWNER_DE_SCOPED future development; old IDs/cases/tests retained.
 Q06 ledger remains0PASS/0FAIL/4PENDING/15STALE/5BLOCKED; G0PENDING,

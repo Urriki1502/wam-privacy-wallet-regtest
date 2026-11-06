@@ -71,6 +71,22 @@ class NativeProbeSourceContracts(unittest.TestCase):
         for name in names:
             self.assertEqual((self.root/name).read_bytes(), b'public owner instructions\n')
 
+    def test_exact_owner_adr_package_is_recorded_but_no_folder_wide_exclusion(self):
+        from hashlib import sha256
+        parent='WAM_Fusion_ADR_Gap_Audit_Codex_2026-11-06/'
+        names=[parent+'WAM_Fusion_'+name+'_2026-11-06.md'
+               for name in ('ADR','Q10_Q20_Gap_Audit','Codex_Handoff')]
+        expected={}
+        for name in names:
+            path=self.root/name;path.parent.mkdir(exist_ok=True)
+            path.write_bytes(b'retained public ADR\n')
+            expected[name]=sha256(path.read_bytes()).hexdigest()
+        status=b''.join(b'?? '+name.encode()+b'\n' for name in names)
+        self.assertEqual(local_audit_documents(self.root,status),expected)
+        for unknown in ('extra.md','shadow.py'):
+            with self.assertRaisesRegex(ProbeSourceError,'CLEAN_SOURCE_REQUIRED'):
+                local_audit_documents(self.root,status+b'?? '+(parent+unknown).encode()+b'\n')
+
     @unittest.skipIf(os.name=='nt','POSIX metadata; native Windows reparse/custody has separate contracts')
     def test_retained_audit_cannot_be_executable_symlink_or_hardlink(self):
         name='docs/INDEPENDENT_RC_AUDIT_56ea3618.md'

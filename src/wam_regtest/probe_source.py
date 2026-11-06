@@ -20,7 +20,10 @@ LOCAL_AUDIT_DOCUMENTS=frozenset((
     'docs/RC_PACKAGE_CONTENT_VERIFICATION.md',
     'docs/RC_RUNTIME_DEPENDENCY_MATRIX.md',
     'docs/security-audit/WAM_Fusion_PreMainnet_Security_Audit_Charter_2026-11-06.md',
-    'docs/security-audit/WAM_Fusion_Security_Remediation_Design_Review_2026-11-06.md'))
+    'docs/security-audit/WAM_Fusion_Security_Remediation_Design_Review_2026-11-06.md',
+    'WAM_Fusion_ADR_Gap_Audit_Codex_2026-11-06/WAM_Fusion_ADR_2026-11-06.md',
+    'WAM_Fusion_ADR_Gap_Audit_Codex_2026-11-06/WAM_Fusion_Q10_Q20_Gap_Audit_2026-11-06.md',
+    'WAM_Fusion_ADR_Gap_Audit_Codex_2026-11-06/WAM_Fusion_Codex_Handoff_2026-11-06.md'))
 
 
 class ProbeSourceError(ValueError):pass
