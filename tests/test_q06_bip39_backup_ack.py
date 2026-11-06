@@ -750,8 +750,17 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
         # Cocoa activation is asynchronous. Establish the actual key window
         # before asserting keyboard focus; show()/processEvents() alone can
         # return while activation still belongs to the previous test window.
+        import time
+        deadline = time.monotonic() + 2
+        dialog.raise_()
         dialog.activateWindow()
-        self.assertTrue(QTest.qWaitForWindowActive(dialog, 2000))
+        # Keep native events and Python callbacks progressing instead of
+        # blocking inside the QtTest binding. The same 2s/native-active gate
+        # applies; no focus state is assigned or synthesized by the test.
+        while not dialog.isActiveWindow() and time.monotonic() < deadline:
+            self.app.processEvents()
+            time.sleep(.01)
+        self.assertTrue(dialog.isActiveWindow())
         dialog._fields[3].setFocus()
         self.assertTrue(dialog._fields[3].hasFocus())
         QTest.keyClick(dialog._fields[3], Qt.Key_Backspace)
