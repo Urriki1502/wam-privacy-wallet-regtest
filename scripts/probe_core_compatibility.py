@@ -39,6 +39,7 @@ def probe(core, source):
             'new_fixture_only':True,'fixture_directory':str(node.directory),
             'mainnet_allowed':False,'runtime_profile_unchanged':PROFILE,
             'mining_address_public_fixture':address,'owner_shutdown_verified':False}
+    result['public_mining_script_pubkey']=p2wpkh(scalar).hex()
     try:
         node.start();context=identity(node.directory)
         assert context.binding.process is node.proc
