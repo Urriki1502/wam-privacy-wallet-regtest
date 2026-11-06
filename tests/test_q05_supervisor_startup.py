@@ -120,9 +120,12 @@ class StartupContracts(unittest.TestCase):
 
     def test_shared_deferred_bootstrap_still_requires_original_http_attestation(self):
         from wam_regtest.shared_regtest import SharedRegtestProfile
-        owner=module.CoreSupervisor(self.root,self.core,authorized=True,
-            shared_profile=SharedRegtestProfile('127.0.0.1',rpc_port=29654,
-                p2p_port=29655,peer_port=29657))
+        # Reuse this unit fixture's storage boundary in the shared config
+        # writer too. Genuine Linux witness/Core tests run in native jobs.
+        with patch('wam_regtest.custody.storage',return_value=module.storage()):
+            owner=module.CoreSupervisor(self.root,self.core,authorized=True,
+                shared_profile=SharedRegtestProfile('127.0.0.1',rpc_port=29654,
+                    p2p_port=29655,peer_port=29657))
         self.addCleanup(owner.close)
         before=(owner.directory/'wam.conf').read_bytes()
         process,binding,registered,rpc,spawn=self.startup(owner)
