@@ -45,3 +45,16 @@ Independently authenticate signed archives and all member pins; preserve WSP
 ac55f134, root witness/native custody and every old profile/artifact. Existing
 v0.1.11 profile migration stays separately opt-in and unapproved for retained
 owner data. No merge/release/mainnet. Q06 accepted=false; G6/G7/V19 BLOCKED.
+
+**Owner workflow correction (6 November 2026):** Before ANY new GitHub push,
+the exact local candidate must pass the FULL native macOS ARM64 build and final
+frozen .app/.dmg qualification in this workspace, using official signed v0.1.13
+Core and the pinned WSP. Source/unit PASS or a remote green badge is insufficient.
+Preserve all historical runs and artifacts; do not cancel/delete them. Until the
+local gate passes, initiate no push, Actions dispatch or remote engineering
+mutation. Local candidate commits needed for exact-source build attestation are
+unqualified snapshots, never permission to push. A missing required local test
+is BLOCKED with exact cause, not bypassed. After local PASS, push only this
+existing feature branch/PR #141, then perform native three-OS requalification.
+Every correction requires affected local qualification again before another
+push. Inspect unauthenticated retained owners read-only. No merge/release/mainnet.

@@ -2,7 +2,8 @@
 
 CI may have untracked JSON/build artifacts. It may NOT change/add Python inputs,
 hide tracked edits behind index flags, substitute a merge runtime or import a
-different project package. Local qualification still requires a clean tree.
+different project package. Local qualification requires exact committed source;
+four retained, non-runtime audit Markdown files are recorded separately.
 """
 from hashlib import sha1,sha256
 import json
@@ -10,11 +11,38 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import stat
 
 REPOSITORY='Urriki1502/wam-privacy-wallet-regtest'
+LOCAL_AUDIT_DOCUMENTS=frozenset((
+    'docs/DEVELOPER_INDEPENDENT_REBUILD_GUIDE.md',
+    'docs/INDEPENDENT_RC_AUDIT_56ea3618.md',
+    'docs/RC_PACKAGE_CONTENT_VERIFICATION.md',
+    'docs/RC_RUNTIME_DEPENDENCY_MATRIX.md'))
 
 
 class ProbeSourceError(ValueError):pass
+
+
+def local_audit_documents(root,status):
+    """Not import inputs: never hide, stage, move or alter the owner's audits."""
+    records={}
+    for row in status.splitlines():
+        if not row.startswith(b'?? '):
+            raise ProbeSourceError('Q05_NATIVE_PROBE_CLEAN_SOURCE_REQUIRED')
+        name=row[3:].decode('utf8')
+        if name not in LOCAL_AUDIT_DOCUMENTS:
+            raise ProbeSourceError('Q05_NATIVE_PROBE_CLEAN_SOURCE_REQUIRED')
+        path=root/name
+        info=path.lstat()
+        if (not stat.S_ISREG(info.st_mode) or info.st_nlink!=1
+                or os.name!='nt' and info.st_uid!=os.geteuid()
+                or info.st_mode&0o111 or path.parent.is_symlink()):
+            raise ProbeSourceError('Q05_LOCAL_AUDIT_DOCUMENT_TYPE_DENIED')
+        from .build_provenance import _file
+        raw,_=_file(path)
+        records[name]=sha256(raw).hexdigest()
+    return records
 
 
 def _git(root,*args):
@@ -61,6 +89,7 @@ def verify_source(root):
         raise ProbeSourceError('Q05_IMPORTED_PROJECT_SOURCE_DENIED')
     head=_git(root,'rev-parse','HEAD').decode().strip()
     ci=os.environ.get('GITHUB_ACTIONS')=='true'
+    non_runtime={}
     if ci:
         candidate=os.environ.get('WAM_SOURCE_HEAD','')
         if (os.environ.get('GITHUB_REPOSITORY')!=REPOSITORY
@@ -70,9 +99,16 @@ def verify_source(root):
         status=_git(root,'status','--porcelain','--untracked-files=no')
     else:
         candidate=head;status=_git(root,'status','--porcelain')
+        non_runtime=local_audit_documents(root,status)
+        # Also compare ALL tracked files with HEAD, independent of Git index
+        # flags, and reject untracked importable modules anywhere in the tree.
+        from .build_provenance import capture
+        capture(root)
+        status=b''
     if status:raise ProbeSourceError('Q05_NATIVE_PROBE_CLEAN_SOURCE_REQUIRED')
     digests,normalized=verify_python_tree(root,_tree(root,head),_tree(root,candidate))
     return {'candidate_source_sha':candidate,'checkout_sha':head,'ci_artifacts_allowed':ci,
+            'retained_non_runtime_audit_sha256':non_runtime,
             'literal_python_files_verified':len(digests),'python_crlf_normalized':normalized,
             'raw_python_tree_sha256':sha256(json.dumps(digests,sort_keys=True,
                 separators=(',',':')).encode()).hexdigest()}

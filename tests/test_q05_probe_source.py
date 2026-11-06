@@ -3,8 +3,9 @@ from hashlib import sha1
 from pathlib import Path
 import tempfile
 import unittest
+import os
 
-from wam_regtest.probe_source import verify_python_tree,ProbeSourceError
+from wam_regtest.probe_source import verify_python_tree,ProbeSourceError,local_audit_documents
 
 
 class NativeProbeSourceContracts(unittest.TestCase):
@@ -38,3 +39,31 @@ class NativeProbeSourceContracts(unittest.TestCase):
         self.assertTrue(normalized)
         self.file.write_bytes(b'value = 9\r\n')
         with self.assertRaises(ProbeSourceError):verify_python_tree(self.root,self.tree,self.tree)
+
+    def test_retained_owner_audit_is_hashed_without_staging_or_changing_it(self):
+        name='docs/INDEPENDENT_RC_AUDIT_56ea3618.md'
+        path=self.root/name;path.parent.mkdir();path.write_bytes(b'public retained audit\n')
+        before=path.stat()
+        from hashlib import sha256
+        self.assertEqual(local_audit_documents(self.root,b'?? '+name.encode()+b'\n'),
+                         {name:sha256(path.read_bytes()).hexdigest()})
+        self.assertEqual(path.stat(),before)
+
+    def test_untracked_code_unknown_docs_and_tracked_edits_still_refuse(self):
+        for status in (b'?? src/extra.py\n',b'?? docs/unknown.md\n',
+                       b' M src/wam_regtest/test.py\n',b'A  scripts/other.py\n'):
+            with self.assertRaisesRegex(ProbeSourceError,'CLEAN_SOURCE_REQUIRED'):
+                local_audit_documents(self.root,status)
+
+    @unittest.skipIf(os.name=='nt','POSIX metadata; native Windows reparse/custody has separate contracts')
+    def test_retained_audit_cannot_be_executable_symlink_or_hardlink(self):
+        name='docs/INDEPENDENT_RC_AUDIT_56ea3618.md'
+        path=self.root/name;path.parent.mkdir();path.write_bytes(b'audit\n')
+        status=b'?? '+name.encode()+b'\n'
+        path.chmod(0o700)
+        with self.assertRaises(ProbeSourceError):local_audit_documents(self.root,status)
+        path.chmod(0o600)
+        link=path.with_name('second');os.link(path,link)
+        with self.assertRaises(ProbeSourceError):local_audit_documents(self.root,status)
+        link.unlink();path.unlink();path.symlink_to(self.file)
+        with self.assertRaises(ProbeSourceError):local_audit_documents(self.root,status)
