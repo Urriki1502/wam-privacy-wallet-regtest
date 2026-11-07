@@ -15,7 +15,7 @@ import platform
 from datetime import datetime, timezone
 
 from wam_regtest.q02_probe import _Node
-from wam_regtest.rpc_scope import identity, unregister
+from wam_regtest.rpc_scope import identity, reauthenticate_owned, unregister
 from wam_regtest.wsp_live import _pinned_source, REGTEST_GENESIS
 from wam_regtest.bip39_12 import PROFILE
 
@@ -133,6 +133,7 @@ def probe(core, source):
         # Q13 genuine Core parser (via allowlisted generatetoaddress): positive
         # v1 bech32m, Core-wallet encoder vector, and malformed-but-wamrt1 negatives.
         from wam_sp.codec import ALPHABET, bits as codec_bits, expand, polymod
+        result['parser_stage']='POSITIVE_V1_AND_CORE_WALLET'
         before=node.call('getblockcount')
         # Public BIP341 generator x-coordinate as a v1 witness program (fixture only).
         taproot=encode('wamrt',bytes.fromhex('79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798'),version=1)
@@ -151,14 +152,23 @@ def probe(core, source):
                                ('v0_with_bech32m_checksum',encode('wamrt',hash160(key.public),version=0,bech32m=True)),
                                ('v1_with_bech32_checksum',encode('wamrt',bytes(32),version=1,bech32m=False)),
                                ('v0_21_byte_program',encode('wamrt',bytes(21),version=0,bech32m=False))]:
+            result['parser_stage']='NEGATIVE_'+name
             try:node.call('generatetoaddress','1',candidate,timeout=60)
-            except Exception:negatives[name]='CORE_REJECTED'
+            except Exception:
+                negatives[name]='CORE_REJECTED'
+                # By design any Core RPC error latches the owned scope fault.
+                # Explicit fresh attestation of the SAME original process only.
+                assert identity(node.directory).faulted is True
+                reauthenticate_owned(node.directory,authorized=True)
+                assert identity(node.directory).faulted is False
             else:negatives[name]='CORE_ACCEPTED'
         assert node.call('getblockcount')==before+2
+        result['parser_stage']='DONE'
         assert set(negatives.values())=={'CORE_REJECTED'},negatives
         result['core_address_parser']={'v1_bech32m_accepted':True,'core_wallet_bech32_vector':core_address,
             'wsp_codec_roundtrip_of_core_encoder':True,'negatives':negatives,
-            'wrong_network_not_sent_to_core':'Fusion route() regex admits only lowercase wamrt1'}
+            'wrong_network_not_sent_to_core':'Fusion route() regex admits only lowercase wamrt1',
+            'core_rejection_latches_owned_scope_fault':True,'explicit_reauthentication_per_rejection':True}
         result['wallet_balance_rpc_executed']=False
         result['core_validateaddress_executed']=False  # Not in current RPC scope.
         result['no_broadcast']=True
@@ -173,6 +183,12 @@ def probe(core, source):
         if node.proc is not None and node.proc.poll() is None:
             # Authenticated shutdown of this original Popen only. No kill fallback.
             try:
+                context=identity(node.directory)
+                if context is not None and context.faulted:
+                    # Explicit fresh attestation of the SAME original Popen, only to
+                    # reach authenticated shutdown; never a wallet or write grant.
+                    reauthenticate_owned(node.directory,authorized=True)
+                    result['shutdown_after_explicit_reauthentication']=True
                 node.call('stop',timeout=5)
                 node.proc.wait(timeout=20)
             except Exception:

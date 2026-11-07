@@ -71,6 +71,11 @@ Duplication and coupling observed (reported only; no mass refactor):
   `decode_address(code, 'wamrtsp')`: full Bech32m decode, exact HRP equality
   (never prefix), version 0, 66-byte payload of two valid points.
 - `wamsp`/`twamsp`/`wamrtsp` remain PROPOSED, non-production until namespace approval.
+- Wrong-network SegWit strings never reach Core: `cli_rpc.validate` admits only
+  lowercase `wamrt1…` for `generatetoaddress`. Any Core RPC error, including a
+  Core parser rejection, latches the owned RPC scope fault (`rpc_scope.route`);
+  only explicit `reauthenticate_owned` of the same original process clears it.
+  A probe that omitted this left its own disposable Core unable to stop.
 
 ## 4. Q10 recovery contract (ADR-Q10-01, PROPOSED)
 

@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from wam_regtest.q02_probe import _Node
-from wam_regtest.rpc_scope import identity, unregister
+from wam_regtest.rpc_scope import identity, reauthenticate_owned, unregister
 from wam_regtest.wsp_live import _pinned_source, REGTEST_GENESIS
 
 PUBLIC_MNEMONIC = 'abandon ' * 11 + 'about'   # Published BIP39 vector; never owner data.
@@ -256,6 +256,10 @@ def probe(core, source):
         if keys is not None: keys.close()
         if node.proc is not None and node.proc.poll() is None:
             try:
+                context = identity(node.directory)
+                if context is not None and context.faulted:
+                    reauthenticate_owned(node.directory, authorized=True)  # Same original Popen only.
+                    result['shutdown_after_explicit_reauthentication'] = True
                 node.call('stop', timeout=5); node.proc.wait(timeout=20)
             except Exception:
                 result['status'] = 'BLOCKED_ORIGINAL_OWNER_SHUTDOWN_UNVERIFIED'
