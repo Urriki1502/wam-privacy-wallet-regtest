@@ -4,8 +4,7 @@ Measurement only: never changes or evaluates the approved Q18 budget. Metrics
 per process come from proc_pid_rusage(RUSAGE_INFO_V4): resident size, current
 physical footprint and the kernel's lifetime-max physical footprint (catches
 transients between samples). Stages: (A) Core alone, idle then across five
-REGTEST RandomX key changes (epoch 64, lag 4: heights 68,132,196,260,324) and a
-same-datadir restart; (B) WSP scanner increment, re-sync and full rescan in this
+REGTEST RandomX key changes (epoch 64, lag 4: heights 68,132,196,260,324); (B) WSP scanner increment, re-sync and full rescan in this
 Python process; (C) the real Fusion Q06 backend with a Cocoa window, concurrent
 Core+Python samples, then quit and same-profile restart. No transaction stress,
 no soak, no owner wallet, no mainnet.
@@ -124,15 +123,9 @@ def stage_core(meter, core, source, out):
                                  sqlite_bytes=(work / 'scan.sqlite').stat().st_size)
         tracemalloc.stop(); scanner.close(); scanner = None
         rpc._transport.close() if getattr(rpc, '_transport', None) else None; rpc = None
-        # Core restart on the same datadir (original owner stop, then new original Popen).
-        pre = meter(node.proc.pid)
-        node.call('stop', timeout=10); node.proc.wait(timeout=30); unregister(node.directory)
-        node.start(); assert identity(node.directory).binding.process is node.proc
-        time.sleep(3)
-        rows.append(snap(meter, 'A restart idle, height %d' % height, {'core': node.proc.pid}))
-        node.call('generatetoaddress', '1', address, timeout=120)
-        rows.append(snap(meter, 'A restart after 1 block', {'core': node.proc.pid}))
-        result['core_pre_restart_mib'] = {k: mib(v) for k, v in pre.items() if k != 'cpu_ns'}
+        # _Node.start() is fresh-chain only by design; Core restart retention is
+        # measured in stage C through the real supervisor on the same profile.
+        result['core_restart_in_stage_a'] = 'NOT_MEASURED_FRESH_CHAIN_ONLY_FIXTURE'
         result['status'] = 'MEASURED'
     except Exception as error:
         result.update(status='FAIL_MEASUREMENT', error_class=type(error).__name__, error=str(error)[:200])
