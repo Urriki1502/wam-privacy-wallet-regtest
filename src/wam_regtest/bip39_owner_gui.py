@@ -208,7 +208,7 @@ class Bip39RecoveryVerifyDialog(QDialog):
             try:
                 # A nested signal may publish newer clipboard content, even
                 # the same text. Only clear our unchanged consumed snapshot.
-                if text and not changed and clipboard.text() == text:
+                if text and clipboard.text() == text and not changed:
                     clipboard.clear()
             finally:
                 clipboard.dataChanged.disconnect(ownership_changed)
