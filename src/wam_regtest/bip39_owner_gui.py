@@ -759,6 +759,15 @@ class Bip39TrialWindow(QWidget):
     def _on_denied(self, code):
         code = public_code(code)
         self._last_error_code = code
+        if (code == 'WALLET_UNLOCK_REFUSED' and self.executor.state.locked
+                and not self.executor.state.faulted
+                and not self.executor.state.reauthentication_required
+                and self.executor.state.core_alive is True):
+            # A failed initial Open has no earlier Lock event to expose this
+            # existing control. Allow another EXPLICIT password attempt on
+            # the same owner; this grants neither keys nor spending scope.
+            self._unlock_allowed = True
+            self._ready = False
         if self.executor.state.faulted:
             self._signed_ready=False
         self.status.setText(

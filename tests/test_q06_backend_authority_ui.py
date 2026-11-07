@@ -51,4 +51,12 @@ class BackendSafetyUi(unittest.TestCase):
   self.assertIn('Payment state retained',self.window.review_summary.text())
   self.assertFalse(self.window.broadcast.isEnabled())
   self.assertIsNone(self.window._pending_action)
+ def test_initial_open_password_refusal_exposes_only_explicit_authenticated_retry(self):
+  self.owner.state=ExecutorState(locked=True,core_alive=True)
+  self.window._ready=self.window._spend_enabled=False
+  self.window._on_denied('WALLET_UNLOCK_REFUSED')
+  self.assertTrue(self.window.unlock.isEnabled())
+  self.assertTrue(self.owner.state.locked)
+  self.assertFalse(self.window._spend_enabled)
+  self.assertIsNone(self.window._pending_action)
 if __name__=='__main__':unittest.main(verbosity=2)
