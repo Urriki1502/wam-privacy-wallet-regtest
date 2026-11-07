@@ -682,6 +682,217 @@ def _qualify_empty_core_loss(core, source, adapter, source_sha):
             raise ValueError('Q06_CORE_LOSS_OWNER_RETAINED') from None
 
 
+_NETWORK_WRITES = frozenset((
+    'sendrawtransaction', 'generatetoaddress', 'generateblock', 'generate', 'submitblock',
+    'addnode', 'prioritisetransaction', 'sendtoaddress', 'sendmany', 'invalidateblock',
+    'reconsiderblock', 'abandontransaction', 'setban', 'disconnectnode'))
+
+
+def _qualify_recovered_unsigned_cancel(core, source, adapter, source_sha):
+    """NEW disposable wallet: unsigned draft -> clean shutdown -> reopen -> Qt Cancel.
+
+    The actual Cancel button is the only release. Proves no signature, no
+    network write, same identity/chain/confirmed balance, native generation
+    advance, available restored only afterwards, and restart consistency.
+    """
+    from unittest.mock import patch
+    from .desktop import qt_application
+    from .bip39_fusion_gui import Bip39FusionWindow
+    from .bip39_12 import Bip39Regtest12Keys
+    from .qualification_gui import click_visible_approval
+    from .wallet_session import WalletCoreCli
+    import wam_sp.wallet as wsp_wallet
+    from PySide6.QtCore import QTimer
+    app = qt_application()
+    if app.platformName() != 'cocoa':
+        raise ValueError('Q06_RECOVERED_CANCEL_NATIVE_COCOA_REQUIRED')
+    parent = Path.cwd() / '.wam-regtest-temp'
+    if not parent.exists():
+        custody.create_directory(parent)
+    root = parent / ('wam-fusion-core-' + secrets.token_hex(8))
+    custody.create_directory(root)
+    password = b'public-disposable-q06-recovered-unsigned-cancel-only'
+    keychain = root / 'q05-disposable.keychain-db'
+    record = dict(status='FAIL', source_sha=source_sha, synthetic_rpc=False,
+                  frozen=bool(getattr(sys, 'frozen', False)), mainnet_allowed=False,
+                  physical_accepted=False, profile=root.name)
+    begin = time.monotonic()
+    state = {'executor': WalletExecutor(lambda: Bip39ReadOnlyBackend(
+        root, core, source, _anchor_factory=adapter.make_anchor)), 'window': None}
+
+    def request(*args, timeout=240):
+        return state['executor'].request(*args, timeout=timeout)
+
+    def restart():
+        request('quit', timeout=120)
+        if not state['executor'].join(15) or not state['executor'].closed:
+            raise ValueError('Q06_RECOVERED_CANCEL_SHUTDOWN_DENIED')
+        state['executor'] = WalletExecutor(lambda: Bip39ReadOnlyBackend(
+            root, core, source, keychain=keychain))
+
+    def ledger():
+        session = state['executor']._backend._spend_session
+        return (tuple(tuple(r) for r in session.scanner.store.db.execute(
+            'SELECT * FROM reservations ORDER BY txid,vout')), session.vault.anchor.read())
+
+    def mempool():
+        owner = state['executor']._backend.owner
+        observer = WalletCoreCli(owner.cli, owner.directory)
+        try:
+            return observer._call('getblockhash', [0]), observer._call('getrawmempool', [])
+        finally:
+            if observer._transport is not None:
+                observer._transport.close()
+
+    try:
+        opened = request('open', password, 'create', '', timeout=120)
+        words = opened['mnemonic_once'].split()
+        challenge = request('backup_challenge')
+        if request('backup_verify', challenge['challenge_id'],
+                   tuple(words[p - 1] for p in challenge['positions'])) is not True:
+            raise ValueError('Q06_RECOVERED_CANCEL_BACKUP_DENIED')
+        words = opened = None
+        request('mine')
+        base = request('activate')
+        if base['available_atoms'] != base['confirmed_atoms'] or base['confirmed_atoms'] <= 0:
+            raise ValueError('Q06_RECOVERED_CANCEL_FUNDING_DENIED')
+        with Bip39Regtest12Keys('abandon ' * 11 + 'about', source=source,
+                                authorized_disposable=True) as payee:
+            destination = payee.public_metadata()['receive_code']
+        request('prepare', destination, 123_456_789, 10_000)
+        rows, anchor = ledger()
+        if not rows or {r[3] for r in rows} != {'draft'} or len({r[2] for r in rows}) != 1:
+            raise ValueError('Q06_RECOVERED_CANCEL_DRAFT_DENIED')
+        restart()
+        window = state['window'] = Bip39FusionWindow(state['executor'])
+        executor = state['executor']
+        window.show()
+
+        def idle():
+            return window._worker is None and not executor.busy and not window._delivering_result
+
+        def wait_for(predicate, label, timeout=240):
+            deadline = time.monotonic() + timeout
+            while not predicate():
+                app.processEvents()
+                if idle() and window._last_error_code is not None:
+                    record['gui_denied'] = window._last_error_code
+                    raise ValueError('Q06_RECOVERED_CANCEL_GUI_DENIED_' + label)
+                if time.monotonic() >= deadline:
+                    raise ValueError('Q06_RECOVERED_CANCEL_WAIT_' + label)
+                time.sleep(0.01)
+            app.processEvents()
+
+        window.start(password, 'reopen', '')
+        wait_for(lambda: idle() and window._ready, 'REOPEN')
+        if window._spend_enabled or window.cancel.isEnabled():
+            raise ValueError('Q06_RECOVERED_CANCEL_UNAPPROVED_SCOPE')
+        timer = QTimer()
+        timer.setInterval(150)
+        timer.timeout.connect(lambda: click_visible_approval(app, 'Approve'))
+        timer.start()
+        try:
+            window.activate.click()
+            wait_for(lambda: idle() and window._spend_enabled, 'ACTIVATE')
+        finally:
+            timer.stop()
+        wait_for(lambda: idle() and window._recovered_unsigned_cancel, 'RECOVERED_FLAG')
+        window._set_actions()
+        reopened_rows, reopened_anchor = ledger()
+        after = request('snapshot')
+        session = executor._backend._spend_session
+        if (reopened_rows != rows or reopened_anchor[0] < anchor[0]
+                or session._prepared is not None or session._signed is not None
+                or after['available_atoms'] != 0
+                or after['confirmed_atoms'] != base['confirmed_atoms']
+                or after['receive_code'] != base['receive_code']
+                or not window.cancel.isEnabled() or window.send.isEnabled()
+                or window.broadcast.isEnabled()):
+            raise ValueError('Q06_RECOVERED_CANCEL_REOPEN_STATE_DENIED')
+        methods, signs = [], []
+        o_call, o_raw, o_sign = WalletCoreCli.call, WalletCoreCli._call, wsp_wallet.Signer.sign
+
+        def call(rpc, method, params=None):
+            methods.append(method)
+            return o_call(rpc, method, params)
+
+        def raw(rpc, method, params=None):
+            methods.append(method)
+            return o_raw(rpc, method, params)
+
+        def sign(*args, **kwargs):
+            signs.append(1)
+            return o_sign(*args, **kwargs)
+
+        with (patch.object(WalletCoreCli, 'call', call), patch.object(WalletCoreCli, '_call', raw),
+              patch.object(wsp_wallet.Signer, 'sign', sign)):
+            window.cancel.click()
+            wait_for(lambda: idle() and not window._recovered_unsigned_cancel
+                     and window._pending_action is None, 'QT_CANCEL')
+            final = request('snapshot')
+            final_rows, final_anchor = ledger()
+            genesis, pool = mempool()
+            try:
+                request('cancel', timeout=120)
+            except Exception as error:
+                repeated = error.args[0] if error.args else type(error).__name__
+            else:
+                raise ValueError('Q06_RECOVERED_CANCEL_REPEAT_NOT_REFUSED')
+        writes = sorted(set(methods) & _NETWORK_WRITES)
+        if (final_rows != () or final_anchor[0] <= reopened_anchor[0]
+                or ledger()[1] != final_anchor or repeated != 'WALLET_ONLY_UNSIGNED_DRAFT_CAN_CANCEL'
+                or final['available_atoms'] != base['available_atoms']
+                or final['confirmed_atoms'] != base['confirmed_atoms']
+                or final['receive_code'] != base['receive_code']
+                or (final['height'], final['tip']) != (after['height'], after['tip'])
+                or final['recovered_unsigned_cancel_available'] is not False
+                or window.cancel.isEnabled() or not window.send.isEnabled()
+                or pool != [] or signs or writes):
+            raise ValueError('Q06_RECOVERED_CANCEL_RESULT_DENIED')
+        window._poll.stop()
+        window.hide()
+        restart()
+        request('open', password, 'reopen', '', timeout=120)
+        again = request('activate')
+        again_rows, again_anchor = ledger()
+        if (again_rows != () or again_anchor[0] < final_anchor[0]
+                or again['available_atoms'] != base['available_atoms']
+                or again['confirmed_atoms'] != base['confirmed_atoms']
+                or again['recovered_unsigned_cancel_available'] is not False
+                or mempool() != (genesis, [])):
+            raise ValueError('Q06_RECOVERED_CANCEL_RESTART_DENIED')
+        if time.monotonic() - begin > 420:
+            raise ValueError('Q06_RECOVERED_CANCEL_TIME_BUDGET')
+        record.update(status='PASS', actual_qt_cancel_button=True, reservation_state_before='draft',
+                      reservation_rows_before=len(rows), anchor_generation=[anchor[0], reopened_anchor[0],
+                      final_anchor[0], again_anchor[0]], confirmed_atoms=final['confirmed_atoms'],
+                      available_restored_atoms=final['available_atoms'], repeated_cancel=repeated,
+                      sign_calls=0, network_writes=[], mempool_empty=True, restart_consistent=True,
+                      rpc_methods_during_cancel=sorted(set(methods)))
+        return record
+    finally:
+        window = state['window']
+        if window is not None:
+            window._poll.stop()
+            window.hide()
+            window.deleteLater()
+            app.processEvents()
+        executor = state['executor']
+        if not executor.closed:
+            try:
+                executor.request('quit', timeout=120)
+                record['owner_shutdown_verified'] = executor.join(15) and executor.closed
+            except Exception:
+                record['owner_shutdown_verified'] = False
+        else:
+            record['owner_shutdown_verified'] = True
+        record['seconds'] = time.monotonic() - begin
+        with (parent / ('recovered-cancel-result-' + root.name + '.json')).open('x') as output:
+            json.dump(record, output, indent=2)
+        if not record.get('owner_shutdown_verified'):
+            raise ValueError('Q06_RECOVERED_CANCEL_OWNER_RETAINED') from None
+
+
 def run(core, source):
     try:
         receipt = qualify(core, source)
@@ -693,6 +904,11 @@ def run(core, source):
                 or restored['all_original_owners_shutdown_verified'] is not True):
             raise ValueError('Q06_MAC_FRESH_SAME_CHAIN_RESTORE_DENIED')
         receipt['fresh_same_chain_profile_full_history_recovered'] = True
+        recovered = _qualify_recovered_unsigned_cancel(
+            core, source, DarwinArm64Adapter(), receipt['source_sha'])
+        receipt['recovered_unsigned_cancel'] = recovered
+        if recovered['status'] != 'PASS' or recovered['owner_shutdown_verified'] is not True:
+            raise ValueError('Q06_MAC_RECOVERED_UNSIGNED_CANCEL_DENIED')
         with Path("q06-frozen-spend-evidence.json").open("x") as output:
             json.dump(receipt, output, sort_keys=True, indent=2)
             output.write("\n")
