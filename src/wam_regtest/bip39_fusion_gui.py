@@ -811,6 +811,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
     def _prepare_send(self):
         if (not self._spend_enabled or self._approved_commitment is not None
+                or self._recovered_unsigned_cancel
                 or self.executor.state.faulted or self.executor.busy):
             return
         try:
@@ -1024,7 +1025,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self._spend_enabled = False
             self._clear_visuals()
             if (self._approved_commitment is not None or self._signed_ready
-                    or self._pending_confirm_txid is not None):
+                    or self._pending_confirm_txid is not None
+                    or self._recovered_unsigned_cancel):
                 self.review_summary.setText(
                     'Payment state retained. Verify the original Core and custody '
                     'before continuing. Do not automatically sign or broadcast again.')

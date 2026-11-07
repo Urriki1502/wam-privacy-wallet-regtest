@@ -165,6 +165,48 @@ class Q06OwnedSpendSession(WalletSession):
         self._q06_pending_confirm = txid
         return txid
 
+    def _recovered_unsigned_token(self):
+        """Only a singleton all-draft native ledger can be canceled sans review.
+
+        Never reconstruct an approval, signature or transaction from this row.
+        Even an unrelated irreversible row makes this narrow recovery refuse.
+        """
+        import re
+        if any(value is not None for value in
+               (self._prepared, self._signed, self._review, self._q06_pending_confirm)):
+            return None
+        with self.scanner.store.transaction():
+            groups = self.scanner.store.db.execute(
+                'SELECT DISTINCT token,state FROM reservations LIMIT 2').fetchall()
+        if (len(groups) != 1 or groups[0][1] != 'draft'
+                or type(groups[0][0]) is not str
+                or re.fullmatch('[0-9a-f]{32}', groups[0][0]) is None):
+            return None
+        return groups[0][0]
+
+    def recovered_unsigned_cancel_available(self):
+        """Presentation only; explicit Cancel rechecks under the native lease."""
+        with self._lock:
+            self._rpc()
+            self.scanner.assert_current()
+            return self._recovered_unsigned_token() is not None
+
+    def cancel(self):
+        with self._lock:
+            if self._prepared is not None:
+                return super().cancel()  # Existing exact active-draft contract.
+            with self.vault.anchor.lease():
+                self._rpc()  # Original owner, native generation and Core scope.
+                self.snapshot()  # Refuse an unauthenticated/stale chain view.
+                token = self._recovered_unsigned_token()
+                if token is None:
+                    raise WalletSessionError('WALLET_ONLY_UNSIGNED_DRAFT_CAN_CANCEL')
+                from wam_sp.wallet import Wallet
+                Wallet(self.scanner).release_draft(token)  # Rechecks every row.
+                self._save()  # Existing native CAS; failure latches/preserves.
+                return {'recovered_unsigned_cancelled': True,
+                        'signer_allowed': False, 'broadcast_allowed': False}
+
     def confirm_pending(self, txid):
         """Mine ONE block only for this session's just-broadcast REGTEST tx.
 

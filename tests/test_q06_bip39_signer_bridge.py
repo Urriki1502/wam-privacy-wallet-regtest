@@ -306,6 +306,79 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.signer.sign(altered,(self.intent,),1001)
 
+    def _q12_recovered_unsigned_fixture(self):
+        # Synthetic custody/transport only. Real native/frozen proof is separate.
+        from types import SimpleNamespace
+        from contextlib import nullcontext
+        import threading
+        from wam_regtest.bip39_spend_session import Q06OwnedSpendSession
+        session = object.__new__(Q06OwnedSpendSession)
+        session._lock = threading.RLock()
+        session.scanner,session.ring = self.scanner,self.keys
+        session._prepared = session._signed = session._review = session._tip = None
+        session._q06_pending_confirm = None
+        session._password = PASSWORD
+        session.faulted = session._q06_uncertain = False
+        session._q06_owner = SimpleNamespace()
+        session._q06_guard = SimpleNamespace(check=lambda:None)
+        session._rpc = lambda:None
+        session.snapshot = lambda:None
+        saved=[]
+        session.vault = SimpleNamespace(anchor=SimpleNamespace(lease=lambda:nullcontext()),
+            save=lambda *args:saved.append(_reservations(self.scanner)))
+        return session,saved
+
+    def test_q12_recovered_singleton_draft_explicit_cancel_without_approval(self):
+        from unittest.mock import patch
+        session,saved=self._q12_recovered_unsigned_fixture()
+        with patch('wam_regtest.bip39_spend_session._owned'):
+            result=session.cancel()
+        self.assertTrue(result['recovered_unsigned_cancelled'])
+        self.assertEqual(saved,[{}])
+        self.assertIsNone(session._prepared)
+        self.assertIsNone(session._signed)
+        self.assertIsNone(session._review)
+
+    def test_q12_recovered_cancel_refuses_multiple_tokens_or_irreversible_states(self):
+        from unittest.mock import patch
+        session,saved=self._q12_recovered_unsigned_fixture()
+        with patch('wam_regtest.bip39_spend_session._owned'):
+            for state in ('signed','uncertain','broadcast','manual','unknown'):
+                self.scanner.store.db.execute('UPDATE reservations SET state=?',(state,))
+                before=_reservations(self.scanner)
+                with self.subTest(state=state),self.assertRaises(ValueError):session.cancel()
+                self.assertEqual(_reservations(self.scanner),before)
+            # Only this synthetic un-signed fixture is reset to construct the
+            # separate ambiguous-token negative; no actual signed state exists.
+            self.scanner.store.db.execute("UPDATE reservations SET state='draft'")
+            self.scanner.store.db.execute('INSERT INTO reservations VALUES(?,?,?,?,?)',
+                ('01'*32,1,'e'*32,'draft',1))
+            before=_reservations(self.scanner)
+            with self.assertRaises(ValueError):session.cancel()
+            self.assertEqual(_reservations(self.scanner),before)
+        self.assertEqual(saved,[])
+
+    def test_q12_recovered_cancel_native_save_failure_latches_and_retains(self):
+        from unittest.mock import patch
+        from wam_regtest.wallet_session import WalletSessionError
+        session,saved=self._q12_recovered_unsigned_fixture()
+        with patch('wam_regtest.bip39_spend_session._owned'),patch.object(
+                session.vault,'save',side_effect=OSError('PUBLIC_TEST_NATIVE_CAS_CUT')):
+            with self.assertRaisesRegex(WalletSessionError,'Q06_SPEND_ANCHORED_SAVE_DENIED'):
+                session.cancel()
+        self.assertTrue(session.faulted)
+        self.assertTrue(session._q06_uncertain)
+        self.assertEqual(saved,[])
+
+    def test_q12_recovered_cancel_guard_refusal_never_changes_rows(self):
+        from unittest.mock import patch
+        session,saved=self._q12_recovered_unsigned_fixture()
+        before=_reservations(self.scanner)
+        with patch.object(session,'_rpc',side_effect=ValueError('PUBLIC_TEST_OWNER_DENIED')):
+            with self.assertRaises(ValueError):session.cancel()
+        self.assertEqual(_reservations(self.scanner),before)
+        self.assertEqual(saved,[])
+
     def test_post_reopen_full_history_txid_read_only_and_ambiguous(self):
         from contextlib import nullcontext
         from threading import RLock

@@ -309,6 +309,8 @@ class Bip39TrialWindow(QWidget):
         self._delivering_result=False
         self._last_error_code=None
         self._recovery_dialog=None
+        self._recovered_unsigned_cancel=False
+        self.cancel.setToolTip("Cancel requires an authenticated unsigned draft. Signed or uncertain reservations cannot be released.")
         self._set_actions()
 
     def _set_actions(self):
@@ -322,10 +324,11 @@ class Bip39TrialWindow(QWidget):
                              and not busy and not self._quit_requested)
         self.activate.setEnabled(self._ready and safe and not self._spend_enabled and not busy and not self._quit_requested)
         self.send.setEnabled(spend_safe and self._spend_enabled and self._approved_commitment is None
-                             and not busy and not self._quit_requested)
+                             and not self._recovered_unsigned_cancel and not busy and not self._quit_requested)
         self.broadcast.setEnabled(spend_safe and self._spend_enabled and self._signed_ready
                                   and not busy and not self._quit_requested)
-        self.cancel.setEnabled(spend_safe and self._spend_enabled and self._approved_commitment is not None
+        self.cancel.setEnabled(spend_safe and self._spend_enabled
+                               and (self._approved_commitment is not None or self._recovered_unsigned_cancel)
                                and not self._signed_ready and not busy and not self._quit_requested)
         self.confirm.setEnabled(spend_safe and self._spend_enabled and self._pending_confirm_txid is not None
                                 and not busy and not self._quit_requested)
@@ -511,6 +514,10 @@ class Bip39TrialWindow(QWidget):
             self._command("inspect_confirmed",txid)
 
     def _on_ready(self, action, result):
+        if action in ('open', 'lock', 'quit'):
+            self._recovered_unsigned_cancel = False
+        elif action in ('snapshot', 'activate', 'unlock') and isinstance(result, dict):
+            self._recovered_unsigned_cancel = result.get('recovered_unsigned_cancel_available') is True
         if action=="open":
             self._backup_unacked=False
             # Start from a locked UI state; the backup flow (if required) will
@@ -578,7 +585,11 @@ class Bip39TrialWindow(QWidget):
                 "\n".join("{}  height={}  atoms={}".format(
                     row["txid"],row["height"],row["atoms"]) for row in rows)
                 if rows else "No confirmed BIP352 transactions found on this disposable Core")
-            if (self._spend_enabled and result.get("reservation_count",0)>0
+            if self._recovered_unsigned_cancel:
+                self.status.setText(
+                    "An unsigned draft remains from this original wallet. Use Cancel unsigned draft "
+                    "explicitly before reviewing a new payment. Signed/uncertain locks are never released.")
+            elif (self._spend_enabled and result.get("reservation_count",0)>0
                     and self._pending_confirm_txid is None):
                 self.status.setText(
                     "Anchored transaction reservations exist; check previous TXID "
@@ -644,6 +655,9 @@ class Bip39TrialWindow(QWidget):
                     "TXID NOT in complete verified confirmed history; status uncertain. "
                     "Do NOT retry, remine or release coin reservations.")
         elif action=="cancel":
+            self._recovered_unsigned_cancel=False
+            if isinstance(result, dict) and result.get('recovered_unsigned_cancelled') is True:
+                self._pending_action=('snapshot',)  # Read only, never a write retry.
             self._approved_commitment=None
             self._signed_ready=False
             self.status.setText("Unsigned draft cancelled")

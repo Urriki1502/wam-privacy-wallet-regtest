@@ -393,6 +393,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             "reservation_count": item.reservation_count,
             "payment_review": session._review,
             "payment_signed": session._signed is not None,
+            "recovered_unsigned_cancel_available": session.recovered_unsigned_cancel_available(),
             "pending_confirm_txid": session._q06_pending_confirm,
             # Same verified WalletReadSnapshot consumed by existing Fusion UI.
             # No duplicate scanner, signer or new custody/session authority.
