@@ -69,7 +69,7 @@ def probe(core, source):
         def mine(count):
             hashes = []
             while count:
-                step = min(count, 101); hashes += node.call('generatetoaddress', str(step), miner_address, timeout=180)
+                step = min(count, 101); hashes += node.call('generatetoaddress', str(step), miner_address, timeout=120)
                 count -= step
             return hashes
 
