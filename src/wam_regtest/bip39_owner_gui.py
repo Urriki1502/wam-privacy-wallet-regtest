@@ -190,12 +190,28 @@ class Bip39RecoveryVerifyDialog(QDialog):
 
     def _on_paste(self):
         clipboard = QApplication.clipboard()
-        text = clipboard.text()
-        self._apply_paste(text)
-        if text:
-            # The phrase is consumed by this explicit Paste; never leave a BIP39
-            # seed readable in the system pasteboard for other processes.
-            clipboard.clear()
+        changed = False
+        def ownership_changed():
+            nonlocal changed
+            changed = True
+        clipboard.dataChanged.connect(ownership_changed)
+        text = ""
+        try:
+            text = clipboard.text()
+            self._apply_paste(text)
+        except Exception:
+            # Never forward a secret-bearing exception through Qt or logging.
+            self._clear_fields()
+            self._verify_error.setText(t("recovery_invalid"))
+            self._verify_error.show()
+        finally:
+            try:
+                # A nested signal may publish newer clipboard content, even
+                # the same text. Only clear our unchanged consumed snapshot.
+                if text and not changed and clipboard.text() == text:
+                    clipboard.clear()
+            finally:
+                clipboard.dataChanged.disconnect(ownership_changed)
 
     def _apply_paste(self, text):
         tokens = str(text or "").strip().lower().split()
