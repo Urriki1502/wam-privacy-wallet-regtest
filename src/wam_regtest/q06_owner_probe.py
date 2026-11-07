@@ -10,6 +10,7 @@ from pathlib import Path
 import platform
 import secrets
 import sys
+from contextlib import nullcontext
 
 from . import custody
 from .bip39_owner_backend import Bip39ReadOnlyBackend
@@ -45,7 +46,11 @@ def qualify(core,source):
     def stage(label):
         print("MACOS_Q06_OWNER_STAGE=" + label, flush=True)
     stage("NATIVE_SCOPE_VERIFIED")
-    with custody.private_temporary_directory(prefix="q06-owner-frozen-") as t:
+    # Preserve new diagnostic wallets and uncertain ownership evidence; never
+    # let TemporaryDirectory remove a profile when a shutdown guard refuses.
+    retained = custody.private_temporary_directory(prefix="q06-owner-frozen-")
+    retained._finalizer.detach()
+    with nullcontext(retained.name) as t:
         parent=Path(t).resolve()
         def new_executor():
             root=parent/("wam-fusion-core-"+secrets.token_hex(8))

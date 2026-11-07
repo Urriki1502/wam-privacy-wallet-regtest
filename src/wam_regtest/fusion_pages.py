@@ -85,9 +85,12 @@ class HistoryPage(QWidget):
         else:
             start=self._offset+1 if shown else 0
             end=self._offset+shown
+            proof = ('Full history is fingerprinted in custody, not discarded.'
+                     if snap.history_sha256 is not None else
+                     'Full history was scanned against this Core; only the display is paged.')
             self.scope.setText(
                 f'Showing newest-offset {self._offset} records {start}–{end} of {self._total} '
-                'verified records. Full history is fingerprinted in custody, not discarded.')
+                f'verified records. {proof}')
         c=fusion_palette(self.mode)
         for i,row in enumerate(self.rows):
             net=row.credit_atoms-row.debit_atoms;direction='Received' if net>0 else 'Sent' if net<0 else 'Activity'

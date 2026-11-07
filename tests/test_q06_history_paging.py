@@ -40,6 +40,7 @@ class PagingWidgets(unittest.TestCase):
             snapshot=WalletReadSnapshot('regtest',1,'b'*64,'public-test-only',1000,1,(row,), 'c'*64,
                 history_count=251,history_complete=False,history_offset=0)
             window.history_page.render_snapshot(snapshot)
+            self.assertNotIn('fingerprinted in custody',window.history_page.scope.text())
             with patch.object(window,'_command',side_effect=lambda *a:calls.append(a)):
                 window.history_page.older.click()
             self.assertEqual(calls,[('snapshot',250)])
