@@ -49,3 +49,12 @@ comparison remains a platform limitation, and clipboard-history managers are
 outside the deletion guarantee. The intentional verify_requested phrase signal
 remains the existing explicit confirmation channel to the backend; Paste/cancel
 must not emit it. No additional secret logs, errors or diagnostic signals.
+
+
+Runtime graph correction: the existing explicit once-only REGTEST funding GUI
+called fund_checkpoint_fixture from a developer scenario. The function body was
+moved unchanged to regtest_funding, with a compatibility re-export from the
+scenario and one backend import update. Its existing original-owner, new-profile,
+RPC consent/attestation and once-only rules remain. No fault injection/scenario
+entrypoint is carried into the production module. This preserves existing GUI
+functionality while excluding the complete developer scenario.

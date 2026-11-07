@@ -281,7 +281,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         from .managed_wallet_checkpoint import _owned
         from .wallet_session import WalletCoreCli
         from .wsp_live import public_regtest_mining_address
-        from .q05_checkpoint_scenario import fund_checkpoint_fixture
+        from .regtest_funding import fund_checkpoint_fixture
         owner=self._core()
         _owned(owner)
         seed_id=self._seed_folder.name.removeprefix("bip39-12-")

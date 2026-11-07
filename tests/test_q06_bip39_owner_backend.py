@@ -260,7 +260,7 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         with (patch("wam_regtest.managed_wallet_checkpoint._owned") as ownership,
               patch("wam_regtest.wallet_session.WalletCoreCli",return_value=cli),
               patch("wam_regtest.wsp_live.public_regtest_mining_address",return_value="wamrt1public"),
-              patch("wam_regtest.q05_checkpoint_scenario.fund_checkpoint_fixture",
+              patch("wam_regtest.regtest_funding.fund_checkpoint_fixture",
                     side_effect=funding)):
             receipt=self.backend.execute("mine",(),{})
         self.assertEqual(receipt["status"],"Q06_REGTEST_PUBLIC_BIP39_RECEIVE_FUNDED")
