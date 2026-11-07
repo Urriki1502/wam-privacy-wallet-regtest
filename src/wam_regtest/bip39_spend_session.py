@@ -247,10 +247,17 @@ class Q06OwnedSpendSession(WalletSession):
     def lock(self):
         if self.locked:
             return
+        failed = False
         try:
-            self._close_rpc()
-            self.scanner.close()
-            self.ring.close()
+            # Each secret/resource close is independent: a transport or
+            # SQLite failure must not prevent best-effort key invalidation.
+            for close in (self._close_rpc, self.scanner.close, self.ring.close):
+                try:
+                    close()
+                except Exception:
+                    failed = True
+            if failed:
+                raise Q06SpendSessionError("Q06_SPEND_RUNTIME_UNCERTAIN")
             if (self._q06_uncertain or self.faulted
                     or self.vault.anchor.read() != self.vault._expected):
                 raise Q06SpendSessionError("Q06_SPEND_RUNTIME_UNCERTAIN")
@@ -258,13 +265,19 @@ class Q06OwnedSpendSession(WalletSession):
             _remove_known_scanner_lock(self.runtime)
             self._q06_guard.remove_owned()
         except Exception:
-            self._q06_uncertain = True
-            raise Q06SpendSessionError("Q06_SPEND_RUNTIME_PRESERVED") from None
+            failed = True
         finally:
             # Secrets close even if the guarded SQLite must remain for review.
-            self._q06_guard.close()
-            self.ring = self.scanner = self._password = None
-            self._prepared = self._signed = self._review = self._tip = None
+            try:
+                self._q06_guard.close()
+            except Exception:
+                failed = True
+            finally:
+                self.ring = self.scanner = self._password = None
+                self._prepared = self._signed = self._review = self._tip = None
+        if failed:
+            self._q06_uncertain = self.faulted = True
+            raise Q06SpendSessionError("Q06_SPEND_RUNTIME_PRESERVED") from None
 
     def backup(self, *args, **kwargs):
         raise Q06SpendSessionError("Q06_SPEND_Q05_BACKUP_FORMAT_DENIED")

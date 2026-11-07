@@ -677,7 +677,12 @@ class Bip39TrialWindow(QWidget):
                 self.tip.setText("Chain: not yet verified")
                 self.status.setText(
                     "BIP39 native seed unlocked. Activate Send after checkpoint verification.")
-                self._pending_action = ("snapshot",)
+                # Seed authentication alone cannot scan over an existing
+                # native checkpoint. Match the normal Open route: retain
+                # explicit Enable sending/reconciliation consent first.
+                self._pending_action = (
+                    ("snapshot",) if not result.get('checkpoint_present')
+                    or result.get('signer_allowed') is True else None)
                 if result.get('signer_allowed') is True:
                     self._spend_enabled = True
             elif backup_status == "deferred":
