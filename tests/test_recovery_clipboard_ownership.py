@@ -49,3 +49,27 @@ class ClipboardOwnership(unittest.TestCase):
   self.dialog._on_cancel()
   self.assertEqual(signals,[]);self.assertEqual(self.clip.text(),'public TXID')
   self.assertTrue(all(not x.text() for x in self.dialog._fields))
+
+ def _assert_cleanup_error_redacted(self,operation,adapter):
+  self.clip.setText(self.words);output=io.StringIO();signals=[];escaped=None
+  self.dialog.verify_requested.connect(signals.append)
+  with patch.object(self.clip,operation,adapter),contextlib.redirect_stdout(output),contextlib.redirect_stderr(output):
+   try:self.dialog._on_paste()
+   except Exception as error:escaped=(type(error).__name__,'PRIVATE_ADAPTER_ERROR_SENTINEL' in str(error))
+  self.assertIsNone(escaped,'Cleanup adapter exceptions must not escape a Qt slot')
+  self.assertEqual(signals,[])
+  self.assertNotIn('PRIVATE_ADAPTER_ERROR_SENTINEL',output.getvalue())
+  self.assertNotIn(self.words,output.getvalue())
+  self.assertTrue(all(not field.text() for field in self.dialog._fields))
+  self.assertFalse(self.dialog._verify_error.isHidden())
+ def test_final_clipboard_read_error_is_redacted_and_fields_cleared(self):
+  original=self.clip.text;reads=0
+  def read(*args):
+   nonlocal reads
+   reads+=1
+   if reads==2:raise RuntimeError('PRIVATE_ADAPTER_ERROR_SENTINEL')
+   return original(*args)
+  self._assert_cleanup_error_redacted('text',read)
+ def test_clipboard_clear_error_is_redacted_and_fields_cleared(self):
+  def clear(*args):raise RuntimeError('PRIVATE_ADAPTER_ERROR_SENTINEL')
+  self._assert_cleanup_error_redacted('clear',clear)

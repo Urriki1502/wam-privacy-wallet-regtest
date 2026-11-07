@@ -58,3 +58,12 @@ scenario and one backend import update. Its existing original-owner, new-profile
 RPC consent/attestation and once-only rules remain. No fault injection/scenario
 entrypoint is carried into the production module. This preserves existing GUI
 functionality while excluding the complete developer scenario.
+
+Clipboard API cleanup errors must also be contained: a final read, clear or
+signal disconnect error produces only the existing fixed validation error and
+invalidates the input fields where the Qt widgets remain accessible. No blind
+clear or retry follows an uncertain clipboard operation. This is an error
+containment guarantee, not proof that clipboard content was erased when its
+platform API failed. Destroyed widgets/Python copies/history remain subject
+to the stated erasure limitations. Injected adapter tests are fault tests, not
+a claim that a native macOS secret disclosure incident was observed.

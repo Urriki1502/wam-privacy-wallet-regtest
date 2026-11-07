@@ -195,23 +195,36 @@ class Bip39RecoveryVerifyDialog(QDialog):
             nonlocal changed
             changed = True
         clipboard.dataChanged.connect(ownership_changed)
+        def deny_paste():
+            try:
+                self._clear_fields()
+                self._verify_error.setText(t("recovery_invalid"))
+                self._verify_error.show()
+            except RuntimeError:
+                # A destroyed Qt widget cannot retain visible input. Never
+                # forward cleanup exception text through the event loop.
+                pass
         text = ""
         try:
             text = clipboard.text()
             self._apply_paste(text)
         except Exception:
-            # Never forward a secret-bearing exception through Qt or logging.
-            self._clear_fields()
-            self._verify_error.setText(t("recovery_invalid"))
-            self._verify_error.show()
+            deny_paste()
         finally:
             try:
                 # A nested signal may publish newer clipboard content, even
                 # the same text. Only clear our unchanged consumed snapshot.
                 if text and clipboard.text() == text and not changed:
                     clipboard.clear()
+            except Exception:
+                # Clipboard access/clear may fail. Do not retry or blindly
+                # clear uncertain/newer content; report only a fixed error.
+                deny_paste()
             finally:
-                clipboard.dataChanged.disconnect(ownership_changed)
+                try:
+                    clipboard.dataChanged.disconnect(ownership_changed)
+                except Exception:
+                    deny_paste()
 
     def _apply_paste(self, text):
         tokens = str(text or "").strip().lower().split()
