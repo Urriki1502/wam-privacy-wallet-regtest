@@ -15,7 +15,9 @@ class RecoveryClose(unittest.TestCase):
   guard=Mock();rpc=Mock();rpc.attest.side_effect=ValueError('PUBLIC_TEST_ATTEST_FAULT')
   baseline=SimpleNamespace(chain='regtest',signer_allowed=True,history_count=0,history_sha256='0'*64,receive_code=keys.public_metadata()['receive_code'])
   with tempfile.TemporaryDirectory() as directory:
-   with (patch('wam_regtest.bip39_recovery_proof._owned'),patch('wam_regtest.bip39_recovery_proof.Bip39Regtest12Keys',return_value=keys),patch('wam_sp.scanner.Scanner',return_value=scanner),patch('wam_regtest.bip39_recovery_proof.RuntimeGuard',return_value=guard),patch('wam_regtest.bip39_recovery_proof.WalletCoreCli',return_value=rpc)):
+   # Source-only close-fault test: native directory custody is exercised by
+   # the real Core/frozen probe, not this synthetic scanner fixture.
+   with (patch('wam_regtest.bip39_recovery_proof._owned'),patch('wam_regtest.bip39_recovery_proof.Bip39Regtest12Keys',return_value=keys),patch('wam_sp.scanner.Scanner',return_value=scanner),patch('wam_regtest.bip39_recovery_proof.RuntimeGuard',return_value=guard),patch('wam_regtest.bip39_recovery_proof.WalletCoreCli',return_value=rpc),patch('wam_regtest.bip39_recovery_proof.custody.create_directory',side_effect=lambda p:p.mkdir(mode=0o700))):
     try:
      with self.assertRaises(Q06RecoveryProofError):verify_mnemonic_on_original_chain(SimpleNamespace(directory=Path(directory).resolve(),cli=Path("/public-test-cli")),SOURCE,phrase,baseline)
     finally:

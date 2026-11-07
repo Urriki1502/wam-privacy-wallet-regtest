@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from .desktop import qt_application
-from .gui_errors import operation_error
+from .gui_errors import operation_error, public_code, error_text
 from .managed_gui import ControlWorker
 from .wallet_executor import WalletExecutor
 from .bip39_owner_backend import Bip39ReadOnlyBackend
@@ -314,21 +314,24 @@ class Bip39TrialWindow(QWidget):
     def _set_actions(self):
         busy=self._worker is not None or self.executor.busy or self._delivering_result
         safe=not self.executor.state.faulted
+        spend_safe=(safe and not self.executor.state.locked
+                    and not self.executor.state.reauthentication_required
+                    and self.executor.state.core_alive is True)
         self.sync.setEnabled(self._ready and safe and not busy and not self._quit_requested)
         self.fund.setEnabled(self._ready and safe and not self._test_funded and not self._spend_enabled
                              and not busy and not self._quit_requested)
         self.activate.setEnabled(self._ready and safe and not self._spend_enabled and not busy and not self._quit_requested)
-        self.send.setEnabled(safe and self._spend_enabled and self._approved_commitment is None
+        self.send.setEnabled(spend_safe and self._spend_enabled and self._approved_commitment is None
                              and not busy and not self._quit_requested)
-        self.broadcast.setEnabled(safe and self._spend_enabled and self._signed_ready
+        self.broadcast.setEnabled(spend_safe and self._spend_enabled and self._signed_ready
                                   and not busy and not self._quit_requested)
-        self.cancel.setEnabled(safe and self._spend_enabled and self._approved_commitment is not None
+        self.cancel.setEnabled(spend_safe and self._spend_enabled and self._approved_commitment is not None
                                and not self._signed_ready and not busy and not self._quit_requested)
-        self.confirm.setEnabled(safe and self._spend_enabled and self._pending_confirm_txid is not None
+        self.confirm.setEnabled(spend_safe and self._spend_enabled and self._pending_confirm_txid is not None
                                 and not busy and not self._quit_requested)
-        self.recovery.setEnabled(safe and self._spend_enabled and self._pending_confirm_txid is None
+        self.recovery.setEnabled(spend_safe and self._spend_enabled and self._pending_confirm_txid is None
                                  and not busy and not self._quit_requested)
-        self.inspect.setEnabled(safe and self._spend_enabled
+        self.inspect.setEnabled(spend_safe and self._spend_enabled
                                 and not busy and not self._quit_requested)
         self.lock.setEnabled(self._ready and not busy and not self._quit_requested)
         self.unlock.setEnabled(self._unlock_allowed and not self._ready and not busy
@@ -754,13 +757,14 @@ class Bip39TrialWindow(QWidget):
         self._backup_flow_completed(False)
 
     def _on_denied(self, code):
+        code = public_code(code)
         self._last_error_code = code
         if self.executor.state.faulted:
             self._signed_ready=False
         self.status.setText(
             "Wallet faulted — stop spending; original state preserved for review."
             if self.executor.state.faulted else
-            "Operation refused safely: " + str(code))
+            "Operation refused safely: " + error_text(code))
         self._set_actions()
 
     def _receive_result(self, action, result):

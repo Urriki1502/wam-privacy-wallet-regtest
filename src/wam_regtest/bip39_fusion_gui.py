@@ -604,7 +604,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 for control in (self.fund,self.confirm,self.send,self.broadcast):
                     control.setEnabled(False)
         if hasattr(self, "overview"):
-            ready = self._ready and not self.executor.state.faulted
+            ready = (self._ready and not self.executor.state.faulted
+                     and not self.executor.state.locked)
             idle = (self._worker is None and not self.executor.busy
                     and not self._delivering_result)
             if hasattr(self,'reconcile_button'):
@@ -612,7 +613,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
             if hasattr(self, 'custody_switch'):
                 unlocked = not self.executor.state.locked and self._ready
                 for switch in (self.custody_switch, self.overview.custody_switch):
-                    switch.setToolTip('Click to lock this wallet.' if self._ready else
+                    switch.setToolTip('Click to lock this wallet.' if unlocked else
                                       'Click to unlock with the original wallet password.')
                     switch.blockSignals(True)
                     switch.setChecked(unlocked)
@@ -631,12 +632,20 @@ class Bip39FusionWindow(Bip39TrialWindow):
                     network=self._network_view(self._last_verified),
                 ), animate=False)
             self.overview.go_send.setEnabled(ready and idle and self._spend_enabled
+                and self.executor.state.core_alive is True
+                and not self.executor.state.reauthentication_required
                 and (self.shared_profile is None or self._shared_connected))
             self.overview.open_security.setEnabled(not self._quit_requested)
             if hasattr(self, "security_state"):
                 self.security_state.setText(
                     "Faulted · original reservations preserved"
                     if self.executor.state.faulted else
+                    "Locked · use Unlock wallet to reauthenticate this original REGTEST wallet"
+                    if self.executor.state.locked else
+                    "Original Core reauthentication required · Send unavailable"
+                    if self.executor.state.reauthentication_required else
+                    "Core verification required · Send unavailable"
+                    if self.executor.state.core_alive is not True else
                     "Custody verified · peer disconnected · payment state preserved"
                     if self.shared_profile is not None and self._spend_enabled and not self._shared_connected else
                     "Verified native custody · Send enabled" if self._spend_enabled else
@@ -865,6 +874,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
             return
         self._last_verified = snap
         self.overview.go_send.setEnabled(self._spend_enabled and
+                                         not self.executor.state.locked and
+                                         not self.executor.state.reauthentication_required and
+                                         self.executor.state.core_alive is True and
                                          not self.executor.state.faulted)
 
     def _clear_visuals(self):
@@ -1003,10 +1015,21 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self._shared_connected=False
             self.status.setText('Peer disconnected. Reconnect and verify the chain; signed and pending payments remain preserved.')
             self._set_actions()
-        if self.executor.state.faulted:
+        if (self.executor.state.faulted or self.executor.state.core_alive is not True
+                or code in ('WALLET_CORE_AUTHENTICATION_DENIED',
+                            'WALLET_CORE_IDENTITY_DENIED', 'WALLET_CORE_UNAVAILABLE',
+                            'WALLET_CORE_UNVERIFIED')):
+            # Revoke only the cached GUI scope. The backend's commitment,
+            # signed evidence and irreversible reservations are untouched.
+            self._spend_enabled = False
             self._clear_visuals()
+            if (self._approved_commitment is not None or self._signed_ready
+                    or self._pending_confirm_txid is not None):
+                self.review_summary.setText(
+                    'Payment state retained. Verify the original Core and custody '
+                    'before continuing. Do not automatically sign or broadcast again.')
             self.connection_pill.setText(classify(
-                'snapshot', snap=None, locked=True, faulted=True,
+                'snapshot', snap=None, locked=True, faulted=self.executor.state.faulted,
                 core_alive=self.executor.state.core_alive)[1])
         elif self._last_verified is not None:
             self.overview.live_badge.setText("Last verified · refresh required")

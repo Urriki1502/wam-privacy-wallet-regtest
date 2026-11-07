@@ -1,6 +1,9 @@
 """Independent close-fault source contracts; not native/frozen custody proof."""
 from types import SimpleNamespace
 from unittest.mock import Mock,patch
+import importlib.util
+import os
+import sys
 import unittest
 from wam_regtest.bip39_spend_session import Q06OwnedSpendSession,Q06SpendSessionError
 
@@ -40,6 +43,11 @@ class LockCleanup(unittest.TestCase):
   remove.assert_called_once_with(s.runtime);guard.check.assert_called_once();guard.remove_owned.assert_called_once()
   self.assertTrue(s.locked);self.assertFalse(s._q06_uncertain)
 
+if sys.platform == 'linux' and not os.environ.get('DISPLAY'):
+ os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+
+@unittest.skipUnless(importlib.util.find_spec('PySide6') is not None,
+                     'Qt surface only; native/frozen GUI proof remains required')
 class UnlockSnapshotRouting(unittest.TestCase):
  def test_seed_only_anchored_unlock_never_autoscans(self):
   from PySide6.QtWidgets import QApplication
