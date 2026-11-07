@@ -518,6 +518,9 @@ def qualify(core, source):
             if not executor.join(15) or not executor.closed:
                 raise ValueError('Q06_RESTART_SHUTDOWN_DENIED')
             stage("CLEAN_CORE_SHUTDOWN_PASS")
+            data['empty_owned_core_loss_gui'] = _qualify_empty_core_loss(
+                core, source, adapter, data['source_sha'])
+            stage('EMPTY_OWNED_CORE_LOSS_GUI_PASS')
             data["status"] = "Q06_NATIVE_BIP39_SEND_CONFIRM_REOPEN_PASS"
             data['timestamp_utc'] = datetime.now(timezone.utc).isoformat()
             good = True
@@ -545,6 +548,118 @@ def qualify(core, source):
                 data['profile_retained'] = str(root)
                 (root.parent / 'failure-public.json').write_text(json.dumps(data,indent=2)+'\n')
             phrase = None
+
+
+def _qualify_empty_core_loss(core, source, adapter, source_sha):
+    """One explicit original-Popen crash, only on a NEW EMPTY test wallet.
+
+    No application/foreign-owner kill, existing data, transaction, anchor
+    replacement or uncertain reservation recovery. The original supervisor
+    survives and alone holds the capability for explicit Core recovery.
+    """
+    from .desktop import qt_application
+    from .bip39_fusion_gui import Bip39FusionWindow
+    from .rpc_scope import identity
+    app = qt_application()
+    if app.platformName() != 'cocoa':
+        raise ValueError('Q06_CORE_LOSS_NATIVE_COCOA_REQUIRED')
+    parent = Path.cwd() / '.wam-regtest-temp'
+    if not parent.exists():
+        custody.create_directory(parent)
+    root = parent / ('wam-fusion-core-' + secrets.token_hex(8))
+    custody.create_directory(root)
+    password = b'public-disposable-q06-empty-core-loss-only'
+    executor = WalletExecutor(lambda: Bip39ReadOnlyBackend(
+        root, core, source, _anchor_factory=adapter.make_anchor))
+    window = None
+    record = dict(status='FAIL', source_sha=source_sha, synthetic_rpc=False,
+                  frozen=bool(getattr(sys, 'frozen', False)),
+                  max_crashes=1, empty_profile_only=True,
+                  mainnet_allowed=False, physical_accepted=False)
+    begin = time.monotonic()
+    try:
+        opened = executor.request('open', password, 'create', '', timeout=120)
+        words = opened['mnemonic_once'].split()
+        challenge = executor.request('backup_challenge')
+        if executor.request('backup_verify', challenge['challenge_id'],
+                tuple(words[p - 1] for p in challenge['positions'])) is not True:
+            raise ValueError('Q06_CORE_LOSS_BACKUP_DENIED')
+        words = None
+        opened = dict(opened, mnemonic_once='', backup_status='verified', checkpoint_present=True)
+        baseline = executor.request('activate', timeout=120)
+        if (baseline['height'] != 0 or any(baseline[key] != 0 for key in
+                ('confirmed_atoms','available_atoms','reservation_count'))):
+            raise ValueError('Q06_CORE_LOSS_NONEMPTY_FIXTURE_DENIED')
+        window = Bip39FusionWindow(executor)
+        window._on_ready('open', opened)
+        window._on_ready('activate', baseline)
+        window.show()
+        owner = executor._backend.owner
+        process = owner.process
+        scope = identity(owner.directory)
+        if (process is None or process.poll() is not None
+                or owner.binding.process is not process
+                or scope is None or scope.binding.process is not process):
+            raise ValueError('Q06_CORE_LOSS_ORIGINAL_POPEN_REQUIRED')
+        owner.binding._assert_image()
+        authority = root.parent / ('core-loss-authority-' + root.name + '.json')
+        with authority.open('x') as output:
+            json.dump(dict(source_sha=source_sha, original_popen_pid=process.pid,
+                action='ONE_EXPLICIT_CRASH_NEW_EMPTY_REGTEST_CORE_ONLY',
+                original_binding_verified=True, no_transactions_or_reservations=True), output)
+        process.kill()  # Deliberate disposable fault through retained capability.
+        process.wait(timeout=10)
+        if process.returncode != -9:
+            raise ValueError('Q06_CORE_LOSS_CRASH_NOT_OBSERVED')
+        window.sync.click()
+        deadline = time.monotonic() + 30
+        while (window._worker is not None or executor.busy or window._delivering_result
+                or window._last_error_code is None):
+            app.processEvents()
+            if time.monotonic() >= deadline:
+                raise ValueError('Q06_CORE_LOSS_GUI_WAIT_DENIED')
+            time.sleep(.01)
+        if (window._last_error_code != 'WALLET_CORE_IDENTITY_DENIED'
+                or executor.state.core_alive is not False
+                or window.send.isEnabled() or window.broadcast.isEnabled()
+                or window.overview.go_send.isEnabled() or window._last_verified is not None):
+            raise ValueError('Q06_CORE_LOSS_CACHED_GUI_AUTHORITY_DENIED')
+        executor.request('lock', timeout=30)
+        executor.request('control', 'recover-dead', timeout=120)
+        if not executor.state.locked or owner.process is process:
+            raise ValueError('Q06_CORE_RECOVERY_GRANTED_WALLET_AUTHORITY')
+        reopened = executor.request('open', password, 'reopen', '', timeout=120)
+        if reopened['signer_allowed'] or reopened['receive_code'] != baseline['receive_code']:
+            raise ValueError('Q06_CORE_LOSS_REOPEN_SCOPE_DENIED')
+        restored = executor.request('activate', timeout=120)
+        if any(restored[key] != baseline[key] for key in
+                ('receive_code','height','tip','confirmed_atoms','available_atoms','reservation_count')):
+            raise ValueError('Q06_CORE_LOSS_CUSTODY_CONTINUITY_DENIED')
+        if time.monotonic() - begin > 180:
+            raise ValueError('Q06_CORE_LOSS_TIME_BUDGET')
+        record.update(status='PASS', original_popen_only=True, cached_send_revoked=True,
+                      unverified_balance_hidden=True, explicit_core_recovery_only=True,
+                      seed_reopen_not_spending_authority=True, same_identity_native_chain=True)
+        return record
+    finally:
+        if window is not None:
+            window._poll.stop()
+            window.hide()
+            window.deleteLater()
+            app.processEvents()
+        if not executor.closed:
+            try:
+                executor.request('quit', timeout=120)
+                record['owner_shutdown_verified'] = executor.join(15) and executor.closed
+            except Exception:
+                record['owner_shutdown_verified'] = False
+        record['seconds'] = time.monotonic() - begin
+        with (root.parent / ('core-loss-result-' + root.name + '.json')).open('x') as output:
+            json.dump(record, output, indent=2)
+        if not record.get('owner_shutdown_verified'):
+            with (root.parent / ('core-loss-failure-' + root.name + '.json')).open('x') as output:
+                json.dump(record, output, indent=2)
+            raise ValueError('Q06_CORE_LOSS_OWNER_RETAINED') from None
 
 
 def run(core, source):
