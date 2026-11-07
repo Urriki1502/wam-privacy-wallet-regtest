@@ -379,6 +379,95 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
         self.assertEqual(_reservations(self.scanner),before)
         self.assertEqual(saved,[])
 
+    def test_q12_recovered_cancel_real_q06_rpc_refuses_owner_profile_anchor(self):
+        # Production Q06/WalletSession _rpc, not a stub: wrong owner, foreign
+        # runtime guard and a stale native anchor each refuse before any row.
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from wam_regtest.bip39_spend_session import Q06OwnedSpendSession
+        cases = ('owner','guard','anchor')
+        for case in cases:
+            with self.subTest(case=case):
+                session,saved=self._q12_recovered_unsigned_fixture()
+                del session._rpc  # Restore the real class method.
+                session._managed_owner = None
+                session.vault.anchor.read = lambda:(7,'public-test-anchor')
+                session.vault._expected = ((7,'public-test-anchor') if case!='anchor'
+                                           else (6,'public-test-previous-anchor'))
+                if case=='guard':
+                    def foreign():raise ValueError('PUBLIC_TEST_FOREIGN_RUNTIME')
+                    session._q06_guard = SimpleNamespace(check=foreign)
+                owned = (patch('wam_regtest.bip39_spend_session._owned',
+                               side_effect=ValueError('PUBLIC_TEST_WRONG_OWNER'))
+                         if case=='owner' else patch('wam_regtest.bip39_spend_session._owned'))
+                before=_reservations(self.scanner)
+                with owned,patch('wam_regtest.wallet_session._pinned_source',
+                                 side_effect=AssertionError('CORE_MUST_NOT_BE_REACHED')):
+                    with self.assertRaises(ValueError):session.cancel()
+                self.assertEqual(_reservations(self.scanner),before)
+                self.assertEqual(saved,[])
+                if case=='anchor':
+                    self.assertTrue(session.faulted)
+        self.assertEqual(Q06OwnedSpendSession._rpc.__qualname__, 'Q06OwnedSpendSession._rpc')
+
+    def test_q12_recovered_cancel_refuses_mixed_state_single_token(self):
+        from unittest.mock import patch
+        session,saved=self._q12_recovered_unsigned_fixture()
+        token=next(iter(_reservations(self.scanner).values()))[0]
+        # Same token, one draft and one irreversible row: never partially release.
+        self.scanner.store.db.execute('INSERT INTO reservations VALUES(?,?,?,?,?)',
+            ('02'*32,0,token,'signed',1))
+        before=_reservations(self.scanner)
+        with patch('wam_regtest.bip39_spend_session._owned'):
+            self.assertFalse(session.recovered_unsigned_cancel_available())
+            with self.assertRaises(ValueError):session.cancel()
+        self.assertEqual(_reservations(self.scanner),before)
+        self.assertEqual(saved,[])
+
+    def test_q12_recovered_cancel_refuses_in_memory_signed_review_or_pending(self):
+        from unittest.mock import patch
+        for name in ('_signed','_review','_q06_pending_confirm'):
+            with self.subTest(field=name):
+                session,saved=self._q12_recovered_unsigned_fixture()
+                setattr(session,name,'public-test-transient-'+name)
+                before=_reservations(self.scanner)
+                with patch('wam_regtest.bip39_spend_session._owned'):
+                    self.assertFalse(session.recovered_unsigned_cancel_available())
+                    with self.assertRaises(ValueError):session.cancel()
+                self.assertEqual(_reservations(self.scanner),before)
+                self.assertEqual(saved,[])
+
+    def test_q12_recovered_cancel_repeated_and_concurrent_release_once(self):
+        import threading
+        from unittest.mock import patch
+        session,saved=self._q12_recovered_unsigned_fixture()
+        outcomes=[];barrier=threading.Barrier(4)
+        def attempt():
+            barrier.wait()
+            try:outcomes.append(session.cancel()['recovered_unsigned_cancelled'])
+            except ValueError as error:outcomes.append(error.args[0])
+        with patch('wam_regtest.bip39_spend_session._owned'):
+            threads=[threading.Thread(target=attempt) for _ in range(4)]
+            for thread in threads:thread.start()
+            for thread in threads:thread.join(30)
+            # A later explicit repeat is also a safe refusal, not a second save.
+            with self.assertRaisesRegex(ValueError,'WALLET_ONLY_UNSIGNED_DRAFT_CAN_CANCEL'):
+                session.cancel()
+        self.assertEqual(sorted(map(str,outcomes)),
+                         ['True']+['WALLET_ONLY_UNSIGNED_DRAFT_CAN_CANCEL']*3)
+        self.assertEqual(saved,[{}])
+        self.assertEqual(_reservations(self.scanner),{})
+
+    def test_q12_active_prepared_cancel_keeps_existing_wallet_session_contract(self):
+        from unittest.mock import patch
+        from wam_regtest.wallet_session import WalletSession
+        session,saved=self._q12_recovered_unsigned_fixture()
+        session._prepared=object()
+        with patch.object(WalletSession,'cancel',return_value='PUBLIC_TEST_SUPER') as base:
+            self.assertEqual(session.cancel(),'PUBLIC_TEST_SUPER')
+        base.assert_called_once_with()
+        self.assertEqual(saved,[])
+
     def test_post_reopen_full_history_txid_read_only_and_ambiguous(self):
         from contextlib import nullcontext
         from threading import RLock

@@ -51,6 +51,44 @@ class UnsignedDraftControls(unittest.TestCase):
         dialog.cancel.click();self.app.processEvents()
         self.assertEqual(self.calls,[('cancel',)])
         self.assertFalse(w._signed_ready)
+    def test_recovered_unsigned_draft_explicit_cancel_controls(self):
+        from wam_regtest.wallet_executor import ExecutorState
+        w=self.window;ok=ExecutorState(locked=False,core_alive=True)
+        snap=lambda flag:{'recovered_unsigned_cancel_available':flag,'signer_allowed':True,
+                          'payment_review':None,'payment_signed':False,'pending_confirm_txid':None,
+                          'receive_code':'wamrtsp1public','confirmed_atoms':5,'available_atoms':0 if flag else 5,
+                          'height':1,'tip':'c'*64,'history':(),'reservation_count':1 if flag else 0}
+        # Presentation flag comes only from the backend's verified snapshot,
+        # through the real production handler.
+        from wam_regtest.bip39_owner_gui import Bip39TrialWindow
+        Bip39TrialWindow._on_ready(w,'snapshot',snap(True));w._set_actions()
+        self.assertTrue(w._recovered_unsigned_cancel)
+        self.assertTrue(w.cancel.isEnabled());self.assertFalse(w.send.isEnabled())
+        w.recipient_input.setText('wamrtsp1public');w.amount_input.setText('1');w.fee_input.setText('0.0001')
+        w._prepare_send();self.assertEqual(self.calls,[])  # New payment waits.
+        for name,state,busy in [('faulted',ExecutorState(locked=False,core_alive=True,faulted=True),False),
+                                ('locked',ExecutorState(locked=True,core_alive=True),False),
+                                ('reauth',ExecutorState(locked=False,core_alive=True,reauthentication_required=True),False),
+                                ('busy',ok,True)]:
+            with self.subTest(state=name):
+                self.owner.state=state;self.owner.busy=busy;w._set_actions()
+                self.assertFalse(w.cancel.isEnabled())
+        self.owner.state=ok;self.owner.busy=False;w._set_actions()
+        w._signed_ready=True;w._set_actions();self.assertFalse(w.cancel.isEnabled())
+        w._signed_ready=False;w._set_actions();w.cancel.click()
+        self.assertEqual(self.calls,[('cancel',)])
+        Bip39TrialWindow._on_ready(w,'cancel',{'recovered_unsigned_cancelled':True,
+                                              'signer_allowed':False,'broadcast_allowed':False})
+        self.assertFalse(w._recovered_unsigned_cancel)
+        self.assertEqual(w._pending_action,('snapshot',))  # Read only; never a write retry.
+        Bip39TrialWindow._on_ready(w,'snapshot',snap(False));w._set_actions()
+        self.assertFalse(w.cancel.isEnabled());self.assertTrue(w.send.isEnabled())
+        # Lock/quit/open clear the cached flag; it never survives authority loss.
+        for action in ('lock','open'):
+            w._recovered_unsigned_cancel=True
+            try:Bip39TrialWindow._on_ready(w,action,{})
+            except Exception:pass
+            self.assertFalse(w._recovered_unsigned_cancel)
     def test_fee_and_amount_validation_never_dispatch_invalid_values(self):
         w=self.window;w.recipient_input.setText('wamrtsp1public');w.amount_input.setText('1.23456789')
         for fee in ['0','-1','0.000000001','0.01000001','NaN','1e-8']:
