@@ -307,6 +307,41 @@ def qualify(core, source):
                 raise ValueError("Q06_SPEND_SAME_CHAIN_RECOVERY_DENIED")
             data["q06_bip39_same_chain_seed_history_recovery"] = True
             stage("SAME_CHAIN_MNEMONIC_RESCAN_PASS")
+            # Fail only the NEW independent proof scanner close. The
+            # original native wallet must retain authority and reservations;
+            # derived recovery keys must still be invalidated best-effort.
+            from unittest.mock import patch
+            from wam_sp.scanner import Scanner
+            original_scanner_close = Scanner.close
+            original_keys_close = Bip39Regtest12Keys.close
+            held_scanners, closed_recovery_keys = [], []
+            def fail_proof_close(scan):
+                held_scanners.append(scan)
+                raise OSError('Q06_TEST_RECOVERY_CLOSE_FAULT')
+            def observe_keys_close(keys):
+                original_keys_close(keys)
+                closed_recovery_keys.append(keys._closed and not any(keys._seed))
+            try:
+                with (patch.object(Scanner, 'close', fail_proof_close),
+                      patch.object(Bip39Regtest12Keys, 'close', observe_keys_close)):
+                    try:
+                        executor.request('recovery_verify', phrase, timeout=240)
+                    except Exception as error:
+                        if error.args != ('Q06_RECOVERY_TEMP_RUNTIME_PRESERVED',):
+                            raise ValueError('Q06_RECOVERY_CLOSE_FAULT_CATEGORY_DENIED') from None
+                    else:
+                        raise ValueError('Q06_RECOVERY_CLOSE_FAULT_NOT_REFUSED')
+                if not closed_recovery_keys or not all(closed_recovery_keys):
+                    raise ValueError('Q06_RECOVERY_CLOSE_SECRET_INVALIDATION_DENIED')
+                preserved = executor.request('snapshot', timeout=240)
+                if any(preserved[key] != after[key] for key in
+                       ('receive_code','confirmed_atoms','reservation_count','height','tip')):
+                    raise ValueError('Q06_RECOVERY_CLOSE_NATIVE_STATE_CHANGED')
+            finally:
+                for scan in held_scanners:
+                    original_scanner_close(scan)
+            data['recovery_close_failure_keys_invalidated_native_state_preserved'] = True
+            stage('RECOVERY_CLOSE_FAILURE_INVALIDATION_PASS')
             data["q06_bip39_spend_confirmed"] = True
             data["txid_sha256"] = sha256(broadcast.encode("ascii")).hexdigest()
             data["receive_sha256"] = sha256(
@@ -316,6 +351,22 @@ def qualify(core, source):
                 window.custody_switch.click()
                 wait_for(lambda: idle() and executor.state.locked, 'LOCK')
                 if cycle == 0:
+                    timer = QTimer()
+                    timer.setInterval(150)
+                    def cancel_unlock_dialog():
+                        dialog = app.activeModalWidget()
+                        if dialog is not None and hasattr(dialog, 'password_input'):
+                            for button in dialog.findChildren(QPushButton):
+                                if button.text() == 'Cancel':
+                                    button.click()
+                                    timer.stop()
+                    timer.timeout.connect(cancel_unlock_dialog)
+                    timer.start()
+                    window.custody_switch.click()
+                    timer.stop()
+                    if not executor.state.locked or window._ready or window._spend_enabled:
+                        raise ValueError('Q06_UNLOCK_CANCEL_GRANTED_AUTHORITY')
+                    data['normal_gui_unlock_cancel_retains_locked'] = True
                     try:
                         executor.request('unlock', b'wrong-disposable-password', False, timeout=120)
                     except Exception:
@@ -401,6 +452,22 @@ def qualify(core, source):
             wait_for(lambda: idle() and window._ready, 'RESTART_REOPEN')
             if window._spend_enabled:
                 raise ValueError('Q06_RESTART_UNAPPROVED_SIGNER')
+            # Reopen authenticates only the seed until explicit activation.
+            # Lock/Unlock here must not auto-scan over native reservations.
+            window.custody_switch.click()
+            wait_for(lambda: idle() and executor.state.locked, 'SEED_ONLY_LOCK')
+            timer = QTimer()
+            timer.setInterval(150)
+            timer.timeout.connect(unlock_dialog)
+            timer.start()
+            window.custody_switch.click()
+            timer.stop()
+            wait_for(lambda: idle() and not executor.state.locked, 'SEED_ONLY_UNLOCK')
+            if (window._spend_enabled or window._last_verified is not None
+                    or window._pending_action is not None):
+                raise ValueError('Q06_SEED_ONLY_UNLOCK_AUTHORITY_DENIED')
+            data['normal_gui_seed_only_anchored_unlock'] = True
+            stage('SEED_ONLY_ANCHORED_UNLOCK_PASS')
             approve_click(window.activate, 'Approve', lambda: window._spend_enabled)
             restart = executor.request('snapshot', timeout=240)
             if any(restart[key] != after[key] for key in
@@ -411,6 +478,42 @@ def qualify(core, source):
                 raise ValueError('Q06_RESTART_CONFIRMED_TX_MISSING')
             data['same_profile_core_restart'] = True
             stage('SAME_PROFILE_CORE_RESTART_PASS')
+            # One explicit close fault on this NEW disposable session only.
+            # Keep native/signed evidence and prove the real keyring closes
+            # even when SQLite close cannot run. No secret bytes are emitted.
+            from unittest.mock import patch
+            session = executor._backend._spend_session
+            scanner, ring = session.scanner, session.ring
+            original_close = scanner.close
+            runtime_hash = sha256(session.runtime.read_bytes()).hexdigest()
+            reservations = tuple(tuple(row) for row in scanner.store.db.execute(
+                'SELECT * FROM reservations ORDER BY txid,vout'))
+            anchor = session.vault.anchor.read()
+            try:
+                with patch.object(scanner, 'close', side_effect=OSError('Q06_TEST_CLOSE_FAULT')):
+                    try:
+                        executor.request('lock', timeout=90)
+                    except Exception as error:
+                        if error.args != ('Q06_SPEND_RUNTIME_PRESERVED',):
+                            raise ValueError('Q06_LOCK_FAULT_CATEGORY_DENIED') from None
+                    else:
+                        raise ValueError('Q06_LOCK_FAULT_NOT_REFUSED')
+                if (not executor.state.locked or not executor.state.faulted
+                        or not ring._closed or any(ring._seed)
+                        or session._password is not None
+                        or executor._backend._secret is not None
+                        or sha256(session.runtime.read_bytes()).hexdigest() != runtime_hash
+                        or session.vault.anchor.read() != anchor
+                        or tuple(tuple(row) for row in scanner.store.db.execute(
+                            'SELECT * FROM reservations ORDER BY txid,vout')) != reservations):
+                    raise ValueError('Q06_LOCK_FAULT_SECRET_OR_AUTHORITY_DENIED')
+            finally:
+                # Release only the deliberately held SQLite connection in
+                # this fixture. Runtime/checkpoint/reservations stay retained.
+                original_close()
+            data['native_lock_failure_key_invalidation_verified'] = True
+            data['native_lock_failure_reservations_anchor_runtime_preserved'] = True
+            stage('NATIVE_LOCK_FAILURE_INVALIDATION_PASS')
             executor.request('quit', timeout=90)
             if not executor.join(15) or not executor.closed:
                 raise ValueError('Q06_RESTART_SHUTDOWN_DENIED')
