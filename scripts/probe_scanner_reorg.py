@@ -3,7 +3,7 @@
 Q14 scope: depth 1/12/100 reorgs, canonical replacement (same tx re-mined),
 orphaned outputs (BIP125 conflict replaces the payment), reorg DURING an active
 scan, interrupted scan + restart, rescan consistency against a fresh scanner
-and an independent integer-atom oracle built only from Core gettxout. Signed/
+and an independent integer-atom oracle from Core active-chain blocks + gettxout. Signed/
 uncertain/draft reservation rows and the label table must be byte-identical.
 
 Uses the pinned WSP Scanner and Fusion's REAL BIP39 derivation with the published
@@ -35,7 +35,7 @@ def atoms(value):
 def probe(core, source):
     _pinned_source(source)
     from wam_sp.hd import ExtendedPrivate, HARDENED
-    from wam_sp.core import Input, send
+    from wam_sp.core import Input, send, pub
     from wam_sp.codec import encode
     from wam_sp.core import hash160
     from wam_sp.transaction import p2wpkh, signed_single_input
@@ -66,10 +66,15 @@ def probe(core, source):
         accounts = keys.accounts()
         assert all(a.labels == () for a in accounts), 'FUSION_LABELS_EXPECTED_EMPTY'
 
-        def mine(count):
+        # Replacement branches pay a different public dummy key so a re-mined
+        # block can never be byte-identical to the block just invalidated.
+        branch_address = encode('wamrt', hash160(pub(31)), bech32m=False)
+
+        def mine(count, to=None):
             hashes = []
             while count:
-                step = min(count, 101); hashes += node.call('generatetoaddress', str(step), miner_address, timeout=120)
+                step = min(count, 101)
+                hashes += node.call('generatetoaddress', str(step), to or miner_address, timeout=120)
                 count -= step
             return hashes
 
@@ -96,22 +101,35 @@ def probe(core, source):
         def pay(height):
             raw, value = build(height)
             txid = node.call('sendrawtransaction', raw)
-            payments[txid] = dict(coinbase_height=height, atoms=value, vout=0)
+            payments[txid] = dict(coinbase_height=height, atoms=value, vout=0,
+                                  height=node.call('getblockcount') + 1)  # Earliest possible inclusion.
             return txid
 
         def conflict(height):
             raw, _ = build(height, to_wallet=False, fee=FEE * 3)
             return node.call('sendrawtransaction', raw)  # BIP125 nSequence 0xfffffffd.
 
+        def canonical_txids(low):
+            """Core's active chain only; never mempool, never WSP."""
+            seen = set()
+            for h in range(low, node.call('getblockcount') + 1):
+                block = node.call('getblock', node.call('getblockhash', str(h)), '2')
+                seen.update(tx['txid'] for tx in block['tx'])
+            return seen
+
         def oracle():
-            """Independent of WSP: our constructed outputs that Core says are confirmed UTXOs."""
+            """Independent of WSP: our constructed outputs confirmed on Core's active chain."""
+            if not payments:
+                return {}
+            on_chain = canonical_txids(min(p['height'] for p in payments.values()))
             expected = {}
             for txid, p in payments.items():
-                coin = node.call('gettxout', txid, str(p['vout']), 'true')
-                if coin is not None and coin['confirmations'] >= 1:
-                    assert atoms(coin['value']) == p['atoms']
-                    assert coin['scriptPubKey']['hex'].startswith('5120')
-                    expected[(txid, p['vout'])] = p['atoms']
+                if txid not in on_chain:
+                    continue  # Orphaned/conflicted: absent from every canonical block.
+                coin = node.call('gettxout', txid, str(p['vout']), 'true')  # Non-null: unspent.
+                assert coin['confirmations'] >= 1 and atoms(coin['value']) == p['atoms']
+                assert coin['scriptPubKey']['hex'].startswith('5120')
+                expected[(txid, p['vout'])] = p['atoms']
             return expected
 
         def new_scanner(name):
@@ -143,7 +161,7 @@ def probe(core, source):
         old_hash = tip()[1]
         fork, n = reorg(1, 2)
         assert a in node.call('getrawmempool')  # Disconnected tx returned to mempool.
-        mine(n); m = s1.sync(r1); s1.assert_current()
+        mine(n, branch_address); m = s1.sync(r1); s1.assert_current()
         assert m.rollback == 1 and held(s1) == oracle() and (a, 0) in held(s1)
         assert node.call('getblockhash', str(fork)) != old_hash
         result['cases']['depth1_canonical_replacement'] = dict(status='PASS', rollback=m.rollback,
@@ -157,29 +175,30 @@ def probe(core, source):
         reservations, labels = table(s1, 'reservations'), table(s1, 'labels')
         # ---- depth 12: orphaned output (conflict replaces the reorged payment)
         fork, n = reorg(12, 13)
-        assert b in node.call('getrawmempool')
-        replaced = conflict(2)
+        b_returned = b in node.call('getrawmempool')  # Core may not re-add deep reorgs.
+        replaced = conflict(2)  # Replaces b if pooled; otherwise a plain conflicting spend.
         assert b not in node.call('getrawmempool') and replaced in node.call('getrawmempool')
-        mine(n); m = s1.sync(r1); s1.assert_current()
+        mine(n, branch_address); m = s1.sync(r1); s1.assert_current()
         assert m.rollback == 12 and (b, 0) not in held(s1) and held(s1) == oracle()
-        assert node.call('gettxout', b, '0', 'true') is None
+        assert b not in canonical_txids(payments[b]['height'])
         assert table(s1, 'reservations') == reservations, 'RESERVATIONS_CHANGED_BY_REORG'
         assert table(s1, 'labels') == labels == [], 'LABELS_CHANGED_BY_REORG'
         result['cases']['depth12_orphaned_output'] = dict(status='PASS', rollback=m.rollback,
-            orphaned_txid=b, conflict_txid=replaced, orphan_removed=True,
+            orphaned_txid=b, conflict_txid=replaced, orphan_removed=True, core_readded_to_mempool=b_returned,
             reservations_preserved=len(reservations), labels_table_rows=0)
 
         # ---- depth 100: orphaned output at maximum tested depth
         c = pay(3); mine(1); mine(99); s1.sync(r1)
         assert (c, 0) in held(s1)
         fork, n = reorg(100, 101)
-        assert c in node.call('getrawmempool')
+        c_returned = c in node.call('getrawmempool')
         conflict(3); assert c not in node.call('getrawmempool')
-        mine(n); m = s1.sync(r1); s1.assert_current()
+        mine(n, branch_address); m = s1.sync(r1); s1.assert_current()
         assert m.rollback == 100 and (c, 0) not in held(s1) and held(s1) == oracle()
         assert table(s1, 'reservations') == reservations and table(s1, 'labels') == []
         result['cases']['depth100_orphaned_output'] = dict(status='PASS', rollback=m.rollback,
-            orphaned_txid=c, orphan_removed=True, reservations_preserved=len(reservations))
+            orphaned_txid=c, orphan_removed=True, reservations_preserved=len(reservations),
+            core_readded_to_mempool=c_returned)
 
         # ---- reorg DURING an active scan (fresh scanner from genesis)
         d = pay(4); mine(1); mine(5)  # d at depth 6.
@@ -193,7 +212,7 @@ def probe(core, source):
                 fired.append(s2.store.tip())
                 node.call('invalidateblock', node.call('getblockhash', str(fork_at)))
                 conflict(4)
-                mine(height - fork_at + 2)
+                mine(height - fork_at + 2, branch_address)
             return False
         try:
             s2.sync(r2, cancel=reorg_mid_scan)
