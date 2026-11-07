@@ -184,6 +184,21 @@ def qualify(core, source):
             window.recipient_input.setText(destination)
             window.amount_input.setText('3')
             window.fee_input.setText('0.00010000')
+            # Match the existing Windows/Linux Q06 negative: genuine native
+            # custody + default-Cancel GUI must dispatch no signature and
+            # release only this unsigned draft before a later approved payment.
+            approve_click(window.send, 'Cancel', lambda: window._last_review is None)
+            cancelled = executor.request('snapshot', timeout=240)
+            if (window._signed_ready or cancelled['payment_signed']
+                    or cancelled['payment_review'] is not None
+                    or cancelled['reservation_count'] != active['reservation_count']
+                    or cancelled['confirmed_atoms'] != active['confirmed_atoms']):
+                raise ValueError('Q06_SPEND_GUI_CANCEL_SIGNED_OR_CHANGED_CUSTODY')
+            data['normal_gui_cancel_does_not_sign'] = True
+            stage('GUI_UNSIGNED_CANCEL_PASS')
+            window.recipient_input.setText(destination)
+            window.amount_input.setText('3')
+            window.fee_input.setText('0.00010000')
             approve_click(window.send, 'Approve Sign', lambda: window._signed_ready)
             prepared = window._last_review
             if (prepared.code != destination or prepared.atoms != atoms
