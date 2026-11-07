@@ -178,7 +178,7 @@ def qualify(core, source):
                     Mnemonic("english").to_mnemonic(bytes([1] * 16)),
                     source=source, authorized_disposable=True) as payee:
                 destination = payee.public_metadata()["receive_code"]
-            atoms = 300_000_000
+            atoms = 123_456_789
             if atoms < 330 or funded["atoms"] < atoms + 1000:
                 raise ValueError("Q06_SPEND_FUNDS_NOT_SPENDABLE")
             stage("PREPARE_START")
@@ -198,9 +198,16 @@ def qualify(core, source):
             data['normal_gui_cancel_does_not_sign'] = True
             stage('GUI_UNSIGNED_CANCEL_PASS')
             window.recipient_input.setText(destination)
-            window.amount_input.setText('3')
+            window.amount_input.setText('1.23456789')
             window.fee_input.setText('0.00010000')
-            approve_click(window.send, 'Approve Sign', lambda: window._signed_ready)
+            # The GUI caller's Decimal precision must never round approved
+            # money. The owner executor still validates the exact integer intent.
+            from decimal import localcontext
+            with localcontext() as decimal_context:
+                decimal_context.prec = 6
+                approve_click(window.send, 'Approve Sign', lambda: window._signed_ready)
+            data['gui_low_decimal_precision_exact_atoms'] = atoms
+            data['gui_raw_amount_input'] = '1.23456789'
             prepared = window._last_review
             if (prepared.code != destination or prepared.atoms != atoms
                     or prepared.fee != 10000 or len(prepared.commitment) != 64

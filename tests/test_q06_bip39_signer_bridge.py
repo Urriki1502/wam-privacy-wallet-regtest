@@ -240,6 +240,72 @@ class Q06Bip39SignerBridgeContracts(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.wallet.release_draft(session._prepared.proposal.token)
 
+    def test_q12_unsigned_cancel_cannot_release_irreversible_rows(self):
+        from wam_regtest.wallet_session import WalletSession
+        import threading
+        session = object.__new__(WalletSession)
+        session._lock = threading.RLock()
+        session.scanner = self.scanner
+        session._prepared = self.signer.prepare(self.proposal)
+        session._signed = None  # Crash can lose transient bytes; row remains authoritative.
+        session._review = session._tip = object()
+        session._rpc = lambda: None
+        saved = []
+        session._save = lambda: saved.append(_reservations(self.scanner))
+        for state in ('signed', 'uncertain', 'broadcast'):
+            self.scanner.store.db.execute('UPDATE reservations SET state=?', (state,))
+            before = _reservations(self.scanner)
+            with self.subTest(state=state), self.assertRaises(ValueError):
+                session.cancel()
+            self.assertEqual(_reservations(self.scanner), before)
+            self.assertEqual(saved, [])
+        self.scanner.store.db.execute("UPDATE reservations SET state='draft'")
+        session.cancel()
+        self.assertEqual(saved, [{}])
+        self.assertIsNone(session._prepared)
+        self.assertIsNone(session._review)
+
+    def test_q12_sign_fault_occurs_after_irreversible_save(self):
+        from wam_regtest.wallet_session import WalletSession, WalletSessionError, PaymentReview
+        from unittest.mock import patch
+        from types import SimpleNamespace
+        from contextlib import nullcontext
+        import threading
+        session = object.__new__(WalletSession)
+        session._lock = threading.RLock()
+        session.scanner, session.ring = self.scanner, self.keys
+        session._prepared = self.signer.prepare(self.proposal)
+        session._review = PaymentReview(self.intent.code,50000,1000,49000,1,'c'*64)
+        session._signed = None
+        session.faulted = False
+        session.vault = SimpleNamespace(anchor=SimpleNamespace(lease=lambda:nullcontext()))
+        session._rpc = lambda: None
+        session._unchanged_inputs = lambda rpc: None
+        saved = []
+        session._save = lambda: saved.append(_reservations(self.scanner))
+        with patch('wam_sp.wallet.Signer.sign',side_effect=RuntimeError('PUBLIC_TEST_CRYPTO_CUT')) as sign:
+            with self.assertRaisesRegex(WalletSessionError,'SIGN_UNCERTAIN_LOCK_RETAINED'):
+                session.sign('c'*64)
+        self.assertEqual(sign.call_count,1)
+        self.assertEqual(len(saved),1)
+        self.assertEqual({value[1] for value in saved[0].values()},{'signed'})
+        self.assertEqual(_reservations(self.scanner),saved[0])
+        self.assertTrue(session.faulted)
+        with self.assertRaises(ValueError):
+            self.wallet.release_draft(self.proposal.token)
+
+    def test_q12_changed_amount_recipient_or_fee_cannot_sign_prepared_psbt(self):
+        prepared = self.signer.prepare(self.proposal)
+        for intent, fee in ((Intent(self.intent.code,50001),1000),
+                            (Intent(self.keys.accounts()[0].payment_code(),50000),1000),
+                            (self.intent,999)):
+            with self.subTest(fee=fee),self.assertRaises(ValueError):
+                self.signer.sign(prepared,(intent,),fee)
+        from dataclasses import replace
+        altered = replace(prepared,proposal=replace(prepared.proposal,fee=1001))
+        with self.assertRaises(ValueError):
+            self.signer.sign(altered,(self.intent,),1001)
+
     def test_post_reopen_full_history_txid_read_only_and_ambiguous(self):
         from contextlib import nullcontext
         from threading import RLock
