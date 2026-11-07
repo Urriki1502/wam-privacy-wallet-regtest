@@ -370,12 +370,12 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             print('MACOS_Q06_SPEND_INITIAL_SNAPSHOT_PASS', flush=True)
         return self._session_snapshot()
 
-    def _session_snapshot(self):
+    def _session_snapshot(self, history_offset=0):
         if self._spend_session is None:
             raise Q06ReadOnlyError("Q06_GUI_SPEND_NOT_ACTIVE")
         from wam_sp.wallet import Wallet
         session = self._spend_session
-        item = session.snapshot()
+        item = session.snapshot() if history_offset == 0 else session.snapshot(history_offset=history_offset)
         available = Wallet(session.scanner).balance()["available_atoms"]
         return {
             "status": "Q06_REGTEST_BIP39_OWNED_SPEND_VERIFIED",
@@ -431,9 +431,9 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             if getattr(cli, "_transport", None) is not None:
                 cli._transport.close()
 
-    def _scan_q06(self):
+    def _scan_q06(self, history_offset=0):
         if self._spend_session is not None:
-            return self._session_snapshot()
+            return self._session_snapshot() if history_offset == 0 else self._session_snapshot(history_offset)
         if self._seed_folder is None or self._secret is None:
             raise Q06ReadOnlyError("Q06_GUI_LOCKED")
         from .managed_wallet_checkpoint import _owned
@@ -486,7 +486,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                     "SELECT count(*) FROM history WHERE credit>0").fetchone()[0]
                 verified_rows = scanner.store.db.execute(
                     "SELECT txid,height,credit,debit FROM history "
-                    "ORDER BY height DESC,txid LIMIT ?", (GUI_HISTORY_LIMIT,)
+                    "ORDER BY height DESC,txid DESC LIMIT ? OFFSET ?", (GUI_HISTORY_LIMIT, history_offset)
                 ).fetchall()
             if (type(total) is not int or total<0
                     or type(receives) is not int or not 0<=receives<=total
@@ -508,7 +508,8 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                 history=tuple(structured),
                 core_sha256=owner.receipt["wamd_sha256"],
                 history_count=total, receive_count=receives,
-                history_complete=total<=GUI_HISTORY_LIMIT,
+                history_complete=history_offset == 0 and total<=GUI_HISTORY_LIMIT,
+                history_offset=history_offset,
             )
             _owned(owner)
             guard.check()
@@ -741,8 +742,11 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             except Exception:
                 raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_DENIED") from None
         if action == "snapshot":
-            if args or kwargs:raise Q06ReadOnlyError("Q06_GUI_SYNC_ARGUMENTS_DENIED")
-            return self._scan_q06()
+            from .history_pages import HISTORY_OFFSET_MAX
+            if (kwargs or len(args) > 1 or args and
+                    (type(args[0]) is not int or not 0 <= args[0] <= HISTORY_OFFSET_MAX)):
+                raise Q06ReadOnlyError("Q06_GUI_SYNC_ARGUMENTS_DENIED")
+            return self._scan_q06(args[0]) if args else self._scan_q06()
         if action == "mine":
             if args or kwargs:raise Q06ReadOnlyError("Q06_GUI_FUND_ARGUMENTS_DENIED")
             return self._fund_q06()

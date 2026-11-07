@@ -127,6 +127,13 @@ def qualify(core,source):
             data["Q06_actual_onchain_BIP39_received_atoms"]=funded["atoms"]
             data["Q06_actual_Core_confirmed_BIP39_txid_sha256"]=sha256(funded["txid"].encode()).hexdigest()
             data["Q06_native_Qt_funded_balance_bound"]=True
+            from .q06_history_probe import fund_public_history, verify_pages
+            stage('READ_ONLY_HISTORY_PAGE_BOUNDARY_START')
+            extra = fund_public_history(first._backend.owner, source, opened['receive_code'])
+            paged, data['read_only_history_pagination'] = verify_pages(first, funded_view, extra)
+            if paged['signer_allowed'] or paged['broadcast_allowed']:
+                raise ValueError('Q06_OWNER_HISTORY_GRANTED_SPENDING')
+            stage('READ_ONLY_HISTORY_PAGE_BOUNDARY_PASS')
             # Never touch a Q05 reference or create a signing grant.
             first.request("lock")
             stage("ENCRYPTED_SEED_REOPEN_START")

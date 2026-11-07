@@ -412,6 +412,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.overview.manual_sync.clicked.connect(
             lambda: self._command("snapshot"))
         self.overview.transaction_selected.connect(self._select_transaction)
+        self.history_page.page_requested.connect(self._request_history_page)
         self.overview.custody_switch.clicked.connect(self._switch_custody)
         self._last_verified = None
         self._last_review = None
@@ -543,6 +544,14 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 STAGGER_MS * delay,
                 lambda widget=widget: fade_widget(
                     widget, start=0.35, end=1.0, duration=STANDARD_MS, parent=self))
+
+    def _request_history_page(self, offset):
+        # Only a read of this same authenticated profile. Never select a
+        # different owner or grant spending authority from cached GUI rows.
+        if (not self._ready or self._quit_requested or self.executor.state.locked
+                or self.executor.state.faulted):
+            return False
+        return self._command('snapshot', offset)
 
     def _select_transaction(self, txid):
         self.navigation.setCurrentRow(2)

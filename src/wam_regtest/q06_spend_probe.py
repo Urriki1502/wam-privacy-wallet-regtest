@@ -288,6 +288,11 @@ def qualify(core, source):
                     if not window.grab().save(str(image)):
                         raise ValueError('Q06_NORMAL_GUI_SCREENSHOT_DENIED')
                     data['normal_gui_screenshots'][image.name] = sha256(image.read_bytes()).hexdigest()
+            from .q06_history_probe import fund_public_history, verify_pages
+            stage('GUI_HISTORY_PAGE_BOUNDARY_START')
+            extra = fund_public_history(executor._backend.owner, source, created['receive_code'])
+            after, data['gui_history_pagination'] = verify_pages(executor, after, extra, window=window)
+            stage('GUI_HISTORY_PAGE_BOUNDARY_PASS')
             # Rebuild a NEW scanner from the 12 words against THIS same
             # attested Core. Do not adopt its checkpoint/signing authority.
             stage("SAME_CHAIN_MNEMONIC_RESCAN_START")
