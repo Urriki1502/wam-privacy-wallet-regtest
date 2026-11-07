@@ -70,12 +70,13 @@ def qualify(core, source):
 
     from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QPushButton
-    def wait_for(predicate, label, timeout=240):
+    def wait_for(predicate, label, timeout=240, expected_denial=None):
         deadline = time.monotonic() + timeout
         next_beat = time.monotonic()
         while not predicate():
             app.processEvents()
-            if (window is not None and idle() and window._last_error_code is not None):
+            if (window is not None and idle() and window._last_error_code is not None
+                    and window._last_error_code != expected_denial):
                 data['gui_denied'] = window._last_error_code
                 raise ValueError('Q06_GUI_DENIED_' + label)
             now = time.monotonic()
@@ -448,8 +449,20 @@ def qualify(core, source):
                 root, core, source, keychain=keychain))
             window = Bip39FusionWindow(executor)
             window.show()
-            window.start(password, 'reopen', '')
+            window.start(b'wrong-disposable-initial-password', 'reopen', '')
+            wait_for(lambda: idle() and window._last_error_code == 'WALLET_UNLOCK_REFUSED',
+                     'INITIAL_PASSWORD_REFUSAL', expected_denial='WALLET_UNLOCK_REFUSED')
+            if (not executor.state.locked or not window.unlock.isEnabled()
+                    or window._ready or window._spend_enabled):
+                raise ValueError('Q06_INITIAL_PASSWORD_RETRY_SCOPE_DENIED')
+            timer = QTimer()
+            timer.setInterval(150)
+            timer.timeout.connect(unlock_dialog)
+            timer.start()
+            window.custody_switch.click()
+            timer.stop()
             wait_for(lambda: idle() and window._ready, 'RESTART_REOPEN')
+            data['normal_gui_initial_wrong_password_retry'] = True
             if window._spend_enabled:
                 raise ValueError('Q06_RESTART_UNAPPROVED_SIGNER')
             # Reopen authenticates only the seed until explicit activation.
