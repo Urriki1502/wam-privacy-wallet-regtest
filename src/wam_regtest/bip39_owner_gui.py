@@ -821,6 +821,37 @@ def _last_remembered_profile():
         return ""
 
 
+def _onboarding_password(parent, mode):
+    """Recoverable input validation before any executor request creates custody."""
+    while True:
+        password, ok = QInputDialog.getText(
+            parent, "Q06 BIP39 wallet (REGTEST only)",
+            "Disposable encrypted-seed password (12–1024 UTF-8 bytes)",
+            QLineEdit.EchoMode.Password)
+        if not ok:
+            return "", False
+        if not 12 <= len(password.encode("utf-8")) <= 1024:
+            password = ""
+            QMessageBox.warning(parent, "Q06 password",
+                                "Use a disposable password of 12–1024 UTF-8 bytes.")
+            continue
+        if mode in ("create", "restore"):
+            confirmation, confirmed = QInputDialog.getText(
+                parent, "Confirm wallet password", "Enter the same password again.",
+                QLineEdit.EchoMode.Password)
+            if not confirmed:
+                password = confirmation = ""
+                return "", False
+            matches = password == confirmation
+            confirmation = ""
+            if not matches:
+                password = ""
+                QMessageBox.warning(parent, "Q06 password",
+                                    "Passwords do not match. Please try again.")
+                continue
+        return password, True
+
+
 def launch_bip39_trial(root,core,source,*,mode,authorized=False,shared_profile=None):
     if authorized is not True or mode not in ("create","restore","reopen"):
         raise ValueError("Q06_GUI_EXPLICIT_REGTEST_CONSENT_REQUIRED")
@@ -836,14 +867,7 @@ def launch_bip39_trial(root,core,source,*,mode,authorized=False,shared_profile=N
     from .bip39_fusion_gui import Bip39FusionWindow
     window=Bip39FusionWindow(executor,shared_profile=shared_profile)
     window.show()
-    password, ok=QInputDialog.getText(
-        window, "Q06 BIP39 wallet (REGTEST only)",
-        "Disposable encrypted-seed password (12–1024 UTF-8 bytes)",
-        QLineEdit.EchoMode.Password,
-    )
-    if ok and not 12 <= len(password.encode("utf-8")) <= 1024:
-        QMessageBox.warning(window,"Q06 password","Use a disposable password of 12–1024 bytes.")
-        ok=False
+    password, ok = _onboarding_password(window, mode)
     phrase=""
     if ok and mode=="restore":
         phrase,ok=QInputDialog.getMultiLineText(

@@ -217,7 +217,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
             "Review, sign and broadcast",
             "Signing reserves inputs. Broadcast is a separate explicit approval.",
         )
-        self.review_summary = label("No prepared payment. Recipient, amount, fee and change appear here after Review.")
+        self.review_summary = _WrappingStatusLabel()
+        self.review_summary.setWordWrap(True)
+        self.review_summary.setText("No prepared payment. Recipient, amount, fee and change appear here after Review.")
         self.review_summary.setMinimumWidth(0)
         rl.addWidget(self.review_summary)
         self.activate.setText("Enable sending")
@@ -517,7 +519,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
         dialog = WalletConsent(
             'Backup this REGTEST wallet',
             'Recovery words are shown only at wallet creation. This action does not '
-            'display the seed. Use Verify Recovery to check words you already wrote down.',
+            'display the seed. The three-word creation acknowledgment checks that you wrote '
+            'the phrase down. Independent Recovery verifies all 12 words and rescans this '
+            'same verified chain; it does not restore spending authority or prove clean-device recovery.',
             self, accept_text='Verify recovery words')
         try:
             if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -599,6 +603,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
             if hasattr(self, 'custody_switch'):
                 unlocked = not self.executor.state.locked and self._ready
                 for switch in (self.custody_switch, self.overview.custody_switch):
+                    switch.setToolTip('Click to lock this wallet.' if self._ready else
+                                      'Click to unlock with the original wallet password.')
                     switch.blockSignals(True)
                     switch.setChecked(unlocked)
                     switch.setText('Unlocked' if unlocked else 'Locked')

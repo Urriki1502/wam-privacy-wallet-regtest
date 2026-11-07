@@ -901,6 +901,12 @@ class BalanceHistoryChart(QWidget):
             mapped.append((x, y, height_value, atoms))
         return mapped
 
+    def _height_rect(self, x, height):
+        width = min(float(self.width()), max(72.0,
+                    float(self.fontMetrics().horizontalAdvance(str(height)) + 12)))
+        left = min(max(0.0, x - width / 2), self.width() - width)
+        return QRectF(left, self.height() - 20, width, 16)
+
     def mouseMoveEvent(self, event):
         mapped = self._mapped(self.width(), self.height())
         index = -1
@@ -936,7 +942,7 @@ class BalanceHistoryChart(QWidget):
             p.end()
             return
         mapped = self._mapped(self.width(), self.height())
-        clip_right = 8.0 + (self.width() - 18.0) * self._reveal
+        clip_right = self.width() * self._reveal
         p.setClipRect(QRectF(0, 0, clip_right, self.height()))
         if len(mapped) == 1:
             x, y, height, atoms = mapped[0]
@@ -978,7 +984,7 @@ class BalanceHistoryChart(QWidget):
                 p.setBrush(QColor(c['accent']))
                 p.drawEllipse(QPointF(x, y), 4.2, 4.2)
                 p.setPen(QColor(c['muted']))
-                p.drawText(QRectF(x - 36, self.height() - 20, 72, 16),
+                p.drawText(self._height_rect(x, height),
                            Qt.AlignmentFlag.AlignHCenter, str(height))
         p.end()
 

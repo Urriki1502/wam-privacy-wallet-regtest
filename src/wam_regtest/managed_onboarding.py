@@ -48,6 +48,7 @@ def welcome_dialog():
     from PySide6.QtCore import Qt
     from PySide6.QtWidgets import (
         QApplication, QDialog, QFrame, QHBoxLayout, QToolButton, QVBoxLayout, QCheckBox,
+        QScrollArea, QWidget,
     )
     from .fusion_ui import action, label, panel, fusion_palette, fusion_stylesheet, vector_icon
 
@@ -63,7 +64,16 @@ def welcome_dialog():
     dialog.setStyleSheet(fusion_stylesheet(mode))
     palette = fusion_palette(mode)
 
-    root = QVBoxLayout(dialog)
+    outer = QVBoxLayout(dialog)
+    outer.setContentsMargins(0, 0, 0, 0)
+    scroll = QScrollArea(dialog)
+    scroll.setWidgetResizable(True)
+    scroll.setFrameShape(QFrame.Shape.NoFrame)
+    scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    content = QWidget()
+    scroll.setWidget(content)
+    outer.addWidget(scroll)
+    root = QVBoxLayout(content)
     root.setContentsMargins(28, 28, 28, 24)
     root.setSpacing(18)
     root.addWidget(label("WAM FUSION", "FusionKicker"))
@@ -160,51 +170,56 @@ def assert_unified_welcome_qt():
         raise ValueError("WAM_FUSION_LEGACY_ROUTE_DENIED")
     dialog.deleteLater()
 
+    # Also executed by genuine native/frozen Q06 probes before any owner exists.
+    from .onboarding_probe import qualify_password_dialogs
+    qualify_password_dialogs()
+
 
 def launch(core, source):
     from .desktop import qt_application
     from PySide6.QtWidgets import QFileDialog, QDialog, QMessageBox
     qt_application()
-    dialog = welcome_dialog()
-    try:
-        if dialog.exec() != QDialog.DialogCode.Accepted:
-            return 0
-        choice = dialog.selection
-        shared = dialog.shared_mode.isChecked()
-    finally:
-        dialog.deleteLater()
-    q06, mode, create = wallet_route(choice)
-    shared_profile = None
-    if shared:
-        if not q06:
-            QMessageBox.warning(None, 'Shared REGTEST', 'Shared mode requires a BIP39 wallet profile.')
-            return 0
-        from .shared_regtest_gui import configure
-        shared_profile = configure()
-        if shared_profile is None:
-            return 0
-    selected = QFileDialog.getExistingDirectory(
-        None,
-        ("Choose a parent folder for the NEW REGTEST wallet profile"
-         if create else
-         "Choose the exact EXISTING REGTEST wallet profile"),
-    )
-    if not selected:
-        return 0
-    try:
-        root = selected_profile(Path(selected).absolute(), create)
-    except ValueError:
-        QMessageBox.warning(
-            None, "Wallet folder not accepted",
-            "Choose an existing wallet profile or a safe parent folder "
-            "for a new one. No wallet files were changed.",
+    while True:
+        dialog = welcome_dialog()
+        try:
+            if dialog.exec() != QDialog.DialogCode.Accepted:
+                return 0
+            choice = dialog.selection
+            shared = dialog.shared_mode.isChecked()
+        finally:
+            dialog.deleteLater()
+        q06, mode, create = wallet_route(choice)
+        shared_profile = None
+        if shared:
+            if not q06:
+                QMessageBox.warning(None, 'Shared REGTEST', 'Shared mode requires a BIP39 wallet profile.')
+                continue
+            from .shared_regtest_gui import configure
+            shared_profile = configure()
+            if shared_profile is None:
+                continue
+        selected = QFileDialog.getExistingDirectory(
+            None,
+            ("Choose a parent folder for the NEW REGTEST wallet profile"
+             if create else
+             "Choose the exact EXISTING REGTEST wallet profile"),
         )
-        return 0
-    if q06:
-        from .bip39_owner_gui import launch_bip39_trial
-        return launch_bip39_trial(
-            root, core, source, mode=mode, authorized=True, shared_profile=shared_profile)
-    # Preserve the established Q05 engine and separate legacy format.
-    from .managed_gui import launch_managed
-    return launch_managed(
-        root, core, source, authorized=True, create=create)
+        if not selected:
+            continue
+        try:
+            root = selected_profile(Path(selected).absolute(), create)
+        except ValueError:
+            QMessageBox.warning(
+                None, "Wallet folder not accepted",
+                "Choose an existing wallet profile or a safe parent folder "
+                "for a new one. No wallet files were changed.",
+            )
+            continue
+        if q06:
+            from .bip39_owner_gui import launch_bip39_trial
+            return launch_bip39_trial(
+                root, core, source, mode=mode, authorized=True, shared_profile=shared_profile)
+        # Preserve the established Q05 engine and separate legacy format.
+        from .managed_gui import launch_managed
+        return launch_managed(
+            root, core, source, authorized=True, create=create)
