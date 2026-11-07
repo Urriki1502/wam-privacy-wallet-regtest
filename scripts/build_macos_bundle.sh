@@ -3,6 +3,12 @@
 # immutable WSP source and actual Core/Qt E2E before this build is allowed.
 set -euo pipefail
 umask 077
+# Distributed wallet bytes use the positive allowlist. The legacy frozen probe
+# build is explicitly separate and must never stand in for production E2E.
+case "${1:-}" in
+  "") exec python -I scripts/build_macos_production.py ;;
+  --qualification-only) shift ;;
+esac
 case "${1:-}" in
   "") export WAM_BUILD_SCOPE=full ;;
   --ui-layout-focused) export WAM_BUILD_SCOPE=ui-layout-focused ;;
