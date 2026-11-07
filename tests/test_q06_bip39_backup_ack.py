@@ -743,6 +743,8 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
         for field, word in zip(dialog._fields, words):
             self.assertEqual(field.text(), word)
         self.assertTrue(dialog._verify_button.isEnabled())
+        # A consumed seed must not remain readable in the system pasteboard.
+        self.assertEqual(QApplication.clipboard().text(), "")
         _find_button(dialog, "Clear all").click()
         self.app.processEvents()
         self.assertEqual(dialog._count_label.text(), "0/12 words entered")
@@ -751,6 +753,11 @@ class RecoveryVerifyDialogContract(unittest.TestCase):
         _find_button(dialog, "Paste 12 words").click()
         self.app.processEvents()
         self.assertEqual(dialog._fields[0].text(), words[4])
+        self.assertEqual(dialog._count_label.text(), "1/12 words entered")
+        self.assertEqual(QApplication.clipboard().text(), "")
+        # An empty pasteboard is a harmless no-op, never an error.
+        _find_button(dialog, "Paste 12 words").click()
+        self.app.processEvents()
         self.assertEqual(dialog._count_label.text(), "1/12 words entered")
 
     def test_cancel_clears_fields_and_emits_cancelled(self):

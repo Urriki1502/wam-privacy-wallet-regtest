@@ -189,7 +189,13 @@ class Bip39RecoveryVerifyDialog(QDialog):
         self.accept()
 
     def _on_paste(self):
-        self._apply_paste(QApplication.clipboard().text())
+        clipboard = QApplication.clipboard()
+        text = clipboard.text()
+        self._apply_paste(text)
+        if text:
+            # The phrase is consumed by this explicit Paste; never leave a BIP39
+            # seed readable in the system pasteboard for other processes.
+            clipboard.clear()
 
     def _apply_paste(self, text):
         tokens = str(text or "").strip().lower().split()
