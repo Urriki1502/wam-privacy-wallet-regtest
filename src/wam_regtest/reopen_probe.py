@@ -53,7 +53,10 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case):
             'native_qt_recovered_receive_balance':True,'observed_height':103,
             'cross_mac_anchor_migration_allowed':False,
         }
-    except Exception:
+    except Exception as error:
+        stage=getattr(error,'recovery_stage',None)
+        if stage is not None:
+            print('WALLET_REOPEN_DENIED_STAGE='+stage+' CAUSE='+str(error.recovery_cause),flush=True)
         raise ReopenProbeError('WALLET_REAL_CORE_REOPEN_DENIED') from None
     finally:
         if window is not None:
