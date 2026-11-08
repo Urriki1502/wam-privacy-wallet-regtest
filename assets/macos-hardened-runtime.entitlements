@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Hardened-runtime exceptions for the frozen Python/PySide6 wallet.
+	     Kept empty unless a verified hardened-runtime dry run proves one is
+	     required. No sandbox escape, debugging, JIT or library-validation
+	     waiver is granted by default. -->
+</dict>
+</plist>
