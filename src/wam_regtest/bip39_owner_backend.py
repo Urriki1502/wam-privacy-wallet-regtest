@@ -113,12 +113,30 @@ def _ack_read(directory, name):
     return raw
 
 
+def _ack_create_private_directory(directory):
+    """Native owner-only directory creation; no runtime/witness policy needed.
+
+    Never repairs or chmods an existing directory; callers re-validate.
+    """
+    if sys.platform == "darwin":
+        directory.mkdir(mode=0o700)
+        from .private_directory import open_macos_private_directory
+        os.close(open_macos_private_directory(directory))
+    elif sys.platform == "linux":
+        from .linux_private_storage import create_private_directory
+        create_private_directory(directory)
+    elif sys.platform == "win32":
+        from .windows_private_storage import create_private_directory
+        create_private_directory(directory)
+    else:
+        raise Q06ReadOnlyError(_ACK_DENIED)
+
+
 def _ack_ensure_directories(root):
-    from . import custody
     state = root / "q06-gui-state"
     for directory in (state, state / "ack"):
         if _ack_absent(directory):
-            custody.create_directory(directory)
+            _ack_create_private_directory(directory)
     return state / "ack"
 
 

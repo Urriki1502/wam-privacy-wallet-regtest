@@ -7,6 +7,7 @@ from contextlib import contextmanager
 import json
 from pathlib import Path
 from types import SimpleNamespace
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -205,6 +206,12 @@ class Q06OwnerBackendContracts(unittest.TestCase):
         self.tmp=tempfile.TemporaryDirectory(prefix="q06-owner-unit-")
         self.addCleanup(self.tmp.cleanup)
         self.root=Path(self.tmp.name)
+        if sys.platform=="darwin":
+            # Hosted macOS runners give system temp an inheritable ACL; the
+            # owner-only ack storage correctly refuses ACL'd directories.
+            # Remove ACL entries from this disposable fixture root only.
+            import subprocess
+            subprocess.run(["/bin/chmod","-N",str(self.root)],check=True)
         self.owner=SimpleNamespace(directory=self.root,root=self.root)
         self.backend=Bip39ReadOnlyBackend(self.root,Path("/synthetic-core"),SOURCE)
         self.backend._core=lambda:self.owner

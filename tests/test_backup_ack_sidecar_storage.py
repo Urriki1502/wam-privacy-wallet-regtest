@@ -29,6 +29,9 @@ class BackupAckSidecarStorage(unittest.TestCase):
         self.base = Path(temp.name).resolve()
         self.root = self.base / "profile"
         self.root.mkdir(mode=0o700)
+        import subprocess
+        subprocess.run(["/bin/chmod", "-N", str(self.base)], check=True)  # runner temp ACL
+        subprocess.run(["/bin/chmod", "-N", str(self.root)], check=True)
         self.backend = Bip39ReadOnlyBackend(self.root, Path("/synthetic-core"), SOURCE)
         self.folder = self.root / SEED
         self.ack_dir = self.root / "q06-gui-state" / "ack"
@@ -204,6 +207,17 @@ class BackupAckSidecarStorage(unittest.TestCase):
             self.backend._q06_write_ack(self.root / "../escape", False, deferred=True)
         self.assertEqual(self.backend._q06_read_ack(self.root / "not-a-seed")[2], False)
 
+
+    def test_inherited_acl_profile_directory_is_refused(self):
+        """Hosted-runner condition: an inheritable ACL makes new ack dirs non-private."""
+        import subprocess
+        subprocess.run(["/bin/chmod", "+a", "everyone allow read,list,search,file_inherit,"
+                        "directory_inherit", str(self.root)], check=True)
+        self._denied_write()
+        subprocess.run(["/bin/chmod", "-N", str(self.root)], check=True)
+        if (self.root / "q06-gui-state").exists():
+            subprocess.run(["/bin/chmod", "-RN", str(self.root / "q06-gui-state")], check=True)
+        self.assertEqual(self.backend._q06_read_ack(self.folder)[2], False if self.path.exists() else True)
 
 if __name__ == "__main__":
     unittest.main()
