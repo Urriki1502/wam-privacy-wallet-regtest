@@ -27,7 +27,7 @@ def _load(name, path):
 
 policy = _load('phase5_packaging_policy', ROOT / 'scripts/production_packaging.py')
 AVAILABLE = {p.stem for p in SRC.glob('*.py')}
-PLATFORMS = ('macos', 'windows', 'linux-desktop', 'linux-headless')
+PLATFORMS = ('macos', 'windows', 'linux-desktop')
 HOSTILE = {'CI': 'true', 'GITHUB_ACTIONS': 'true', 'WAM_Q06_CI_SPEND_QUALIFY': '1', 'WAM_QUALIFICATION': '1'}
 
 
@@ -79,15 +79,7 @@ REVIEWED_LAZY = {
     'windows': _COMMON_LAZY | {('windows_core_regtest_smoke', 'windows_read_gui'),
                                ('windows_core_regtest_smoke', 'windows_vault_probe'),
                                ('windows_core_regtest_smoke', 'windows_wsp_regtest')},
-    'linux-desktop': _COMMON_LAZY | _NON_WINDOWS_SMOKE | {('linux_headless', 'linux_headless_probe'),
-                                                          ('linux_headless', 'linux_qt_probe')},
-    'linux-headless': _COMMON_LAZY | _NON_WINDOWS_SMOKE | {
-        ('linux_headless', 'linux_headless_probe'), ('linux_headless', 'linux_qt_probe'),
-        # Qt-only branches; the no-Qt package refuses them (fail closed).
-        ('core', 'desktop'), ('core', 'operational_gui'), ('linux_headless', 'operational_gui'),
-        ('linux_production_entry', 'desktop'), ('managed_onboarding', 'bip39_owner_gui'),
-        ('managed_onboarding', 'desktop'), ('managed_onboarding', 'fusion_ui'),
-        ('managed_onboarding', 'managed_gui'), ('shared_regtest_gui', 'fusion_ui')},
+    'linux-desktop': _COMMON_LAZY | _NON_WINDOWS_SMOKE,
 }
 
 
@@ -97,10 +89,10 @@ class PlatformAllowlists(unittest.TestCase):
         base = policy.RUNTIME - {'production_entry'}
         self.assertEqual(policy.runtime_modules('windows'), base | policy.WINDOWS_EXTRA)
         self.assertEqual(policy.runtime_modules('linux-desktop'), base | policy.LINUX_EXTRA)
-        self.assertEqual(policy.runtime_modules('linux-headless'),
-                         (base | policy.LINUX_EXTRA) - policy.QT_MODULES)
-        with self.assertRaises(ValueError):
-            policy.runtime_modules('android')
+        self.assertNotIn('linux_headless', policy.runtime_modules('linux-desktop'))
+        for retired in ('android', 'linux-headless'):
+            with self.assertRaises(ValueError):
+                policy.runtime_modules(retired)
 
     def test_no_platform_ships_developer_entries_probes_or_scenarios(self):
         for platform in PLATFORMS:
@@ -119,7 +111,6 @@ class PlatformAllowlists(unittest.TestCase):
     def test_qt_module_set_matches_static_module_level_imports(self):
         desktop = policy.runtime_modules('linux-desktop')
         self.assertEqual({n for n in desktop if SCAN[n][2]}, set(policy.QT_MODULES))
-        self.assertFalse({n for n in policy.runtime_modules('linux-headless') if SCAN[n][2]})
 
     def test_module_level_closure_is_complete_for_every_platform(self):
         for platform in PLATFORMS:
@@ -242,30 +233,20 @@ class LinuxProductionEntry(unittest.TestCase):
                 self.assertEqual(self.entry.main(), 64)
                 check.assert_not_called()
 
-    def test_strict_headless_parser(self):
-        self.assertIsNotNone(self.entry.headless_arguments(self.VALID[1:]))
-        self.assertIsNotNone(self.entry.headless_arguments(self.VALID[1:] + ['--recover-backup', '/b/x.enc']))
-        for bad in (self.VALID[1:] + ['--confirm-experimental-developer-regtest'],
-                    self.VALID[1:] + ['--recover-backup', 'relative.enc'],
-                    self.VALID[1:3] + self.VALID[5:],
-                    ['--manifest-sha256=' + 'a' * 64] + self.VALID[3:],
-                    [t.upper() if t.startswith('a' * 8) else t for t in self.VALID[1:]],
-                    self.VALID[1:] + ['--gui']):
-            with self.subTest(bad=bad):
-                self.assertIsNone(self.entry.headless_arguments(bad))
-
-    def test_valid_headless_runs_existing_frontend_with_bundled_core_and_no_probe(self):
-        with mock.patch.object(sys, 'argv', ['wam', *self.VALID]), \
-                mock.patch.object(self.entry, 'checked_resources', return_value=(Path('/b/core'), Path('/b/wsp'))), \
-                mock.patch('wam_regtest.linux_headless.run', return_value=0) as run:
-            self.assertEqual(self.entry.main(), 0)
-        args = run.call_args.args[0]
-        self.assertEqual((args.core_dir, args.wsp_source_root), (Path('/b/core'), Path('/b/wsp')))
-        self.assertEqual(args.manifest_sha256, 'a' * 64)
-        self.assertEqual(args.anchor_socket, Path('/run/wam/anchor.sock'))
-        self.assertFalse(args.confirm_headless_e2e or args.confirm_qt_e2e or args.gui)
-        self.assertIsNone(args.report)
-        self.assertIsNone(args.recover_backup)
+    def test_headless_cli_is_not_a_production_route(self):
+        """Six-gate decision B: legacy-custody headless is refused like any developer argv."""
+        self.assertFalse(hasattr(self.entry, 'headless_arguments'))
+        for argv in (self.VALID, self.VALID + ['--recover-backup', '/b/x.enc'], ['wallet']):
+            with self.subTest(argv=argv), mock.patch.object(sys, 'argv', ['wam', *argv]), \
+                    mock.patch.object(self.entry, 'checked_resources') as check, \
+                    mock.patch('wam_regtest.linux_headless.run') as run:
+                self.assertEqual(self.entry.main(), 64)
+                check.assert_not_called()
+                run.assert_not_called()
+        formerly_accepted = ['wallet', '--manifest-sha256', '0' * 64, '--anchor-socket',
+                             '/nonexistent/anchor.sock', '--confirm-experimental-developer-regtest']
+        self.assertIn(formerly_accepted, [list(a) for a in policy.DEVELOPER_ARGV])
+        self.assertNotIn('linux_headless', (SRC / 'linux_production_entry.py').read_text())
 
     def test_check_bundle_and_unfrozen_host(self):
         with mock.patch.object(sys, 'argv', ['wam', '--check-bundle']), \
@@ -299,7 +280,8 @@ class BuilderContracts(unittest.TestCase):
 
     def test_linux_builder_production_mode(self):
         text = (ROOT / 'scripts/build_linux_wallet.py').read_text()
-        for needle in ("'--production'", "'linux-desktop' if args.desktop else 'linux-headless'",
+        for needle in ("'--production'", "production_arguments(source_root,'linux-desktop')",
+                       'LINUX_HEADLESS_PRODUCTION_OUT_OF_SCOPE',
                        'linux_production_entry.py', 'audit(binary,bundle,flavor)', 'DEVELOPER_ARGV',
                        "'production_qualified':False", 'linux-production-output', 'dist-production'):
             self.assertIn(needle, text)
@@ -310,7 +292,8 @@ class BuilderContracts(unittest.TestCase):
         self.assertLess(windows.index('python -I scripts/build_windows_bundle.py\n'),
                         windows.index('python -I scripts/build_windows_bundle.py --production'))
         self.assertIn('path: windows-production-output/', windows)
-        self.assertIn('--production', linux)
+        self.assertIn('--production --desktop', linux)
+        self.assertNotIn("matrix.frontend == 'desktop' && '--desktop' || ''", linux)
         self.assertIn('path: linux-production-output/', linux)
         for text in (windows, linux):
             self.assertIn('scripts/production_packaging.py', text)

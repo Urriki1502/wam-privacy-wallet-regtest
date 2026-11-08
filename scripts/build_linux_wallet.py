@@ -26,7 +26,7 @@ def _finish_production(args,name,bundle,binary,output,source_root,source_stamp,w
     read-only self-check. No normal-UI/headless E2E is claimed here."""
     from wam_regtest.build_provenance import verify as verify_source,public_receipt
     from production_packaging import audit,DEVELOPER_ARGV
-    flavor='linux-desktop' if args.desktop else 'linux-headless'
+    flavor='linux-desktop'
     inventory=audit(binary,bundle,flavor)
     (output/'PRODUCTION_MODULE_INVENTORY.json').write_text(json.dumps(inventory,indent=2)+'\n')
     clean={k:v for k,v in os.environ.items() if k not in ('PYTHONPATH','PYTHONHOME')}
@@ -74,6 +74,9 @@ def main():
     parser.add_argument('--production',action='store_true',
         help='Allowlisted distributed wallet; qualification frozen E2E stays in the default build')
     args=parser.parse_args()
+    if args.production and not args.desktop:
+        # Six-gate decision B: no headless production spending authority.
+        raise SystemExit('LINUX_HEADLESS_PRODUCTION_OUT_OF_SCOPE')
     assert sys.platform=='linux' and platform.machine()=='x86_64'
     from wam_regtest.build_provenance import capture,verify as verify_source,public_receipt
     source_root=Path.cwd();source_stamp=capture(source_root)
@@ -99,7 +102,7 @@ def main():
             sys.path.insert(0,str(source_root/'scripts'))
             from production_packaging import arguments as production_arguments
             modules=['--distpath','dist-production','--workpath','build-production',
-                     *production_arguments(source_root,'linux-desktop' if args.desktop else 'linux-headless')]
+                     *production_arguments(source_root,'linux-desktop')]
             entry='src/wam_regtest/linux_production_entry.py'
         else:
             modules=['--collect-submodules','wam_regtest']

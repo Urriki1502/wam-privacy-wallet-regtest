@@ -301,11 +301,15 @@ jobs:
             fusion-ui-review/
           if-no-files-found: error
           retention-days: 14
+      # Six-gate decision B: production is desktop-only; headless stays an
+      # experimental qualification tool and has no production build.
       - name: Freeze allowlisted production binary after qualification (normal-entry E2E pending, not acceptance)
+        if: matrix.frontend == 'desktop'
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python -I scripts/build_linux_wallet.py --core-dir qualified-linux-core/linux-core --production ${{ matrix.frontend == 'desktop' && '--desktop' || '' }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        run: python -I scripts/build_linux_wallet.py --core-dir qualified-linux-core/linux-core --production --desktop
+      - if: matrix.frontend == 'desktop'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: WAM-Fusion-REGTEST-production-allowlist-linux-x86_64-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
           path: linux-production-output/

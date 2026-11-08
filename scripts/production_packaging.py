@@ -32,14 +32,15 @@ wsp_import wsp_live
 # helpers that core_supervisor/core_process/rpc_scope call on win32.
 WINDOWS_EXTRA = frozenset(('windows_core_regtest_smoke', 'windows_core_stage',
                            'windows_production_entry'))
-# Linux: existing headless wallet frontend (linux-wallet) and its entry.
-LINUX_EXTRA = frozenset(('linux_headless', 'linux_production_entry'))
+# Linux: desktop production entry only. The headless frontend (legacy base
+# WalletSession custody) is an experimental REGTEST tool, not production.
+LINUX_EXTRA = frozenset(('linux_production_entry',))
 # Modules importing PySide6 at module level: never in the no-Qt headless build.
 QT_MODULES = frozenset(('bip39_backup_page bip39_fusion_gui bip39_locale bip39_owner_gui '
                         'desktop external_core_gui fusion_motion fusion_pages fusion_ui '
                         'managed_gui operational_gui').split())
 ENTRY = {'macos': 'production_entry', 'windows': 'windows_production_entry',
-         'linux-desktop': 'linux_production_entry', 'linux-headless': 'linux_production_entry'}
+         'linux-desktop': 'linux_production_entry'}
 
 
 def runtime_modules(platform='macos'):
@@ -50,8 +51,6 @@ def runtime_modules(platform='macos'):
         return frozenset(base | WINDOWS_EXTRA)
     if platform == 'linux-desktop':
         return frozenset(base | LINUX_EXTRA)
-    if platform == 'linux-headless':
-        return frozenset((base | LINUX_EXTRA) - QT_MODULES)
     raise ValueError('PRODUCTION_PLATFORM_POLICY_DENIED')
 
 
@@ -74,7 +73,12 @@ DEVELOPER_ARGV = tuple([a] for a in (
     ['wallet', '--manifest-sha256', '0' * 64, '--anchor-socket', 'relative.sock',
      '--confirm-experimental-developer-regtest'],
     ['wallet', '--manifest', '0' * 64, '--anchor-socket', '/nonexistent/anchor.sock',
-     '--confirm-experimental-developer-regtest'])
+     '--confirm-experimental-developer-regtest'],
+    # Formerly accepted Linux headless production tuple (six-gate decision B).
+    ['wallet', '--manifest-sha256', '0' * 64, '--anchor-socket', '/nonexistent/anchor.sock',
+     '--confirm-experimental-developer-regtest'],
+    ['wallet', '--manifest-sha256', '0' * 64, '--anchor-socket', '/nonexistent/anchor.sock',
+     '--confirm-experimental-developer-regtest', '--recover-backup', '/nonexistent/backup.enc'])
 
 PYTHON_SUFFIXES = ('.py', '.pyc', '.pyo', '.pyw', '.pyd')
 

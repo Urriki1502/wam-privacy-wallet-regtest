@@ -3,48 +3,15 @@
 Accepted argv only:
   (empty)                  existing desktop flow (manifest + witness dialogs)
   --check-bundle           read-only bundle self-check
-  wallet --manifest-sha256 HEX --anchor-socket ABS
-         --confirm-experimental-developer-regtest [--recover-backup ABS]
-                           existing headless wallet (linux_headless.launch)
-Everything else (acceptance probes, --ci-*, q04, external Core/WSP overrides,
-report files) returns 64 before resources are read. Environment is ignored.
+Everything else returns 64 before resources are read, including the
+headless `wallet ...` CLI: Linux headless uses the legacy base WalletSession
+custody, not the Q06 BIP39 original-owner path, so it is NOT a production
+spending authority (six-gate decision B). It remains an experimental REGTEST
+engineering tool in the qualification build. Environment is ignored.
 """
 from pathlib import Path
 import platform
-import re
 import sys
-
-_FLAGS = frozenset(('--confirm-experimental-developer-regtest',))
-_VALUED = frozenset(('--manifest-sha256', '--anchor-socket', '--recover-backup'))
-_REQUIRED = frozenset(('--manifest-sha256', '--anchor-socket', '--confirm-experimental-developer-regtest'))
-
-
-def headless_arguments(argv):
-    """Strict, abbreviation-free parser; None means refuse."""
-    seen = {}
-    index = 0
-    while index < len(argv):
-        token = argv[index]
-        if token in seen:
-            return None
-        if token in _FLAGS:
-            seen[token] = True
-            index += 1
-        elif (token in _VALUED and index + 1 < len(argv)
-                and not argv[index + 1].startswith('-')):
-            seen[token] = argv[index + 1]
-            index += 2
-        else:
-            return None
-    if not _REQUIRED <= set(seen):
-        return None
-    if not re.fullmatch('[0-9a-f]{64}', seen['--manifest-sha256']):
-        return None
-    for key in ('--anchor-socket', '--recover-backup'):
-        if key in seen and not Path(seen[key]).is_absolute():
-            return None
-    return seen
-
 
 def checked_resources():
     if (sys.platform != 'linux' or platform.machine() != 'x86_64'
@@ -92,28 +59,12 @@ def _desktop(core, source):
 
 def main():
     argv = sys.argv[1:]
-    headless = None
-    if argv[:1] == ['wallet']:
-        headless = headless_arguments(argv[1:])
-        if headless is None:
-            return 64
-    elif argv not in ([], ['--check-bundle']):
+    if argv not in ([], ['--check-bundle']):
         return 64
     try:
         core, source = checked_resources()
         if argv == ['--check-bundle']:
             return 0
-        if headless is not None:
-            from types import SimpleNamespace
-            from wam_regtest.linux_headless import run
-            backup = headless.get('--recover-backup')
-            return run(SimpleNamespace(
-                core_dir=core, wsp_source_root=source,
-                manifest_sha256=headless['--manifest-sha256'],
-                anchor_socket=Path(headless['--anchor-socket']),
-                confirm_experimental_developer_regtest=True,
-                confirm_headless_e2e=False, confirm_qt_e2e=False, gui=False,
-                recover_backup=None if backup is None else Path(backup), report=None))
         return _desktop(core, source)
     except Exception:
         # Fixed token only; never exception text, paths or secrets.
