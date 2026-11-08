@@ -548,17 +548,34 @@ class WalletSession:
             if getattr(self,'_managed_owner',None) is not None:
                 from .managed_wallet_session import close_session
                 return close_session(self)
-            self._close_rpc()
-            if self._disclosure_gate is not None:
-                self._disclosure_gate.close()
-                self._disclosure_gate=None
-            if self.locked:
+            gate,self._disclosure_gate=self._disclosure_gate,None
+            scanner,ring=self.scanner,self.ring
+            closes=[self._close_rpc]
+            if gate is not None:closes.append(gate.close)
+            if ring is not None:closes+=[scanner.close,ring.close]
+            failed=False
+            try:
+                # Every close is attempted even if an earlier one raises.
+                for close in closes:
+                    try:
+                        close()
+                    except Exception:
+                        failed=True
+            finally:
+                # Drop this session's signing/password references regardless.
+                # (Python cannot guarantee zeroization of other copies.)
+                self._rpc_client=None
+                self.scanner=self.ring=None
+                self._password=None
+                self._prepared=self._signed=self._review=self._tip=None
+            if failed:
+                # Cleanup outcome unknown: latch, keep the runtime for review,
+                # and refuse unlock in this process. Reservations untouched.
+                self.faulted=True
+                self._lock_cleanup_uncertain=True
+                raise WalletSessionError("WALLET_LOCK_CLEANUP_UNCERTAIN") from None
+            if ring is None:
                 return
-            self.scanner.close()
-            self.ring.close()
-            self.scanner=self.ring=None
-            self._password=None
-            self._prepared=self._signed=self._review=self._tip=None
             # This path was created only by this disposable session. No user DB.
             self.runtime.unlink(missing_ok=True)
 
@@ -566,6 +583,8 @@ class WalletSession:
         with self._lock:
             if getattr(self,'_managed_owner',None) is not None:
                 raise WalletSessionError('WALLET_MANAGED_REOPEN_REQUIRED')
+            if getattr(self,'_lock_cleanup_uncertain',False):
+                raise WalletSessionError('WALLET_LOCK_CLEANUP_UNCERTAIN')
             if not self.locked:
                 raise WalletSessionError("WALLET_ALREADY_UNLOCKED")
             if self._core_reauthentication_required and reauthenticate_core is not True:
