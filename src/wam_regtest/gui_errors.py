@@ -28,6 +28,8 @@ _MESSAGES={
  'WALLET_PAYMENT_ALREADY_PENDING':'A payment review is already active. Finish that review or cancel its unsigned draft before preparing another.',
  'WALLET_SIGN_UNCERTAIN_LOCK_RETAINED':'Signing did not complete safely. Input reservations are irreversible. Do not retry automatically or release the locks.',
  'WALLET_BROADCAST_UNCERTAIN_LOCK_RETAINED':'Broadcast result is uncertain. The node may have accepted the transaction. Do not retry automatically; reservations remain locked.',
+ 'WALLET_BROADCAST_REJECTED_LOCK_RETAINED':'The local node rejected the signed transaction before submission; it was not sent. Input reservations stay signed and locked. Nothing is retried or released automatically.',
+ 'WALLET_BROADCAST_NOT_SUBMITTED_LOCK_RETAINED':'Pre-submission verification could not complete; the transaction was not sent by this wallet. Input reservations stay signed and locked. Nothing is retried or released automatically.',
  'WALLET_ROOT_LEASE_UNCERTAIN_LOCK_RETAINED':'The independent custody lease was lost. Operations are stopped and reservations retained. Do not reset the witness or retry automatically.',
  'WALLET_BACKUP_STALE_OR_TAMPERED':'This backup does not match the latest anchored checkpoint. Choose the current unmodified backup; do not reset the anchor.',
  'WALLET_UNLOCK_REFUSED':'Could not unlock: passphrase, encrypted snapshot or custody verification failed. The wallet remains locked. Check the passphrase and latest backup; do not reset custody.',

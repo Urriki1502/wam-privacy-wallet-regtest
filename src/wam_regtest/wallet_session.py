@@ -423,6 +423,13 @@ class WalletSession:
                 rpc=self._rpc()
                 self._unchanged_inputs(rpc)
                 token=self._prepared.proposal.token
+                # Read-only policy preflight while the durable state is still
+                # 'signed'. Nothing has been handed to sendrawtransaction, so a
+                # definitive rejection must not become network uncertainty.
+                # The reservation stays signed/irreversible: no release, no
+                # retry, and this session latches exactly as before.
+                self._preflight_not_submitted(rpc)
+                self._before_broadcast_submission()
                 # Retain irreversible uncertainty in encrypted storage BEFORE RPC.
                 self.scanner.store.db.execute("UPDATE reservations SET state='uncertain' WHERE token=?",(token,))
                 self._save()
@@ -438,6 +445,28 @@ class WalletSession:
         except LinuxWitnessError:
             self.faulted=True;self._signed=None
             raise WalletSessionError("WALLET_ROOT_LEASE_UNCERTAIN_LOCK_RETAINED") from None
+
+    def _preflight_not_submitted(self, rpc):
+        """testmempoolaccept only; raises with the durable state still 'signed'.
+
+        Any later rejection observed inside WSP's own broadcast, after the
+        uncertain checkpoint, is deliberately NOT relabelled (conservative).
+        """
+        from wam_sp.psbt import PSBT
+        try:
+            raw=PSBT.decode(self._signed).finalize().hex()
+            allowed=rpc.call("testmempoolaccept",[[raw]])[0]["allowed"]
+        except Exception:
+            self.faulted=True
+            self._signed=None
+            raise WalletSessionError("WALLET_BROADCAST_NOT_SUBMITTED_LOCK_RETAINED") from None
+        if allowed is not True:
+            self.faulted=True
+            self._signed=None
+            raise WalletSessionError("WALLET_BROADCAST_REJECTED_LOCK_RETAINED")
+
+    def _before_broadcast_submission(self):
+        """Hook: subclasses persist submission-intent evidence here."""
 
     def cancel(self):
         from wam_sp.wallet import Wallet

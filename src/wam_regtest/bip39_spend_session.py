@@ -158,12 +158,17 @@ class Q06OwnedSpendSession(WalletSession):
                 or commitment != self._review.commitment):
             raise WalletSessionError('WALLET_BROADCAST_APPROVAL_REQUIRED')
         signed, review, token = self._signed, self._review, self._prepared.proposal.token
-        self._retain_signed_payment('uncertain')
         txid = super().broadcast(commitment)
         self._retain_signed_payment('broadcast', signed=signed, review=review,
                                     token=token, txid=txid)
         self._q06_pending_confirm = txid
         return txid
+
+    def _before_broadcast_submission(self):
+        # Called only after the read-only preflight accepted, and BEFORE the
+        # durable 'uncertain' checkpoint and sendrawtransaction. A rejected
+        # transaction therefore never receives 'uncertain' evidence.
+        self._retain_signed_payment('uncertain')
 
     def _recovered_unsigned_token(self):
         """Only a singleton all-draft native ledger can be canceled sans review.
