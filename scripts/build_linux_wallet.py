@@ -21,9 +21,59 @@ CORE={'wamd':'a3e3bf810e74824e3739fd4cbd1a45037cae997056b8c978c4dc1a61d674f0c7',
       'wam-cli':'d99fc90e3aa4233979056d9981a388360e5d7ff77090d00b9bc37191a2425300'}
 
 
+def _finish_production(args,name,bundle,binary,output,source_root,source_stamp,wsp_root,wsp_stamp):
+    """Distributed Linux bytes: exact allowlist audit, developer argv refusal,
+    read-only self-check. No normal-UI/headless E2E is claimed here."""
+    from wam_regtest.build_provenance import verify as verify_source,public_receipt
+    from production_packaging import audit,DEVELOPER_ARGV
+    flavor='linux-desktop' if args.desktop else 'linux-headless'
+    inventory=audit(binary,bundle,flavor)
+    (output/'PRODUCTION_MODULE_INVENTORY.json').write_text(json.dumps(inventory,indent=2)+'\n')
+    clean={k:v for k,v in os.environ.items() if k not in ('PYTHONPATH','PYTHONHOME')}
+    hostile=dict(clean,CI='true',GITHUB_ACTIONS='true',WAM_Q06_CI_SPEND_QUALIFY='1',WAM_QUALIFICATION='1')
+    checks=[]
+    with tempfile.TemporaryDirectory(prefix='wam-linux-production-cwd-') as work:
+        check=subprocess.run([str(binary),'--check-bundle'],env=clean,cwd=work,stdin=subprocess.DEVNULL,timeout=120)
+        assert check.returncode==0,'LINUX_PRODUCTION_CHECK_BUNDLE_DENIED'
+        for argv in DEVELOPER_ARGV:
+            result=subprocess.run([str(binary),*argv],env=hostile,cwd=work,stdin=subprocess.DEVNULL,
+                capture_output=True,timeout=60)
+            assert result.returncode==64,'LINUX_PRODUCTION_DEVELOPER_DISPATCH_NOT_DENIED'
+            checks.append({'argv':argv,'returncode':result.returncode})
+    (output/'PRODUCTION_DISPATCH_NEGATIVES.json').write_text(json.dumps(checks,indent=2)+'\n')
+    members={};links={}
+    for p in sorted(bundle.rglob('*')):
+        relative=p.relative_to(bundle).as_posix()
+        if p.is_symlink():
+            target=os.readlink(p)
+            assert not Path(target).is_absolute() and p.resolve(strict=True).is_relative_to(bundle)
+            links[relative]=target
+        elif p.is_file():members[relative]=sha256(p.read_bytes()).hexdigest()
+    head=os.environ['WAM_SOURCE_HEAD']
+    verify_source(source_root,source_stamp);verify_source(wsp_root,wsp_stamp)
+    archive=output/(name+'-linux-x86_64-production-'+head+'.tar.gz')
+    with tarfile.open(archive,'x:gz',dereference=False) as tar:tar.add(bundle,arcname=name)
+    receipt={'artifact_role':'allowlisted-regtest-wallet','platform':'linux-x86_64','frontend':flavor,
+        'source':public_receipt(source_stamp,source_head=head,dispatch=os.environ.get('GITHUB_EVENT_NAME')=='workflow_dispatch'),
+        'approved_core_manifest_sha256':APPROVED,'core_sha256':CORE,
+        'wsp_source_commit':'ac55f13423620252bdbf848c7e8a280c3b84721e',
+        'executable_sha256':sha256(binary.read_bytes()).hexdigest(),'bundle_files_sha256':members,
+        'internal_symlinks':links,'archive_name':archive.name,'archive_sha256':sha256(archive.read_bytes()).hexdigest(),
+        'production_qualified':False,'normal_ui_frozen_e2e':'PENDING_NATIVE_LINUX_NORMAL_ENTRY_QUALIFICATION',
+        'separate_qualification_artifact':'linux-package-output; does not qualify distributed bytes',
+        'root_witness_provisioned_by_app':False,'mainnet_allowed':False}
+    (output/'PRODUCTION_BUILD_RECEIPT.json').write_text(json.dumps(receipt,sort_keys=True,indent=2)+'\n')
+    from wam_regtest.release_candidate import write_portable_sha256sums
+    write_portable_sha256sums(output)
+    print('LINUX_PRODUCTION_ALLOWLIST_BUILD_PASS_'+('DESKTOP' if args.desktop else 'HEADLESS')+'_NORMAL_ENTRY_QUALIFICATION_PENDING')
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--core-dir',type=Path,required=True)
-    parser.add_argument('--desktop',action='store_true');args=parser.parse_args()
+    parser.add_argument('--desktop',action='store_true')
+    parser.add_argument('--production',action='store_true',
+        help='Allowlisted distributed wallet; qualification frozen E2E stays in the default build')
+    args=parser.parse_args()
     assert sys.platform=='linux' and platform.machine()=='x86_64'
     from wam_regtest.build_provenance import capture,verify as verify_source,public_receipt
     source_root=Path.cwd();source_stamp=capture(source_root)
@@ -35,7 +85,7 @@ def main():
     from wam_regtest.branding import brand_image
     core=args.core_dir.absolute();verify_core(core,APPROVED,authorized=True)
     name='wam-regtest-desktop' if args.desktop else 'wam-regtest-headless'
-    output=Path('linux-package-output');output.mkdir()
+    output=Path('linux-production-output' if args.production else 'linux-package-output');output.mkdir()
     with tempfile.TemporaryDirectory(prefix='wam-linux-package-') as temporary:
         stage=Path(temporary);wsp=stage/'wsp-source'
         from wam_regtest.q05_package_provenance import stage as stage_q05
@@ -44,16 +94,26 @@ def main():
         from wam_regtest.distribution_notices import stage_distribution_notices
         notices=stage/'third-party-notices'
         stage_distribution_notices(notices,qt=args.desktop)
+        if args.production:
+            # Positive allowlist and strict production entry; no developer CLI.
+            sys.path.insert(0,str(source_root/'scripts'))
+            from production_packaging import arguments as production_arguments
+            modules=['--distpath','dist-production','--workpath','build-production',
+                     *production_arguments(source_root,'linux-desktop' if args.desktop else 'linux-headless')]
+            entry='src/wam_regtest/linux_production_entry.py'
+        else:
+            modules=['--collect-submodules','wam_regtest']
+            entry='src/wam_regtest/linux_package_entry.py'
         command=[sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--onedir','--noupx',
-            '--name',name,'--paths','src','--collect-submodules','wam_regtest',
+            '--name',name,'--paths','src',*modules,
             '--collect-submodules','wam_sp','--collect-all','coincurve','--hidden-import','_cffi_backend',
             '--add-data',str(q05_source)+':.','--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
             '--add-data',str(notices)+':third-party-notices',
             '--add-data',str(brand_image())+':branding']
         if not args.desktop:
             for module in ('PySide6','shiboken6','qrcode'):command+=['--exclude-module',module]
-        subprocess.run([*command,'src/wam_regtest/linux_package_entry.py'],check=True)
-    bundle=Path('dist',name).absolute();binary=bundle/name
+        subprocess.run([*command,entry],check=True)
+    bundle=Path('dist-production' if args.production else 'dist',name).absolute();binary=bundle/name
     inspect_elf(binary.read_bytes())
     if args.desktop:
         from wam_regtest.qt_bundle_prune import prune_unreferenced_qt
@@ -72,6 +132,8 @@ def main():
     assert len(manifests)==1 and sha256(manifests[0].read_bytes()).hexdigest()==APPROVED
     if not args.desktop:
         assert not any('pyside6' in p.as_posix().lower() or 'shiboken' in p.as_posix().lower() for p in bundle.rglob('*'))
+    if args.production:
+        return _finish_production(args,name,bundle,binary,output,source_root,source_stamp,wsp_root,wsp_stamp)
     # Execute final bootloader, bundled Python/WSP/crypto and unchanged Core.
     # Test harness alone provisions its disposable root witness, never the app.
     environment={k:v for k,v in os.environ.items() if k not in ('PYTHONPATH','PYTHONHOME')}

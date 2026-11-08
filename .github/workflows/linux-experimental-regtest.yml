@@ -16,6 +16,7 @@ on:
       - '.github/workflows/linux-experimental-regtest.yml'
       - 'scripts/build_linux_developer_core.sh'
       - 'scripts/build_linux_wallet.py'
+      - 'scripts/production_packaging.py'
       - 'scripts/linux_headless_acceptance.py'
       - 'src/wam_regtest/*.py'
       - 'tests/test_v1_k07_real_git_source.py'
@@ -298,6 +299,16 @@ jobs:
           path: |
             linux-package-output/
             fusion-ui-review/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Freeze allowlisted production binary after qualification (normal-entry E2E pending, not acceptance)
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/build_linux_wallet.py --core-dir qualified-linux-core/linux-core --production ${{ matrix.frontend == 'desktop' && '--desktop' || '' }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: WAM-Fusion-REGTEST-production-allowlist-linux-x86_64-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: linux-production-output/
           if-no-files-found: error
           retention-days: 14
       - name: Preserve Q01 source-install receipt (not Q acceptance)

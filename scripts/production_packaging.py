@@ -1,8 +1,11 @@
-"""Explicit reviewed macOS wallet module inventory; build-time only, never shipped.
+"""Explicit reviewed wallet module inventories; build-time only, never shipped.
 
-Platform-specific runtime helpers stay until their imports can be separated in
-an independently qualified change. Their diagnostic callers are not included.
-This policy is macOS-only; Windows/Linux build scripts remain unqualified.
+RUNTIME is the reviewed macOS ARM64 set. Windows x64 and Linux x86_64 reuse it
+and add only what their normal production entry actually needs (Phase 5).
+Other-platform runtime helpers that common modules dispatch to behind
+sys.platform guards stay until they can be separated in a qualified change;
+their diagnostic callers are excluded. Windows/Linux production bytes are NOT
+qualified until native frozen execution on those hosts.
 """
 from pathlib import Path
 
@@ -25,11 +28,53 @@ wsp_import wsp_live
 ''').split())
 
 
-def runtime_modules(platform='macos'):
-    if platform != 'macos':
-        raise ValueError('PRODUCTION_PLATFORM_POLICY_DENIED')
-    return RUNTIME
+# Windows: Core staging helper and the existing Win32 Core config/env/RPC
+# helpers that core_supervisor/core_process/rpc_scope call on win32.
+WINDOWS_EXTRA = frozenset(('windows_core_regtest_smoke', 'windows_core_stage',
+                           'windows_production_entry'))
+# Linux: existing headless wallet frontend (linux-wallet) and its entry.
+LINUX_EXTRA = frozenset(('linux_headless', 'linux_production_entry'))
+# Modules importing PySide6 at module level: never in the no-Qt headless build.
+QT_MODULES = frozenset(('bip39_backup_page bip39_fusion_gui bip39_locale bip39_owner_gui '
+                        'desktop external_core_gui fusion_motion fusion_pages fusion_ui '
+                        'managed_gui operational_gui').split())
+ENTRY = {'macos': 'production_entry', 'windows': 'windows_production_entry',
+         'linux-desktop': 'linux_production_entry', 'linux-headless': 'linux_production_entry'}
 
+
+def runtime_modules(platform='macos'):
+    if platform == 'macos':
+        return RUNTIME
+    base = RUNTIME - {'production_entry'}
+    if platform == 'windows':
+        return frozenset(base | WINDOWS_EXTRA)
+    if platform == 'linux-desktop':
+        return frozenset(base | LINUX_EXTRA)
+    if platform == 'linux-headless':
+        return frozenset((base | LINUX_EXTRA) - QT_MODULES)
+    raise ValueError('PRODUCTION_PLATFORM_POLICY_DENIED')
+
+
+# Developer/qualification/alternate argv that every production executable must
+# refuse with 64 before reading resources (all platforms, hostile CI env set).
+DEVELOPER_ARGV = tuple([a] for a in (
+    '--ci-q06-bip39-spend', '--ci-q05-managed-wallet', '--ci-real-core-gui', '--ci-ui-layout',
+    '--ci-v1-net-shared-regtest', '--ci-q04-external-miner', '--ci-real-core-wallet-cocoa',
+    '--ci-q06-bip39-readonly', '--ci-q06-owned-spend', '--ci-real-core-wallet',
+    'q04-external-miner', 'linux-wallet', 'smoke', 'wallet', '-m', '-c', '--core-dir',
+    '--check-bundle=1', '--mainnet', '--testnet', '--regtest', '-h', '--help', '')) + (
+    ['--check-bundle', '--check-bundle'], ['--ci-q05-managed-wallet', 'native'],
+    ['--ci-q06-owned-spend', 'spend'], ['wallet', '--confirm-headless-e2e'],
+    ['wallet', '--manifest-sha256', '0' * 64, '--anchor-socket', '/nonexistent/anchor.sock',
+     '--confirm-experimental-developer-regtest', '--confirm-qt-e2e'],
+    ['wallet', '--manifest-sha256', '0' * 64, '--anchor-socket', '/nonexistent/anchor.sock',
+     '--confirm-experimental-developer-regtest', '--report', '/nonexistent/report.json'],
+    ['wallet', '--manifest-sha256', '0' * 64, '--anchor-socket', '/nonexistent/anchor.sock',
+     '--confirm-experimental-developer-regtest', '--core-dir', '/nonexistent'],
+    ['wallet', '--manifest-sha256', '0' * 64, '--anchor-socket', 'relative.sock',
+     '--confirm-experimental-developer-regtest'],
+    ['wallet', '--manifest', '0' * 64, '--anchor-socket', '/nonexistent/anchor.sock',
+     '--confirm-experimental-developer-regtest'])
 
 PYTHON_SUFFIXES = ('.py', '.pyc', '.pyo', '.pyw', '.pyd')
 
@@ -44,7 +89,12 @@ def audit_loose_files(app):
     import hashlib
     import json
     app = Path(app)
-    wsp = app/'Contents/Resources/wsp-source'
+    # macOS: Contents/Resources/wsp-source (Frameworks/ holds a symlink to it).
+    # Windows/Linux onedir: _internal/wsp-source. Exactly one real directory.
+    found = [p for p in app.rglob('wsp-source') if p.is_dir() and not p.is_symlink()]
+    if len(found) > 1:
+        raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
+    wsp = found[0] if found else app/'wsp-source'
     allowed = {}
     if wsp.exists():
         if wsp.is_symlink() or not wsp.is_dir():
@@ -68,19 +118,20 @@ def audit_loose_files(app):
             raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
 
 
-def arguments(root):
+def arguments(root, platform='macos'):
+    runtime, entry = runtime_modules(platform), ENTRY[platform]
     available = {p.stem for p in (Path(root)/'src/wam_regtest').glob('*.py')}
-    if not RUNTIME <= available:
+    if not runtime <= available:
         raise ValueError('PRODUCTION_ALLOWLIST_MEMBER_MISSING')
     args = []
-    for name in sorted(RUNTIME - {'__init__', 'production_entry'}):
+    for name in sorted(runtime - {'__init__', entry}):
         args += ['--hidden-import', 'wam_regtest.' + name]
-    for name in sorted(available - RUNTIME):
+    for name in sorted(available - runtime):
         args += ['--exclude-module', 'wam_regtest.' + name]
     return args
 
 
-def audit(binary, app):
+def audit(binary, app, platform='macos'):
     from PyInstaller.archive.readers import CArchiveReader
     archive = CArchiveReader(str(binary))
     pyz_names = [n for n in archive.toc if n.endswith('.pyz')]
@@ -90,10 +141,11 @@ def audit(binary, app):
     present = {n.partition('.')[2] or '__init__' for n in modules
                if n == 'wam_regtest' or n.startswith('wam_regtest.')}
     # The entry is a top-level script in CArchive, not a PYZ submodule.
-    expected = RUNTIME - {'production_entry'}
+    entry = ENTRY[platform]
+    expected = runtime_modules(platform) - {entry}
     if present != expected:
         raise ValueError('PRODUCTION_MODULE_INVENTORY_DENIED:' + ','.join(sorted(present ^ expected)))
     audit_loose_files(app)
     return dict(status='PASS_EXACT_PRODUCTION_ALLOWLIST', modules=sorted(present),
-                entrypoint='production_entry', developer_dispatch=False,
+                platform=platform, entrypoint=entry, developer_dispatch=False,
                 wam_sp_source_is_pinned_data_not_wallet_developer_tools=True)
