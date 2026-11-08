@@ -358,6 +358,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
         advanced_body.addWidget(self.fund)
         advanced_body.addWidget(self.confirm)
         advanced_body.addWidget(self.inspect)
+        advanced_body.addWidget(self.intents)
+        advanced_body.addWidget(self.resume)
         advanced_body.addWidget(label("OWNED CORE / SESSION", "FusionKicker"))
         advanced_body.addWidget(self.account)
         advanced_body.addWidget(self.balance)

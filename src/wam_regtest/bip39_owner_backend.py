@@ -825,6 +825,19 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                     or self.public_state()["faulted"]):
                 raise Q06ReadOnlyError("Q06_GUI_INSPECT_ARGUMENTS_DENIED")
             return self._spend_session.inspect_confirmed(args[0])
+        if action == "intent_status":
+            # TX-03 Stage A: read-only; no replay, signature or release.
+            if (args or kwargs or self._spend_session is None
+                    or self.public_state()["faulted"]):
+                raise Q06ReadOnlyError("Q06_GUI_INTENT_STATUS_ARGUMENTS_DENIED")
+            return self._spend_session.signed_intent_status()
+        if action == "resume_intent":
+            # TX-03 Stage B: explicit owner approval of ONE exact signed intent.
+            if (kwargs or len(args) != 3 or args[2] is not True
+                    or self._spend_session is None
+                    or self.public_state()["faulted"]):
+                raise Q06ReadOnlyError("Q06_GUI_RESUME_ARGUMENTS_DENIED")
+            return self._spend_session.resume_signed_intent(args[0], args[1], approved=True)
         if action in ("prepare", "sign", "broadcast", "cancel"):
             if kwargs or self._spend_session is None:
                 raise Q06ReadOnlyError("Q06_GUI_SPEND_NOT_ACTIVE")

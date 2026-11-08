@@ -164,6 +164,164 @@ class Q06OwnedSpendSession(WalletSession):
         self._q06_pending_confirm = txid
         return txid
 
+    # ---- TX-03 signed-intent recovery (Stage A read-only, Stage B resume) ----
+    # Authority stays with the native-anchored reservation rows; the encrypted
+    # create-only evidence only supplies the EXACT previously signed bytes.
+    # Nothing here re-signs, retries automatically, or releases a reservation.
+    # There is deliberately no abandon/release path (TX-03 Stage C is blocked
+    # on a security proof: the native checkpoint forbids losing these rows).
+
+    def _read_payment_evidence(self, token, stage):
+        import re
+        from wam_sp.keystore import unseal
+        from wam_sp.psbt import PSBT
+        directory = self._q06_owner.directory / 'q06-payment-evidence'
+        name = token + '-' + stage + '.enc'
+        if not os.path.lexists(directory / name):
+            return None
+        body = json.loads(unseal(custody.storage().read(directory, name),
+                                 self._password, b'recovery'))
+        if (type(body) is not dict or body.get('version') != 1
+                or body.get('owner_binding') != _owner_binding(self._q06_owner)
+                or body.get('account_id') != self.ring.public_metadata()['account_id']
+                or body.get('token') != token or body.get('stage') != stage
+                or type(body.get('signed_psbt')) is not str
+                or type(body.get('commitment')) is not str
+                or re.fullmatch('[0-9a-f]{64}', body['commitment']) is None
+                or PSBT.decode(bytes.fromhex(body['signed_psbt'])).txid() != body.get('txid')):
+            raise ValueError('Q06_PAYMENT_EVIDENCE_INVALID')
+        return body
+
+    def _intent_status_unlocked(self):
+        import re
+        from wam_sp.psbt import PSBT
+        snapshot = self.snapshot()  # Original owner, native generation, live tip.
+        rpc = self._rpc()
+        with self.scanner.store.transaction():
+            rows = self.scanner.store.db.execute(
+                "SELECT txid,vout,token,state FROM reservations "
+                "WHERE state IN ('signed','uncertain') ORDER BY token,txid,vout").fetchall()
+            confirmed = {r[0] for r in self.scanner.store.db.execute(
+                'SELECT txid FROM history WHERE height>0')}
+        mempool = rpc._call('getrawmempool', [])
+        if (type(mempool) is not list or any(
+                type(i) is not str or re.fullmatch('[0-9a-f]{64}', i) is None for i in mempool)):
+            raise Q06SpendSessionError('Q06_INTENT_STATUS_UNVERIFIED')
+        groups = {}
+        for txid, vout, token, state in rows:
+            groups.setdefault(token, []).append(((txid, vout), state))
+        items = []
+        for token, members in groups.items():
+            states = {state for _, state in members}
+            outpoints = {coin for coin, _ in members}
+            item = {'token': token, 'state': states.pop() if len(states) == 1 else 'mixed',
+                    'input_count': len(outpoints), 'txid': None, 'evidence': 'missing'}
+            try:
+                body = self._read_payment_evidence(token, 'signed')
+            except Exception:
+                body, item['evidence'] = None, 'invalid'
+            if item['state'] == 'mixed':
+                item['classification'] = 'OPERATOR_REVIEW_MIXED_STATE'
+            elif body is None:
+                item['classification'] = ('OPERATOR_REVIEW_EVIDENCE_INVALID'
+                                          if item['evidence'] == 'invalid'
+                                          else 'OPERATOR_REVIEW_SIGNED_EVIDENCE_MISSING')
+            else:
+                item['evidence'] = 'verified'
+                item['txid'] = body['txid']
+                item.update(recipient=body['recipient'], atoms=body['atoms'], fee=body['fee'])
+                if set(PSBT.decode(bytes.fromhex(body['signed_psbt'])).tx.inputs) != outpoints:
+                    item['classification'] = 'OPERATOR_REVIEW_EVIDENCE_INPUT_MISMATCH'
+                elif body['txid'] in confirmed:
+                    item['classification'] = 'CONFIRMED_IN_VERIFIED_HISTORY'
+                elif body['txid'] in mempool:
+                    item['classification'] = 'IN_MEMPOOL_AWAITING_CONFIRMATION'
+                elif any(rpc.call('gettxout', [t, v, True]) is None for t, v in sorted(outpoints)):
+                    # Spent by another (or a reorged) transaction: never resumable.
+                    item['classification'] = 'OPERATOR_REVIEW_INPUT_SPENT_OR_CONFLICTED'
+                elif item['state'] == 'signed':
+                    item['classification'] = 'SIGNED_NOT_SUBMITTED_RESUMABLE'
+                else:
+                    item['classification'] = 'UNCERTAIN_NOT_OBSERVED_RESUMABLE'
+            items.append(item)
+        return {'status': 'Q06_SIGNED_INTENT_STATUS', 'height': snapshot.height,
+                'tip': snapshot.tip, 'intents': items, 'write_attempted': False,
+                'automatic_resume': False, 'abandon_available': False,
+                'mainnet_allowed': False}
+
+    def signed_intent_status(self):
+        """Stage A: read-only reconstruction of every irreversible intent."""
+        with self._lock:
+            if self._q06_uncertain or self.faulted:
+                raise Q06SpendSessionError('Q06_INTENT_STATUS_SESSION_FAULTED')
+            return self._intent_status_unlocked()
+
+    def resume_signed_intent(self, token, txid, *, approved=False):
+        """Stage B: owner-approved submission of the EXACT previously signed tx.
+
+        Eligible only for a verified-evidence intent whose inputs are still
+        unspent and which is neither confirmed nor in the mempool. A 'signed'
+        intent gets the same read-only preflight and durable 'uncertain'
+        write-ahead as a fresh broadcast; an 'uncertain' intent is resubmitted
+        byte-for-byte (same txid, so it can never double-spend). No re-signing.
+        """
+        import re
+        from types import SimpleNamespace
+        from wam_sp.psbt import PSBT
+        from wam_sp.wallet import Wallet
+        if (approved is not True or type(token) is not str or type(txid) is not str
+                or re.fullmatch('[0-9a-f]{32}', token) is None
+                or re.fullmatch('[0-9a-f]{64}', txid) is None):
+            raise Q06SpendSessionError('Q06_RESUME_EXPLICIT_APPROVAL_REQUIRED')
+        with self._lock, self.vault.anchor.lease():
+            if (self._q06_uncertain or self.faulted
+                    or any(v is not None for v in (self._prepared, self._signed,
+                                                   self._review, self._q06_pending_confirm))):
+                raise Q06SpendSessionError('Q06_RESUME_SESSION_NOT_IDLE')
+            item = next((i for i in self._intent_status_unlocked()['intents']
+                         if i['token'] == token), None)
+            if (item is None or item['txid'] != txid or item['classification'] not in
+                    ('SIGNED_NOT_SUBMITTED_RESUMABLE', 'UNCERTAIN_NOT_OBSERVED_RESUMABLE')):
+                raise Q06SpendSessionError('Q06_RESUME_NOT_ELIGIBLE')
+            body = self._read_payment_evidence(token, 'signed')
+            signed = bytes.fromhex(body['signed_psbt'])
+            review = SimpleNamespace(commitment=body['commitment'], code=body['recipient'],
+                                     atoms=body['atoms'], fee=body['fee'])
+            rpc = self._rpc()
+            if item['state'] == 'signed':
+                try:
+                    allowed = rpc.call('testmempoolaccept',
+                                       [[PSBT.decode(signed).finalize().hex()]])[0]['allowed']
+                except Exception:
+                    self.faulted = True
+                    raise WalletSessionError(
+                        'WALLET_BROADCAST_NOT_SUBMITTED_LOCK_RETAINED') from None
+                if allowed is not True:
+                    # Durable state remains 'signed'; nothing was submitted.
+                    raise WalletSessionError('WALLET_BROADCAST_REJECTED_LOCK_RETAINED')
+                existing = self._read_payment_evidence(token, 'uncertain')
+                if existing is None:
+                    self._retain_signed_payment('uncertain', signed=signed, review=review,
+                                                token=token, txid=txid)
+                elif existing['txid'] != txid:
+                    self.faulted = self._q06_uncertain = True
+                    raise Q06SpendSessionError('Q06_PAYMENT_EVIDENCE_PRESERVED_NO_RETRY')
+                self.scanner.store.db.execute(
+                    "UPDATE reservations SET state='uncertain' WHERE token=? AND state='signed'",
+                    (token,))
+                self._save()
+            try:
+                actual = Wallet(self.scanner).broadcast(signed, token, rpc)
+                self._save()
+            except Exception:
+                self.faulted = self._q06_uncertain = True
+                raise WalletSessionError('WALLET_BROADCAST_UNCERTAIN_LOCK_RETAINED') from None
+            self._retain_signed_payment('broadcast', signed=signed, review=review,
+                                        token=token, txid=actual)
+            self._q06_pending_confirm = actual
+            return {'status': 'Q06_SIGNED_INTENT_RESUBMITTED', 'txid': actual,
+                    'resigned': False, 'automatic': False, 'mainnet_allowed': False}
+
     def _before_broadcast_submission(self):
         # Called only after the read-only preflight accepted, and BEFORE the
         # durable 'uncertain' checkpoint and sendrawtransaction. A rejected
