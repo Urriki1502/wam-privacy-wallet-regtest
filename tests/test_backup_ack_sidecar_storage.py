@@ -24,7 +24,8 @@ SECRET = b"public-test-ack-key-not-a-seed"
 class BackupAckSidecarStorage(unittest.TestCase):
     def setUp(self):
         from wam_regtest.bip39_owner_backend import Bip39ReadOnlyBackend
-        temp = tempfile.TemporaryDirectory(prefix="ack-")
+        from wam_regtest.custody import private_temporary_directory
+        temp = private_temporary_directory("ack-")  # runner-safe private root
         self.addCleanup(temp.cleanup)
         self.base = Path(temp.name).resolve()
         self.root = self.base / "profile"
