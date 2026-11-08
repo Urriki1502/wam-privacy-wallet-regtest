@@ -366,16 +366,36 @@ class WalletSession:
             proposal = wallet.propose((intent,),fee)
             try:
                 prepared = Signer(self.ring).prepare(proposal)
+            except Exception:
+                # No review, signature, save or network action exists. Release
+                # ONLY this new token, and only while every row is still draft.
+                self._release_unreviewed_draft(wallet,proposal.token)
+                raise WalletSessionError("WALLET_PREPARE_DENIED") from None
+            try:
                 self._save()  # Reservation is durable before exposing review.
             except Exception:
-                # No signature or network action happened; draft can be
-                # conservatively retained on encrypted persistence failure.
+                # Publication outcome is unknown: the anchored checkpoint may
+                # already contain this draft. Retain it conservatively.
                 raise WalletSessionError("WALLET_PREPARE_DENIED") from None
             commitment = sha256(prepared.psbt).hexdigest()
             change = sum(c["atoms"] for c in proposal.coins)-atoms-fee
             review = PaymentReview(code,atoms,fee,change,len(proposal.coins),commitment)
             self._prepared,self._review,self._tip = prepared,review,self.scanner.store.tip()
             return review
+
+    def _release_unreviewed_draft(self, wallet, token):
+        """Release a never-saved, never-reviewed draft; latch on any doubt.
+
+        WSP release_draft rechecks every row of `token` inside one store
+        transaction and refuses signed/uncertain/broadcast/manual rows. Rows of
+        other tokens are never touched. Failure keeps the rows and faults.
+        """
+        if self.faulted:
+            return
+        try:
+            wallet.release_draft(token)
+        except Exception:
+            self.faulted=True
 
     def _unchanged_inputs(self, rpc):
         from wam_sp.scanner import atoms
