@@ -597,7 +597,9 @@ def open_owned_spend_session(owner, seed_folder, source, password, *,
         if (sys.platform == 'darwin' and os.environ.get('GITHUB_ACTIONS') == 'true'
                 and os.environ.get('WAM_Q06_CI_SPEND_QUALIFY') == '1'):
             print('MACOS_Q06_SPEND_OPEN_DENIED_STAGE=' + phase, flush=True)
-        raise Q06SpendSessionError("Q06_SPEND_OPEN_DENIED") from None
+        denied = Q06SpendSessionError("Q06_SPEND_OPEN_DENIED")
+        denied.open_stage = phase  # fixed public stage token only
+        raise denied from None
     finally:
         if rpc is not None and getattr(rpc, "_transport", None) is not None:
             rpc._transport.close()

@@ -42,5 +42,19 @@ class RecoveryDenialDiagnostics(unittest.TestCase):
                          ("READ", "KEYSTORE_AUTH"))
 
 
+    def test_q06_open_denial_carries_only_a_fixed_stage(self):
+        from wam_regtest.bip39_spend_session import open_owned_spend_session, Q06SpendSessionError
+        from types import SimpleNamespace
+        with mock.patch("wam_regtest.bip39_spend_session._owned_password"), \
+                mock.patch("wam_regtest.bip39_spend_session._owned"), \
+                mock.patch("wam_regtest.bip39_spend_session.open_owned_seed_container",
+                           side_effect=OSError("/secret/path PUBLIC_SECRET")):
+            with self.assertRaises(Q06SpendSessionError) as caught:
+                open_owned_spend_session(SimpleNamespace(), Path("/x"), Path("/x"), b"p" * 12,
+                                         authorized=True)
+        self.assertEqual(caught.exception.args, ("Q06_SPEND_OPEN_DENIED",))
+        self.assertEqual(caught.exception.open_stage, "SEED_AUTH")
+        self.assertTrue(caught.exception.__suppress_context__)
+
 if __name__ == "__main__":
     unittest.main()

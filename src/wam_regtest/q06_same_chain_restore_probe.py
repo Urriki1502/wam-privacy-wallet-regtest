@@ -107,6 +107,9 @@ def qualify(core, source, parent, adapter, *, port_base=29554):
                         frames.append({'function':tb.tb_frame.f_code.co_name,'line':tb.tb_lineno})
                     tb=tb.tb_next
                 if frames:report['backend_failure']['supervisor_frames']=frames
+                stage=getattr(error,'open_stage',None)
+                if type(stage) is str and stage.replace('_','').isalnum():
+                    report['backend_failure']['open_stage']=stage
                 print('Q06_SAME_CHAIN_BACKEND_FAILURE='+json.dumps(report['backend_failure']),flush=True)
                 raise
     def start(index, mode, mnemonic='', existing_root=None):
