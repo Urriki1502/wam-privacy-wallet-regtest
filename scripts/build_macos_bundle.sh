@@ -16,6 +16,12 @@ case "${1:-}" in
   *) exit 64 ;;
 esac
 test "$#" -le 1
+# Legacy probe build = qualification-only, never distributed. It must not share
+# the production app name, bundle identifier (TCC subject) or payload names.
+QUAL_NAME="WAM Privacy Wallet REGTEST QUALIFICATION"
+QUAL_BUNDLE_ID="org.wamcoin.privacywallet.regtest.qualification"
+export WAM_QUAL_ZIP="WAM-Privacy-Wallet-REGTEST-QUALIFICATION-ONLY-macOS-ARM64.app.zip"
+export WAM_QUAL_DMG="WAM-Privacy-Wallet-REGTEST-QUALIFICATION-ONLY-macOS-ARM64.dmg"
 
 test "$(uname -s)" = Darwin
 test "$(uname -m)" = arm64
@@ -45,8 +51,8 @@ python -I -m wam_regtest.distribution_notices --output "$SOURCE_STAGE/third-part
 echo "MACOS_APP_STAGE=PYINSTALLER_START"
 python -I -m PyInstaller --noconfirm --clean --onedir --windowed \
   --distpath "$BUILD_ROOT/dist" --workpath "$BUILD_ROOT/build" --specpath "$SOURCE_STAGE/spec" \
-  --name "WAM Privacy Wallet REGTEST" \
-  --osx-bundle-identifier "org.wamcoin.privacywallet.regtest" \
+  --name "$QUAL_NAME" \
+  --osx-bundle-identifier "$QUAL_BUNDLE_ID" \
   --icon "$(pwd)/assets/wam-wallet.icns" \
   --add-data "$(pwd)/assets/wam-coin-logo.png:branding" \
   --paths "$(pwd)/src" \
@@ -63,7 +69,7 @@ python -I -m PyInstaller --noconfirm --clean --onedir --windowed \
   src/wam_regtest/package_entry.py
 
 echo "MACOS_APP_STAGE=PYINSTALLER_COMPLETED"
-APP="$BUILD_ROOT/dist/WAM Privacy Wallet REGTEST.app"
+APP="$BUILD_ROOT/dist/$QUAL_NAME.app"
 # On macOS, PyInstaller re-codesigns --add-binary Mach-O executables,
 # changing publisher-signed SHA-256. These binaries MUST be unmodified DATA,
 # then made executable in-place; validate both hashes against ORIGINALS.
@@ -111,7 +117,7 @@ print("MACOS_APP_STAGE=OUTER_APP_SIGNED_CORE_HASH_STILL_PASS", flush=True)
 PY
 python -I scripts/audit_wallet_security.py --root "$(pwd)" --core "$CORE_DIR" \
   --app "$APP" --output "$WAM_MACOS_PACKAGE_DIR/INDEPENDENT-WALLET-SECURITY.json"
-BIN="$APP/Contents/MacOS/WAM Privacy Wallet REGTEST"
+BIN="$APP/Contents/MacOS/$QUAL_NAME"
 test -d "$APP"
 test -x "$BIN"
 
@@ -269,7 +275,7 @@ python -I -m wam_regtest.build_provenance verify --stamp "$SOURCE_STAGE/wallet-s
 (cd wsp-upstream && env -u WAM_SOURCE_HEAD python -I -m wam_regtest.build_provenance verify --stamp "$SOURCE_STAGE/wsp-source.json")
 # Preserve macOS bundle metadata/resource forks in the downloadable ZIP.
 ditto -c -k --sequesterRsrc --keepParent "$APP" \
-  "$WAM_MACOS_PACKAGE_DIR/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip"
+  "$WAM_MACOS_PACKAGE_DIR/$WAM_QUAL_ZIP"
 
 # The DMG is an unnotarized developer preview. Do not claim Developer ID.
 echo "MACOS_APP_STAGE=DMG_CREATE_START"
@@ -278,7 +284,7 @@ echo "MACOS_APP_STAGE=DMG_CREATE_START"
 # atomic final publication; never detach unrelated volumes or bypass E2E.
 python -I scripts/create_verified_dmg.py \
   --app "$APP" \
-  --output "$WAM_MACOS_PACKAGE_DIR/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
+  --output "$WAM_MACOS_PACKAGE_DIR/$WAM_QUAL_DMG"
 echo "MACOS_APP_STAGE=DMG_VERIFIED"
 
 python -I - <<'PY'
@@ -289,8 +295,7 @@ import os
 package=Path(os.environ['WAM_MACOS_PACKAGE_DIR'])
 core=Path(os.environ['WAM_MACOS_CORE_DIR'])
 out = {}
-for name in ("WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip",
-             "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"):
+for name in (os.environ["WAM_QUAL_ZIP"], os.environ["WAM_QUAL_DMG"]):
     p = package / name
     if not p.is_file() or p.stat().st_size <= 0:
         raise SystemExit("MACOS_PACKAGE_ARTIFACT_MISSING")
@@ -302,6 +307,9 @@ assert len(out) == 2
 (package/"SHA256SUMS.json").write_text(
     json.dumps({
         "status": "UNNOTARIZED_REAL_REGTEST_MACOS_ARM64_PREVIEW",
+        "artifact_role": "qualification-only",
+        "distribution_allowed": False,
+        "bundle_identifier": "org.wamcoin.privacywallet.regtest.qualification",
         "source": "signed WAM Core v0.1.13 + pinned WSP-1",
         "source_commit": __import__("subprocess").check_output(["git", "rev-parse", "HEAD"],text=True).strip(),
         "independent_contract_receipt_sha256": sha256((package/'INDEPENDENT-WALLET-SECURITY.json').read_bytes()).hexdigest(),

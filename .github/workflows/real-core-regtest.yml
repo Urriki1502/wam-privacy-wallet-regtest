@@ -344,35 +344,26 @@ jobs:
         run: |
           python -m wam_regtest.release --platform macos-arm64 --destination core
           python scripts/q01_core_negatives.py --core-dir core --output q01-core-negatives.json
-      - name: Build actual native .app/.dmg and repeat REAL Core + WSP + Qt E2E inside app
+      - name: Build allowlisted production app and separate qualification-only app (REAL Core + WSP + Qt E2E inside qualification app)
         shell: bash
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          WAM_MACOS_OUTPUT_ROOT: ${{ github.workspace }}/macos-build
+          WAM_MACOS_CORE_DIR: ${{ github.workspace }}/core
         run: bash scripts/build_macos_bundle.sh
-      - name: Upload real built Mac application, DMG, checksums and Qt screenshot
+      - name: Bind production and qualification-only outputs to the checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -I scripts/verify_macos_ci_outputs.py \
+            --build-root "$GITHUB_WORKSPACE/macos-build" \
+            --expected-sha "$(git rev-parse HEAD)" \
+            --publish "$GITHUB_WORKSPACE/macos-publish"
+      - name: Upload production payloads and qualification-only evidence (no qualification DMG/ZIP)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: WAM-Fusion-REGTEST-RC1-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
-          path: |
-            package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip
-            package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg
-            package-output/SHA256SUMS.json
-            package-output/BUILD_SOURCE_RECEIPT.json
-            package-output/q04-frozen-evidence.json
-            package-output/q05-frozen-evidence*.json
-            package-output/q05-frozen-evidence*.png
-            package-output/q06-frozen-readonly-evidence.json
-            package-output/q06-frozen-spend-evidence.json
-            package-output/cocoa-evidence/
-            package-output/INDEPENDENT-WALLET-SECURITY.json
-            package-output/RELEASE_CANDIDATE_MANIFEST.json
-            package-output/SHA256SUMS.txt
-            package-output/OWNER_REGTEST_ACCEPTANCE.md
-            package-output/DEV_WAM_REVIEW_HANDOFF.md
-            fusion-ui-review/
-            real-regtest-gui-preview.png
-            real-regtest-wallet-preview.png
-            real-regtest-security-preview.png
+          path: macos-publish/
           if-no-files-found: error
           retention-days: 14
       - name: Preserve Q01 source-install receipt (not Q acceptance)
@@ -392,7 +383,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q05-frozen-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
-          path: package-output/q05-frozen-evidence*.json
+          path: macos-build/qualification-only/package-output/q05-frozen-evidence*.json
           if-no-files-found: warn
           retention-days: 14
 

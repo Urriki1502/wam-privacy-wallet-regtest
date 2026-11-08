@@ -8,11 +8,20 @@ from hashlib import sha256
 import json
 import os
 import platform
+import plistlib
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+
+
+PRODUCTION_BUNDLE_ID = 'org.wamcoin.privacywallet.regtest'
+QUALIFICATION_BUNDLE_ID = 'org.wamcoin.privacywallet.regtest.qualification'
+
+
+def _bundle_id(app):
+    return plistlib.loads((Path(app)/'Contents/Info.plist').read_bytes()).get('CFBundleIdentifier')
 
 
 def main():
@@ -29,19 +38,26 @@ def main():
     base.mkdir(parents=True, exist_ok=True)
     core = Path(os.environ.get('WAM_MACOS_CORE_DIR', str(root/'core'))).resolve()
     verified_core_paths(core)
+    # bundle-input is Git-ignored and absent on a fresh CI checkout.
+    (root/'bundle-input').mkdir(mode=0o700, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix='production-stage-', dir=root/'bundle-input'))
     stamp = stage/'source.json';snapshot=capture(root)
     stamp.write_text(json.dumps(snapshot,sort_keys=True))
     env = dict(os.environ, WAM_MACOS_CORE_DIR=str(core), WAM_MACOS_OUTPUT_ROOT=str(base/'qualification-only'))
     with (base/'qualification-only.log').open('x') as log:
         subprocess.run(['bash','scripts/build_macos_bundle.sh','--qualification-only'],env=env,stdout=log,stderr=subprocess.STDOUT,check=True)
-    (base/'qualification-only/NOT_FOR_DISTRIBUTION.json').write_text(json.dumps(dict(artifact_role='qualification-only',production_binary_qualified=False))+'\n')
+    (base/'qualification-only/NOT_FOR_DISTRIBUTION.json').write_text(json.dumps(dict(artifact_role='qualification-only',production_binary_qualified=False,
+        bundle_identifier=QUALIFICATION_BUNDLE_ID))+'\n')
+    qualification_apps = list((base/'qualification-only/dist').glob('*.app'))
+    if (len(qualification_apps) != 1 or _bundle_id(qualification_apps[0]) != QUALIFICATION_BUNDLE_ID
+            or qualification_apps[0].name == 'WAM Privacy Wallet REGTEST.app'):
+        raise ValueError('PRODUCTION_QUALIFICATION_IDENTITY_COLLISION_DENIED')
     stages = re.findall(r'^MACOS_APP_SOURCE_STAGE=(.+)$',(base/'qualification-only.log').read_text(),re.M)
     if len(stages)!=1:raise ValueError('PRODUCTION_QUALIFICATION_SOURCE_STAGE_DENIED')
     data = Path(stages[0]);dist=base/'dist';out=base/'package-output';out.mkdir(mode=0o700)
     command=[sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--onedir','--windowed',
         '--distpath',str(dist),'--workpath',str(base/'production-work'),'--specpath',str(stage),
-        '--name','WAM Privacy Wallet REGTEST','--osx-bundle-identifier','org.wamcoin.privacywallet.regtest',
+        '--name','WAM Privacy Wallet REGTEST','--osx-bundle-identifier',PRODUCTION_BUNDLE_ID,
         '--icon',str(root/'assets/wam-wallet.icns'),'--paths',str(root/'src'),
         '--collect-submodules','wam_sp','--copy-metadata','coincurve','--hidden-import','coincurve._cffi_backend']
     for src,dst in [(root/'assets/wam-coin-logo.png','branding'),(data/'Q05_BUILD_SOURCE.json','.'),
@@ -61,6 +77,8 @@ def main():
     for name,digest in MEMBERS['macos-arm64'].items():
         files=[p for p in app.rglob(name) if p.is_file() and not p.is_symlink()]
         if len(files)!=1 or sha256(files[0].read_bytes()).hexdigest()!=digest:raise ValueError('PRODUCTION_CODESIGN_CORE_BYTES_DENIED')
+    if _bundle_id(app) != PRODUCTION_BUNDLE_ID:
+        raise ValueError('PRODUCTION_BUNDLE_IDENTITY_DENIED')
     inventory=audit(binary,app)
     (out/'PRODUCTION_MODULE_INVENTORY.json').write_text(json.dumps(inventory,indent=2)+'\n')
     from wam_regtest.macos_build_layout import frozen_environment
@@ -85,7 +103,8 @@ def main():
         wsp_source_commit='ac55f13423620252bdbf848c7e8a280c3b84721e',mainnet_allowed=False,
         production_qualified=False,normal_ui_frozen_e2e='PENDING_EXTERNAL_NORMAL_UI_QUALIFICATION',
         separate_qualification_artifact='qualification-only; does not qualify distributed bytes',
-        codesign='ad-hoc unnotarized',files_sha256={p.name:sha256(p.read_bytes()).hexdigest() for p in out.iterdir() if p.suffix in ('.zip','.dmg')})
+        codesign='ad-hoc unnotarized',bundle_identifier=PRODUCTION_BUNDLE_ID,
+        executable_sha256=sha256(binary.read_bytes()).hexdigest(),files_sha256={p.name:sha256(p.read_bytes()).hexdigest() for p in out.iterdir() if p.suffix in ('.zip','.dmg')})
     (out/'PRODUCTION_BUILD_RECEIPT.json').write_text(json.dumps(record,indent=2)+'\n')
     write_portable_sha256sums(out)
     print('PRODUCTION_ALLOWLIST_BUILD_PASS_EXTERNAL_NORMAL_UI_QUALIFICATION_PENDING',flush=True)

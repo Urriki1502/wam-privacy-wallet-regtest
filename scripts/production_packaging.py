@@ -20,9 +20,52 @@ production_entry q05_platforms regtest_funding release rpc_contention rpc_creden
 shared_regtest shared_regtest_gui supervisor_client supervisor_identity supervisor_journal
 supervisor_protocol supervisor_store telemetry vault wallet_executor wallet_read wallet_recovery
 wallet_session windows_checkpoint_anchor windows_core_files windows_core_transport
-windows_private_storage windows_read_gui windows_release_preflight windows_wallet_read
+windows_private_storage windows_release_preflight
 wsp_import wsp_live
 ''').split())
+
+
+def runtime_modules(platform='macos'):
+    if platform != 'macos':
+        raise ValueError('PRODUCTION_PLATFORM_POLICY_DENIED')
+    return RUNTIME
+
+
+PYTHON_SUFFIXES = ('.py', '.pyc', '.pyo', '.pyw', '.pyd')
+
+
+def audit_loose_files(app):
+    """No loose Python may bypass the audited PYZ.
+
+    The only permitted loose sources are the pinned public WSP data corpus,
+    exactly as listed (path and SHA-256) in its bundled SOURCE_SHA256.json.
+    Any other Python source/bytecode file anywhere in the app is denied.
+    """
+    import hashlib
+    import json
+    app = Path(app)
+    wsp = app/'Contents/Resources/wsp-source'
+    allowed = {}
+    if wsp.exists():
+        if wsp.is_symlink() or not wsp.is_dir():
+            raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
+        receipt = json.loads((wsp/'SOURCE_SHA256.json').read_text())
+        if (receipt.get('source_commit') != 'ac55f13423620252bdbf848c7e8a280c3b84721e'
+                or type(receipt.get('files')) is not dict):
+            raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
+        for relative, digest in receipt['files'].items():
+            if (type(relative) is not str or not relative.startswith('src/wam_sp/')
+                    or not relative.endswith('.py') or '..' in Path(relative).parts):
+                raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
+            allowed[(wsp/relative).resolve()] = digest
+    for p in app.rglob('*'):
+        if p.suffix.lower() not in PYTHON_SUFFIXES or p.is_dir():
+            continue
+        if p.is_symlink():
+            raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
+        digest = allowed.get(p.resolve())
+        if digest is None or hashlib.sha256(p.read_bytes()).hexdigest() != digest:
+            raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
 
 
 def arguments(root):
@@ -50,11 +93,7 @@ def audit(binary, app):
     expected = RUNTIME - {'production_entry'}
     if present != expected:
         raise ValueError('PRODUCTION_MODULE_INVENTORY_DENIED:' + ','.join(sorted(present ^ expected)))
-    for p in Path(app).rglob('*'):
-        if p.is_file() and p.suffix in ('.py', '.pyc') and p.stem in (set(n for n in modules if n.startswith('wam_regtest.'))):
-            raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
-        if p.is_file() and p.suffix in ('.py', '.pyc') and ('wam_regtest' in p.parts or p.stem in {'cli','package_entry','bip39_reconcile'}):
-            raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
+    audit_loose_files(app)
     return dict(status='PASS_EXACT_PRODUCTION_ALLOWLIST', modules=sorted(present),
                 entrypoint='production_entry', developer_dispatch=False,
                 wam_sp_source_is_pinned_data_not_wallet_developer_tools=True)
