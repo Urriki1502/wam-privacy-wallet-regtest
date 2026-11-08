@@ -109,7 +109,12 @@ def main():
             entry='src/wam_regtest/linux_package_entry.py'
         command=[sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--onedir','--noupx',
             '--name',name,'--paths','src',*modules,
-            '--collect-submodules','wam_sp','--collect-all','coincurve','--hidden-import','_cffi_backend',
+            '--collect-submodules','wam_sp',
+            # Production: no loose third-party Python (loose-file audit);
+            # coincurve via its PyInstaller hook + binaries, like macOS.
+            *(['--collect-binaries','coincurve','--copy-metadata','coincurve',
+               '--hidden-import','coincurve._cffi_backend'] if args.production else
+              ['--collect-all','coincurve']),'--hidden-import','_cffi_backend',
             '--add-data',str(q05_source)+':.','--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
             '--add-data',str(notices)+':third-party-notices',
             '--add-data',str(brand_image())+':branding']

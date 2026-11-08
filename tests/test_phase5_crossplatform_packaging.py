@@ -305,6 +305,15 @@ class BuilderContracts(unittest.TestCase):
                        "'production_qualified':False", 'linux-production-output', 'dist-production'):
             self.assertIn(needle, text)
 
+    def test_production_builders_do_not_ship_loose_coincurve_python(self):
+        # Linux CI 128889575508: --collect-all coincurve shipped coincurve/*.py
+        # loose, which the production loose-file audit correctly denies.
+        for name in ('build_windows_bundle.py', 'build_linux_wallet.py'):
+            text = (ROOT / 'scripts' / name).read_text()
+            with self.subTest(builder=name):
+                self.assertIn("['--collect-binaries','coincurve','--copy-metadata','coincurve',", text)
+                self.assertIn("['--collect-all','coincurve']", text)  # qualification build only
+
     def test_ci_jobs_build_production_after_qualification(self):
         windows = (ROOT / '.github/workflows/windows-x64-credential-anchor.yml').read_text()
         linux = (ROOT / '.github/workflows/linux-experimental-regtest.yml').read_text()

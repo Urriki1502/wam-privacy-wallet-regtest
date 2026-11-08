@@ -136,7 +136,11 @@ def main():
         subprocess.run([sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--noupx','--onedir','--windowed',
             '--name','WAM-Privacy-Wallet-REGTEST','--icon',str(icon),'--paths','src',
             *modules,'--collect-submodules','wam_sp',
-            '--collect-all','coincurve','--hidden-import','_cffi_backend',
+            # Production: no loose third-party Python (loose-file audit);
+            # coincurve via its PyInstaller hook + binaries, like macOS.
+            *(['--collect-binaries','coincurve','--copy-metadata','coincurve',
+               '--hidden-import','coincurve._cffi_backend'] if production else
+              ['--collect-all','coincurve']),'--hidden-import','_cffi_backend',
             '--add-data',str(q05_source)+':.','--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
             '--add-data',str(notices)+':third-party-notices',
             '--add-data',str(brand_image())+':branding',entry],env=build_environment,check=True)
