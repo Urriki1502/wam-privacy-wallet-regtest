@@ -54,7 +54,11 @@ def main():
     parser.add_argument('--wsp-source', type=Path, required=True)
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--confirm-disposable-regtest', action='store_true')
+    parser.add_argument('--lock-cycles', type=int, default=0,
+                        help='Q18 evidence only: bounded extra Lock/reopen cycles (max 20)')
     a = parser.parse_args()
+    if not 0 <= a.lock_cycles <= 20:
+        raise SystemExit('SIX_GATE_LOCK_CYCLES_BOUND')
     if not a.confirm_disposable_regtest or a.report.exists():
         raise SystemExit('SIX_GATE_NATIVE_CONSENT_OR_NEW_REPORT_REQUIRED')
     from mnemonic import Mnemonic
@@ -174,8 +178,16 @@ def main():
         [still] = request('intent_status')['intents']
         assert still['state'] == 'signed' and still['classification'] == 'SIGNED_NOT_SUBMITTED_RESUMABLE'
         step('CUR004_REOPEN_AND_RESUME_REJECTED_AGAIN_SIGNED_RETAINED', code=code)
+        for cycle in range(a.lock_cycles):
+            sampler.phase = 'lock_cycle_%02d' % cycle
+            request('lock', timeout=120)
+            request('open', password, 'reopen', '', timeout=180)
+            request('activate')
+            request('snapshot')
+        if a.lock_cycles:
+            step('Q18_LOCK_REOPEN_CYCLES', cycles=a.lock_cycles)
         sampler.phase = 'idle'
-        time.sleep(5)
+        time.sleep(15)
         sampler.phase = 'quit'
         request('quit', timeout=120)
         if not executor.join(30) or not executor.closed:
