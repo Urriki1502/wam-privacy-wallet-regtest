@@ -27,7 +27,11 @@ class _WordCard(QFrame):
         word_label = QLabel(word)
         word_label.setObjectName("FusionCardValue")
         word_label.setStyleSheet("font-size:17px;font-weight:600;")
-        word_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        # Recovery words are written down by hand. Never selectable/copyable:
+        # X11 exports any mouse selection to PRIMARY for every client, and
+        # Ctrl+C/context-menu copy would reach system clipboard history.
+        word_label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        word_label.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         layout.addWidget(number_label)
         layout.addWidget(word_label)
         self.setMinimumWidth(140)
