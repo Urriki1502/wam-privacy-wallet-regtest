@@ -549,16 +549,26 @@ class WalletSession:
                 from .managed_wallet_session import close_session
                 return close_session(self)
             gate,self._disclosure_gate=self._disclosure_gate,None
-            scanner,ring=self.scanner,self.ring
-            closes=[self._close_rpc]
-            if gate is not None:closes.append(gate.close)
-            if ring is not None:closes+=[scanner.close,ring.close]
+            unlocked=not self.locked
             failed=False
             try:
                 # Every close is attempted even if an earlier one raises.
-                for close in closes:
+                try:
+                    self._close_rpc()
+                except Exception:
+                    failed=True
+                if gate is not None:
                     try:
-                        close()
+                        gate.close()
+                    except Exception:
+                        failed=True
+                if unlocked:
+                    try:
+                        self.scanner.close()
+                    except Exception:
+                        failed=True
+                    try:
+                        self.ring.close()
                     except Exception:
                         failed=True
             finally:
@@ -574,7 +584,7 @@ class WalletSession:
                 self.faulted=True
                 self._lock_cleanup_uncertain=True
                 raise WalletSessionError("WALLET_LOCK_CLEANUP_UNCERTAIN") from None
-            if ring is None:
+            if not unlocked:
                 return
             # This path was created only by this disposable session. No user DB.
             self.runtime.unlink(missing_ok=True)

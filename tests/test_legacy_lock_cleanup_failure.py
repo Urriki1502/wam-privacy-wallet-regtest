@@ -101,5 +101,19 @@ class LegacyLockCleanup(unittest.TestCase):
         self.assertNotIn("PUBLIC_", error_text(code))
 
 
+    def test_independent_evaluator_contracts_still_hold_on_source(self):
+        """The frozen build's scripts/audit_wallet_security.py gate (AST contracts)."""
+        import ast
+        import importlib.util
+        root = Path(__file__).resolve().parents[1]
+        spec = importlib.util.spec_from_file_location(
+            "independent_wallet_audit", root / "scripts/audit_wallet_security.py")
+        audit = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(audit)
+        tree = ast.parse((root / "src/wam_regtest/wallet_session.py").read_text())
+        self.assertTrue(all(audit.contracts(tree).values()))
+        calls = {label for _, label, _ in audit.events(audit.method(tree, "lock"))}
+        self.assertTrue({"self.ring.close", "self.scanner.close", "self.runtime.unlink"} <= calls)
+
 if __name__ == "__main__":
     unittest.main()
