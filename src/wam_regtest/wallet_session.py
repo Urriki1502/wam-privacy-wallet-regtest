@@ -469,6 +469,9 @@ class WalletSession:
     def _preflight_not_submitted(self, rpc):
         """testmempoolaccept only; raises with the durable state still 'signed'.
 
+        A verification/transport failure latches (Core trust is in doubt); a
+        definitive rejection does not (see below).
+
         Any later rejection observed inside WSP's own broadcast, after the
         uncertain checkpoint, is deliberately NOT relabelled (conservative).
         """
@@ -481,8 +484,12 @@ class WalletSession:
             self._signed=None
             raise WalletSessionError("WALLET_BROADCAST_NOT_SUBMITTED_LOCK_RETAINED") from None
         if allowed is not True:
-            self.faulted=True
-            self._signed=None
+            # Definitive and fully consistent: nothing was submitted and the
+            # durable state equals the runtime ('signed'). Do NOT latch a fault
+            # (a faulted isolated profile cannot reopen to spend); forget only
+            # the in-memory payment. The irreversible reservation remains and
+            # is reported by TX-03 signed-intent status. Never released.
+            self._prepared=self._signed=self._review=self._tip=None
             raise WalletSessionError("WALLET_BROADCAST_REJECTED_LOCK_RETAINED")
 
     def _before_broadcast_submission(self):

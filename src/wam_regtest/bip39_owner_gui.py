@@ -875,6 +875,11 @@ class Bip39TrialWindow(QWidget):
             self._ready = False
         if self.executor.state.faulted:
             self._signed_ready=False
+        if code == 'WALLET_BROADCAST_REJECTED_LOCK_RETAINED':
+            # The backend forgot the in-memory payment; the signed reservation
+            # stays locked and is listed by "Review signed payments".
+            self._signed_ready=False
+            self._approved_commitment=None
         self.status.setText(
             "Wallet faulted — stop spending; original state preserved for review."
             if self.executor.state.faulted else

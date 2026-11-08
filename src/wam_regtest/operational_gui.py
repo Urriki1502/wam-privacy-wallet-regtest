@@ -287,6 +287,9 @@ class OperationalWalletWindow(RegtestWalletWindow):
 
     def _operation_denied(self,reason):
         reason=public_code(reason)
+        if reason=='WALLET_BROADCAST_REJECTED_LOCK_RETAINED':
+            # Session forgot the in-memory payment; reservation stays signed.
+            self.review=None;self.signed=False
         if (reason in INPUT_ERRORS and self._snapshot is not None
                 and not self.session.locked and not self.session.faulted):
             # Only known pre-mutation input/coin-selection refusals retain a

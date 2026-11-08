@@ -178,8 +178,12 @@ class BroadcastRejectionState(unittest.TestCase):
         self.assertEqual(len(self.vault.saved), 2)  # draft, signed; never 'uncertain'
         self.assertEqual(_states(self.vault.saved[-1]), {"signed"})
         self.assertEqual(self._stages(), ["signed"])  # no 'uncertain' evidence
-        self.assertTrue(session.faulted)
+        # Definitive and consistent: no fault latch (profile stays reopenable);
+        # the in-memory payment is forgotten, the reservation is not.
+        self.assertFalse(session.faulted)
         self.assertIsNone(session._signed)
+        self.assertIsNone(session._prepared)
+        self.assertIsNone(session._review)
         with self.assertRaisesRegex(ValueError, "RESERVATION_NOT_DRAFT"):
             Wallet(self.scanner).release_draft(self.token)
         before = list(self.calls)
