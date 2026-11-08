@@ -222,7 +222,9 @@ class MacCiOutputVerifier(unittest.TestCase):
             artifact_role='allowlisted-regtest-wallet', mainnet_allowed=False, production_qualified=False,
             source=dict(checkout_sha=self.SHA, source_head_sha=self.SHA, tracked_source_matches_head=True,
                         source_unchanged_across_build=True),
-            core_sha256=v.CORE_PINS, wsp_source_commit=v.WSP_PIN, files_sha256=files)))
+            core_sha256=v.CORE_PINS, wsp_source_commit=v.WSP_PIN, files_sha256=files,
+            # The real builder always records it; binding requires it (CDX-AUD-008).
+            executable_sha256=hashlib.sha256(v.PRODUCTION_BUNDLE_ID.encode()).hexdigest())))
         (prod / 'PRODUCTION_MODULE_INVENTORY.json').write_text(json.dumps(dict(
             status='PASS_EXACT_PRODUCTION_ALLOWLIST', developer_dispatch=False)))
         (prod / 'PRODUCTION_DISPATCH_NEGATIVES.json').write_text(json.dumps([dict(mode='smoke', returncode=64)]))
@@ -243,7 +245,17 @@ class MacCiOutputVerifier(unittest.TestCase):
         return root
 
     def _verify(self, root, publish):
-        return self.verifier.verify(Path(root), self.SHA, Path(publish))
+        # Synthetic fixtures exercise the BINDING stage only (CDX-AUD-008).
+        return self.verifier.verify(Path(root), self.SHA, Path(publish), payload_audit=False)
+
+    def test_default_verification_rejects_synthetic_non_payload_bytes(self):
+        """CDX-AUD-008: self-consistent receipts no longer pass without real payloads."""
+        with tempfile.TemporaryDirectory() as d:
+            root = self._tree(Path(d) / 'b')
+            self.verifier.verify(root, self.SHA, Path(d) / 'binding', payload_audit=False)
+            with self.assertRaisesRegex(ValueError, 'MACOS_CI_OUTPUT_PAYLOAD_'):
+                self.verifier.verify(root, self.SHA, Path(d) / 'p')
+            self.assertFalse((Path(d) / 'p').exists())
 
     def test_split_outputs_publish_only_production_payloads(self):
         with tempfile.TemporaryDirectory() as d:

@@ -7,15 +7,32 @@ Only production payloads are published as the wallet; qualification-only
 DMG/ZIP bytes are never published. Receipts from different commits, roles or
 executables are refused. This is a consistency check, not an attestation, and
 grants no acceptance: production_qualified stays false until real normal-UI E2E.
+
+Two stages run before anything is published (CDX-AUD-008):
+  1. binding: receipts/roles/commit/hashes/bundle ids are mutually consistent;
+  2. payload: the actual bytes are opened and must agree with that metadata --
+     PyInstaller PYZ inventory equals the reviewed allowlist (and the producer's
+     inventory claim), every DEVELOPER_ARGV case is re-executed on the actual
+     binary and returns 64, the ZIP and read-only-mounted DMG contain exactly
+     the same production executable, bundle id and pinned Core bytes, the
+     bundled WSP manifest names the pinned commit, codesign verifies, and the
+     qualification ZIP holds only the qualification identity.
+The command line always runs both stages; binding-only exists for unit fixtures.
 """
 import argparse
 from hashlib import sha256
+import importlib.util
 import json
+import os
 from pathlib import Path
 import plistlib
 import re
 import shutil
+import stat
+import subprocess
 import sys
+import tempfile
+import zipfile
 
 PRODUCTION_APP = 'WAM Privacy Wallet REGTEST.app'
 QUALIFICATION_APP = 'WAM Privacy Wallet REGTEST QUALIFICATION.app'
@@ -67,7 +84,7 @@ def _sums(directory):
     (Path(directory) / 'SHA256SUMS.txt').write_bytes(''.join(lines).encode())
 
 
-def verify(build_root, expected_sha, publish):
+def verify(build_root, expected_sha, publish, *, payload_audit=True):
     build_root, publish = Path(build_root), Path(publish)
     if not re.fullmatch('[0-9a-f]{40}', expected_sha):
         _deny('COMMIT_SHAPE')
@@ -112,7 +129,7 @@ def verify(build_root, expected_sha, publish):
     if type(negatives) is not list or not negatives or any(n.get('returncode') != 64 for n in negatives):
         _deny('PRODUCTION_DISPATCH')
     production_executable = _app(build_root / 'dist', PRODUCTION_APP, PRODUCTION_BUNDLE_ID)
-    if receipt.get('executable_sha256', production_executable) != production_executable:
+    if receipt.get('executable_sha256') != production_executable:
         _deny('PRODUCTION_EXECUTABLE')
 
     # Qualification-only: same commit, explicit role, distinct identity/bytes.
@@ -145,6 +162,11 @@ def verify(build_root, expected_sha, publish):
             or any((prod / n).exists() for n in QUALIFICATION_FILES)
             or any((qual / n).exists() for n in PRODUCTION_FILES)):
         _deny('ROLE_MIXING')
+
+    payload = None
+    if payload_audit is not False:
+        payload = verify_payload(build_root, production_executable, qualification_executable,
+                                 production_hashes, inventory, negatives)
 
     # Publish into a private sibling, then rename: no partial publish on denial.
     staging = publish.with_name(publish.name + '.staging')
@@ -183,6 +205,7 @@ def verify(build_root, expected_sha, publish):
                        qualification_only=dict(bundle_identifier=QUALIFICATION_BUNDLE_ID,
                                                executable_sha256=qualification_executable,
                                                files_sha256=qualification_hashes, published_payloads=False),
+                       payload_verification=payload if payload is not None else 'NOT_RUN_BINDING_ONLY',
                        production_qualified=False, mainnet_allowed=False, acceptance=False)
         (staging / 'CI_OUTPUT_BINDING.json').write_text(json.dumps(binding, indent=2, sort_keys=True) + '\n')
         staging.rename(publish)
@@ -190,6 +213,164 @@ def verify(build_root, expected_sha, publish):
         shutil.rmtree(staging, ignore_errors=True)
         raise
     return binding
+
+
+def _packaging():
+    spec = importlib.util.spec_from_file_location(
+        'wam_production_packaging_policy', Path(__file__).resolve().with_name('production_packaging.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _plist_id(data):
+    try:
+        return plistlib.loads(data).get('CFBundleIdentifier')
+    except Exception:
+        _deny('PAYLOAD_PLIST')
+
+
+def _bundle_tree(app, name, bundle_id, executable_sha256):
+    """Actual app bytes: identity, executable, single real pinned Core members."""
+    if app.is_symlink() or not app.is_dir():
+        _deny('PAYLOAD_APP_SHAPE')
+    if _plist_id((app / 'Contents/Info.plist').read_bytes()) != bundle_id:
+        _deny('PAYLOAD_BUNDLE_IDENTITY')
+    executable = app / 'Contents/MacOS' / name.removesuffix('.app')
+    if executable.is_symlink() or not executable.is_file() or _digest(executable) != executable_sha256:
+        _deny('PAYLOAD_EXECUTABLE')
+    for member, digest in CORE_PINS.items():
+        found = [p for p in app.rglob(member) if p.is_file() and not p.is_symlink()]
+        if len(found) != 1 or _digest(found[0]) != digest:
+            _deny('PAYLOAD_CORE_PIN')
+    manifest = app / 'Contents/Resources/wsp-source/SOURCE_SHA256.json'
+    if manifest.is_symlink() or not manifest.is_file():
+        _deny('PAYLOAD_WSP_MANIFEST')
+    if json.loads(manifest.read_text()).get('source_commit') != WSP_PIN:
+        _deny('PAYLOAD_WSP_PIN')
+    others = [p.name for p in app.parent.iterdir() if p.suffix == '.app' and p.name != name]
+    return others
+
+
+def _zip_tree(path, name, bundle_id, executable_sha256, forbidden):
+    """Structure + bytes of a ditto ZIP without extraction."""
+    if not zipfile.is_zipfile(path):
+        _deny('PAYLOAD_ZIP_SHAPE')
+    with zipfile.ZipFile(path) as archive:
+        infos = archive.infolist()
+        prefix = name + '/'
+        for info in infos:
+            parts = Path(info.filename).parts
+            if (not info.filename.startswith(prefix) or info.filename.startswith('/')
+                    or '..' in parts or '\\' in info.filename):
+                _deny('PAYLOAD_ZIP_MEMBER')
+        if any(info.filename.startswith(forbidden + '/') for info in infos):
+            _deny('PAYLOAD_ZIP_ROLE')
+
+        def regular(member):
+            hits = [i for i in infos if i.filename == member
+                    and not stat.S_ISLNK(i.external_attr >> 16)]
+            if len(hits) != 1:
+                _deny('PAYLOAD_ZIP_MEMBER_MISSING')
+            return archive.read(hits[0])
+        if _plist_id(regular(prefix + 'Contents/Info.plist')) != bundle_id:
+            _deny('PAYLOAD_ZIP_BUNDLE_IDENTITY')
+        if sha256(regular(prefix + 'Contents/MacOS/' + name.removesuffix('.app'))).hexdigest() != executable_sha256:
+            _deny('PAYLOAD_ZIP_EXECUTABLE')
+        for member, digest in CORE_PINS.items():
+            hits = [i for i in infos if i.filename.endswith('/' + member)
+                    and not stat.S_ISLNK(i.external_attr >> 16) and not i.is_dir()]
+            if len(hits) != 1 or sha256(archive.read(hits[0])).hexdigest() != digest:
+                _deny('PAYLOAD_ZIP_CORE_PIN')
+
+
+def _run(args, **kwargs):
+    return subprocess.run(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE, **kwargs)
+
+
+def _dmg_tree(path, executable_sha256):
+    """Mount read-only, nobrowse; compare actual app; always detach."""
+    if sys.platform != 'darwin':
+        _deny('PAYLOAD_DMG_PLATFORM')
+    if _run(['hdiutil', 'imageinfo', str(path)], timeout=120).returncode != 0:
+        _deny('PAYLOAD_DMG_SHAPE')
+    with tempfile.TemporaryDirectory(prefix='wam-ci-dmg-') as temporary:
+        mount = Path(temporary) / 'mnt'
+        mount.mkdir()
+        attached = _run(['hdiutil', 'attach', '-readonly', '-nobrowse', '-noautoopen',
+                         '-mountpoint', str(mount), str(path)], timeout=300)
+        if attached.returncode != 0:
+            _deny('PAYLOAD_DMG_ATTACH')
+        try:
+            apps = sorted(p.name for p in mount.iterdir() if p.suffix == '.app')
+            if apps != [PRODUCTION_APP]:
+                _deny('PAYLOAD_DMG_ROLE')
+            _bundle_tree(mount / PRODUCTION_APP, PRODUCTION_APP, PRODUCTION_BUNDLE_ID, executable_sha256)
+            if _run(['codesign', '--verify', '--deep', '--strict', str(mount / PRODUCTION_APP)],
+                    timeout=300).returncode != 0:
+                _deny('PAYLOAD_DMG_CODESIGN')
+        finally:
+            if _run(['hdiutil', 'detach', str(mount)], timeout=120).returncode != 0:
+                _deny('PAYLOAD_DMG_DETACH')
+
+
+def _negatives(executable, policy, receipt_negatives):
+    """Re-execute EVERY reviewed developer argv on the actual binary (hostile env)."""
+    singles = {tuple(argv) for argv in policy if len(argv) == 1}
+    for entry in receipt_negatives:
+        if type(entry) is not dict or (entry.get('mode'),) not in singles or entry.get('returncode') != 64:
+            _deny('PAYLOAD_DISPATCH_RECEIPT')
+    executed = []
+    with tempfile.TemporaryDirectory(prefix='wam-ci-argv-') as cwd:
+        env = dict(PATH='/usr/bin:/bin:/usr/sbin:/sbin', HOME=cwd, TMPDIR=cwd, LANG='C',
+                   QT_QPA_PLATFORM='offscreen', CI='true', GITHUB_ACTIONS='true',
+                   WAM_BUILD_SCOPE='full', WAM_QUALIFICATION='1', WAM_Q06_CI_SPEND_QUALIFY='1')
+        for argv in policy:
+            try:
+                result = _run([str(executable), *argv], cwd=cwd, env=env, timeout=30)
+            except subprocess.TimeoutExpired:
+                _deny('PAYLOAD_DISPATCH_TIMEOUT')
+            if result.returncode != 64:
+                _deny('PAYLOAD_DISPATCH')
+            executed.append(dict(argv=list(argv), returncode=64))
+    return executed
+
+
+def verify_payload(build_root, production_executable, qualification_executable,
+                   production_hashes, inventory, receipt_negatives):
+    """Open the actual payloads; producer metadata must agree with the bytes."""
+    policy = _packaging()
+    app = build_root / 'dist' / PRODUCTION_APP
+    if _bundle_tree(app, PRODUCTION_APP, PRODUCTION_BUNDLE_ID, production_executable):
+        _deny('PAYLOAD_DIST_ROLE')
+    try:
+        actual = policy.audit(app / 'Contents/MacOS' / PRODUCTION_APP.removesuffix('.app'), app, 'macos')
+    except Exception:
+        _deny('PAYLOAD_PYZ_AUDIT')
+    if (actual.get('status') != 'PASS_EXACT_PRODUCTION_ALLOWLIST'
+            or inventory.get('modules') != actual['modules']
+            or inventory.get('entrypoint', actual['entrypoint']) != actual['entrypoint']):
+        _deny('PAYLOAD_INVENTORY_MISMATCH')
+    if _run(['codesign', '--verify', '--deep', '--strict', str(app)], timeout=300).returncode != 0:
+        _deny('PAYLOAD_CODESIGN')
+    prod = build_root / 'package-output'
+    _zip_tree(prod / PRODUCTION_FILES[1], PRODUCTION_APP, PRODUCTION_BUNDLE_ID,
+              production_executable, QUALIFICATION_APP)
+    _dmg_tree(prod / PRODUCTION_FILES[0], production_executable)
+    executed = _negatives(app / 'Contents/MacOS' / PRODUCTION_APP.removesuffix('.app'),
+                          policy.DEVELOPER_ARGV, receipt_negatives)
+    qual_app = build_root / 'qualification-only/dist' / QUALIFICATION_APP
+    _bundle_tree(qual_app, QUALIFICATION_APP, QUALIFICATION_BUNDLE_ID, qualification_executable)
+    _zip_tree(build_root / 'qualification-only/package-output' / QUALIFICATION_FILES[1],
+              QUALIFICATION_APP, QUALIFICATION_BUNDLE_ID, qualification_executable, PRODUCTION_APP)
+    return dict(status='PASS_ACTUAL_PAYLOAD_AGREES_WITH_RECEIPTS', pyz_modules=len(actual['modules']),
+                developer_argv_executed=len(executed), developer_argv_all_returned_64=True,
+                zip_and_dmg_executable_sha256=production_executable,
+                core_sha256=CORE_PINS, wsp_manifest_commit=WSP_PIN, codesign_deep_strict=True,
+                qualification_zip_identity=QUALIFICATION_BUNDLE_ID,
+                qualification_dmg_not_mounted_not_published=True,
+                wam_sp_pyz_bytes_not_compared_to_pin=True)
 
 
 def main():
