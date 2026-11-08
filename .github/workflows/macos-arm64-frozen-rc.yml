@@ -104,9 +104,10 @@ jobs:
           if-no-files-found: warn
       - name: Build allowlisted production app plus separate qualification-only app
         env:
-          # Explicit split layout: production in macos-build/package-output,
-          # qualification-only (distinct name/bundle id) in macos-build/qualification-only.
-          WAM_MACOS_OUTPUT_ROOT: ${{ github.workspace }}/macos-build
+          # Explicit split layout (macos_build_layout requires output under bundle-input/):
+          # production in bundle-input/macos-build/package-output,
+          # qualification-only (distinct name/bundle id) in bundle-input/macos-build/qualification-only.
+          WAM_MACOS_OUTPUT_ROOT: ${{ github.workspace }}/bundle-input/macos-build
           WAM_MACOS_CORE_DIR: ${{ github.workspace }}/core
         run: bash scripts/build_macos_bundle.sh
 
@@ -119,8 +120,8 @@ jobs:
         with:
           name: macos-frozen-build-logs-${{ github.sha }}
           path: |
-            macos-build/*.log
-            macos-build/qualification-only/*.log
+            bundle-input/macos-build/*.log
+            bundle-input/macos-build/qualification-only/*.log
           if-no-files-found: warn
           retention-days: 14
 
@@ -130,7 +131,7 @@ jobs:
         run: |
           set -euo pipefail
           python -I scripts/verify_macos_ci_outputs.py \
-            --build-root "$GITHUB_WORKSPACE/macos-build" \
+            --build-root "$GITHUB_WORKSPACE/bundle-input/macos-build" \
             --expected-sha "$WORKFLOW_SHA" \
             --publish "$GITHUB_WORKSPACE/macos-rc-publish"
           echo "FUNCTIONAL_PIN_ANCESTOR $FUNCTIONAL_PIN"

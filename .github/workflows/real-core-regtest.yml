@@ -348,7 +348,7 @@ jobs:
         shell: bash
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-          WAM_MACOS_OUTPUT_ROOT: ${{ github.workspace }}/macos-build
+          WAM_MACOS_OUTPUT_ROOT: ${{ github.workspace }}/bundle-input/macos-build
           WAM_MACOS_CORE_DIR: ${{ github.workspace }}/core
         run: bash scripts/build_macos_bundle.sh
       - name: Bind production and qualification-only outputs to the checkout
@@ -356,7 +356,7 @@ jobs:
         run: |
           set -euo pipefail
           python -I scripts/verify_macos_ci_outputs.py \
-            --build-root "$GITHUB_WORKSPACE/macos-build" \
+            --build-root "$GITHUB_WORKSPACE/bundle-input/macos-build" \
             --expected-sha "$(git rev-parse HEAD)" \
             --publish "$GITHUB_WORKSPACE/macos-publish"
       - name: Upload production payloads and qualification-only evidence (no qualification DMG/ZIP)
@@ -383,7 +383,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q05-frozen-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
-          path: macos-build/qualification-only/package-output/q05-frozen-evidence*.json
+          path: bundle-input/macos-build/qualification-only/package-output/q05-frozen-evidence*.json
           if-no-files-found: warn
           retention-days: 14
 

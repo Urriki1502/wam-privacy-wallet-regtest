@@ -194,6 +194,23 @@ class ArtifactIdentity(unittest.TestCase):
 
 
 @unittest.skipUnless((ROOT / 'scripts/verify_macos_ci_outputs.py').is_file(), 'verifier not present')
+class MacCiOutputRootContract(unittest.TestCase):
+    """CI 42532111790: macos_build_layout only accepts outputs under bundle-input/."""
+
+    def test_workflow_output_roots_satisfy_the_build_layout_guard(self):
+        import re
+        for name in ('macos-arm64-frozen-rc.yml', 'real-core-regtest.yml'):
+            text = (ROOT / '.github/workflows' / name).read_text()
+            roots = re.findall(r'WAM_MACOS_OUTPUT_ROOT: (.+)', text)
+            with self.subTest(workflow=name):
+                self.assertTrue(roots)
+                for root in roots:
+                    self.assertTrue(root.startswith('${{ github.workspace }}/bundle-input/'), root)
+                self.assertNotRegex(text, r'(?<!bundle-input/)macos-build/')
+        layout = (ROOT / 'src/wam_regtest/macos_build_layout.py').read_text()
+        self.assertIn("output.is_relative_to(root/'bundle-input')", layout)
+
+
 class MacCiOutputVerifier(unittest.TestCase):
     """R1: receipts from different executables or commits cannot be mixed."""
 
