@@ -110,6 +110,20 @@ jobs:
           WAM_MACOS_CORE_DIR: ${{ github.workspace }}/core
         run: bash scripts/build_macos_bundle.sh
 
+      # Diagnosability only: the qualification-only build writes its frozen
+      # probe output (fixed public stage tokens, no secrets) to a log file that
+      # is otherwise lost when the build fails.
+      - name: Preserve frozen build logs on failure (diagnostic, not acceptance)
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: macos-frozen-build-logs-${{ github.sha }}
+          path: |
+            macos-build/*.log
+            macos-build/qualification-only/*.log
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Bind both outputs to this commit and publish production payloads only
         env:
           WORKFLOW_SHA: ${{ github.sha }}
