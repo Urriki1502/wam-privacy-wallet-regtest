@@ -169,6 +169,25 @@ class OnedirLooseFilePolicy(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'PRODUCTION_LOOSE_MODULE_DENIED'):
                     policy.audit_loose_files(bundle)
 
+    def test_windows_native_extension_modules_are_allowed_but_not_wallet_named(self):
+        # Windows-CI 42486018402: .pyd files are compiled extension modules
+        # (like .so on macOS/Linux), not loose Python source.
+        for relative in ('_internal/_ssl.pyd', '_internal/_cffi_backend.cp312-win_amd64.pyd',
+                         '_internal/PySide6/QtCore.pyd', '_internal/coincurve/_libsecp256k1.cp312-win_amd64.pyd'):
+            with self.subTest(allowed=relative), tempfile.TemporaryDirectory() as d:
+                bundle = self._bundle(d)
+                (bundle / relative).parent.mkdir(parents=True, exist_ok=True)
+                (bundle / relative).write_bytes(b'MZ')
+                policy.audit_loose_files(bundle)
+        for relative in ('_internal/wallet_session.cp312-win_amd64.pyd', '_internal/wam_regtest/x.pyd',
+                         '_internal/wam_sp/core.so', '_internal/scanner.cpython-312-darwin.so'):
+            with self.subTest(denied=relative), tempfile.TemporaryDirectory() as d:
+                bundle = self._bundle(d)
+                (bundle / relative).parent.mkdir(parents=True, exist_ok=True)
+                (bundle / relative).write_bytes(b'MZ')
+                with self.assertRaisesRegex(ValueError, 'PRODUCTION_LOOSE_MODULE_DENIED'):
+                    policy.audit_loose_files(bundle)
+
     def test_second_wsp_source_directory_is_denied(self):
         with tempfile.TemporaryDirectory() as d:
             bundle = self._bundle(d)

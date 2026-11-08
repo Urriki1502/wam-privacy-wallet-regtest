@@ -80,7 +80,12 @@ DEVELOPER_ARGV = tuple([a] for a in (
     ['wallet', '--manifest-sha256', '0' * 64, '--anchor-socket', '/nonexistent/anchor.sock',
      '--confirm-experimental-developer-regtest', '--recover-backup', '/nonexistent/backup.enc'])
 
-PYTHON_SUFFIXES = ('.py', '.pyc', '.pyo', '.pyw', '.pyd')
+PYTHON_SUFFIXES = ('.py', '.pyc', '.pyo', '.pyw')
+# Compiled extension modules (.pyd on Windows; .so on macOS/Linux) are native
+# libraries that PyInstaller must ship loose (_ssl, _cffi_backend, PySide6 ...).
+# They are not Python source/bytecode, but none may impersonate a wallet module.
+NATIVE_EXTENSION_SUFFIXES = ('.pyd', '.so')
+WALLET_PACKAGES = ('wam_regtest', 'wam_sp')
 
 
 def audit_loose_files(app):
@@ -112,14 +117,29 @@ def audit_loose_files(app):
                     or not relative.endswith('.py') or '..' in Path(relative).parts):
                 raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
             allowed[(wsp/relative).resolve()] = digest
+    source = Path(__file__).resolve().parents[1]
+    wallet_modules = {p.stem for package in WALLET_PACKAGES
+                      for p in (source / 'src' / package).glob('*.py')}
+    wallet_modules |= {p.stem for p in (source / 'wsp-upstream/src/wam_sp').glob('*.py')}
     for p in app.rglob('*'):
-        if p.suffix.lower() not in PYTHON_SUFFIXES or p.is_dir():
+        if p.is_dir():
+            continue
+        relative = p.relative_to(app).as_posix()
+        suffix = p.suffix.lower()
+        if suffix in NATIVE_EXTENSION_SUFFIXES:
+            # e.g. wallet_session.cp312-win_amd64.pyd or anything under a
+            # wam_regtest/ or wam_sp/ directory would bypass the audited PYZ.
+            if (p.name.split('.')[0] in wallet_modules
+                    or any(part in WALLET_PACKAGES for part in p.relative_to(app).parts[:-1])):
+                raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED:' + relative)
+            continue
+        if suffix not in PYTHON_SUFFIXES:
             continue
         if p.is_symlink():
-            raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
+            raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED:' + relative)
         digest = allowed.get(p.resolve())
         if digest is None or hashlib.sha256(p.read_bytes()).hexdigest() != digest:
-            raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED')
+            raise ValueError('PRODUCTION_LOOSE_MODULE_DENIED:' + relative)
 
 
 def arguments(root, platform='macos'):
