@@ -158,8 +158,15 @@ class WalletConsent(QDialog):
         self.resize(540, 260)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
-        layout.addWidget(label(title, 'PageTitle'))
-        layout.addWidget(label(message))
+        for text, role in ((title, 'PageTitle'), (message, 'FusionMuted')):
+            # Wrapped consent text must grow with its wrapped height; the shared
+            # Maximum policy clipped long titles/explanations (V19 Reconcile).
+            wrapped = label(text, role)
+            policy = wrapped.sizePolicy()
+            policy.setVerticalPolicy(policy.Policy.Minimum)
+            policy.setHeightForWidth(True)
+            wrapped.setSizePolicy(policy)
+            layout.addWidget(wrapped)
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.password_input.setAccessibleName('Original wallet password')
