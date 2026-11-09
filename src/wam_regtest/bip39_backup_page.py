@@ -301,8 +301,10 @@ class Bip39BackupPage(QWidget):
         self._clear_challenge()
         self.verify_requested.emit(identifier, answers)
 
-    def show_verification_error(self):
-        self._verify_error.setText(t("verify_error"))
+    def show_verification_error(self, key="verify_error"):
+        # "verify_error" only for answers the backend compared and rejected;
+        # "verify_unavailable" when the backend refused before judging words.
+        self._verify_error.setText(t(key))
         self._verify_error.show()
         self._clear_challenge()
 

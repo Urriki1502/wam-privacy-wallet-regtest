@@ -749,7 +749,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
             challenge = self.executor.request('backup_challenge', timeout=30)
             self.backup_page.set_challenge(challenge)
         except Exception as error:
-            self.backup_page.show_verification_error()
+            self.backup_page.show_verification_error('verify_unavailable')
             self.status.setText('Backup verification unavailable: ' +
                                 str(operation_error('backup_challenge', error)))
 
@@ -766,7 +766,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
         except Exception as error:
             self.status.setText(
                 "Backup verification unavailable: " + str(operation_error("backup_verify", error)))
-            self.backup_page.show_verification_error()
+            # The backend refused before judging the words: never report this
+            # as a wrong-word result (V19: correct words shown as "do not match").
+            self.backup_page.show_verification_error('verify_unavailable')
             self._on_backup_challenge()
             return
         if ok:

@@ -391,6 +391,50 @@ class BackupPageContract(unittest.TestCase):
         self.assertNotEqual(
             len(self.window.backup_page._challenge_positions), 0)
 
+    def test_backend_refusal_is_not_reported_as_wrong_words(self):
+        # V19 physical: owned-Core/shared-peer fault made backup_verify raise;
+        # correct words were shown "One or more words do not match".
+        self._show_required()
+        self.window.backup_page.findChildren(QCheckBox)[0].setChecked(True)
+        _find_button(self.window.backup_page, "Back up now").click()
+        self.app.processEvents()
+        executor = self.window.executor
+        original = executor.request
+        def refuse(action, *args, **kwargs):
+            if action == "backup_verify":
+                executor.requests.append(action)
+                executor.challenge = None
+                from wam_regtest.wallet_executor import WalletExecutorError
+                raise WalletExecutorError("Q06_GUI_BACKUP_VERIFY_DENIED")
+            return original(action, *args, **kwargs)
+        executor.request = refuse
+        words = _DISPLAY_PHRASE_WORDS.split()
+        for edit, pos in zip(self.window.backup_page._verify_inputs,
+                             self.window.backup_page._challenge_positions):
+            edit.setText(words[pos - 1])
+        _find_button(self.window.backup_page, "Verify").click()
+        self.app.processEvents()
+        err = self.window.backup_page._verify_error
+        self.assertFalse(err.isHidden())
+        self.assertNotIn("do not match", err.text())
+        self.assertIn("not a wrong-word result", err.text())
+        self.window.resize(1100, 760)
+        self.window.show()
+        self.app.processEvents(); self.app.processEvents()
+        self.assertGreaterEqual(err.height(), err.heightForWidth(err.width()))
+        self.assertIn("Backup verification unavailable", self.window.status.text())
+        self.assertFalse(self.window._ready)
+        self.assertFalse(executor.verified)
+        # A fresh single-use challenge replaces the consumed one; retry works.
+        self.assertIsNotNone(self.window.backup_page._challenge_id)
+        executor.request = original
+        for edit, pos in zip(self.window.backup_page._verify_inputs,
+                             self.window.backup_page._challenge_positions):
+            edit.setText(words[pos - 1])
+        _find_button(self.window.backup_page, "Verify").click()
+        self.app.processEvents()
+        self.assertTrue(executor.verified)
+
     def test_deferred_mode_skips_grid_and_requires_verification(self):
         self._show_deferred()
         self.assertEqual(self.window.stack.currentWidget(), self.window.backup_page)
