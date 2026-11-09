@@ -125,6 +125,11 @@ def probe_wallet(core_dir,datadir,source,mining_address):
                                    capture_output=True,timeout=15,check=False).returncode
             if status:raise WalletProbeError("WALLET_TEST_KEYCHAIN_DENIED")
             created=True
+            # Disposable fixture only: no 300 s / lock-on-sleep auto-lock
+            # (root cause of intermittent REOPEN ANCHOR VAULT_KEYCHAIN_READ_DENIED).
+            if subprocess.run(['/usr/bin/security','set-keychain-settings',str(keychain)],
+                              capture_output=True,timeout=15,check=False).returncode:
+                raise WalletProbeError("WALLET_TEST_KEYCHAIN_DENIED")
         stage="CREATE"
         print("WALLET_E2E_STAGE=CREATE",flush=True)
         session=WalletSession.create(core_dir,datadir,source,password,mining_address,authorized=True,keychain=keychain)

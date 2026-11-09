@@ -124,7 +124,9 @@ def measure_reuse(core_dir: Path, source_root: Path, cycles: int = 5, *, cookie_
                     ["/usr/bin/security", "create-keychain", "-p", "public-test-only", str(keychain)],
                     capture_output=True, timeout=15, check=False,
                 ).returncode
-                if status:
+                if status or subprocess.run(
+                        ["/usr/bin/security", "set-keychain-settings", str(keychain)],
+                        capture_output=True, timeout=15, check=False).returncode:
                     raise CoreSmokeError("CORE_MEASURE_KEYCHAIN_DENIED")
                 created_keychain = True
             else:

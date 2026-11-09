@@ -44,6 +44,10 @@ def probe_security(cli, datadir, source, mining_address):
         ).returncode
         if status:
             raise SecurityProbeError("SECURITY_ISOLATED_KEYCHAIN_DENIED")
+        # Disposable fixture only: no 300 s / lock-on-sleep auto-lock.
+        if subprocess.run(["/usr/bin/security", "set-keychain-settings", str(keychain)],
+                          capture_output=True, timeout=15, check=False).returncode:
+            raise SecurityProbeError("SECURITY_ISOLATED_KEYCHAIN_DENIED")
         created = True
         anchor = KeychainAnchor(secrets.token_hex(16), keychain)
         vault = CheckpointVault(private, anchor, source)

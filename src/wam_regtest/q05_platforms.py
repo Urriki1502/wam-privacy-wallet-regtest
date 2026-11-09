@@ -57,6 +57,13 @@ class DarwinArm64Adapter(PlatformAdapter):
             'public-test-only',str(keychain)],capture_output=True,timeout=15)
         if result.returncode:
             raise OwnedLifecycleError('Q05_DISPOSABLE_KEYCHAIN_DENIED')
+        # Disposable fixture only: macOS auto-locks new keychains after 300 s
+        # of inactivity or on sleep, which made later anchor reads fail
+        # intermittently (VAULT_KEYCHAIN_READ_DENIED). Never applied to the
+        # user's own keychain; production Keychain settings are untouched.
+        if subprocess.run(['/usr/bin/security','set-keychain-settings',str(keychain)],
+                          capture_output=True,timeout=15).returncode:
+            raise OwnedLifecycleError('Q05_DISPOSABLE_KEYCHAIN_DENIED')
         return keychain
 
     def reopen_anchor(self,root):
