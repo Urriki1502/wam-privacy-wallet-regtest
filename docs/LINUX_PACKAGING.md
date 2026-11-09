@@ -1,3 +1,25 @@
+# v0.1.13 candidate policy — 2026-11-05
+
+The new candidate uses independently authenticated official signed v0.1.13
+Core and a **separate** `linux_official_core.py` policy, with immutable archive
+and member pins plus reviewed Ubuntu24.04 root-owned loader/library identity.
+Current approved loader-manifest SHA256:
+`4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2`.
+The signature does not authorize wallet spending: independent root witness,
+native ownership, private storage, leases, checkpoint CAS and consent remain
+mandatory. Legacy CLI option names such as `--linux-developer-manifest` are
+compatibility spellings; only the new official manifest is accepted by this
+candidate's runtime. No old developer manifest silently becomes official.
+
+Fresh disposable v0.1.13 profiles only; old profiles and historical developer
+artifacts remain intact and fail closed. Frozen Ubuntu24.04/glibc >=2.38 remains
+the supported baseline; Ubuntu22.04 UNSUPPORTED. Final qualification is still
+PENDING until exact-source native/frozen receipts exist. See
+[provenance](WAM_CORE_V013_PROVENANCE.md) and
+[migration design](WAM_CORE_V013_COMPATIBILITY_AND_MIGRATION.md).
+
+## Historical developer policy (preserved)
+
 # Experimental Linux frozen wallet packages
 
 Current packages require glibc >= 2.38 and Ubuntu 24.04. Ubuntu 22.04 is not supported. Details: `docs/LINUX_GLIBC_BASELINE.md`.

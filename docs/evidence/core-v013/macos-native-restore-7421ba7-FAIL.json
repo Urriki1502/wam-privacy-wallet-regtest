@@ -1,0 +1,62 @@
+{
+  "status": "FAIL",
+  "synthetic_rpc": false,
+  "mainnet_allowed": false,
+  "physical_accepted": false,
+  "independent_reviewed": false,
+  "chain_copied": false,
+  "native_anchor_copied": false,
+  "old_profile_overwritten": false,
+  "restored_signer_enabled": false,
+  "platform": "macos-arm64",
+  "ports": [
+    [
+      29554,
+      29555
+    ],
+    [
+      29556,
+      29557
+    ],
+    [
+      29558,
+      29559
+    ]
+  ],
+  "stage": "NEW_PROFILE_RESTORE_THEN_SYNC_HISTORICAL_CHAIN",
+  "observed_peer_subversions": [
+    "/WAM:0.1.13/"
+  ],
+  "observed_peer_protocols": [
+    70016
+  ],
+  "backend_failure": {
+    "action": "open",
+    "type": "ManagedWalletError",
+    "errno": null,
+    "owner_state": "recovery-needed",
+    "owner_faulted": true,
+    "supervisor_failure": {
+      "code": "RPC_CONNECTION_UNCERTAIN_READ_FAILED",
+      "stage": "status"
+    }
+  },
+  "original_participant_shutdown_verified": true,
+  "retired_endpoint_available": false,
+  "retired_endpoint_not_adopted": true,
+  "failure_code": "MANAGED_WALLET_OWNED_CORE_UNVERIFIED",
+  "all_original_owners_shutdown_verified": true,
+  "source_provenance": {
+    "candidate_source_sha": "7421ba7550e287f9a3433107393a7e35ab4f02f8",
+    "checkout_sha": "7421ba7550e287f9a3433107393a7e35ab4f02f8",
+    "ci_artifacts_allowed": true,
+    "literal_python_files_verified": 233,
+    "python_crlf_normalized": false,
+    "raw_python_tree_sha256": "2c68535f372e8bd7de60553f41cd42da841d047ec050a9d7638a3e872f6b7143"
+  },
+  "core_sha256": {
+    "wamd": "fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba",
+    "wam-cli": "2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19"
+  },
+  "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e"
+}

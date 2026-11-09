@@ -4,6 +4,7 @@ Reuses only build tactics from legacy PR170/206, never their GUI-only acceptance
 Original owner-supplied PNG -> ICO conversion; no substituted/generated artwork.
 """
 from hashlib import sha256
+from contextlib import nullcontext
 import importlib.metadata
 import json
 import os
@@ -17,7 +18,64 @@ import tempfile
 import zipfile
 
 
+def _production_mode(argv):
+    """[] = existing qualification build; ['--production'] = allowlisted wallet."""
+    if argv==[]:return False
+    if argv==['--production']:return True
+    raise SystemExit(64)
+
+
+def _finish_production(executable,bundle,output,source_root,source_stamp,wsp_root,wsp_stamp,python_ssl,core_pins):
+    """Distributed Windows bytes: exact allowlist audit, developer argv refusal,
+    read-only self-check. No normal-UI E2E is claimed here (separate gate)."""
+    from wam_regtest.build_provenance import verify,public_receipt
+    sys.path.insert(0,str(source_root/'scripts'))
+    from production_packaging import audit,DEVELOPER_ARGV
+    for name,digest in core_pins.items():
+        matches=[p for p in bundle.rglob(name) if p.is_file()]
+        assert len(matches)==1 and not matches[0].is_symlink() and sha256(matches[0].read_bytes()).hexdigest()==digest
+    inventory=audit(executable,bundle,'windows')
+    (output/'PRODUCTION_MODULE_INVENTORY.json').write_text(json.dumps(inventory,indent=2)+'\n')
+    system_root=Path(os.environ['SystemRoot'])
+    clean={k:v for k,v in os.environ.items() if k not in ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV')
+        and not k.startswith(('QT_','QML_'))}
+    clean.update({'QT_QPA_PLATFORM':'windows','PATH':str(system_root/'System32')+os.pathsep+str(system_root)})
+    checks=[]
+    with tempfile.TemporaryDirectory(prefix='wam-win-production-cwd-') as work:
+        check=subprocess.run([str(executable),'--check-bundle'],env=clean,cwd=work,stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=180)
+        assert check.returncode==0,'WIN_PRODUCTION_CHECK_BUNDLE_DENIED'
+        hostile=dict(clean,CI='true',GITHUB_ACTIONS='true',WAM_Q06_CI_SPEND_QUALIFY='1',WAM_QUALIFICATION='1')
+        for argv in DEVELOPER_ARGV:
+            result=subprocess.run([str(executable),*argv],env=hostile,cwd=work,stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=60)
+            assert result.returncode==64,'WIN_PRODUCTION_DEVELOPER_DISPATCH_NOT_DENIED'
+            checks.append({'argv':argv,'returncode':result.returncode})
+    (output/'PRODUCTION_DISPATCH_NEGATIVES.json').write_text(json.dumps(checks,indent=2)+'\n')
+    members={p.relative_to(bundle).as_posix():sha256(p.read_bytes()).hexdigest() for p in bundle.rglob('*') if p.is_file()}
+    assert not any(p.is_symlink() for p in bundle.rglob('*'))
+    verify(source_root,source_stamp);verify(wsp_root,wsp_stamp)
+    head=os.environ['WAM_SOURCE_HEAD']
+    archive=output/('WAM-Privacy-Wallet-REGTEST-windows-x64-production-'+head+'.zip')
+    with zipfile.ZipFile(archive,'x',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
+        for relative in sorted(members):z.write(bundle/relative,'WAM-Privacy-Wallet-REGTEST/'+relative)
+    receipt={'artifact_role':'allowlisted-regtest-wallet','platform':'windows-x64',
+        'source':public_receipt(source_stamp,source_head=head,dispatch=os.environ.get('GITHUB_EVENT_NAME')=='workflow_dispatch'),
+        'core_sha256':core_pins,'wsp_source_commit':'ac55f13423620252bdbf848c7e8a280c3b84721e',
+        'executable_sha256':sha256(executable.read_bytes()).hexdigest(),'bundle_files_sha256':members,
+        'archive_name':archive.name,'archive_sha256':sha256(archive.read_bytes()).hexdigest(),
+        'q01_cpython_ssl_sha256':python_ssl,'authenticode_signed_application':False,
+        'production_qualified':False,'normal_ui_frozen_e2e':'PENDING_NATIVE_WINDOWS_NORMAL_UI_QUALIFICATION',
+        'separate_qualification_artifact':'windows-package-output; does not qualify distributed bytes',
+        'mainnet_allowed':False}
+    (output/'PRODUCTION_BUILD_RECEIPT.json').write_text(json.dumps(receipt,sort_keys=True,indent=2)+'\n')
+    from wam_regtest.release_candidate import write_portable_sha256sums
+    write_portable_sha256sums(output)
+    print('WIN64_PRODUCTION_ALLOWLIST_BUILD_PASS_NORMAL_UI_QUALIFICATION_PENDING')
+
+
 def main():
+    production=_production_mode(sys.argv[1:])
     assert sys.platform=='win32' and platform.machine().lower() in ('amd64','x86_64')
     from wam_regtest.build_provenance import capture,verify,public_receipt
     source_root=Path.cwd();source_stamp=capture(source_root)
@@ -28,16 +86,16 @@ def main():
     source=Path('wsp-upstream').absolute()
     assert subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip()=='ac55f13423620252bdbf848c7e8a280c3b84721e'
     wsp_stamp=capture(source)
-    output=Path('windows-package-output');output.mkdir()
+    output=Path('windows-production-output' if production else 'windows-package-output');output.mkdir()
     with tempfile.TemporaryDirectory(prefix='wam-win-build-') as t:
         stage=Path(t);core=stage/'core';core.mkdir()
         from wam_regtest.q05_package_provenance import stage as stage_q05
         q05_source=stage/'Q05_BUILD_SOURCE.json';stage_q05(source_stamp,q05_source)
         for remote,name,limit in (
             ('/SIGNING-KEY.asc','SIGNING-KEY.asc',32768),
-            ('/downloads/v0.1.11/SHA256SUMS','SHA256SUMS',131072),
-            ('/downloads/v0.1.11/SHA256SUMS.asc','SHA256SUMS.asc',16384),
-            ('/downloads/v0.1.11/'+ASSET,ASSET,320*1024*1024)):
+            ('/downloads/v0.1.13/SHA256SUMS','SHA256SUMS',131072),
+            ('/downloads/v0.1.13/SHA256SUMS.asc','SHA256SUMS.asc',16384),
+            ('/downloads/v0.1.13/'+ASSET,ASSET,320*1024*1024)):
             _download_exact(remote,limit,stage/name)
         receipt=verify_signed_windows_archive(stage/ASSET,stage/'SIGNING-KEY.asc',stage/'SHA256SUMS',stage/'SHA256SUMS.asc')
         from wam_regtest.windows_release_preflight import ROOT
@@ -64,14 +122,29 @@ def main():
         from wam_regtest.distribution_notices import stage_distribution_notices
         notices=stage/'third-party-notices'
         stage_distribution_notices(notices,qt=True)
+        if production:
+            # Positive allowlist and the strict production entry; no
+            # --collect-submodules wam_regtest, no developer dispatch.
+            sys.path.insert(0,str(source_root/'scripts'))
+            from production_packaging import arguments as production_arguments
+            modules=['--distpath','dist-production','--workpath','build-production',
+                     *production_arguments(source_root,'windows')]
+            entry='src/wam_regtest/windows_production_entry.py'
+        else:
+            modules=['--collect-submodules','wam_regtest']
+            entry='src/wam_regtest/windows_package_entry.py'
         subprocess.run([sys.executable,'-I','-m','PyInstaller','--noconfirm','--clean','--noupx','--onedir','--windowed',
             '--name','WAM-Privacy-Wallet-REGTEST','--icon',str(icon),'--paths','src',
-            '--collect-submodules','wam_regtest','--collect-submodules','wam_sp',
-            '--collect-all','coincurve','--hidden-import','_cffi_backend',
+            *modules,'--collect-submodules','wam_sp',
+            # Production: no loose third-party Python (loose-file audit);
+            # coincurve via its PyInstaller hook + binaries, like macOS.
+            *(['--collect-binaries','coincurve','--copy-metadata','coincurve',
+               '--hidden-import','coincurve._cffi_backend'] if production else
+              ['--collect-all','coincurve']),'--hidden-import','_cffi_backend',
             '--add-data',str(q05_source)+':.','--add-data',str(core)+':core','--add-data',str(wsp)+':wsp-source',
             '--add-data',str(notices)+':third-party-notices',
-            '--add-data',str(brand_image())+':branding','src/wam_regtest/windows_package_entry.py'],env=build_environment,check=True)
-    bundle=Path('dist/WAM-Privacy-Wallet-REGTEST').absolute()
+            '--add-data',str(brand_image())+':branding',entry],env=build_environment,check=True)
+    bundle=Path('dist-production/WAM-Privacy-Wallet-REGTEST' if production else 'dist/WAM-Privacy-Wallet-REGTEST').absolute()
     executable=bundle/'WAM-Privacy-Wallet-REGTEST.exe'
     _validate_amd64_pe(executable.read_bytes())
     # Refuse, never delete, an undeclared optional TLS provider. This does not
@@ -85,6 +158,8 @@ def main():
         digest=sha256(source_dll.read_bytes()).hexdigest()
         assert sha256(members[0].read_bytes()).hexdigest()==digest,'WIN_CPYTHON_SSL_BYTES_CHANGED'
         python_ssl[name]=digest
+    if production:
+        return _finish_production(executable,bundle,output,source_root,source_stamp,source,wsp_stamp,python_ssl,BINARY_SHA256)
     subprocess.run([sys.executable,'-I','scripts/qualify_q05_frozen.py',
         '--executable',str(executable),'--output',str((output/'q05-frozen-evidence.json').absolute())],
         check=True,timeout=1200)
@@ -100,7 +175,9 @@ def main():
         ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV') and not k.startswith(('QT_','QML_'))}
     system_root=Path(os.environ['SystemRoot'])
     environment.update({'QT_QPA_PLATFORM':'windows','PATH':str(system_root/'System32')+os.pathsep+str(system_root)})
-    with tempfile.TemporaryDirectory(prefix='wam-q01-win-frozen-cwd-') as clean:
+    # Preserve this NEW qualification namespace on failure, including a live
+    # original owner. Never upload private profiles/configs or sweep temp roots.
+    with nullcontext(tempfile.mkdtemp(prefix='wam-q01-win-frozen-cwd-')) as clean:
         isolated=Path(clean).resolve()
         result=subprocess.run([str(executable),'--ci-real-core-wallet'],env=environment,cwd=isolated,stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1200)
@@ -110,19 +187,29 @@ def main():
             # Never print OS/RPC logs, paths, exception text or credentials.
             refusal=isolated/'windows-packaged-wallet-denied.json'
             code='WIN_BUNDLE_NO_PUBLIC_REFUSAL_RECEIPT'
+            from wam_regtest.windows_package_entry import public_failure_details
+            details=public_failure_details({})
             if refusal.is_file():
                 try:
                     payload=json.loads(refusal.read_text(encoding='utf8'))
                     candidate=payload.get('reason_code')
                     if (payload.get('status')=='WIN_BUNDLE_DENIED'
                             and type(candidate) is str and len(candidate)<=110
-                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',candidate)):
+                            and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q02|Q04|Q06)_[A-Z0-9_]{4,105}',candidate)):
                         code=candidate
+                        details=public_failure_details(payload)
                 except (OSError,ValueError,TypeError):
                     pass
             print('WIN_FROZEN_DEFAULT_PUBLIC_DENIAL='+code,flush=True)
+            line_path=isolated/'wallet-probe-public-line.json'
+            if line_path.is_file():
+                try:
+                    line=json.loads(line_path.read_text(encoding='utf8')).get('line')
+                    if type(line) is int and 1<=line<=10000:details['wallet_probe_line']=line
+                except (OSError,ValueError,TypeError):pass
+            print('WIN_FROZEN_DEFAULT_PUBLIC_DETAILS='+json.dumps(details,sort_keys=True),flush=True)
             with (output/'Q01_DEFAULT_FAILURE.json').open('x') as failure:
-                json.dump({'status':'FAIL','stage':'frozen-100','reason_code':code},failure)
+                json.dump({'status':'FAIL','stage':'frozen-100','reason_code':code,**details},failure)
             raise AssertionError('WIN_FROZEN_REAL_WALLET_DENIED')
         evidence=json.loads((isolated/'windows-packaged-wallet-evidence.json').read_text())
         assert evidence['wallet_live_core']['synthetic_rpc'] is False and evidence['platform']=='windows-x64'
@@ -147,7 +234,7 @@ def main():
                         candidate=payload.get('reason_code')
                         if (payload.get('status')=='WIN_BUNDLE_DENIED'
                                 and type(candidate) is str and len(candidate)<=110
-                                and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04)_[A-Z0-9_]{4,105}',candidate)):
+                                and re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q02|Q04|Q06)_[A-Z0-9_]{4,105}',candidate)):
                             code=candidate
                     except (OSError,ValueError,TypeError):
                         pass

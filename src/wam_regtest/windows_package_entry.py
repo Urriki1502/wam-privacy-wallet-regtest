@@ -4,11 +4,52 @@ import io
 import json
 from pathlib import Path
 import platform
+import re
 import sys
 import tempfile
 
 from wam_regtest.external_core import ExternalAttachmentError
 from wam_regtest.q04_runner import run_q04_scenario
+from wam_regtest.windows_core_stage import _stage_original_core
+
+
+_PUBLIC_ERROR_TYPES=frozenset(('CoreSmokeError','WindowsCoreSmokeError','WalletProbeError',
+    'RealWspScanError','WindowsWspError','Q04RunnerError','Q02ProbeError',
+    'Q06PlatformQualificationError','ValueError'))
+_PUBLIC_KINDS=_PUBLIC_ERROR_TYPES|frozenset(('AssertionError','KeyError','AttributeError',
+    'TypeError','OSError','PermissionError','FileNotFoundError','TimeoutError','OTHER'))
+_PUBLIC_CAUSES=frozenset(('Q02_NODE_START_TIMEOUT','Q02_OWNED_NODE_EARLY_EXIT',
+    'Q02_BOOT_LOG_BOUNDS_DENIED','Q02_BOOT_LOG_CUSTODY_DENIED','Q02_BOOT_ORIGINAL_OWNER_REQUIRED',
+    'Q02_UNEXPECTED_FIXED_REFUSAL','Q02_REQUIRED_REFUSAL_MISSING',
+    'CORE_LOCAL_NETWORK_POLICY_DENIED','CORE_RPC_SCOPE_FAULTED',
+    'CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE','CORE_RPC_PROCESS_IDENTITY_DENIED',
+    'CORE_RPC_AUTHENTICATION_DENIED','CORE_LOCAL_RPC_COMMAND_DENIED',
+    'CORE_RPC_DENIED','CORE_RPC_UNAVAILABLE','CORE_RPC_WARMUP',
+    'CORE_RPC_REPLY_DENIED','CORE_RPC_TIMEOUT_UNCERTAIN','CORE_RPC_OWNED_SCOPE_REQUIRED'))
+
+
+def public_failure_details(payload):
+    """Validate only fixed diagnostic enums, never copy arbitrary payload text."""
+    causes=payload.get('cause_codes',[]);kind=payload.get('exception_kind','OTHER')
+    return {'cause_codes':causes if type(causes) is list and len(causes)<=4
+            and all(type(c) is str and c in _PUBLIC_CAUSES for c in causes) else [],
+            'exception_kind':kind if type(kind) is str and kind in _PUBLIC_KINDS else 'OTHER'}
+
+
+def _public_denial(error):
+    name=type(error).__name__;args=error.args
+    reason=args[0] if name in _PUBLIC_ERROR_TYPES and len(args)==1 and type(args[0]) is str else ''
+    if (not re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q02|Q04|Q06)_[A-Z0-9_]{4,105}',reason)
+            or len(reason)>110):reason='WIN_BUNDLE_UNCLASSIFIED'
+    causes=[];seen={id(error)};cause=error.__cause__ or error.__context__
+    for _ in range(4):
+        if cause is None or id(cause) in seen:break
+        seen.add(id(cause));args=cause.args
+        if (type(cause).__name__ in _PUBLIC_ERROR_TYPES and len(args)==1
+                and type(args[0]) is str and args[0] in _PUBLIC_CAUSES):causes.append(args[0])
+        cause=cause.__cause__ or cause.__context__
+    return {'status':'WIN_BUNDLE_DENIED','reason_code':reason,'mainnet_allowed':False,
+            **public_failure_details({'cause_codes':causes,'exception_kind':name})}
 
 
 def _resources():
@@ -24,39 +65,6 @@ def _resources():
     if shared_point((1).to_bytes(32,'big'),pub(2))!=pub(2) or len(hash160(pub(31)))!=20:
         raise ValueError('WIN_BUNDLE_NATIVE_CRYPTO_DENIED')
     return root/'core',source
-
-
-def _stage_original_core(source,destination):
-    from wam_regtest import windows_private_storage as store
-    from wam_regtest.windows_core_transport import write_new,verified_core_paths
-    from wam_regtest.windows_release_preflight import BINARY_SHA256
-    store.create_private_directory(destination)
-    with store.directory_guard(source,private=False):
-        if set(p.name for p in source.iterdir())!={'wamd.exe','wam-cli.exe','receipt.json'}:
-            raise ValueError('WIN_BUNDLE_CORE_MEMBERS_DENIED')
-        for name in ('wamd.exe','wam-cli.exe','receipt.json'):
-            # Distribution ACLs are not runtime custody. Only independently
-            # pinned original bytes enter the newly protected executable stage.
-            handle=store.create(str(source/name),0x80000000,1,None,3,0x200080,None)
-            if handle in (None,store.INVALID):raise ValueError('WIN_BUNDLE_CORE_READ_DENIED')
-            try:
-                before=store._metadata(handle)
-                limit=4096 if name=='receipt.json' else 128*1024*1024
-                if not 1<=before[3]<=limit:raise ValueError('WIN_BUNDLE_CORE_SIZE_DENIED')
-                import ctypes
-                remaining=before[3];parts=[]
-                while remaining:
-                    size=min(remaining,65536);buf=ctypes.create_string_buffer(size);count=store.w.DWORD()
-                    if not store.readfile(handle,buf,size,ctypes.byref(count),None) or not count.value:
-                        raise ValueError('WIN_BUNDLE_CORE_READ_DENIED')
-                    parts.append(buf.raw[:count.value]);remaining-=count.value
-                if before!=store._metadata(handle):raise ValueError('WIN_BUNDLE_CORE_CHANGED_DENIED')
-                payload=b''.join(parts)
-                if name in BINARY_SHA256 and sha256(payload).hexdigest()!=BINARY_SHA256[name]:
-                    raise ValueError('WIN_BUNDLE_CORE_PIN_DENIED')
-                write_new(destination,name,payload)
-            finally:store.close(handle)
-    verified_core_paths(destination)
 
 
 def main():
@@ -128,18 +136,8 @@ def main():
         # Only public, bounded, explicitly typed status tokens. NEVER include
         # exception arguments from OS/RPC/Qt, stack traces or secret values.
         if report_denied:
-            import re
-            accepted_names = {
-                'CoreSmokeError','WindowsCoreSmokeError','WalletProbeError',
-                'RealWspScanError','WindowsWspError','Q04RunnerError',
-                'Q06PlatformQualificationError','ValueError'}
-            reason = str(error) if type(error).__name__ in accepted_names else ''
-            if (not re.fullmatch(r'(?:CORE|WIN|WALLET|WSP|Q04|Q06)_[A-Z0-9_]{4,105}',reason)
-                    or len(reason)>110):
-                reason='WIN_BUNDLE_UNCLASSIFIED'
             with Path('windows-packaged-wallet-denied.json').open('x',encoding='utf8') as out:
-                json.dump({'status':'WIN_BUNDLE_DENIED','reason_code':reason,
-                           'mainnet_allowed':False},out,sort_keys=True)
+                json.dump(_public_denial(error),out,sort_keys=True)
         else:
             from PySide6.QtWidgets import QApplication,QMessageBox
             app=QApplication.instance() or QApplication([])

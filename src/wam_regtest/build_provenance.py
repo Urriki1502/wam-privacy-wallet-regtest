@@ -19,7 +19,9 @@ TEXT_NAMES={'LICENSE','.gitattributes','.gitignore'}
 # Generated package trees are outputs, never source import roots. The immutable
 # WSP checkout is authenticated separately before backend execution and build.
 BUILD_OUTPUTS={'.git','wsp-upstream','build','dist','bundle-input','package-output',
-    'windows-package-output','linux-package-output','linux-upstream'}
+    'windows-package-output','linux-package-output','linux-upstream',
+    # Phase 5 allowlisted production builders (Windows/Linux onedir).
+    'build-production','dist-production','windows-production-output','linux-production-output'}
 
 
 class BuildSourceError(ValueError):

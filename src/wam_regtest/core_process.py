@@ -143,6 +143,11 @@ class OwnedCoreBinding:
         self.node,self.cli,self.receipt=verified_core_paths(core)
         self._image_path=str(self.node.resolve(strict=True))
         self._argv=[str(self.node),f'-datadir={directory}','-daemon=0']
+        # A qualification bootstrap may withhold P2P until attestation and
+        # custody complete. Exactly this finite flag is supported; no other
+        # launch options or process substitution gain authority.
+        if process.args==self._argv+['-networkactive=0']:
+            self._argv=self._argv+['-networkactive=0']
         if process.args!=self._argv or process.poll() is not None:raise CoreBindingError('RPC_OWNED_PROCESS_REQUIRED')
         self._files=(_metadata(self.node),_metadata(self.cli))
         self._assert_image()

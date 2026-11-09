@@ -92,6 +92,7 @@ def audit(core,source):
   try:
    assert sys.platform=='darwin','MACOS_OWNER_AUDIT_SCOPE'
    subprocess.run(['/usr/bin/security','create-keychain','-p','public-test-only',str(keychain)],check=True,capture_output=True);created=True
+   subprocess.run(['/usr/bin/security','set-keychain-settings',str(keychain)],check=True,capture_output=True)  # disposable fixture: no auto-lock
    session=WalletSession.create(core,data,source,password,mining,authorized=True,keychain=keychain)
    receiver=Keyring();rscan=Scanner(data/'receiver.sqlite',receiver.accounts())
    rpc=session._rpc();initial=session.snapshot();window=OperationalWalletWindow(session);window.show();window.apply_snapshot(initial);window._sync_timer.stop()

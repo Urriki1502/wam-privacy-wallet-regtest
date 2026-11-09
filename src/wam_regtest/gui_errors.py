@@ -2,6 +2,7 @@
 INPUT_ERRORS=frozenset(('WALLET_INPUT_AMOUNT_INVALID','WALLET_INPUT_FEE_INVALID',
                         'WALLET_INPUT_RECIPIENT_INVALID','WALLET_INPUT_FUNDS_UNAVAILABLE'))
 _MESSAGES={
+ 'WALLET_NATIVE_CHECKPOINT_VERIFICATION_REQUIRED':'This original wallet has a native checkpoint. Use Enable sending and explicitly approve custody verification before refreshing its history. Reservations remain protected; no wallet data should be reset.',
  'Q06_SHARED_RECONCILIATION_DENIED':'Shared-chain reconciliation was refused. Native checkpoints, signed evidence and reservations are preserved. Verify the original profile, password and chain; do not remove runtime files.',
  'Q06_RECONCILIATION_NOT_NEEDED':'The active custody session is healthy. Refresh the chain before requesting recovery.',
  'SHARED_CONFIRMED_PEER_REQUIRED':'The configured Core peer is disconnected or not yet verified. Reconnect and verify the shared chain; signed and pending payments remain preserved.',
@@ -27,6 +28,9 @@ _MESSAGES={
  'WALLET_PAYMENT_ALREADY_PENDING':'A payment review is already active. Finish that review or cancel its unsigned draft before preparing another.',
  'WALLET_SIGN_UNCERTAIN_LOCK_RETAINED':'Signing did not complete safely. Input reservations are irreversible. Do not retry automatically or release the locks.',
  'WALLET_BROADCAST_UNCERTAIN_LOCK_RETAINED':'Broadcast result is uncertain. The node may have accepted the transaction. Do not retry automatically; reservations remain locked.',
+ 'WALLET_BROADCAST_REJECTED_LOCK_RETAINED':'The local node rejected the signed transaction before submission; it was not sent. Input reservations stay signed and locked. Nothing is retried or released automatically.',
+ 'WALLET_BROADCAST_NOT_SUBMITTED_LOCK_RETAINED':'Pre-submission verification could not complete; the transaction was not sent by this wallet. Input reservations stay signed and locked. Nothing is retried or released automatically.',
+ 'WALLET_LOCK_CLEANUP_UNCERTAIN':'Lock could not close every wallet resource. Keys were dropped from this session and it is stopped; local wallet data and reservations are preserved. Restart the application before reopening; do not remove files.',
  'WALLET_ROOT_LEASE_UNCERTAIN_LOCK_RETAINED':'The independent custody lease was lost. Operations are stopped and reservations retained. Do not reset the witness or retry automatically.',
  'WALLET_BACKUP_STALE_OR_TAMPERED':'This backup does not match the latest anchored checkpoint. Choose the current unmodified backup; do not reset the anchor.',
  'WALLET_UNLOCK_REFUSED':'Could not unlock: passphrase, encrypted snapshot or custody verification failed. The wallet remains locked. Check the passphrase and latest backup; do not reset custody.',
@@ -54,6 +58,16 @@ def operation_error(action,error):
     args=error.args if type(error) in (ValueError,WalletSessionError,VaultError,WalletExecutorError) else ()
     code=args[0] if len(args)==1 and type(args[0]) is str else None
     if type(error) is WalletExecutorError and code in _MESSAGES:return code
+    if type(error) is WalletExecutorError:
+        if (action in ('snapshot','mine') and
+                code=='Q06_GUI_ANCHORED_SCANNER_REQUIRES_RECONCILIATION'):
+            return 'WALLET_NATIVE_CHECKPOINT_VERIFICATION_REQUIRED'
+        if action in ('open','unlock') and code in (
+                'Q06_SEED_REOPEN_DENIED','Q06_SEED_PASSWORD_DENIED',
+                'Q06_GUI_UNLOCK_RECONCILIATION_DENIED'):
+            return 'WALLET_UNLOCK_REFUSED'
+        if code=='MANAGED_WALLET_ORIGINAL_OWNER_REQUIRED':
+            return 'WALLET_CORE_IDENTITY_DENIED'
     if action=='prepare' and type(error) is ValueError:
         if code in ('INVALID_ADDRESS','INVALID_ENCODING','INVALID_PADDING','WRONG_NETWORK_OR_ADDRESS',
                     'INVALID_VERSION_OR_CHECKSUM','INVALID_ADDRESS_LENGTH','INVALID_PUBLIC_KEY'):

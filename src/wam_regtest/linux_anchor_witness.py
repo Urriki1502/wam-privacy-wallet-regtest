@@ -4,7 +4,11 @@ Optional administrative service; NEVER auto-installed by the wallet. Client
 requires root SO_PEERCRED and protected pathname ancestors. Server authorizes
 one non-root UID and retains immutable generation/digest records. Root/whole
 OS rollback, power-loss durability and hardened process binding are unqualified.
-Not yet connected to custody.py or spending; native acceptance is mandatory.
+Connected: custody.anchor() returns LinuxRootWitnessAnchor on Linux,
+CheckpointVault (vault.py) requires it, linux_runtime.policy() probes the
+provisioned witness, and WalletSession sign/broadcast hold its lease (a lost
+lease latches WALLET_ROOT_LEASE_UNCERTAIN_LOCK_RETAINED). Linux native
+acceptance of this custody/spending path is still mandatory and NOT EXECUTED.
 """
 from contextlib import contextmanager
 import json

@@ -51,6 +51,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -146,6 +147,59 @@ class _Node:
         self.original=self.config.read_bytes()
     def call(self,*args,timeout=15):
         return _read_cli([str(self.cli),'-datadir='+str(self.directory),*args],timeout=timeout)
+    def _wait_for_macos_loaded(self,descriptor,deadline):
+        """Observe original Core stdout before racing its directory creation.
+
+        This is fixture readiness only. No credential/profile/RPC custody check
+        is skipped or refreshed. pread never moves the child's stdout offset.
+        The deadline is shared with the existing 30-second startup budget.
+        """
+        context=identity(self.directory)
+        if context is None or context.binding.process is not self.proc:
+            raise Q02ProbeError('Q02_BOOT_ORIGINAL_OWNER_REQUIRED')
+        original=os.fstat(descriptor)
+        fields=('st_dev','st_ino','st_mode','st_uid','st_nlink')
+        expected=tuple(getattr(original,k) for k in fields)
+        if (not stat.S_ISREG(original.st_mode) or original.st_uid!=os.geteuid()
+                or stat.S_IMODE(original.st_mode)!=0o600 or original.st_nlink!=1):
+            raise Q02ProbeError('Q02_BOOT_LOG_CUSTODY_DENIED')
+        offset=0;pending=b'';limit=2*1024*1024
+        while time.monotonic()<deadline:
+            if self.proc.poll() is not None:raise Q02ProbeError('Q02_OWNED_NODE_EARLY_EXIT')
+            context.binding._assert_image()
+            info=os.fstat(descriptor)
+            if (tuple(getattr(info,k) for k in fields)!=expected
+                    or not offset<=info.st_size<=limit):
+                raise Q02ProbeError('Q02_BOOT_LOG_CUSTODY_DENIED')
+            raw=os.pread(descriptor,min(8192,limit-offset),offset)
+            offset+=len(raw);pending+=raw
+            lines=pending.split(b'\n');pending=lines.pop()
+            if any(line.endswith(b' init message: Done loading') for line in lines):
+                context.binding._assert_image()
+                print('Q02_ORIGINAL_CORE_STARTUP_COMPLETE',flush=True)
+                return
+            if offset>=limit or len(pending)>8192:
+                raise Q02ProbeError('Q02_BOOT_LOG_BOUNDS_DENIED')
+            if not raw:time.sleep(.05)
+        raise Q02ProbeError('Q02_NODE_START_TIMEOUT')
+    def _boot_retry_allowed(self,code):
+        context=identity(self.directory)
+        if (context is None or context.binding.process is not self.proc
+                or context.ready or context.faulted):return False
+        if code in ('CORE_RPC_UNAVAILABLE','CORE_RPC_WARMUP'):return True
+        # Windows may observe the original Core before its cookie exists.
+        # The transport explicitly leaves ONLY this uninitialized scope live;
+        # changed/unsafe already-snapshotted credentials must remain fatal.
+        if (not self.cookie or context.credentials is not None
+                or code!='CORE_RPC_CREDENTIAL_CHANGED_OR_UNSAFE'):return False
+        parent=self.directory/'regtest'
+        try:
+            if not stat.S_ISDIR(parent.lstat().st_mode):return False
+        except OSError:return False
+        try:(parent/'.cookie').lstat()
+        except FileNotFoundError:return True
+        except OSError:return False
+        return False
     def start(self):
         if self.proc is not None and self.proc.poll() is None:
             raise Q02ProbeError('Q02_NODE_ALREADY_RUNNING')
@@ -170,14 +224,17 @@ class _Node:
             from .windows_core_regtest_smoke import _host_env
             env=_host_env(self.directory)
         else:env={'PATH':'/usr/bin:/bin:/usr/sbin:/sbin','HOME':str(self.directory),'LC_ALL':'C'}
-        with (self.directory/('node-'+secrets.token_hex(4)+'.log')).open('xb') as log:
+        with (self.directory/('node-'+secrets.token_hex(4)+'.log')).open(
+                'x+b' if sys.platform=='darwin' else 'xb') as log:
+            if sys.platform=='darwin':os.fchmod(log.fileno(),0o600)
             self.proc=subprocess.Popen([str(self.node),'-datadir='+str(self.directory),'-daemon=0'],
                 cwd=self.node.parent if sys.platform=='win32' else self.directory,env=env,
                 stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,
                 creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0) if sys.platform=='win32' else 0)
-        register(self.proc,self.core,self.directory,authorized_disposable_mutation=True)
-        deadline=time.monotonic()+30;refusals=set()
-        print('Q02_OWNED_BOOT_MODE='+('cookie' if self.cookie else 'config'),flush=True)
+            register(self.proc,self.core,self.directory,authorized_disposable_mutation=True)
+            deadline=time.monotonic()+30;refusals=set()
+            print('Q02_OWNED_BOOT_MODE='+('cookie' if self.cookie else 'config'),flush=True)
+            if sys.platform=='darwin':self._wait_for_macos_loaded(log.fileno(),deadline)
         while time.monotonic()<deadline:
             if self.proc.poll() is not None:raise Q02ProbeError('Q02_OWNED_NODE_EARLY_EXIT')
             try:
@@ -191,6 +248,7 @@ class _Node:
                     'CORE_LOCAL_RPC_COMMAND_DENIED','CORE_RPC_DENIED')
                 if code in allowed and code not in refusals:
                     refusals.add(code);print('Q02_BOOT_FIXED_REFUSAL='+code,flush=True)
+                if not self._boot_retry_allowed(code):raise
                 time.sleep(.1)
         # Diagnose only credential metadata on this owned fixture; never print
         # cookie/config contents, SID, datadir, process arguments or node logs.
@@ -268,9 +326,9 @@ def probe(core):
                 assert observed and rpc._genesis is None
                 _expect(('WSP_LIVE_METHOD_DENIED',),lambda:rpc.call('getblockcount'))
             version=a.call('getnetworkinfo')
-            assert (version['version'],version['subversion'],version['protocolversion'])==(111,'/WAM:0.1.11/',70016)
+            assert (version['version'],version['subversion'],version['protocolversion'])==(113,'/WAM:0.1.13/',70016)
             def version_faults():
-                for key,bad in (('version',112),('version',111.0),('subversion','/WAM:0.1.12/'),('protocolversion',0)):
+                for key,bad in (('version',112),('version',113.0),('subversion','/WAM:0.1.12/'),('protocolversion',0)):
                     fault_attest('getnetworkinfo',lambda raw,v:json.dumps({**v,key:bad}).encode(),'WSP_LIVE_VERSION_DENIED')
             case('RPC-VERSION',version_faults,fault=True)
             case('PEERS',lambda:fault_attest('getconnectioncount',lambda *_:b'1','WSP_LIVE_PEERS_DENIED'),fault=True)
@@ -452,7 +510,7 @@ def probe(core):
         assert len(records)==33
         assert originals=={p.name:sha256(p.read_bytes()).hexdigest() for p in (node,cli)}
         return {'status':'REAL_Q02_SIGNED_CLI_AUTH_FAIL_CLOSED_PASS','cases':records,
-            'observed_genesis':before[1],'observed_rpc_version':version['version'],'core_version':'v0.1.11','core_sha256':originals,
+            'observed_genesis':before[1],'observed_rpc_version':version['version'],'core_version':'v0.1.13','core_sha256':originals,
             'genuine_core_processes':True,'synthetic_rpc_server':False,
             'negative_injections_are_not_observed_wrong_network_core':True,
             'persistent_shared_rpc_implemented':False,'mainnet_allowed':False,'production_qualified':False}

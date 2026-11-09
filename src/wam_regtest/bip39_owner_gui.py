@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from .desktop import qt_application
-from .gui_errors import operation_error
+from .gui_errors import operation_error, public_code, error_text
 from .managed_gui import ControlWorker
 from .wallet_executor import WalletExecutor
 from .bip39_owner_backend import Bip39ReadOnlyBackend
@@ -189,7 +189,42 @@ class Bip39RecoveryVerifyDialog(QDialog):
         self.accept()
 
     def _on_paste(self):
-        self._apply_paste(QApplication.clipboard().text())
+        clipboard = QApplication.clipboard()
+        changed = False
+        def ownership_changed():
+            nonlocal changed
+            changed = True
+        clipboard.dataChanged.connect(ownership_changed)
+        def deny_paste():
+            try:
+                self._clear_fields()
+                self._verify_error.setText(t("recovery_invalid"))
+                self._verify_error.show()
+            except RuntimeError:
+                # A destroyed Qt widget cannot retain visible input. Never
+                # forward cleanup exception text through the event loop.
+                pass
+        text = ""
+        try:
+            text = clipboard.text()
+            self._apply_paste(text)
+        except Exception:
+            deny_paste()
+        finally:
+            try:
+                # A nested signal may publish newer clipboard content, even
+                # the same text. Only clear our unchanged consumed snapshot.
+                if text and clipboard.text() == text and not changed:
+                    clipboard.clear()
+            except Exception:
+                # Clipboard access/clear may fail. Do not retry or blindly
+                # clear uncertain/newer content; report only a fixed error.
+                deny_paste()
+            finally:
+                try:
+                    clipboard.dataChanged.disconnect(ownership_changed)
+                except Exception:
+                    deny_paste()
 
     def _apply_paste(self, text):
         tokens = str(text or "").strip().lower().split()
@@ -268,6 +303,8 @@ class Bip39TrialWindow(QWidget):
         self.confirm=QPushButton("Confirm 1 REGTEST block")
         self.recovery=QPushButton("Verify 12-word recovery on this chain")
         self.inspect=QPushButton("Inspect past TXID (read-only)")
+        self.intents=QPushButton("Review signed payments (read-only)")
+        self.resume=QPushButton("Submit reviewed signed payment")
         self.cancel=QPushButton("Cancel unsigned draft")
         self.lock=QPushButton("Lock Q06")
         self.unlock=QPushButton("Unlock wallet")
@@ -280,6 +317,8 @@ class Bip39TrialWindow(QWidget):
         box.addWidget(self.confirm)
         box.addWidget(self.recovery)
         box.addWidget(self.inspect)
+        box.addWidget(self.intents)
+        box.addWidget(self.resume)
         utility=QHBoxLayout()
         utility.addWidget(self.lock);utility.addWidget(self.unlock);utility.addWidget(self.quit)
         box.addLayout(utility)
@@ -292,6 +331,8 @@ class Bip39TrialWindow(QWidget):
         self.confirm.clicked.connect(self._confirm_one_block)
         self.recovery.clicked.connect(self._verify_recovery_phrase)
         self.inspect.clicked.connect(self._inspect_past_txid)
+        self.intents.clicked.connect(lambda:self._command("intent_status"))
+        self.resume.clicked.connect(self._confirm_resume_intent)
         self.cancel.clicked.connect(lambda:self._command("cancel"))
         self.lock.clicked.connect(lambda:self._command("lock"))
         self.quit.clicked.connect(self.request_quit)
@@ -309,27 +350,43 @@ class Bip39TrialWindow(QWidget):
         self._delivering_result=False
         self._last_error_code=None
         self._recovery_dialog=None
+        self._recovered_unsigned_cancel=False
+        self._resumable_intent=None
+        self.resume.setToolTip("Submits the EXACT previously signed transaction after your approval. "
+                               "It is never re-signed, retried automatically or released.")
+        self.cancel.setToolTip("Cancel requires an authenticated unsigned draft. Signed or uncertain reservations cannot be released.")
         self._set_actions()
 
     def _set_actions(self):
         busy=self._worker is not None or self.executor.busy or self._delivering_result
         safe=not self.executor.state.faulted
+        spend_safe=(safe and not self.executor.state.locked
+                    and not self.executor.state.reauthentication_required
+                    and self.executor.state.core_alive is True)
         self.sync.setEnabled(self._ready and safe and not busy and not self._quit_requested)
         self.fund.setEnabled(self._ready and safe and not self._test_funded and not self._spend_enabled
                              and not busy and not self._quit_requested)
         self.activate.setEnabled(self._ready and safe and not self._spend_enabled and not busy and not self._quit_requested)
-        self.send.setEnabled(safe and self._spend_enabled and self._approved_commitment is None
-                             and not busy and not self._quit_requested)
-        self.broadcast.setEnabled(safe and self._spend_enabled and self._signed_ready
+        self.send.setEnabled(spend_safe and self._spend_enabled and self._approved_commitment is None
+                             and not self._recovered_unsigned_cancel and not busy and not self._quit_requested)
+        self.broadcast.setEnabled(spend_safe and self._spend_enabled and self._signed_ready
                                   and not busy and not self._quit_requested)
-        self.cancel.setEnabled(safe and self._spend_enabled and self._approved_commitment is not None
+        self.cancel.setEnabled(spend_safe and self._spend_enabled
+                               and (self._approved_commitment is not None or self._recovered_unsigned_cancel)
                                and not self._signed_ready and not busy and not self._quit_requested)
-        self.confirm.setEnabled(safe and self._spend_enabled and self._pending_confirm_txid is not None
+        self.confirm.setEnabled(spend_safe and self._spend_enabled and self._pending_confirm_txid is not None
                                 and not busy and not self._quit_requested)
-        self.recovery.setEnabled(safe and self._spend_enabled and self._pending_confirm_txid is None
+        self.recovery.setEnabled(spend_safe and self._spend_enabled and self._pending_confirm_txid is None
                                  and not busy and not self._quit_requested)
-        self.inspect.setEnabled(safe and self._spend_enabled
+        self.inspect.setEnabled(spend_safe and self._spend_enabled
                                 and not busy and not self._quit_requested)
+        idle_payment=(self._approved_commitment is None and not self._signed_ready
+                      and self._pending_confirm_txid is None)
+        self.intents.setEnabled(spend_safe and self._spend_enabled and idle_payment
+                                and not busy and not self._quit_requested)
+        self.resume.setEnabled(spend_safe and self._spend_enabled and idle_payment
+                               and self._resumable_intent is not None
+                               and not busy and not self._quit_requested)
         self.lock.setEnabled(self._ready and not busy and not self._quit_requested)
         self.unlock.setEnabled(self._unlock_allowed and not self._ready and not busy
                                 and not self._quit_requested)
@@ -340,7 +397,7 @@ class Bip39TrialWindow(QWidget):
                 or self._delivering_result):
             return False
         worker=ControlWorker(self.executor, action, args,
-                             kwargs={"timeout":240} if action in ("mine","snapshot","activate","prepare","sign","broadcast","confirm","recovery_verify","inspect_confirmed") else None,
+                             kwargs={"timeout":240} if action in ("mine","snapshot","activate","prepare","sign","broadcast","confirm","recovery_verify","inspect_confirmed","intent_status","resume_intent") else None,
                              parent=self)
         self._worker=worker
         self._completed_result = None
@@ -496,6 +553,22 @@ class Bip39TrialWindow(QWidget):
     def _on_recovery_verify_cancelled(self):
         self._recovery_dialog = None
 
+    def _confirm_resume_intent(self):
+        item=self._resumable_intent
+        if item is None or not self._spend_enabled or self.executor.state.faulted:
+            return
+        answer=QMessageBox.question(
+            self,"Submit previously signed REGTEST payment",
+            "Submit this EXACT previously signed transaction?\n\n"
+            "TXID: {}\nRecipient: {}\nAmount: {:,} atoms\nFee: {:,} atoms\nState: {}\n\n"
+            "It is not re-signed and nothing is retried automatically. If the "
+            "result is uncertain, reservations stay locked. Mainnet is never used.".format(
+                item["txid"],item["recipient"],item["atoms"],item["fee"],item["state"]),
+            QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if answer==QMessageBox.StandardButton.Yes and self._resumable_intent is item:
+            self._command("resume_intent",item["token"],item["txid"],True)
+
     def _inspect_past_txid(self):
         if not self._spend_enabled or self.executor.state.faulted:
             return
@@ -508,6 +581,12 @@ class Bip39TrialWindow(QWidget):
             self._command("inspect_confirmed",txid)
 
     def _on_ready(self, action, result):
+        if action in ('open', 'lock', 'quit', 'unlock'):
+            self._resumable_intent = None
+        if action in ('open', 'lock', 'quit'):
+            self._recovered_unsigned_cancel = False
+        elif action in ('snapshot', 'activate', 'unlock') and isinstance(result, dict):
+            self._recovered_unsigned_cancel = result.get('recovered_unsigned_cancel_available') is True
         if action=="open":
             self._backup_unacked=False
             # Start from a locked UI state; the backup flow (if required) will
@@ -575,7 +654,11 @@ class Bip39TrialWindow(QWidget):
                 "\n".join("{}  height={}  atoms={}".format(
                     row["txid"],row["height"],row["atoms"]) for row in rows)
                 if rows else "No confirmed BIP352 transactions found on this disposable Core")
-            if (self._spend_enabled and result.get("reservation_count",0)>0
+            if self._recovered_unsigned_cancel:
+                self.status.setText(
+                    "An unsigned draft remains from this original wallet. Use Cancel unsigned draft "
+                    "explicitly before reviewing a new payment. Signed/uncertain locks are never released.")
+            elif (self._spend_enabled and result.get("reservation_count",0)>0
                     and self._pending_confirm_txid is None):
                 self.status.setText(
                     "Anchored transaction reservations exist; check previous TXID "
@@ -640,7 +723,32 @@ class Bip39TrialWindow(QWidget):
                 self.status.setText(
                     "TXID NOT in complete verified confirmed history; status uncertain. "
                     "Do NOT retry, remine or release coin reservations.")
+        elif action=="intent_status":
+            intents=result["intents"]
+            resumable=[i for i in intents if i["classification"] in
+                       ("SIGNED_NOT_SUBMITTED_RESUMABLE","UNCERTAIN_NOT_OBSERVED_RESUMABLE")]
+            self._resumable_intent=resumable[0] if len(resumable)==1 else None
+            counts={}
+            for item in intents:
+                counts[item["classification"]]=counts.get(item["classification"],0)+1
+            summary="; ".join("{} x{}".format(k,v) for k,v in sorted(counts.items())) or "none"
+            self.status.setText(
+                "Signed payment review (read-only): {}. ".format(summary)
+                +("One exact signed payment can be submitted after your approval."
+                  if self._resumable_intent is not None else
+                  "Nothing is submitted or released automatically; locked reservations stay protected."))
+        elif action=="resume_intent":
+            self._resumable_intent=None
+            self._pending_confirm_txid=result["txid"]
+            self.last_txid.setText(result["txid"])
+            self.status.setText(
+                "Previously signed payment submitted (not re-signed). Record the TXID: {}. "
+                "Confirm 1 REGTEST block to verify on-chain.".format(result["txid"]))
+            self._pending_action=("snapshot",)
         elif action=="cancel":
+            self._recovered_unsigned_cancel=False
+            if isinstance(result, dict) and result.get('recovered_unsigned_cancelled') is True:
+                self._pending_action=('snapshot',)  # Read only, never a write retry.
             self._approved_commitment=None
             self._signed_ready=False
             self.status.setText("Unsigned draft cancelled")
@@ -677,7 +785,12 @@ class Bip39TrialWindow(QWidget):
                 self.tip.setText("Chain: not yet verified")
                 self.status.setText(
                     "BIP39 native seed unlocked. Activate Send after checkpoint verification.")
-                self._pending_action = ("snapshot",)
+                # Seed authentication alone cannot scan over an existing
+                # native checkpoint. Match the normal Open route: retain
+                # explicit Enable sending/reconciliation consent first.
+                self._pending_action = (
+                    ("snapshot",) if not result.get('checkpoint_present')
+                    or result.get('signer_allowed') is True else None)
                 if result.get('signer_allowed') is True:
                     self._spend_enabled = True
             elif backup_status == "deferred":
@@ -749,13 +862,28 @@ class Bip39TrialWindow(QWidget):
         self._backup_flow_completed(False)
 
     def _on_denied(self, code):
+        code = public_code(code)
         self._last_error_code = code
+        if (code == 'WALLET_UNLOCK_REFUSED' and self.executor.state.locked
+                and not self.executor.state.faulted
+                and not self.executor.state.reauthentication_required
+                and self.executor.state.core_alive is True):
+            # A failed initial Open has no earlier Lock event to expose this
+            # existing control. Allow another EXPLICIT password attempt on
+            # the same owner; this grants neither keys nor spending scope.
+            self._unlock_allowed = True
+            self._ready = False
         if self.executor.state.faulted:
             self._signed_ready=False
+        if code == 'WALLET_BROADCAST_REJECTED_LOCK_RETAINED':
+            # The backend forgot the in-memory payment; the signed reservation
+            # stays locked and is listed by "Review signed payments".
+            self._signed_ready=False
+            self._approved_commitment=None
         self.status.setText(
             "Wallet faulted — stop spending; original state preserved for review."
             if self.executor.state.faulted else
-            "Operation refused safely: " + str(code))
+            "Operation refused safely: " + error_text(code))
         self._set_actions()
 
     def _receive_result(self, action, result):
@@ -821,6 +949,37 @@ def _last_remembered_profile():
         return ""
 
 
+def _onboarding_password(parent, mode):
+    """Recoverable input validation before any executor request creates custody."""
+    while True:
+        password, ok = QInputDialog.getText(
+            parent, "Q06 BIP39 wallet (REGTEST only)",
+            "Disposable encrypted-seed password (12–1024 UTF-8 bytes)",
+            QLineEdit.EchoMode.Password)
+        if not ok:
+            return "", False
+        if not 12 <= len(password.encode("utf-8")) <= 1024:
+            password = ""
+            QMessageBox.warning(parent, "Q06 password",
+                                "Use a disposable password of 12–1024 UTF-8 bytes.")
+            continue
+        if mode in ("create", "restore"):
+            confirmation, confirmed = QInputDialog.getText(
+                parent, "Confirm wallet password", "Enter the same password again.",
+                QLineEdit.EchoMode.Password)
+            if not confirmed:
+                password = confirmation = ""
+                return "", False
+            matches = password == confirmation
+            confirmation = ""
+            if not matches:
+                password = ""
+                QMessageBox.warning(parent, "Q06 password",
+                                    "Passwords do not match. Please try again.")
+                continue
+        return password, True
+
+
 def launch_bip39_trial(root,core,source,*,mode,authorized=False,shared_profile=None):
     if authorized is not True or mode not in ("create","restore","reopen"):
         raise ValueError("Q06_GUI_EXPLICIT_REGTEST_CONSENT_REQUIRED")
@@ -836,14 +995,7 @@ def launch_bip39_trial(root,core,source,*,mode,authorized=False,shared_profile=N
     from .bip39_fusion_gui import Bip39FusionWindow
     window=Bip39FusionWindow(executor,shared_profile=shared_profile)
     window.show()
-    password, ok=QInputDialog.getText(
-        window, "Q06 BIP39 wallet (REGTEST only)",
-        "Disposable encrypted-seed password (12–1024 UTF-8 bytes)",
-        QLineEdit.EchoMode.Password,
-    )
-    if ok and not 12 <= len(password.encode("utf-8")) <= 1024:
-        QMessageBox.warning(window,"Q06 password","Use a disposable password of 12–1024 bytes.")
-        ok=False
+    password, ok = _onboarding_password(window, mode)
     phrase=""
     if ok and mode=="restore":
         phrase,ok=QInputDialog.getMultiLineText(

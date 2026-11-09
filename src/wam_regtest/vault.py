@@ -24,6 +24,113 @@ class VaultError(ValueError):
     pass
 
 
+LEASE_DIRECTORY = ("Library", "Application Support", "WAM Fusion REGTEST", "wallet-leases")
+LEGACY_LEASE_DIRECTORY = "wam-regtest-wallet-leases"
+_CS_DARWIN_USER_TEMP_DIR = 65537
+
+
+def stable_lease_root():
+    """Per-user private lease root independent of the process environment."""
+    import pwd
+    home = Path(pwd.getpwuid(os.geteuid()).pw_dir)
+    if not home.is_absolute() or ".." in home.parts:
+        raise VaultError("VAULT_GLOBAL_LEASE_DENIED")
+    return home.joinpath(*LEASE_DIRECTORY)
+
+
+def _lease_roots():
+    if sys.platform != "darwin":
+        raise VaultError("VAULT_MACOS_SCOPE_DENIED")
+    try:
+        stable = stable_lease_root()
+        default = Path(os.confstr(_CS_DARWIN_USER_TEMP_DIR)).resolve(strict=True)
+        current = Path(tempfile.gettempdir()).resolve(strict=True)
+    except (OSError, ValueError, KeyError, TypeError):
+        raise VaultError("VAULT_GLOBAL_LEASE_DENIED") from None
+    roots = [stable]
+    for legacy in (default / LEGACY_LEASE_DIRECTORY, current / LEGACY_LEASE_DIRECTORY):
+        if legacy not in roots:
+            roots.append(legacy)
+    return roots
+
+
+def _ensure_private_directory(directory):
+    # Create missing components owner-only; never chmod/repair an existing one.
+    missing = []
+    probe = directory
+    while not (probe.exists() or probe.is_symlink()):
+        missing.append(probe)
+        probe = probe.parent
+    for component in reversed(missing):
+        try:
+            component.mkdir(mode=0o700)
+        except FileExistsError:
+            pass
+
+
+def _open_lock(root, name):
+    """Open root (no-follow, private) and the lock file; bounded transient retry.
+
+    Concurrent first creation in the same root changes the directory mtime
+    (the strict validator reports MACOS_PRIVATE_DIRECTORY_CHANGED) and APFS
+    can briefly return ENOENT for a racing O_CREAT. Only those two transient
+    cases are retried, at most 5 times; metadata violations deny at once.
+    Nothing is locked until flock below, so a retry never weakens exclusion.
+    """
+    import errno
+    import time
+    from .private_directory import MacosPrivateDirectoryError
+    for attempt in range(5):
+        if attempt:
+            time.sleep(0.02 * attempt)
+        try:
+            _ensure_private_directory(root)
+            dfd = encrypted_storage.open_macos_private_directory(root)
+        except MacosPrivateDirectoryError as error:
+            if error.args == ("MACOS_PRIVATE_DIRECTORY_CHANGED",):
+                continue
+            raise VaultError("VAULT_GLOBAL_LEASE_DENIED") from None
+        except (OSError, ValueError):
+            raise VaultError("VAULT_GLOBAL_LEASE_DENIED") from None
+        try:
+            return dfd, os.open(name, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                0o600, dir_fd=dfd)
+        except OSError as error:
+            os.close(dfd)
+            if error.errno == errno.ENOENT:
+                continue
+            raise VaultError("VAULT_GLOBAL_LEASE_DENIED") from None
+    raise VaultError("VAULT_SESSION_BUSY")
+
+
+@contextmanager
+def _exclusive_lock(root, name):
+    import fcntl
+    dfd, fd = _open_lock(root, name)
+    try:
+        info = os.fstat(fd)
+        if (not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode) != 0o600
+                or info.st_uid != os.geteuid() or info.st_nlink != 1):
+            raise VaultError("VAULT_GLOBAL_LEASE_DENIED")
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            raise VaultError("VAULT_SESSION_BUSY") from None
+        try:
+            # The locked inode must still be the published name (no unlink or
+            # replacement raced the open); otherwise two holders could exist.
+            named = os.stat(name, dir_fd=dfd, follow_symlinks=False)
+            if (named.st_dev, named.st_ino) != (info.st_dev, info.st_ino):
+                raise VaultError("VAULT_GLOBAL_LEASE_DENIED")
+            yield
+        finally:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+    finally:
+        if fd is not None:
+            os.close(fd)
+        os.close(dfd)
+
+
 class KeychainAnchor:
     """Only a public generation/digest is stored; never a key or passphrase.
 
@@ -43,38 +150,30 @@ class KeychainAnchor:
     @contextmanager
     def lease(self):
         # All copies of one wallet share this OS lease even when their vault
-        # directories differ. The root contains empty locks, never secrets.
-        import fcntl
+        # directories differ. Roots contain empty locks, never secrets.
+        #
+        # CDX-AUD-001: the authoritative lock lives in a stable per-user
+        # private directory derived from the password database (never from
+        # TMPDIR/HOME). During the transition the legacy locks used by earlier
+        # builds are ALSO held: the Darwin per-user default temp root (what an
+        # earlier process launched normally used) and the caller's current
+        # temp root. Order is fixed (stable, default-legacy, env-legacy); every
+        # acquisition is non-blocking and any busy/invalid lock fails closed.
+        # Lock files are never unlinked or recreated.
+        from contextlib import ExitStack
         # Only this exact anchor object and thread may nest a held lease.
         # Another object/process for the same wallet must still contend.
         if getattr(self._lease_local,"held_pid",None)==os.getpid():
             yield
             return
-        root=Path(tempfile.gettempdir()).resolve(strict=True)/"wam-regtest-wallet-leases"
-        root.mkdir(mode=0o700,exist_ok=True)
-        dfd=encrypted_storage.open_macos_private_directory(root)
-        fd=None
-        try:
-            fd=os.open(self.wallet_id+".lock",os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW|os.O_CLOEXEC,
-                       0o600,dir_fd=dfd)
-            info=os.fstat(fd)
-            if (not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode)!=0o600
-                    or info.st_uid!=os.geteuid() or info.st_nlink!=1):
-                raise VaultError("VAULT_GLOBAL_LEASE_DENIED")
-            try:
-                fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
-            except OSError:
-                raise VaultError("VAULT_SESSION_BUSY") from None
+        with ExitStack() as stack:
+            for root in _lease_roots():
+                stack.enter_context(_exclusive_lock(root,self.wallet_id+".lock"))
             self._lease_local.held_pid=os.getpid()
             try:
                 yield
             finally:
                 self._lease_local.held_pid=None
-                fcntl.flock(fd,fcntl.LOCK_UN)
-        finally:
-            if fd is not None:
-                os.close(fd)
-            os.close(dfd)
 
     def _run(self, args):
         try:

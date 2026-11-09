@@ -141,8 +141,21 @@ class SupervisorLifecycleUnit(unittest.TestCase):
         self.assertEqual(owner.status()['state'], 'recovery-needed')
         self.assertFalse(owner.status()['core_process_owned'])
         self.assertEqual(owner.read.call.call_count, 1)
+        self.assertEqual(json.loads(read_exact(owner.root,'supervisor.failure')),
+                         {'stage':'status','code':'RPC_CONFIG_CHANGED'})
         with self.assertRaises(ManagedCoreError):
             owner.start()
+
+    def test_status_failure_retains_only_fixed_diagnostic_without_exception_text(self):
+        owner=self.owner()
+        self.runtime(owner)
+        owner.read.call.side_effect=ValueError('private credential/path must not be recorded')
+        self.assertEqual(owner.status()['state'],'recovery-needed')
+        before=read_exact(owner.root,'supervisor.failure')
+        self.assertEqual(json.loads(before),
+                         {'stage':'status','code':'MANAGED_UNCLASSIFIED_FAILURE'})
+        owner._record_failure('start',RpcError('RPC_CONFIG_CHANGED'))
+        self.assertEqual(read_exact(owner.root,'supervisor.failure'),before)
 
     def test_crashed_core_has_no_automatic_restart(self):
         owner = self.owner()

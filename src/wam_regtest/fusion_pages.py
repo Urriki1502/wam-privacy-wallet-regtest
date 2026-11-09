@@ -63,7 +63,7 @@ class HistoryPage(QWidget):
     page_requested=Signal(int)
     def __init__(self):
         super().__init__();self.setObjectName('FusionInner');self.rows=();self.mode='dark';self._offset=0;self._total=0;root=QVBoxLayout(self);root.setContentsMargins(0,0,0,0)
-        scroll,layout=page('History','Confirmed credits and debits verified by WAM Core and WSP-1.','ON-CHAIN / HISTORY');root.addWidget(scroll)
+        scroll,layout=page('History','Credit is owned outputs, including change. Debit is spent owned inputs. Net change is credit minus debit; outgoing net includes the fee.','ON-CHAIN / HISTORY');root.addWidget(scroll)
         card,cl=panel();toolbar=QHBoxLayout();self.search=QLineEdit();self.search.setPlaceholderText('Search transaction ID or block height');self.search.setClearButtonEnabled(True);self.search.setAccessibleName('Search confirmed transactions');self.filter=QComboBox();self.filter.addItems(('All activity','Credits','Debits'));toolbar.addWidget(self.search,1);toolbar.addWidget(self.filter);cl.addLayout(toolbar)
         self.table=QTableWidget(0,6);self.table.setObjectName('FusionActivityTable');self.table.setHorizontalHeaderLabels(('DIRECTION','TRANSACTION','BLOCK','CONFIRMED','CREDIT WAM','DEBIT WAM'));self.table.verticalHeader().hide();self.table.setShowGrid(False);self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers);self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows);self.table.horizontalHeader().setSectionResizeMode(1,QHeaderView.ResizeMode.Stretch);self.table.setMinimumHeight(220);self.table.setColumnWidth(0,130);self.table.setColumnWidth(2,65);self.table.setColumnWidth(3,90);self.table.setColumnWidth(4,145);self.table.setColumnWidth(5,145);cl.addWidget(self.table)
         nav=QHBoxLayout();self.newer=action('Newer confirmed history','history');self.older=action('Older confirmed history','history');self.newer.setEnabled(False);self.older.setEnabled(False);self.newer.clicked.connect(self._newer);self.older.clicked.connect(self._older);nav.addWidget(self.newer);nav.addWidget(self.older);nav.addStretch();cl.addLayout(nav)
@@ -85,9 +85,12 @@ class HistoryPage(QWidget):
         else:
             start=self._offset+1 if shown else 0
             end=self._offset+shown
+            proof = ('Full history is fingerprinted in custody, not discarded.'
+                     if snap.history_sha256 is not None else
+                     'Full history was scanned against this Core; only the display is paged.')
             self.scope.setText(
                 f'Showing newest-offset {self._offset} records {start}–{end} of {self._total} '
-                'verified records. Full history is fingerprinted in custody, not discarded.')
+                f'verified records. {proof}')
         c=fusion_palette(self.mode)
         for i,row in enumerate(self.rows):
             net=row.credit_atoms-row.debit_atoms;direction='Received' if net>0 else 'Sent' if net<0 else 'Activity'
@@ -155,8 +158,15 @@ class WalletConsent(QDialog):
         self.resize(540, 260)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
-        layout.addWidget(label(title, 'PageTitle'))
-        layout.addWidget(label(message))
+        for text, role in ((title, 'PageTitle'), (message, 'FusionMuted')):
+            # Wrapped consent text must grow with its wrapped height; the shared
+            # Maximum policy clipped long titles/explanations (V19 Reconcile).
+            wrapped = label(text, role)
+            policy = wrapped.sizePolicy()
+            policy.setVerticalPolicy(policy.Policy.Minimum)
+            policy.setHeightForWidth(True)
+            wrapped.setSizePolicy(policy)
+            layout.addWidget(wrapped)
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.password_input.setAccessibleName('Original wallet password')

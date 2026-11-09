@@ -1,4 +1,4 @@
-name: Linux x86_64 experimental developer Core REGTEST
+name: Linux x86_64 official Core v0.1.13 REGTEST
 on:
   pull_request:
     paths:
@@ -16,33 +16,40 @@ on:
       - '.github/workflows/linux-experimental-regtest.yml'
       - 'scripts/build_linux_developer_core.sh'
       - 'scripts/build_linux_wallet.py'
+      - 'scripts/production_packaging.py'
       - 'scripts/linux_headless_acceptance.py'
       - 'src/wam_regtest/*.py'
       - 'tests/test_v1_k07_real_git_source.py'
       - 'tests/test_v1_wsp_execution.py'
       - 'tests/test_linux*.py'
   workflow_dispatch:
+    inputs:
+      intake_only:
+        description: 'Observe official v0.1.13 bytes on native Linux before integration'
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
 jobs:
   native-contracts:
+    if: ${{ inputs.intake_only != true }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
       core_changed: ${{ steps.scope.outputs.core_changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.15'
       - name: Q01 clean hash-locked headless environment
@@ -69,6 +76,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_q06_bip39*.py' -v
           python -m unittest discover -s tests -p 'test_q06_executor_commands.py' -v
           python -m unittest discover -s tests -p 'test_linux*.py' -v
+          python -m unittest discover -s tests -p 'test_official_core_v013*.py' -v
           python - <<'PY'
           import os,subprocess
           base=os.environ.get('BASE_SHA')
@@ -81,7 +89,7 @@ jobs:
           PY
       - name: Preserve Q01 source-install receipt (not Q acceptance)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q01-install-linux-experimental-regtest-native-contracts-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -91,21 +99,22 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   headless-wallet:
+    if: ${{ inputs.intake_only != true }}
     needs: native-contracts
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.15'
       - name: Q01 clean hash-locked wallet environment
@@ -114,13 +123,15 @@ jobs:
         run: python -I scripts/q01_environment.py --profile headless --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Q01 native missing-dependency refusal (no Core execution)
         run: python scripts/q01_dependency_negatives.py
-      - name: Fetch previously qualified immutable developer Core artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Native headless dependency closure and actual wallet executable
         run: |
           sudo apt-get update -qq
@@ -128,7 +139,17 @@ jobs:
           chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
           python scripts/q01_core_negatives.py --core-dir qualified-linux-core/linux-core --output q01-core-negatives.json
           python scripts/linux_headless_acceptance.py --core-dir qualified-linux-core/linux-core
-      - uses: actions/upload-artifact@v4
+      - name: Q06 fresh same-chain native profile restoration (no custody copy)
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python scripts/qualify_q06_same_chain_restore.py --core-dir "$GITHUB_WORKSPACE/qualified-linux-core/linux-core" --wsp-source "$GITHUB_WORKSPACE/wsp-upstream" --report "$RUNNER_TEMP/q06-same-chain-native.json" --test-root-witness --confirm-disposable-regtest
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: q06-same-chain-native-linux-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/q06-same-chain-native.json
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: linux-headless-wallet-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: linux-headless-evidence.json
@@ -136,7 +157,7 @@ jobs:
           retention-days: 14
       - name: Preserve Q01 source-install receipt (not Q acceptance)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q01-install-linux-experimental-regtest-headless-wallet-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -146,21 +167,22 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   native-qt-wallet:
+    if: ${{ inputs.intake_only != true }}
     needs: native-contracts
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.15'
       - name: Q01 clean hash-locked wallet environment
@@ -169,13 +191,15 @@ jobs:
         run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Q01 native missing-dependency refusal (no Core execution)
         run: python scripts/q01_dependency_negatives.py
-      - name: Fetch previously qualified immutable developer Core artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Native xcb Qt over actual Core and independent root witness
         run: |
           sudo apt-get update -qq
@@ -191,7 +215,7 @@ jobs:
           assert 'not found' not in result,'NATIVE_QT_XCB_DEPENDENCY_UNAVAILABLE'
           PYQT
           QT_QPA_PLATFORM=xcb xvfb-run -a python scripts/linux_headless_acceptance.py --core-dir qualified-linux-core/linux-core --qt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: linux-qt-wallet-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -201,7 +225,7 @@ jobs:
           retention-days: 14
       - name: Preserve Q01 source-install receipt (not Q acceptance)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q01-install-linux-experimental-regtest-native-qt-wallet-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -211,6 +235,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   frozen-wallet:
+    if: ${{ inputs.intake_only != true }}
     needs: [headless-wallet, native-qt-wallet]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -219,17 +244,17 @@ jobs:
       matrix:
         frontend: [headless, desktop]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.15'
       - name: Q01 clean hash-locked wallet environment
@@ -238,12 +263,15 @@ jobs:
         run: python -I scripts/q01_environment.py --profile ${{ matrix.frontend == 'desktop' && 'gui' || 'headless' }} --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
       - name: Q01 native missing-dependency refusal (no Core execution)
         run: python scripts/q01_dependency_negatives.py
-      - uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Native dependencies and pinned source closure
         run: |
           sudo apt-get update -qq
@@ -265,7 +293,7 @@ jobs:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           QT_QPA_PLATFORM: xcb
         run: xvfb-run -a python -I scripts/build_linux_wallet.py --core-dir qualified-linux-core/linux-core --desktop
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: WAM-Fusion-REGTEST-RC1-linux-x86_64-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -273,9 +301,23 @@ jobs:
             fusion-ui-review/
           if-no-files-found: error
           retention-days: 14
+      # Six-gate decision B: production is desktop-only; headless stays an
+      # experimental qualification tool and has no production build.
+      - name: Freeze allowlisted production binary after qualification (normal-entry E2E pending, not acceptance)
+        if: matrix.frontend == 'desktop'
+        env:
+          WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I scripts/build_linux_wallet.py --core-dir qualified-linux-core/linux-core --production --desktop
+      - if: matrix.frontend == 'desktop'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: WAM-Fusion-REGTEST-production-allowlist-linux-x86_64-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: linux-production-output/
+          if-no-files-found: error
+          retention-days: 14
       - name: Preserve Q01 source-install receipt (not Q acceptance)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q01-install-linux-experimental-regtest-frozen-wallet-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -286,7 +328,7 @@ jobs:
           retention-days: 14
       - name: Preserve Q05 frozen receipts including FAIL (no datadirs)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q05-frozen-linux-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
           path: linux-package-output/q05-frozen-evidence*.json
@@ -294,120 +336,127 @@ jobs:
           retention-days: 14
       - name: Preserve Q06 frozen receipt including FAIL (no seed/datadirs)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q06-frozen-linux-${{ matrix.frontend }}-${{ github.event.pull_request.head.sha || github.sha }}
           path: linux-package-output/q06-frozen-evidence*.json
           if-no-files-found: warn
           retention-days: 14
   q04-miner-coexistence:
+    if: ${{ inputs.intake_only != true }}
     needs: headless-wallet
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.15'
       - name: Q01 clean hash-locked headless environment
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python -I scripts/q01_environment.py --profile headless --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
-      - name: Fetch previously qualified immutable developer Core artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Q04 genuine Core miner coexistence and read-only attachment
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libevent-dev libsqlite3-dev binutils
           chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
           python scripts/q04_miner_coexistence.py --core-dir "${GITHUB_WORKSPACE}/qualified-linux-core/linux-core" --max-duration 180
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q04-miner-coexistence-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: q04-evidence.json
           if-no-files-found: error
           retention-days: 14
   q04-contention:
+    if: ${{ inputs.intake_only != true }}
     needs: headless-wallet
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.15'
       - name: Q01 clean hash-locked headless environment
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python -I scripts/q01_environment.py --profile headless --environment "${{ runner.temp }}/q01-env" --receipt q01-install.json
-      - name: Fetch previously qualified immutable developer Core artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Q04 RPC contention handling on genuine Core
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libevent-dev libsqlite3-dev binutils
           chmod 700 qualified-linux-core/linux-core/wamd qualified-linux-core/linux-core/wam-cli
           python scripts/q04_contention.py --core-dir "${GITHUB_WORKSPACE}/qualified-linux-core/linux-core" --max-duration 180
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q04-contention-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: q04-contention-evidence.json
           if-no-files-found: error
           retention-days: 14
   developer-core:
+    if: ${{ false }} # Historical developer build retained; not this official candidate
     needs: native-contracts
-    if: github.event_name == 'workflow_dispatch' || needs.native-contracts.outputs.core_changed == 'true'
+    # Historical developer build job remains available outside intake-only runs.
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.15'
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: wamcoin-Project/wam-coin
           ref: 82a1487fd86f7021b1b9fc1524d267fca126f7d4
           path: linux-upstream
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: bitcoin/bitcoin
           ref: 32efe850438ef22e2de39e562af557872a402c31
           path: linux-upstream/build/wam-core
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: tevador/RandomX
           ref: 102f8acf90a7649ada410de5499a7ec62e49e1da
@@ -428,7 +477,7 @@ jobs:
             --manifest-sha256 "$(cat LINUX_DEVELOPER_CORE_MANIFEST_SHA256.txt)" \
             --confirm-experimental-developer-regtest --report linux-core-evidence.json
       - name: Publish experimental Core bytes and public trust receipt only
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: linux-developer-core-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -439,6 +488,7 @@ jobs:
           if-no-files-found: error
 
   q05-managed-gui:
+    if: ${{ inputs.intake_only != true }}
     name: Q05 serialized owned GUI / reviewed Core / test root witness
     runs-on: ubuntu-24.04
     timeout-minutes: 35
@@ -447,29 +497,31 @@ jobs:
       PYTHONDONTWRITEBYTECODE: '1'
       WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.15'
           architecture: 'x64'
       - name: Q01 hash-locked GUI environment
         run: python -I scripts/q01_environment.py --profile gui --environment "${{ runner.temp }}/q05-gui-env" --receipt q05-install.json
-      - name: Fetch immutable qualified developer Core (not official signed Linux)
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-developer-core-a900eb60669e702d6eaa7e4dcae68df8e2c81156
-          run-id: 41972167303
-          github-token: ${{ github.token }}
-          path: qualified-linux-core
+      - name: Authenticate official v0.1.13 Core and reviewed loader closure
+        run: |
+          python - <<'PYCORE'
+          from pathlib import Path
+          from wam_regtest.linux_official_core import stage
+          target=Path('qualified-linux-core/linux-core').absolute()
+          target.parent.mkdir(mode=0o700)
+          stage(target)
+          PYCORE
       - name: Install native ACL and Qt runtime
         run: |
           sudo apt-get update -qq
@@ -484,7 +536,7 @@ jobs:
             --core-dir "${GITHUB_WORKSPACE}/qualified-linux-core/linux-core" \
             --wsp-source "${GITHUB_WORKSPACE}/wsp-upstream" \
             --output-dir "${RUNNER_TEMP}/q05-native-matrix" --confirm-disposable-regtest \
-            --linux-developer-manifest 1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d \
+            --linux-developer-manifest 4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2 \
             --test-root-witness
       - name: Require actual combined-source GUI receipt
         shell: python
@@ -507,7 +559,7 @@ jobs:
           assert r['observations'][-2]['owned_Core_flush_before_cold_crash'] is True
       - name: Preserve native evidence including FAIL receipts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q05-gui-linux-x86_64-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -517,3 +569,26 @@ jobs:
             ${{ runner.temp }}/q05-native-matrix/
           if-no-files-found: warn
           retention-days: 14
+
+  official-core-intake:
+    if: ${{ inputs.intake_only == true }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12.15'
+      - name: Authenticate official archives and observe native loader and RPC
+        run: python scripts/official_core_v013_preflight.py --destination "$RUNNER_TEMP/official-v013" --report official-v013-native.json
+      - name: Retain public native intake receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: official-v013-linux-native-${{ github.sha }}
+          path: official-v013-native.json
+          if-no-files-found: error
+          retention-days: 90

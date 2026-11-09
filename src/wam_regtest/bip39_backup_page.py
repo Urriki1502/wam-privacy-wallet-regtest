@@ -27,7 +27,11 @@ class _WordCard(QFrame):
         word_label = QLabel(word)
         word_label.setObjectName("FusionCardValue")
         word_label.setStyleSheet("font-size:17px;font-weight:600;")
-        word_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        # Recovery words are written down by hand. Never selectable/copyable:
+        # X11 exports any mouse selection to PRIMARY for every client, and
+        # Ctrl+C/context-menu copy would reach system clipboard history.
+        word_label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        word_label.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         layout.addWidget(number_label)
         layout.addWidget(word_label)
         self.setMinimumWidth(140)
@@ -36,7 +40,9 @@ class _WordCard(QFrame):
 class Bip39BackupPage(QWidget):
     """Full onboarding backup page: grid → verification → success."""
 
-    verify_requested = Signal(list, list)
+    verify_requested = Signal(str, list)
+    challenge_requested = Signal()
+    challenge_cancelled = Signal()
     deferred_requested = Signal()
     continue_requested = Signal()
 
@@ -44,6 +50,7 @@ class Bip39BackupPage(QWidget):
         super().__init__(parent)
         self._phrase_words = []
         self._challenge_positions = []
+        self._challenge_id = None
         self._verify_inputs = []
         self._verify_cards = []
         self._build_ui()
@@ -212,8 +219,7 @@ class Bip39BackupPage(QWidget):
             self._grid.addWidget(card, i // 3, i % 3)
         self._written_check.setChecked(False)
         self._back_up_now.setEnabled(False)
-        self._challenge_positions = self._pick_challenge()
-        self._build_verify_inputs(self._challenge_positions)
+        self._clear_challenge()
         self._verify_error.hide()
         self._stack.setCurrentWidget(self._phrase_page)
 
@@ -221,10 +227,10 @@ class Bip39BackupPage(QWidget):
         """Skip the grid; user must verify to resume an interrupted backup."""
         self._phrase_words = []
         self._clear_grid()
-        self._challenge_positions = self._pick_challenge()
-        self._build_verify_inputs(self._challenge_positions)
+        self._clear_challenge()
         self._verify_error.hide()
         self._stack.setCurrentWidget(self._verify_page)
+        self.challenge_requested.emit()
 
     def _clear_grid(self):
         while self._grid.count():
@@ -232,9 +238,25 @@ class Bip39BackupPage(QWidget):
             if item.widget():
                 item.widget().deleteLater()
 
-    def _pick_challenge(self, count=3):
-        import random
-        return sorted(random.sample(range(1, 13), count))
+    def _clear_challenge(self):
+        self._challenge_id = None
+        self._challenge_positions = []
+        for edit in self._verify_inputs:
+            edit.clear()
+        self._verify_inputs = []
+
+    def set_challenge(self, challenge):
+        import re
+        self._clear_challenge()
+        identifier = challenge.get('challenge_id')
+        positions = challenge.get('positions')
+        if (type(identifier) is not str or not re.fullmatch('[0-9a-f]{64}', identifier)
+                or type(positions) not in (list, tuple) or len(positions) != 3
+                or not all(type(p) is int and 1 <= p <= 12 for p in positions)
+                or len(set(positions)) != 3):
+            raise ValueError('Q06_BACKUP_PAGE_CHALLENGE_DENIED')
+        self._challenge_id = identifier
+        self._build_verify_inputs(positions)
 
     def _build_verify_inputs(self, positions):
         # Clear old inputs.
@@ -251,31 +273,40 @@ class Bip39BackupPage(QWidget):
     def _on_back_up_now(self):
         if not self._written_check.isChecked():
             return
-        self._stack.setCurrentWidget(self._verify_page)
+        self._clear_challenge()
+        self.challenge_requested.emit()
+        if self._challenge_id is not None:
+            self._stack.setCurrentWidget(self._verify_page)
 
     def _on_back_up_later(self):
         self.clear_phrase()
         self.deferred_requested.emit()
 
     def _on_verify_back(self):
+        self._clear_challenge()
+        self.challenge_cancelled.emit()
         if self._phrase_words:
             self._stack.setCurrentWidget(self._phrase_page)
 
     def _on_verify(self):
+        if self._challenge_id is None:
+            self.challenge_requested.emit()
+            return
         answers = [edit.text().strip() for edit in self._verify_inputs]
         if not all(answers):
             self._verify_error.setText(t("verify_error"))
             self._verify_error.show()
             return
-        self.verify_requested.emit(self._challenge_positions, answers)
+        identifier = self._challenge_id
+        self._clear_challenge()
+        self.verify_requested.emit(identifier, answers)
 
-    def show_verification_error(self):
-        self._verify_error.setText(t("verify_error"))
+    def show_verification_error(self, key="verify_error"):
+        # "verify_error" only for answers the backend compared and rejected;
+        # "verify_unavailable" when the backend refused before judging words.
+        self._verify_error.setText(t(key))
         self._verify_error.show()
-        for edit in self._verify_inputs:
-            edit.clear()
-        self._challenge_positions = self._pick_challenge()
-        self._build_verify_inputs(self._challenge_positions)
+        self._clear_challenge()
 
     def show_success(self):
         self.clear_phrase()
@@ -283,6 +314,7 @@ class Bip39BackupPage(QWidget):
         self._stack.setCurrentWidget(self._success_page)
 
     def clear_phrase(self):
+        self._clear_challenge()
         self._phrase_words = []
         self._clear_grid()
         self._written_check.setChecked(False)

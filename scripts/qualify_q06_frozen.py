@@ -54,7 +54,7 @@ def main():
             NativeRootWitness.setUpClass()
             witness=NativeRootWitness
             args+=["--linux-developer-manifest",
-                   "1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d",
+                   "4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2",
                    "--linux-root-witness",str(witness.root/"anchor.sock")]
         # Capture only fixed public phase names. A frozen windowed Windows
         # executable has no stdout; receipt is always the proof authority.
@@ -79,9 +79,20 @@ def main():
             "txid_readonly":data.get("post_reopen_txid_verified") is True,
             "no_fictional_history":data.get("fresh_chain_full_history_recovered") is False,
             "fresh_profile_identity":data.get("fresh_profile_seed_identity_restored") is True,
+            "fresh_same_chain_history":data.get("fresh_same_chain_profile_full_history_recovered") is True,
             "native_gui":data.get("native_gui_checked") is (not a.headless),
             "frozen_binary_sha256":data.get("frozen_executable_sha256")==sha256(exe.read_bytes()).hexdigest(),
         }
+        if not a.headless:
+            checks.update({
+                "gui_backup":data.get("normal_gui_backup_verified") is True,
+                "gui_cancel_sign":data.get("gui_cancel_does_not_sign") is True,
+                "gui_duplicate_send":data.get("gui_duplicate_send_one_reservation") is True,
+                "gui_sign_broadcast":data.get("normal_gui_separate_sign_broadcast") is True,
+            })
+        expected_source = os.environ.get("WAM_SOURCE_HEAD") or subprocess.check_output(
+            ['git','rev-parse','HEAD'],text=True).strip()
+        checks["source_sha"] = data.get("source_sha") == expected_source
         # Public, bounded diagnostic keys ONLY. Keep strict failure on ANY
         # mismatched gate (especially native binary hash and process exit).
         # No args, datadirs, raw errors, keys, RPC bodies or seed words.

@@ -11,12 +11,214 @@ import re
 import secrets
 import stat
 import sys
+import time
 
 from .wallet_executor import ManagedWalletBackend, WalletExecutorError
 
 
 class Q06ReadOnlyError(ValueError):
     pass
+
+
+# ---- Backup-acknowledgement sidecar storage (CUR-003 + CDX-AUD-003) -------
+# GUI metadata only: never spending authority, never a seed. The JSON/HMAC
+# format is unchanged; only publication and reading are hardened:
+#   * the ack directory is reached by native no-follow private-directory
+#     walkers (macOS/Linux) or the NTFS DACL guard (Windows);
+#   * an unpredictable O_EXCL|O_NOFOLLOW 0600 stage file is written, fsynced,
+#     atomically renamed over the target (dir-fd relative on POSIX) and the
+#     directory is fsynced where supported;
+#   * an existing target that is not a single-link regular owned file
+#     without group/other write is refused, never replaced or followed;
+#   * reads are bounded and the decoded record is validated strictly.
+# Retained profiles are never modified, repaired or migrated.
+_ACK_LIMIT = 4096
+_ACK_REQUIRED = frozenset(("version", "acknowledged", "deferred", "seed_id"))
+_ACK_DENIED = "Q06_GUI_BACKUP_ACK_STORAGE_DENIED"
+
+
+def _ack_name(folder):
+    if (type(folder) is not type(Path())
+            or re.fullmatch(r"bip39-12-[0-9a-f]{32}", folder.name) is None):
+        raise Q06ReadOnlyError(_ACK_DENIED)
+    return folder.name + ".json"
+
+
+def _ack_file_ok(info):
+    return (stat.S_ISREG(info.st_mode) and info.st_nlink == 1
+            and (sys.platform == "win32" or info.st_uid == os.geteuid()
+                 and not stat.S_IMODE(info.st_mode) & 0o022
+                 and stat.S_IMODE(info.st_mode) & 0o600 == 0o600))
+
+
+def _ack_posix_directory(directory):
+    if sys.platform == "darwin":
+        from .private_directory import open_macos_private_directory
+        return open_macos_private_directory(directory)
+    from .linux_private_storage import open_linux_private_directory
+    return open_linux_private_directory(directory)
+
+
+def _ack_absent(path):
+    """Lenient no-follow absence probe; presence is then verified strictly."""
+    try:
+        os.lstat(path)
+    except FileNotFoundError:
+        return True
+    return False
+
+
+def _ack_read(directory, name):
+    for component in (directory.parent, directory):
+        if _ack_absent(component):
+            return None
+        if not stat.S_ISDIR(os.lstat(component).st_mode):
+            raise Q06ReadOnlyError(_ACK_DENIED)  # symlink/junction or file
+    if _ack_absent(directory / name):
+        return None
+    if sys.platform == "win32":
+        from .windows_private_storage import directory_guard
+        with directory_guard(directory):
+            before = os.lstat(directory / name)
+            if getattr(before, "st_file_attributes", 0) & 0x400 or not _ack_file_ok(before):
+                raise Q06ReadOnlyError(_ACK_DENIED)
+            with open(directory / name, "rb") as handle:
+                info = os.fstat(handle.fileno())
+                if (info.st_ino, info.st_dev) != (before.st_ino, before.st_dev):
+                    raise Q06ReadOnlyError(_ACK_DENIED)
+                raw = handle.read(_ACK_LIMIT + 1)
+    else:
+        dfd = _ack_posix_directory(directory)
+        fd = None
+        try:
+            try:
+                fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+                             | os.O_CLOEXEC, dir_fd=dfd)
+            except FileNotFoundError:
+                return None
+            before = os.fstat(fd)
+            if not _ack_file_ok(before) or not 1 <= before.st_size <= _ACK_LIMIT:
+                raise Q06ReadOnlyError(_ACK_DENIED)
+            raw = os.read(fd, _ACK_LIMIT + 1)
+            after = os.fstat(fd)
+            if ((before.st_ino, before.st_size, before.st_mtime_ns)
+                    != (after.st_ino, after.st_size, after.st_mtime_ns)):
+                raise Q06ReadOnlyError(_ACK_DENIED)
+        finally:
+            if fd is not None:
+                os.close(fd)
+            os.close(dfd)
+    if not 1 <= len(raw) <= _ACK_LIMIT:
+        raise Q06ReadOnlyError(_ACK_DENIED)
+    return raw
+
+
+def _ack_create_private_directory(directory):
+    """Native owner-only directory creation; no runtime/witness policy needed.
+
+    Never repairs or chmods an existing directory; callers re-validate.
+    """
+    if sys.platform == "darwin":
+        directory.mkdir(mode=0o700)
+        from .private_directory import open_macos_private_directory
+        os.close(open_macos_private_directory(directory))
+    elif sys.platform == "linux":
+        from .linux_private_storage import create_private_directory
+        create_private_directory(directory)
+    elif sys.platform == "win32":
+        from .windows_private_storage import create_private_directory
+        create_private_directory(directory)
+    else:
+        raise Q06ReadOnlyError(_ACK_DENIED)
+
+
+def _ack_ensure_directories(root):
+    state = root / "q06-gui-state"
+    for directory in (state, state / "ack"):
+        if _ack_absent(directory):
+            _ack_create_private_directory(directory)
+    return state / "ack"
+
+
+def _ack_write(root, name, payload):
+    directory = _ack_ensure_directories(root)
+    stage = ".ack-" + secrets.token_hex(16) + ".tmp"
+    if sys.platform == "win32":
+        # NOT EXECUTED on Windows in this remediation. Win32 rename reopens
+        # the target directory, which conflicts with the guard's share mode,
+        # so the guard validates before and after an exclusive stage+replace.
+        from .windows_private_storage import validate_directory
+        validate_directory(directory)
+        target = directory / name
+        try:
+            existing = os.lstat(target)
+        except FileNotFoundError:
+            existing = None
+        if existing is not None and (getattr(existing, "st_file_attributes", 0) & 0x400
+                                     or not _ack_file_ok(existing)):
+            raise Q06ReadOnlyError(_ACK_DENIED)
+        fd = os.open(directory / stage, os.O_WRONLY | os.O_CREAT | os.O_EXCL
+                     | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOINHERIT", 0), 0o600)
+        try:
+            try:
+                offset = 0
+                while offset < len(payload):
+                    count = os.write(fd, payload[offset:])
+                    if count <= 0:
+                        raise Q06ReadOnlyError(_ACK_DENIED)
+                    offset += count
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+            os.replace(directory / stage, target)
+        except BaseException:
+            try:
+                os.unlink(directory / stage)
+            except OSError:
+                pass
+            raise
+        validate_directory(directory)
+        return
+    dfd = _ack_posix_directory(directory)
+    fd = None
+    staged = False
+    try:
+        try:
+            existing = os.stat(name, dir_fd=dfd, follow_symlinks=False)
+        except FileNotFoundError:
+            existing = None
+        if existing is not None and not _ack_file_ok(existing):
+            raise Q06ReadOnlyError(_ACK_DENIED)
+        fd = os.open(stage, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+                     | os.O_CLOEXEC, 0o600, dir_fd=dfd)
+        staged = True
+        os.fchmod(fd, 0o600)
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.geteuid():
+            raise Q06ReadOnlyError(_ACK_DENIED)
+        offset = 0
+        while offset < len(payload):
+            count = os.write(fd, payload[offset:])
+            if count <= 0:
+                raise Q06ReadOnlyError(_ACK_DENIED)
+            offset += count
+        os.fsync(fd)
+        os.close(fd)
+        fd = None
+        os.rename(stage, name, src_dir_fd=dfd, dst_dir_fd=dfd)
+        staged = False
+        os.fsync(dfd)
+    finally:
+        if fd is not None:
+            os.close(fd)
+        try:
+            if staged:
+                os.unlink(stage, dir_fd=dfd)
+        except OSError:
+            pass
+        finally:
+            os.close(dfd)
+
 
 
 class Bip39ReadOnlyBackend(ManagedWalletBackend):
@@ -30,6 +232,24 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         self._public = None
         self._spend_session = None
         self._resume_spend = False
+        self._backup_challenge = None
+        self._backup_epoch = 0
+
+    def _invalidate_backup_challenge(self):
+        self._backup_challenge = None
+        self._backup_epoch += 1
+
+    def _new_backup_challenge(self):
+        # Serialized owner-session memory only. No mnemonic/answers persisted.
+        self._backup_challenge = None
+        if self._secret is None or self._seed_folder is None:
+            raise Q06ReadOnlyError('Q06_GUI_BACKUP_VERIFY_LOCKED')
+        positions = tuple(sorted(secrets.SystemRandom().sample(range(1, 13), 3)))
+        identifier = secrets.token_hex(32)
+        self._backup_challenge = (identifier, positions, self._seed_folder,
+                                  self._backup_epoch, time.monotonic() + 120)
+        return {'challenge_id': identifier, 'positions': positions,
+                'expires_in_seconds': 120}
 
     def public_state(self):
         # Executor.state is the GUI's safety authority. Never conceal a
@@ -47,6 +267,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         }
 
     def _lock_q06(self):
+        self._invalidate_backup_challenge()
         try:
             if self._spend_session is not None:
                 session = self._spend_session
@@ -68,13 +289,10 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
     # continue to open normally; only an explicit `acknowledged=False` record
     # written by the GUI refusal path blocks reopen.
     def _q06_ack_dir(self):
-        d = self.root / "q06-gui-state" / "ack"
-        if not d.exists():
-            d.mkdir(mode=0o700, parents=True, exist_ok=True)
-        return d
+        return self.root / "q06-gui-state" / "ack"
 
     def _q06_ack_path(self, folder):
-        return self._q06_ack_dir() / (folder.name + ".json")
+        return self._q06_ack_dir() / _ack_name(folder)
 
     def _q06_read_ack(self, folder, secret=None):
         """Return (acknowledged, deferred, integrity).
@@ -87,19 +305,25 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         If `secret` is supplied and the sidecar claims acknowledgement, the
         stored MAC is verified; a bad MAC yields integrity=False.
         """
-        path = self._q06_ack_path(folder)
-        if not path.exists():
-            return None, None, True
         try:
-            data = json.loads(path.read_text())
-            if type(data) is not dict or data.get("version") != 1:
+            raw = _ack_read(self._q06_ack_dir(), _ack_name(folder))
+            if raw is None:
+                return None, None, True
+            data = json.loads(raw.decode("utf-8"))
+            if (type(data) is not dict or not _ACK_REQUIRED <= set(data)
+                    or not set(data) <= _ACK_REQUIRED | {"mac"}
+                    or type(data["version"]) is not int or data["version"] != 1
+                    or data["seed_id"] != folder.name
+                    or type(data["acknowledged"]) is not bool
+                    or type(data["deferred"]) is not bool
+                    or data["acknowledged"] and data["deferred"]):
                 return False, True, False
-            if data.get("seed_id") != folder.name:
+            acknowledged, deferred = data["acknowledged"], data["deferred"]
+            mac = data.get("mac")
+            if mac is not None and (not acknowledged or type(mac) is not str
+                                    or re.fullmatch("[0-9a-f]{64}", mac) is None):
                 return False, True, False
-            acknowledged = bool(data.get("acknowledged"))
-            deferred = bool(data.get("deferred"))
             if acknowledged and secret is not None:
-                mac = data.get("mac")
                 expected = hmac.new(secret, f"{folder.name}:acknowledged".encode(),
                                     "sha256").hexdigest()
                 if mac is None or not hmac.compare_digest(mac, expected):
@@ -109,15 +333,17 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             return False, True, False
 
     def _q06_write_ack(self, folder, acknowledged, deferred=False, secret=None):
-        path = self._q06_ack_path(folder)
-        tmp = path.with_suffix(".tmp")
+        name = _ack_name(folder)
         data = {"version": 1, "acknowledged": bool(acknowledged),
                 "deferred": bool(deferred), "seed_id": folder.name}
         if acknowledged and secret is not None:
             data["mac"] = hmac.new(secret, f"{folder.name}:acknowledged".encode(),
                                    "sha256").hexdigest()
-        tmp.write_text(json.dumps(data, separators=(',', ':')))
-        tmp.replace(path)
+        try:
+            _ack_write(self.root, name, json.dumps(data, separators=(',', ':')).encode())
+        except Exception:
+            # Not recorded: the caller fails closed and onboarding asks again.
+            raise Q06ReadOnlyError(_ACK_DENIED) from None
 
     def _only_seed(self, owner):
         from .bip39_seed_vault import _folder
@@ -132,6 +358,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         return matches[0]
 
     def _open_q06(self, password, mode, phrase=""):
+        self._invalidate_backup_challenge()
         if (type(password) is not bytes or not 12 <= len(password) <= 1024
                 or mode not in ("create", "restore", "reopen")
                 or type(phrase) is not str):
@@ -198,6 +425,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         involved. Fail-closed on missing/tampered/deferred acknowledgement and
         clears partial in-memory custody on refusal.
         """
+        self._invalidate_backup_challenge()
         owner = self._core()
         from .bip39_seed_vault import open_owned_seed_container
         folder = self._only_seed(owner)
@@ -259,7 +487,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         from .managed_wallet_checkpoint import _owned
         from .wallet_session import WalletCoreCli
         from .wsp_live import public_regtest_mining_address
-        from .q05_checkpoint_scenario import fund_checkpoint_fixture
+        from .regtest_funding import fund_checkpoint_fixture
         owner=self._core()
         _owned(owner)
         seed_id=self._seed_folder.name.removeprefix("bip39-12-")
@@ -269,7 +497,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
         fixture_record={}
         funding_phase="PREFLIGHT"
         try:
-            rpc.attest()  # exact signed Core v0.1.11, chain and zero peers
+            rpc.attest()  # exact signed Core v0.1.13, chain and zero peers
             if rpc.call("getblockcount") != 0:
                 raise Q06ReadOnlyError("Q06_GUI_TEST_FUNDING_FRESH_CHAIN_ONLY")
             address=public_regtest_mining_address(self.source)
@@ -348,12 +576,12 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             print('MACOS_Q06_SPEND_INITIAL_SNAPSHOT_PASS', flush=True)
         return self._session_snapshot()
 
-    def _session_snapshot(self):
+    def _session_snapshot(self, history_offset=0):
         if self._spend_session is None:
             raise Q06ReadOnlyError("Q06_GUI_SPEND_NOT_ACTIVE")
         from wam_sp.wallet import Wallet
         session = self._spend_session
-        item = session.snapshot()
+        item = session.snapshot() if history_offset == 0 else session.snapshot(history_offset=history_offset)
         available = Wallet(session.scanner).balance()["available_atoms"]
         return {
             "status": "Q06_REGTEST_BIP39_OWNED_SPEND_VERIFIED",
@@ -371,6 +599,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             "reservation_count": item.reservation_count,
             "payment_review": session._review,
             "payment_signed": session._signed is not None,
+            "recovered_unsigned_cancel_available": session.recovered_unsigned_cancel_available(),
             "pending_confirm_txid": session._q06_pending_confirm,
             # Same verified WalletReadSnapshot consumed by existing Fusion UI.
             # No duplicate scanner, signer or new custody/session authority.
@@ -409,9 +638,9 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             if getattr(cli, "_transport", None) is not None:
                 cli._transport.close()
 
-    def _scan_q06(self):
+    def _scan_q06(self, history_offset=0):
         if self._spend_session is not None:
-            return self._session_snapshot()
+            return self._session_snapshot() if history_offset == 0 else self._session_snapshot(history_offset)
         if self._seed_folder is None or self._secret is None:
             raise Q06ReadOnlyError("Q06_GUI_LOCKED")
         from .managed_wallet_checkpoint import _owned
@@ -464,7 +693,7 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                     "SELECT count(*) FROM history WHERE credit>0").fetchone()[0]
                 verified_rows = scanner.store.db.execute(
                     "SELECT txid,height,credit,debit FROM history "
-                    "ORDER BY height DESC,txid LIMIT ?", (GUI_HISTORY_LIMIT,)
+                    "ORDER BY height DESC,txid DESC LIMIT ? OFFSET ?", (GUI_HISTORY_LIMIT, history_offset)
                 ).fetchall()
             if (type(total) is not int or total<0
                     or type(receives) is not int or not 0<=receives<=total
@@ -486,7 +715,8 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                 history=tuple(structured),
                 core_sha256=owner.receipt["wamd_sha256"],
                 history_count=total, receive_count=receives,
-                history_complete=total<=GUI_HISTORY_LIMIT,
+                history_complete=history_offset == 0 and total<=GUI_HISTORY_LIMIT,
+                history_offset=history_offset,
             )
             _owned(owner)
             guard.check()
@@ -613,6 +843,19 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                     or self.public_state()["faulted"]):
                 raise Q06ReadOnlyError("Q06_GUI_INSPECT_ARGUMENTS_DENIED")
             return self._spend_session.inspect_confirmed(args[0])
+        if action == "intent_status":
+            # TX-03 Stage A: read-only; no replay, signature or release.
+            if (args or kwargs or self._spend_session is None
+                    or self.public_state()["faulted"]):
+                raise Q06ReadOnlyError("Q06_GUI_INTENT_STATUS_ARGUMENTS_DENIED")
+            return self._spend_session.signed_intent_status()
+        if action == "resume_intent":
+            # TX-03 Stage B: explicit owner approval of ONE exact signed intent.
+            if (kwargs or len(args) != 3 or args[2] is not True
+                    or self._spend_session is None
+                    or self.public_state()["faulted"]):
+                raise Q06ReadOnlyError("Q06_GUI_RESUME_ARGUMENTS_DENIED")
+            return self._spend_session.resume_signed_intent(args[0], args[1], approved=True)
         if action in ("prepare", "sign", "broadcast", "cancel"):
             if kwargs or self._spend_session is None:
                 raise Q06ReadOnlyError("Q06_GUI_SPEND_NOT_ACTIVE")
@@ -663,18 +906,34 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
             self._q06_write_ack(self._seed_folder, False, deferred=True)
             self._lock_q06()
             return None
+        if action == 'backup_challenge_cancel':
+            self._invalidate_backup_challenge()
+            if args or kwargs:
+                raise Q06ReadOnlyError('Q06_GUI_BACKUP_CHALLENGE_ARGS_DENIED')
+            return None
+        if action == 'backup_challenge':
+            self._backup_challenge = None
+            if args or kwargs:
+                raise Q06ReadOnlyError('Q06_GUI_BACKUP_CHALLENGE_ARGS_DENIED')
+            return self._new_backup_challenge()
         if action == "backup_verify":
+            # Consume BEFORE validation/decryption/ack write: wrong answers,
+            # exceptions and concurrent/replayed submissions cannot reuse it.
+            challenge, self._backup_challenge = self._backup_challenge, None
             if kwargs or len(args) != 2:
                 raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_ARGS_DENIED")
-            positions, answers = args
-            if (type(positions) not in (tuple, list) or type(answers) not in (tuple, list)
-                    or len(positions) != len(answers) or not positions
-                    or not all(type(p) is int and 1 <= p <= 12 for p in positions)
-                    or len(set(positions)) != len(positions)
-                    or not all(type(a) is str and a.strip() for a in answers)):
+            identifier, answers = args
+            if (type(identifier) is not str or not re.fullmatch('[0-9a-f]{64}', identifier)
+                    or type(answers) not in (tuple, list) or len(answers) != 3
+                    or not all(type(a) is str and 1 <= len(a) <= 32 and a.strip() for a in answers)):
                 raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_INPUT_DENIED")
             if self._seed_folder is None or self._secret is None:
                 raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_LOCKED")
+            if (challenge is None or not hmac.compare_digest(identifier, challenge[0])
+                    or challenge[2] != self._seed_folder or challenge[3] != self._backup_epoch
+                    or time.monotonic() >= challenge[4]):
+                raise Q06ReadOnlyError('Q06_GUI_BACKUP_CHALLENGE_DENIED')
+            positions = challenge[1]
             from .bip39_seed_vault import (
                 _owner_binding, open_owned_seed_container, read_seed_phrase)
             owner = self._core()
@@ -696,13 +955,18 @@ class Bip39ReadOnlyBackend(ManagedWalletBackend):
                         bytes(self._secret), authorized=True,
                         keychain=self.keychain) as keys:
                     secret = keys.backup_ack_key()
+                if time.monotonic() >= challenge[4]:
+                    raise Q06ReadOnlyError('Q06_GUI_BACKUP_CHALLENGE_DENIED')
                 self._q06_write_ack(self._seed_folder, True, secret=secret)
                 return True
             except Exception:
                 raise Q06ReadOnlyError("Q06_GUI_BACKUP_VERIFY_DENIED") from None
         if action == "snapshot":
-            if args or kwargs:raise Q06ReadOnlyError("Q06_GUI_SYNC_ARGUMENTS_DENIED")
-            return self._scan_q06()
+            from .history_pages import HISTORY_OFFSET_MAX
+            if (kwargs or len(args) > 1 or args and
+                    (type(args[0]) is not int or not 0 <= args[0] <= HISTORY_OFFSET_MAX)):
+                raise Q06ReadOnlyError("Q06_GUI_SYNC_ARGUMENTS_DENIED")
+            return self._scan_q06(args[0]) if args else self._scan_q06()
         if action == "mine":
             if args or kwargs:raise Q06ReadOnlyError("Q06_GUI_FUND_ARGUMENTS_DENIED")
             return self._fund_q06()

@@ -1,4 +1,4 @@
-name: REAL WAM Core v0.1.11 REGTEST (macOS ARM64)
+name: REAL WAM Core v0.1.13 REGTEST (macOS ARM64)
 on:
   push:
     branches: [main]
@@ -17,18 +17,18 @@ jobs:
       PYTHONUNBUFFERED: '1'
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
       - name: Checkout immutable WSP-1 upstream source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.10'
           architecture: 'arm64'
@@ -53,7 +53,7 @@ jobs:
           test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
           python -m pip check
       - name: Run fail-closed unit contracts (not E2E)
-        run: python -m unittest discover -s tests -v
+        run: python scripts/run_macos_source_tests.py
       - name: Fetch pinned official signed ARM64 Core (SHA-256 + GPG)
         run: |
           python -m wam_regtest.release --platform macos-arm64 --destination core
@@ -85,7 +85,7 @@ jobs:
           import json
           from pathlib import Path
           proof=json.loads(Path('real-core-evidence.json').read_text())
-          assert proof['status']=='REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS'
+          assert proof['status']=='REAL_WAM_CORE_V0_1_13_NATIVE_QT_WALLET_E2E_PASS'
           assert proof['chain']=='regtest' and proof['block_height']==105
           assert proof['q02_authentication']['status']=='REAL_Q02_SIGNED_CLI_AUTH_FAIL_CLOSED_PASS'
           assert len(proof['q02_authentication']['cases'])==33
@@ -108,7 +108,7 @@ jobs:
           assert proof['wallet_send_e2e_pass'] is True
           assert proof['gui_real_core_e2e_pass'] is True
           view = proof['gui_live_core_view']
-          assert view['status']=='REAL_WAM_CORE_V0_1_11_NATIVE_QT_RECEIVE_BALANCE_HISTORY_PASS'
+          assert view['status']=='REAL_WAM_CORE_V0_1_13_NATIVE_QT_RECEIVE_BALANCE_HISTORY_PASS'
           assert view['real_core_rpc'] is True and view['synthetic_rpc'] is False
           assert view['qt_gui_rendered'] is True
           assert view['confirmed_balance_atoms']==actual['confirmed_receive_atoms']
@@ -196,7 +196,7 @@ jobs:
         run: python scripts/measure_q03_reuse.py --core-dir core --wsp-source wsp-upstream --cookie-auth --report q03-cookie-reuse.json
       - name: Upload only sanitized live-Core evidence
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: real-core-regtest-${{ github.sha }}
           path: |
@@ -214,7 +214,7 @@ jobs:
 
       - name: Preserve Q01 source-install receipt (not Q acceptance)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q01-install-real-core-regtest-real-wamd-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -233,17 +233,17 @@ jobs:
       PYTHONUNBUFFERED: '1'
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.10'
           architecture: 'arm64'
@@ -253,7 +253,7 @@ jobs:
         run: python -m wam_regtest.release --platform macos-arm64 --destination core
       - name: Q04 genuine Core miner coexistence and read-only attachment
         run: python scripts/q04_miner_coexistence.py --core-dir core --max-duration 180
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q04-miner-coexistence-evidence-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
           path: q04-evidence.json
@@ -268,17 +268,17 @@ jobs:
       PYTHONUNBUFFERED: '1'
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.10'
           architecture: 'arm64'
@@ -288,7 +288,7 @@ jobs:
         run: python -m wam_regtest.release --platform macos-arm64 --destination core
       - name: Q04 RPC contention handling on genuine Core
         run: python scripts/q04_contention.py --core-dir core --max-duration 180
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q04-contention-evidence-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
           path: q04-contention-evidence.json
@@ -304,18 +304,18 @@ jobs:
       PYTHONUNBUFFERED: '1'
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
       - name: Immutable upstream WSP-1 source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.10'
           architecture: 'arm64'
@@ -339,45 +339,36 @@ jobs:
           test "$(git -C wsp-upstream rev-parse HEAD)" = ac55f13423620252bdbf848c7e8a280c3b84721e
           python -m pip check
       - name: Security and bundling contracts
-        run: python -m unittest discover -s tests -v
-      - name: Fetch and authenticate exact official v0.1.11 ARM64 Core
+        run: python scripts/run_macos_source_tests.py
+      - name: Fetch and authenticate exact official v0.1.13 ARM64 Core
         run: |
           python -m wam_regtest.release --platform macos-arm64 --destination core
           python scripts/q01_core_negatives.py --core-dir core --output q01-core-negatives.json
-      - name: Build actual native .app/.dmg and repeat REAL Core + WSP + Qt E2E inside app
+      - name: Build allowlisted production app and separate qualification-only app (REAL Core + WSP + Qt E2E inside qualification app)
         shell: bash
         env:
           WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          WAM_MACOS_OUTPUT_ROOT: ${{ github.workspace }}/bundle-input/macos-build
+          WAM_MACOS_CORE_DIR: ${{ github.workspace }}/core
         run: bash scripts/build_macos_bundle.sh
-      - name: Upload real built Mac application, DMG, checksums and Qt screenshot
-        uses: actions/upload-artifact@v4
+      - name: Bind production and qualification-only outputs to the checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -I scripts/verify_macos_ci_outputs.py \
+            --build-root "$GITHUB_WORKSPACE/bundle-input/macos-build" \
+            --expected-sha "$(git rev-parse HEAD)" \
+            --publish "$GITHUB_WORKSPACE/macos-publish"
+      - name: Upload production payloads and qualification-only evidence (no qualification DMG/ZIP)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: WAM-Fusion-REGTEST-RC1-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
-          path: |
-            package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.app.zip
-            package-output/WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg
-            package-output/SHA256SUMS.json
-            package-output/BUILD_SOURCE_RECEIPT.json
-            package-output/q04-frozen-evidence.json
-            package-output/q05-frozen-evidence*.json
-            package-output/q05-frozen-evidence*.png
-            package-output/q06-frozen-readonly-evidence.json
-            package-output/q06-frozen-spend-evidence.json
-            package-output/cocoa-evidence/
-            package-output/INDEPENDENT-WALLET-SECURITY.json
-            package-output/RELEASE_CANDIDATE_MANIFEST.json
-            package-output/SHA256SUMS.txt
-            package-output/OWNER_REGTEST_ACCEPTANCE.md
-            package-output/DEV_WAM_REVIEW_HANDOFF.md
-            fusion-ui-review/
-            real-regtest-gui-preview.png
-            real-regtest-wallet-preview.png
-            real-regtest-security-preview.png
+          path: macos-publish/
           if-no-files-found: error
           retention-days: 14
       - name: Preserve Q01 source-install receipt (not Q acceptance)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q01-install-real-core-regtest-native-app-dmg-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -389,10 +380,10 @@ jobs:
 
       - name: Preserve Q05 frozen receipts including FAIL (no datadirs)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q05-frozen-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
-          path: package-output/q05-frozen-evidence*.json
+          path: bundle-input/macos-build/qualification-only/package-output/q05-frozen-evidence*.json
           if-no-files-found: warn
           retention-days: 14
 
@@ -405,17 +396,17 @@ jobs:
       PYTHONDONTWRITEBYTECODE: '1'
       WAM_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Urriki1502/wam-silent-payments
           ref: ac55f13423620252bdbf848c7e8a280c3b84721e
           path: wsp-upstream
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.10'
           architecture: 'arm64'
@@ -455,7 +446,7 @@ jobs:
           assert r['observations'][-2]['owned_Core_flush_before_cold_crash'] is True
       - name: Preserve native evidence including FAIL receipts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: q05-gui-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
           path: |

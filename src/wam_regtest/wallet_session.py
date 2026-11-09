@@ -185,46 +185,62 @@ class WalletSession:
         from wam_sp.keystore import unseal
         from wam_sp.watcher import GENESIS
         ring=scanner=None
+        stage="START"
         try:
+            stage="READ"
             ciphertext=read(directory,name)
             payload=json.loads(unseal(ciphertext,password,b"recovery"))
             if (type(payload) is not dict or payload.get("disposable_regtest") is not True
                     or any(type(payload.get(k)) is not type(v) or payload.get(k)!=v for k,v in custody.envelope_profile().items()) or payload.get("network")!=GENESIS
                     or type(payload.get("generation")) is not int):
                 raise WalletSessionError("WALLET_BACKUP_PROFILE_DENIED")
+            stage="ANCHOR"
             anchor=custody.anchor(payload["wallet_id"],keychain)
             record=payload["generation"],sha256(ciphertext).hexdigest()
             if anchor.read()!=record:
                 raise WalletSessionError("WALLET_BACKUP_STALE_OR_TAMPERED")
+            stage="PUBLISH"
             folder=datadir/"wallet-vault"
             custody.create_directory(folder)
             publish(folder,CheckpointVault._filename(record[0]),ciphertext)
             vault=CheckpointVault(folder,anchor,source)
+            stage="RESTORE"
             ring,scanner=vault.restore(datadir/"wallet-runtime.sqlite",password)
+            stage="CORE"
             _,cli,receipt=verified_core_paths(core_dir)
             if receipt["platform"]!=custody.platform_name():
                 raise WalletSessionError("WALLET_MACOS_CORE_DENIED")
             rpc=WalletCoreCli(cli,datadir)
             rpc.attest()
+            stage="HEIGHT"
             height=rpc.call("getblockcount")
             if height not in (102,103):
                 raise WalletSessionError("WALLET_FRESH_TEST_CHAIN_REQUIRED")
+            stage="SYNC"
             scanner.sync(rpc)
             account=ring.rotate(height+1)
             scanner.reconfigure(ring.accounts())
+            stage="FUND"
             _public_fixture_payment(rpc,account,mining_address,funding_height=height-100,
                                     expected_before_height=height)
             scanner.sync(rpc)
             session=cls(core_dir,datadir,source,ring,scanner,vault,password,mining_address,
                         core_cli=cli,core_receipt=receipt)
+            stage="SAVE"
             session._save()
             return session
-        except Exception:
+        except Exception as error:
+            # Fixed public diagnostics only (stage token + public error code);
+            # never message text, paths, payload or secrets.
+            code=error.args[0] if (len(error.args)==1 and type(error.args[0]) is str
+                                   and re.fullmatch(r"[A-Z0-9_]{3,80}",error.args[0])) else type(error).__name__
             if scanner is not None:
                 scanner.close()
             if ring is not None:
                 ring.close()
-            raise WalletSessionError("WALLET_CROSS_SESSION_RECOVERY_DENIED") from None
+            denied=WalletSessionError("WALLET_CROSS_SESSION_RECOVERY_DENIED")
+            denied.recovery_stage,denied.recovery_cause=stage,code
+            raise denied from None
 
     @property
     def locked(self):
@@ -366,16 +382,36 @@ class WalletSession:
             proposal = wallet.propose((intent,),fee)
             try:
                 prepared = Signer(self.ring).prepare(proposal)
+            except Exception:
+                # No review, signature, save or network action exists. Release
+                # ONLY this new token, and only while every row is still draft.
+                self._release_unreviewed_draft(wallet,proposal.token)
+                raise WalletSessionError("WALLET_PREPARE_DENIED") from None
+            try:
                 self._save()  # Reservation is durable before exposing review.
             except Exception:
-                # No signature or network action happened; draft can be
-                # conservatively retained on encrypted persistence failure.
+                # Publication outcome is unknown: the anchored checkpoint may
+                # already contain this draft. Retain it conservatively.
                 raise WalletSessionError("WALLET_PREPARE_DENIED") from None
             commitment = sha256(prepared.psbt).hexdigest()
             change = sum(c["atoms"] for c in proposal.coins)-atoms-fee
             review = PaymentReview(code,atoms,fee,change,len(proposal.coins),commitment)
             self._prepared,self._review,self._tip = prepared,review,self.scanner.store.tip()
             return review
+
+    def _release_unreviewed_draft(self, wallet, token):
+        """Release a never-saved, never-reviewed draft; latch on any doubt.
+
+        WSP release_draft rechecks every row of `token` inside one store
+        transaction and refuses signed/uncertain/broadcast/manual rows. Rows of
+        other tokens are never touched. Failure keeps the rows and faults.
+        """
+        if self.faulted:
+            return
+        try:
+            wallet.release_draft(token)
+        except Exception:
+            self.faulted=True
 
     def _unchanged_inputs(self, rpc):
         from wam_sp.scanner import atoms
@@ -423,6 +459,13 @@ class WalletSession:
                 rpc=self._rpc()
                 self._unchanged_inputs(rpc)
                 token=self._prepared.proposal.token
+                # Read-only policy preflight while the durable state is still
+                # 'signed'. Nothing has been handed to sendrawtransaction, so a
+                # definitive rejection must not become network uncertainty.
+                # The reservation stays signed/irreversible: no release, no
+                # retry, and this session latches exactly as before.
+                self._preflight_not_submitted(rpc)
+                self._before_broadcast_submission()
                 # Retain irreversible uncertainty in encrypted storage BEFORE RPC.
                 self.scanner.store.db.execute("UPDATE reservations SET state='uncertain' WHERE token=?",(token,))
                 self._save()
@@ -438,6 +481,35 @@ class WalletSession:
         except LinuxWitnessError:
             self.faulted=True;self._signed=None
             raise WalletSessionError("WALLET_ROOT_LEASE_UNCERTAIN_LOCK_RETAINED") from None
+
+    def _preflight_not_submitted(self, rpc):
+        """testmempoolaccept only; raises with the durable state still 'signed'.
+
+        A verification/transport failure latches (Core trust is in doubt); a
+        definitive rejection does not (see below).
+
+        Any later rejection observed inside WSP's own broadcast, after the
+        uncertain checkpoint, is deliberately NOT relabelled (conservative).
+        """
+        from wam_sp.psbt import PSBT
+        try:
+            raw=PSBT.decode(self._signed).finalize().hex()
+            allowed=rpc.call("testmempoolaccept",[[raw]])[0]["allowed"]
+        except Exception:
+            self.faulted=True
+            self._signed=None
+            raise WalletSessionError("WALLET_BROADCAST_NOT_SUBMITTED_LOCK_RETAINED") from None
+        if allowed is not True:
+            # Definitive and fully consistent: nothing was submitted and the
+            # durable state equals the runtime ('signed'). Do NOT latch a fault
+            # (a faulted isolated profile cannot reopen to spend); forget only
+            # the in-memory payment. The irreversible reservation remains and
+            # is reported by TX-03 signed-intent status. Never released.
+            self._prepared=self._signed=self._review=self._tip=None
+            raise WalletSessionError("WALLET_BROADCAST_REJECTED_LOCK_RETAINED")
+
+    def _before_broadcast_submission(self):
+        """Hook: subclasses persist submission-intent evidence here."""
 
     def cancel(self):
         from wam_sp.wallet import Wallet
@@ -499,17 +571,44 @@ class WalletSession:
             if getattr(self,'_managed_owner',None) is not None:
                 from .managed_wallet_session import close_session
                 return close_session(self)
-            self._close_rpc()
-            if self._disclosure_gate is not None:
-                self._disclosure_gate.close()
-                self._disclosure_gate=None
-            if self.locked:
+            gate,self._disclosure_gate=self._disclosure_gate,None
+            unlocked=not self.locked
+            failed=False
+            try:
+                # Every close is attempted even if an earlier one raises.
+                try:
+                    self._close_rpc()
+                except Exception:
+                    failed=True
+                if gate is not None:
+                    try:
+                        gate.close()
+                    except Exception:
+                        failed=True
+                if unlocked:
+                    try:
+                        self.scanner.close()
+                    except Exception:
+                        failed=True
+                    try:
+                        self.ring.close()
+                    except Exception:
+                        failed=True
+            finally:
+                # Drop this session's signing/password references regardless.
+                # (Python cannot guarantee zeroization of other copies.)
+                self._rpc_client=None
+                self.scanner=self.ring=None
+                self._password=None
+                self._prepared=self._signed=self._review=self._tip=None
+            if failed:
+                # Cleanup outcome unknown: latch, keep the runtime for review,
+                # and refuse unlock in this process. Reservations untouched.
+                self.faulted=True
+                self._lock_cleanup_uncertain=True
+                raise WalletSessionError("WALLET_LOCK_CLEANUP_UNCERTAIN") from None
+            if not unlocked:
                 return
-            self.scanner.close()
-            self.ring.close()
-            self.scanner=self.ring=None
-            self._password=None
-            self._prepared=self._signed=self._review=self._tip=None
             # This path was created only by this disposable session. No user DB.
             self.runtime.unlink(missing_ok=True)
 
@@ -517,6 +616,8 @@ class WalletSession:
         with self._lock:
             if getattr(self,'_managed_owner',None) is not None:
                 raise WalletSessionError('WALLET_MANAGED_REOPEN_REQUIRED')
+            if getattr(self,'_lock_cleanup_uncertain',False):
+                raise WalletSessionError('WALLET_LOCK_CLEANUP_UNCERTAIN')
             if not self.locked:
                 raise WalletSessionError("WALLET_ALREADY_UNLOCKED")
             if self._core_reauthentication_required and reauthenticate_core is not True:
