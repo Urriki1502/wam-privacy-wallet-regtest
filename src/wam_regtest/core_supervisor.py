@@ -43,6 +43,10 @@ DIAGNOSTIC_CODES = frozenset((
     'CORE_RPC_WARMUP','CORE_RPC_UNAVAILABLE','CORE_RPC_SCOPE_FAULTED',
     'MANAGED_SHUTDOWN_UNCERTAIN',
     'MANAGED_RECOVERY_HEIGHT_REGRESSED',
+    # Shared REGTEST peer-policy refusals raised by read attestation. Public
+    # fixed codes (no address); previously recorded as UNCLASSIFIED (V19).
+    'SHARED_UNEXPECTED_PEER_DENIED','SHARED_PEER_ENDPOINT_DENIED',
+    'SHARED_PEER_REPLY_DENIED','SHARED_PEER_SET_DENIED','SHARED_OWNED_SCOPE_REQUIRED',
 ))
 
 
@@ -208,8 +212,9 @@ class CoreSupervisor:
             raise ManagedCoreError('MANAGED_IDENTITY_CHANGED')
 
     def _record_failure(self, stage, error):
+        from .shared_regtest import SharedRegtestError
         code = (error.args[0] if type(error) in
-                (RpcError, CoreBindingError, CoreSmokeError, ManagedCoreError)
+                (RpcError, CoreBindingError, CoreSmokeError, ManagedCoreError, SharedRegtestError)
                 and len(error.args)==1 and type(error.args[0]) is str
                 and error.args[0] in DIAGNOSTIC_CODES
                 else 'MANAGED_UNCLASSIFIED_FAILURE')
