@@ -3265,7 +3265,8 @@
           "Q01-PHYSICAL-windows-x64"
         ],
         "scope": "ENGINEERING FOCUS ONLY. Q01 accepted=false; mandatory physical, independent and postmerge release evidence pending; stop next Q for a real late failure."
-      }
+      },
+      "task_name": "Reproducible Build & Release Provenance"
     },
     {
       "id": "Q02",
@@ -10301,7 +10302,8 @@
           "Q02-PHYSICAL-windows-x64"
         ],
         "scope": "ENGINEERING FOCUS ONLY. Q02 accepted=false; G6 physical three-OS and G7 independent review remain BLOCKED. Stop Q03 for any real late Q02 failure."
-      }
+      },
+      "task_name": "Authenticated WAM Core & Chain Identity"
     },
     {
       "id": "Q03",
@@ -13382,7 +13384,8 @@
           "Q03-WINDOWS-NO-FLICKER"
         ],
         "timestamp_utc": "2026-10-26T10:36:17Z"
-      }
+      },
+      "task_name": "Managed RPC & Credential Lifecycle"
     },
     {
       "id": "Q04",
@@ -17108,7 +17111,8 @@
           "Q04-PHYSICAL-SOLO-MINER"
         ],
         "scope": "ENGINEERING FOCUS ONLY; full Q04 accepted=false. No exception: 5 exact-main workflows / 17 jobs passed on macOS Windows Linux. G6 physical external solo miner and G7 independent review BLOCKED. Late genuine Q04 failure stops Q05 and triggers affected requalification."
-      }
+      },
+      "task_name": "Node/Miner Coexistence & Safe Reconnection"
     },
     {
       "id": "Q05",
@@ -19537,18 +19541,19 @@
           "Q05-PHYSICAL-WINDOWS"
         ],
         "scope": "Q-GATE v2 engineering focus ONLY. Owner has directed Q05→Q06; exact-main CI unavailable to connector and is tracked PENDING, NOT PASS/waived. Q05 accepted=false, G6/G7 BLOCKED, no mainnet. Later real Q05 failure or critical security issue stops Q06."
-      }
+      },
+      "task_name": "Owned Core Persistence & Native Wallet Custody"
     },
     {
       "id": "Q06",
       "requirement": "New 12-word BIP39 Create→Receive→Sign→Broadcast→Reopen→Restore same identity",
       "processing": "ACTIVE",
-      "status": "PENDING",
+      "status": "BLOCKED",
       "accepted": false,
       "coverage_identified": true,
       "coverage_total": 24,
       "base_main_sha": "a0ec5799de3e59e93689c744672168b76bf571be",
-      "candidate_pr": null,
+      "candidate_pr": 140,
       "candidate_head_sha": null,
       "cases": [
         {
@@ -19566,8 +19571,25 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19585,8 +19607,25 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19604,8 +19643,25 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19623,8 +19679,25 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19644,7 +19717,12 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "Q06_ENGINEERING",
+            "missing_evidence": "The unified Q06 GUI and once-only mnemonic display are tested; explicit human-facing seed-backup acknowledgment is not yet proven as required by this case.",
+            "next_action": "Review backup acknowledgment behavior and test it in the packaged GUI; preserve seed privacy."
+          },
+          "observed_partial_result": "Native unified GUI and one-time mnemonic display pass."
         },
         {
           "id": "Q06-RESTORE-BOUNDARY",
@@ -19661,8 +19739,25 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19680,8 +19775,30 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19699,8 +19816,30 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19718,8 +19857,30 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19737,8 +19898,30 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19756,8 +19939,30 @@
             "G3"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:35:14Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673155/job/125044686513",
+              "workflow_run_id": 41371673155,
+              "job_id": 125044686513,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "core_sha256": {
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "artifact_id": 13110027013,
+              "artifact_sha256": "99169351195b63e0b9b7a1cd4be57de06d4045f87cc86259b9e782e4361d83cc",
+              "frozen_executable_sha256": "420f3a266450f39fd5b60b1685aa15abada734850f7ae2c9f18a8aad326be86b",
+              "scope": "Genuine original Core REGTEST funded BIP352 receive, anchored Prepare/Sign/Broadcast/Confirm/Lock/Reopen, same-chain history scan. No fresh-genesis prior-history claim."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19777,7 +19982,12 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "Q06_ENGINEERING",
+            "missing_evidence": "Fresh separate height-0 REGTEST chain reproduces BIP39 receive identity but does not recover old-chain funds/history. Artifact receipts explicitly say fresh_chain_full_history_recovered=false.",
+            "next_action": "Qualify authenticated original-blockchain recovery into a fresh owned profile, without importing a foreign native anchor or rewriting immutable reservations."
+          },
+          "observed_partial_result": "Same-chain full-history mnemonic rescan PASS; new genesis restores only public identity."
         },
         {
           "id": "Q06-WINDOWS-CREATE-E2E",
@@ -19794,8 +20004,30 @@
             "G3"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Genuine original Core REGTEST funded BIP352 receive, anchored Prepare/Sign/Broadcast/Confirm/Lock/Reopen, same-chain history scan. No fresh-genesis prior-history claim."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19815,7 +20047,12 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "Q06_ENGINEERING",
+            "missing_evidence": "Fresh separate height-0 REGTEST chain reproduces BIP39 receive identity but does not recover old-chain funds/history. Artifact receipts explicitly say fresh_chain_full_history_recovered=false.",
+            "next_action": "Qualify authenticated original-blockchain recovery into a fresh owned profile, without importing a foreign native anchor or rewriting immutable reservations."
+          },
+          "observed_partial_result": "Same-chain full-history mnemonic rescan PASS; new genesis restores only public identity."
         },
         {
           "id": "Q06-LINUX-CREATE-E2E",
@@ -19832,8 +20069,30 @@
             "G3"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:26:34Z",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673190/job/125043962083",
+              "workflow_run_id": 41371673190,
+              "job_id": 125043962083,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "core_sha256": {
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "artifact_id": 13110276074,
+              "artifact_sha256": "9b8818e239c348f7089d5152cb336c48a20afc3e73d48af171417835d5e47ecf",
+              "frozen_executable_sha256": "c8fcc6cdc02946dcd90907299431c4e53dd9cdb2a1cbfbd49dfa7e5425469aef",
+              "scope": "Genuine original Core REGTEST funded BIP352 receive, anchored Prepare/Sign/Broadcast/Confirm/Lock/Reopen, same-chain history scan. No fresh-genesis prior-history claim."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19853,7 +20112,12 @@
           "mandatory": true,
           "status": "PENDING",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "Q06_ENGINEERING",
+            "missing_evidence": "Fresh separate height-0 REGTEST chain reproduces BIP39 receive identity but does not recover old-chain funds/history. Artifact receipts explicitly say fresh_chain_full_history_recovered=false.",
+            "next_action": "Qualify authenticated original-blockchain recovery into a fresh owned profile, without importing a foreign native anchor or rewriting immutable reservations."
+          },
+          "observed_partial_result": "Same-chain full-history mnemonic rescan PASS; new genesis restores only public identity."
         },
         {
           "id": "Q06-FROZEN-MACOS",
@@ -19870,8 +20134,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:35:14Z",
+              "platform": "macos-arm64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673155/job/125044686513",
+              "workflow_run_id": 41371673155,
+              "job_id": 125044686513,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "core_sha256": {
+                "wamd": "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068",
+                "wam-cli": "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "artifact_id": 13110027013,
+              "artifact_sha256": "99169351195b63e0b9b7a1cd4be57de06d4045f87cc86259b9e782e4361d83cc",
+              "frozen_executable_sha256": "420f3a266450f39fd5b60b1685aa15abada734850f7ae2c9f18a8aad326be86b",
+              "scope": "Final native/frozen app Send/Confirm/Reopen. Downloaded SHA256-verified evidence ZIP; full independent source/receipt metadata bound to tested SHA. No G6/G7 inference."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19889,8 +20175,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:46:06Z",
+              "platform": "windows-x64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673175/job/125043262516",
+              "workflow_run_id": 41371673175,
+              "job_id": 125043262516,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "core_sha256": {
+                "wamd.exe": "31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1",
+                "wam-cli.exe": "538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21"
+              },
+              "core_trust": "official-signed-v0.1.11",
+              "artifact_id": 13110487713,
+              "artifact_sha256": "6cf9578954e1dcf5b19b86490a5b00970ddcb20059024d26028b41d9a988b2b3",
+              "frozen_executable_sha256": "23851b4bb0726fc967cb2d4c8c0be0026ee99e5501aa12d0cff2a451c7a1ced1",
+              "scope": "Final native/frozen app Send/Confirm/Reopen. Downloaded SHA256-verified evidence ZIP; full independent source/receipt metadata bound to tested SHA. No G6/G7 inference."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19908,8 +20216,30 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PENDING",
-          "acceptance_evidence": [],
+          "status": "PASS",
+          "acceptance_evidence": [
+            {
+              "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "checkout_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
+              "timestamp_utc": "2026-11-02T01:26:34Z",
+              "platform": "linux-x86_64",
+              "reference": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/41371673190/job/125043962083",
+              "workflow_run_id": 41371673190,
+              "job_id": 125043962083,
+              "core_version": "v0.1.11",
+              "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+              "synthetic_rpc": false,
+              "core_sha256": {
+                "wamd": "ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6",
+                "wam-cli": "ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652"
+              },
+              "core_trust": "reviewed-developer-source-build",
+              "artifact_id": 13110276074,
+              "artifact_sha256": "9b8818e239c348f7089d5152cb336c48a20afc3e73d48af171417835d5e47ecf",
+              "frozen_executable_sha256": "c8fcc6cdc02946dcd90907299431c4e53dd9cdb2a1cbfbd49dfa7e5425469aef",
+              "scope": "Final native/frozen app Send/Confirm/Reopen. Downloaded SHA256-verified evidence ZIP; full independent source/receipt metadata bound to tested SHA. No G6/G7 inference."
+            }
+          ],
           "blocker": null
         },
         {
@@ -19926,9 +20256,13 @@
             "G6"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "MACOS_OWNER",
+            "missing_evidence": "No complete independent physical clean-device human receipt for backup acknowledgment + same-chain funded-history recovery + UI/UX negative cases. Mac test screenshots alone do not fulfill the complete G6 criterion.",
+            "next_action": "Carry out and record clean native device create/back up/lock/reopen/send/restore workflow, with artifact hash, redacted evidence and device/OS details."
+          }
         },
         {
           "id": "Q06-PHYSICAL-WINDOWS",
@@ -19944,9 +20278,13 @@
             "G6"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "WINDOWS_11_OWNER",
+            "missing_evidence": "No complete independent physical clean-device human receipt for backup acknowledgment + same-chain funded-history recovery + UI/UX negative cases. Mac test screenshots alone do not fulfill the complete G6 criterion.",
+            "next_action": "Carry out and record clean native device create/back up/lock/reopen/send/restore workflow, with artifact hash, redacted evidence and device/OS details."
+          }
         },
         {
           "id": "Q06-PHYSICAL-LINUX",
@@ -19962,9 +20300,13 @@
             "G6"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "LINUX_PHYSICAL_OPERATOR",
+            "missing_evidence": "No complete independent physical clean-device human receipt for backup acknowledgment + same-chain funded-history recovery + UI/UX negative cases. Mac test screenshots alone do not fulfill the complete G6 criterion.",
+            "next_action": "Carry out and record clean native device create/back up/lock/reopen/send/restore workflow, with artifact hash, redacted evidence and device/OS details."
+          }
         },
         {
           "id": "Q06-INDEPENDENT",
@@ -19980,9 +20322,13 @@
             "G7"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "INDEPENDENT_SECURITY_REVIEWER",
+            "missing_evidence": "No truly independent exact-SHA review of BIP39 WSP account derivation, native custody/antirollback, signing intent and uncertain reservation recovery.",
+            "next_action": "Request external source review, register reviewer, findings and issue/PR links; internal/CI review is not an independent approval."
+          }
         },
         {
           "id": "Q06-MERGE-AUTH",
@@ -19999,9 +20345,13 @@
             "G7"
           ],
           "mandatory": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "acceptance_evidence": [],
-          "blocker": null
+          "blocker": {
+            "actor": "REPOSITORY_OWNER",
+            "missing_evidence": "No explicit owner authorization of PR #140; exact-main postmerge CI impossible premerge; unresolved technical Q06 cases.",
+            "next_action": "Finish missing technical cases, request scoped owner decision, then merge only with consent and run exact-main platform CI."
+          }
         }
       ],
       "gates": {
@@ -20012,7 +20362,7 @@
         },
         "G1": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G2": {
@@ -20027,7 +20377,7 @@
         },
         "G4": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "PASS",
           "not_applicable_reason": null
         },
         "G5": {
@@ -20037,12 +20387,12 @@
         },
         "G6": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "not_applicable_reason": null
         },
         "G7": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "BLOCKED",
           "not_applicable_reason": null
         }
       },
@@ -20055,8 +20405,9 @@
           "note": "Stacked BIP39 engine and vectors are leads for narrow review only, NOT Q06 acceptance or prior-pass import."
         }
       ],
-      "engineering_status": "ACTIVE_SOURCE_DISCOVERY",
-      "scope_note": "Owner-directed Q06 12-word BIP39 engineering focus only. All 24 cases PENDING; no Q06 tests/receipt adopted. PR #43 is historical stacked draft review material, not merged or qualified. Begin with pinned wordlist/derivation and managed wallet integration; no mainnet, no 24-word Q07, no real funds. Prior Q05 exact-main outstanding recorded and non-waived."
+      "engineering_status": "ACTIVE_TECHNICAL_GAPS",
+      "scope_note": "2026-11-02 evidence reconciliation based on frozen actual Core/WSP tests at runtime source SHA 33683419. Fresh genesis recovery is identity-only, not former-chain funds/history; technical remaining PENDING and external G6/G7 BLOCKED remain mandatory. Ledger-only edits require fresh governance CI. See docs/Q06_FINAL_ENGINEERING_AUDIT.md.",
+      "task_name": "BIP39 12-Word Wallet & BIP352 Silent Payments"
     },
     {
       "id": "Q07",
@@ -20114,7 +20465,8 @@
       },
       "owner_merge_authorization": null,
       "post_merge_main_sha": null,
-      "historical_evidence": []
+      "historical_evidence": [],
+      "task_name": "BIP39 24-Word Wallet"
     },
     {
       "id": "Q08",
@@ -20880,5 +21232,17 @@
       "post_merge_main_sha": null,
       "historical_evidence": []
     }
-  ]
+  ],
+  "pre_v1_feature_gate": {
+    "id": "V1-NET",
+    "task_name": "Shared REGTEST P2P & Cross-Platform Transactions",
+    "status": "PENDING",
+    "accepted": false,
+    "engineering_status": "NOT_STARTED",
+    "implementation_pr_count": 1,
+    "implementation_pr_number": null,
+    "not_a_q07_rename": true,
+    "isolated_q06_unchanged": true,
+    "documentation": "docs/ENGINEERING_TASK_CATALOG.md"
+  }
 }

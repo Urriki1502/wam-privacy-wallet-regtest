@@ -38,7 +38,9 @@ class ExecutorState:
 
 COMMANDS=frozenset(('open','snapshot','prepare','sign','broadcast','cancel','lock',
     'unlock','backup','recover','complete_recovery','recovery_status','network',
-    'disclose','mine','core_status','core_start','core_restart','control','quit'))
+    'disclose','mine','activate','ci_confirm','confirm','recovery_verify',
+    'inspect_confirmed','backup_verify','backup_defer',
+    'core_status','core_start','core_restart','control','quit'))
 
 
 class WalletExecutor:

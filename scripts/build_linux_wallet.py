@@ -76,6 +76,12 @@ def main():
         '--executable',str(binary),'--output',str((output/'q05-frozen-evidence.json').absolute()),
         *([] if args.desktop else ['--headless'])],
         env=environment,check=True,timeout=1200)
+    # Q06 always runs in this final frozen executable against reviewed
+    # developer Core + separately provisioned disposable root witness.
+    subprocess.run([sys.executable,'-I','scripts/qualify_q06_frozen.py',
+        '--executable',str(binary),'--output',str((output/'q06-frozen-evidence.json').absolute()),
+        *([] if args.desktop else ['--headless'])],
+        env=environment,check=True,timeout=1200)
     # Enumerate links without following arbitrary paths. PyInstaller uses
     # relative internal library links; custody/Core members stay regular files.
     members={};links={}

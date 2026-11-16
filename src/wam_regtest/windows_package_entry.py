@@ -66,9 +66,10 @@ def main():
     ci=sys.argv[1:]==['--ci-real-core-wallet']
     q04_mode=sys.argv[1:]==['--ci-q04-external-miner']
     q05_mode=sys.argv[1:2]==['--ci-q05-managed-wallet']
-    report_denied=ci or q04_mode or q05_mode
+    q06_mode=sys.argv[1:2]==['--ci-q06-owned-spend']
+    report_denied=ci or q04_mode or q05_mode or q06_mode
     try:
-        if sys.argv[1:] and not (ci or q04_mode or q05_mode):raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
+        if sys.argv[1:] and not (ci or q04_mode or q05_mode or q06_mode):raise ValueError('WIN_BUNDLE_ARGUMENT_DENIED')
         core,source=_resources()
         from wam_regtest.core import smoke_real_core,CoreSmokeError
         if q04_mode:
@@ -94,6 +95,9 @@ def main():
             stage=Path(t).absolute()/'core';_stage_original_core(core,stage)
             if q05_mode:
                 from wam_regtest.q05_packaged import run
+                return run(stage,source,sys.argv[2:])
+            if q06_mode:
+                from wam_regtest.q06_platform_probe import run
                 return run(stage,source,sys.argv[2:])
             if not ci:
                 from wam_regtest.managed_onboarding import launch

@@ -285,3 +285,7 @@ pefile==2024.8.26 ; sys_platform == "win32" \
 
 pywin32-ctypes==0.2.3 ; sys_platform == "win32" \
     --hash=sha256:8a1513379d709975552d202d942d9837758905c8d01eb82b8bcc30918929e7b8
+
+# Q06 BIP39 12-word only; official wheel digest independently matched to PyPI 0.21.
+mnemonic==0.21 \
+    --hash=sha256:72dc9de16ec5ef47287237b9b6943da11647a03fe7cf1f139fc3d7c4a7439288

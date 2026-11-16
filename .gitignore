@@ -20,6 +20,7 @@ core/
 real-core-evidence.json
 
 wsp-upstream/
+wsp-source/
 bundle-input/
 package-output/
 *.spec
