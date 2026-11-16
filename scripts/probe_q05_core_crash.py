@@ -37,7 +37,7 @@ def main():
     record={'source_sha':head,'checkout_sha':head,'status':'FAIL',
         'platform':'macos-arm64','fault_model':'SIGKILL of freshly verified original owned Popen',
         'core_sha256':{x.name:sha256(x.read_bytes()).hexdigest() for x in (node,cli)},
-        'core_version':'v0.1.11','core_trust':'official-signed-v0.1.11',
+        'core_version':'v0.1.13','core_trust':'official-signed-v0.1.13',
         'wsp_source_commit':PINNED_WSP_COMMIT,'wsp_executed':False,
         'synthetic_rpc':False,'frozen':False,'mainnet_allowed':False,'observations':[],
         'python_version':platform.python_version(),'command':__import__('sys').argv[1:],

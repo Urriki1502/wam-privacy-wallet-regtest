@@ -14,7 +14,7 @@ from .external_core import ExternalAttachmentError
 def main() -> int:
     ap = argparse.ArgumentParser(prog="wam-regtest")
     sub = ap.add_subparsers(dest="command", required=True)
-    smoke = sub.add_parser("smoke", help="Run signed real WAM Core v0.1.11 on fresh REGTEST only")
+    smoke = sub.add_parser("smoke", help="Run signed real WAM Core v0.1.13 on fresh REGTEST only")
     smoke.add_argument("--core-dir", required=True, type=Path)
     smoke.add_argument("--confirm-disposable-regtest", action="store_true", help="Approve keyless local Core process and disposable test wallet")
     smoke.add_argument("--report", type=Path, help="Write a redacted public receipt")
@@ -34,7 +34,7 @@ def main() -> int:
     gui.add_argument("--confirm-disposable-regtest", action="store_true")
 
     demo = sub.add_parser(
-        "demo", help="One command: signed v0.1.11 Core -> genuine BIP352 payment -> interactive native Qt REGTEST"
+        "demo", help="One command: signed v0.1.13 Core -> genuine BIP352 payment -> interactive native Qt REGTEST"
     )
     demo.add_argument("--core-dir", required=True, type=Path)
     demo.add_argument("--wsp-source-root", required=True, type=Path)
@@ -45,7 +45,7 @@ def main() -> int:
     wallet.add_argument("--wsp-source-root",required=True,type=Path)
     wallet.add_argument("--confirm-disposable-regtest",action="store_true")
     wallet.add_argument("--confirm-public-fixture-payment",action="store_true")
-    linux=sub.add_parser('linux-wallet',help='Experimental Linux headless wallet; approved developer manifest and root witness required')
+    linux=sub.add_parser('linux-wallet',help='Experimental Linux headless wallet; signed Core, reviewed loader manifest and root witness required')
     linux.add_argument('--core-dir',type=Path,required=True)
     linux.add_argument('--manifest-sha256',required=True)
     linux.add_argument('--anchor-socket',type=Path,required=True)

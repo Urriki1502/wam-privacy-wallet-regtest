@@ -1,7 +1,7 @@
 """Pinned, real WSP-1 Scanner.sync against a LIVE signed WAM Core REGTEST.
 
 No synthetic RPC and no mainnet. This scanner connects to the already-running
-official v0.1.11 node via the exact signed wam-cli executable and a private
+official v0.1.13 node via the exact signed wam-cli executable and a private
 fresh datadir. The initial M1 proof scans actual mined blocks but does NOT
 yet claim a BIP352 payment occurred. A positive receive/coins E2E is a
 separate acceptance gate, never inferred from an empty-chain scan.
@@ -408,8 +408,8 @@ class LiveCoreReadOnlyCli:
             from .shared_regtest import peer_status
             peer_status(self._datadir)
         version=self._call('getnetworkinfo',[])
-        if (type(version) is not dict or type(version.get('version')) is not int or version.get('version')!=111
-                or version.get('subversion')!='/WAM:0.1.11/' or type(version.get('protocolversion')) is not int or version.get('protocolversion')!=70016):
+        if (type(version) is not dict or type(version.get('version')) is not int or version.get('version')!=113
+                or version.get('subversion')!='/WAM:0.1.13/' or type(version.get('protocolversion')) is not int or version.get('protocolversion')!=70016):
             raise RealWspScanError('WSP_LIVE_VERSION_DENIED')
         self._genesis = genesis
         from .rpc_scope import identity

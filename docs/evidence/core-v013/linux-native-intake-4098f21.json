@@ -1,0 +1,98 @@
+{
+  "files": {
+    "wam-cli": {
+      "elf": {
+        "architecture": "ELF64-x86_64",
+        "gnu_stack": "RW",
+        "interpreter": "/lib64/ld-linux-x86-64.so.2"
+      },
+      "libraries": {
+        "libc.so.6": {
+          "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+          "sha256": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf"
+        },
+        "libgcc_s.so.1": {
+          "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+          "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+        },
+        "libm.so.6": {
+          "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+          "sha256": "fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0"
+        },
+        "libstdc++.so.6": {
+          "path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+          "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11"
+        }
+      },
+      "loader": {
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+      },
+      "sha256": "d99fc90e3aa4233979056d9981a388360e5d7ff77090d00b9bc37191a2425300"
+    },
+    "wamd": {
+      "elf": {
+        "architecture": "ELF64-x86_64",
+        "gnu_stack": "RW",
+        "interpreter": "/lib64/ld-linux-x86-64.so.2"
+      },
+      "libraries": {
+        "libc.so.6": {
+          "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+          "sha256": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf"
+        },
+        "libgcc_s.so.1": {
+          "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+          "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+        },
+        "libm.so.6": {
+          "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+          "sha256": "fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0"
+        },
+        "libstdc++.so.6": {
+          "path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+          "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11"
+        }
+      },
+      "loader": {
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+      },
+      "sha256": "a3e3bf810e74824e3739fd4cbd1a45037cae997056b8c978c4dc1a61d674f0c7"
+    }
+  },
+  "genesis": "b88f3d262f285e38e184f50bf3eea1c8e615486ae67d3d9eaf0976fbd6d3d30d",
+  "height": 101,
+  "mainnet_allowed": false,
+  "native_versions": {
+    "wam-cli": "WAM Coin RPC client version v0.1.13",
+    "wamd": "WAM Coin version v0.1.13"
+  },
+  "networkinfo": {
+    "connections": 0,
+    "protocolversion": 70016,
+    "subversion": "/WAM:0.1.13/",
+    "version": 113
+  },
+  "original_popen_stopped": true,
+  "platform": "linux-x86_64",
+  "release": {
+    "archive": "wam-coin-v0.1.13-x86_64-linux-gnu.tar.gz",
+    "archive_sha256": "1adb703f9c881f1ce20ee1d085c7d0d07395b61751faa02a532f947bb97d594a",
+    "loader_process_binding_qualified": false,
+    "mainnet_allowed": false,
+    "platform": "linux-x86_64",
+    "publisher_fingerprint": "4BD4A8D3AFD43F5CBCB500E23798462FE00ADBA4",
+    "real_wsp_e2e_qualified": false,
+    "signed_archive_verified": true,
+    "tag": "v0.1.13",
+    "wam_cli_sha256": "d99fc90e3aa4233979056d9981a388360e5d7ff77090d00b9bc37191a2425300",
+    "wamd_sha256": "a3e3bf810e74824e3739fd4cbd1a45037cae997056b8c978c4dc1a61d674f0c7"
+  },
+  "schema": "wam-official-v013-native-intake/v1",
+  "source_sha": "4098f21aae9e00650eca4cad91227fc00302b90f",
+  "status": "NATIVE_OFFICIAL_CORE_INTAKE_101_BLOCKS_PASS",
+  "synthetic_rpc": false,
+  "upstream_source": "b3fb899ddb1ceab7e9b3b12ccd034ad1b4be8186",
+  "zero_peers": true
+}

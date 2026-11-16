@@ -1,6 +1,6 @@
 """Genuine Core macOS measurement for Q03 persistent JSON-RPC reuse.
 
-Launches the real signed v0.1.11 regtest Core, mines 101 public-fixture blocks,
+Launches the real signed v0.1.13 regtest Core, mines 101 public-fixture blocks,
 creates a disposable WalletSession, then repeatedly refreshes the wallet read
 snapshot while recording telemetry counters.
 
@@ -124,7 +124,9 @@ def measure_reuse(core_dir: Path, source_root: Path, cycles: int = 5, *, cookie_
                     ["/usr/bin/security", "create-keychain", "-p", "public-test-only", str(keychain)],
                     capture_output=True, timeout=15, check=False,
                 ).returncode
-                if status:
+                if status or subprocess.run(
+                        ["/usr/bin/security", "set-keychain-settings", str(keychain)],
+                        capture_output=True, timeout=15, check=False).returncode:
                     raise CoreSmokeError("CORE_MEASURE_KEYCHAIN_DENIED")
                 created_keychain = True
             else:
@@ -214,7 +216,7 @@ def main(argv: list[str] | None = None) -> int:
         raise CoreSmokeError('CORE_MEASURE_REUSE_DENIED')
     checkout = subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
     result.update(source_head_sha=os.environ.get('WAM_SOURCE_HEAD', checkout),checkout_sha=checkout,
-                  core_version='v0.1.11',wsp_source_commit='ac55f13423620252bdbf848c7e8a280c3b84721e',
+                  core_version='v0.1.13',wsp_source_commit='ac55f13423620252bdbf848c7e8a280c3b84721e',
                   synthetic_rpc=False,mainnet_allowed=False)
     if args.report is not None:
         args.report.write_text(json.dumps(result,indent=2)+'\n')

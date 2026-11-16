@@ -1,4 +1,4 @@
-"""Real WAM v0.1.11 Core REGTEST disposable RPC smoke, never mock or mainnet.
+"""Real WAM v0.1.13 Core REGTEST disposable RPC smoke, never mock or mainnet.
 
 This is a developer acceptance harness, not a production executable loader
 binding or key custody boundary. No user datadir is ever read or modified.
@@ -15,7 +15,8 @@ import stat
 import subprocess
 import time
 
-from .release import ARCHIVES, CLI_SHA256, _sha
+from .release import ARCHIVES, CLI_SHA256, FINGERPRINT, VERSION, _sha
+from .official_core_v013 import ARCHIVES as SIGNED_ARCHIVES
 from .custody import private_temporary_directory
 from .telemetry import increment
 
@@ -41,7 +42,11 @@ def verified_core_paths(core_dir: Path) -> tuple[Path, Path, dict]:
         platform = receipt["platform"]
         node = core_dir / "wamd"
         cli = core_dir / "wam-cli"
-        if (platform not in ARCHIVES or
+        if (platform != "macos-arm64" or platform not in ARCHIVES
+                or receipt.get("tag") != VERSION
+                or receipt.get("archive") != SIGNED_ARCHIVES["macos-arm64"][0]
+                or receipt.get("archive_sha256") != SIGNED_ARCHIVES["macos-arm64"][2]
+                or receipt.get("publisher_fingerprint") != FINGERPRINT or
                 receipt["signed_archive_verified"] is not True or
                 receipt.get("mainnet_allowed") is not False or
                 receipt.get("loader_process_binding_qualified") is not False or
@@ -269,8 +274,8 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
             genesis=_read_cli(prefix + ['getblockhash','0'])
             if genesis!=REGTEST_GENESIS:raise CoreSmokeError('CORE_WRONG_GENESIS_DENIED')
             version=_read_cli(prefix + ['getnetworkinfo'])
-            if (type(version) is not dict or type(version.get('version')) is not int or version.get('version')!=111
-                    or version.get('subversion')!='/WAM:0.1.11/' or type(version.get('protocolversion')) is not int or version.get('protocolversion')!=70016):
+            if (type(version) is not dict or type(version.get('version')) is not int or version.get('version')!=113
+                    or version.get('subversion')!='/WAM:0.1.13/' or type(version.get('protocolversion')) is not int or version.get('protocolversion')!=70016):
                 raise CoreSmokeError('CORE_RPC_VERSION_DENIED')
             if _read_cli(prefix + ["getconnectioncount"]) != 0:
                 raise CoreSmokeError("CORE_EXTERNAL_PEERS_DENIED")
@@ -391,13 +396,13 @@ def smoke_real_core(core_dir: Path, *, explicit_consent: bool, timeout: int = 12
                 "interactive_demo_closed_cleanly": demo_finished,
                 "gui_real_core_e2e_pass": gui_receipt is not None,
                 "gui_live_core_view": gui_receipt,
-                "status": ("REAL_WAM_CORE_V0_1_11_NATIVE_QT_WALLET_E2E_PASS"
+                "status": ("REAL_WAM_CORE_V0_1_13_NATIVE_QT_WALLET_E2E_PASS"
                            if gui_receipt is not None else
-                           "REAL_WAM_CORE_V0_1_11_BIP352_RECEIVE_E2E_PASS"
+                           "REAL_WAM_CORE_V0_1_13_BIP352_RECEIVE_E2E_PASS"
                            if wsp_payment_e2e and wsp_receipt is not None else
-                           "REAL_WAM_CORE_V0_1_11_REGTEST_AND_NATIVE_WSP_SCANNER_PASS"
+                           "REAL_WAM_CORE_V0_1_13_REGTEST_AND_NATIVE_WSP_SCANNER_PASS"
                            if wsp_receipt is not None else
-                           "REAL_WAM_CORE_V0_1_11_REGTEST_RPC_101_BLOCKS_PASS"),
+                           "REAL_WAM_CORE_V0_1_13_REGTEST_RPC_101_BLOCKS_PASS"),
                 "wsp_real_core_scan_pass": wsp_receipt is not None,
                 "wsp_live_scan": wsp_receipt,
                 "regtest_public_fixture_broadcast_confirmed": (

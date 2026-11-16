@@ -125,6 +125,11 @@ def probe_wallet(core_dir,datadir,source,mining_address):
                                    capture_output=True,timeout=15,check=False).returncode
             if status:raise WalletProbeError("WALLET_TEST_KEYCHAIN_DENIED")
             created=True
+            # Disposable fixture only: no 300 s / lock-on-sleep auto-lock
+            # (root cause of intermittent REOPEN ANCHOR VAULT_KEYCHAIN_READ_DENIED).
+            if subprocess.run(['/usr/bin/security','set-keychain-settings',str(keychain)],
+                              capture_output=True,timeout=15,check=False).returncode:
+                raise WalletProbeError("WALLET_TEST_KEYCHAIN_DENIED")
         stage="CREATE"
         print("WALLET_E2E_STAGE=CREATE",flush=True)
         session=WalletSession.create(core_dir,datadir,source,password,mining_address,authorized=True,keychain=keychain)
@@ -486,6 +491,11 @@ def probe_wallet(core_dir,datadir,source,mining_address):
         import traceback
         frames=traceback.extract_tb(error.__traceback__)
         lines=[f.lineno for f in frames if Path(f.filename).name=='wallet_probe.py']
+        # Fixed public cause token only (e.g. a CoreSmokeError category).
+        import re as _re
+        cause=(error.args[0] if len(error.args)==1 and type(error.args[0]) is str
+               and _re.fullmatch(r'[A-Z0-9_]{3,80}',error.args[0]) else type(error).__name__)
+        print('WALLET_PROBE_CAUSE='+cause,flush=True)
         if lines and type(lines[-1]) is int:
             print('WALLET_PROBE_ASSERTION_LINE='+str(lines[-1]),flush=True)
             try:

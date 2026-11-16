@@ -14,24 +14,38 @@ class ReopenProbeError(ValueError):
 def probe_reopened_wallet(core_dir,datadir,source,mining_address,case):
     directory,name,password,keychain,expected_code=case
     session=window=None
+    probe_step=0
     try:
         if sys.platform=='win32':print('WIN_REOPEN_STAGE=FROM_BACKUP',flush=True)
+        probe_step=1
         session=WalletSession.from_backup(core_dir,datadir,source,directory,name,password,
                                            mining_address,authorized=True,keychain=keychain)
         if sys.platform=='win32':print('WIN_REOPEN_STAGE=SNAPSHOT',flush=True)
+        probe_step=2
         snap=session.snapshot()
+        probe_step=3
         assert session.ring.accounts()[0].payment_code()==expected_code
+        probe_step=4
         assert snap.receive_code!=expected_code and session.ring.accounts()[-1].epoch==1
+        probe_step=5
         assert snap.height==103 and snap.confirmed_utxos==1 and snap.confirmed_atoms>0
         # Old broadcast/uncertain locks remain in the recovered state. Newly
         # funded epoch coins have different outpoints and can be proposed.
+        probe_step=6
         rows=session.scanner.store.db.execute('SELECT state FROM reservations').fetchall()
+        probe_step=7
         assert rows and all(row[0] in ('broadcast','signed','uncertain') for row in rows)
+        probe_step=8
         window=OperationalWalletWindow(session)
+        probe_step=9
         window.show()
+        probe_step=10
         window.apply_snapshot(snap)
+        probe_step=11
         qt_application().processEvents()
+        probe_step=12
         assert window.receive_code.text()==snap.receive_code and window.prepare_button.isEnabled()
+        probe_step=13
         assert window.navigation.count()==6
         if sys.platform=='win32':
             # Window close locks its session. Exercise stale writers while
@@ -39,9 +53,13 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case):
             window._sync_timer.stop()
             print('WIN_REOPEN_STAGE=STALE_PAYMENT',flush=True)
             _prove_windows_stale_payment(session,password)
+        probe_step=14
         window.close()
+        probe_step=15
         window.deleteLater()
+        probe_step=16
         QCoreApplication.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+        probe_step=17
         window=None
         return {
             'stale_before_native_signature_denied':sys.platform=='win32',
@@ -53,7 +71,15 @@ def probe_reopened_wallet(core_dir,datadir,source,mining_address,case):
             'native_qt_recovered_receive_balance':True,'observed_height':103,
             'cross_mac_anchor_migration_allowed':False,
         }
-    except Exception:
+    except Exception as error:
+        stage=getattr(error,'recovery_stage',None)
+        if stage is not None:
+            print('WALLET_REOPEN_DENIED_STAGE='+stage+' CAUSE='+str(error.recovery_cause),flush=True)
+        # Fixed diagnostics only: probe step number + public code or class name.
+        import re as _re
+        code=(error.args[0] if len(error.args)==1 and type(error.args[0]) is str
+              and _re.fullmatch(r'[A-Z0-9_]{3,80}',error.args[0]) else type(error).__name__)
+        print('WALLET_REOPEN_PROBE_STEP='+str(probe_step)+' CAUSE='+code,flush=True)
         raise ReopenProbeError('WALLET_REAL_CORE_REOPEN_DENIED') from None
     finally:
         if window is not None:

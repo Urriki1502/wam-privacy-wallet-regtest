@@ -25,6 +25,7 @@ def stage(snapshot,destination):
         dispatch=os.environ.get('GITHUB_EVENT_NAME')=='workflow_dispatch')
     value['literal_python_files_verified']=proof['literal_python_files_verified']
     value['raw_python_tree_sha256']=proof['raw_python_tree_sha256']
+    value['retained_non_runtime_audit_sha256']=proof['retained_non_runtime_audit_sha256']
     with destination.open('x') as out:json.dump(value,out,sort_keys=True);out.write('\n')
     return value
 

@@ -108,7 +108,7 @@ def probe_running_real_core_gui(
     win.deleteLater()
     QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
     return {
-        "status": "REAL_WAM_CORE_V0_1_11_NATIVE_QT_RECEIVE_BALANCE_HISTORY_PASS",
+        "status": "REAL_WAM_CORE_V0_1_13_NATIVE_QT_RECEIVE_BALANCE_HISTORY_PASS",
         "real_core_rpc": True,
         "synthetic_rpc": False,
         "qt_gui_rendered": True,

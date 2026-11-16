@@ -95,7 +95,11 @@ class CoreContractTests(unittest.TestCase):
     def test_mutable_receipt_cannot_authorize_replaced_macos_cli(self):
         with tempfile.TemporaryDirectory() as folder:
             home=Path(folder)
-            receipt={
+            from wam_regtest.official_core_v013 import ARCHIVES as signed_archives
+            from wam_regtest.release import VERSION, FINGERPRINT
+            receipt={"tag":VERSION,"publisher_fingerprint":FINGERPRINT,
+                "archive":signed_archives['macos-arm64'][0],
+                "archive_sha256":signed_archives['macos-arm64'][2],
                 "platform":"macos-arm64","signed_archive_verified":True,
                 "mainnet_allowed":False,"loader_process_binding_qualified":False,
                 "wamd_sha256":ARCHIVES["macos-arm64"][1],"wam_cli_sha256":"0"*64,

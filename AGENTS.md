@@ -35,3 +35,26 @@ The Q-GATE v2 owner instruction supersedes earlier "Q+1 must wait for ALL human/
 **Q05→Q06 handoff proposal (31 October 2026):** Owner-approved Q05 code PR [#138](https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/138) merged at `a0ec5799de3e59e93689c744672168b76bf571be`. Owner directed engineering focus to Q06 in [Issue #45 comment 6539050755](https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755). This governance branch proposes the **single-Q transition**, only effective once its own PR is separately approved and merged. Q05 technical source/native/frozen 32 PASS are preserved. **Q05-MERGE-AUTH is BLOCKED on missing actual-main CI** despite owner-approved code merge; its main-ref equality is confirmed but is not executable qualification. G6 physical/G7 independent BLOCKED; Q05 accepted=false. The limited engineering-focus transition is tracked with `postmerge_status=PENDING`, an explicit owner-decision reference and a non-waiver obligation to complete exact-main Mac/Win/Linux runs. A genuine later Q05 regression **stops Q06** for correction. Proposed Q06 uses 24 all-PENDING BIP39 **12-word** case records; prior unmerged stacked #43 remains review-only, not accepted source. No automatic governance merge, Q06 case PASS, mainnet or production permission.
 
 **Stable task naming and pre-V1 gate (owner direction, 2 November 2026):** Use the descriptive Q01–Q06 display labels in [the engineering task catalog](docs/ENGINEERING_TASK_CATALOG.md) while preserving all permanent Q IDs, acceptance case IDs, receipts and existing source module import paths. Q07 remains the 24-word BIP39 task. Shared REGTEST P2P is the *separate* **V1-NET** pre-V1 feature gate, proposed as **one dedicated Draft PR** after owner-authorized Q06 technical integration; never treat it as a new Q07, overwrite Q06 zero-peer profile, bypass the active-Q rule or claim network/custody acceptance before real two-device evidence. Q06 exact-runtime evidence and the independent physical/security backlog are recorded in [its audit](docs/Q06_FINAL_ENGINEERING_AUDIT.md); preserve `accepted=false` and named blockers until actual external review.
+
+**Scoped official Core v0.1.13 candidate (owner task, 5 November 2026):**
+Use feature/official-core-v013-three-platform-20261105 from the verified
+bd783d7 docs-only descendant of c61e3c5; focused Draft #141 base remediation/post-dev-review-20261105.
+Official v0.1.13 is authorized only for NEW disposable REGTEST profiles, in
+Linux → Windows → macOS order, then common exact-source frozen qualification.
+Independently authenticate signed archives and all member pins; preserve WSP
+ac55f134, root witness/native custody and every old profile/artifact. Existing
+v0.1.11 profile migration stays separately opt-in and unapproved for retained
+owner data. No merge/release/mainnet. Q06 accepted=false; G6/G7/V19 BLOCKED.
+
+**Owner workflow correction (6 November 2026):** Before ANY new GitHub push,
+the exact local candidate must pass the FULL native macOS ARM64 build and final
+frozen .app/.dmg qualification in this workspace, using official signed v0.1.13
+Core and the pinned WSP. Source/unit PASS or a remote green badge is insufficient.
+Preserve all historical runs and artifacts; do not cancel/delete them. Until the
+local gate passes, initiate no push, Actions dispatch or remote engineering
+mutation. Local candidate commits needed for exact-source build attestation are
+unqualified snapshots, never permission to push. A missing required local test
+is BLOCKED with exact cause, not bypassed. After local PASS, push only this
+existing feature branch/PR #141, then perform native three-OS requalification.
+Every correction requires affected local qualification again before another
+push. Inspect unauthenticated retained owners read-only. No merge/release/mainnet.

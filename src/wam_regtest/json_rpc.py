@@ -29,7 +29,7 @@ MAX_REPLY = 1024 * 1024
 MAX_BLOCK_REPLY = 32 * 1024 * 1024
 MAX_IDLE_REUSE_SECONDS = 5
 MAX_TRUST_CACHE_SECONDS = 5
-SUPPORTED_RPC = (111, '/WAM:0.1.11/', 70016)
+SUPPORTED_RPC = (113, '/WAM:0.1.13/', 70016)
 
 _HTTP_READS = frozenset((
     'getblockchaininfo', 'getblockcount', 'getbestblockhash', 'getblockhash',

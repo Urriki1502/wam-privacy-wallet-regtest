@@ -15871,13 +15871,13 @@
       },
       "integration_blocker": {
         "actor": "REPOSITORY_OWNER_AND_EXTERNAL_REVIEWERS",
-        "missing_evidence": "Executable exact-main qualification is complete. Q04→Q05 owner authorization, physical external solo-miner observation and independent security/architecture approval remain outstanding.",
-        "next_action": "Owner reviews this focused governance PR and separately records any Q04→Q05 handoff authorization. Authorized operator supplies Q04 physical receipt; independent reviewer supplies source-specific sign-off. Do not activate Q05 automatically."
+        "missing_evidence": "Executable exact-main qualification is complete. Q04\u2192Q05 owner authorization, physical external solo-miner observation and independent security/architecture approval remain outstanding.",
+        "next_action": "Owner reviews this focused governance PR and separately records any Q04\u2192Q05 handoff authorization. Authorized operator supplies Q04 physical receipt; independent reviewer supplies source-specific sign-off. Do not activate Q05 automatically."
       },
       "owner_merge_decision_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6433299588",
       "full_acceptance_status": "BLOCKED",
       "postmerge_qualification": {
-        "scope": "Complete executable Q04 exact-main qualification; physical/independent acceptance and owner Q04→Q05 authorization remain separate.",
+        "scope": "Complete executable Q04 exact-main qualification; physical/independent acceptance and owner Q04\u2192Q05 authorization remain separate.",
         "status": "PASS",
         "qualified_main_sha": "c316671ac0e483640736e1b3c599a8b2541a839a",
         "governance_recording_base_sha": "c316671ac0e483640736e1b3c599a8b2541a839a",
@@ -15901,7 +15901,7 @@
             "jobs": [
               {
                 "job_id": 122021908124,
-                "name": "Real signed Core → WSP BIP352 → native Qt Receive Balance History",
+                "name": "Real signed Core \u2192 WSP BIP352 \u2192 native Qt Receive Balance History",
                 "status": "completed",
                 "conclusion": "success",
                 "head_sha": "c316671ac0e483640736e1b3c599a8b2541a839a",
@@ -16621,7 +16621,7 @@
         "independent_review_case": "Q04-INDEPENDENT",
         "release_or_mainnet_authorized": false,
         "handoff_to_q05_authorized": true,
-        "owner_focus_transition_condition": "All mandatory executable exact-main requirements are verified PASS with no exception or waiver. A separate explicit owner decision is required before Q04→Q05 focus transition. Q05 remains QUEUED.",
+        "owner_focus_transition_condition": "All mandatory executable exact-main requirements are verified PASS with no exception or waiver. A separate explicit owner decision is required before Q04\u2192Q05 focus transition. Q05 remains QUEUED.",
         "q04_receipt_observations": {
           "native": [
             {
@@ -17128,7 +17128,7 @@
       "cases": [
         {
           "id": "Q05-COVERAGE",
-          "requirement": "Complete scoped managed-Core case matrix per §G/A06 and related mandatory T/K/F/R dependencies",
+          "requirement": "Complete scoped managed-Core case matrix per \u00a7G/A06 and related mandatory T/K/F/R dependencies",
           "acceptance_predicate": "Requirements and negative cases enumerated; source and final packaging provenance individually traceable.",
           "requirement_refs": [
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
@@ -19431,7 +19431,7 @@
         }
       ],
       "engineering_status": "INTEGRATED_PENDING_EXTERNAL",
-      "scope_note": "2026-10-31: Owner-approved #138 merged as a0ec5799de3e59e93689c744672168b76bf571be (actual main tip); PR HEAD a74eebc58a79613d826ed862189667dc6aefc3b1, qualified runtime 4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5. 32 existing source/native/frozen PASS; 4 external physical/independent BLOCKED; Q05-MERGE-AUTH now BLOCKED only on missing exact-main CI/independent completion, not lack of merge authorization. Q-GATE v2 owner-directed Q06 engineering focus; postmerge PENDING explicitly recorded, NOT PASS or waiver of verification. G0–G5 PASS; G6/G7 BLOCKED; accepted=false. Linux Core reviewed unsigned; no preflush crash auto-recovery guarantee; preserved historical FAIL including macOS reopen retry.",
+      "scope_note": "2026-10-31: Owner-approved #138 merged as a0ec5799de3e59e93689c744672168b76bf571be (actual main tip); PR HEAD a74eebc58a79613d826ed862189667dc6aefc3b1, qualified runtime 4f7d4ed42e5fdeb5ea91712dea70ea4653bce0f5. 32 existing source/native/frozen PASS; 4 external physical/independent BLOCKED; Q05-MERGE-AUTH now BLOCKED only on missing exact-main CI/independent completion, not lack of merge authorization. Q-GATE v2 owner-directed Q06 engineering focus; postmerge PENDING explicitly recorded, NOT PASS or waiver of verification. G0\u2013G5 PASS; G6/G7 BLOCKED; accepted=false. Linux Core reviewed unsigned; no preflush crash auto-recovery guarantee; preserved historical FAIL including macOS reopen retry.",
       "failure_history": [
         {
           "source_sha": "d6a3acfdd80076d20aaca01e0eaab653255ddcbb",
@@ -19540,20 +19540,20 @@
           "Q05-PHYSICAL-MACOS",
           "Q05-PHYSICAL-WINDOWS"
         ],
-        "scope": "Q-GATE v2 engineering focus ONLY. Owner has directed Q05→Q06; exact-main CI unavailable to connector and is tracked PENDING, NOT PASS/waived. Q05 accepted=false, G6/G7 BLOCKED, no mainnet. Later real Q05 failure or critical security issue stops Q06."
+        "scope": "Q-GATE v2 engineering focus ONLY. Owner has directed Q05\u2192Q06; exact-main CI unavailable to connector and is tracked PENDING, NOT PASS/waived. Q05 accepted=false, G6/G7 BLOCKED, no mainnet. Later real Q05 failure or critical security issue stops Q06."
       },
       "task_name": "Owned Core Persistence & Native Wallet Custody"
     },
     {
       "id": "Q06",
-      "requirement": "New 12-word BIP39 Create→Receive→Sign→Broadcast→Reopen→Restore same identity",
+      "requirement": "New 12-word BIP39 Create\u2192Receive\u2192Sign\u2192Broadcast\u2192Reopen\u2192Restore same identity",
       "processing": "ACTIVE",
       "status": "BLOCKED",
       "accepted": false,
       "coverage_identified": true,
       "coverage_total": 24,
       "base_main_sha": "a0ec5799de3e59e93689c744672168b76bf571be",
-      "candidate_pr": 140,
+      "candidate_pr": 141,
       "candidate_head_sha": null,
       "cases": [
         {
@@ -19571,7 +19571,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -19590,7 +19590,8 @@
               "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-BIP39-NFKD-SEED",
@@ -19607,7 +19608,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -19626,7 +19627,8 @@
               "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-BIP32-WSP-ROOT",
@@ -19643,7 +19645,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -19662,7 +19664,8 @@
               "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-NATIVE-CUSTODY",
@@ -19679,7 +19682,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -19698,7 +19701,8 @@
               "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-ONBOARDING-GUI",
@@ -19739,7 +19743,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -19758,7 +19762,8 @@
               "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-NEGATIVE-WORDCOUNT-CHECKSUM",
@@ -19775,7 +19780,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -19799,7 +19804,8 @@
               "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-NEGATIVE-CHAIN-PROFILE",
@@ -19816,7 +19822,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -19840,7 +19846,8 @@
               "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-NEGATIVE-IDENTITY-ROLLBACK",
@@ -19857,7 +19864,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -19881,7 +19888,8 @@
               "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-NEGATIVE-TX-REPLAY",
@@ -19898,7 +19906,7 @@
             "G4"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -19922,12 +19930,13 @@
               "scope": "Scoped native source tests (54 positive/negative Q06 suite + 2 executor command contracts); not a physical or independent review."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-MACOS-CREATE-E2E",
-          "requirement": "Genuine signed Core 12-word create→fund BIP352→prepare/sign/broadcast/confirm→lock/reopen on macOS",
-          "acceptance_predicate": "Genuine signed Core 12-word create→fund BIP352→prepare/sign/broadcast/confirm→lock/reopen on macOS",
+          "requirement": "Genuine signed Core 12-word create\u2192fund BIP352\u2192prepare/sign/broadcast/confirm\u2192lock/reopen on macOS",
+          "acceptance_predicate": "Genuine signed Core 12-word create\u2192fund BIP352\u2192prepare/sign/broadcast/confirm\u2192lock/reopen on macOS",
           "requirement_refs": [
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
@@ -19939,7 +19948,7 @@
             "G3"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -19963,7 +19972,8 @@
               "scope": "Genuine original Core REGTEST funded BIP352 receive, anchored Prepare/Sign/Broadcast/Confirm/Lock/Reopen, same-chain history scan. No fresh-genesis prior-history claim."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-MACOS-RESTORE-E2E",
@@ -19991,8 +20001,8 @@
         },
         {
           "id": "Q06-WINDOWS-CREATE-E2E",
-          "requirement": "Genuine signed Core 12-word create→receive→sign/broadcast/confirm→reopen with native Windows custody",
-          "acceptance_predicate": "Genuine signed Core 12-word create→receive→sign/broadcast/confirm→reopen with native Windows custody",
+          "requirement": "Genuine signed Core 12-word create\u2192receive\u2192sign/broadcast/confirm\u2192reopen with native Windows custody",
+          "acceptance_predicate": "Genuine signed Core 12-word create\u2192receive\u2192sign/broadcast/confirm\u2192reopen with native Windows custody",
           "requirement_refs": [
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
@@ -20004,7 +20014,7 @@
             "G3"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -20028,7 +20038,8 @@
               "scope": "Genuine original Core REGTEST funded BIP352 receive, anchored Prepare/Sign/Broadcast/Confirm/Lock/Reopen, same-chain history scan. No fresh-genesis prior-history claim."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-WINDOWS-RESTORE-E2E",
@@ -20056,8 +20067,8 @@
         },
         {
           "id": "Q06-LINUX-CREATE-E2E",
-          "requirement": "Reviewed developer Core 12-word create→receive→send/confirm→reopen under approved root witness",
-          "acceptance_predicate": "Reviewed developer Core 12-word create→receive→send/confirm→reopen under approved root witness",
+          "requirement": "Reviewed developer Core 12-word create\u2192receive\u2192send/confirm\u2192reopen under approved root witness",
+          "acceptance_predicate": "Reviewed developer Core 12-word create\u2192receive\u2192send/confirm\u2192reopen under approved root witness",
           "requirement_refs": [
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45",
             "https://github.com/Urriki1502/wam-privacy-wallet-regtest/issues/45#issuecomment-6539050755"
@@ -20069,7 +20080,7 @@
             "G3"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -20093,7 +20104,8 @@
               "scope": "Genuine original Core REGTEST funded BIP352 receive, anchored Prepare/Sign/Broadcast/Confirm/Lock/Reopen, same-chain history scan. No fresh-genesis prior-history claim."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-LINUX-RESTORE-E2E",
@@ -20134,7 +20146,7 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -20158,7 +20170,8 @@
               "scope": "Final native/frozen app Send/Confirm/Reopen. Downloaded SHA256-verified evidence ZIP; full independent source/receipt metadata bound to tested SHA. No G6/G7 inference."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-FROZEN-WINDOWS",
@@ -20175,7 +20188,7 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -20199,7 +20212,8 @@
               "scope": "Final native/frozen app Send/Confirm/Reopen. Downloaded SHA256-verified evidence ZIP; full independent source/receipt metadata bound to tested SHA. No G6/G7 inference."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-FROZEN-LINUX",
@@ -20216,7 +20230,7 @@
             "G5"
           ],
           "mandatory": true,
-          "status": "PASS",
+          "status": "STALE",
           "acceptance_evidence": [
             {
               "source_sha": "336834198ce6fc648011218ffdea3a32512dcafb",
@@ -20240,7 +20254,8 @@
               "scope": "Final native/frozen app Send/Confirm/Reopen. Downloaded SHA256-verified evidence ZIP; full independent source/receipt metadata bound to tested SHA. No G6/G7 inference."
             }
           ],
-          "blocker": null
+          "blocker": null,
+          "stale_reason": "Official Core v0.1.13 candidate changes runtime/trust; retained v0.1.11 evidence does not qualify the new source or binaries."
         },
         {
           "id": "Q06-PHYSICAL-MACOS",
@@ -20362,27 +20377,27 @@
         },
         "G1": {
           "applicable": true,
-          "status": "PASS",
+          "status": "STALE",
           "not_applicable_reason": null
         },
         "G2": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "STALE",
           "not_applicable_reason": null
         },
         "G3": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "STALE",
           "not_applicable_reason": null
         },
         "G4": {
           "applicable": true,
-          "status": "PASS",
+          "status": "STALE",
           "not_applicable_reason": null
         },
         "G5": {
           "applicable": true,
-          "status": "PENDING",
+          "status": "STALE",
           "not_applicable_reason": null
         },
         "G6": {
@@ -20406,8 +20421,20 @@
         }
       ],
       "engineering_status": "ACTIVE_TECHNICAL_GAPS",
-      "scope_note": "2026-11-02 evidence reconciliation based on frozen actual Core/WSP tests at runtime source SHA 33683419. Fresh genesis recovery is identity-only, not former-chain funds/history; technical remaining PENDING and external G6/G7 BLOCKED remain mandatory. Ledger-only edits require fresh governance CI. See docs/Q06_FINAL_ENGINEERING_AUDIT.md.",
-      "task_name": "BIP39 12-Word Wallet & BIP352 Silent Payments"
+      "scope_note": "2026-11-02 evidence reconciliation based on frozen actual Core/WSP tests at runtime source SHA 33683419. Fresh genesis recovery is identity-only, not former-chain funds/history; technical remaining PENDING and external G6/G7 BLOCKED remain mandatory. Ledger-only edits require fresh governance CI. See docs/Q06_FINAL_ENGINEERING_AUDIT.md. Official Core v0.1.13 migration Draft #141 is the current scoped candidate; original v0.1.11 PASS receipts are retained but STALE for this runtime. No Q transition, full acceptance, merge or release is implied.",
+      "task_name": "BIP39 12-Word Wallet & BIP352 Silent Payments",
+      "core_migration": {
+        "target_version": "v0.1.13",
+        "candidate_pr_url": "https://github.com/Urriki1502/wam-privacy-wallet-regtest/pull/141",
+        "owner_scope": "Owner delegated task 2026-11-05: official signed three-OS Core, new disposable REGTEST profiles only; no merge/release/mainnet or retained-profile conversion.",
+        "status": "PENDING",
+        "qualified_common_source_sha": null,
+        "wsp_source_commit": "ac55f13423620252bdbf848c7e8a280c3b84721e",
+        "prior_candidate_pr": 140,
+        "prior_candidate_head_sha": null,
+        "historical_evidence_policy": "v0.1.11 acceptance_evidence retained verbatim at their original SHAs; changed Core requires fresh exact-source native/frozen proof. STALE is not FAIL or PASS.",
+        "provenance": "docs/WAM_CORE_V013_PROVENANCE.md"
+      }
     },
     {
       "id": "Q07",
@@ -20707,7 +20734,7 @@
     },
     {
       "id": "Q12",
-      "requirement": "Pending→confirmed→conflicted/dropped/reorg; restart with uncertain broadcast/UTXO reservations",
+      "requirement": "Pending\u2192confirmed\u2192conflicted/dropped/reorg; restart with uncertain broadcast/UTXO reservations",
       "processing": "QUEUED",
       "status": "PENDING",
       "accepted": false,

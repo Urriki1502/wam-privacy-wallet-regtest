@@ -79,7 +79,7 @@ class FundingContracts(unittest.TestCase):
                 return {'getblockchaininfo':{'chain':'regtest','blocks':0},
                     'getblockhash':REGTEST_GENESIS,
                     'getconnectioncount':0,
-                    'getnetworkinfo':{'version':111,'subversion':'/WAM:0.1.11/','protocolversion':70016}}[method]
+                    'getnetworkinfo':{'version':113,'subversion':'/WAM:0.1.13/','protocolversion':70016}}[method]
             with patch.dict(rpc_scope._contexts,{str(directory):context}), \
                     patch('wam_regtest.managed_wallet_session.check_session'), \
                     patch('wam_regtest.wsp_live.LiveCoreReadOnlyCli._http_enabled',False), \

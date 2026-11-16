@@ -189,7 +189,7 @@ class _JsonRpcHandler(http.server.BaseHTTPRequestHandler):
             height = req["params"][0]
             result = self.genesis if height == 0 else "a" * 64
         elif method == "getnetworkinfo":
-            result = {"version": 111, "subversion": "/WAM:0.1.11/", "protocolversion": 70016}
+            result = {"version": 113, "subversion": "/WAM:0.1.13/", "protocolversion": 70016}
         elif method == "getconnectioncount":
             result = 0
         elif method == "getblockcount":

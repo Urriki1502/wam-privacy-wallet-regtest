@@ -46,7 +46,7 @@ class SharedPolicyContracts(unittest.TestCase):
         profile = self.profile()
         with self.assertRaises(SharedRegtestError):
             validate_peers([],profile,require_connected=True)
-        row = dict(addr='127.0.0.1:29557',inbound=False,version=70016,subver='/WAM:0.1.11/')
+        row = dict(addr='127.0.0.1:29557',inbound=False,version=70016,subver='/WAM:0.1.13/')
         self.assertTrue(validate_peers([row],profile,require_connected=True)['connected'])
         for altered in (dict(row,addr='10.0.0.9:29557'),dict(row,version=70015),
                         dict(row,addr='127.0.0.1:9555'),dict(row,subver='/untrusted/')):

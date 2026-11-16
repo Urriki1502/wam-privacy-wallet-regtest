@@ -1,0 +1,7 @@
+{
+  "schema": "wam-v1-owner-scope-proposal/v1",
+  "status": "PROPOSED",
+  "owner_decision_url": null,
+  "owner_de_scoped": ["Q07", "Q08", "Q09", "Q17"],
+  "future_engineering_order": ["Q10", "Q11", "Q12", "Q13", "Q14", "Q15", "Q16", "Q18", "Q19", "Q20"]
+}

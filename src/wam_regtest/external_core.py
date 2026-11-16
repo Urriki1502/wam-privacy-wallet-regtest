@@ -37,7 +37,7 @@ class ExternalCoreAttachment:
       - the declared PID exists and its process image is the expected wamd binary;
       - the server half of the loopback socket is owned by that same PID;
       - the RPC chain is regtest and the genesis hash matches the pinned WSP value;
-      - the RPC version tuple matches the supported v0.1.11 tuple.
+      - the RPC version tuple matches the supported v0.1.13 tuple.
 
     Only idempotent read methods are allowed. Writes, wallet loads, and any
     operation that could mutate the external node are denied at the boundary.

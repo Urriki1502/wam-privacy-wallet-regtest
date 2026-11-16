@@ -101,21 +101,30 @@ def verify_mnemonic_on_original_chain(owner, source, phrase, expected):
     except Exception:
         raise Q06RecoveryProofError("Q06_RECOVERY_INDEPENDENT_RESCAN_DENIED") from None
     finally:
-        if scanner is not None:
-            scanner.close()
-        if rpc is not None and getattr(rpc, "_transport", None) is not None:
-            rpc._transport.close()
-        if keys is not None:
-            keys.close()
+        cleanup_failed = False
+        # A temporary scanner/transport close failure must not strand the
+        # independently derived seed. Preserve ambiguous scan files, while
+        # attempting every independent close without exposing raw errors.
+        resources = (scanner, getattr(rpc, "_transport", None), keys)
+        for resource in resources:
+            if resource is not None:
+                try:
+                    resource.close()
+                except Exception:
+                    cleanup_failed = True
         if guard is not None:
-            if verified:
+            if verified and not cleanup_failed:
                 try:
                     _remove_known_scanner_lock(target)
                     guard.remove_owned()
                     directory.rmdir()
                 except Exception:
-                    guard.close()
-                    raise Q06RecoveryProofError("Q06_RECOVERY_TEMP_RUNTIME_PRESERVED") from None
-            else:
+                    cleanup_failed = True
+            if not verified or cleanup_failed:
                 # Never erase an ambiguous or partially written SQLite scan.
-                guard.close()
+                try:
+                    guard.close()
+                except Exception:
+                    cleanup_failed = True
+        if cleanup_failed:
+            raise Q06RecoveryProofError("Q06_RECOVERY_TEMP_RUNTIME_PRESERVED") from None

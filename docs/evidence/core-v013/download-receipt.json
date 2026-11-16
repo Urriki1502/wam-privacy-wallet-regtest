@@ -1,0 +1,51 @@
+[
+  {
+    "url": "https://wamcoin.org/security/",
+    "name": "security.html",
+    "bytes": 29342,
+    "sha256": "866d2522a4fa1981925ebab530adebfe653c5ff3e64beab3548b3d0e88de7a93",
+    "status": "DOWNLOADED"
+  },
+  {
+    "url": "https://wamcoin.org/SIGNING-KEY.asc",
+    "name": "SIGNING-KEY.asc",
+    "bytes": 3179,
+    "sha256": "842d9419593efc8fe0a5f45feaeab86710c03b27b3e2416a2dc9205fe506ee63",
+    "status": "DOWNLOADED"
+  },
+  {
+    "url": "https://wamcoin.org/downloads/v0.1.13/SHA256SUMS",
+    "name": "SHA256SUMS",
+    "bytes": 963,
+    "sha256": "fab37640d6860fd28cadd547ca4e3312f60ec1441df4574029ff2cf6536c3907",
+    "status": "DOWNLOADED"
+  },
+  {
+    "url": "https://wamcoin.org/downloads/v0.1.13/SHA256SUMS.asc",
+    "name": "SHA256SUMS.asc",
+    "bytes": 833,
+    "sha256": "2014ce6a2fceb446448219ed16e1b923f457582cbeaf05bb57f62258ca9c1a73",
+    "status": "DOWNLOADED"
+  },
+  {
+    "url": "https://wamcoin.org/downloads/v0.1.13/wam-coin-v0.1.13-arm64-apple-darwin.tar.gz",
+    "name": "wam-coin-v0.1.13-arm64-apple-darwin.tar.gz",
+    "bytes": 11133091,
+    "sha256": "2e6d4cb34e4e1ca800db82591295ede775e5ba1769fec737db70ebaa38ab5894",
+    "status": "DOWNLOADED"
+  },
+  {
+    "url": "https://wamcoin.org/downloads/v0.1.13/wam-coin-v0.1.13-x86_64-w64-mingw32.zip",
+    "name": "wam-coin-v0.1.13-x86_64-w64-mingw32.zip",
+    "bytes": 16333094,
+    "sha256": "db6bcb58e909a72a69ab7bb74a95ab3837298c12fd847dc83fdb37fca10732b4",
+    "status": "DOWNLOADED"
+  },
+  {
+    "url": "https://wamcoin.org/downloads/v0.1.13/wam-coin-v0.1.13-x86_64-linux-gnu.tar.gz",
+    "name": "wam-coin-v0.1.13-x86_64-linux-gnu.tar.gz",
+    "bytes": 13163409,
+    "sha256": "1adb703f9c881f1ce20ee1d085c7d0d07395b61751faa02a532f947bb97d594a",
+    "status": "DOWNLOADED"
+  }
+]

@@ -19,11 +19,11 @@ jobs:
     timeout-minutes: 18
     steps:
       - name: Download pinned Fusion Mac package from SUCCESSFUL real-Core E2E
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           repository: Urriki1502/wam-privacy-wallet-regtest
-          run-id: 38579345792
-          artifact-ids: "11900859924"
+          run-id: 42079016062
+          artifact-ids: "13440798567"
           github-token: ${{ github.token }}
           path: source
           merge-multiple: true
@@ -42,13 +42,13 @@ jobs:
           manifest_path = manifests[0]
           receipt = json.loads(manifest_path.read_text(encoding="utf-8"))
           if (receipt.get("status") != "UNNOTARIZED_REAL_REGTEST_MACOS_ARM64_PREVIEW"
-              or receipt.get("source_commit") != "115bb20d2f37106748b56dfae93f54ae25ec559f"
+              or receipt.get("source_commit") != "f96db6fc4f2044deba2c632a9a237b56b259b13c"
               or receipt.get("real_core_packaged_e2e") is not True
               or receipt.get("mainnet_allowed") is not False
               or receipt.get("wamd_sha256") !=
-                    "7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068"
+                    "fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba"
               or receipt.get("wam_cli_sha256") !=
-                    "81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82"):
+                    "2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19"):
               raise SystemExit("LITE_EXACT_TRUST_PROVENANCE_DENIED")
           files = receipt.get("files")
           dmg = "WAM-Privacy-Wallet-REGTEST-macOS-ARM64.dmg"
@@ -57,6 +57,10 @@ jobs:
               raise SystemExit("LITE_PACKAGE_MEMBERS_DENIED")
           out = Path("mac-lite")
           out.mkdir(mode=0o700)
+          pinned = {
+              dmg: (71093647, "9de540606d6088d001a066e4b8e40805700724527cfc64adf09b660a1510cfa5"),
+              app_zip: (62499845, "6be60ce26c2b9e16457cfd9e658a2e8c67a07ce96f267a5abe75b8d7f51f487f"),
+          }
           for name in (dmg, app_zip):
               candidate = manifest_path.parent / name
               expected = files[name]
@@ -64,7 +68,7 @@ jobs:
                   or type(expected) is not dict
                   or type(expected.get("size_bytes")) is not int
                   or candidate.stat().st_size != expected["size_bytes"]
-                  or expected["size_bytes"] < 4096):
+                  or (expected["size_bytes"], expected.get("sha256")) != pinned[name]):
                   raise SystemExit("LITE_PACKAGE_SIZE_DENIED")
               hasher = hashlib.sha256()
               with candidate.open("rb") as fp:
@@ -82,7 +86,9 @@ jobs:
               "The application is ad-hoc signed and NOT Apple notarized. Your Mac\n"
               "may show a Gatekeeper warning. Do not disable system protections.\n"
               "Use disposable REGTEST keys and test funds only. NO MAINNET.\n"
-              "Original full CI: https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/38579345792\n"
+              "Original full CI: https://github.com/Urriki1502/wam-privacy-wallet-regtest/actions/runs/42079016062\n"
+              "Pinned source f96db6f; this repack does not qualify newer source.\n"
+              "Q06 acceptance and physical/independent review remain blocked.\n"
               "The JSON manifest contains the original SHA256 hash for this DMG.\n",
               encoding="utf-8",
           )
@@ -92,9 +98,9 @@ jobs:
                 sum((manifest_path.parent / name).stat().st_size for name in (dmg, app_zip)))
           PY
       - name: Publish smaller DMG-only ZIP download, not a release
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: WAM-Fusion-macOS-ARM64-DMG-Lite-28888aa27
+          name: WAM-Fusion-macOS-ARM64-DMG-Lite-f96db6f
           path: mac-lite/
           if-no-files-found: error
           compression-level: 0

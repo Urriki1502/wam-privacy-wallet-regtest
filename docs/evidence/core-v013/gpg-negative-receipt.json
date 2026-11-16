@@ -1,0 +1,17 @@
+[
+  {
+    "changed_public_file": "SHA256SUMS",
+    "status": "PASS_REFUSED",
+    "reason": "RELEASE_SIGNATURE_DENIED"
+  },
+  {
+    "changed_public_file": "SHA256SUMS.asc",
+    "status": "PASS_REFUSED",
+    "reason": "RELEASE_SIGNATURE_DENIED"
+  },
+  {
+    "changed_public_file": "SIGNING-KEY.asc",
+    "status": "PASS_REFUSED",
+    "reason": "RELEASE_SIGNER_DENIED"
+  }
+]

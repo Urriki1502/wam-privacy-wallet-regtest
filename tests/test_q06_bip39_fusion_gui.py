@@ -162,9 +162,15 @@ class ApprovalWorkerOrdering(unittest.TestCase):
         review = PaymentReview("wamrtsp1public", 300000000, 10000,
                                4449980000, 1, "a" * 64)
         class Backend:
+            def __init__(self):
+                self.core_alive = True
             def public_state(self):
-                return dict(locked=False, faulted=False, core_alive=False)
+                # Synthetic healthy scope for modal-ordering only. Dead or
+                # unverified Core must disable payment controls separately.
+                return dict(locked=False, faulted=False, core_alive=self.core_alive)
             def execute(self, action, args, kwargs):
+                if action == 'quit':
+                    self.core_alive = False
                 calls.append(action)
                 return review if action in ("prepare", "sign") else None
         executor = WalletExecutor(Backend)
@@ -207,9 +213,13 @@ class ApprovalWorkerOrdering(unittest.TestCase):
         review = PaymentReview("wamrtsp1public", 300000000, 10000,
                                4449980000, 1, "b" * 64)
         class Backend:
+            def __init__(self):
+                self.core_alive = True
             def public_state(self):
-                return dict(locked=False, faulted=False, core_alive=False)
+                return dict(locked=False, faulted=False, core_alive=self.core_alive)
             def execute(self, action, args, kwargs):
+                if action == 'quit':
+                    self.core_alive = False
                 calls.append(action)
                 return review if action in ("prepare", "sign") else None
         class ClickOnShow(QObject):

@@ -17,6 +17,28 @@ from wam_regtest.wallet_executor import ManagedWalletBackend,WalletExecutor
 class SerializedControlContracts(unittest.TestCase):
     setUp=fixture.SupervisorLifecycleUnit.setUp
 
+    def test_join_waits_for_original_control_listener_before_profile_reopen(self):
+        entered, finish = threading.Event(), threading.Event()
+        def serve(owner):
+            entered.set()
+            finish.wait(5)
+        with patch.object(CoreSupervisor,'start'), patch.object(CoreSupervisor,'serve',serve):
+            executor=WalletExecutor(lambda:ManagedWalletBackend(self.root,self.core,self.core))
+            try:
+                executor.request('core_start')
+                self.assertTrue(entered.wait(2))
+                executor.request('quit')
+                # Closing a socket while another thread accepts on it can
+                # retain its kernel listener until that thread returns.
+                self.assertFalse(executor.join(.01))
+                finish.set()
+                self.assertTrue(executor.join(2))
+                self.assertFalse(executor._backend._control_thread.is_alive())
+            finally:
+                finish.set()
+                if not executor.closed:executor.request('quit')
+                executor.join()
+
     def test_authenticated_control_and_release_stay_on_original_executor(self):
         threads=[]
         def status():threads.append(threading.get_ident());return public_status(state='stopped')

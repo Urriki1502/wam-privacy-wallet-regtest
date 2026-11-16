@@ -217,7 +217,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
             "Review, sign and broadcast",
             "Signing reserves inputs. Broadcast is a separate explicit approval.",
         )
-        self.review_summary = label("No prepared payment. Recipient, amount, fee and change appear here after Review.")
+        self.review_summary = _WrappingStatusLabel()
+        self.review_summary.setWordWrap(True)
+        self.review_summary.setText("No prepared payment. Recipient, amount, fee and change appear here after Review.")
         self.review_summary.setMinimumWidth(0)
         rl.addWidget(self.review_summary)
         self.activate.setText("Enable sending")
@@ -315,7 +317,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         about, about_layout = panel(
             "WAM Fusion · REGTEST",
             "Local-first BIP352 silent payments. No remote account or cloud custody.")
-        about_layout.addWidget(label("WAM Core v0.1.11 · WSP-1 · BIP39 12 words"))
+        about_layout.addWidget(label("WAM Core v0.1.13 · WSP-1 · BIP39 12 words"))
         about_layout.addWidget(label(
             "This preview is not a mainnet wallet. All test transactions stay on the owned REGTEST chain."))
         settings_layout.addWidget(about)
@@ -356,6 +358,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
         advanced_body.addWidget(self.fund)
         advanced_body.addWidget(self.confirm)
         advanced_body.addWidget(self.inspect)
+        advanced_body.addWidget(self.intents)
+        advanced_body.addWidget(self.resume)
         advanced_body.addWidget(label("OWNED CORE / SESSION", "FusionKicker"))
         advanced_body.addWidget(self.account)
         advanced_body.addWidget(self.balance)
@@ -379,6 +383,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
         self.backup_page = Bip39BackupPage()
         self.backup_page.verify_requested.connect(self._on_backup_verify)
+        self.backup_page.challenge_requested.connect(self._on_backup_challenge)
+        self.backup_page.challenge_cancelled.connect(self._on_backup_challenge_cancel)
         self.backup_page.deferred_requested.connect(self._on_backup_deferred)
         self.backup_page.continue_requested.connect(self._on_backup_continue)
         self.stack.addWidget(self.backup_page)
@@ -408,6 +414,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
         self.overview.manual_sync.clicked.connect(
             lambda: self._command("snapshot"))
         self.overview.transaction_selected.connect(self._select_transaction)
+        self.history_page.page_requested.connect(self._request_history_page)
         self.overview.custody_switch.clicked.connect(self._switch_custody)
         self._last_verified = None
         self._last_review = None
@@ -515,7 +522,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
         dialog = WalletConsent(
             'Backup this REGTEST wallet',
             'Recovery words are shown only at wallet creation. This action does not '
-            'display the seed. Use Verify Recovery to check words you already wrote down.',
+            'display the seed. The three-word creation acknowledgment checks that you wrote '
+            'the phrase down. Independent Recovery verifies all 12 words and rescans this '
+            'same verified chain; it does not restore spending authority or prove clean-device recovery.',
             self, accept_text='Verify recovery words')
         try:
             if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -537,6 +546,14 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 STAGGER_MS * delay,
                 lambda widget=widget: fade_widget(
                     widget, start=0.35, end=1.0, duration=STANDARD_MS, parent=self))
+
+    def _request_history_page(self, offset):
+        # Only a read of this same authenticated profile. Never select a
+        # different owner or grant spending authority from cached GUI rows.
+        if (not self._ready or self._quit_requested or self.executor.state.locked
+                or self.executor.state.faulted):
+            return False
+        return self._command('snapshot', offset)
 
     def _select_transaction(self, txid):
         self.navigation.setCurrentRow(2)
@@ -589,7 +606,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
                 for control in (self.fund,self.confirm,self.send,self.broadcast):
                     control.setEnabled(False)
         if hasattr(self, "overview"):
-            ready = self._ready and not self.executor.state.faulted
+            ready = (self._ready and not self.executor.state.faulted
+                     and not self.executor.state.locked)
             idle = (self._worker is None and not self.executor.busy
                     and not self._delivering_result)
             if hasattr(self,'reconcile_button'):
@@ -597,6 +615,8 @@ class Bip39FusionWindow(Bip39TrialWindow):
             if hasattr(self, 'custody_switch'):
                 unlocked = not self.executor.state.locked and self._ready
                 for switch in (self.custody_switch, self.overview.custody_switch):
+                    switch.setToolTip('Click to lock this wallet.' if unlocked else
+                                      'Click to unlock with the original wallet password.')
                     switch.blockSignals(True)
                     switch.setChecked(unlocked)
                     switch.setText('Unlocked' if unlocked else 'Locked')
@@ -614,12 +634,20 @@ class Bip39FusionWindow(Bip39TrialWindow):
                     network=self._network_view(self._last_verified),
                 ), animate=False)
             self.overview.go_send.setEnabled(ready and idle and self._spend_enabled
+                and self.executor.state.core_alive is True
+                and not self.executor.state.reauthentication_required
                 and (self.shared_profile is None or self._shared_connected))
             self.overview.open_security.setEnabled(not self._quit_requested)
             if hasattr(self, "security_state"):
                 self.security_state.setText(
                     "Faulted · original reservations preserved"
                     if self.executor.state.faulted else
+                    "Locked · use Unlock wallet to reauthenticate this original REGTEST wallet"
+                    if self.executor.state.locked else
+                    "Original Core reauthentication required · Send unavailable"
+                    if self.executor.state.reauthentication_required else
+                    "Core verification required · Send unavailable"
+                    if self.executor.state.core_alive is not True else
                     "Custody verified · peer disconnected · payment state preserved"
                     if self.shared_profile is not None and self._spend_enabled and not self._shared_connected else
                     "Verified native custody · Send enabled" if self._spend_enabled else
@@ -716,18 +744,38 @@ class Bip39FusionWindow(Bip39TrialWindow):
         finally:
             dialog.deleteLater()
 
-    def _on_backup_verify(self, positions, answers):
+    def _on_backup_challenge(self):
         try:
-            ok = self.executor.request("backup_verify", positions, answers, timeout=30)
+            challenge = self.executor.request('backup_challenge', timeout=30)
+            self.backup_page.set_challenge(challenge)
+        except Exception as error:
+            self.backup_page.show_verification_error('verify_unavailable')
+            self.status.setText('Backup verification unavailable: ' +
+                                str(operation_error('backup_challenge', error)))
+
+    def _on_backup_challenge_cancel(self):
+        try:
+            self.executor.request('backup_challenge_cancel', timeout=30)
+        except Exception as error:
+            self.status.setText('Backup verification unavailable: ' +
+                                str(operation_error('backup_challenge_cancel', error)))
+
+    def _on_backup_verify(self, identifier, answers):
+        try:
+            ok = self.executor.request("backup_verify", identifier, answers, timeout=30)
         except Exception as error:
             self.status.setText(
                 "Backup verification unavailable: " + str(operation_error("backup_verify", error)))
-            self.backup_page.show_verification_error()
+            # The backend refused before judging the words: never report this
+            # as a wrong-word result (V19: correct words shown as "do not match").
+            self.backup_page.show_verification_error('verify_unavailable')
+            self._on_backup_challenge()
             return
         if ok:
             self.backup_page.show_success()
         else:
             self.backup_page.show_verification_error()
+            self._on_backup_challenge()
 
     def _on_backup_deferred(self):
         try:
@@ -767,6 +815,7 @@ class Bip39FusionWindow(Bip39TrialWindow):
 
     def _prepare_send(self):
         if (not self._spend_enabled or self._approved_commitment is not None
+                or self._recovered_unsigned_cancel
                 or self.executor.state.faulted or self.executor.busy):
             return
         try:
@@ -830,6 +879,9 @@ class Bip39FusionWindow(Bip39TrialWindow):
             return
         self._last_verified = snap
         self.overview.go_send.setEnabled(self._spend_enabled and
+                                         not self.executor.state.locked and
+                                         not self.executor.state.reauthentication_required and
+                                         self.executor.state.core_alive is True and
                                          not self.executor.state.faulted)
 
     def _clear_visuals(self):
@@ -968,10 +1020,22 @@ class Bip39FusionWindow(Bip39TrialWindow):
             self._shared_connected=False
             self.status.setText('Peer disconnected. Reconnect and verify the chain; signed and pending payments remain preserved.')
             self._set_actions()
-        if self.executor.state.faulted:
+        if (self.executor.state.faulted or self.executor.state.core_alive is not True
+                or code in ('WALLET_CORE_AUTHENTICATION_DENIED',
+                            'WALLET_CORE_IDENTITY_DENIED', 'WALLET_CORE_UNAVAILABLE',
+                            'WALLET_CORE_UNVERIFIED')):
+            # Revoke only the cached GUI scope. The backend's commitment,
+            # signed evidence and irreversible reservations are untouched.
+            self._spend_enabled = False
             self._clear_visuals()
+            if (self._approved_commitment is not None or self._signed_ready
+                    or self._pending_confirm_txid is not None
+                    or self._recovered_unsigned_cancel):
+                self.review_summary.setText(
+                    'Payment state retained. Verify the original Core and custody '
+                    'before continuing. Do not automatically sign or broadcast again.')
             self.connection_pill.setText(classify(
-                'snapshot', snap=None, locked=True, faulted=True,
+                'snapshot', snap=None, locked=True, faulted=self.executor.state.faulted,
                 core_alive=self.executor.state.core_alive)[1])
         elif self._last_verified is not None:
             self.overview.live_badge.setText("Last verified · refresh required")

@@ -319,7 +319,7 @@ def run_scenario(core,source,root,receipt,*,confirmed=False,linux_manifest=None,
     adapter=detect_adapter();adapter.enforce_host();_pinned_source(source)
     record={'schema':'q05-executor-gui-native/v1','status':'FAIL','source_provenance':proof,
         'source_sha':proof['candidate_source_sha'],'checkout_sha':proof['checkout_sha'],
-        'platform':adapter.platform_id,'core_version':'v0.1.11','core_trust':adapter.core_trust,
+        'platform':adapter.platform_id,'core_version':'v0.1.13','core_trust':adapter.core_trust,
         'official_signed_release':adapter.official_signed,'wsp_source_commit':PINNED_WSP_COMMIT,
         'synthetic_rpc':False,'frozen':_frozen,'physical_acceptance':False,'mainnet_allowed':False,
         'test_root_witness':test_witness,'profile_root':str(root),'observations':[]}

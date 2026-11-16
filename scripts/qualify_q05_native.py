@@ -69,7 +69,7 @@ def main():
             if witness is not None:
                 command+=['--linux-root-witness',str(witness),'--linux-developer-manifest',
                     a.linux_developer_manifest or
-                    '1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d']
+                    '4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2']
                 if a.test_root_witness:
                     command+=['--test-root-witness' if script=='probe_q05_executor_gui.py'
                               else '--qualification-test-witness']

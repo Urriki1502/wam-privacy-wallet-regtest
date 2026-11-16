@@ -6,7 +6,7 @@ from wam_regtest.linux_developer_core import inspect_elf, LinuxCoreError
 from wam_regtest.q05_platforms import DarwinArm64Adapter, LinuxX64Adapter, WindowsX64Adapter
 from wam_regtest.windows_release_preflight import BINARY_SHA256, ARCHIVE_SHA256
 
-from tests.test_linux_developer_core import elf
+from test_linux_developer_core import elf
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,7 +42,9 @@ class PlatformReuseContracts(unittest.TestCase):
         self.assertIn('Q06PlatformQualificationError', linux)
         self.assertIn('Q06PlatformQualificationError', windows)
         self.assertIn(r'(?:LINUX|Q04|EXTERNAL_ATTACHMENT|Q06)_', linux)
-        self.assertIn(r'(?:CORE|WIN|WALLET|WSP|Q04|Q06)_', windows)
+        from wam_regtest.windows_package_entry import _public_denial
+        for code in ('Q06_NATIVE_SCOPE_DENIED','Q02_ACCEPTANCE_CONFIG_AUTH_FAILED'):
+            self.assertEqual(_public_denial(ValueError(code))['reason_code'],code)
 
     def test_v1_net_frozen_lab_stays_cocoa_and_v19_blocked(self):
         probe = (ROOT / 'src' / 'wam_regtest' / 'shared_network_probe.py').read_text()
@@ -55,13 +57,13 @@ class PlatformReuseContracts(unittest.TestCase):
     def test_core_trust_labels_and_official_pe_pins(self):
         self.assertTrue(DarwinArm64Adapter.official_signed)
         self.assertTrue(WindowsX64Adapter.official_signed)
-        self.assertFalse(LinuxX64Adapter.official_signed)
-        self.assertEqual(LinuxX64Adapter.core_trust, 'qualified-developer-core-reviewed-manifest')
-        self.assertEqual(ARCHIVE_SHA256, 'ece622fa7ec3072c4e8b0d32e2c3749397d66260f2b0cf22b3636346873d15c5')
+        self.assertTrue(LinuxX64Adapter.official_signed)
+        self.assertEqual(LinuxX64Adapter.core_trust, 'official-signed-v0.1.13-reviewed-loader')
+        self.assertEqual(ARCHIVE_SHA256, 'db6bcb58e909a72a69ab7bb74a95ab3837298c12fd847dc83fdb37fca10732b4')
         self.assertEqual(BINARY_SHA256['wamd.exe'],
-                         '31717319535c5b784b2bed3b4d3c9a727f5c062e9534b4d27c59d2ffd04e95a1')
+                         '5fbeb6e07a83b337209edf0efbe342201bc3bf2e0c113dea8fdf7bf0e07d49e3')
         self.assertEqual(BINARY_SHA256['wam-cli.exe'],
-                         '538a6d1b918b698ce76a949dda982fdda6776e33ba057efaac59b1af59e59d21')
+                         'a6171ed6cddfeea58b9a6a8b722f2c07c0d332f0f1a7263f52193e4ef9f6f326')
 
     def test_q06_owner_probe_uses_current_fusion_nav(self):
         from wam_regtest.fusion_ui import FUSION_NAV_PAGES

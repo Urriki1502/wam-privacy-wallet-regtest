@@ -58,7 +58,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
     record={'schema':'q05-security-native/v1','status':'FAIL','source_provenance':proof,
         'source_sha':proof['candidate_source_sha'],'checkout_sha':proof['checkout_sha'],
         'platform':adapter.platform_id,'python_version':sys.version.split()[0],
-        'core_version':'v0.1.11','core_trust':adapter.core_trust,
+        'core_version':'v0.1.13','core_trust':adapter.core_trust,
         'core_sha256':{p.name:sha256(p.read_bytes()).hexdigest() for p in (node,cli)},
         'wsp_source_commit':PINNED_WSP_COMMIT,'frozen':frozen,'synthetic_rpc':False,
         'mainnet_allowed':False,'profile_root':str(a.root),'observations':[]}
@@ -116,7 +116,7 @@ def main(argv=None, *, core=None, source=None, frozen=False):
             elif sys.platform=='linux' and adapter._witness is not None:
                 args+=['--linux-root-witness',str(adapter._witness.root/'anchor.sock'),
                        '--linux-developer-manifest',a.linux_developer_manifest or
-                       '1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d']
+                       '4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2']
             subprocess.run(args,check=True,timeout=30,stdin=subprocess.DEVNULL,
                            stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             child=json.loads(child_receipt.read_text())

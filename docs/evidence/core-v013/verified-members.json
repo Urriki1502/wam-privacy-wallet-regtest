@@ -1,0 +1,220 @@
+[
+  {
+    "platform": "macos-arm64",
+    "archive": "wam-coin-v0.1.13-arm64-apple-darwin.tar.gz",
+    "sha256": "2e6d4cb34e4e1ca800db82591295ede775e5ba1769fec737db70ebaa38ab5894",
+    "members": {
+      "wam-cli": "2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19",
+      "wamd": "fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba"
+    },
+    "entries": [
+      [
+        "wam-coin-v0.1.13",
+        0,
+        true
+      ],
+      [
+        "wam-coin-v0.1.13/bin",
+        0,
+        true
+      ],
+      [
+        "wam-coin-v0.1.13/README.md",
+        14521,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/COPYING",
+        1728,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/RELEASE.txt",
+        2163,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/SECURITY.md",
+        22871,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/WHITEPAPER.md",
+        28993,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-cli",
+        511736,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-tx",
+        2252936,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-util",
+        286712,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-wallet",
+        5199624,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wamd",
+        12677848,
+        false
+      ]
+    ]
+  },
+  {
+    "platform": "windows-x64",
+    "archive": "wam-coin-v0.1.13-x86_64-w64-mingw32.zip",
+    "sha256": "db6bcb58e909a72a69ab7bb74a95ab3837298c12fd847dc83fdb37fca10732b4",
+    "members": {
+      "wam-cli.exe": "a6171ed6cddfeea58b9a6a8b722f2c07c0d332f0f1a7263f52193e4ef9f6f326",
+      "wamd.exe": "5fbeb6e07a83b337209edf0efbe342201bc3bf2e0c113dea8fdf7bf0e07d49e3"
+    },
+    "entries": [
+      [
+        "wam-coin-v0.1.13/",
+        0,
+        true
+      ],
+      [
+        "wam-coin-v0.1.13/bin/",
+        0,
+        true
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-wallet.exe",
+        9534976,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-cli.exe",
+        2274816,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wamd.exe",
+        15913984,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-util.exe",
+        1873920,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-tx.exe",
+        4007936,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/RELEASE.txt",
+        3425,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/README.md",
+        14521,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/SECURITY.md",
+        22871,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/WHITEPAPER.md",
+        28993,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/COPYING",
+        1728,
+        false
+      ]
+    ]
+  },
+  {
+    "platform": "linux-x86_64",
+    "archive": "wam-coin-v0.1.13-x86_64-linux-gnu.tar.gz",
+    "sha256": "1adb703f9c881f1ce20ee1d085c7d0d07395b61751faa02a532f947bb97d594a",
+    "members": {
+      "wamd": "a3e3bf810e74824e3739fd4cbd1a45037cae997056b8c978c4dc1a61d674f0c7",
+      "wam-cli": "d99fc90e3aa4233979056d9981a388360e5d7ff77090d00b9bc37191a2425300"
+    },
+    "entries": [
+      [
+        "wam-coin-v0.1.13",
+        0,
+        true
+      ],
+      [
+        "wam-coin-v0.1.13/COPYING",
+        1728,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/DEPENDENCIES.txt",
+        1984,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin",
+        0,
+        true
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-tx",
+        3083744,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wamd",
+        13893368,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-wallet",
+        7375736,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-util",
+        867760,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/bin/wam-cli",
+        1236912,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/README.md",
+        14521,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/RELEASE.txt",
+        3403,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/WHITEPAPER.md",
+        28993,
+        false
+      ],
+      [
+        "wam-coin-v0.1.13/SECURITY.md",
+        22871,
+        false
+      ]
+    ]
+  }
+]

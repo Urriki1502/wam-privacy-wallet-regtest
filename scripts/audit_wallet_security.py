@@ -7,8 +7,8 @@ Not external human review, full formal verification or a second build witness.
 import argparse,ast,hashlib,json,subprocess
 from pathlib import Path
 
-PINS={'wamd':'7298de701e467eb28b4806cbcbe35edb393861b4b97117017fee4c1b194e3068',
-      'wam-cli':'81a031ebf9b3060b19061b29756d43bcd09b32ad778348b8c3d8321397076e82'}
+PINS={'wamd':'fe04a61f17eb8047f1d2a537ebcb61b45cbde14c491bc332d2a2ab7ee18237ba',
+      'wam-cli':'2b19fdac692cbed5810b6fa9663ac89f25ab8f346da84c5fd13bf2b8535e3e19'}
 WSP='ac55f13423620252bdbf848c7e8a280c3b84721e'
 
 def sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()

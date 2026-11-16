@@ -78,6 +78,29 @@ class Q01BuildSourceTests(unittest.TestCase):
             capture(self.root)
         self.assertEqual(sentinel.read_bytes(),b'unchanged public data')
 
+    def test_production_onedir_output_with_internal_links_does_not_change_source(self):
+        # Linux CI 128904830966: the production onedir (internal relative
+        # library links) appeared after capture and failed the re-capture.
+        for name in ('dist-production','build-production','linux-production-output',
+                     'windows-production-output'):
+            with self.subTest(output=name):
+                stamp=capture(self.root)
+                out=self.root/name/'app/_internal';out.mkdir(parents=True)
+                (out/'libpublic.so.1').write_bytes(b'public')
+                (out/'libpublic.so').symlink_to('libpublic.so.1')
+                verify(self.root,stamp)
+                import shutil;shutil.rmtree(self.root/name)
+
+    def test_production_output_root_cannot_be_a_link(self):
+        target=self.root/'public-target';target.mkdir()
+        for name in ('dist-production','linux-production-output'):
+            with self.subTest(output=name):
+                (self.root/name).symlink_to(target,target_is_directory=True)
+                try:
+                    with self.assertRaisesRegex(BuildSourceError,'BUILD_SOURCE_TREE_DENIED'):
+                        capture(self.root)
+                finally:(self.root/name).unlink()
+
     def test_git_replacement_cannot_authenticate_modified_source(self):
         pin = self.git('rev-parse', 'HEAD').decode().strip()
         self.source.write_bytes(b'# substituted public source\n')

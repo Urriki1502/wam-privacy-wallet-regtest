@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 
-LINUX_MANIFEST = '1e8d6cbd3039fb7f80d26118c6e7c10c8defa654460072b6a3471d7f41cece4d'
+LINUX_MANIFEST = '4052c4a75dee853f5a27c2fb1869aee841a075ed8d6187b90a9d1c06a88cf3c2'
 
 
 def qualify(directory):
@@ -30,11 +30,11 @@ def qualify(directory):
         metadata_name = 'receipt.json'
         error = CoreSmokeError
     elif sys.platform == 'linux':
-        from wam_regtest.linux_developer_core import verify as linux_verify, LinuxCoreError
-        pins = {'wamd': 'ccc9f0f1d299a1e98a49ff83859aa03e994e83e6ea4b7cd60c327eb1e0e8e4d6',
-                'wam-cli': 'ada9dabd56d0859b9d64c0b20a05c33cb039b2573f75088443b45c35d5379652'}
+        from wam_regtest.linux_official_core import verify as linux_verify, LinuxCoreError
+        pins = {'wamd': 'a3e3bf810e74824e3739fd4cbd1a45037cae997056b8c978c4dc1a61d674f0c7',
+                'wam-cli': 'd99fc90e3aa4233979056d9981a388360e5d7ff77090d00b9bc37191a2425300'}
         verify = lambda path: linux_verify(path, LINUX_MANIFEST, authorized=True)
-        metadata_name = 'DEVELOPER_CORE_MANIFEST.json'
+        metadata_name = 'LINUX_OFFICIAL_CORE_MANIFEST.json'
         error = LinuxCoreError
     else:
         raise ValueError('Q01_NATIVE_PLATFORM_REQUIRED')
@@ -54,6 +54,9 @@ def qualify(directory):
                 target.mkdir(mode=0o700)
                 put = lambda name, value: (target / name).write_bytes(value)
             put(metadata_name, metadata)
+            if sys.platform == 'linux':
+                for public in ('SHA256SUMS','SHA256SUMS.asc','SIGNING-KEY.asc'):
+                    put(public,(directory/public).read_bytes())
             for name, value in raw.items():
                 if changed == 'missing-cli' and name == list(pins)[1]:
                     continue
@@ -88,8 +91,8 @@ def qualify(directory):
     return {'schema': 'wam-q01-real-core-input-negatives/v1', 'layer': 'SOURCE',
         'source_checkout_sha': subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip(),
         'timestamp_utc': datetime.now(timezone.utc).isoformat(), 'platform': sys.platform,
-        'core_version': 'v0.1.11', 'core_sha256': pins,
-        'core_trust': 'reviewed-developer-source-build' if sys.platform == 'linux' else 'official-signed-v0.1.11',
+        'core_version': 'v0.1.13', 'core_sha256': pins,
+        'core_trust': 'official-signed-v0.1.13',
         'original_pair_unchanged': True, 'core_process_started': False,
         'cases': results, 'core_e2e_qualified': False, 'frozen_qualified': False}
 
